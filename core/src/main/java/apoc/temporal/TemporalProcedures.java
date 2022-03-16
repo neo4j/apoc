@@ -7,9 +7,12 @@ import org.neo4j.values.storable.DurationValue;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 
 import static apoc.date.Date.*;
 import static apoc.util.DateFormatUtil.*;
+import static org.neo4j.values.storable.DurationFields.MONTHS;
 
 public class TemporalProcedures
 {
@@ -65,15 +68,25 @@ public class TemporalProcedures
             @Name("input") Object input,
             @Name("format") String format
     ) {
+        
+        DurationValue duration = ((DurationValue) input);
+        
+        final long months = duration.get(MONTHS.name()).value();
+        if (months > 0) {
+            duration = duration
+                    .plus(-1, ChronoUnit.DAYS)
+                    .plus(-1, ChronoUnit.MONTHS);
+        }
+        
         try {
             LocalDateTime midnight = LocalDateTime.of(0, 1, 1, 0, 0, 0, 0);
-            LocalDateTime newDuration = midnight.plus( (DurationValue) input );
+            LocalDateTime newDuration = midnight.plus(duration);
 
             DateTimeFormatter formatter = getOrCreate(format);
 
             return newDuration.format(formatter);
         } catch (Exception e){
-        throw new RuntimeException("Available formats are:\n" +
+            throw new RuntimeException("Available formats are:\n" +
                 String.join("\n", getTypes()) +
                 "\nSee also: https://www.elastic.co/guide/en/elasticsearch/reference/5.5/mapping-date-format.html#built-in-date-formats " +
                 "and https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html");
