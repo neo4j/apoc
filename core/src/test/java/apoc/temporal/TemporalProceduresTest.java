@@ -11,6 +11,8 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class TemporalProceduresTest
 {
@@ -63,6 +65,30 @@ public class TemporalProceduresTest
     {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( duration('P0M0DT4820.487660000S'), \"HH:mm:ss.SSSS\" ) as output");
         assertEquals("01:20:20.4876", output);
+    }
+    
+    @Test
+    public void shouldFormatDurationGreaterThanADay() {
+        String output = TestUtil.singleResultFirstColumn(db, "WITH duration.between(datetime(\"2017-06-02T18:40:32\"), datetime(\"2019-07-03T19:41:33\")) AS duration\n" +
+                "RETURN apoc.temporal.formatDuration(duration, \"yy 'years' MM 'months' dd 'days' - HH:mm:ss\", true) AS value");
+        assertEquals("02 years 01 months 01 days - 01:01:01", output);
+    }
+    
+    @Test
+    public void shouldFormatDurationGreaterThanADayWithIsoFormat() {
+        String output = TestUtil.singleResultFirstColumn(db, "WITH duration.between( datetime(\"2017-06-02T18:40:32\"), datetime(\"2019-07-03T19:41:33\") ) AS duration\n" +
+                "RETURN apoc.temporal.formatDuration(duration, 'iso_format', true) AS value");
+        assertEquals("P0002Y1M1DT1H1M1.000S", output);
+    }
+    
+    @Test
+    public void shouldFormatDurationGreaterThanADayWithDurationNegative() {
+        try {
+            TestUtil.testCall(db, "WITH duration.between( datetime(\"2019-07-03T19:41:33\") , datetime(\"2017-06-02T18:40:32\")) AS duration\n" +
+                    "RETURN apoc.temporal.formatDuration(duration, 'iso_format', true) AS value", r -> fail());
+        } catch (RuntimeException e) {
+            assertTrue(e.getMessage().contains("The duration must be positive"));
+        }
     }
 
     @Test

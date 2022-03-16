@@ -23,3 +23,36 @@ RETURN apoc.temporal.formatDuration( duration({seconds: 10000}), "hour_minute") 
 | output
 | "02:46"
 |===
+
+To format durations greater than a day, we can add a 3rd parameter with `true`,
+to leverage on `org.apache.commons.lang3.time.DurationFormatUtils` instead of `DateTimeFormatter`.
+In this case, we cannot use Java ISO and Elasticsearch patterns, e.g. `iso_date` or `date_time`, but only a custom pattern or `iso_format` to create a pattern `"'P'yyyy'Y'M'M'd'DT'H'H'm'M's.SSS'S'"`.
+For example:
+
+[source,cypher]
+----
+WITH duration.between(datetime("2017-06-02T18:40:32"), datetime("2019-07-03T19:41:33")) AS duration
+RETURN apoc.temporal.formatDuration(duration, "yy 'years' MM 'months' dd 'days' - HH:mm:ss", true) AS value
+----
+
+.Results
+[opts="header"]
+|===
+| value
+| 02 years 01 months 01 days - 01:01:01
+|===
+
+or:
+
+[source,cypher]
+----
+WITH duration.between(datetime("2017-06-02T18:40:32"), datetime("2019-07-03T19:41:33")) AS duration
+RETURN apoc.temporal.formatDuration(duration, "iso_format", true) AS value
+----
+
+.Results
+[opts="header"]
+|===
+| value
+| P0002Y1M1DT1H1M1.000S
+|===

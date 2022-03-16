@@ -1,5 +1,6 @@
 package apoc.temporal;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
@@ -7,9 +8,15 @@ import org.neo4j.values.storable.DurationValue;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 import static apoc.date.Date.*;
 import static apoc.util.DateFormatUtil.*;
+import static org.apache.commons.lang3.time.DurationFormatUtils.ISO_EXTENDED_FORMAT_PATTERN;
+import static org.neo4j.values.storable.DurationFields.DAYS;
+import static org.neo4j.values.storable.DurationFields.MILLISECONDS;
+import static org.neo4j.values.storable.DurationFields.MONTHS;
+import static org.neo4j.values.storable.DurationFields.NANOSECONDS;
 
 public class TemporalProcedures
 {
@@ -41,7 +48,7 @@ public class TemporalProcedures
             } else if (input instanceof OffsetTime) {
                 return ((OffsetTime) input).format(formatter);
             } else if (input instanceof DurationValue) {
-                return formatDuration(input, format);
+                return formatDuration(input, format, false);
             }
         } catch (Exception e){
             throw new RuntimeException("Available formats are:\n" +
@@ -63,8 +70,27 @@ public class TemporalProcedures
     @Description( "apoc.temporal.formatDuration(input, format) | Format a Duration" )
     public String formatDuration(
             @Name("input") Object input,
-            @Name("format") String format
+            @Name("format") String format,
+            @Name(value ="formatDaysDuration", defaultValue = "false") boolean formatDaysDuration
     ) {
+        
+        if (formatDaysDuration) {
+            final ZonedDateTime now = LocalDateTime.now().atZone(ZoneId.systemDefault());
+            final long start = now.toInstant().toEpochMilli();
+            final Map<String, String> durationFormats = Map.of("iso_format", ISO_EXTENDED_FORMAT_PATTERN);
+            String durationFormat = durationFormats.getOrDefault(format.toLowerCase(), format);
+            final DurationValue duration = (DurationValue) input;
+            final long millis1 = duration.get(DAYS.name()).value();
+            final long millis12 = duration.get(MONTHS.name()).value();
+            final long millis = duration.get(MILLISECONDS.name()).value();
+            final long end = now.plusMonths(millis12).plusDays(millis1).plusNanos(millis * 1000 * 1000)
+                    .toInstant().toEpochMilli();
+            if (start > end) {
+                throw new RuntimeException("The duration must be positive");
+            }
+            return DurationFormatUtils.formatPeriod(start, end, durationFormat);
+        }
+        
         try {
             LocalDateTime midnight = LocalDateTime.of(0, 1, 1, 0, 0, 0, 0);
             LocalDateTime newDuration = midnight.plus( (DurationValue) input );
