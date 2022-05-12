@@ -2,6 +2,7 @@ package apoc.export.cypher.formatter;
 
 import apoc.export.util.FormatUtils;
 import apoc.util.Util;
+import org.apache.commons.collections.MapUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -186,7 +187,7 @@ public class CypherFormatterUtils {
 
     public static StringBuilder formatProperties(String id, Map<String, Object> properties, boolean jsonStyle) {
         StringBuilder result = new StringBuilder(100);
-        if (properties != null) {
+        if (MapUtils.isNotEmpty(properties)) {
             List<String> keys = Iterables.asList(properties.keySet());
             Collections.sort(keys);
             for (String prop : keys) {
