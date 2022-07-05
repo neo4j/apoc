@@ -29,6 +29,10 @@ public class BatchTransaction implements AutoCloseable {
         }
     }
 
+    public void rollback() {
+        tx.rollback();
+    }
+    
     private void doCommit() {
         tx.commit();
         tx.close();
@@ -44,7 +48,6 @@ public class BatchTransaction implements AutoCloseable {
     @Override
     public void close() {
         if (tx!=null) {
-            tx.commit();
             tx.close();
             if (reporter!=null) reporter.progress("finish after " + count + " row(s) ");
         }
