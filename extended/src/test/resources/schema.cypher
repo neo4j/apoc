@@ -1,1 +1,0 @@
-CREATE INDEX FOR (n:Node) ON (n.id);

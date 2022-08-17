@@ -20,7 +20,7 @@ javadoc {
 
 dependencies {
     implementation group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective   // mandatory to run @ServiceProvider based META-INF code generation
-    implementation 'com.squareup:javapoet:1.13.0'
+    api 'com.squareup:javapoet:1.13.0'
     testImplementation 'com.google.testing.compile:compile-testing:0.19'
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation 'org.assertj:assertj-core:3.19.0'
@@ -31,7 +31,7 @@ publishing {
     repositories {
         maven {
             name = 'pipeline'
-            url = "file://${project(':extended').buildDir}/repo"
+            url = "file://${project(':processor').buildDir}/repo"
         }
     }
     publications {
@@ -57,13 +57,10 @@ publishing {
                 licenseNode.appendNode("comments", 'Note that this license is for the project itself, and not for its dependencies.')
                 licenseNode.appendNode("distribution", 'repo')
 
-                def developersNode = root.appendNode("developers")
-                def developerNode = developersNode.appendNode("developer")
-                developerNode.appendNode("id", 'michaelhunger')
-                developerNode.appendNode("name", 'Michael Hunger')
-                developerNode.appendNode("email", 'michael.hunger@neo4j.com')
-
                 def dependenciesNode = root.get("dependencies")[0]
+                if (dependenciesNode == null) {
+                    dependenciesNode = root.appendNode("dependencies")
+                }
 
                 if (dependenciesNode != null) {
                     configurations.default.allDependencies.findAll {dependency -> dependency.group != "org.neo4j.procedure"}.forEach {
@@ -89,13 +86,9 @@ publishing {
                                 exclusion.appendNode('groupId', ex.group)
                             }
                         }
-
                     }
                 }
-
-
             }
-
         }
     }
 }
