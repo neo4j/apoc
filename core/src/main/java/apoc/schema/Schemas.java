@@ -3,6 +3,7 @@ package apoc.schema;
 import apoc.result.AssertSchemaResult;
 import apoc.result.IndexConstraintNodeInfo;
 import apoc.result.IndexConstraintRelationshipInfo;
+import apoc.util.Util;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.EntityType;
 import org.neo4j.common.TokenNameLookup;
@@ -156,9 +157,9 @@ public class Schemas {
 
     private AssertSchemaResult createNodeKeyConstraint(String lbl, List<Object> keys) {
         String keyProperties = keys.stream()
-                .map( property -> String.format("n.`%s`", property))
+                .map( property -> String.format("n.`%s`", Util.sanitizeBackTicks(property.toString())))
                 .collect( Collectors.joining( "," ) );
-        tx.execute(String.format("CREATE CONSTRAINT FOR (n:`%s`) REQUIRE (%s) IS NODE KEY", lbl, keyProperties)).close();
+        tx.execute(String.format("CREATE CONSTRAINT FOR (n:`%s`) REQUIRE (%s) IS NODE KEY", Util.sanitizeBackTicks(lbl), keyProperties)).close();
         List<String> keysToSting = keys.stream().map(Object::toString).collect(Collectors.toList());
         return new AssertSchemaResult(lbl, keysToSting).unique().created();
     }
@@ -240,9 +241,9 @@ public class Schemas {
 
     private AssertSchemaResult createCompoundIndex(String label, List<String> keys) {
         List<String> backTickedKeys = new ArrayList<>();
-        keys.forEach(key->backTickedKeys.add(String.format("n.`%s`", key)));
+        keys.forEach(key->backTickedKeys.add(String.format("n.`%s`", Util.sanitizeBackTicks(key))));
 
-        tx.execute(String.format("CREATE INDEX FOR (n:`%s`) ON (%s)", label, String.join(",", backTickedKeys))).close();
+        tx.execute(String.format("CREATE INDEX FOR (n:`%s`) ON (%s)", Util.sanitizeBackTicks(label), String.join(",", backTickedKeys))).close();
         return new AssertSchemaResult(label, keys).created();
     }
 

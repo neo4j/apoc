@@ -56,6 +56,55 @@ public class RenameTest {
 	}
 
 	@Test
+	public void testRenameLabelDoesntAllowCypherInjection() throws Exception {
+		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})");
+		testCall(db, "CALL apoc.refactor.rename.label(" +
+						"  'Foo', " +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(10L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(0L, resultNodesMatches("Foo", null));
+
+		testCall(db, "CALL apoc.refactor.rename.label(" +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
+						"  'Foo'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(10L, resultNodesMatches("Foo", null));
+	}
+
+	@Test
+	public void testRenameLabelDoesntAllowCypherInjectionForSomeNodes() throws Exception {
+		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
+		testCall(db, "CALL apoc.refactor.rename.label(" +
+						"  'Foo', " +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'," +
+						"   $nodes" +
+						")",
+				map("nodes", nodes.subList(0,3)),
+				(r) -> {});
+
+		assertEquals(3L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(7L, resultNodesMatches("Foo", null));
+
+		testCall(db, "CALL apoc.refactor.rename.label(" +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
+						"  'Bar'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(3L, resultNodesMatches("Bar", null));
+	}
+
+	@Test
 	public void testRenameRelationship() throws Exception {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 		testCall(db, "CALL apoc.refactor.rename.type($oldType,$newType)",
@@ -76,6 +125,57 @@ public class RenameTest {
 
 		assertEquals(2L, resultRelationshipsMatches("LOVES", null));
 		assertEquals(8L, resultRelationshipsMatches("KNOWS", null));
+	}
+
+	@Test
+	public void testRenameTypeDoesntAllowCypherInjection() throws Exception {
+		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
+		testCall(db, "CALL apoc.refactor.rename.type(" +
+						"  'KNOWS', " +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(10L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(0L, resultRelationshipsMatches("KNOWS", null));
+
+		testCall(db, "CALL apoc.refactor.rename.type(" +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
+						"  'KNOWS'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(10L, resultRelationshipsMatches( "KNOWS", null));
+	}
+	@Test
+	public void testRenameTypeDoesntAllowCypherInjectionForSomeRelationships() throws Exception {
+		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
+
+		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
+
+		testCall(db, "CALL apoc.refactor.rename.type(" +
+						"  'KNOWS', " +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'," +
+						"  $rels" +
+						")",
+				map("rels", rels),
+				(r) -> {});
+
+		assertEquals(2L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(8L, resultRelationshipsMatches("KNOWS", null));
+
+		testCall(db, "CALL apoc.refactor.rename.type(" +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
+						"  'LIKES'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(2L, resultRelationshipsMatches( "LIKES", null));
 	}
 
 	@Test
@@ -100,6 +200,54 @@ public class RenameTest {
 	}
 
 	@Test
+	public void testRenamePropertyDoesntAllowCypherInjection() throws Exception {
+		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id})");
+		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
+						"  'name', " +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(10L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
+		assertEquals(0L, resultNodesMatches(null, "name"));
+
+		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
+						"  'name'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
+		assertEquals(10L, resultNodesMatches(null, "name"));
+	}
+	@Test
+	public void testRenamePropertyDoesntAllowCypherInjectionForSomeNodes() throws Exception {
+		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
+		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
+						"  'name', " +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'," +
+						"	$nodes" +
+						")",
+				map("nodes", nodes.subList(0,3)),
+				(r) -> {});
+
+		assertEquals(3L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
+		assertEquals(7L, resultNodesMatches(null, "name"));
+
+		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
+						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
+						"  'surname'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
+		assertEquals(3L, resultNodesMatches(null, "surname"));
+	}
+
+	@Test
 	public void testRenameTypeProperty() throws Exception {
 		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
 		testCall(db, "CALL apoc.refactor.rename.typeProperty($oldName,$newName)",
@@ -107,6 +255,56 @@ public class RenameTest {
 
 		assertEquals(10L, resultRelationshipsMatches(null, "surname"));
 		assertEquals(0L, resultRelationshipsMatches(null, "name"));
+	}
+
+	@Test
+	public void testRenameTypePropertyDoesntAllowCypherInjection() throws Exception {
+		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
+		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
+						"  'name', " +
+						"  'Whatever ` = null remove r.name //'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(10L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(0L, resultRelationshipsMatches(null, "name"));
+
+		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
+						"  'Whatever ` = null remove r.name //', " +
+						"  'name'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(10L, resultRelationshipsMatches(null, "name"));
+	}
+
+	@Test
+	public void testRenameTypePropertyDoesntAllowCypherInjectionForSomeRelationships() throws Exception {
+		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
+		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
+		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
+						"  'name', " +
+						"  'Whatever ` = null remove r.name //'," +
+						"	$rels" +
+						")",
+				map("rels",rels),
+				(r) -> {});
+
+		assertEquals(2L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(8L, resultRelationshipsMatches(null, "name"));
+
+		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
+						"  'Whatever ` = null remove r.name //', " +
+						"  'surname'" +
+						")",
+				map(),
+				(r) -> {});
+
+		assertEquals(0L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(2L, resultRelationshipsMatches(null, "surname"));
 	}
 
 	@Test

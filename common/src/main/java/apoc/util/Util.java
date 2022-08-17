@@ -61,6 +61,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -670,8 +672,19 @@ public class Util {
         return SourceVersion.isIdentifier(var) && !var.contains("$") ? var : '`' + var + '`';
     }
 
-    public static String sanitizeAndQuote(String var) {
-        return quote(var.replaceAll("`", ""));
+    // Escape all backticks in a string to stop Cypher Injection Attacks
+    public static String sanitizeBackTicks(String text) {
+        Pattern finOddCountBackticks = Pattern.compile("(?<!`)`(?:`{2})*(?!`)");
+        Matcher matcher = finOddCountBackticks.matcher(text);
+
+        int currentMatch = 0;
+        String newText = text;
+        while (matcher.find()) {
+            newText = new StringBuilder(newText).insert(matcher.start() + currentMatch, "`").toString();
+            currentMatch++;
+        }
+
+        return newText;
     }
 
     public static String param(String var) {
