@@ -57,6 +57,12 @@ publishing {
                 licenseNode.appendNode("comments", 'Note that this license is for the project itself, and not for its dependencies.')
                 licenseNode.appendNode("distribution", 'repo')
 
+                def developersNode = root.appendNode("developers")
+                def developerNode = developersNode.appendNode("developer")
+                developerNode.appendNode("id", 'michaelhunger')
+                developerNode.appendNode("name", 'Michael Hunger')
+                developerNode.appendNode("email", 'michael.hunger@neo4j.com')
+
                 def dependenciesNode = root.get("dependencies")[0]
                 if (dependenciesNode == null) {
                     dependenciesNode = root.appendNode("dependencies")

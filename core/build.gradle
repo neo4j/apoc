@@ -116,7 +116,7 @@ publishing {
             pom.withXml {
                 def root = asNode()
                 root.appendNode("name", "neo4j-apoc-core")
-                root.appendNode("description", "A collection of useful Neo4j Procedures, core package")
+                root.appendNode("description", "Core package for Neo4j Procedures")
                 root.appendNode("url", "http://github.com/neo4j/apoc")
 
                 def scmNode = root.appendNode("scm")
@@ -128,6 +128,12 @@ publishing {
                 licenseNode.appendNode("url", 'http://www.apache.org/licenses/LICENSE-2.0.txt')
                 licenseNode.appendNode("comments", 'Note that this license is for the project itself, and not for its dependencies.')
                 licenseNode.appendNode("distribution", 'repo')
+
+                def developersNode = root.appendNode("developers")
+                def developerNode = developersNode.appendNode("developer")
+                developerNode.appendNode("id", 'michaelhunger')
+                developerNode.appendNode("name", 'Michael Hunger')
+                developerNode.appendNode("email", 'michael.hunger@neo4j.com')
 
                 def dependenciesNode = root.get("dependencies")[0]
 
