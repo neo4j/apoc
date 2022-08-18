@@ -106,7 +106,7 @@ publishing {
     repositories {
         maven {
             name = 'pipeline'
-            url = "file://${project(':common').buildDir}/repo"
+            url = "file://${project(':core').buildDir}/repo"
         }
     }
     publications {

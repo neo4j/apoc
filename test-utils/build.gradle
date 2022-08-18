@@ -48,7 +48,7 @@ publishing {
     repositories {
         maven {
             name = 'pipeline'
-            url = "file://${project(':test-utils').buildDir}/repo"
+            url = "file://${project(':core').buildDir}/repo"
         }
     }
     publications {
