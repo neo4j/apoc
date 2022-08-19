@@ -672,23 +672,53 @@ public class Util {
         return SourceVersion.isIdentifier(var) && !var.contains("$") ? var : '`' + var + '`';
     }
 
-    // Escape all backticks in a string to stop Cypher Injection Attacks
-    public static String sanitizeBackTicks(String text) {
-        if (text == null) return null;
-        // Replace unicode backticks with the backtick char first
-        text = text.replaceAll("\u0060", "`");
-        Pattern findOddCountBackticks = Pattern.compile("(?<!`)`(?:`{2})*(?!`)");
-        Matcher matcher = findOddCountBackticks.matcher(text);
+    private static final String BACKTICK_OR_UC = "[`\\\\\u0060]";
 
-        int currentMatch = 0;
-        String newText = text;
-        while (matcher.find()) {
-            newText = new StringBuilder(newText).insert(matcher.start() + currentMatch, "`").toString();
-            currentMatch++;
+    private static final Pattern LABEL_AND_TYPE_QUOTATION = Pattern.compile(
+            String.format("(?<!%1$s)%1$s(?:%1$s{2})*(?!%1$s)", BACKTICK_OR_UC));
+
+    /**
+     * This is a literal copy of {@code javax.lang.model.SourceVersion#isIdentifier(CharSequence)} included here to
+     * be not dependent on the compiler module.
+     *
+     * @param name A possible Java identifier
+     * @return True, if {@code name} represents an identifier.
+     */
+    public static boolean isIdentifier(CharSequence name) {
+        String id = name.toString();
+
+        if (id.length() == 0) {
+            return false;
+        }
+        int cp = id.codePointAt(0);
+        if (!Character.isJavaIdentifierStart(cp)) {
+            return false;
+        }
+        for (int i = Character.charCount(cp); i < id.length(); i += Character.charCount(cp)) {
+            cp = id.codePointAt(i);
+            if (!Character.isJavaIdentifierPart(cp)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Escapes the string {@literal potentiallyNonIdentifier} in all cases when it's not a valid Cypher identifier.
+     *
+     * @param potentiallyNonIdentifier A value to escape
+     * @return The escaped value or the same value if no escaping is necessary.
+     */
+    public static String sanitizeBackTicks(String potentiallyNonIdentifier) {
+
+        if (potentiallyNonIdentifier == null || potentiallyNonIdentifier.trim().isEmpty() || isIdentifier(potentiallyNonIdentifier)) {
+            return potentiallyNonIdentifier;
         }
 
-        return newText;
+        Matcher matcher = LABEL_AND_TYPE_QUOTATION.matcher(potentiallyNonIdentifier);
+        return matcher.replaceAll("`$0");
     }
+
 
     public static String param(String var) {
         return var.charAt(0) == '$' ? var : '$'+quote(var);
