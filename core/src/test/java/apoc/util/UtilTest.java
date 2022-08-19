@@ -90,6 +90,19 @@ public class UtilTest {
     }
 
     @Test
+    public void testSanitizeBackTicks() {
+        assertEquals("``", Util.sanitizeBackTicks("`"));
+        assertEquals("``", Util.sanitizeBackTicks("\u0060"));
+        assertEquals("``", Util.sanitizeBackTicks("``"));
+        assertEquals("````", Util.sanitizeBackTicks("\u0060\u0060\u0060"));
+        assertEquals("Hello``", Util.sanitizeBackTicks("Hello`"));
+        assertEquals("Hi````there", Util.sanitizeBackTicks("Hi````there"));
+        assertEquals("Hi``````there", Util.sanitizeBackTicks("Hi`````there"));
+        assertEquals("``a``b``c``", Util.sanitizeBackTicks("`a`b`c`"));
+        assertEquals("``a``b``c``d``", Util.sanitizeBackTicks("\u0060a`b`c\u0060d\u0060"));
+    }
+
+    @Test
     public void testMerge() {
         try {
             final ResultTransformer<Object> resultTransformer = res -> res.next().get("count");

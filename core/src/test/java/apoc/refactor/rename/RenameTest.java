@@ -65,7 +65,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(10L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(10L, resultNodesMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
 		assertEquals(0L, resultNodesMatches("Foo", null));
 
 		testCall(db, "CALL apoc.refactor.rename.label(" +
@@ -75,7 +75,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(0L, resultNodesMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
 		assertEquals(10L, resultNodesMatches("Foo", null));
 	}
 
@@ -89,9 +89,16 @@ public class RenameTest {
 						")",
 				map("nodes", nodes.subList(0,3)),
 				(r) -> {});
+		testCall(db, "CALL apoc.refactor.rename.label(" +
+						"  'Foo', " +
+						"  'Whatever\u0060 WITH n MATCH (m) DETACH DELETE m //'," +
+						"   $nodes" +
+						")",
+				map("nodes", nodes.subList(4,6)),
+				(r) -> {});
 
-		assertEquals(3L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
-		assertEquals(7L, resultNodesMatches("Foo", null));
+		assertEquals(5L, resultNodesMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
+		assertEquals(5L, resultNodesMatches("Foo", null));
 
 		testCall(db, "CALL apoc.refactor.rename.label(" +
 						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
@@ -100,8 +107,8 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultNodesMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
-		assertEquals(3L, resultNodesMatches("Bar", null));
+		assertEquals(0L, resultNodesMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
+		assertEquals(5L, resultNodesMatches("Bar", null));
 	}
 
 	@Test
@@ -137,7 +144,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(10L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(10L, resultRelationshipsMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
 		assertEquals(0L, resultRelationshipsMatches("KNOWS", null));
 
 		testCall(db, "CALL apoc.refactor.rename.type(" +
@@ -147,25 +154,33 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
+		assertEquals(0L, resultRelationshipsMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
 		assertEquals(10L, resultRelationshipsMatches( "KNOWS", null));
 	}
 	@Test
 	public void testRenameTypeDoesntAllowCypherInjectionForSomeRelationships() throws Exception {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 
-		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
+		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 4");
 
 		testCall(db, "CALL apoc.refactor.rename.type(" +
 						"  'KNOWS', " +
 						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //'," +
 						"  $rels" +
 						")",
-				map("rels", rels),
+				map("rels", rels.subList(0,2)),
 				(r) -> {});
 
-		assertEquals(2L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
-		assertEquals(8L, resultRelationshipsMatches("KNOWS", null));
+		testCall(db, "CALL apoc.refactor.rename.type(" +
+						"  'KNOWS', " +
+						"  'Whatever\u0060 WITH n MATCH (m) DETACH DELETE m //'," +
+						"  $rels" +
+						")",
+				map("rels", rels.subList(2,4)),
+				(r) -> {});
+
+		assertEquals(4L, resultRelationshipsMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
+		assertEquals(6L, resultRelationshipsMatches("KNOWS", null));
 
 		testCall(db, "CALL apoc.refactor.rename.type(" +
 						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
@@ -174,8 +189,8 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultRelationshipsMatches("`Whatever`` WITH n MATCH (m) DETACH DELETE m //`", null));
-		assertEquals(2L, resultRelationshipsMatches( "LIKES", null));
+		assertEquals(0L, resultRelationshipsMatches("Whatever`` WITH n MATCH (m) DETACH DELETE m //", null));
+		assertEquals(4L, resultRelationshipsMatches( "LIKES", null));
 	}
 
 	@Test
@@ -209,7 +224,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(10L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
+		assertEquals(10L, resultNodesMatches(null, "Whatever`` WITH n MATCH (m) DETACH DELETE m //"));
 		assertEquals(0L, resultNodesMatches(null, "name"));
 
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
@@ -219,7 +234,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
+		assertEquals(0L, resultNodesMatches(null, "Whatever`` WITH n MATCH (m) DETACH DELETE m //"));
 		assertEquals(10L, resultNodesMatches(null, "name"));
 	}
 	@Test
@@ -232,9 +247,16 @@ public class RenameTest {
 						")",
 				map("nodes", nodes.subList(0,3)),
 				(r) -> {});
+		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
+						"  'name', " +
+						"  'Whatever\u0060 WITH n MATCH (m) DETACH DELETE m //'," +
+						"	$nodes" +
+						")",
+				map("nodes", nodes.subList(4,6)),
+				(r) -> {});
 
-		assertEquals(3L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
-		assertEquals(7L, resultNodesMatches(null, "name"));
+		assertEquals(5L, resultNodesMatches(null, "Whatever`` WITH n MATCH (m) DETACH DELETE m //"));
+		assertEquals(5L, resultNodesMatches(null, "name"));
 
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
 						"  'Whatever` WITH n MATCH (m) DETACH DELETE m //', " +
@@ -243,8 +265,8 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultNodesMatches(null, "`Whatever`` WITH n MATCH (m) DETACH DELETE m //`"));
-		assertEquals(3L, resultNodesMatches(null, "surname"));
+		assertEquals(0L, resultNodesMatches(null, "Whatever`` WITH n MATCH (m) DETACH DELETE m //"));
+		assertEquals(5L, resultNodesMatches(null, "surname"));
 	}
 
 	@Test
@@ -267,7 +289,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(10L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(10L, resultRelationshipsMatches(null, "Whatever `` = null remove r.name //"));
 		assertEquals(0L, resultRelationshipsMatches(null, "name"));
 
 		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
@@ -277,7 +299,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(0L, resultRelationshipsMatches(null, "Whatever `` = null remove r.name //"));
 		assertEquals(10L, resultRelationshipsMatches(null, "name"));
 	}
 
@@ -293,7 +315,7 @@ public class RenameTest {
 				map("rels",rels),
 				(r) -> {});
 
-		assertEquals(2L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(2L, resultRelationshipsMatches(null, "Whatever `` = null remove r.name //"));
 		assertEquals(8L, resultRelationshipsMatches(null, "name"));
 
 		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
@@ -303,7 +325,7 @@ public class RenameTest {
 				map(),
 				(r) -> {});
 
-		assertEquals(0L, resultRelationshipsMatches(null, "`Whatever `` = null remove r.name //`"));
+		assertEquals(0L, resultRelationshipsMatches(null, "Whatever `` = null remove r.name //"));
 		assertEquals(2L, resultRelationshipsMatches(null, "surname"));
 	}
 
@@ -343,12 +365,12 @@ public class RenameTest {
 	}
 
 	private long resultRelationshipsMatches(String type, String prop){
-		String query = type != null ? "MATCH ()-[r:"+type+"]->() RETURN count(r) as countResult" : "match ()-[r]->() where r."+prop+" IS NOT NULL return count(r) as countResult";
+		String query = type != null ? "MATCH ()-[r:`"+type+"`]->() RETURN count(r) as countResult" : "match ()-[r]->() where r.`"+prop+"` IS NOT NULL return count(r) as countResult";
 		return TestUtil.singleResultFirstColumn(db, query);
 	}
 
 	private long resultNodesMatches(String label, String prop) {
-		String query = label != null ? "MATCH (b:"+label+") RETURN count(b) as countResult" : "match (n) where n."+prop+" IS NOT NULL return count(n) as countResult";
+		String query = label != null ? "MATCH (b:`"+label+"`) RETURN count(b) as countResult" : "match (n) where n.`"+prop+"` IS NOT NULL return count(n) as countResult";
 		return TestUtil.singleResultFirstColumn(db, query);
 	}
 

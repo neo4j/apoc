@@ -674,8 +674,11 @@ public class Util {
 
     // Escape all backticks in a string to stop Cypher Injection Attacks
     public static String sanitizeBackTicks(String text) {
-        Pattern finOddCountBackticks = Pattern.compile("(?<!`)`(?:`{2})*(?!`)");
-        Matcher matcher = finOddCountBackticks.matcher(text);
+        if (text == null) return null;
+        // Replace unicode backticks with the backtick char first
+        text = text.replaceAll("\u0060", "`");
+        Pattern findOddCountBackticks = Pattern.compile("(?<!`)`(?:`{2})*(?!`)");
+        Matcher matcher = findOddCountBackticks.matcher(text);
 
         int currentMatch = 0;
         String newText = text;
