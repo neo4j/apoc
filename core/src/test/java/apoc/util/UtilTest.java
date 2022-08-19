@@ -114,4 +114,8 @@ public class UtilTest {
             db.executeTransactionally("MATCH (n:Test) DETACH DELETE n");
         }
     }
+    @Test
+    public void testIsWritableInstance() {
+        assertTrue(Util.isWriteableInstance(db));
+    }
 }
