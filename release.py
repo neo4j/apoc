@@ -7,7 +7,7 @@ import sys
 def main(token, tag_name, file_names):
     headers = {"Authorization": "bearer {token}".format(token=token)}
     data = {'tag_name': tag_name}
-    response = requests.post("https://api.github.com/repos/neo4j-contrib/neo4j-apoc-procedures/releases",
+    response = requests.post("https://api.github.com/repos/neo4j/apoc/releases",
                              data=json.dumps(data), headers=headers)
     release_json = response.json()
     print("releases: ", release_json)
@@ -15,7 +15,7 @@ def main(token, tag_name, file_names):
     
     for file_name in file_names:
         with open(file_name, "rb") as file_name_handle:
-            upload_url = "https://uploads.github.com/repos/neo4j-contrib/neo4j-apoc-procedures/releases/{release_id}/assets?name={file_name}".format(
+            upload_url = "https://uploads.github.com/repos/neo4j/apoc/releases/{release_id}/assets?name={file_name}".format(
                 release_id=release_id, file_name=file_name.split("/")[-1]
             )
             print("upload_url: ", upload_url)
