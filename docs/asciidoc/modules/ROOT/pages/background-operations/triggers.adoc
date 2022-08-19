@@ -60,8 +60,6 @@ You can use these helper functions to extract nodes or relationships by label/re
 .Helper Functions
 [cols="5m,5"]
 |===
-| apoc.trigger.nodesByLabel($assignedLabels/$assignedNodeProperties,'Label') | function to filter entries by label, to be used within a trigger statement with `$assignedLabels` and `$removedLabels`
-| apoc.trigger.propertiesByKey($assignedNodeProperties,'key') | function to filter propertyEntries by property-key, to be used within a trigger statement with $assignedNode/RelationshipProperties and $removedNode/RelationshipProperties. Returns [{old,[new],key,node,relationship}]
 | apoc.trigger.toNode(node, $removedLabels, $removedNodeProperties) | function to rebuild a node as a virtual, to be used in triggers with a not 'afterAsync' phase
 | apoc.trigger.toRelationship(rel, $removedRelationshipProperties) | function to rebuild a relationship as a virtual, to be used in triggers with a not 'afterAsync' phase
 |===
@@ -398,11 +396,3 @@ impact the original one.
 Heavy operations should be processed in this phase without blocking the original transaction.
 Please note that 'after' and 'before' phases can sometimes block transactions, so generally, `afterAsync` phase is preferred
 |===
-
-=== Export metadata
-
-[NOTE]
-====
-To import triggers in another database (for example after a `./neo4j-admin backup` and `/neo4j-admin restore`),
-please see the xref::overview/apoc.systemdb/apoc.systemdb.export.metadata.adoc[apoc.systemdb.export.metadata] procedure.
-====

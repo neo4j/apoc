@@ -2,7 +2,7 @@
 
 // tag::docker[]
 
-APOC Extended can be used with the https://hub.docker.com/_/neo4j/[Neo4j Docker image] via the `NEO4JLABS_PLUGINS` environment variable.
+APOC can be used with the https://hub.docker.com/_/neo4j/[Neo4j Docker image] via the `NEO4JLABS_PLUGINS` environment variable.
 If we use this environment variable, the APOC plugin will be downloaded and configured at runtime.
 
 [NOTE]
@@ -10,7 +10,7 @@ If we use this environment variable, the APOC plugin will be downloaded and conf
 This feature is intended to facilitate using APOC in development environments, but it is not recommended for use in production environments.
 ====
 
-.The following runs Neo4j 4.0 in a Docker container with the latest version of the APOC Library
+.The following runs Neo4j 5.0 in a Docker container with the latest version of the APOC Library
 [source,bash]
 ----
 docker run \
@@ -21,7 +21,7 @@ docker run \
     -e NEO4J_apoc_import_file_enabled=true \
     -e NEO4J_apoc_import_file_use__neo4j__config=true \
     -e NEO4JLABS_PLUGINS=\[\"apoc\"\] \
-    neo4j:4.0
+    neo4j:5.0
 ----
 
 We should see the following two lines in the output after running this command:

@@ -62,7 +62,6 @@ The `replace`, `split` and `regexGroups` functions work with regular expressions
 [cols="5m,5"]
 |===
 | apoc.data.url('url') as {protocol,user,host,port,path,query,file,anchor} | turn URL into map structure
-| apoc.data.email('email_address') as {personal,user,domain} | extract the personal name, user and domain as a map (needs javax.mail jar)
 |===
 
 [[text-functions-text-similarity]]

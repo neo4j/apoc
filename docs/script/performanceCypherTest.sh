@@ -105,21 +105,6 @@ time ./cypher-shell -a $url -u $user -p $password "$exportGraphBatchSize1000"
 echo "drop db"
 time ./cypher-shell -a $url -u $user -p $password "$dropDb"
 
-#run Schema file
-export importRunSchemaFile="call apoc.cypher.runSchemaFile('$neo4j_home/import/exportAllDifferentFile.schema.cypher')"
-echo $importRunSchemaFile
-time ./cypher-shell -a $url -u $user -p $password "$importRunSchemaFile"
-
-#run file node
-export importRunFileNode="call apoc.cypher.runFile('$neo4j_home/import/exportAllDifferentFile.nodes.cypher')"
-echo $importRunFileNode
-time ./cypher-shell -a $url -u $user -p $password "$importRunFileNode"
-
-#run file rel
-export importRunFileRel="call apoc.cypher.runFile('$neo4j_home/import/exportAllDifferentFile.relationships.cypher')"
-echo $importRunFileRel
-time ./cypher-shell -a $url -u $user -p $password "$importRunFileRel"
-
 #Drop DB
 echo "drop db"
 time ./cypher-shell -a $url -u $user -p $password "$dropDb"

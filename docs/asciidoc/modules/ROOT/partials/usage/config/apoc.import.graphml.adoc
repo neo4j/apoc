@@ -11,7 +11,6 @@ The procedure support the following config parameters:
 | compression | `Enum[NONE, BYTES, GZIP, BZIP2, DEFLATE, BLOCK_LZ4, FRAMED_SNAPPY]` | `null` | Allow taking binary data, either not compressed (value: `NONE`) or compressed (other values)
 | source | Map<String,String> | Empty map | See below
 | target | Map<String,String> | Empty map | See below
-See the xref::overview/apoc.load/apoc.load.csv.adoc#_binary_file[Binary file example]
 |===
 
 === source / target config

@@ -74,16 +74,6 @@ apoc.create.vNode(['Label'], {key:value,...}) returns a virtual node
 apoc.create.vNodes(['Label'], [{key:value,...}]) returns virtual nodes
 |label:procedure[]
 |label:apoc-core[]
-|xref::overview/apoc.create/apoc.create.adoc[apoc.create.vPattern icon:book[]]
-
-apoc.create.vPattern({_labels:['LabelA'],key:value},'KNOWS',{key:value,...}, {_labels:['LabelB'],key:value}) returns a virtual pattern
-|label:procedure[]
-|label:apoc-core[]
-|xref::overview/apoc.create/apoc.create.adoc[apoc.create.vPatternFull icon:book[]]
-
-apoc.create.vPatternFull(['LabelA'],{key:value},'KNOWS',{key:value,...},['LabelB'],{key:value}) returns a virtual pattern
-|label:procedure[]
-|label:apoc-core[]
 |xref::overview/apoc.create/apoc.create.adoc[apoc.create.vRelationship icon:book[]]
 
 apoc.create.vRelationship(nodeFrom,'KNOWS',{key:value,...}, nodeTo) returns a virtual relationship

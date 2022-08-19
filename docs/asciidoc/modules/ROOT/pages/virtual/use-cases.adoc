@@ -3,7 +3,7 @@
 
 Virtual nodes and relationships are used for quite a number of things.
 
-You can create visual **representation of data that are not in the graph**, e.g. from other databases, that's also what the `apoc.bolt.load` procedure supports.
+You can create visual **representation of data that are not in the graph**, e.g. from other databases.
 
 Also the virtual nodes and relationships are used by `db.schema` and `apoc.meta.graph`
 

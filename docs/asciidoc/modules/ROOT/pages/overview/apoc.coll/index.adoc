@@ -33,11 +33,6 @@ apoc.coll.zipToRows(list1,list2) - creates pairs like zip but emits one row per 
 apoc.coll.avg([0.5,1,2.3])
 |label:function[]
 |label:apoc-core[]
-|xref::overview/apoc.coll/apoc.coll.avgDuration.adoc[apoc.coll.avgDuration icon:book[]]
-
-apoc.coll.avgDuration([duration('P2DT3H'), duration('PT1H45S'), ...]) -  returns the average of a list of duration values
-|label:function[]
-|label:apoc-extended[]
 |xref::overview/apoc.coll/apoc.coll.combinations.adoc[apoc.coll.combinations icon:book[]]
 
 apoc.coll.combinations(coll, minSelect, maxSelect:minSelect) - Returns collection of all combinations of list elements of selection size between minSelect and maxSelect (default:minSelect), inclusive
@@ -186,11 +181,6 @@ apoc.coll.remove(coll, index, [length=1]) \| remove range of values from index t
 |xref::overview/apoc.coll/apoc.coll.removeAll.adoc[apoc.coll.removeAll icon:book[]]
 
 apoc.coll.removeAll(first, second) - returns first list with all elements of second list removed
-|label:function[]
-|label:apoc-core[]
-|xref::overview/apoc.coll/apoc.coll.reverse.adoc[apoc.coll.reverse icon:book[]]
-
-apoc.coll.reverse(coll) - returns reversed list
 |label:function[]
 |label:apoc-core[]
 |xref::overview/apoc.coll/apoc.coll.runningTotal.adoc[apoc.coll.runningTotal icon:book[]]

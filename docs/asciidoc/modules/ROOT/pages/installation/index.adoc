@@ -4,19 +4,12 @@
 
 
 
-_APOC Core_ is packaged with Neo4j and can be found in the `$NEO4J_HOME/labs` directory.
-_APOC Extended_ can be downloaded using one of the methods described in the sections below.
+APOC is packaged with Neo4j and can be found in the `$NEO4J_HOME/labs` directory.
 
-[WARNING]
-====
-_APOC Extended_ contains all the procedures and functions included in _APOC Core_.
-You *must not* install both libraries.
-====
+[[apoc]]
+== APOC
 
-[[apoc-core]]
-== APOC Core
-
-_APOC Core_ can be installed by moving the APOC jar file from the `$NEO4J_HOME/labs` directory to the `$NEO4J_HOME/plugins` directory and restarting Neo4j.
+APOC can be installed by moving the APOC jar file from the `$NEO4J_HOME/labs` directory to the `$NEO4J_HOME/plugins` directory and restarting Neo4j.
 
 [[neo4j-desktop]]
 == Neo4j Desktop
@@ -31,8 +24,6 @@ include::partial$neo4j-server.adoc[tags=install,leveloffset=2]
 After you move the jar file to the plugins folder you have to restart neo4j with `neo4j restart`
 
 // tag::version-matrix[]
-Since APOC relies on Neo4j's internal APIs, you need to use the right APOC version for your Neo4j installation.
-
 APOC uses a consistent versioning scheme: `<neo4j-version>.<apoc>` version.
 The trailing `<apoc>` part of the version number will be incremented with every apoc release.
 
@@ -64,7 +55,7 @@ The version compatibility matrix explains the mapping between Neo4j and APOC ver
 If by mistake a jar not compatible with the neo4j version is inserted, a `log.warn` like this will appear in `neo4j.log`:
 ```
 The apoc version (<APOC_VERSION>) and the Neo4j DBMS versions [NEO4J_VERSION] are incompatible. 
-See the compatibility matrix in https://neo4j.com/labs/apoc/4.4/installation/ to see the correct version
+See the compatibility matrix in https://neo4j.com/labs/apoc/5.0/installation/ to see the correct version
 ```
 
 [[docker]]

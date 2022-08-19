@@ -10,9 +10,6 @@ For more information on these procedures, see:
 
 * xref::import/web-apis.adoc[]
 * xref::import/load-json.adoc[]
-* xref::import/load-csv.adoc[]
 * xref::import/import-csv.adoc[]
-* xref::import/xls.adoc[]
 * xref::import/xml.adoc[]
-* xref::import/html.adoc[]
 * xref::import/graphml.adoc[]
