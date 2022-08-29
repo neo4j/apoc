@@ -1294,7 +1294,7 @@ call apoc.index.nodes('Person','name:name100*') YIELD node, weight return * limi
 <div class="sect3">
 <h4 id="_export_to_cypher_script"><a class="link" href="#_export_to_cypher_script">Export to Cypher Script</a></h4>
 <div class="paragraph">
-<p>Data is exported as cypher statements (for neo4j-shell, and partly apoc.cypher.runFile to the given file.</p>
+<p>Data is exported as cypher statements</p>
 </div>
 <div class="paragraph">
 <p><code>YIELD file, source, format, nodes, relationships, properties, time</code></p>
@@ -2045,25 +2045,6 @@ CALL apoc.trigger.add('count-removed-rels','MATCH (c:Counter) SET c.count = c.co
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>apoc.util.validate(predicate, message,[params])</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">raises exception if prediate evaluates to true</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_config"><a class="link" href="#_config">Config</a></h3>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 16%;">
-<col style="width: 83%;">
-</colgroup>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>apoc.config.list</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lists the Neo4j configuration as key,value table</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>apoc.config.map</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Lists the Neo4j configuration as map</p></td>
 </tr>
 </tbody>
 </table>
@@ -4627,31 +4608,6 @@ FOREACH (a IN q.answers |
 </div>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_load_json_from_twitter_with_additional_parameters"><a class="link" href="#_load_json_from_twitter_with_additional_parameters">Load JSON from Twitter (with additional parameters)</a></h4>
-<div class="paragraph">
-<p>With <code>apoc.load.jsonParams</code> you can send additional headers or payload with your JSON GET request, e.g. for the Twitter API:</p>
-</div>
-<div class="paragraph">
-<p>Configure Bearer and Twitter Search Url token in <code>neo4j.conf</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>apoc.static.twitter.bearer=XXXX
-apoc.static.twitter.url=https://api.twitter.com/1.1/search/tweets.json?count=100&amp;result_type=recent&amp;lang=en&amp;q=</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">Twitter Search via Cypher</div>
-<div class="content">
-<pre class="highlight"><code class="language-cypher" data-lang="cypher">CALL apoc.static.getAll("twitter") yield value AS twitter
-CALL apoc.load.jsonParams(twitter.url + "oscon+OR+neo4j+OR+%23oscon+OR+%40neo4j",{Authorization:"Bearer "+twitter.bearer},null) yield value
-UNWIND value.statuses as status
-WITH status, status.user as u, status.entities as e
-RETURN status.id, status.text, u.screen_name, [t IN e.hashtags | t.text] as tags, e.symbols, [m IN e.user_mentions | m.screen_name] as mentions, [u IN e.urls | u.expanded_url] as urls</code></pre>
-</div>
-</div>
-</div>
 <div class="sect2">
 <h3 id="_example_2"><a class="link" href="#_example_2">Example</a></h3>
 <div class="listingblock">
@@ -5002,10 +4958,6 @@ RETURN node</code></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL apoc.cypher.run(fragment, params) yield value</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">executes reading fragment with the given parameters</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL apoc.cypher.runFile(file or url) yield row, result</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">runs each statement in the file, all semicolon separated - currently no schema operations</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL apoc.cypher.runMany('cypher;\nstatements;',{params})</code></p></td>

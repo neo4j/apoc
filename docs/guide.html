@@ -333,10 +333,6 @@ Please note that there are (case-sensitive) <a href="http://neo4j.com/docs/devel
 <td class="tableblock halign-left valign-top"><p class="tableblock">add node to an index for each label it has</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>apoc.index.addNodeByLabel(node,'Label',['prop1',&#8230;&#8203;])</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">add node to an index for the given label</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>apoc.index.addRelationship(rel,['prop1',&#8230;&#8203;])</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">add relationship to an index for its type</p></td>
 </tr>
@@ -586,7 +582,7 @@ call apoc.index.nodes('Person','name:name100*') YIELD node, weight return * limi
     <br/>
     <div>
       <div class="paragraph">
-<p>Data is exported as cypher statements (for neo4j-shell, and partly apoc.cypher.runFile to the given file.</p>
+<p>Data is exported as cypher statements</p>
 </div>
 
 
@@ -3482,40 +3478,6 @@ RETURN instruction<!--/code--></pre>
 </div>
 
 
-
-<slide class="row-fluid">
-  <div class="col-sm-12">
-    <h3>Load Json with additional parameters</h3>
-    <br/>
-    <div>
-      <div class="paragraph">
-<p>With <code>apoc.load.jsonParams</code> you can send additional headers or payload with your JSON GET request, e.g. for the Twitter API:</p>
-</div>
-<div class="paragraph">
-<p>Configure Bearer and Twitter Search Url token in <code>neo4j.conf</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>apoc.static.twitter.bearer=XXXX
-apoc.static.twitter.url=https://api.twitter.com/1.1/search/tweets.json?count=100&amp;result_type=recent&amp;lang=en&amp;q=</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">Twitter Search via Cypher</div>
-<div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->CALL apoc.static.getAll("twitter") yield value AS twitter
-CALL apoc.load.jsonParams(twitter.url + "oscon+OR+neo4j+OR+%23oscon+OR+%40neo4j",{Authorization:"Bearer "+twitter.bearer},null) yield value
-UNWIND value.statuses as status
-WITH status, status.user as u, status.entities as e
-RETURN status.id, status.text, u.screen_name, [t IN e.hashtags | t.text] as tags, e.symbols, [m IN e.user_mentions | m.screen_name] as mentions, [u IN e.urls | u.expanded_url] as urls<!--/code--></pre>
-</div>
-</div>
-	</div>
-  </div>
-</slide>
-
-
-
 <slide class="row-fluid">
   <div class="col-sm-12">
     <h3>Load JSON StackOverflow Example</h3>
@@ -3996,10 +3958,6 @@ RETURN node<!--/code--></pre>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL apoc.cypher.run(fragment, params) yield value</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">executes reading fragment with the given parameters</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL apoc.cypher.runFile(file or url) yield row, result</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">runs each statement in the file, all semicolon separated - currently no schema operations</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>CALL apoc.cypher.runMany('cypher;\nstatements;',{params})</code></p></td>

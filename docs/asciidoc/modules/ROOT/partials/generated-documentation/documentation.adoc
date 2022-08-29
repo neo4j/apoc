@@ -1122,6 +1122,11 @@ apoc.label.exists(element, label) - returns true or false related to label exist
 [.procedures, opts=header, cols='5a,1a,1a']
 |===
 | Qualified Name | Type | Release
+|xref::overview/apoc.load/apoc.load.json.adoc[apoc.load.json icon:book[]]
+
+apoc.load.json('urlOrKeyOrBinary',path, config) YIELD value - import JSON as stream of values if the JSON was an array or a single value if it was a map
+|label:procedure[]
+|label:apoc-core[]
 |xref::overview/apoc.load/apoc.load.jsonArray.adoc[apoc.load.jsonArray icon:book[]]
 
 apoc.load.jsonArray('url') YIELD value - load array from JSON URL (e.g. web-api) to import JSON as stream of values

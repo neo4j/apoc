@@ -1,9 +1,5 @@
-The examples in this section are based on the following sample graph:
-
-[source,cypher]
-----
-CALL apoc.generate.ba(10000, 50, "Node", "CONNECTED_TO");
-----
+The examples in this section are based on a sample graph with 10000 nodes, each with 50 relationships
+with the label "Node" and Type "CONNECTED_TO".
 
 The query below calculates the cross product of shortest paths for every pair of nodes.
 

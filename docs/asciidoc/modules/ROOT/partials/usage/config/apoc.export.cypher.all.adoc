@@ -9,7 +9,7 @@ The procedure support the following config parameters:
 | format | String | cypher-shell a| Export format. The following values are supported:
 
 * `cypher-shell` - for import with Cypher Shell
-* `neo4j-shell` - for import with Neo4j Shell and partly the `apoc.cypher.runFile` procedure
+* `neo4j-shell` - for import with Neo4j Shell
 * `plain` - exports plain Cypher without `begin`, `commit`, or `await` commands. For import with Neo4j Browser
 
 | cypherFormat | String | create a| Cypher update operation type. The following values are supported:
@@ -18,7 +18,6 @@ The procedure support the following config parameters:
 * `updateAll` - uses `MERGE` instead of `CREATE`
 * `addStructure` - uses `MATCH` for nodes and `MERGE` for relationships
 * `updateStructure` - uses `MERGE` and `MATCH` for nodes and relationships
-| separateFiles | boolean | false | Export to separate files? This is useful for later use with the `apoc.cypher.runFiles` and `apoc.cypher.runSchemaFiles` procedures.
 | useOptimizations | Map a| `{type: "UNWIND_BATCH", unwindBatchSize: 20}` a| Optimizations to use for Cypher statement generation. `type` supports the following values:
 
 * `NONE` - exports the file with `CREATE` statement

@@ -223,39 +223,6 @@ user    17m26.557s
 sys     0m13.465s
 ----
 
-== Import Schema file
-
-[source,bash,subs=attributes]
-----
-time ./cypher-shell -u yourUsername -p yourPassword
-"call apoc.cypher.runSchemaFile('yourPath/exportPlain.schema.cypher')"
-----
-
-=== Result
-
-----
-real    0m0.683s
-user    0m0.896s
-sys     0m0.092s
-----
-
-== Import from file
-
-=== runFile
-
-The `runFile` procedure takes much time to import from files like the ones we've generated before.
-These file has more than 19.000.000 rows.
-It was created an issue about this https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/500[#500].
-
-[source,bash,subs=attributes]
-----
-time ./cypher-shell -u yourUsername -p yourPassword
-"call apoc.cypher.runFile('yourPath/import/exportPlain.cypher')"
-----
-
-With this command we import not more than 10/15 nodes per second.
-
-
 === Import cypher-shell
 
 [source,bash,subs=attributes]

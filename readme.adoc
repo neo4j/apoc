@@ -57,7 +57,7 @@ image::{img}/desktop-apoc.jpg[width=800]
 == Feedback
 
 // tag::feedback[]
-Please provide feedback and report bugs as https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues[GitHub issues] or join the https://community.neo4j.com/t5/forums/filteredbylabelpage/board-id/graph_platform/label-name/procedures%20&%20apoc[Neo4j Community Forum and ask in the APOC & Procedures category^].
+Please provide feedback and report bugs as https://github.com/neo4j/apoc/issues[GitHub issues] or join the https://community.neo4j.com/t5/forums/filteredbylabelpage/board-id/graph_platform/label-name/procedures%20&%20apoc[Neo4j Community Forum and ask in the APOC & Procedures category^].
 // end::feedback[]
 
 // tag::calling-procedures[]
