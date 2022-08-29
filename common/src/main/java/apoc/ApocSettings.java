@@ -45,10 +45,6 @@ public class ApocSettings implements SettingsDeclaration {
 
     public static final Setting<Long> apoc_jobs_scheduled_num_threads = newBuilder(APOC_CONFIG_JOBS_SCHEDULED_NUM_THREADS, LONG, null).build();
 
-//    public static final Setting<String> apoc_json_zip_url = newBuilder(APOC_JSON_ZIP_URL, STRING, null ).build();
-
-//    public static final Setting<String> apoc_json_simpleJson_url = newBuilder(APOC_JSON_SIMPLE_JSON_URL, STRING, null ).build();
-
     public static <T> Setting<T> dynamic(String name, SettingValueParser<T> parser) {
         return newBuilder(name, parser, null).build();
     }
