@@ -3,35 +3,35 @@ package apoc.export.util;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import org.neo4j.graphdb.spatial.Point;
 
 import java.io.IOException;
-import java.util.List;
+
+import org.neo4j.graphdb.spatial.Point;
 
 public class PointSerializer extends JsonSerializer<Point> {
     @Override
     public void serialize(Point value, JsonGenerator jsonGenerator, SerializerProvider serializers) throws IOException {
 
         String crsType = value.getCRS().getType();
-        List<Double> coordinate = value.getCoordinate().getCoordinate();
+        double[] coordinates = value.getCoordinate().getCoordinate();
 
         if (crsType.startsWith("cartesian")) {
-            if (coordinate.size() == 3) {
-                jsonGenerator.writeObject(new PointCartesian(crsType, coordinate.get(0), coordinate.get(1), coordinate.get(2)));
+            if (coordinates.length == 3) {
+                jsonGenerator.writeObject( new PointCartesian( crsType, coordinates[0], coordinates[1], coordinates[2] ) );
             } else {
-                jsonGenerator.writeObject(new PointCartesian(crsType, coordinate.get(0), coordinate.get(1)));
+                jsonGenerator.writeObject( new PointCartesian( crsType, coordinates[0], coordinates[1] ) );
             }
         } else {
-            if (coordinate.size() == 3) {
-                jsonGenerator.writeObject(new PointWgs(crsType, coordinate.get(0), coordinate.get(1), coordinate.get(2)));
+            if (coordinates.length == 3) {
+                jsonGenerator.writeObject( new PointWgs( crsType, coordinates[0], coordinates[1], coordinates[2] ) );
             } else {
-                jsonGenerator.writeObject(new PointWgs(crsType, coordinate.get(0), coordinate.get(1)));
+                jsonGenerator.writeObject( new PointWgs( crsType, coordinates[0], coordinates[1] ) );
             }
         }
     }
 
 
-    class PointCartesian {
+    static class PointCartesian {
         private String crs;
         private Double x;
         private Double y;
@@ -84,7 +84,7 @@ public class PointSerializer extends JsonSerializer<Point> {
     }
 
 
-    class PointWgs {
+    static class PointWgs {
         private String crs;
         private Double latitude;
         private Double longitude;
