@@ -41,6 +41,17 @@ Replaced by Neo4j Function randomUUID():
 UNWIND range(0,$count) AS row RETURN row, randomUUID() AS uuid
 ----
 
+a|
+label:procedure[]
+label:deprecated[]
+[source, cypher, role="noheader"]
+----
+apoc.warmup.run(loadProperties=false,loadDynamicProperties=false,loadIndexes=false)
+----
+a|
+This procedure duplicated functionality of page cache warm up which is a part of the DBMS.
+
+
 |===
 
 === Removed procedures and functions
@@ -330,16 +341,6 @@ Replaced by the Neo4j round() function:
 ----
 RETURN round(3.141592, 3)
 ----
-
-a|
-label:procedure[]
-label:removed[]
-[source, cypher, role="noheader"]
-----
-apoc.warmup.run(loadProperties=false,loadDynamicProperties=false,loadIndexes=false)
-----
-a|
-This procedure duplicated functionality of page cache warm up which is a part of the DBMS.
 
 a|
 label:function[]
