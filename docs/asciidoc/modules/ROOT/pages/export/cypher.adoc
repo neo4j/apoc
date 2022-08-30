@@ -47,7 +47,7 @@ The procedures support the following config parameters:
 | format | String | cypher-shell a| Export format. The following values are supported:
 
 * `cypher-shell` - for import with Cypher Shell
-* `neo4j-shell` - for import with Neo4j Shell and partly the `apoc.cypher.runFile` procedure
+* `neo4j-shell` - for import with Neo4j Shell
 * `plain` - exports plain Cypher without `begin`, `commit`, or `await` commands. For import with Neo4j Browser
 
 | cypherFormat | String | create a| Cypher update operation type. The following values are supported:
@@ -56,7 +56,6 @@ The procedures support the following config parameters:
 * `updateAll` - uses `MERGE` instead of `CREATE`
 * `addStructure` - uses `MATCH` for nodes and `MERGE` for relationships
 * `updateStructure` - uses `MERGE` and `MATCH` for nodes and relationships
-| separateFiles | boolean | false | Export to separate files? This is useful for later use with the `apoc.cypher.runFiles` and `apoc.cypher.runSchemaFiles` procedures.
 | useOptimizations | Map a| `{type: "UNWIND_BATCH", unwindBatchSize: 20}` a| Optimizations to use for Cypher statement generation. `type` supports the following values:
 
 * `NONE` - exports the file with `CREATE` statement
@@ -83,7 +82,7 @@ include::partial$enableS3Export.adoc[]
 
 If we don't want to export to a file, we can stream results back by providing a file name of `null`.
 
-By default all Cypher statements will be returned in a single row in the `cypherStatements` column.
+By default, all Cypher statements will be returned in a single row in the `cypherStatements` column.
 
 .The following exports the whole database as a single row
 [source,cypher]
@@ -106,7 +105,7 @@ CALL apoc.export.cypher.all(null, {
 == Examples
 
 This section includes examples showing how to use the export to Cypher procedures.
-These examples are based on a movies dataset, which can be imported by running the following Cypher query:
+These examples are based on a movies' dataset, which can be imported by running the following Cypher query:
 
 include::partial$createExportGraph.adoc[]
 
@@ -769,131 +768,3 @@ DROP CONSTRAINT ON (node:&#96;UNIQUE IMPORT LABEL&#96;) ASSERT (node.&#96;UNIQUE
 :commit
 "
 |===
-
-
-[[export-cypher-examples-roundtrip]]
-=== Round trip
-
-This example shows how to export data from one Neo4j instance (the source database) and import it into another one (the destination database).
-
-
-.The following exports 100 nodes and relationships from the source database in `plain` format into multiple files
-[source,cypher]
-----
-CALL apoc.export.cypher.query(
-    "match (n)-[r]->(n2) return * limit 100",
-    "/tmp/mysubset.cypher",
-    {format:'plain',separateFiles:true}
-)
-YIELD file, batches, source, format, nodes, relationships, time, rows, batchSize
-RETURN file, batches, source, format, nodes, relationships, time, rows, batchSize;
-----
-
-.Results
-[opts="header"]
-|===
-| file                   | batches | source                           | format   | nodes | relationships | time | rows | batchSize
-|  "/tmp/mysubset.cypher" | 1       | "statement: nodes(16), rels(14)" | "cypher" | 16    | 14            | 9    | 30   | 20000
-|===
-
-
-This should result in 4 files in your directory.
-
-[source,shell]
-----
-ls -1 /tmp/mysubset.*
-/tmp/mysubset.cleanup.cypher
-/tmp/mysubset.nodes.cypher
-/tmp/mysubset.relationships.cypher
-/tmp/mysubset.schema.cypher
-----
-
-Now let's copy those files so they're accessible from our destination database.
-We'll need to first add the following property to `apoc.conf`:
-
-.apoc.conf
-[source,properties]
-----
-apoc.import.file.enabled=true
-----
-
-And now we're going to use procedures from xref::cypher-execution/running-cypher.adoc[] to import the data.
-
-.The following imports the schema
-[source,cypher]
-----
-CALL apoc.cypher.runSchemaFile('/tmp/mysubset.schema.cypher');
-----
-
-.Results
-[opts="header",cols="1m,8"]
-|===
-| row | result
-|  -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 0, rows: 0, propertiesSet: 0, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 0, r
-   elationshipsCreated: 0, time: 0}
-|===
-
-.The following imports the nodes and relationships
-[source,cypher]
-----
-CALL apoc.cypher.runFiles(['/tmp/mysubset.nodes.cypher','/tmp/mysubset.relationships.cypher']);
-----
-
-.Results
-[opts="header",cols="1m,8"]
-|===
-| row | result
-| -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 2, rows: 0, propertiesSet: 8, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 4, r
-elationshipsCreated: 0, time: 0}
-| -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 14, rows: 0, propertiesSet: 42, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 28
-, relationshipsCreated: 0, time: 0}
-| -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 0, rows: 0, propertiesSet: 8, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 0, r
-elationshipsCreated: 8, time: 0}
-| -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 0, rows: 0, propertiesSet: 0, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 0, r
-elationshipsCreated: 2, time: 0}
-| -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 0, rows: 0, propertiesSet: 0, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 0, r
-elationshipsCreated: 4, time: 0}
-|===
-
-.The following removes temporary node labels and properties
-[source,cypher]
-----
-CALL apoc.cypher.runFile('/tmp/mysubset.cleanup.cypher');
-----
-
-.Results
-[opts="header",cols="1m,8"]
-|===
-| row | result
-|  -1  | {constraintsRemoved: 0, indexesRemoved: 0, nodesCreated: 0, rows: 0, propertiesSet: 16, labelsRemoved: 16, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 0,
-    relationshipsCreated: 0, time: 0}
-|===
-
-.The following drops the import specific constraint
-[source,cypher]
-----
-CALL apoc.cypher.runSchemaFile('/tmp/mysubset.cleanup.cypher');
-----
-
-.Results
-[opts="header",cols="1m,8"]
-|===
-| row | result
-|  -1  | {constraintsRemoved: 1, indexesRemoved: 0, nodesCreated: 0, rows: 0, propertiesSet: 0, labelsRemoved: 0, relationshipsDeleted: 0, constraintsAdded: 0, nodesDeleted: 0, indexesAdded: 0, labelsAdded: 0, r
-   elationshipsCreated: 0, time: 0}
-|===
-
-
-The `apoc.cypher.run*` procedures have some optional config:
-
-* `{statistics:true/false}` to output a row of update-stats per statement, default is true
-* `{timeout:1 or 10}` for how long the stream waits for new data, default is 10
-
-Make sure to set the config options in your `neo4j.conf`
-
-
-
-[NOTE]
-====
-You can also compress the files to export. xref::overview/apoc.export/compression.adoc[See here for more information]
-====

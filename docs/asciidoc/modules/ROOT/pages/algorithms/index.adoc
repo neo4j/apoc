@@ -7,4 +7,3 @@
 include::partial$deprecated.adoc[]
 
 * xref::algorithms/path-finding-procedures.adoc[]
-* xref::algorithms/similarity.adoc[]

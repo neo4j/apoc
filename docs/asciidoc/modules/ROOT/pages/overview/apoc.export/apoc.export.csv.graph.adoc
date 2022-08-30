@@ -46,7 +46,5 @@ apoc.export.csv.graph(graph :: MAP?, file :: STRING?, config :: MAP?) :: (file :
 
 [[usage-apoc.export.csv.graph]]
 == Usage Examples
-include::partial$usage/apoc.export.csv.graph.adoc[]
-
-xref::export/csv.adoc[More documentation of apoc.export.csv.graph,role=more information]
+xref::export/csv.adoc[See here for more documentation of apoc.export.csv.graph.,role=more information]
 

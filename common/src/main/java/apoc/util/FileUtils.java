@@ -278,7 +278,7 @@ public class FileUtils {
                     "httpclient-x.y.z.jar\n" +
                     "httpcore-x.y.z.jar\n" +
                     "joda-time-x.y.z.jar\n" +
-                    "\nSee the documentation: https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_loading_data_from_web_apis_json_xml_csv");
+                    "\nSee the documentation: https://neo4j.github.io/apoc/#_loading_data_from_web_apis_json_xml_csv");
         }
         return S3URLConnection.openS3InputStream(new URL(urlAddress));
     }

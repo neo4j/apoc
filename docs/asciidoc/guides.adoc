@@ -27,6 +27,6 @@ include::overview.adoc[tags=procedurecount]
 
 == Further Resources
 
-* https://neo4j-contrib.github.io/neo4j-apoc-procedures[APOC Documentation]
-* https://github.com/neo4j-contrib/neo4j-apoc-procedures[APOC GitHub Repository]
+* https://neo4j.github.io/apoc[APOC Documentation]
+* https://github.com/neo4j/apoc[APOC GitHub Repository]
 * http://neo4j.com/docs/developer-manual/current/#procedures[Neo4j Developer Manual]

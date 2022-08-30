@@ -16,12 +16,6 @@ If you want to remove these constraints please set `apoc.import.file.use_neo4j_c
 |===
 | CALL apoc.load.json('http://example.com/map.json', [path], [config]) YIELD value as person CREATE (p:Person) SET p = person | load from JSON URL (e.g. web-api) to import JSON as stream of values if the JSON was an array or a single value if it was a map
 | CALL apoc.load.xml('http://example.com/test.xml', ['xPath'], [config]) YIELD value as doc CREATE (p:Person) SET p.name = doc.name | load from XML URL (e.g. web-api) to import XML as single nested map with attributes and `+_type+`, `+_text+` and `+_children+` fields.
-| CALL apoc.load.csv('url',{sep:";"}) YIELD lineNo, list, strings, map, stringMap | load CSV fom URL as stream of values +
-config contains any of: `{skip:1,limit:5,header:false,sep:'TAB',ignore:['aColumn'],arraySep:';',results:['map','list','strings','stringMap'], +
-nullValues:[''],mapping:{years:{type:'int',arraySep:'-',array:false,name:'age',ignore:false,nullValues:['n.A.']}}`
-| CALL apoc.load.xls('url','Sheet'/'Sheet!A2:B5',\{config}) YIELD lineNo, list, map | load XLS fom URL as stream of values +
-config contains any of: `{skip:1,limit:5,header:false,ignore:['aColumn'],arraySep:';'+
-nullValues:[''],mapping:{years:{type:'int',arraySep:'-',array:false,name:'age',ignore:false,nullValues:['n.A.']}}`
 |===
 
 == Load Single File From Compressed File (zip/tar/tar.gz/tgz)
@@ -29,14 +23,9 @@ nullValues:[''],mapping:{years:{type:'int',arraySep:'-',array:false,name:'age',i
 When loading data from compressed files, we need to put the `!` character before the file name or path in the compressed file.
 For example:
 
-.Loading a compressed CSV file
-----
-apoc.load.csv("pathToCompressedFile/file.zip!pathToCsvFileInZip/fileName.csv")
-----
-
 .Loading a compressed JSON file
 ----
-apoc.load.json("https://github.com/neo4j-contrib/neo4j-apoc-procedures/tree/3.4/src/test/resources/testload.tgz?raw=true!person.json");
+apoc.load.json("https://github.com/neo4j/apoc/tree/3.4/src/test/resources/testload.tgz?raw=true!person.json");
 ----
 
 include::partial$s3-protocol.adoc[]
@@ -44,9 +33,9 @@ include::partial$s3-protocol.adoc[]
 == Using hdfs protocol
 
 To use the hdfs protocol we need to download and copy the additional jars not included in the APOC Library.
-We can download it from https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/{apoc-release}/apoc-redis-dependencies-{apoc-release}.jar[this link] or locally downloading the apoc repository:
+We can download it from https://github.com/neo4j/apoc/releases/download/{apoc-release}/apoc-redis-dependencies-{apoc-release}.jar[this link] or locally downloading the apoc repository:
 ----
-git clone http://github.com/neo4j-contrib/neo4j-apoc-procedures
+git clone https://github.com/neo4j/apoc
 cd neo4j-apoc-procedures/extra-dependencies
 ./gradlew shadow
 ----

@@ -339,44 +339,6 @@ RETURN count(answer)
 This imports around 78 answers to our graph.
 We can then explore this graph to find out which users submitted the most answers, have the highest ratings, and more.
 
-[[load-json-examples-twitter]]
-=== Import from Twitter API (with additional parameters)
-
-With `apoc.load.jsonParams` we can send additional headers or payload with our JSON GET request, e.g. for the Twitter API:
-
-Let's first configure the Bearer and Twitter Search URL token in `apoc.conf`:
-
-.apoc.conf
-----
-apoc.static.twitter.bearer=XXXX
-apoc.static.twitter.url=https://api.twitter.com/1.1/search/tweets.json?count=100&result_type=recent&lang=en&q=
-----
-
-These values can then be retrieved using the functions described in
-
-static-values>>.
-
-.The following queries the Twitter API and returns the results
-[source,cypher]
-----
-WITH apoc.static.getAll("twitter") AS twitter
-CALL apoc.load.jsonParams(
-  twitter.url + "oscon+OR+neo4j+OR+%23oscon+OR+%40neo4j",
-  {Authorization:"Bearer "+twitter.bearer},
-  null // payload
-)
-YIELD value
-UNWIND value.statuses as status
-
-WITH status, status.user as u, status.entities as e
-RETURN status.id, status.text, u.screen_name,
-       [t IN e.hashtags | t.text] as tags,
-       e.symbols,
-       [m IN e.user_mentions | m.screen_name] as mentions,
-       [u IN e.urls | u.expanded_url] as urls;
-----
-
-
 [[load-json-examples-import-json]]
 === Import JSON file created by Export JSON procedures
 

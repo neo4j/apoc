@@ -10,11 +10,6 @@ apoc.index.orderedRange (index feature ootb)
 
 apoc.algo.* (use separate graph algo package instead)
 
-apoc.static.get (proc deleted, function exists)
-apoc.static.getAll (proc deleted, function exists)
-
-apoc.monitor.locks() (proc deleted, cannot get information via api)
-
 
 ## functions
 
