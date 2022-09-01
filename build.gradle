@@ -1,8 +1,6 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
-import java.time.LocalDate
-import java.time.ZonedDateTime
 import java.security.MessageDigest
 
 /**
@@ -53,12 +51,12 @@ def apocReleases(neo4jReleases) {
 
     // get tags
     def pattern = ~/neo4jVersion\s*=\s*"(.*)".*/
-    def releases = slurper.parseText(new URL("https://api.github.com/repos/neo4j-contrib/neo4j-apoc-procedures/releases?page=1&per_page=500").getText())
+    def releases = slurper.parseText(new URL("https://api.github.com/repos/neo4j/apoc/releases?page=1&per_page=500").getText())
     def neo4jToApoc = [:]
     def latestApoc, oldestApoc
     for (release in releases) {
         if (release.prerelease || release.draft) continue;
-        def buildText = new URL("https://raw.githubusercontent.com/neo4j-contrib/neo4j-apoc-procedures/" + release.tag_name + "/build.gradle").getText()
+        def buildText = new URL("https://raw.githubusercontent.com/neo4j/apoc/" + release.tag_name + "/build.gradle").getText()
         def matcher = pattern.matcher(buildText)
         for (def i = 0; i < matcher.getCount(); i++) {
             def neo4jVersion = matcher[i][1]
@@ -150,38 +148,41 @@ task versions <<  {
     versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
 };
 
+// TODO: Remove this once we can begin signing APOC jars
+// Calculates checksums of an APOC Jar. Skips downloading and hashing APOC versions it already knows about.
 task checksums <<  {
-    def jsonSlurper = new JsonSlurper()
-    def values = jsonSlurper.parse(new File("checksums.json"))
     def apocReleases = apocReleases().releases
+    def checksums = new JsonSlurper().parse(new File("checksums.json"))
 
-    for(apocRelease in apocReleases) {
+    for (apocRelease in apocReleases) {
         def apocVersion = apocRelease.tag_name
 
-        if(values.containsKey(apocVersion)) {
+        if (checksums.containsKey(apocVersion)) {
             println("skipping: " + apocVersion)
-            continue;
+            continue
         }
 
-        def assets = apocRelease.assets.find { it.browser_download_url.contains("apoc-${apocVersion}")}
+        println("hashing: " + apocVersion)
+        def assets = apocRelease.assets.find { it.browser_download_url.contains("apoc-${apocVersion}") }
 
-        def fileName = "apoc-${apocVersion}-all.jar"
+        def fileName = "apoc-${apocVersion}-core.jar"
         def url = assets.browser_download_url
         def f = new File(fileName)
 
         if (!f.exists()) {
-            new URL(url).withInputStream{ i -> f.withOutputStream{ it << i }}
+            new URL(url).withInputStream { i -> f.withOutputStream { it << i }}
         }
+
         println("sha1: " + Checksum.getSha1sum(f))
         println("sha256: " + Checksum.getSha256sum(f))
         println("md5: " + Checksum.getMD5sum(f))
 
-
-        values[apocVersion] = [sha1: Checksum.getSha1sum(f), sha256: Checksum.getSha256sum(f), md5: Checksum.getMD5sum(f)]
+        checksums[apocVersion] = [sha1: Checksum.getSha1sum(f), sha256: Checksum.getSha256sum(f), md5: Checksum.getMD5sum(f)]
     }
 
-    def checksumsFile = new File("build/checksums.json")
-    checksumsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(values)))
+    def checksumsFile = new File("checksums.json")
+    checksumsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(checksums)))
+}
 }
 
 class Checksum {
@@ -199,11 +200,11 @@ class Checksum {
 
     static getChecksum(file, type) {
         def digest = MessageDigest.getInstance(type)
-        def inputstream = file.newInputStream()
+        def inputStream = file.newInputStream()
         def buffer = new byte[16384]
         def len
 
-        while((len=inputstream.read(buffer)) > 0) {
+        while((len=inputStream.read(buffer)) > 0) {
             digest.update(buffer, 0, len)
         }
         def sha1sum = digest.digest()
@@ -222,12 +223,4 @@ class Checksum {
     private static toHex(int b) {
         return hexChr((b & 0xF0) >> 4) + hexChr(b & 0x0F)
     }
-
-    static def main(args) {
-        def sha1sum = Checksum.getSha1sum(new File(args[0]))
-        println "file($args[0]): sha1sum($sha1sum)"
-    }
-
 }
-
-
