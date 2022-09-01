@@ -3,155 +3,90 @@ import groovy.json.JsonSlurper
 
 import java.security.MessageDigest
 
-/**
- * Get all the Neo4j releases
- * The source of truth is https://repo1.maven.org/maven2/org/neo4j/neo4j-kernel/
- * We don't consider all the tags with "prerelease" attribute to true
- *
- * @return
- */
-def collectNeo4jReleases() {
-    def slurper = new JsonSlurper()
-
-    def htmlString = 'https://repo1.maven.org/maven2/org/neo4j/neo4j-kernel/'.toURL().text
+// Gets all Neo4j 5.0.0+ releases from Maven, ordered from oldest to most recent.
+static def neo4jReleases() {
+    def url = new URL("https://repo1.maven.org/maven2/org/neo4j/neo4j-kernel/")
+    def htmlString = url.getText()
             .replace("<!DOCTYPE html>", "")
             .replace("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">", "")
 
     def rootNode = new XmlParser().parseText(htmlString)
+    def releases = []
 
-    def actualReleases = []
     for (a in rootNode.body.main.pre.a) {
         def href = a.attributes()["href"]
-        if (!href.contains("xml")) {
-            actualReleases.add(href[0..-2])
-        }
+
+        if (!href.contains("xml")) releases.add(href[0..-2])
     }
 
-    // We sort considering that X.Y.Z-SOMETHING should be considered lower than X.Y.Z --> it's not a lexicographical ordering
-    return actualReleases
-            .findAll { it >= "3.0" }
-            .sort{ o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }
+    return releases
+            .findAll { it >= "5.0.0" }
+            .sort { o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }
             .reverse()
 }
 
-def orderVersion(str) {
-  return str.split("[.-]").collect{ it =~ "^\\d+\$" ? it.padLeft(4,"0") : it.replace("beta","mbeta").replace("BETA","MBETA") }.join(".") + "/"
-}
-/**
- * Coupling Neo4j with APOC
- *
- * There are two heuristic in place:
- *
- * - latest version of Neo4j with latest version of APOC
- * - if there is no available version of APOC for a given NEO4j release than take the prior available version of APOC
- */
-
-def apocReleases(neo4jReleases) {
-    def slurper = new JsonSlurper()
-
-    // get tags
-    def pattern = ~/neo4jVersion\s*=\s*"(.*)".*/
-    def releases = slurper.parseText(new URL("https://api.github.com/repos/neo4j/apoc/releases?page=1&per_page=500").getText())
-    def neo4jToApoc = [:]
-    def latestApoc, oldestApoc
-    for (release in releases) {
-        if (release.prerelease || release.draft) continue;
-        def buildText = new URL("https://raw.githubusercontent.com/neo4j/apoc/" + release.tag_name + "/build.gradle").getText()
-        def matcher = pattern.matcher(buildText)
-        for (def i = 0; i < matcher.getCount(); i++) {
-            def neo4jVersion = matcher[i][1]
-
-            println "neo " + neo4jVersion + ", apoc " + release.tag_name
-            if (!neo4jToApoc.containsKey(neo4jVersion)) {
-                neo4jToApoc[neo4jVersion] = release.tag_name
-            }
-
-            if (latestApoc == null) {
-                latestApoc = release.tag_name
-            }
-
-            oldestApoc = release.tag_name
-        }
-    }
-
-    return [
-            oldestApoc: oldestApoc,
-            latestApoc: latestApoc,
-            neo4jToApoc: neo4jToApoc,
-            releases: releases.findAll { !(it.prerelease || it.draft)}
-    ]
+// Gets all APOC releases from Github
+static def apocReleases() {
+    def url = new URL("https://api.github.com/repos/neo4j/apoc/releases?page=1&per_page=500")
+    def releases = new JsonSlurper().parseText(url.getText())
+    return releases.findAll { !(it.prerelease || it.draft) }
 }
 
-def findApocVersion(neo4jToApoc, neo4jRelease, prefix) {
-    def apocVersion = neo4jToApoc[neo4jRelease]
+// Any major version of Neo4j should use the latest corresponding major version of APOC
+static def findApocVersion(apocReleases, neo4jRelease) {
+    def majorNeoVersion = neo4jRelease.substring(0, 1)
+    def candidates = apocReleases
+            .findAll { it.substring(0, 1) == majorNeoVersion }
+            .sort { o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }[-1]
+    return candidates[-1]
+}
 
-    // If there is no APOC release for a Neo4j release we have to guess which one to associate
-    if (apocVersion == null) {
-        def matchingNeo4jVersions = neo4jToApoc.keySet().findAll{ it.substring(0,4) == prefix }.sort{ o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }
-        def matchingApocVersions = neo4jToApoc.subMap(matchingNeo4jVersions).values().sort{ o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }
-        matchingNeo4jVersions = matchingNeo4jVersions.findAll{ orderVersion(it) < orderVersion(neo4jRelease) }
-        def matchingNeo4jVersion = matchingNeo4jVersions.isEmpty() ? null : matchingNeo4jVersions[-1]
-        def firstApocVersion = matchingApocVersions.isEmpty() ? null : matchingApocVersions[0]
-        apocVersion = neo4jToApoc[matchingNeo4jVersion]==null ? firstApocVersion : neo4jToApoc[matchingNeo4jVersion]
-    }
-    return apocVersion
-};
-
+// Calculates which APOC version should be used for each known Neo4j version.
 task versions <<  {
-    def neo4jReleases = collectNeo4jReleases()
+    def neo4jReleases = neo4jReleases()
     def apocReleases = apocReleases()
-    def oldestApoc = apocReleases.oldestApoc
-    def latestApoc = apocReleases.latestApoc
-    def neo4jToApoc = apocReleases.neo4jToApoc
-    def releases = apocReleases.releases
-
-    println "LATEST APOC IS " + latestApoc + " WHILE OLDEST IS " + oldestApoc
-    println(neo4jToApoc)
-    println(neo4jReleases)
-
-    def jsonSlurper = new JsonSlurper()
-    def checksums = jsonSlurper.parse(new File("checksums.json"))
-
+    def checksums = new JsonSlurper().parse(new File("checksums.json"))
     def versions = []
+
+    println(neo4jReleases)
+    println(apocReleases.collect { it.tag_name })
+
     for (neo4jRelease in neo4jReleases) {
-        def prefix = neo4jRelease.substring(0,Math.min(4,neo4jRelease.length()))
-        if (prefix < "3.0") continue;
+        def apocVersion = findApocVersion(apocReleases, neo4jRelease)
 
-        def apocVersion = findApocVersion(neo4jToApoc, neo4jRelease, prefix)
         if (apocVersion != null) {
+            def url = apocReleases
+                    .find { it.tag_name == apocVersion }
+                    .assets.find { it.browser_download_url.contains("apoc-${apocVersion}") }
+                    .browser_download_url
 
-            def url = releases.find { it.tag_name == apocVersion}.assets.find { it.browser_download_url.contains("apoc-${apocVersion}")}.browser_download_url
-
-            def version = [ neo4j : neo4jRelease, neo4jVersion : neo4jRelease,
-                            apoc : apocVersion, version: apocVersion,
-                            url : "http://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/" + apocVersion,
-                            homepageUrl : "http://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/" + apocVersion,
-                            jar: url, downloadUrl: url
-            ]
-
-            if(checksums[apocVersion]) {
-                version["sha1"] =  checksums[apocVersion].sha1
-                version["sha256"] =  checksums[apocVersion].sha256
-                version["md5"] =  checksums[apocVersion].md5
-            }
-
-            version["config"] = [
-                "+:dbms.security.procedures.unrestricted": ["apoc.*"]
+            def version = [
+                    neo4j : neo4jRelease,
+                    neo4jVersion : neo4jRelease,
+                    apoc : apocVersion,
+                    version: apocVersion,
+                    url : "https://github.com/neo4j/apoc/releases/" + apocVersion,
+                    homepageUrl : "https://github.com/neo4j/apoc/releases/" + apocVersion,
+                    jar: url,
+                    downloadUrl: url,
+                    sha1: checksums[apocVersion].sha1,
+                    sha256:  checksums[apocVersion].sha256,
+                    md5:  checksums[apocVersion].md5,
+                    config: [ "+:dbms.security.procedures.unrestricted": ["apoc.*"] ]
             ]
 
             versions.add(version)
         }
     }
 
-    def versionsFile = new File("build/versions.json")
-
+    def versionsFile = new File("versions.json")
     versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
-};
+}
 
 // TODO: Remove this once we can begin signing APOC jars
 // Calculates checksums of an APOC Jar. Skips downloading and hashing APOC versions it already knows about.
 task checksums <<  {
-    def apocReleases = apocReleases().releases
+    def apocReleases = apocReleases()
     def checksums = new JsonSlurper().parse(new File("checksums.json"))
 
     for (apocRelease in apocReleases) {
@@ -183,6 +118,10 @@ task checksums <<  {
     def checksumsFile = new File("checksums.json")
     checksumsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(checksums)))
 }
+
+// We order considering that X.Y.Z-SOMETHING should be considered lower than X.Y.Z
+static def orderVersion(str) {
+    return str.split("[.-]").collect { it =~ "^\\d+\$" ? it.padLeft(4,"0") : it.replace("beta","mbeta").replace("BETA","MBETA") }.join(".") + "/"
 }
 
 class Checksum {
