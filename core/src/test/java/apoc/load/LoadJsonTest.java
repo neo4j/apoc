@@ -68,6 +68,7 @@ public class LoadJsonTest {
 	    apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
 	    apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
 	    apocConfig().setProperty("apoc.json.zip.url", "https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true!person.json");
+         apocConfig().setProperty("apoc.json.simpleJson.url", ClassLoader.getSystemResource("map.json").toString());
         TestUtil.registerProcedure(db, LoadJson.class);
     }
 
