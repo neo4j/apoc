@@ -1,5 +1,6 @@
 package apoc.warmup;
 
+import apoc.ApocConfig;
 import apoc.util.Util;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.io.pagecache.PageCache;
@@ -67,6 +68,9 @@ public class Warmup {
             "Secondly, the API of this procedure is very specific to Record storage engine." )
     @Description("apoc.warmup.run(loadProperties=false,loadDynamicProperties=false,loadIndexes=false) - quickly loads all nodes and rels into memory by skipping one page at a time")
     public Stream<WarmupResult> run(@Name(value = "loadProperties", defaultValue = "false") boolean loadProperties, @Name(value = "loadDynamicProperties", defaultValue = "false") boolean loadDynamicProperties, @Name(value = "loadIndexes", defaultValue = "false") boolean loadIndexes) throws IOException {
+        // This procedure is likely to break with future storage engines
+        ApocConfig.apocConfig().checkStorageEngine();
+
         PageCache pageCache = db.getDependencyResolver().resolveDependency(PageCache.class);
         KernelTransaction ktx = ((InternalTransaction)tx).kernelTransaction();
 
