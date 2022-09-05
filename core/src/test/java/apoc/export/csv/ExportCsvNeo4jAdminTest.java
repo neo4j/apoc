@@ -1,6 +1,5 @@
 package apoc.export.csv;
 
-import apoc.ApocSettings;
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
@@ -23,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
 import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.MapUtil.map;
 import static junit.framework.TestCase.assertTrue;
@@ -84,11 +85,11 @@ public class ExportCsvNeo4jAdminTest {
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath())
-            .withSetting(ApocSettings.apoc_export_file_enabled, true);
+            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     @BeforeClass
     public static void setUp() throws Exception {
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
         db.executeTransactionally("CREATE (f:User1:User {name:'foo',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
         db.executeTransactionally("CREATE (f:Address1:Address {name:'Andrea', city: 'Milano', street:'Via Garibaldi, 7'})-[:NEXT_DELIVERY]->(a:Address {name: 'Bar Sport'}), (b:Address {street: 'via Benni'})");

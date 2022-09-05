@@ -1,6 +1,5 @@
 package apoc.export.graphml;
 
-import apoc.ApocSettings;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3TestUtil;
@@ -111,7 +110,6 @@ public class ExportGraphMLS3Test {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(ApocSettings.apoc_import_file_use__neo4j__config, false)
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     private static File directory = new File("target/import");
@@ -149,6 +147,7 @@ public class ExportGraphMLS3Test {
 
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, Boolean.toString(!testName.getMethodName().endsWith(TEST_WITH_NO_EXPORT)));
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, Boolean.toString(!testName.getMethodName().endsWith(TEST_WITH_NO_IMPORT)));
+        apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
 
         db.executeTransactionally("CREATE (f:Foo:Foo2:Foo0 {name:'foo', born:Date('2018-10-10'), place:point({ longitude: 56.7, latitude: 12.78, height: 100 })})-[:KNOWS]->(b:Bar {name:'bar',age:42, place:point({ longitude: 56.7, latitude: 12.78})}),(c:Bar {age:12,values:[1,2,3]})");
     }
