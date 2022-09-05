@@ -672,10 +672,7 @@ public class Util {
         return SourceVersion.isIdentifier(var) && !var.contains("$") ? var : '`' + var + '`';
     }
 
-    private static final String BACKTICK_OR_UC = "[`\\\\\u0060]";
-
-    private static final Pattern LABEL_AND_TYPE_QUOTATION = Pattern.compile(
-            String.format("(?<!%1$s)%1$s(?:%1$s{2})*(?!%1$s)", BACKTICK_OR_UC));
+    private static final Pattern LABEL_AND_TYPE_QUOTATION = Pattern.compile("\\\\u0060|(?<!`)`(?:`{2})*(?!`)");
 
     /**
      * This is a literal copy of {@code javax.lang.model.SourceVersion#isIdentifier(CharSequence)} included here to

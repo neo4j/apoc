@@ -111,6 +111,8 @@ public class UtilTest {
         assertEquals("``A ``Label", Util.sanitizeBackTicks("`A `Label"));
         assertEquals("Spring Data Neo4j⚡️RX", Util.sanitizeBackTicks("Spring Data Neo4j⚡️RX"));
         assertEquals("Foo ``", Util.sanitizeBackTicks("Foo \u0060"));
+        assertEquals("Foo\\``bar", Util.sanitizeBackTicks("Foo\\`bar"));
+        assertEquals("Foo\\\\``bar", Util.sanitizeBackTicks("Foo\\\\`bar"));
     }
 
     @Test
