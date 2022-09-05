@@ -6,11 +6,11 @@ import apoc.version.Version;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
-import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.availability.AvailabilityListener;
+import org.neo4j.kernel.database.DefaultDatabaseResolver;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
@@ -40,7 +40,7 @@ public class CypherInitializer implements AvailabilityListener {
         this.userLog = userLog;
         this.dependencyResolver = db.getDependencyResolver();
         this.procs = dependencyResolver.resolveDependency(GlobalProcedures.class);
-        this.defaultDb = dependencyResolver.resolveDependency(Config.class).get(GraphDatabaseSettings.default_database);
+        this.defaultDb = dependencyResolver.resolveDependency(DefaultDatabaseResolver.class).defaultDatabase(null);
     }
 
     public boolean isFinished() {
