@@ -2,6 +2,7 @@ package apoc;
 
 import apoc.export.util.ExportConfig;
 import inet.ipaddr.IPAddressString;
+import java.util.Map;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
@@ -48,17 +49,22 @@ public class ApocConfig extends LifecycleAdapter {
     public static final String APOC_IMPORT_FILE_ENABLED = "apoc.import.file.enabled";
     public static final String APOC_EXPORT_FILE_ENABLED = "apoc.export.file.enabled";
     public static final String APOC_IMPORT_FILE_USE_NEO4J_CONFIG = "apoc.import.file.use_neo4j_config";
-    public static final String APOC_TTL_SCHEDULE = "apoc.ttl.schedule";
-    public static final String APOC_TTL_ENABLED = "apoc.ttl.enabled";
-    public static final String APOC_TTL_LIMIT = "apoc.ttl.limit";
     public static final String APOC_TRIGGER_ENABLED = "apoc.trigger.enabled";
-    public static final String APOC_UUID_ENABLED = "apoc.uuid.enabled";
     public static final String APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM = "apoc.import.file.allow_read_from_filesystem";
     public static final String APOC_CONFIG_JOBS_SCHEDULED_NUM_THREADS = "apoc.jobs.scheduled.num_threads";
     public static final String APOC_CONFIG_JOBS_POOL_NUM_THREADS = "apoc.jobs.pool.num_threads";
     public static final String APOC_CONFIG_JOBS_QUEUE_SIZE = "apoc.jobs.queue.size";
     public static final String APOC_CONFIG_INITIALIZER = "apoc.initializer";
     public static final String LOAD_FROM_FILE_ERROR = "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
+
+    // These were earlier added via the Neo4j config using the ApocSettings.java class
+    private static final Map<String,Object> configDefaultValues =
+            Map.of(
+                    APOC_EXPORT_FILE_ENABLED, false,
+                    APOC_IMPORT_FILE_ENABLED, false,
+                    APOC_IMPORT_FILE_USE_NEO4J_CONFIG, true,
+                    APOC_TRIGGER_ENABLED, false
+            );
 
     private static final List<Setting> NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES = new ArrayList<>(Arrays.asList(
             data_directory,
@@ -156,14 +162,14 @@ public class ApocConfig extends LifecycleAdapter {
                     .configure(new Parameters().fileBased().setURL(resource));
             config = builder.getConfiguration();
 
-            // copy apoc settings from neo4j.conf for legacy support
-            neo4jConfig.getDeclaredSettings().entrySet().stream()
-                    .filter(e -> !config.containsKey(e.getKey()))
-                    .filter(e -> e.getKey().startsWith("apoc."))
-                    .forEach(e -> {
-                        log.info("setting from neo4j.conf: " + e.getKey() + "=" + neo4jConfig.get(e.getValue()));
-                        config.setProperty(e.getKey(), neo4jConfig.get(e.getValue()));
-                    });
+            // set config settings not explicitly set in apoc.conf to their default value
+            configDefaultValues.forEach((k,v) -> {
+                if (!config.containsKey(k))
+                {
+                   config.setProperty(k, v);
+                   log.info("setting APOC config to default value: " + k + "=" + v);
+                }
+            });
 
             addDbmsDirectoriesMetricsSettings();
             for (Setting s : NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES) {
