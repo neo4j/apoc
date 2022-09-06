@@ -21,7 +21,7 @@ static def neo4jReleases() {
 
     return releases
             .findAll { it >= "5.0.0" }
-            .sort { o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }
+            .sort { o1, o2 -> normalizeVersion(o1) <=> normalizeVersion(o2) }
             .reverse()
 }
 
@@ -37,7 +37,7 @@ static def findApocVersion(apocReleases, neo4jRelease) {
     def majorNeoVersion = neo4jRelease.substring(0, 1)
     def candidates = apocReleases
             .findAll { it.substring(0, 1) == majorNeoVersion }
-            .sort { o1, o2 -> orderVersion(o1) <=> orderVersion(o2) }[-1]
+            .sort { o1, o2 -> normalizeVersion(o1) <=> normalizeVersion(o2) }
     return candidates[-1]
 }
 
@@ -119,9 +119,9 @@ task checksums <<  {
     checksumsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(checksums)))
 }
 
-// We order considering that X.Y.Z-SOMETHING should be considered lower than X.Y.Z
-static def orderVersion(str) {
-    return str.split("[.-]").collect { it =~ "^\\d+\$" ? it.padLeft(4,"0") : it.replace("beta","mbeta").replace("BETA","MBETA") }.join(".") + "/"
+static def normalizeVersion(str) {
+    return str.split("[.-]").collect { it =~ "^\\d+\$" ? it.padLeft(4,"0") : it }.join(".") + "/"
+}
 }
 
 class Checksum {
