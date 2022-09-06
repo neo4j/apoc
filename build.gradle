@@ -45,7 +45,9 @@ static def findApocVersion(apocReleases, neo4jRelease) {
 task versions <<  {
     def neo4jReleases = neo4jReleases()
     def apocReleases = apocReleases()
-    def checksums = new JsonSlurper().parse(new File("checksums.json"))
+    def reader = new JsonSlurper();
+    def checksums = reader.parse(new File("checksums.json"))
+    def previousVersions = reader.parse(new File("versions.json"))
     def versions = []
 
     println(neo4jReleases)
@@ -80,6 +82,8 @@ task versions <<  {
     }
 
     def versionsFile = new File("versions.json")
+    assertVersionsGrew(previousVersions, versions)
+
     versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
 }
 
@@ -122,6 +126,13 @@ task checksums <<  {
 static def normalizeVersion(str) {
     return str.split("[.-]").collect { it =~ "^\\d+\$" ? it.padLeft(4,"0") : it }.join(".") + "/"
 }
+
+// We have noticed in the past that the versions.json file sometimes gets wiped clean by the task when it's run in
+// TeamCity. We assume that this is due to one or several of the HTTP requests this job makes fails silently. In these
+// scenarios it is better to simply keep the old versions.json file. We detect this scenario by verifying the new
+// versions have at least as many keys as the previous versions
+static def assertVersionsGrew(previousVersions, versions) {
+    if (previousVersions.keySet().size() > versions.keySet().size()) throw new Exception("Error: versions file shrank.")
 }
 
 class Checksum {
