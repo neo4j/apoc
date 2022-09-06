@@ -81,13 +81,13 @@ task versions <<  {
         }
     }
 
-    def versionsFile = new File("versions.json")
     assertVersionsGrew(previousVersions, versions)
 
+    def versionsFile = new File("build/versions.json")
     versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
 }
 
-// TODO: Remove this once we can begin signing APOC jars
+// TODO: Remove this once we begin signing APOC jars
 // Calculates checksums of an APOC Jar. Skips downloading and hashing APOC versions it already knows about.
 task checksums <<  {
     def apocReleases = apocReleases()
@@ -119,7 +119,7 @@ task checksums <<  {
         checksums[apocVersion] = [sha1: Checksum.getSha1sum(f), sha256: Checksum.getSha256sum(f), md5: Checksum.getMD5sum(f)]
     }
 
-    def checksumsFile = new File("checksums.json")
+    def checksumsFile = new File("build/checksums.json")
     checksumsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(checksums)))
 }
 
