@@ -1,6 +1,5 @@
 package apoc.spatial;
 
-import apoc.ApocSettings;
 import apoc.date.Date;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
@@ -20,6 +19,8 @@ import org.neo4j.procedure.Procedure;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testCallEmpty;
@@ -32,8 +33,7 @@ import static org.junit.Assert.assertTrue;
 public class SpatialTest {
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(ApocSettings.apoc_import_file_enabled, true);
+    public DbmsRule db = new ImpermanentDbmsRule();
 
     private Map<String, Map<String, Object>> eventNodes = new LinkedHashMap<>();
     private Map<String, Map<String, Object>> spaceNodes = new LinkedHashMap<>();
@@ -81,6 +81,7 @@ public class SpatialTest {
     public void setUp() throws Exception {
         TestUtil.registerProcedure(db, Date.class);
         TestUtil.registerProcedure(db, MockGeocode.class);
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         URL url = ClassLoader.getSystemResource("spatial.json");
         Map tests = (Map) JsonUtil.loadJson(url.toString()).findFirst().orElse(null);
         for (Object event : (List) tests.get("events")) {

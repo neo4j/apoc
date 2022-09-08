@@ -1,14 +1,11 @@
 package apoc.load;
 
 import apoc.ApocConfig;
-import apoc.ApocSettings;
 import apoc.util.FileUtils;
 import apoc.util.SensitivePathGenerator;
 import apoc.util.TestUtil;
 import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -29,6 +26,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -49,22 +48,12 @@ public class LoadCoreSecurityTest {
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, import_folder)
-            .withSetting(ApocSettings.apoc_import_file_enabled, false);
+            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, import_folder);
 
     @BeforeClass
     public static void setUp() throws Exception {
         TestUtil.registerProcedure(db, LoadJson.class, Xml.class);
-    }
-
-    @Before
-    public void before() {
-        ApocConfig.apocConfig().setProperty(ApocSettings.apoc_import_file_enabled, false);
-    }
-
-    @After
-    public void after() {
-        ApocConfig.apocConfig().setProperty(ApocSettings.apoc_import_file_enabled, false);
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, false);
     }
 
     private static final Map<String, List<String>> APOC_PROCEDURE_WITH_ARGUMENTS = Map.of(
