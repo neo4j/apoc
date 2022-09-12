@@ -1,6 +1,7 @@
 package apoc.periodic;
 
 import apoc.Pools;
+import apoc.util.collection.Pair;
 import apoc.util.Util;
 import apoc.periodic.PeriodicUtils.JobInfo;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -11,7 +12,6 @@ import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.internal.helpers.collection.Iterators;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 

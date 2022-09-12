@@ -1,5 +1,6 @@
 package apoc.text;
 
+import apoc.util.collection.Pair;
 import apoc.util.Util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.HammingDistance;
@@ -8,7 +9,6 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;

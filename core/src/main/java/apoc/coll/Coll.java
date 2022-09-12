@@ -1,6 +1,7 @@
 package apoc.coll;
 
 import apoc.result.ListResult;
+import apoc.util.collection.Pair;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
@@ -11,7 +12,6 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;

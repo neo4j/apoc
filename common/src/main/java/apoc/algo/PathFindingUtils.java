@@ -1,13 +1,13 @@
 package apoc.algo;
 
 import apoc.path.RelationshipTypeAndDirections;
+import apoc.util.collection.Pair;
 import org.neo4j.graphalgo.EstimateEvaluator;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.PathExpander;
 import org.neo4j.graphdb.PathExpanderBuilder;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.values.storable.PointValue;
 
 public class PathFindingUtils {

@@ -2,11 +2,11 @@ package apoc.stats;
 
 import apoc.Pools;
 import apoc.path.RelationshipTypeAndDirections;
+import apoc.util.collection.Pair;
 import apoc.util.kernel.MultiThreadedGlobalGraphOperations;
 import org.HdrHistogram.AtomicHistogram;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.Read;

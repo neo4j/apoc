@@ -1,8 +1,8 @@
 package apoc.path;
 
+import apoc.util.collection.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.Pair;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,7 +1,7 @@
 package apoc.periodic;
 
+import apoc.util.collection.Pair;
 import org.junit.Test;
-import org.neo4j.internal.helpers.collection.Pair;
 
 import java.util.List;
 
