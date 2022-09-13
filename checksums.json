@@ -1,12 +1,17 @@
 {
-  "5.0.0-rc02": {
-    "sha1": "c52f7dc54762297b772036dab163d07375908631",
-    "sha256": "6b2969665f24bc27e18eb04c0c275a40b5075ffcb58aacd8e6a53c01a6e1fbff",
-    "md5": "94ec922d16e650e5c52d1b338f1e55df"
-  },
-  "5.0.0-rc01": {
-    "sha1": "54c27ef7d014a14ed1e10ca7b7c94487aea66bf2",
-    "sha256": "528d3b13ca539e598a1b84f80f3517151efa81d2ec7537ca932c531caf4b2ac0",
-    "md5": "e75d77aa76ca178ebf1a2efede673b90"
-  }
+    "5.0.0-rc02": {
+        "sha1": "c52f7dc54762297b772036dab163d07375908631",
+        "sha256": "6b2969665f24bc27e18eb04c0c275a40b5075ffcb58aacd8e6a53c01a6e1fbff",
+        "md5": "94ec922d16e650e5c52d1b338f1e55df"
+    },
+    "5.0.0-rc01": {
+        "sha1": "54c27ef7d014a14ed1e10ca7b7c94487aea66bf2",
+        "sha256": "528d3b13ca539e598a1b84f80f3517151efa81d2ec7537ca932c531caf4b2ac0",
+        "md5": "e75d77aa76ca178ebf1a2efede673b90"
+    },
+    "5.0.0": {
+        "sha1": "cedf320fd91947da3a628c1cdf81020ce46071a6",
+        "sha256": "6c416afdf973518d466a82b640648a7402caa0f2d47704b5290f5537e16dc3dd",
+        "md5": "ffb5db073178515a43472842397046ab"
+    }
 }
