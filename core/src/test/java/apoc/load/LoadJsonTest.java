@@ -33,6 +33,7 @@ import static apoc.convert.ConvertJsonTest.EXPECTED_AS_PATH_LIST;
 import static apoc.convert.ConvertJsonTest.EXPECTED_PATH;
 import static apoc.convert.ConvertJsonTest.EXPECTED_PATH_WITH_NULLS;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.assertEventuallySilently;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Arrays.asList;
@@ -259,46 +260,35 @@ public class LoadJsonTest {
 
     @Test public void testLoadJsonZipByUrl() throws Exception {
         URL url = new URL("https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
-                (row) -> {
-                    Map<String,Object> r = (Map<String, Object>) row.get("value");
-                    assertEquals("Michael", r.get("name"));
-                    assertEquals(41L, r.get("age"));
-                    assertEquals(asList("Selina", "Rana", "Selma"), r.get("children"));
-                });
+        assertEventuallySilently(db, "CALL apoc.load.json($url)", map("url", url +"!person.json"),
+                LoadJsonTest::archiveUrlCommon);
     }
 
     @Test public void testLoadJsonTarByUrl() throws Exception {
         URL url = new URL("https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
-                (row) -> {
-                    Map<String,Object> r = (Map<String, Object>) row.get("value");
-                    assertEquals("Michael", r.get("name"));
-                    assertEquals(41L, r.get("age"));
-                    assertEquals(asList("Selina", "Rana", "Selma"), r.get("children"));
-                });
+        assertEventuallySilently(db, "CALL apoc.load.json($url)", map("url", url +"!person.json"),
+                LoadJsonTest::archiveUrlCommon);
     }
 
     @Test public void testLoadJsonTarGzByUrl() throws Exception {
         URL url = new URL("https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar.gz?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
-                (row) -> {
-                    Map<String,Object> r = (Map<String, Object>) row.get("value");
-                    assertEquals("Michael", r.get("name"));
-                    assertEquals(41L, r.get("age"));
-                    assertEquals(asList("Selina", "Rana", "Selma"), r.get("children"));
-                });
+        assertEventuallySilently(db, "CALL apoc.load.json($url)", map("url", url +"!person.json"),
+                LoadJsonTest::archiveUrlCommon);
     }
 
     @Test public void testLoadJsonTgzByUrl() throws Exception {
         URL url = new URL("https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tgz?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
-                (row) -> {
-                    Map<String,Object> r = (Map<String, Object>) row.get("value");
-                    assertEquals("Michael", r.get("name"));
-                    assertEquals(41L, r.get("age"));
-                    assertEquals(asList("Selina", "Rana", "Selma"), r.get("children"));
-                });
+        assertEventuallySilently(db, "CALL apoc.load.json($url)", map("url", url +"!person.json"),
+                LoadJsonTest::archiveUrlCommon);
+    }
+
+    private static boolean archiveUrlCommon(Result result) {
+        final Map<String, Object> row = result.next();
+        Map<String,Object> r = (Map<String, Object>) row.get("value");
+        return !result.hasNext() &&
+                "Michael".equals(r.get("name")) &&
+                r.get("age").equals(41L) &&
+                asList("Selina", "Rana", "Selma").equals(r.get("children"));
     }
 
     @Test public void testLoadJsonZipByUrlInConfigFile() throws Exception {

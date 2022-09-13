@@ -383,41 +383,41 @@ public class XmlTest {
 
     @Test
     public void testLoadXmlFromZipByUrl() {
-        testResult(db, "call apoc.load.xml('https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true!xml/books.xml') yield value as catalog\n" +
+        assertEventuallySilently(db, "call apoc.load.xml('https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true!xml/books.xml') yield value as catalog\n" +
                 "UNWIND catalog._children as book\n" +
                 "RETURN book.id as id\n", result -> {
             List<Object> ids = Iterators.asList(result.columnAs("id"));
-            assertTrue(IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value))));
+            return IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value)));
         });
     }
 
     @Test
     public void testLoadXmlFromTarByUrl() {
-        testResult(db, "call apoc.load.xml('https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar.gz?raw=true!xml/books.xml') yield value as catalog\n" +
+        assertEventuallySilently(db, "call apoc.load.xml('https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar.gz?raw=true!xml/books.xml') yield value as catalog\n" +
                 "UNWIND catalog._children as book\n" +
                 "RETURN book.id as id\n", result -> {
             List<Object> ids = Iterators.asList(result.columnAs("id"));
-            assertTrue(IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value))));
+            return IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value)));
         });
     }
 
     @Test
     public void testLoadXmlFromTarGzByUrl() {
-        testResult(db, "call apoc.load.xml('https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar.gz?raw=true!xml/books.xml') yield value as catalog\n" +
+        assertEventuallySilently(db, "call apoc.load.xml('https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar.gz?raw=true!xml/books.xml') yield value as catalog\n" +
                 "UNWIND catalog._children as book\n" +
                 "RETURN book.id as id\n", result -> {
             List<Object> ids = Iterators.asList(result.columnAs("id"));
-            assertTrue(IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value))));
+            return IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value)));
         });
     }
 
     @Test
     public void testLoadXmlFromTgzByUrl() {
-        testResult(db, "call apoc.load.xml('https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tgz?raw=true!xml/books.xml') yield value as catalog\n" +
+        assertEventuallySilently(db, "call apoc.load.xml('https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tgz?raw=true!xml/books.xml') yield value as catalog\n" +
                 "UNWIND catalog._children as book\n" +
                 "RETURN book.id as id\n", result -> {
             List<Object> ids = Iterators.asList(result.columnAs("id"));
-            assertTrue(IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value))));
+            return IntStream.rangeClosed(1,12).allMatch(value -> ids.contains(String.format("bk1%02d",value)));
         });
     }
 

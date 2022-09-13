@@ -7,6 +7,7 @@ import org.neo4j.exceptions.KernelException;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.ResultTransformer;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.internal.helpers.collection.Iterators;
@@ -24,11 +25,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
+import static org.neo4j.test.assertion.Assert.assertEventually;
 
 /**
  * @author mh
@@ -222,5 +225,23 @@ public class TestUtil {
 
     public static <T> List<T> firstColumn(GraphDatabaseService db, String cypher) {
         return db.executeTransactionally(cypher , Collections.emptyMap(), result -> Iterators.asList(iteratorSingleColumn(result)));
+    }
+
+    public static void assertEventuallySilently(GraphDatabaseService db, String cypher, ResultTransformer<Boolean> resultTransformer) {
+        assertEventuallySilently(db, cypher, Collections.emptyMap(), resultTransformer);
+    }
+
+    public static void assertEventuallySilently(GraphDatabaseService db, String cypher, Map<String,Object> params, ResultTransformer<Boolean> resultTransformer) {
+        assertEventuallySilently(db, cypher, params, resultTransformer, 20L);
+    }
+    public static void assertEventuallySilently(GraphDatabaseService db, String cypher, Map<String,Object> params, ResultTransformer<Boolean> resultTransformer, long timeout) {
+        assertEventually(() -> {
+            try {
+                return db.executeTransactionally(cypher, params, resultTransformer);
+            } catch (Exception e) {
+                System.out.println("Exception during assertEventually execution" + e.getMessage());
+                return false;
+            }
+        }, (value) -> value, timeout, TimeUnit.SECONDS);
     }
 }
