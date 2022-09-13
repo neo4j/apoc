@@ -41,7 +41,7 @@ public class ExportJsonTest {
 
     private static final String DEFLATE_EXT = ".zz";
     private static File directory = new File("target/import");
-    private static File directoryExpected = new File("../docs/asciidoc/modules/ROOT/examples/data/exportJSON");
+    private static File directoryExpected = new File("src/test/resources/exportJSON");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();

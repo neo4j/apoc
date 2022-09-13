@@ -56,7 +56,7 @@ public class ImportJsonTest {
 
     private static final long NODES_BIG_JSON = 16L;
     private static final long RELS_BIG_JSON = 4L;
-    private static File directory = new File("../docs/asciidoc/modules/ROOT/examples/data/exportJSON");
+    private static File directory = new File("src/test/resources/exportJSON");
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()

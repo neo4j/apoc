@@ -3,7 +3,7 @@
 :docs: https://neo4j.com/docs/labs/apoc/current
 :apoc-release: 5.1.0
 :neo4j-version: 5.1.0
-:img: https://raw.githubusercontent.com/neo4j/apoc/{branch}/docs/images
+:img: https://raw.githubusercontent.com/neo4j/apoc/{branch}/images
 
 https://community.neo4j.com[image:https://img.shields.io/discourse/users?logo=discourse&server=https%3A%2F%2Fcommunity.neo4j.com[Discourse users]]
 https://discord.gg/neo4j[image:https://img.shields.io/discord/787399249741479977?logo=discord&logoColor=white[Discord]]
