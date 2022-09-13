@@ -132,7 +132,7 @@ static def normalizeVersion(str) {
 // scenarios it is better to simply keep the old versions.json file. We detect this scenario by verifying the new
 // versions have at least as many keys as the previous versions
 static def assertVersionsGrew(previousVersions, versions) {
-    if (previousVersions.keySet().size() > versions.keySet().size()) throw new Exception("Error: versions file shrank.")
+    if (previousVersions.size() > versions.size()) throw new Exception("Error: versions file shrank.")
 }
 
 class Checksum {
