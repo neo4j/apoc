@@ -1,6 +1,5 @@
 package apoc.export.json;
 
-import apoc.ApocSettings;
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
@@ -21,6 +20,9 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
+import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.CompressionAlgo.DEFLATE;
 import static apoc.util.CompressionAlgo.FRAMED_SNAPPY;
@@ -47,13 +49,13 @@ public class ExportJsonTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-        .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath())
-        .withSetting(ApocSettings.apoc_import_file_enabled, true)
-        .withSetting(ApocSettings.apoc_export_file_enabled, true);
+        .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     @Before
     public void setup() {
         TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class);
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");
     }
 

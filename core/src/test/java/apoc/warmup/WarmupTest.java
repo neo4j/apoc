@@ -4,8 +4,13 @@ import apoc.util.TestUtil;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -67,5 +72,19 @@ public class WarmupTest {
             assertEquals(true, r.get("indexesLoaded"));
             assertNotEquals( 0L, r.get("indexPages") );
         });
+    }
+
+    @Test
+    public void testWarmupOnDifferentStorageEngines() throws Exception {
+        final List<String> supportedTypes = Arrays.asList("standard", "aligned");
+        for (String storageType : supportedTypes) {
+            db.restartDatabase(Map.of(GraphDatabaseSettings.db_format, storageType));
+            TestUtil.registerProcedure(db, Warmup.class);
+
+            TestUtil.testCall(db, "CALL apoc.warmup.run(true,true,true)", r -> {
+                assertEquals(true, r.get("indexesLoaded"));
+                assertNotEquals( 0L, r.get("indexPages") );
+            });
+        }
     }
 }

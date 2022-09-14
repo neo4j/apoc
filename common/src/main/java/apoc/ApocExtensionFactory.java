@@ -55,7 +55,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         AvailabilityGuard availabilityGuard();
         DatabaseManagementService databaseManagementService();
         ApocConfig apocConfig();
-        TTLConfig ttlConfig();
         GlobalProcedures globalProceduresRegistry();
         RegisterComponentFactory.RegisterComponentLifecycle registerComponentLifecycle();
         Pools pools();
@@ -69,8 +68,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
     }
 
     public static class ApocLifecycle extends LifecycleAdapter {
-
-        private final LogService log;
         private final Log userLog;
         private final GraphDatabaseAPI db;
         private final Dependencies dependencies;
@@ -83,7 +80,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
 
 
         public ApocLifecycle(LogService log, GraphDatabaseAPI db, Dependencies dependencies) {
-            this.log = log;
             this.db = db;
             this.dependencies = dependencies;
             this.userLog = log.getUserLog(ApocExtensionFactory.class);
