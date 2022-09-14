@@ -1,8 +1,8 @@
 package apoc.export.cypher;
 
-import apoc.cypher.Cypher;
 import apoc.export.util.ExportConfig;
 import apoc.graph.Graphs;
+import apoc.schema.Schemas;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
@@ -68,7 +68,7 @@ public class ExportCypherTest {
     @Before
     public void setUp() throws Exception {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-        TestUtil.registerProcedure(db, ExportCypher.class, Graphs.class, Cypher.class);
+        TestUtil.registerProcedure(db, ExportCypher.class, Graphs.class, Schemas.class);
         db.executeTransactionally("CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name)");
         db.executeTransactionally("CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name)");
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint FOR (b:Bar) REQUIRE b.name IS UNIQUE");
@@ -957,7 +957,11 @@ public class ExportCypherTest {
             return;
         }
         db.executeTransactionally("match (n) detach delete n");
-        db.executeTransactionally("call apoc.cypher.runMany($statements, {})", map("statements", cypherStatements));
+        db.executeTransactionally("call apoc.schema.assert({}, {})");
+        
+        for (String i: cypherStatements.split(";\n")) {
+            db.executeTransactionally(i);
+        }
 
         beforeAfterIssue2886(startOne, relOne, startTwo, relTwo);
     }
@@ -1541,13 +1545,13 @@ public class ExportCypherTest {
                 "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n" +
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
         
-        static final String EXPECTED_2886_SCHEMA = "CREATE INDEX FOR (node:Bar) ON (node.first_name, node.last_name);\n" +
-                "CREATE INDEX FOR (node:Foo) ON (node.name);\n" +
-                "CREATE CONSTRAINT ON (node:Bar) ASSERT (node.name) IS UNIQUE;\n" +
-                "CREATE CONSTRAINT ON (node:`UNIQUE IMPORT LABEL`) ASSERT (node.`UNIQUE IMPORT ID`) IS UNIQUE;\n";
+        static final String EXPECTED_2886_SCHEMA = "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);\n" +
+                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);\n" +
+                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;\n" +
+                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;\n";
 
         static final String EXPECTED_2886_CLEANUP = "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;\n" +
-                "DROP CONSTRAINT ON (node:`UNIQUE IMPORT LABEL`) ASSERT (node.`UNIQUE IMPORT ID`) IS UNIQUE;\n";
+                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;\n";
 
         static final String EXPECTED_2886_UPDATE_STRUCTURE = "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row\n" +
                 "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})\n" +
