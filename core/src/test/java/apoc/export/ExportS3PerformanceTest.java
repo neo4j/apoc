@@ -1,6 +1,5 @@
 package apoc.export;
 
-import apoc.ApocSettings;
 import apoc.export.csv.ExportCSV;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
@@ -23,6 +22,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 
+import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static junit.framework.TestCase.assertTrue;
 
@@ -59,8 +60,7 @@ public class ExportS3PerformanceTest {
     }
 
     @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(ApocSettings.apoc_export_file_enabled, true);
+    public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
     public static void setUp() throws Exception {
@@ -68,6 +68,8 @@ public class ExportS3PerformanceTest {
             S3_BUCKET_NAME = getEnvVar("S3_BUCKET_NAME");
         }
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
+
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
     }
 
     @Test

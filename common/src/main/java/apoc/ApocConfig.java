@@ -1,8 +1,8 @@
 package apoc;
 
 import apoc.export.util.ExportConfig;
-import apoc.util.SimpleRateLimiter;
 import inet.ipaddr.IPAddressString;
+import java.util.Map;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
@@ -30,7 +30,6 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -46,29 +45,26 @@ import static org.neo4j.configuration.GraphDatabaseSettings.plugin_dir;
 import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_root_path;
 
 public class ApocConfig extends LifecycleAdapter {
-    public static final String SUN_JAVA_COMMAND = "sun.java.command";
+    protected static final String SUN_JAVA_COMMAND = "sun.java.command";
     public static final String APOC_IMPORT_FILE_ENABLED = "apoc.import.file.enabled";
     public static final String APOC_EXPORT_FILE_ENABLED = "apoc.export.file.enabled";
     public static final String APOC_IMPORT_FILE_USE_NEO4J_CONFIG = "apoc.import.file.use_neo4j_config";
-    public static final String APOC_TTL_SCHEDULE = "apoc.ttl.schedule";
-    public static final String APOC_TTL_ENABLED = "apoc.ttl.enabled";
-    public static final String APOC_TTL_LIMIT = "apoc.ttl.limit";
-    public static final String APOC_TTL_SCHEDULE_DB = "apoc.ttl.schedule.%s";
-    public static final String APOC_TTL_ENABLED_DB = "apoc.ttl.enabled.%s";
-    public static final String APOC_TTL_LIMIT_DB = "apoc.ttl.limit.%s";
     public static final String APOC_TRIGGER_ENABLED = "apoc.trigger.enabled";
-    public static final String APOC_UUID_ENABLED = "apoc.uuid.enabled";
-    public static final String APOC_UUID_ENABLED_DB = "apoc.uuid.enabled.%s";
-    public static final String APOC_UUID_FORMAT = "apoc.uuid.format";
-    public enum UuidFormatType { hex, base64 }
-    public static final String APOC_JSON_ZIP_URL = "apoc.json.zip.url";  // TODO: check if really needed
-    public static final String APOC_JSON_SIMPLE_JSON_URL = "apoc.json.simpleJson.url"; // TODO: check if really needed
     public static final String APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM = "apoc.import.file.allow_read_from_filesystem";
     public static final String APOC_CONFIG_JOBS_SCHEDULED_NUM_THREADS = "apoc.jobs.scheduled.num_threads";
     public static final String APOC_CONFIG_JOBS_POOL_NUM_THREADS = "apoc.jobs.pool.num_threads";
     public static final String APOC_CONFIG_JOBS_QUEUE_SIZE = "apoc.jobs.queue.size";
     public static final String APOC_CONFIG_INITIALIZER = "apoc.initializer";
     public static final String LOAD_FROM_FILE_ERROR = "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
+
+    // These were earlier added via the Neo4j config using the ApocSettings.java class
+    private static final Map<String,Object> configDefaultValues =
+            Map.of(
+                    APOC_EXPORT_FILE_ENABLED, false,
+                    APOC_IMPORT_FILE_ENABLED, false,
+                    APOC_IMPORT_FILE_USE_NEO4J_CONFIG, true,
+                    APOC_TRIGGER_ENABLED, false
+            );
 
     private static final List<Setting> NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES = new ArrayList<>(Arrays.asList(
             data_directory,
@@ -92,16 +88,9 @@ public class ApocConfig extends LifecycleAdapter {
     private Configuration config;
 
     private static ApocConfig theInstance;
-    private LoggingType loggingType;
-    private SimpleRateLimiter rateLimiter;
     private GraphDatabaseService systemDb;
 
     private List<IPAddressString> blockedIpRanges = List.of();
-
-    /**
-     * keep track if this instance is already initialized so dependent class can wait if needed
-     */
-    private boolean initialized = false;
 
     public ApocConfig(Config neo4jConfig, LogService log, GlobalProcedures globalProceduresRegistry, DatabaseManagementService databaseManagementService) {
         this.neo4jConfig = neo4jConfig;
@@ -129,18 +118,13 @@ public class ApocConfig extends LifecycleAdapter {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() {
         log.debug("called init");
         // grab NEO4J_CONF from environment. If not set, calculate it from sun.java.command system property
         String neo4jConfFolder = System.getenv().getOrDefault("NEO4J_CONF", determineNeo4jConfFolder());
         System.setProperty("NEO4J_CONF", neo4jConfFolder);
         log.info("system property NEO4J_CONF set to %s", neo4jConfFolder);
         loadConfiguration();
-        initialized = true;
-    }
-
-    public boolean isInitialized() {
-        return initialized;
     }
 
     protected String determineNeo4jConfFolder() {
@@ -177,14 +161,14 @@ public class ApocConfig extends LifecycleAdapter {
                     .configure(new Parameters().fileBased().setURL(resource));
             config = builder.getConfiguration();
 
-            // copy apoc settings from neo4j.conf for legacy support
-            neo4jConfig.getDeclaredSettings().entrySet().stream()
-                    .filter(e -> !config.containsKey(e.getKey()))
-                    .filter(e -> e.getKey().startsWith("apoc."))
-                    .forEach(e -> {
-                        log.info("setting from neo4j.conf: " + e.getKey() + "=" + neo4jConfig.get(e.getValue()));
-                        config.setProperty(e.getKey(), neo4jConfig.get(e.getValue()));
-                    });
+            // set config settings not explicitly set in apoc.conf to their default value
+            configDefaultValues.forEach((k,v) -> {
+                if (!config.containsKey(k))
+                {
+                   config.setProperty(k, v);
+                   log.info("setting APOC config to default value: " + k + "=" + v);
+                }
+            });
 
             addDbmsDirectoriesMetricsSettings();
             for (Setting s : NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES) {
@@ -200,8 +184,6 @@ public class ApocConfig extends LifecycleAdapter {
             // todo - evaluate default timezone here [maybe is reusable], otherwise through db.execute('CALL dbms.listConfig()')
             final Setting<ZoneId> db_temporal_timezone = GraphDatabaseSettings.db_temporal_timezone;
             config.setProperty(db_temporal_timezone.name(), neo4jConfig.get(db_temporal_timezone));
-
-            initLogging();
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
         }
@@ -218,22 +200,6 @@ public class ApocConfig extends LifecycleAdapter {
         }
     }
 
-    public LoggingType getLoggingType() {
-        return loggingType;
-    }
-
-    public SimpleRateLimiter getRateLimiter() {
-        return rateLimiter;
-    }
-
-    public void setLoggingType(LoggingType loggingType) {
-        this.loggingType = loggingType;
-    }
-
-    public void setRateLimiter(SimpleRateLimiter rateLimiter) {
-        this.rateLimiter = rateLimiter;
-    }
-
     public GraphDatabaseService getSystemDb() {
         if (systemDb == null) {
             try {
@@ -243,13 +209,6 @@ public class ApocConfig extends LifecycleAdapter {
             }
         }
         return systemDb;
-    }
-
-    public enum LoggingType {none, safe, raw}
-
-    private void initLogging() {
-        loggingType = LoggingType.valueOf(getString("apoc.user.log.type", "safe").trim());
-        rateLimiter = new SimpleRateLimiter(getInt( "apoc.user.log.window.time", 10000), getInt("apoc.user.log.window.ops", 10));
     }
 
     // added because with binary file there isn't an url
@@ -286,6 +245,15 @@ public class ApocConfig extends LifecycleAdapter {
         }
     }
 
+    // Helper method for the apoc.warmup.run procedure, as upcoming storage engines are not able to work
+    // with it.
+    public void checkStorageEngine() {
+        final List<String> supportedTypes = Arrays.asList("standard", "aligned", "high_limit");
+        if (!supportedTypes.contains(neo4jConfig.get(GraphDatabaseSettings.db_format))) {
+            throw new RuntimeException("Record engine type unsupported; please use one of the following; standard, aligned or high_limit");
+        }
+    }
+
     public static ApocConfig apocConfig() {
         return theInstance;
     }
@@ -294,10 +262,6 @@ public class ApocConfig extends LifecycleAdapter {
     /*
      * delegate methods for Configuration
      */
-
-    public Iterator<String> getKeys(String prefix) {
-        return getConfig().getKeys(prefix);
-    }
 
     public boolean containsKey(String key) {
         return getConfig().containsKey(key);
@@ -325,16 +289,6 @@ public class ApocConfig extends LifecycleAdapter {
 
     public boolean getBoolean(String key, boolean defaultValue) {
         return getConfig().getBoolean(key, defaultValue);
-    }
-
-    public <T extends Enum<T>> T getEnumProperty(String key, Class<T> cls, T defaultValue) {
-        var value = getConfig().getString(key, defaultValue.toString()).trim();
-        try {
-            return T.valueOf(cls, value);
-        } catch (IllegalArgumentException e) {
-            log.error("Wrong value '{}' for parameter '{}' is provided. Default value is used: '{}'", value, key, defaultValue);
-            return defaultValue;
-        }
     }
 
     public boolean isImportFolderConfigured() {

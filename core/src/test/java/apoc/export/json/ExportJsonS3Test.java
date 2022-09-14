@@ -1,6 +1,5 @@
 package apoc.export.json;
 
-import apoc.ApocSettings;
 import apoc.graph.Graphs;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
@@ -19,6 +18,8 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
 
+import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static org.junit.Assert.*;
 
@@ -36,8 +37,7 @@ public class ExportJsonS3Test {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath())
-            .withSetting(ApocSettings.apoc_export_file_enabled, true);
+            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     private static String getS3Url(String key) {
         return String.format("s3://:@/%s/%s", S3_BUCKET_NAME, key);
@@ -65,6 +65,7 @@ public class ExportJsonS3Test {
         }
 
         TestUtil.registerProcedure(db, ExportJson.class, Graphs.class);
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");
     }
 

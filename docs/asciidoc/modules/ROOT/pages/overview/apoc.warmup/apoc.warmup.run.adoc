@@ -68,3 +68,10 @@ apoc.warmup.run(loadProperties = false :: BOOLEAN?, loadDynamicProperties = fals
 == Usage Examples
 include::partial$usage/apoc.warmup.run.adoc[]
 
+[WARNING]
+====
+This procedure can only be used with a Database record format of
+`standard`, `aligned` or `high_limit`. The record format is set using
+the neo4j configuration setting `db.format`.
+====
+

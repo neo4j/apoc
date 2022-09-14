@@ -867,7 +867,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatCreate2() {
+    public void testIssue2886OptimizationsNoneAndCypherFormatAddStructure() {
         String expected = "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}) ON CREATE SET n.name=\"First\", n:Person;\n" +
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) ON CREATE SET n:Project;\n" +
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}) ON CREATE SET n.name=\"Second\", n:Person;\n" +
@@ -878,7 +878,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatCreate23() {
+    public void testIssue2886OptimizationsNoneAndCypherFormatUpdateStructure() {
         String expected = "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;\n" +
                 "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;\n";
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
@@ -886,7 +886,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatCreate245() {
+    public void testIssue2886OptimizationsNoneAndCypherFormatUpdateAll() {
         String expected = "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}) SET n.name=\"First\", n:Person;\n" +
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) SET n:Project;\n" +
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}) SET n.name=\"Second\", n:Person;\n" +
@@ -907,20 +907,20 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886CypherFormatCreate2() {
+    public void testIssue2886CypherFormatAddStructure() {
         final Map<String, Object> config = map("cypherFormat", "addStructure");
         issue2886Common(EXPECTED_2886_ADD_STRUCTURE, config, true);
     }
 
     @Test
-    public void testIssue2886CypherFormatCreate23() {
+    public void testIssue2886CypherFormatUpdateStructure() {
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
         final String expected = String.format(EXPECTED_2886_UPDATE_STRUCTURE, "MERGE");
         issue2886Common(expected, config, false);
     }
 
     @Test
-    public void testIssue2886CypherFormatCreate245() {
+    public void testIssue2886CypherFormatUpdateAll() {
         final Map<String, Object> config = map("cypherFormat", "updateAll");
         String expected = String.format(EXPECTED_2886_UNWIND, "MERGE");
         issue2886Common(expected, config, true);

@@ -62,8 +62,8 @@ public class Rename {
 	@Description("apoc.refactor.rename.label(oldLabel, newLabel, [nodes]) | rename a label from 'oldLabel' to 'newLabel' for all nodes. If 'nodes' is provided renaming is applied to this set only")
 	public Stream<BatchAndTotalResultWithInfo> label(@Name("oldLabel") String oldLabel, @Name("newLabel") String newLabel, @Name(value = "nodes", defaultValue = "[]") List<Node> nodes) {
 		nodes = nodes.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
-		oldLabel = Util.sanitizeBackTicks(oldLabel);
-		newLabel = Util.sanitizeBackTicks(newLabel);
+		oldLabel = Util.sanitize(oldLabel);
+		newLabel = Util.sanitize(newLabel);
 		String cypherIterate = nodes != null && !nodes.isEmpty() ? "UNWIND $nodes AS n WITH n WHERE n:`"+oldLabel+"` RETURN n" : "MATCH (n:`"+oldLabel+"`) RETURN n";
         String cypherAction = "SET n:`"+newLabel+"` REMOVE n:`"+oldLabel+"`";
         Map<String, Object> parameters = MapUtil.map("batchSize", 100000, "parallel", true, "iterateList", true, "params", MapUtil.map("nodes", nodes));
@@ -80,8 +80,8 @@ public class Rename {
 													@Name(value = "rels", defaultValue = "[]") List<Relationship> rels,
 													@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 		rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
-		newType = Util.sanitizeBackTicks(newType);
-		oldType = Util.sanitizeBackTicks(oldType);
+		newType = Util.sanitize(newType);
+		oldType = Util.sanitize(oldType);
 		String cypherIterate = rels != null && ! rels.isEmpty() ?
 				"UNWIND $rels AS oldRel WITH oldRel WHERE type(oldRel)=\""+oldType+"\" RETURN oldRel,startNode(oldRel) as a,endNode(oldRel) as b" :
 				"MATCH (a)-[oldRel:`"+oldType+"`]->(b) RETURN oldRel,a,b";
@@ -121,8 +121,8 @@ public class Rename {
 															@Name(value="nodes", defaultValue = "[]") List<Node> nodes,
 															@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 		nodes = nodes.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
-		oldName = Util.sanitizeBackTicks(oldName);
-		newName = Util.sanitizeBackTicks(newName);
+		oldName = Util.sanitize(oldName);
+		newName = Util.sanitize(newName);
 		String cypherIterate = nodes != null && ! nodes.isEmpty() ? "UNWIND $nodes AS n WITH n WHERE n.`"+oldName+"` IS NOT NULL return n" : "match (n) where n.`"+oldName+"` IS NOT NULL return n";
 		String cypherAction = "set n.`"+newName+"`= n.`"+oldName+"` remove n.`"+oldName+"`";
 		final Map<String, Object> params = MapUtil.map("nodes", nodes);
@@ -140,8 +140,8 @@ public class Rename {
 															@Name(value="rels", defaultValue = "[]") List<Relationship> rels,
 															@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 		rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
-		newName = Util.sanitizeBackTicks(newName);
-		oldName = Util.sanitizeBackTicks(oldName);
+		newName = Util.sanitize(newName);
+		oldName = Util.sanitize(oldName);
 		String cypherIterate = rels != null && ! rels.isEmpty() ? "UNWIND $rels AS r WITH r WHERE r.`"+oldName+"` IS NOT NULL return r" : "match ()-[r]->() where r.`"+oldName+"` IS NOT NULL return r";
 		String cypherAction = "set r.`"+newName+"` = r.`"+oldName+"` remove r.`"+oldName+"`";
 		final Map<String, Object> params = MapUtil.map("rels", rels);
