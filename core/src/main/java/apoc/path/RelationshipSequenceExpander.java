@@ -2,7 +2,9 @@ package apoc.path;
 
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
+import apoc.util.collection.NestingResourceIterator;
 import apoc.util.collection.Pair;
+import apoc.util.collection.ResourceClosingIterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +17,6 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.traversal.BranchState;
-import org.neo4j.internal.helpers.collection.NestingResourceIterator;
-import org.neo4j.internal.helpers.collection.ResourceClosingIterator;
 
 /**
  * An expander for repeating sequences of relationships. The sequence provided should be a string consisting of
