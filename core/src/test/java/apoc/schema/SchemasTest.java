@@ -1,5 +1,6 @@
 package apoc.schema;
 
+import apoc.util.collection.Iterables;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -20,7 +21,6 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 

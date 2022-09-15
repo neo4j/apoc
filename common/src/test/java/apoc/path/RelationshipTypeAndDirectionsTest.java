@@ -11,10 +11,10 @@ import org.neo4j.graphdb.RelationshipType;
 
 import java.util.Arrays;
 
+import static apoc.util.collection.Iterables.iterable;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.graphdb.Direction.*;
 import static org.neo4j.graphdb.RelationshipType.withName;
-import static org.neo4j.internal.helpers.collection.Iterables.iterable;
 
 @RunWith(Parameterized.class)
 public class RelationshipTypeAndDirectionsTest {

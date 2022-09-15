@@ -2,12 +2,12 @@ package apoc.cypher;
 
 import apoc.ApocConfig;
 import apoc.util.Util;
+import apoc.util.collection.Iterators;
 import apoc.version.Version;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.database.DefaultDatabaseResolver;

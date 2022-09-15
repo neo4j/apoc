@@ -4,6 +4,7 @@ import apoc.convert.ConvertUtils;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -12,7 +13,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.event.LabelEntry;
 import org.neo4j.graphdb.event.PropertyEntry;
 import org.neo4j.graphdb.event.TransactionData;
-import org.neo4j.internal.helpers.collection.Iterables;
 
 import java.util.ArrayList;
 import java.util.Collections;

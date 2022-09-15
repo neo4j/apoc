@@ -2,6 +2,7 @@ package apoc.periodic;
 
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterators;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,7 +14,6 @@ import org.neo4j.graphdb.TransientTransactionFailureException;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.api.KernelTransactionHandle;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;

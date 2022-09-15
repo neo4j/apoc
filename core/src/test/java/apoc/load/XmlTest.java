@@ -2,6 +2,8 @@ package apoc.load;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterables;
+import apoc.util.collection.Iterators;
 import apoc.xml.XmlTestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -11,8 +13,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.internal.helpers.collection.Iterables;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 import org.xml.sax.SAXParseException;

@@ -1,16 +1,16 @@
 package org.neo4j.cypher.export;
 
+import static apoc.util.collection.Iterators.loop;
+
+import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
-import org.neo4j.internal.helpers.collection.Iterables;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import static org.neo4j.internal.helpers.collection.Iterators.loop;
 
 public class CypherResultSubGraph implements SubGraph
 {
@@ -34,7 +34,7 @@ public class CypherResultSubGraph implements SubGraph
     void addNode( long id, Node data )
     {
         nodes.put( id, data );
-        labels.addAll( Iterables.asCollection( data.getLabels() ) );
+        labels.addAll( Iterables.addAll( new ArrayList<>(), data.getLabels() ) );
     }
 
     public void add( Relationship rel )

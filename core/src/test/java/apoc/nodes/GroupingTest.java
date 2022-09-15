@@ -1,13 +1,13 @@
 package apoc.nodes;
 
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterators;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.driver.internal.util.Iterables;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 

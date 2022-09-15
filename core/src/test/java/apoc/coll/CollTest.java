@@ -14,11 +14,11 @@ import java.util.*;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.map;
+import static apoc.util.collection.Iterables.asSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
-import static org.neo4j.internal.helpers.collection.Iterables.asSet;
 
 public class CollTest {
 

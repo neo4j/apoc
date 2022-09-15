@@ -6,12 +6,12 @@ import apoc.graph.util.GraphsConfig;
 import apoc.result.RowResult;
 import apoc.result.VirtualGraph;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.procedure.*;
 
 import java.util.*;

@@ -1,13 +1,13 @@
 package apoc.result;
 
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 

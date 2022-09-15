@@ -2,6 +2,7 @@ package apoc.trigger;
 
 import apoc.ApocConfig;
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterators;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -10,7 +11,6 @@ import org.junit.rules.TemporaryFolder;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 
 import java.util.Collections;

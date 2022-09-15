@@ -2,6 +2,7 @@ package apoc.export.arrow;
 
 import apoc.meta.Types;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.neo4j.cypher.export.SubGraph;
@@ -11,8 +12,6 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.Iterables;
-
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;

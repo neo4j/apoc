@@ -5,6 +5,8 @@ import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
+import apoc.util.collection.Iterators;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -12,8 +14,6 @@ import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
-import org.neo4j.internal.helpers.collection.Iterables;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import static apoc.nodes.NodesConfig.MAX_DEPTH_KEY;
 import static apoc.nodes.NodesConfig.REL_TYPES_KEY;
 import static apoc.util.Util.map;
+import static apoc.util.collection.Iterators.asSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
@@ -36,7 +37,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.Label.label;
-import static org.neo4j.internal.helpers.collection.Iterators.asSet;
 
 /**
  * @author mh

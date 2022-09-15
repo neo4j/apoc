@@ -1,9 +1,9 @@
 package apoc.result;
 
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.*;
 import org.neo4j.internal.helpers.collection.FilteringIterable;
-import org.neo4j.internal.helpers.collection.Iterables;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;

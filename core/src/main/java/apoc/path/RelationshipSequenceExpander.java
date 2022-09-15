@@ -1,5 +1,7 @@
 package apoc.path;
 
+import apoc.util.collection.Iterables;
+import apoc.util.collection.Iterators;
 import apoc.util.collection.Pair;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,8 +15,6 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.traversal.BranchState;
-import org.neo4j.internal.helpers.collection.Iterables;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.internal.helpers.collection.NestingResourceIterator;
 import org.neo4j.internal.helpers.collection.ResourceClosingIterator;
 

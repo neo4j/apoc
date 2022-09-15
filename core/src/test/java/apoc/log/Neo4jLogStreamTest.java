@@ -1,12 +1,12 @@
 package apoc.log;
 
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterators;
 import org.junit.Before;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 
 import java.nio.file.Paths;

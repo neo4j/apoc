@@ -1,7 +1,7 @@
 package apoc.periodic;
 
+import apoc.util.collection.Iterators;
 import org.neo4j.common.DependencyResolver;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;

@@ -3,6 +3,7 @@ package apoc.export.arrow;
 import apoc.Pools;
 import apoc.export.util.ProgressReporter;
 import apoc.result.ProgressInfo;
+import apoc.util.collection.Iterables;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -10,7 +11,6 @@ import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.TerminationGuard;
 

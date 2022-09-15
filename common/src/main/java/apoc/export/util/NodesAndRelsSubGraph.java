@@ -1,5 +1,6 @@
 package apoc.export.util;
 
+import apoc.util.collection.Iterables;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -9,7 +10,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.internal.helpers.collection.Iterables;
 
 import java.util.ArrayList;
 import java.util.Collection;

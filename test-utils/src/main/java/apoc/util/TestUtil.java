@@ -1,5 +1,7 @@
 package apoc.util;
 
+import apoc.util.collection.Iterables;
+import apoc.util.collection.Iterators;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.hamcrest.Matcher;
@@ -8,8 +10,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Iterables;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 

@@ -6,12 +6,12 @@ import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportFormat;
 import apoc.export.util.Reporter;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
-import org.neo4j.internal.helpers.collection.Iterables;
 
 import java.io.PrintWriter;
 import java.util.*;

@@ -6,7 +6,6 @@ import apoc.result.NodeListResult;
 import apoc.result.NodeResult;
 import apoc.util.collection.Pair;
 import org.neo4j.graphdb.*;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -28,10 +27,10 @@ public class Neighbors {
     private Iterable<Relationship> getRelationshipsByTypeAndDirection(Node node, Pair<RelationshipType, Direction> typesAndDirection) {
         // as policy if both elements in the pair are null we return an empty result
         if (typesAndDirection.first() == null) {
-            return typesAndDirection.other() == null ? Iterables.empty() : node.getRelationships(typesAndDirection.other());
+            return typesAndDirection.other() == null ? Collections.emptyList() : node.getRelationships(typesAndDirection.other());
         }
         if (typesAndDirection.other() == null) {
-            return typesAndDirection.first() == null ? Iterables.empty() : node.getRelationships(typesAndDirection.first());
+            return typesAndDirection.first() == null ? Collections.emptyList() : node.getRelationships(typesAndDirection.first());
         }
         return node.getRelationships(typesAndDirection.other(), typesAndDirection.first());
     }
