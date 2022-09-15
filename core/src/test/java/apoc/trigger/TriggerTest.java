@@ -22,10 +22,10 @@ import java.util.concurrent.TimeUnit;
 
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
+import static apoc.util.MapUtil.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
-import static org.neo4j.internal.helpers.collection.MapUtil.map;
 
 /**
  * @author mh

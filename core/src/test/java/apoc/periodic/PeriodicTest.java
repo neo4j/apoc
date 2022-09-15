@@ -199,7 +199,7 @@ public class PeriodicTest {
                 "'unwind range(0,$totalNumberOfNodes) as i return i', " +
                 "'create (p:Person{name:\"person_\" + i})', " +
                 "{batchSize:$batchSizeCreate, parallel:true, params: {totalNumberOfNodes: $totalNumberOfNodes}})",
-                org.neo4j.internal.helpers.collection.MapUtil.map(
+                MapUtil.map(
                         "totalNumberOfNodes", totalNumberOfNodes,
                         "batchSizeCreate", batchSizeCreate
                 ));

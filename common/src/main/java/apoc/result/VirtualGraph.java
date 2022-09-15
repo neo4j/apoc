@@ -1,8 +1,8 @@
 package apoc.result;
 
+import apoc.util.MapUtil;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.internal.helpers.collection.MapUtil;
 
 import java.util.Collection;
 import java.util.Map;

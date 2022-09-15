@@ -3,8 +3,8 @@ package apoc.xml;
 import java.util.Arrays;
 import java.util.Map;
 
+import static apoc.util.MapUtil.map;
 import static java.util.Arrays.asList;
-import static org.neo4j.internal.helpers.collection.MapUtil.map;
 
 public class XmlTestUtils {
 
