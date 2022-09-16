@@ -47,7 +47,7 @@ public class TestContainerUtil {
     private TestContainerUtil() {}
 
     private static File baseDir = Paths.get("..").toFile();
-    private static File coreDir = new File(baseDir, "core");
+    private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
     private static File extendedDir = new File(baseDir, "extended");
 
     public static TestcontainersCausalCluster createEnterpriseCluster(List<ApocPackage> apocPackages, int numOfCoreInstances, int numberOfReadReplica, Map<String, Object> neo4jConfig, Map<String, String> envSettings) {
