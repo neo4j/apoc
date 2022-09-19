@@ -1,6 +1,0 @@
-¦Qualified Name¦Type¦Release
-|xref::overview/apoc.data/apoc.data.adoc[apoc.data.url icon:book[]]
-
-apoc.data.url('url') as {protocol,host,port,path,query,file,anchor,user} \| turn URL into map structure
-|label:function[]
-|label:apoc-core[]

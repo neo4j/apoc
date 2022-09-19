@@ -1,5 +1,0 @@
-¦signature
-¦apoc.load.json(urlOrKeyOrBinary :: ANY?, path =  :: STRING?, config = {} :: MAP?) :: (value :: MAP?)
-¦apoc.load.jsonArray(url :: STRING?, path =  :: STRING?, config = {} :: MAP?) :: (value :: ANY?)
-¦apoc.load.jsonParams(urlOrKeyOrBinary :: ANY?, headers :: MAP?, payload :: STRING?, path =  :: STRING?, config = {} :: MAP?) :: (value :: MAP?)
-¦apoc.load.xml(url :: STRING?, path = / :: STRING?, config = {} :: MAP?, simple = false :: BOOLEAN?) :: (value :: MAP?)

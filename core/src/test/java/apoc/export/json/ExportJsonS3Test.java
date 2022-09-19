@@ -29,7 +29,7 @@ public class ExportJsonS3Test {
     private static String S3_BUCKET_NAME = null;
 
     private static File directory = new File("target/import");
-    private static File directoryExpected = new File("../docs/asciidoc/modules/ROOT/examples/data/exportJSON");
+    private static File directoryExpected = new File("src/test/resources/exportJSON");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
