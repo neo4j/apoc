@@ -2,6 +2,7 @@ package apoc.util;
 
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matcher;
 import org.neo4j.exceptions.KernelException;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -16,6 +17,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -232,15 +234,22 @@ public class TestUtil {
     }
 
     public static void assertEventuallySilently(GraphDatabaseService db, String cypher, Map<String,Object> params, ResultTransformer<Boolean> resultTransformer) {
-        assertEventuallySilently(db, cypher, params, resultTransformer, 20L);
+        assertEventuallySilently(db, cypher, params, 20L, resultTransformer);
     }
-    public static void assertEventuallySilently(GraphDatabaseService db, String cypher, Map<String,Object> params, ResultTransformer<Boolean> resultTransformer, long timeout) {
+    public static void assertEventuallySilently(GraphDatabaseService db, String cypher, Map<String,Object> params, long timeout, ResultTransformer<Boolean> resultTransformer) {
+        assertEventuallySilently(db, cypher, params, SocketTimeoutException.class, timeout, resultTransformer);
+    }
+    
+    public static void assertEventuallySilently(GraphDatabaseService db, String cypher, Map<String,Object> params, Class<?> clazz, long timeout, ResultTransformer<Boolean> resultTransformer) {
         assertEventually(() -> {
             try {
                 return db.executeTransactionally(cypher, params, resultTransformer);
             } catch (Exception e) {
-                System.out.println("Exception during assertEventually execution" + e.getMessage());
-                return false;
+                if (clazz.isAssignableFrom(ExceptionUtils.getRootCause(e).getClass())) {
+                    System.out.println("Exception during assertEventually execution" + e.getMessage());
+                    return false;
+                }
+                throw e;
             }
         }, (value) -> value, timeout, TimeUnit.SECONDS);
     }
