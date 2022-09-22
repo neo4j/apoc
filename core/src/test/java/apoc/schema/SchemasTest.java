@@ -86,7 +86,7 @@ public class SchemasTest {
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
         assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat( r.get( "userDescription").toString() ).contains( "name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-1.0' )" );
+        Assertions.assertThat( r.get( "userDescription").toString() ).contains( "name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-2.0' )" );
 
         assertTrue(!result.hasNext());
     }
