@@ -113,7 +113,7 @@ public class CypherInitializerTest {
 
     @Test
     @Env({  // this only creates 2 nodes if the statements run in same order
-            @EnvSetting(key= APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME, value="create user dummy set password 'abc'")
+            @EnvSetting(key= APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME, value="create user dummy set password 'abcd1234'")
     })
     public void databaseSpecificInitializersForSystem() {
         GraphDatabaseService systemDb = dbmsRule.getManagementService().database(SYSTEM_DATABASE_NAME);
