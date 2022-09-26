@@ -1545,18 +1545,24 @@ public class ExportCypherTest {
                 "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n" +
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
         
-        static final String EXPECTED_2886_SCHEMA = "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);\n" +
-                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);\n" +
-                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;\n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;\n";
+        static final String EXPECTED_2886_SCHEMA = """
+                CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);
+                CREATE RANGE INDEX FOR (n:Foo) ON (n.name);
+                CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;
+                CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;
+                """;
 
-        static final String EXPECTED_2886_CLEANUP = "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;\n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;\n";
+        static final String EXPECTED_2886_CLEANUP = """
+                MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;
+                DROP CONSTRAINT UNIQUE_IMPORT_NAME;
+                """;
 
-        static final String EXPECTED_2886_UPDATE_STRUCTURE = "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row\n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})\n" +
-                "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})\n" +
-                "%1$s (start)-[r:WORKS_FOR]->(end) SET r += row.properties;\n";
+        static final String EXPECTED_2886_UPDATE_STRUCTURE = """
+                UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row
+                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
+                MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
+                %1$s (start)-[r:WORKS_FOR]->(end) SET r += row.properties;
+                """;
 
         static final String EXPECTED_2886_UNWIND = EXPECTED_2886_SCHEMA +
                 "UNWIND [{_id:4, properties:{}}, {_id:6, properties:{}}] AS row\n" +
@@ -1566,17 +1572,21 @@ public class ExportCypherTest {
                 EXPECTED_2886_UPDATE_STRUCTURE +
                 EXPECTED_2886_CLEANUP;
 
-        static final String EXPECTED_2886_ADD_STRUCTURE = "UNWIND [{_id:4, properties:{}}, {_id:6, properties:{}}] AS row\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Project;\n" +
-                "UNWIND [{_id:3, properties:{name:\"First\"}}, {_id:5, properties:{name:\"Second\"}}] AS row\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Person;\n" +
-                "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row\n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})\n" +
-                "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})\n" +
-                "CREATE (start)-[r:WORKS_FOR]->(end)  SET r += row.properties;\n";
+        static final String EXPECTED_2886_ADD_STRUCTURE = """
+                UNWIND [{_id:4, properties:{}}, {_id:6, properties:{}}] AS row
+                MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Project;
+                UNWIND [{_id:3, properties:{name:"First"}}, {_id:5, properties:{name:"Second"}}] AS row
+                MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Person;
+                UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row
+                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
+                MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
+                CREATE (start)-[r:WORKS_FOR]->(end)  SET r += row.properties;
+                """;
 
-        static final String EXPECTED_2886_RELS_WITHOUT_OPTIMIZATION = "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);\n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);\n";
+        static final String EXPECTED_2886_RELS_WITHOUT_OPTIMIZATION = """
+                MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);
+                MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);
+                """;
 
     }
 

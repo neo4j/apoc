@@ -113,7 +113,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 		result.append(CypherFormatterUtils.formatNodeLookup("n", node, uniqueConstraints, indexNames));
 		String notUniqueProperties = CypherFormatterUtils.formatNotUniqueProperties("n", node, uniqueConstraints, indexedProperties, false);
 		String notUniqueLabels = CypherFormatterUtils.formatNotUniqueLabels("n", node, uniqueConstraints);
-		if (!"".equals(notUniqueProperties) || !"".equals(notUniqueLabels)) {
+		if (!notUniqueProperties.isEmpty() || !notUniqueLabels.isEmpty()) {
 			result.append(cypherFormat.equals(CypherFormat.ADD_STRUCTURE) ? " ON CREATE SET " : " SET ");
 			result.append(notUniqueProperties);
 			result.append(!"".equals(notUniqueProperties) && !"".equals(notUniqueLabels) ? ", " : "");
