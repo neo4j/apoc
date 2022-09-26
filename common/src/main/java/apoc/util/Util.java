@@ -447,6 +447,10 @@ public class Util {
         return true;
     }
 
+    public static String toString(Object string) {
+        return string  == null ? null : string.toString();
+    }
+
     public static String encodeUrlComponent(String value) {
         try {
             return URLEncoder.encode(value,"UTF-8");

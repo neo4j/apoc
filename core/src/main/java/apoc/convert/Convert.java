@@ -41,21 +41,9 @@ public class Convert {
     }
 
     @UserFunction
-    @Description("apoc.convert.toString(value) | tries it's best to convert the value to a string")
-    public String toString(@Name("string") Object string) {
-        return string  == null ? null : string.toString();
-    }
-
-    @UserFunction
     @Description("apoc.convert.toList(value) | tries it's best to convert the value to a list")
     public List<Object> toList(@Name("list") Object list) {
         return ConvertUtils.convertToList(list);
-    }
-
-    @UserFunction
-    @Description("apoc.convert.toBoolean(value) | tries it's best to convert the value to a boolean")
-    public Boolean toBoolean(@Name("bool") Object bool) {
-        return Util.toBoolean(bool);
     }
 
     @UserFunction
@@ -86,10 +74,10 @@ public class Convert {
     		stream = (Stream<T>) convertedList.stream().map(Util::toDouble);
     		break;
     	case STRING:
-    		stream = (Stream<T>) convertedList.stream().map(this::toString);
+    		stream = (Stream<T>) convertedList.stream().map(Util::toString);
     		break;
     	case BOOLEAN:
-    		stream = (Stream<T>) convertedList.stream().map(this::toBoolean);
+    		stream = (Stream<T>) convertedList.stream().map(Util::toBoolean);
     		break;
     	case NODE:
     		stream = (Stream<T>) convertedList.stream().map(this::toNode);
@@ -110,27 +98,6 @@ public class Convert {
         List list = ConvertUtils.convertToList(value);
         return list == null ? null : new SetBackedList(new LinkedHashSet<>(list));
     }
-    
-	@UserFunction
-    @Description("apoc.convert.toIntList(value) | tries it's best to convert "
-    		+ "the value to a list of integers")
-    public List<Long> toIntList(@Name("list") Object list) {
-        return convertToList(list, Long.class);
-    }
-
-	@UserFunction
-	@Description("apoc.convert.toStringList(value) | tries it's best to convert "
-			+ "the value to a list of strings")
-	public List<String> toStringList(@Name("list") Object list) {
-        return convertToList(list, String.class);
-	}
-
-	@UserFunction
-	@Description("apoc.convert.toBooleanList(value) | tries it's best to convert "
-			+ "the value to a list of booleans")
-	public List<Boolean> toBooleanList(@Name("list") Object list) {
-        return convertToList(list, Boolean.class);
-	}
 
 	@UserFunction
 	@Description("apoc.convert.toNodeList(value) | tries it's best to convert "
@@ -145,86 +112,4 @@ public class Convert {
 	public List<Relationship> toRelationshipList(@Name("list") Object list) {
         return convertToList(list, Relationship.class);
 	}
-
-    @UserFunction
-    @Description("apoc.convert.toInteger(value) | tries it's best to convert the value to an integer")
-    public Long toInteger(@Name("object") Object obj) {
-        if (obj == null || obj.equals("")) {
-            return null;
-        }
-
-        Types varType = Types.of(obj);
-        switch (varType) {
-            case INTEGER:
-            case FLOAT:
-                return ((Number) obj).longValue();
-            case STRING:
-                return parseLongString((String)obj);
-            case BOOLEAN:
-                return ((boolean) obj) ? 1L : 0L;
-            default:
-                return null;
-        }
-    }
-
-    private Long parseLongString(String input) {
-        if (input.equalsIgnoreCase("true")) {
-            return 1L;
-        }
-        if (input.equalsIgnoreCase("false")) {
-            return 0L;
-        }
-        if (input.startsWith("0x")) {
-            return Long.valueOf(input.substring(2), 16);
-        }
-        try {
-            return Long.parseLong(input);
-        } catch (NumberFormatException nfe) {
-            try {
-                return (long)Double.parseDouble(input);
-            } catch(NumberFormatException nfe2) {
-                // String was not able to be parsed, return null
-                return null;
-            }
-        }
-    }
-
-    @UserFunction
-    @Description("apoc.convert.toFloat(value) | tries it's best to convert the value to a float")
-    public Double toFloat(@Name("object") Object obj) {
-        if (obj == null || obj.equals("")) {
-            return null;
-        }
-
-        Types varType = Types.of(obj);
-        switch (varType) {
-            case FLOAT:
-            case INTEGER:
-                return ((Number) obj).doubleValue();
-            case STRING:
-                return parseDoubleString((String)obj);
-            case BOOLEAN:
-                return ((boolean) obj) ? 1D : 0D;
-            default:
-                return null;
-        }
-    }
-
-
-    private Double parseDoubleString(String input) {
-        if (input.equalsIgnoreCase("true")) {
-            return 1D;
-        }
-        if (input.equalsIgnoreCase("false")) {
-            return 0D;
-        }
-        try {
-            if (input.startsWith("0x")) {
-                return (double)Long.parseLong(input.substring(2), 16);
-            }
-            return Double.parseDouble(input);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
-    }
 }
