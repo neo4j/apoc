@@ -53,6 +53,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
+import static org.junit.Assert.fail;
 
 public class ImportCsvTest {
     public static final String BASE_URL_FILES = "src/test/resources/csv-inputs";
@@ -236,7 +237,7 @@ public class ImportCsvTest {
     @Test
     public void issue2826WithImportCsv() {
         db.executeTransactionally("CREATE (n:Person {name: 'John'})");
-        db.executeTransactionally("CREATE CONSTRAINT unique_person ON (n:Person) ASSERT n.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT unique_person FOR (n:Person) REQUIRE n.name IS UNIQUE");
         try {
             TestUtil.testCall(db,
                     "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",

@@ -285,7 +285,7 @@ public class ExportGraphMLTest {
     @Test
     public void issue2797WithImportGraphMl() {
         db.executeTransactionally("CREATE (n:FOO {name: 'foo'})");
-        db.executeTransactionally("CREATE CONSTRAINT unique_foo ON (n:FOO) ASSERT n.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT unique_foo FOR (n:FOO) REQUIRE n.name IS UNIQUE");
         try {
             TestUtil.testCall(db,
                     "CALL apoc.import.graphml($file, {readLabels:true})",
