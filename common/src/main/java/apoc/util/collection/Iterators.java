@@ -112,7 +112,7 @@ public final class Iterators {
      * @return the {@code collection} which was passed in, now filled
      * with the items from {@code iterator}.
      */
-    public static <C extends Collection<T>, T> C addToCollection(Iterator<T> iterator, C collection) {
+    private static <C extends Collection<T>, T> C addToCollection(Iterator<T> iterator, C collection) {
         try {
             while (iterator.hasNext()) {
                 collection.add(iterator.next());
@@ -121,23 +121,6 @@ public final class Iterators {
         } finally {
             tryCloseResource(iterator);
         }
-    }
-
-    /**
-     * Convenience method for looping over an {@link Iterator}. Converts the
-     * {@link Iterator} to an {@link Iterable} by wrapping it in an
-     * {@link Iterable} that returns the {@link Iterator}. It breaks the
-     * contract of {@link Iterable} in that it returns the supplied iterator
-     * instance for each call to {@code iterator()} on the returned
-     * {@link Iterable} instance. This method exists to make it easy to use an
-     * {@link Iterator} in a for-loop.
-     *
-     * @param <T> the type of items in the iterator.
-     * @param iterator the iterator to expose as an {@link Iterable}.
-     * @return the supplied iterator posing as an {@link Iterable}.
-     */
-    public static <T> Iterable<T> loop(final Iterator<T> iterator) {
-        return () -> iterator;
     }
 
     /**

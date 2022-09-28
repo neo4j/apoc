@@ -573,7 +573,7 @@ public class Nodes {
     @Description("apoc.node.relationship.types(node, rel-direction-pattern) - returns a list of distinct relationship types")
     public List<String> relationshipTypes(@Name("node") Node node, @Name(value = "types",defaultValue = "") String types) {
         if (node==null) return null;
-        List<String> relTypes = Iterables.asList(Iterables.map(RelationshipType::name, node.getRelationshipTypes()));
+        List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).collect(Collectors.toList());
         if (types == null || types.isEmpty()) return relTypes;
         List<String> result = new ArrayList<>(relTypes.size());
         for (Pair<RelationshipType, Direction> p : parse(types)) {
@@ -608,7 +608,7 @@ public class Nodes {
     @Description("apoc.node.relationships.exist(node, rel-direction-pattern) - returns a map with rel-pattern, boolean for the given relationship patterns")
     public Map<String,Boolean> relationshipExists(@Name("node") Node node, @Name(value = "types", defaultValue = "") String types) {
         if (node == null || types == null || types.isEmpty()) return null;
-        List<String> relTypes = Iterables.asList(Iterables.map(RelationshipType::name, node.getRelationshipTypes()));
+        List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).toList();
         Map<String,Boolean> result =  new HashMap<>();
         for (Pair<RelationshipType, Direction> p : parse(types)) {
             String name = p.first().name();

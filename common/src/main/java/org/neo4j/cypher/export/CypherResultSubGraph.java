@@ -1,7 +1,5 @@
 package org.neo4j.cypher.export;
 
-import static apoc.util.collection.Iterators.loop;
-
 import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
@@ -34,7 +32,7 @@ public class CypherResultSubGraph implements SubGraph
     void addNode( long id, Node data )
     {
         nodes.put( id, data );
-        labels.addAll( Iterables.addAll( new ArrayList<>(), data.getLabels() ) );
+        labels.addAll( Iterables.asList( data.getLabels() ) );
     }
 
     public void add( Relationship rel )
@@ -52,14 +50,14 @@ public class CypherResultSubGraph implements SubGraph
     {
         final CypherResultSubGraph graph = new CypherResultSubGraph();
         final List<String> columns = result.columns();
-        for ( Map<String, Object> row : loop( result ) )
+        result.forEachRemaining( row ->
         {
             for ( String column : columns )
             {
                 final Object value = row.get( column );
                 graph.addToGraph( value );
             }
-        }
+        } );
         for ( IndexDefinition def : tx.schema().getIndexes() )
         {
             if ( def.isNodeIndex() && def.getIndexType() != IndexType.LOOKUP )

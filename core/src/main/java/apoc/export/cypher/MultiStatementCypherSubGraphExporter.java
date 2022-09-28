@@ -243,9 +243,9 @@ public class MultiStatementCypherSubGraphExporter {
                     Iterable<String> props = index.getPropertyKeys();
                     List<String> tokenNames;
                     if (isNodeIndex) {
-                        tokenNames = Iterables.asList(Iterables.map(Label::name, index.getLabels()));
+                        tokenNames = Iterables.stream(index.getLabels()).map(Label::name).collect(Collectors.toList());
                     } else {
-                        tokenNames = Iterables.asList(Iterables.map(RelationshipType::name, index.getRelationshipTypes()));
+                        tokenNames = Iterables.stream(index.getRelationshipTypes()).map(RelationshipType::name).collect(Collectors.toList());
                     }
 
                     boolean inGraph = tokensInGraph(tokenNames);

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Resource;
 import org.neo4j.graphdb.ResourceIterable;
@@ -52,10 +51,6 @@ public final class Iterables {
         }
 
         return collection;
-    }
-
-    public static <FROM, TO> Iterable<TO> map(Function<? super FROM, ? extends TO> function, Iterable<FROM> from) {
-        return new MapIterable<>(from, function);
     }
 
     @SafeVarargs

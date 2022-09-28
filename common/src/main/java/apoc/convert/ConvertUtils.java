@@ -1,5 +1,6 @@
 package apoc.convert;
 
+import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -18,8 +19,8 @@ public class ConvertUtils {
         if (list == null) return null;
         else if (list instanceof List) return (List) list;
         else if (list instanceof Collection) return new ArrayList((Collection)list);
-        else if (list instanceof Iterable) return Iterators.addToCollection(((Iterable)list).iterator(),(List)new ArrayList<>(100));
-        else if (list instanceof Iterator) return Iterators.addToCollection((Iterator)list,(List)new ArrayList<>(100));
+        else if (list instanceof Iterable) return Iterables.asList((Iterable)list);
+        else if (list instanceof Iterator) return Iterators.asList((Iterator)list);
         else if (list.getClass().isArray()) {
             final Object[] objectArray;
             if (list.getClass().getComponentType().isPrimitive()) {
