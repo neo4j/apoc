@@ -3,9 +3,9 @@ package apoc.periodic;
 import apoc.Pools;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
-import apoc.util.collection.Pair;
 import apoc.util.Util;
 import apoc.periodic.PeriodicUtils.JobInfo;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -263,8 +263,8 @@ public class Periodic {
 
         try (Result result = tx.execute(slottedRuntime(cypherIterate),params)) {
             Pair<String,Boolean> prepared = PeriodicUtils.prepareInnerStatement(cypherAction, batchMode, result.columns(), "_batch");
-            String innerStatement = applyPlanner(prepared.first(), Planner.valueOf((String) config.getOrDefault("planner", Planner.DEFAULT.name())));
-            boolean iterateList = prepared.other();
+            String innerStatement = applyPlanner(prepared.getLeft(), Planner.valueOf((String) config.getOrDefault("planner", Planner.DEFAULT.name())));
+            boolean iterateList = prepared.getRight();
             String periodicId = UUID.randomUUID().toString();
             if (log.isDebugEnabled()) {
             	log.debug("Starting periodic iterate from `%s` operation using iteration `%s` in separate thread with id: `%s`", cypherIterate,cypherAction, periodicId);

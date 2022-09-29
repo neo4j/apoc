@@ -1,9 +1,9 @@
 package apoc.periodic;
 
 import apoc.Pools;
-import apoc.util.collection.Pair;
 import apoc.util.Util;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Transaction;

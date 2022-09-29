@@ -12,8 +12,8 @@ import apoc.result.VirtualNode;
 import apoc.result.VirtualPath;
 import apoc.result.VirtualPathResult;
 import apoc.util.collection.Iterables;
-import apoc.util.collection.Pair;
 import apoc.util.Util;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphalgo.BasicEvaluationContext;
 import org.neo4j.graphalgo.GraphAlgoFactory;
 import org.neo4j.graphalgo.PathFinder;
@@ -183,8 +183,8 @@ public class Nodes {
             TokenRead tokenRead = ktx.tokenRead();
 
             for (Pair<RelationshipType, Direction> pair : parse(types)) {
-                int typeId = tokenRead.relationshipType(pair.first().name());
-                Direction direction = pair.other();
+                int typeId = tokenRead.relationshipType(pair.getLeft().name());
+                Direction direction = pair.getRight();
 
                 int count;
                 switch (direction) {
@@ -369,12 +369,12 @@ public class Nodes {
         int outIdx = Direction.OUTGOING.ordinal();
         int inIdx = Direction.INCOMING.ordinal();
         for (Pair<RelationshipType, Direction> pair : pairs) {
-            int type = ops.relationshipType(pair.first().name());
+            int type = ops.relationshipType(pair.getLeft().name());
             if (type == -1) continue;
-            if (pair.other() != Direction.INCOMING) {
+            if (pair.getRight() != Direction.INCOMING) {
                 result[outIdx][from++]= type;
             }
-            if (pair.other() != Direction.OUTGOING) {
+            if (pair.getRight() != Direction.OUTGOING) {
                 result[inIdx][to++]= type;
             }
         }
@@ -539,7 +539,7 @@ public class Nodes {
         if (types==null || types.isEmpty()) return node.getDegree();
         long degree = 0;
         for (Pair<RelationshipType, Direction> pair : parse(types)) {
-            degree += getDegreeSafe(node, pair.first(), pair.other());
+            degree += getDegreeSafe(node, pair.getLeft(), pair.getRight());
         }
         return degree;
     }
@@ -577,8 +577,8 @@ public class Nodes {
         if (types == null || types.isEmpty()) return relTypes;
         List<String> result = new ArrayList<>(relTypes.size());
         for (Pair<RelationshipType, Direction> p : parse(types)) {
-            String name = p.first().name();
-            if (relTypes.contains(name) && node.hasRelationship(p.other(),p.first())) {
+            String name = p.getLeft().name();
+            if (relTypes.contains(name) && node.hasRelationship(p.getRight(),p.getLeft())) {
                 result.add(name);
             }
         }
@@ -611,8 +611,8 @@ public class Nodes {
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).toList();
         Map<String,Boolean> result =  new HashMap<>();
         for (Pair<RelationshipType, Direction> p : parse(types)) {
-            String name = p.first().name();
-            boolean hasRelationship = relTypes.contains(name) && node.hasRelationship(p.other(), p.first());
+            String name = p.getLeft().name();
+            boolean hasRelationship = relTypes.contains(name) && node.hasRelationship(p.getRight(), p.getLeft());
             result.put(format(p), hasRelationship);
         }
         return result;

@@ -1,6 +1,6 @@
 package apoc.path;
 
-import apoc.util.collection.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
 
@@ -20,8 +20,8 @@ public abstract class RelationshipTypeAndDirections {
 	public static final char BACKTICK = '`';
 
     public static String format(Pair<RelationshipType, Direction> typeAndDirection) {
-        String type = typeAndDirection.first().name();
-        switch (typeAndDirection.other()) {
+        String type = typeAndDirection.getLeft().name();
+        switch (typeAndDirection.getRight()) {
             case OUTGOING:
                 return type + ">";
             case INCOMING:

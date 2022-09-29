@@ -1,9 +1,9 @@
 package apoc.coll;
 
 import apoc.result.ListResult;
-import apoc.util.collection.Pair;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.Combinations;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -853,12 +853,12 @@ public class Coll {
                 int a = 0;
                 for (Pair<String, Boolean> s : fields) {
                     if (a != 0) break;
-                    String name = s.first();
+                    String name = s.getLeft();
                     Comparable<Object> v1 = o1.get(name);
                     Comparable<Object> v2 = o2.get(name);
                     if (v1 != v2) {
                         int cmp = (v1 == null) ? -1 : (v2 == null) ? 1 : v1.compareTo(v2);
-                        a = (s.other()) ? cmp : -cmp;
+                        a = (s.getRight()) ? cmp : -cmp;
                     }
                 }
                 return a;

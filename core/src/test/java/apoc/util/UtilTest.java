@@ -1,6 +1,6 @@
 package apoc.util;
 
-import apoc.util.collection.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;

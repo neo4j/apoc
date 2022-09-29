@@ -8,11 +8,11 @@ import apoc.export.util.ExportConfig;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.collection.Iterators;
-import apoc.util.collection.Pair;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.api.iterator.LongIterator;
 import org.neo4j.logging.NullLog;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
@@ -963,11 +963,11 @@ public class Util {
 
     public static Node mergeNode(Transaction tx, Label primaryLabel, Label addtionalLabel,
                                  Pair<String, Object>... pairs) {
-        Node node = Iterators.singleOrNull(tx.findNodes(primaryLabel, pairs[0].first(), pairs[0].other()).stream()
+        Node node = Iterators.singleOrNull(tx.findNodes(primaryLabel, pairs[0].getLeft(), pairs[0].getRight()).stream()
                 .filter(n -> addtionalLabel == null || n.hasLabel(addtionalLabel))
                 .filter( n -> {
                     for (int i=1; i<pairs.length; i++) {
-                        if (!Objects.deepEquals(pairs[i].other(), n.getProperty(pairs[i].first(), null))) {
+                        if (!Objects.deepEquals(pairs[i].getRight(), n.getProperty(pairs[i].getLeft(), null))) {
                             return false;
                         }
                     }
@@ -980,7 +980,7 @@ public class Util {
                     new Label[]{primaryLabel, addtionalLabel};
             node = tx.createNode(labels);
             for (int i=0; i<pairs.length; i++) {
-                node.setProperty(pairs[i].first(), pairs[i].other());
+                node.setProperty(pairs[i].getLeft(), pairs[i].getRight());
             }
         }
         return node;

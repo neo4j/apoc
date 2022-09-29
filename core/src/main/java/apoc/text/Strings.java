@@ -1,8 +1,8 @@
 package apoc.text;
 
-import apoc.util.collection.Pair;
 import apoc.util.Util;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.HammingDistance;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -576,9 +576,9 @@ public class Strings {
             }
             return '{'+values.entrySet().stream()
                     .map((e)-> Pair.of(e.getKey(), toCypher(e.getValue(),config)))
-                    .filter((p)->p.other() != null)
-                    .sorted(Comparator.comparing(Pair::first))
-                    .map((p) -> quote(p.first())+":"+p.other())
+                    .filter((p)->p.getRight() != null)
+                    .sorted(Comparator.comparing(Pair::getLeft))
+                    .map((p) -> quote(p.getLeft())+":"+p.getRight())
                     .collect(Collectors.joining(","))+'}';
         }
         return null;

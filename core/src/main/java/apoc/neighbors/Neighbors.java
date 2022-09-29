@@ -4,7 +4,7 @@ import apoc.result.ListResult;
 import apoc.result.LongResult;
 import apoc.result.NodeListResult;
 import apoc.result.NodeResult;
-import apoc.util.collection.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -26,13 +26,13 @@ public class Neighbors {
 
     private Iterable<Relationship> getRelationshipsByTypeAndDirection(Node node, Pair<RelationshipType, Direction> typesAndDirection) {
         // as policy if both elements in the pair are null we return an empty result
-        if (typesAndDirection.first() == null) {
-            return typesAndDirection.other() == null ? Collections.emptyList() : node.getRelationships(typesAndDirection.other());
+        if (typesAndDirection.getLeft() == null) {
+            return typesAndDirection.getRight() == null ? Collections.emptyList() : node.getRelationships(typesAndDirection.getRight());
         }
-        if (typesAndDirection.other() == null) {
-            return typesAndDirection.first() == null ? Collections.emptyList() : node.getRelationships(typesAndDirection.first());
+        if (typesAndDirection.getRight() == null) {
+            return typesAndDirection.getLeft() == null ? Collections.emptyList() : node.getRelationships(typesAndDirection.getLeft());
         }
-        return node.getRelationships(typesAndDirection.other(), typesAndDirection.first());
+        return node.getRelationships(typesAndDirection.getRight(), typesAndDirection.getLeft());
     }
 
     @Procedure("apoc.neighbors.tohop")

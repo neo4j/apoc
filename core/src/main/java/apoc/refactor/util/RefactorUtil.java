@@ -1,6 +1,6 @@
 package apoc.refactor.util;
 
-import apoc.util.collection.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
 
 import java.util.List;

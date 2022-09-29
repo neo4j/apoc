@@ -2,9 +2,9 @@ package apoc.stats;
 
 import apoc.Pools;
 import apoc.path.RelationshipTypeAndDirections;
-import apoc.util.collection.Pair;
 import apoc.util.kernel.MultiThreadedGlobalGraphOperations;
 import org.HdrHistogram.AtomicHistogram;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.internal.kernel.api.CursorFactory;
@@ -119,10 +119,10 @@ public class DegreeDistribution {
         }
         List<Pair<RelationshipType, Direction>> pairs = RelationshipTypeAndDirections.parse(types);
         for (Pair<RelationshipType, Direction> pair : pairs) {
-            String typeName = pair.first() == null ? null : pair.first().name();
+            String typeName = pair.getLeft() == null ? null : pair.getLeft().name();
             int type = typeName == null ? ANY_RELATIONSHIP_TYPE : tokenRead.relationshipType(typeName);
             long total = read.countsForRelationship(ANY_LABEL, type, ANY_LABEL);
-            stats.add(new DegreeStats(typeName, type, pair.other(), total));
+            stats.add(new DegreeStats(typeName, type, pair.getRight(), total));
         }
         return stats;
     }

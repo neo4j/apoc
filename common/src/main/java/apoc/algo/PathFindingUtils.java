@@ -1,7 +1,7 @@
 package apoc.algo;
 
 import apoc.path.RelationshipTypeAndDirections;
-import apoc.util.collection.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphalgo.EstimateEvaluator;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -62,17 +62,17 @@ public class PathFindingUtils {
         PathExpanderBuilder builder = PathExpanderBuilder.empty();
         for (Pair<RelationshipType, Direction> pair : RelationshipTypeAndDirections
                 .parse(relationshipsAndDirections)) {
-            if (pair.first() == null) {
-                if (pair.other() == null) {
+            if (pair.getLeft() == null) {
+                if (pair.getRight() == null) {
                     builder = PathExpanderBuilder.allTypesAndDirections();
                 } else {
-                    builder = PathExpanderBuilder.allTypes(pair.other());
+                    builder = PathExpanderBuilder.allTypes(pair.getRight());
                 }
             } else {
-                if (pair.other() == null) {
-                    builder = builder.add(pair.first());
+                if (pair.getRight() == null) {
+                    builder = builder.add(pair.getLeft());
                 } else {
-                    builder = builder.add(pair.first(), pair.other());
+                    builder = builder.add(pair.getLeft(), pair.getRight());
                 }
             }
         }
