@@ -30,17 +30,21 @@ public class DateFormatUtil {
         map.put( "rfc_1123_date_time", DateTimeFormatter.RFC_1123_DATE_TIME );
         ISO_DATE_FORMAT = Collections.unmodifiableMap(map);
     }
+
     public static Map<String, String> ISO_DURATION_PATTERNS = new HashMap<>() {{
         //Static default formatters from Java ISO, excluding those with timezone 
         put("basic_iso_date", "yyyyMMdd");
-        put("iso_date", "yyyy-MM-dd");
         // the letter `I` is used to create nanoseconds in iso format, i.e. with trailing zeros. e.g. '123000' become '123'
-        put("iso_date_time", "yyyy-MM-dd'T'HH:mm:ssI");
-        put("iso_local_date", "yyyy-MM-dd");
-        put("iso_local_date_time", "yyyy-MM-dd'T'HH:mm:ssI");
-        put("iso_local_time", "HH:mm:ssI");
+        final String isoDateTime = "yyyy-MM-dd'T'HH:mm:ssI";
+        put("iso_date_time", isoDateTime);
+        put("iso_local_date_time", isoDateTime);
+        final String isoDate = "yyyy-MM-dd";
+        put("iso_date", isoDate);
+        put("iso_local_date", isoDate);
+        final String isoTime = "HH:mm:ssI";
+        put("iso_time", isoTime);
+        put("iso_local_time", isoTime);
         put("iso_ordinal_date", "yyyy-DDD"); 
-        put("iso_time", "HH:mm:ssI");
         put("iso_week_date", "YYYY-'W'ww-e");
     }};
 

@@ -7,11 +7,11 @@ import org.neo4j.values.storable.DurationValue;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 
 import static apoc.date.Date.*;
 import static apoc.util.DateFormatUtil.*;
-import static org.neo4j.values.storable.DurationFields.MONTHS;
+import static apoc.util.DurationFormatUtil.getDurationFormat;
+import static apoc.util.DurationFormatUtil.getOrCreateDurationPattern;
 
 public class TemporalProcedures
 {
@@ -67,23 +67,11 @@ public class TemporalProcedures
             @Name("input") Object input,
             @Name("format") String format
     ) {
-        
         DurationValue duration = ((DurationValue) input);
         
-        final long months = duration.get(MONTHS.name()).value();
-        if (months > 0) {
-            duration = duration
-                    .plus(-1, ChronoUnit.DAYS)
-                    .plus(-1, ChronoUnit.MONTHS);
-        }
-        
         try {
-            LocalDateTime midnight = LocalDateTime.of(0, 1, 1, 0, 0, 0, 0);
-            LocalDateTime newDuration = midnight.plus(duration);
-
-            DateTimeFormatter formatter = getOrCreate(format);
-
-            return newDuration.format(formatter);
+            String pattern = getOrCreateDurationPattern(format);
+            return getDurationFormat(duration, pattern);
         } catch (Exception e){
             throw new RuntimeException("Available formats are:\n" +
                 String.join("\n", getTypes()) +
