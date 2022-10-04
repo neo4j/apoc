@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     env:
       DOCKER_ENTERPRISE_DEV_URL: ${{ secrets.DOCKER_ENTERPRISE_DEV_URL }}
       DOCKER_COMMUNITY_DEV_URL: ${{ secrets.DOCKER_COMMUNITY_DEV_URL }}
@@ -17,8 +18,15 @@ jobs:
       TEAMCITY_PASSWORD: ${{ secrets.TEAMCITY_PASSWORD }}
       ENTERPRISE_TAR: enterprise-docker.tar
       COMMUNITY_TAR: community-docker.tar
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: java
 
       - name: Set up JDK 17
         uses: actions/setup-java@v2
@@ -43,6 +51,9 @@ jobs:
 
       - name: Build with Gradle
         run: chmod +x gradlew && ./gradlew build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
 
       - name: Clean neo4j artifacts
         if: always() # run this step even if previous step failed
