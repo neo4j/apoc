@@ -1,5 +1,6 @@
 package org.neo4j.cypher.export;
 
+import apoc.util.collection.Iterables;
 import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -7,7 +8,6 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.internal.kernel.api.TokenRead;
 
 import java.util.Collection;

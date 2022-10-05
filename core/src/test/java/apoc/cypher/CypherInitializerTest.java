@@ -6,6 +6,7 @@ import apoc.test.annotations.Env;
 import apoc.test.annotations.EnvSetting;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
+import apoc.util.collection.Iterators;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -14,7 +15,6 @@ import org.junit.rules.RuleChain;
 import java.util.Collections;
 
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.DbmsRule;

@@ -1,8 +1,13 @@
 package apoc.path;
 
+import apoc.util.collection.Iterables;
+import apoc.util.collection.Iterators;
+import apoc.util.collection.NestingResourceIterator;
+import apoc.util.collection.ResourceClosingIterator;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
@@ -12,11 +17,6 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.traversal.BranchState;
-import org.neo4j.internal.helpers.collection.Iterables;
-import org.neo4j.internal.helpers.collection.Iterators;
-import org.neo4j.internal.helpers.collection.NestingResourceIterator;
-import org.neo4j.internal.helpers.collection.Pair;
-import org.neo4j.internal.helpers.collection.ResourceClosingIterator;
 
 /**
  * An expander for repeating sequences of relationships. The sequence provided should be a string consisting of
@@ -93,8 +93,8 @@ public class RelationshipSequenceExpander implements PathExpander {
         return Iterables.asResourceIterable(Iterators.asList(new NestingResourceIterator<>(stepRels.iterator()) {
             @Override
             protected ResourceIterator<Relationship> createNestedIterator( Pair<RelationshipType,Direction> entry ) {
-                RelationshipType type = entry.first();
-                Direction dir = entry.other();
+                RelationshipType type = entry.getLeft();
+                Direction dir = entry.getRight();
 
                 ResourceIterable<Relationship> relationships1;
                 if ( type == null )

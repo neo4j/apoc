@@ -7,7 +7,9 @@ import apoc.result.VirtualGraph;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.MapUtil;
+import apoc.util.collection.Iterables;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.cypher.export.CypherResultSubGraph;
 import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
@@ -26,8 +28,6 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.internal.helpers.collection.Iterables;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -261,7 +261,7 @@ public class Meta {
                         })
                         .flatMap(pair -> transaction.findNodes(label)
                                 .map(node -> {
-                                    if (!visitedNodes.contains(node.getId()) && node.hasRelationship(pair.first(), RelationshipType.withName(pair.other()))) {
+                                    if (!visitedNodes.contains(node.getId()) && node.hasRelationship(pair.getLeft(), RelationshipType.withName(pair.getRight()))) {
                                         visitedNodes.add(node.getId());
                                         return 1L;
                                     } else {

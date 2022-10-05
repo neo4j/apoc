@@ -2,13 +2,13 @@ package apoc.text;
 
 import apoc.util.Util;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.HammingDistance;
 import org.apache.commons.text.similarity.JaroWinklerDistance;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Pair;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -576,9 +576,9 @@ public class Strings {
             }
             return '{'+values.entrySet().stream()
                     .map((e)-> Pair.of(e.getKey(), toCypher(e.getValue(),config)))
-                    .filter((p)->p.other() != null)
-                    .sorted(Comparator.comparing(Pair::first))
-                    .map((p) -> quote(p.first())+":"+p.other())
+                    .filter((p)->p.getRight() != null)
+                    .sorted(Comparator.comparing(Pair::getLeft))
+                    .map((p) -> quote(p.getLeft())+":"+p.getRight())
                     .collect(Collectors.joining(","))+'}';
         }
         return null;

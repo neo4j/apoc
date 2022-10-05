@@ -16,9 +16,9 @@ import java.util.stream.Collectors;
 
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.map;
+import static apoc.util.collection.Iterators.asSet;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.neo4j.internal.helpers.collection.Iterators.asSet;
 
 public class GraphAggregationTest {
 

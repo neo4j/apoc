@@ -2,6 +2,7 @@ package apoc.periodic;
 
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterators;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,7 +14,6 @@ import org.neo4j.graphdb.TransientTransactionFailureException;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.kernel.api.KernelTransactionHandle;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -199,7 +199,7 @@ public class PeriodicTest {
                 "'unwind range(0,$totalNumberOfNodes) as i return i', " +
                 "'create (p:Person{name:\"person_\" + i})', " +
                 "{batchSize:$batchSizeCreate, parallel:true, params: {totalNumberOfNodes: $totalNumberOfNodes}})",
-                org.neo4j.internal.helpers.collection.MapUtil.map(
+                MapUtil.map(
                         "totalNumberOfNodes", totalNumberOfNodes,
                         "batchSizeCreate", batchSizeCreate
                 ));

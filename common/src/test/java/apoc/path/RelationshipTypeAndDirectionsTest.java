@@ -1,5 +1,6 @@
 package apoc.path;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -7,14 +8,13 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.Pair;
 
 import java.util.Arrays;
 
+import static apoc.util.collection.Iterables.iterable;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.graphdb.Direction.*;
 import static org.neo4j.graphdb.RelationshipType.withName;
-import static org.neo4j.internal.helpers.collection.Iterables.iterable;
 
 @RunWith(Parameterized.class)
 public class RelationshipTypeAndDirectionsTest {

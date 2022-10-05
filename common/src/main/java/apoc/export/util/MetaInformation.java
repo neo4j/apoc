@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 
 import static apoc.gephi.GephiFormatUtils.getCaption;
 import static apoc.meta.tablesforlabels.PropertyTracker.typeMappings;
+import static apoc.util.collection.Iterables.stream;
 import static java.util.Arrays.asList;
-import static org.neo4j.internal.helpers.collection.Iterables.stream;
 
 /**
  * @author mh

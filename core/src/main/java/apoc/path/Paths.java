@@ -1,10 +1,10 @@
 package apoc.path;
 
+import apoc.util.collection.Iterables;
 import org.neo4j.graphalgo.impl.util.PathImpl;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;

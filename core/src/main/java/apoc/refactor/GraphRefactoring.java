@@ -8,10 +8,10 @@ import apoc.result.GraphResult;
 import apoc.result.NodeResult;
 import apoc.result.RelationshipResult;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.apache.commons.collections4.IterableUtils;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 

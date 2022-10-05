@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 import static apoc.util.MapUtil.map;
+import static apoc.util.collection.Iterators.asSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.neo4j.internal.helpers.collection.Iterators.asSet;
 
 /**
  * @author mh

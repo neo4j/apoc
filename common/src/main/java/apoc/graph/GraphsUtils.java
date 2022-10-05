@@ -1,12 +1,12 @@
 package apoc.graph;
 
+import apoc.util.collection.Iterables;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.internal.helpers.collection.Iterables;
 
 public class GraphsUtils {
     public static boolean extract(Object data, Set<Node> nodes, Set<Relationship> rels) {

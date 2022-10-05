@@ -2,10 +2,10 @@ package apoc.export.cypher.formatter;
 
 import apoc.export.util.FormatUtils;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.Value;
 import org.neo4j.values.storable.Values;

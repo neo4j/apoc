@@ -4,6 +4,7 @@ import apoc.graph.Graphs;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
@@ -19,7 +20,6 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Iterables;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
@@ -1601,7 +1601,7 @@ public class MetaTest {
         final String query = IOUtils.toString(new InputStreamReader(Thread.currentThread().getContextClassLoader().getResourceAsStream("movies.cypher")));
 
         db.executeTransactionally(query);
-        
+
         TestUtil.testResult( db, "CALL apoc.meta.relTypeProperties($config)",
                 Map.of("config", Map.of("includeRels", List.of("REVIEWED"))), r -> {
                     final Set<Map<String, Object>> actual = r.stream().collect(Collectors.toSet());

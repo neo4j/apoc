@@ -4,10 +4,10 @@ import apoc.graph.util.GraphsConfig;
 import apoc.result.VirtualGraph;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
+import apoc.util.MapUtil;
 import org.junit.Test;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.helpers.collection.MapUtil;
 
 import java.util.*;
 

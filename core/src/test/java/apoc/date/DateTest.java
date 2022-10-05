@@ -2,6 +2,7 @@ package apoc.date;
 
 import apoc.temporal.TemporalProcedures;
 import apoc.util.TestUtil;
+import apoc.util.collection.Iterators;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -10,7 +11,6 @@ import org.junit.rules.ExpectedException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
