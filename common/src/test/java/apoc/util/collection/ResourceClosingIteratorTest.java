@@ -2,6 +2,7 @@ package apoc.util.collection;
 
 import static apoc.util.collection.CollectionTestHelper.resourceIterator;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -31,8 +32,8 @@ public class ResourceClosingIteratorTest {
         ResourceIterator<Integer> iterator = ResourceClosingIterator.fromResourceIterable(iterable);
 
         // Then
-        assertThat( Iterators.asList(iterator)).containsExactlyElementsOf(items);
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertThat(Iterators.asList(iterator)).containsExactlyElementsOf(items);
+        assertTrue(iteratorClosed.booleanValue());
+        assertTrue(iterableClosed.booleanValue());
     }
 }

@@ -5,6 +5,7 @@ import static apoc.util.collection.ResourceClosingIterator.newResourceIterator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.junit.Test;
@@ -35,8 +36,8 @@ public class IterablesTest {
 
         // then
         assertThat(count).isEqualTo(subjects.size());
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertTrue(iteratorClosed.booleanValue());
+        assertTrue(iterableClosed.booleanValue());
     }
 
     @Test
@@ -60,8 +61,8 @@ public class IterablesTest {
         assertThatThrownBy(() -> Iterables.first(iterable));
 
         // then
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertTrue(iteratorClosed.booleanValue());
+        assertTrue(iterableClosed.booleanValue());
     }
 
     @Test
@@ -87,7 +88,7 @@ public class IterablesTest {
 
         // then
         assertThat(first).isEqualTo(1);
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertTrue(iteratorClosed.booleanValue());
+        assertTrue(iterableClosed.booleanValue());
     }
 }

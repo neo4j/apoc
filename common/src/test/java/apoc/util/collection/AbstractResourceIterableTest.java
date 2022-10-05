@@ -7,6 +7,8 @@ import static apoc.util.collection.ResourceClosingIterator.newResourceIterator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -51,8 +53,8 @@ public class AbstractResourceIterableTest {
 
         // Then
         assertThat( Iterators.asList(iterator)).containsExactlyElementsOf(items);
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isFalse();
+        assertTrue(iteratorClosed.booleanValue());
+        assertFalse(iterableClosed.booleanValue());
     }
 
     @Test
@@ -83,7 +85,7 @@ public class AbstractResourceIterableTest {
         iterable.close();
 
         // Then
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertTrue(iterableClosed.booleanValue());
         assertThat(iteratorCount.getValue()).isEqualTo(numberOfIterators);
         assertThat(iterators).containsOnlyOnceElementsOf(new HashSet<>(iterators));
     }
@@ -164,7 +166,7 @@ public class AbstractResourceIterableTest {
 
         // Then
         assertThatThrownBy(iterable::iterator);
-        assertThat(iteratorCreated.isTrue()).isFalse();
+        assertFalse(iteratorCreated.booleanValue());
     }
 
     @Test
@@ -191,9 +193,9 @@ public class AbstractResourceIterableTest {
         iterable.close();
 
         // Then
-        assertThat(iteratorCreated.isTrue()).isTrue();
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertTrue(iteratorCreated.booleanValue());
+        assertTrue(iteratorClosed.booleanValue());
+        assertTrue(iterableClosed.booleanValue());
     }
 
     @Test
@@ -230,8 +232,8 @@ public class AbstractResourceIterableTest {
             }
         });
         assertThat(emitted).isEqualTo(List.of(1));
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isTrue();
+        assertTrue(iteratorClosed.booleanValue());
+        assertTrue(iterableClosed.booleanValue());
     }
 
     @Test
@@ -262,8 +264,8 @@ public class AbstractResourceIterableTest {
 
         // Then
         assertThat(emitted).isEqualTo(items);
-        assertThat(iteratorClosed.isTrue()).isTrue();
-        assertThat(iterableClosed.isTrue()).isFalse();
+        assertTrue(iteratorClosed.booleanValue());
+        assertFalse(iterableClosed.booleanValue());
     }
 
     @Test
@@ -292,8 +294,8 @@ public class AbstractResourceIterableTest {
         }
 
         // Then
-        assertThat(iterableClosed.isTrue()).isTrue();
-        assertThat(iteratorClosed.isTrue()).isTrue();
+        assertTrue(iterableClosed.booleanValue());
+        assertTrue(iteratorClosed.booleanValue());
     }
 
     @Test
