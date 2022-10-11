@@ -61,6 +61,8 @@ public class CypherInitializer implements AvailabilityListener {
                     awaitApocProceduresRegistered();
                 }
 
+                // This code is running once per database.
+                // We only want to check compatibility once, so we do it when we are on the system database.
                 if (isSystemDatabase) {
                     try {
                         awaitDbmsComponentsProcedureRegistered();
