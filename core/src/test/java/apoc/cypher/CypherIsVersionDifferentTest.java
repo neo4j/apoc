@@ -17,6 +17,8 @@ public class CypherIsVersionDifferentTest {
         assertFalse(isVersionDifferent(List.of("3.5.12"), "3.5.0.9"));
         assertFalse(isVersionDifferent(List.of("3.5.12"), "3.5.1.9"));
         assertFalse(isVersionDifferent(List.of("4.4.5"), "4.4.0.4"));
+        assertFalse(isVersionDifferent(List.of("5.1.1"), "5.1.0"));
+        assertTrue(isVersionDifferent(List.of("5.1.0"), "5.2.0"));
 
         // we expect that APOC versioning is always consistent to Neo4j versioning
         assertTrue(isVersionDifferent(List.of(""), "5_2_0_1"));

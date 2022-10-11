@@ -10,7 +10,6 @@ import org.neo4j.common.DependencyResolver;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.availability.AvailabilityListener;
-import org.neo4j.kernel.database.DefaultDatabaseResolver;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
@@ -62,16 +61,18 @@ public class CypherInitializer implements AvailabilityListener {
                     awaitApocProceduresRegistered();
                 }
 
-                var defaultDb = dependencyResolver.resolveDependency(DefaultDatabaseResolver.class).defaultDatabase(null);
-                if (defaultDb.equals(db.databaseName())) {
+                // This code is running once per database.
+                // We only want to check compatibility once, so we do it when we are on the system database.
+                if (isSystemDatabase) {
                     try {
+                        awaitDbmsComponentsProcedureRegistered();
                         final List<String> versions = db.executeTransactionally("CALL dbms.components", Collections.emptyMap(),
                                 r -> (List<String>) r.next().get("versions"));
-                        final String apocFullVersion = Version.class.getPackage().getImplementationVersion();
-                        if (isVersionDifferent(versions, apocFullVersion)) {
+                        final String apocVersion = Version.class.getPackage().getImplementationVersion();
+                        if (isVersionDifferent(versions, apocVersion)) {
                             userLog.warn("The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n" +
-                                            "See the compatibility matrix in https://neo4j.com/labs/apoc/4.4/installation/ to see the correct version",
-                                    apocFullVersion, versions.toString());
+                                            "The two first numbers of both versions needs to be the same.",
+                                    apocVersion, versions.toString());
                         }
                     } catch (Exception ignored) {
                         userLog.info("Cannot check APOC version compatibility because of a transient error. Retrying your request at a later time may succeed");
@@ -130,14 +131,20 @@ public class CypherInitializer implements AvailabilityListener {
     }
 
     private void awaitApocProceduresRegistered() {
-        while (!areApocProceduresRegistered()) {
+        while (!areProceduresRegistered("apoc")) {
             Util.sleep(100);
         }
     }
 
-    private boolean areApocProceduresRegistered() {
+    private void awaitDbmsComponentsProcedureRegistered() {
+        while (!areProceduresRegistered("dbms.components")) {
+            Util.sleep(100);
+        }
+    }
+
+    private boolean areProceduresRegistered(String procStart) {
         try {
-            return procs.getAllProcedures().stream().anyMatch(signature -> signature.name().toString().startsWith("apoc"));
+            return procs.getAllProcedures().stream().anyMatch(signature -> signature.name().toString().startsWith(procStart));
         } catch (ConcurrentModificationException e) {
             // if a CME happens (possible during procedure scanning)
             // we return false and the caller will try again
