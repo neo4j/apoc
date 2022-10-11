@@ -22,7 +22,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static org.neo4j.graphdb.QueryExecutionType.QueryType.READ_ONLY;
+import static org.neo4j.graphdb.QueryExecutionType.QueryType.READ_WRITE;
+import static org.neo4j.graphdb.QueryExecutionType.QueryType.WRITE;
 import static apoc.periodic.PeriodicUtils.recordError;
+import static apoc.periodic.PeriodicUtils.submitJob;
+import static apoc.periodic.PeriodicUtils.submitProc;
+import static apoc.periodic.PeriodicUtils.wrapTask;
 import static apoc.util.Util.merge;
 
 public class Periodic {
@@ -156,16 +162,7 @@ public class Periodic {
     @Description("apoc.periodic.submit('name',statement,params) - submit a one-off background statement; parameter 'params' is optional and can contain query parameters for Cypher statement")
     public Stream<JobInfo> submit(@Name("name") String name, @Name("statement") String statement, @Name(value = "params", defaultValue = "{}") Map<String,Object> config) {
         validateQuery(statement);
-        Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
-        JobInfo info = submit(name, () -> {
-            try {
-                db.executeTransactionally(statement, params);
-            } catch(Exception e) {
-                log.warn("in background task via submit", e);
-                throw new RuntimeException(e);
-            }
-        }, log);
-        return Stream.of(info);
+        return submitProc(name, statement, config, db, log, pools);
     }
 
     @Procedure(mode = Mode.WRITE)
@@ -180,31 +177,19 @@ public class Periodic {
     }
 
     private void validateQuery(String statement) {
-        Util.validateQuery(db, statement);
+        Util.validateQuery(db, statement,
+                READ_ONLY, WRITE, READ_WRITE);
     }
 
     @Procedure(mode = Mode.WRITE)
     @Description("apoc.periodic.countdown('name',statement,repeat-rate-in-seconds) submit a repeatedly-called background statement until it returns 0")
     public Stream<JobInfo> countdown(@Name("name") String name, @Name("statement") String statement, @Name("rate") long rate) {
         validateQuery(statement);
-        JobInfo info = submit(name, new Countdown(name, statement, rate, log), log);
+        JobInfo info = submitJob(name, new Countdown(name, statement, rate, log), log, pools);
         info.rate = rate;
         return Stream.of(info);
     }
 
-    /**
-     * Call from a procedure that gets a <code>@Context GraphDatbaseAPI db;</code> injected and provide that db to the runnable.
-     */
-    public <T> JobInfo submit(String name, Runnable task, Log log) {
-        JobInfo info = new JobInfo(name);
-        Future<T> future = pools.getJobList().remove(info);
-        if (future != null && !future.isDone()) future.cancel(false);
-
-        Runnable wrappingTask = wrapTask(name, task, log);
-        Future newFuture = pools.getScheduledExecutorService().submit(wrappingTask);
-        pools.getJobList().put(info,newFuture);
-        return info;
-    }
 
     /**
      * Call from a procedure that gets a <code>@Context GraphDatbaseAPI db;</code> injected and provide that db to the runnable.
@@ -218,19 +203,6 @@ public class Periodic {
         ScheduledFuture<?> newFuture = pools.getScheduledExecutorService().scheduleWithFixedDelay(wrappingTask, delay, repeat, TimeUnit.SECONDS);
         pools.getJobList().put(info,newFuture);
         return info;
-    }
-
-    private static Runnable wrapTask(String name, Runnable task, Log log) {
-        return () -> {
-            log.debug("Executing task " + name);
-            try {
-                task.run();
-            } catch (Exception e) {
-                log.error("Error while executing task " + name + " because of the following exception (the task will be killed):", e);
-                throw e;
-            }
-            log.debug("Executed task " + name);
-        };
     }
 
     /**
@@ -325,7 +297,7 @@ public class Periodic {
         @Override
         public void run() {
             if (Periodic.this.executeNumericResultStatement(statement, Collections.emptyMap()) > 0) {
-                pools.getScheduledExecutorService().schedule(() -> submit(name, this, log), rate, TimeUnit.SECONDS);
+                pools.getScheduledExecutorService().schedule(() -> submitJob(name, this, log, pools), rate, TimeUnit.SECONDS);
             }
         }
     }
