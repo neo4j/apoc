@@ -9,9 +9,8 @@ public class ApocUrlStreamHandlerFactory extends URLStreamHandlerProvider
 {
 
     @Override
-    public URLStreamHandler createURLStreamHandler(String protocol) {
-        FileUtils.SupportedProtocols supportedProtocol = FileUtils.SupportedProtocols.of(protocol);
-        return supportedProtocol == null ? null : supportedProtocol.createURLStreamHandler();
+    public URLStreamHandler createURLStreamHandler( String protocol ) {
+        SupportedProtocols supportedProtocol = FileUtils.of( protocol );
+        return supportedProtocol == null ? null : FileUtils.createURLStreamHandler( supportedProtocol );
     }
-
 }

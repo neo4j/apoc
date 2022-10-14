@@ -409,9 +409,7 @@ public class Util {
     }
 
     private static StreamConnection getStreamConnection(String urlAddress, Map<String, Object> headers, String payload) throws IOException {
-        return FileUtils.SupportedProtocols
-                .from(urlAddress)
-                .getStreamConnection(urlAddress, headers, payload);
+        return FileUtils.getStreamConnection( FileUtils.from( urlAddress), urlAddress, headers, payload);
     }
 
     private static InputStream getFileStreamIntoCompressedFile(InputStream is, String fileName, ArchiveType archiveType) throws IOException {
