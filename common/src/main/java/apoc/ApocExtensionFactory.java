@@ -1,6 +1,5 @@
 package apoc;
 
-import apoc.util.ApocUrlStreamHandlerFactory;
 import org.neo4j.annotations.service.ServiceProvider;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -19,7 +18,6 @@ import org.neo4j.logging.internal.LogService;
 import org.neo4j.scheduler.JobScheduler;
 import org.neo4j.service.Services;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
