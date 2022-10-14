@@ -27,13 +27,14 @@ public class Graphs {
     @Context
     public Transaction tx;
 
-    @Description("apoc.graph.fromData([nodes],[relationships],'name',{properties}) | creates a virtual graph object for later processing")
-    @Procedure
-    public Stream<VirtualGraph> fromData(@Name("nodes") List<Node> nodes, @Name("relationships") List<Relationship> relationships, @Name("name") String name, @Name("properties") Map<String,Object> properties) {
+    @Procedure("apoc.graph.fromData")
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the given data.")
+    public Stream<VirtualGraph> fromData(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> relationships, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         return Stream.of(new VirtualGraph(name,nodes,relationships,properties));
     }
-    @Description("apoc.graph.from(data,'name',{properties}) | creates a virtual graph object for later processing it tries its best to extract the graph information from the data you pass in")
-    @Procedure
+
+    @Procedure("apoc.graph.from")
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the given data.")
     public Stream<VirtualGraph> from(@Name("data") Object data, @Name("name") String name, @Name("properties") Map<String,Object> properties) {
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(10000);
@@ -41,15 +42,15 @@ public class Graphs {
         return Stream.of(new VirtualGraph(name,nodes,rels,properties));
     }
 
-    @Description("apoc.graph.fromPath(path,'name',{properties}) - creates a virtual graph object for later processing")
-    @Procedure
-    public Stream<VirtualGraph> fromPath(@Name("path") Path paths, @Name("name") String name, @Name("properties") Map<String,Object> properties) {
+    @Procedure("apoc.graph.fromPath")
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given path.")
+    public Stream<VirtualGraph> fromPath(@Name("path") Path paths, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         return Stream.of(new VirtualGraph(name, paths.nodes(), paths.relationships(),properties));
     }
 
-    @Description("apoc.graph.fromPaths([paths],'name',{properties}) - creates a virtual graph object for later processing")
-    @Procedure
-    public Stream<VirtualGraph> fromPaths(@Name("paths") List<Path> paths, @Name("name") String name, @Name("properties") Map<String,Object> properties) {
+    @Procedure("apoc.graph.fromPaths")
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given paths.")
+    public Stream<VirtualGraph> fromPaths(@Name("paths") List<Path> paths, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         List<Node> nodes = new ArrayList<>(1000);
         List<Relationship> rels = new ArrayList<>(1000);
         for (Path path : paths) {
@@ -59,15 +60,15 @@ public class Graphs {
         return Stream.of(new VirtualGraph(name,nodes,rels,properties));
     }
 
-    @Description("apoc.graph.fromDB('name',{properties}) - creates a virtual graph object for later processing")
-    @Procedure
-    public Stream<VirtualGraph> fromDB(@Name("name") String name, @Name("properties") Map<String,Object> properties) {
+    @Procedure("apoc.graph.fromDB")
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given database.")
+    public Stream<VirtualGraph> fromDB(@Name("name") String name, @Name("props") Map<String,Object> properties) {
         return Stream.of(new VirtualGraph(name,tx.getAllNodes(),tx.getAllRelationships(),properties));
     }
 
-    @Description("apoc.graph.fromCypher('kernelTransaction',{params},'name',{properties}) - creates a virtual graph object for later processing")
-    @Procedure
-    public Stream<VirtualGraph> fromCypher(@Name("kernelTransaction") String statement,  @Name("params") Map<String,Object> params,@Name("name") String name,  @Name("properties") Map<String,Object> properties) {
+    @Procedure("apoc.graph.fromCypher")
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given Cypher statement.")
+    public Stream<VirtualGraph> fromCypher(@Name("statement") String statement,  @Name("params") Map<String,Object> params,@Name("name") String name,  @Name("props") Map<String,Object> properties) {
         params = params == null ? Collections.emptyMap() : params;
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(1000);
@@ -83,15 +84,15 @@ public class Graphs {
         return Stream.of(new VirtualGraph(name,nodes,rels,props));
     }
 
-    @Description("apoc.graph.fromDocument({json}, {config}) yield graph - transform JSON documents into graph structures")
-    @Procedure(mode = Mode.WRITE)
+    @Procedure(name = "apoc.graph.fromDocument", mode = Mode.WRITE)
+    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given JSON file.")
     public Stream<VirtualGraph> fromDocument(@Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) throws Exception {
         DocumentToGraph documentToGraph = new DocumentToGraph(tx, new GraphsConfig(config));
         return Stream.of(documentToGraph.create(document));
     }
 
-    @Description("apoc.graph.validateDocument({json}, {config}) yield row - validates the json, return the result of the validation")
-    @Procedure(mode = Mode.READ)
+    @Procedure(name = "apoc.graph.validateDocument", mode = Mode.READ)
+    @Description("Validates the JSON file and returns the result of the validation.")
     public Stream<RowResult> validateDocument(@Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         GraphsConfig graphConfig = new GraphsConfig(config);
         DocumentToGraph documentToGraph = new DocumentToGraph(tx, graphConfig);

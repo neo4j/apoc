@@ -36,14 +36,14 @@ public class CypherFunctions {
       }
     }
 
-    @UserFunction
-    @Description("apoc.cypher.runFirstColumnMany(statement, params) - executes statement with given parameters, returns first column only collected into a list, params are available as identifiers")
-    public List<Object> runFirstColumnMany(@Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+    @UserFunction("apoc.cypher.runFirstColumnMany")
+    @Description("Runs the given statement with the given parameters and returns the first column collected into a list.")
+    public List<Object> runFirstColumnMany(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return (List)runFirstColumn(statement, params, true);
     }
-    @UserFunction
-    @Description("apoc.cypher.runFirstColumnSingle(statement, params) - executes statement with given parameters, returns first element of the first column only, params are available as identifiers")
-    public Object runFirstColumnSingle(@Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+    @UserFunction("apoc.cypher.runFirstColumnSingle")
+    @Description("Runs the given statement with the given parameters and returns the first element of the first column.")
+    public Object runFirstColumnSingle(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return runFirstColumn(statement, params, false);
     }
 }

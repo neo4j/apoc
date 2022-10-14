@@ -32,9 +32,7 @@ public class Regression {
     }
 
     @Procedure(name = "apoc.math.regr", mode = Mode.READ)
-    @Description("apoc.math.regr(label, propertyY, propertyX) - It calculates the coefficient " +
-            "of determination (R-squared) for the values of propertyY and propertyX in the " +
-            "provided label")
+    @Description("Returns the coefficient of determination (R-squared) for the values of propertyY and propertyX in the given label.")
     public Stream<Output> regr(@Name("label") String label,
                                @Name("propertyY") String y, @Name("propertyX") String x) {
 

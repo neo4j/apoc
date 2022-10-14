@@ -24,13 +24,13 @@ public class PathFinding {
     @Context
     public Transaction tx;
 
-    @Procedure
-    @Description("apoc.algo.aStar(startNode, endNode, 'KNOWS|<WORKS_WITH|IS_MANAGER_OF>', 'distance','lat','lon') " +
-            "YIELD path, weight - run A* with relationship property name as cost function")
+    @Procedure("apoc.algo.aStar")
+    @Description("Runs the A* search algorithm to find the optimal path between two nodes, using the given " +
+            "relationship property name for the cost function.")
     public Stream<WeightedPathResult> aStar(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
-            @Name("relationshipTypesAndDirections") String relTypesAndDirs,
+            @Name("relTypesAndDirections") String relTypesAndDirs,
             @Name("weightPropertyName") String weightPropertyName,
             @Name("latPropertyName") String latPropertyName,
             @Name("lonPropertyName") String lonPropertyName) {
@@ -43,13 +43,14 @@ public class PathFinding {
         return WeightedPathResult.streamWeightedPathResult(startNode, endNode, algo);
     }
 
-    @Procedure
-    @Description("apoc.algo.aStarConfig(startNode, endNode, 'KNOWS|<WORKS_WITH|IS_MANAGER_OF>', {weight:'dist',default:10," +
-            "x:'lon',y:'lat', pointPropName:'point'}) YIELD path, weight - run A* with relationship property name as cost function")
+    @Procedure("apoc.algo.aStarConfig")
+    @Description("Runs the A* search algorithm to find the optimal path between two nodes, using the given " +
+            "relationship property name for the cost function.\n" +
+            "This procedure looks for weight, latitude and longitude properties in the config.")
     public Stream<WeightedPathResult> aStarConfig(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
-            @Name("relationshipTypesAndDirections") String relTypesAndDirs,
+            @Name("relTypesAndDirections") String relTypesAndDirs,
             @Name("config") Map<String, Object> config) {
 
         config = config == null ? Collections.emptyMap() : config;
@@ -72,13 +73,12 @@ public class PathFinding {
         return WeightedPathResult.streamWeightedPathResult(startNode, endNode, algo);
     }
 
-    @Procedure
-    @Description("apoc.algo.dijkstra(startNode, endNode, 'KNOWS|<WORKS_WITH|IS_MANAGER_OF>', 'distance', defaultValue, numberOfWantedResults) YIELD path," +
-            " weight - run dijkstra with relationship property name as cost function")
+    @Procedure("apoc.algo.dijkstra")
+    @Description("Runs Dijkstra's algorithm using the given relationship property as the cost function.")
     public Stream<WeightedPathResult> dijkstra(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
-            @Name("relationshipTypesAndDirections") String relTypesAndDirs,
+            @Name("relTypesAndDirections") String relTypesAndDirs,
             @Name("weightPropertyName") String weightPropertyName,
             @Name(value = "defaultWeight", defaultValue = "NaN") double defaultWeight,
             @Name(value = "numberOfWantedPaths", defaultValue = "1") long numberOfWantedPaths) {
@@ -91,13 +91,13 @@ public class PathFinding {
         return WeightedPathResult.streamWeightedPathResult(startNode, endNode, algo);
     }
 
-    @Procedure
-    @Description("apoc.algo.allSimplePaths(startNode, endNode, 'KNOWS|<WORKS_WITH|IS_MANAGER_OF>', 5) YIELD path, " +
-            "weight - run allSimplePaths with relationships given and maxNodes")
+    @Procedure("apoc.algo.allSimplePaths")
+    @Description("runs a search algorithm to find all of the simple paths between the given relationships, " +
+            "up to a max depth described by maxNodes.")
     public Stream<PathResult> allSimplePaths(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
-            @Name("relationshipTypesAndDirections") String relTypesAndDirs,
+            @Name("relTypesAndDirections") String relTypesAndDirs,
             @Name("maxNodes") long maxNodes) {
 
         PathFinder<Path> algo = GraphAlgoFactory.allSimplePaths(

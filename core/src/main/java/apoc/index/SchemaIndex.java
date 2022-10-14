@@ -51,14 +51,14 @@ public class SchemaIndex {
 
 
     @Procedure("apoc.schema.properties.distinct")
-    @Description("apoc.schema.properties.distinct(label, key) - quickly returns all distinct values for a given key")
+    @Description("Returns all distinct node property values for the given key.")
     public Stream<ListResult> distinct(@Name("label") String label, @Name("key")  String key) {
         List<Object> values = distinctCount(label, key).map(propertyValueCount -> propertyValueCount.value).collect(Collectors.toList());
         return Stream.of(new ListResult(values));
     }
 
     @Procedure("apoc.schema.properties.distinctCount")
-    @Description("apoc.schema.properties.distinctCount([label], [key]) YIELD label, key, value, count - quickly returns all distinct values and counts for a given key")
+    @Description("Returns all distinct property values and counts for the given key.")
     public Stream<PropertyValueCount> distinctCount(@Name(value = "label", defaultValue = "") String labelName, @Name(value = "key", defaultValue = "") String keyName) {
 
         BlockingQueue<PropertyValueCount> queue = new LinkedBlockingDeque<>(100);

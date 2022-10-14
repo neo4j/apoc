@@ -63,9 +63,9 @@ public class Cypher {
     @Context
     public Pools pools;
 
-    @Procedure
-    @Description("apoc.cypher.run(fragment, params) yield value - executes reading fragment with the given parameters - currently no schema operations")
-    public Stream<MapResult> run(@Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+    @Procedure("apoc.cypher.run")
+    @Description("Runs a dynamically constructed read-only string with the given parameters.")
+    public Stream<MapResult> run(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return runCypherQuery(tx, statement, params);
     }
 
@@ -141,9 +141,9 @@ public class Cypher {
         }
     }
 
-    @Procedure(mode = WRITE)
-    @Description("apoc.cypher.runMany('cypher;\\nstatements;', $params, [{statistics:true,timeout:10}]) - runs each semicolon separated statement and returns summary - currently no schema operations")
-    public Stream<RowResult> runMany(@Name("cypher") String cypher, @Name("params") Map<String,Object> params, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
+    @Procedure(name = "apoc.cypher.runMany", mode = WRITE)
+    @Description("Runs each semicolon separated statement and returns a summary of the statement outcomes.")
+    public Stream<RowResult> runMany(@Name("statement") String cypher, @Name("params") Map<String,Object> params, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         boolean addStatistics = Util.toBoolean(config.getOrDefault("statistics",true));
         int timeout = Util.toInteger(config.getOrDefault("timeout",1));
         int queueCapacity = Util.toInteger(config.getOrDefault("queueCapacity",100));
@@ -152,9 +152,9 @@ public class Cypher {
         return runManyStatements(stringReader ,params, false, addStatistics, timeout, queueCapacity);
     }
 
-    @Procedure(mode = READ)
-    @Description("apoc.cypher.runManyReadOnly('cypher;\\nstatements;', $params, [{statistics:true,timeout:10}]) - runs each semicolon separated, read-only statement and returns summary - currently no schema operations")
-    public Stream<RowResult> runManyReadOnly(@Name("cypher") String cypher, @Name("params") Map<String,Object> params, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
+    @Procedure(name = "apoc.cypher.runManyReadOnly", mode = READ)
+    @Description("Runs each semicolon separated read-only statement and returns a summary of the statement outcomes.")
+    public Stream<RowResult> runManyReadOnly(@Name("statement") String cypher, @Name("params") Map<String,Object> params, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         return runMany(cypher, params, config);
     }
 
@@ -230,26 +230,26 @@ public class Cypher {
         }
     }
 
-    @Procedure(mode = WRITE)
-    @Description("apoc.cypher.doIt(fragment, params) yield value - executes writing fragment with the given parameters")
-    public Stream<MapResult> doIt(@Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+    @Procedure(name = "apoc.cypher.doIt", mode = WRITE)
+    @Description("Runs a dynamically constructed string with the given parameters.")
+    public Stream<MapResult> doIt(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return runCypherQuery(tx, statement, params);
     }
 
-    @Procedure(mode = WRITE)
-    @Description("apoc.cypher.runWrite(statement, params) yield value - alias for apoc.cypher.doIt")
-    public Stream<MapResult> runWrite(@Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+    @Procedure(name = "apoc.cypher.runWrite", mode = WRITE)
+    @Description("Alias for `apoc.cypher.doIt`.")
+    public Stream<MapResult> runWrite(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return doIt(statement, params);
     }
 
-    @Procedure(mode = SCHEMA)
-    @Description("apoc.cypher.runSchema(statement, params) yield value - executes query schema statement with the given parameters")
-    public Stream<MapResult> runSchema(@Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+    @Procedure(name = "apoc.cypher.runSchema", mode = SCHEMA)
+    @Description("Runs the given query schema statement with the given parameters.")
+    public Stream<MapResult> runSchema(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return runCypherQuery(tx, statement, params);
     }
 
     @Procedure("apoc.when")
-    @Description("apoc.when(condition, ifQuery, elseQuery:'', params:{}) yield value - based on the conditional, executes read-only ifQuery or elseQuery with the given parameters")
+    @Description("This procedure will run the read-only ifQuery if the conditional has evaluated to true, otherwise the elseQuery will run.")
     public Stream<MapResult> when(@Name("condition") boolean condition, @Name("ifQuery") String ifQuery, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         if (params == null) params = Collections.emptyMap();
         String targetQuery = condition ? ifQuery : elseQuery;
@@ -262,13 +262,13 @@ public class Cypher {
     }
 
     @Procedure(value="apoc.do.when", mode = Mode.WRITE)
-    @Description("apoc.do.when(condition, ifQuery, elseQuery:'', params:{}) yield value - based on the conditional, executes writing ifQuery or elseQuery with the given parameters")
+    @Description("Runs the given read/write ifQuery if the conditional has evaluated to true, otherwise the elseQuery will run.")
     public Stream<MapResult> doWhen(@Name("condition") boolean condition, @Name("ifQuery") String ifQuery, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         return when(condition, ifQuery, elseQuery, params);
     }
 
     @Procedure("apoc.case")
-    @Description("apoc.case([condition, query, condition, query, ...], elseQuery:'', params:{}) yield value - given a list of conditional / read-only query pairs, executes the query associated with the first conditional evaluating to true (or the else query if none are true) with the given parameters")
+    @Description("For each pair of conditional and read-only queries in the given list, this procedure will run the first query for which the conditional is evaluated to true.")
     public Stream<MapResult> whenCase(@Name("conditionals") List<Object> conditionals, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         if (params == null) params = Collections.emptyMap();
 
@@ -294,8 +294,8 @@ public class Cypher {
         }
     }
 
-    @Procedure(value="apoc.do.case", mode = Mode.WRITE)
-    @Description("apoc.do.case([condition, query, condition, query, ...], elseQuery:'', params:{}) yield value - given a list of conditional / writing query pairs, executes the query associated with the first conditional evaluating to true (or the else query if none are true) with the given parameters")
+    @Procedure(name="apoc.do.case", mode = Mode.WRITE)
+    @Description("For each pair of conditional queries in the given list, this procedure will run the first query for which the conditional is evaluated to true.")
     public Stream<MapResult> doWhenCase(@Name("conditionals") List<Object> conditionals, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         return whenCase(conditionals, elseQuery, params);
     }

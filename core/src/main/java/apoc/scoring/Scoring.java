@@ -5,16 +5,16 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
 
 public class Scoring {
-    @UserFunction
-    @Description("apoc.scoring.existence(5, true) returns the provided score if true, 0 if false")
+    @UserFunction("apoc.scoring.existence")
+    @Description("Returns the given score if true, 0 if false.")
     public double existence(
             final @Name("score") long score,
             final @Name("exists") boolean exists) {
         return (double) (exists ? score : 0);
     }
 
-    @UserFunction
-    @Description("apoc.scoring.pareto(10, 20, 100, 11) applies a Pareto scoring function over the inputs")
+    @UserFunction("apoc.scoring.pareto")
+    @Description("Applies a Pareto scoring function over the given integers.")
     public double pareto(
             final @Name("minimumThreshold") long minimumThreshold,
             final @Name("eightyPercentValue") long eightyPercentValue,

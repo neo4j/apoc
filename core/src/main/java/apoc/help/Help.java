@@ -40,7 +40,7 @@ public class Help {
     }
 
     @Procedure("apoc.help")
-    @Description("Provides descriptions of available procedures. To narrow the results, supply a search string. To also search in the description text, append + to the end of the search string.")
+    @Description("Returns descriptions of the available APOC procedures and functions.")
     public Stream<HelpResult> info(@Name("proc") String name) throws Exception {
         boolean searchText = false;
         if (name != null) {

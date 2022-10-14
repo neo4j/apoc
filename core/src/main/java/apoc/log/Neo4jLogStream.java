@@ -39,8 +39,9 @@ public class Neo4jLogStream {
     }
 
     @Admin
-    @Procedure(mode=Mode.DBMS)
-    @Description( "apoc.log.stream('neo4j.log', { last: n }) - retrieve log file contents, optionally return only the last n lines" )
+    @Procedure(name = "apoc.log.stream", mode = Mode.DBMS)
+    @Description("Returns the file contents from the given log, optionally returning only the last n lines.\n" +
+            "This procedure requires users to have an admin role.")
     public Stream<FileEntry> stream(
             @Name("path") String logName,
             @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {

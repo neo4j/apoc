@@ -35,8 +35,9 @@ public class Atomic {
     /**
      * increment a property's value
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.atomic.add(node/relatonship,propertyName,number) Sums the property's value with the 'number' value ")
+    @Procedure(name= "apoc.atomic.add", mode = Mode.WRITE)
+    @Description("Sets the given property to the sum of itself and the number value.\n" +
+            "The procedure then sets the property to the returned sum.")
     public Stream<AtomicResults> add(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "times", defaultValue = "5") Long times) {
         checkIsEntity(container);
         final Number[] newValue = new Number[1];
@@ -57,8 +58,9 @@ public class Atomic {
     /**
      * decrement a property's value
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.atomic.subtract(node/relatonship,propertyName,number) Subtracts the 'number' value to the property's value")
+    @Procedure(name = "apoc.atomic.subtract", mode = Mode.WRITE)
+    @Description("Sets the property of a value to itself minus the given number value.\n" +
+            "The procedure then sets the property to the returned sum.")
     public Stream<AtomicResults> subtract(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "times", defaultValue = "5") Long times) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
@@ -79,8 +81,9 @@ public class Atomic {
     /**
      * concat a property's value
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.atomic.concat(node/relatonship,propertyName,string) Concats the property's value with the 'string' value")
+    @Procedure(name = "apoc.atomic.concat", mode = Mode.WRITE)
+    @Description("Sets the given property to the concatenation of itself and the string value.\n" +
+            "The procedure then sets the property to the returned string.")
     public Stream<AtomicResults> concat(@Name("container") Object container, @Name("propertyName") String property, @Name("string") String string, @Name(value = "times", defaultValue = "5") Long times) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
@@ -102,8 +105,9 @@ public class Atomic {
     /**
      * insert a value into an array property value
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.atomic.insert(node/relatonship,propertyName,position,value) insert a value into the property's array value at 'position'")
+    @Procedure(name = "apoc.atomic.insert", mode = Mode.WRITE)
+    @Description("Inserts a value at position into the array value of a property.\n" +
+            "The procedure then sets the result back on the property.")
     public Stream<AtomicResults> insert(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name("value") Object value, @Name(value = "times", defaultValue = "5") Long times) throws ClassNotFoundException {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
@@ -137,8 +141,9 @@ public class Atomic {
     /**
      * remove a value into an array property value
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.atomic.remove(node/relatonship,propertyName,position) remove the element at position 'position'")
+    @Procedure(name = "apoc.atomic.remove", mode = Mode.WRITE)
+    @Description("Removes the element at position from the array value of a property.\n" +
+            "The procedure then sets the property to the resulting array value.")
     public Stream<AtomicResults> remove(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name(value = "times", defaultValue = "5") Long times) throws ClassNotFoundException {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
@@ -174,8 +179,8 @@ public class Atomic {
     /**
      * update the property's value
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.atomic.update(node/relatonship,propertyName,updateOperation) update a property's value with a cypher operation (ex. \"n.prop1+n.prop2\")")
+    @Procedure(name = "apoc.atomic.update", mode = Mode.WRITE)
+    @Description("Updates the value of a property with a Cypher operation.")
     public Stream<AtomicResults> update(@Name("container") Object nodeOrRelationship, @Name("propertyName") String property, @Name("operation") String operation, @Name(value = "times", defaultValue = "5") Long times)  {
         checkIsEntity(nodeOrRelationship);
         Entity entity = Util.rebind(tx, (Entity) nodeOrRelationship);

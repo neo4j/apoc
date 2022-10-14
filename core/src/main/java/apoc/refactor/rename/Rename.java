@@ -58,8 +58,9 @@ public class Rename {
     /**
 	 * Rename the Label of a node by creating a new one and deleting the old.
 	 */
-	@Procedure(mode = Mode.WRITE)
-	@Description("apoc.refactor.rename.label(oldLabel, newLabel, [nodes]) | rename a label from 'oldLabel' to 'newLabel' for all nodes. If 'nodes' is provided renaming is applied to this set only")
+	@Procedure(name = "apoc.refactor.rename.label", mode = Mode.WRITE)
+	@Description("Renames the given label from 'oldLabel' to 'newLabel' for all nodes.\n" +
+			"If a list of nodes is provided, the renaming is applied to the nodes within this list only.")
 	public Stream<BatchAndTotalResultWithInfo> label(@Name("oldLabel") String oldLabel, @Name("newLabel") String newLabel, @Name(value = "nodes", defaultValue = "[]") List<Node> nodes) {
 		nodes = nodes.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
 		oldLabel = Util.sanitize(oldLabel);
@@ -73,8 +74,9 @@ public class Rename {
     /**
 	 * Rename the Relationship Type by creating a new one and deleting the old.
 	 */
-	@Procedure(mode = Mode.WRITE)
-	@Description("apoc.refactor.rename.type(oldType, newType, [rels], {config}) | rename all relationships with type 'oldType' to 'newType'. If 'rels' is provided renaming is applied to this set only")
+	@Procedure(name = "apoc.refactor.rename.type", mode = Mode.WRITE)
+	@Description("Renames all relationships with type 'oldType' to 'newType'.\n" +
+			"If a list of relationships is provided, the renaming is applied to the relationships within this list only.")
 	public Stream<BatchAndTotalResultWithInfo> type(@Name("oldType") String oldType,
 													@Name("newType") String newType,
 													@Name(value = "rels", defaultValue = "[]") List<Relationship> rels,
@@ -114,8 +116,9 @@ public class Rename {
 	/**
 	 * Rename property of a node by creating a new one and deleting the old.
 	 */
-	@Procedure(mode = Mode.WRITE)
-	@Description("apoc.refactor.rename.nodeProperty(oldName, newName, [nodes], {config}) | rename all node's property from 'oldName' to 'newName'. If 'nodes' is provided renaming is applied to this set only")
+	@Procedure(name = "apoc.refactor.rename.nodeProperty", mode = Mode.WRITE)
+	@Description("Renames the given property from 'oldName' to 'newName' for all nodes.\n" +
+			"If a list of nodes is provided, the renaming is applied to the nodes within this list only.")
 	public Stream<BatchAndTotalResultWithInfo> nodeProperty(@Name("oldName") String oldName,
 															@Name("newName") String newName,
 															@Name(value="nodes", defaultValue = "[]") List<Node> nodes,
@@ -133,8 +136,9 @@ public class Rename {
 	/**
 	 * Rename property of a relationship by creating a new one and deleting the old.
 	 */
-	@Procedure(mode = Mode.WRITE)
-	@Description("apoc.refactor.rename.typeProperty(oldName, newName, [rels], {config}) | rename all relationship's property from 'oldName' to 'newName'. If 'rels' is provided renaming is applied to this set only")
+	@Procedure(name = "apoc.refactor.rename.typeProperty", mode = Mode.WRITE)
+	@Description("Renames the given property from 'oldName' to 'newName' for all relationships.\n" +
+			"If a list of relationships is provided, the renaming is applied to the relationships within this list only.")
 	public Stream<BatchAndTotalResultWithInfo> typeProperty(@Name("oldName") String oldName,
 															@Name("newName") String newName,
 															@Name(value="rels", defaultValue = "[]") List<Relationship> rels,

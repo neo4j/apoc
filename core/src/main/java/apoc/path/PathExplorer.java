@@ -34,27 +34,26 @@ public class PathExplorer {
     public Log log;
 
 	@Procedure("apoc.path.expand")
-	@Description("apoc.path.expand(startNode <id>|Node|list, 'TYPE|TYPE_OUT>|<TYPE_IN', '+YesLabel|-NoLabel', minLevel, maxLevel ) yield path - expand from start node following the given relationships from min to max-level adhering to the label filters")
-	public Stream<PathResult> explorePath(@Name("start") Object start
-			                   , @Name("relationshipFilter") String pathFilter
+	@Description("Returns paths expanded from the start node following the given relationship types from min-depth to max-depth.")
+	public Stream<PathResult> explorePath(@Name("startNode") Object start
+			                   , @Name("relFilter") String pathFilter
 			                   , @Name("labelFilter") String labelFilter
-			                   , @Name("minLevel") long minLevel
-			                   , @Name("maxLevel") long maxLevel ) throws Exception {
+			                   , @Name("minDepth") long minLevel
+			                   , @Name("maxDepth") long maxLevel ) throws Exception {
 		List<Node> nodes = startToNodes(start);
 		return explorePathPrivate(nodes, pathFilter, labelFilter, minLevel, maxLevel, BFS, UNIQUENESS, false, -1, null, null, true).map( PathResult::new );
 	}
 
 	//
 	@Procedure("apoc.path.expandConfig")
-	@Description("apoc.path.expandConfig(startNode <id>|Node|list, {minLevel,maxLevel,uniqueness,relationshipFilter,labelFilter,uniqueness:'RELATIONSHIP_PATH',bfs:true, filterStartNode:false, limit:-1, optional:false, endNodes:[], terminatorNodes:[], sequence, beginSequenceAtStart:true}) yield path - " +
-			"expand from start node following the given relationships from min to max-level adhering to the label filters. ")
-	public Stream<PathResult> expandConfig(@Name("start") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	@Description("Returns paths expanded from the start node the given relationship types from min-depth to max-depth.")
+	public Stream<PathResult> expandConfig(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		return expandConfigPrivate(start, config).map( PathResult::new );
 	}
 
 	@Procedure("apoc.path.subgraphNodes")
-	@Description("apoc.path.subgraphNodes(startNode <id>|Node|list, {maxLevel,relationshipFilter,labelFilter,bfs:true, filterStartNode:false, limit:-1, optional:false, endNodes:[], terminatorNodes:[], sequence, beginSequenceAtStart:true}) yield node - expand the subgraph nodes reachable from start node following relationships to max-level adhering to the label filters")
-	public Stream<NodeResult> subgraphNodes(@Name("start") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	@Description("Returns the nodes in the sub-graph reachable from the start node following the given relationship types to max-depth.")
+	public Stream<NodeResult> subgraphNodes(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.put("uniqueness", "NODE_GLOBAL");
 
@@ -66,8 +65,8 @@ public class PathExplorer {
 	}
 
 	@Procedure("apoc.path.subgraphAll")
-	@Description("apoc.path.subgraphAll(startNode <id>|Node|list, {maxLevel,relationshipFilter,labelFilter,bfs:true, filterStartNode:false, limit:-1, endNodes:[], terminatorNodes:[], sequence, beginSequenceAtStart:true}) yield nodes, relationships - expand the subgraph reachable from start node following relationships to max-level adhering to the label filters, and also return all relationships within the subgraph")
-	public Stream<GraphResult> subgraphAll(@Name("start") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	@Description("Returns the sub-graph reachable from the start node following the given relationship types to max-depth.")
+	public Stream<GraphResult> subgraphAll(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.remove("optional"); // not needed, will return empty collections anyway if no results
 		configMap.put("uniqueness", "NODE_GLOBAL");
@@ -83,8 +82,8 @@ public class PathExplorer {
 	}
 
 	@Procedure("apoc.path.spanningTree")
-	@Description("apoc.path.spanningTree(startNode <id>|Node|list, {maxLevel,relationshipFilter,labelFilter,bfs:true, filterStartNode:false, limit:-1, optional:false, endNodes:[], terminatorNodes:[], sequence, beginSequenceAtStart:true}) yield path - expand a spanning tree reachable from start node following relationships to max-level adhering to the label filters")
-	public Stream<PathResult> spanningTree(@Name("start") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	@Description("Returns spanning tree paths expanded from the start node following the given relationship types to max-depth.")
+	public Stream<PathResult> spanningTree(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.put("uniqueness", "NODE_GLOBAL");
 

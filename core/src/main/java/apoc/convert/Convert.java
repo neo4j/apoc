@@ -27,8 +27,8 @@ public class Convert {
     @Context
     public Log log;
 
-    @UserFunction
-    @Description("apoc.convert.toMap(value) | tries it's best to convert the value to a map")
+    @UserFunction("apoc.convert.toMap")
+    @Description("Converts the given value into a map.")
     public Map<String, Object> toMap(@Name("map") Object map) {
 
         if (map instanceof Entity) {
@@ -40,21 +40,21 @@ public class Convert {
         }
     }
 
-    @UserFunction
-    @Description("apoc.convert.toList(value) | tries it's best to convert the value to a list")
-    public List<Object> toList(@Name("list") Object list) {
+    @UserFunction("apoc.convert.toList")
+    @Description("Converts the given value into a list.")
+    public List<Object> toList(@Name("value") Object list) {
         return ConvertUtils.convertToList(list);
     }
 
-    @UserFunction
-    @Description("apoc.convert.toNode(value) | tries it's best to convert the value to a node")
+    @UserFunction("apoc.convert.toNode")
+    @Description("Converts the given value into a node.")
     public Node toNode(@Name("node") Object node) {
         return node instanceof Node ? (Node) node :  null;
     }
 
-    @UserFunction
-    @Description("apoc.convert.toRelationship(value) | tries it's best to convert the value to a relationship")
-    public Relationship toRelationship(@Name("relationship") Object relationship) {
+    @UserFunction("apoc.convert.toRelationship")
+    @Description("Converts the given value into a relationship.")
+    public Relationship toRelationship(@Name("rel") Object relationship) {
         return relationship instanceof Relationship ? (Relationship) relationship :  null;
     }
 
@@ -92,23 +92,21 @@ public class Convert {
     }
 
 	@SuppressWarnings("unchecked")
-    @UserFunction
-    @Description("apoc.convert.toSet(value) | tries it's best to convert the value to a set")
+    @UserFunction("apoc.convert.toSet")
+    @Description("Converts the given value into a set.")
     public List<Object> toSet(@Name("list") Object value) {
         List list = ConvertUtils.convertToList(value);
         return list == null ? null : new SetBackedList(new LinkedHashSet<>(list));
     }
 
-	@UserFunction
-	@Description("apoc.convert.toNodeList(value) | tries it's best to convert "
-			+ "the value to a list of nodes")
+	@UserFunction("apoc.convert.toNodeList")
+	@Description("Converts the given value into a list of nodes.")
 	public List<Node> toNodeList(@Name("list") Object list) {
         return convertToList(list, Node.class);
 	}
 
-	@UserFunction
-	@Description("apoc.convert.toRelationshipList(value) | tries it's best to convert "
-			+ "the value to a list of relationships")
+	@UserFunction("apoc.convert.toRelationshipList")
+	@Description("Converts the given value into a list of relationships.")
 	public List<Relationship> toRelationshipList(@Name("list") Object list) {
         return convertToList(list, Relationship.class);
 	}

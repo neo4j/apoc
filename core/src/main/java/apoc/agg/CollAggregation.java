@@ -11,25 +11,26 @@ import java.util.List;
  */
 public class CollAggregation {
     @UserAggregationFunction("apoc.agg.nth")
-    @Description("apoc.agg.nth(value,offset) - returns value of nth row (or -1 for last)")
+    @Description("Returns the nth value in the given collection (to fetch the last item of an unknown length collection, -1 can be used).")
     public NthFunction nthFunction() {
         return new NthFunction();
     }
 
     @UserAggregationFunction("apoc.agg.first")
-    @Description("apoc.agg.first(value) - returns first value")
+    @Description("Returns the first value from the given collection.")
     public FirstFunction first() {
         return new FirstFunction();
     }
 
     @UserAggregationFunction("apoc.agg.last")
-    @Description("apoc.agg.last(value) - returns last value")
+    @Description("Returns the last value from the given collection.")
     public LastFunction last() {
         return new LastFunction();
     }
 
     @UserAggregationFunction("apoc.agg.slice")
-    @Description("apoc.agg.slice(value, start, length) - returns subset of non-null values, start is 0 based and length can be -1")
+    @Description("Returns a subset of non-null values from the given collection (the collection is considered to be zero-indexed).\n" +
+            "To specify the range from start until the end of the collection, the length should be set to -1.")
     public SliceFunction slice() {
         return new SliceFunction();
     }

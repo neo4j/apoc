@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class Median {
     @UserAggregationFunction("apoc.agg.median")
-    @Description("apoc.agg.median(number) - returns median for non-null numeric values")
+    @Description("Returns the mathematical median for all non-null numeric values.")
     public MedianFunction median() {
         return new MedianFunction();
     }

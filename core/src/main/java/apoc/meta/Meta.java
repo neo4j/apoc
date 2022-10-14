@@ -151,13 +151,13 @@ public class Meta {
     }
 
     @UserFunction("apoc.meta.cypher.isType")
-    @Description("apoc.meta.cypher.isType(value,type) - returns a row if type name matches none if not (INTEGER,FLOAT,STRING,BOOLEAN,RELATIONSHIP,NODE,PATH,NULL,MAP,LIST OF <TYPE>,POINT,DATE,DATE_TIME,LOCAL_TIME,LOCAL_DATE_TIME,TIME,DURATION)")
+    @Description("Returns true if the given value matches the given type.")
     public boolean isTypeCypher(@Name("value") Object value, @Name("type") String type) {
         return type.equalsIgnoreCase(typeCypher(value));
     }
 
     @UserFunction("apoc.meta.cypher.type")
-    @Description("apoc.meta.cypher.type(value) - type name of a value (INTEGER,FLOAT,STRING,BOOLEAN,RELATIONSHIP,NODE,PATH,NULL,MAP,LIST OF <TYPE>,POINT,DATE,DATE_TIME,LOCAL_TIME,LOCAL_DATE_TIME,TIME,DURATION)")
+    @Description("Returns the type name of the given value.")
     public String typeCypher(@Name("value") Object value) {
         Types type = Types.of(value);
 
@@ -170,8 +170,8 @@ public class Meta {
     }
 
     @UserFunction("apoc.meta.cypher.types")
-    @Description("apoc.meta.cypher.types(node-relationship-map)  - returns a map of keys to types")
-    public Map<String,Object> typesCypher(@Name("properties") Object target) {
+    @Description("Returns a map containing the type names of the given values.")
+    public Map<String,Object> typesCypher(@Name("props") Object target) {
         Map<String,Object> properties = Collections.emptyMap();
         if (target instanceof Node) properties = ((Node)target).getAllProperties();
         if (target instanceof Relationship) properties = ((Relationship)target).getAllProperties();
@@ -220,14 +220,14 @@ public class Meta {
         void rel(int typeId, String typeName, int labelId, String labelName, long out, long in);
     }
 
-    @Procedure
-    @Description("apoc.meta.stats yield labelCount, relTypeCount, propertyKeyCount, nodeCount, relCount, labels, relTypes, stats | returns the information stored in the transactional database statistics")
+    @Procedure("apoc.meta.stats")
+    @Description("Returns the metadata stored in the transactional database statistics.")
     public Stream<MetaStats> stats() {
         return Stream.of(collectStats());
     }
 
     @UserFunction(name = "apoc.meta.nodes.count")
-    @Description("apoc.meta.nodes.count([labels], $config) - Returns the sum of the nodes with a label present in the list.")
+    @Description("Returns the sum of the nodes with the given labels in the list.")
     public long count(@Name(value = "nodes", defaultValue = "[]") List<String> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         MetaConfig conf = new MetaConfig(config);
         final DatabaseSubGraph subGraph = new DatabaseSubGraph(transaction);
@@ -348,7 +348,7 @@ public class Meta {
     }
 
     @Procedure("apoc.meta.data.of")
-    @Description("apoc.meta.data.of({graph}, {config})  - examines a subset of the graph to provide a tabular meta information")
+    @Description("Examines the given sub-graph and returns a table of metadata.")
     public Stream<MetaResult> dataOf(@Name(value = "graph") Object graph, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         final SubGraph subGraph;
@@ -373,15 +373,15 @@ public class Meta {
 
     // todo ask index for distinct values if index size < 10 or so
     // todo put index sizes for indexed properties
-    @Procedure
-    @Description("apoc.meta.data({config})  - examines a subset of the graph to provide a tabular meta information")
+    @Procedure("apoc.meta.data")
+    @Description("Examines the given graph and returns a table of metadata.")
     public Stream<MetaResult> data(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         return collectMetaData(new DatabaseSubGraph(transaction), metaConfig).values().stream().flatMap(x -> x.values().stream());
     }
 
-    @Procedure
-    @Description("apoc.meta.schema({config})  - examines a subset of the graph to provide a map-like meta information")
+    @Procedure("apoc.meta.schema")
+    @Description("Examines the given sub-graph and returns metadata as a map.")
     public Stream<MapResult> schema(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaStats metaStats = collectStats();
         MetaConfig metaConfig = new MetaConfig(config);
@@ -408,8 +408,8 @@ public class Meta {
      * supports flexible sampling options, and does not scan the entire database.  The result is producing a table of
      * metadata that is useful for generating "Tables 4 Labels" schema designs for RDBMSs, but in a more performant way.
      */
-    @Procedure
-    @Description( "apoc.meta.nodeTypeProperties()" )
+    @Procedure("apoc.meta.nodeTypeProperties")
+    @Description("Examines the given graph and returns a table of metadata with information about the nodes therein.")
     public Stream<Tables4LabelsProfile.NodeTypePropertiesEntry> nodeTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {
@@ -426,8 +426,8 @@ public class Meta {
      * does not scan the entire database.  The result is producing a table of metadata that is useful for generating "Tables 4 Labels" schema designs for
      * RDBMSs, but in a more performant way.
      */
-    @Procedure
-    @Description( "apoc.meta.relTypeProperties()" )
+    @Procedure("apoc.meta.relTypeProperties")
+    @Description("Examines the given graph and returns a table of metadata with information about the relationships therein.")
     public Stream<Tables4LabelsProfile.RelTypePropertiesEntry> relTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {
@@ -857,15 +857,15 @@ public class Meta {
             return RelationshipType.withName(type);
         }
     }
-    @Procedure
-    @Description("apoc.meta.graph - examines the full graph to create the meta-graph")
+    @Procedure("apoc.meta.graph")
+    @Description("Examines the given graph and returns a meta-graph.")
     public Stream<GraphResult> graph(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         return metaGraph(new DatabaseSubGraph(transaction), null, null, true, metaConfig);
     }
 
     @Procedure("apoc.meta.graph.of")
-    @Description("apoc.meta.graph.of({graph}, {config})  - examines a subset of the graph to provide a graph meta information")
+    @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> graphOf(@Name(value = "graph",defaultValue = "{}") Object graph, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         final SubGraph subGraph;
@@ -991,15 +991,16 @@ public class Meta {
     }
 
 
-    @Procedure
-    @Description("apoc.meta.graphSample() - examines the database statistics to build the meta graph, very fast, might report extra relationships")
+    @Procedure("apoc.meta.graphSample")
+    @Description("Examines the given graph and returns a meta-graph.\n" +
+            "Unlike `apoc.meta.graph`, this procedure does not filter away non-existing paths.")
     public Stream<GraphResult> graphSample(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         return metaGraph(new DatabaseSubGraph(transaction), null, null, false, metaConfig);
     }
 
-    @Procedure
-    @Description("apoc.meta.subGraph({labels:[labels],rels:[rel-types], excludes:[labels,rel-types]}) - examines a sample sub graph to create the meta-graph")
+    @Procedure("apoc.meta.subGraph")
+    @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> subGraph(@Name("config") Map<String,Object> config ) {
 
         MetaConfig metaConfig = new MetaConfig(config);

@@ -22,8 +22,8 @@ public class TemporalProcedures
      * @param format    A valid DateTime format pattern (ie yyyy-MM-dd'T'HH:mm:ss.SSSS)
      * @return
      */
-    @UserFunction( "apoc.temporal.format" )
-    @Description( "apoc.temporal.format(input, format) | Format a temporal value" )
+    @UserFunction("apoc.temporal.format")
+    @Description("Formats the given temporal value into the given time format.")
     public String format(
             @Name( "temporal" ) Object input,
             @Name( value = "format", defaultValue = "yyyy-MM-dd") String format
@@ -61,8 +61,8 @@ public class TemporalProcedures
      * @param format
      * @return
      */
-    @UserFunction( "apoc.temporal.formatDuration" )
-    @Description( "apoc.temporal.formatDuration(input, format) | Format a Duration" )
+    @UserFunction("apoc.temporal.formatDuration")
+    @Description("Formats the given duration into the given time format.")
     public String formatDuration(
             @Name("input") Object input,
             @Name("format") String format
@@ -80,8 +80,8 @@ public class TemporalProcedures
         }
     }
 
-    @UserFunction
-	@Description("apoc.temporal.toZonedTemporal('2012-12-23 23:59:59','yyyy-MM-dd HH:mm:ss', 'UTC-hour-offset') parse date string using the specified format to specified timezone")
+    @UserFunction("apoc.temporal.toZonedTemporal")
+	@Description("Parses the given date string using the specified format into the given time zone.")
 	public ZonedDateTime toZonedTemporal(@Name("time") String time, @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format, final @Name(value = "timezone", defaultValue = "UTC") String timezone) {
 		Long value = parseOrThrow(time, getFormat(format, timezone));
 		return value == null ? null : Instant.ofEpochMilli(value).atZone(ZoneId.of(timezone));

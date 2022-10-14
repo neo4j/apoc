@@ -18,8 +18,8 @@ import java.util.List;
  */
 public class Paths {
 
-    @UserFunction
-    @Description("apoc.path.create(startNode,[rels]) - creates a path instance of the given elements")
+    @UserFunction("apoc.path.create")
+    @Description("Returns a path from the given start node and a list of relationships.")
     public Path create(@Name("startNode") Node startNode, @Name(value = "rels", defaultValue = "[]") List<Relationship> rels) {
         if (startNode == null) return null;
         PathImpl.Builder builder = new PathImpl.Builder(startNode);
@@ -33,8 +33,8 @@ public class Paths {
         return builder.build();
     }
 
-    @UserFunction
-    @Description("apoc.path.slice(path, [offset], [length]) - creates a sub-path with the given offset and length")
+    @UserFunction("apoc.path.slice")
+    @Description("Returns a sub-path of the given length and offset from the given path.")
     public Path slice(@Name("path") Path path, @Name(value = "offset", defaultValue = "0") long offset,@Name(value = "length", defaultValue = "-1") long length) {
         if (path == null) return null;
         if (offset < 0) offset = 0;
@@ -56,9 +56,9 @@ public class Paths {
         return builder.build();
     }
 
-    @UserFunction
-    @Description("apoc.path.combine(path1, path2) - combines the paths into one if the connecting node matches")
-    public Path combine(@Name("first") Path first, @Name("second") Path second) {
+    @UserFunction("apoc.path.combine")
+    @Description("Combines the two given paths into one path.")
+    public Path combine(@Name("path1") Path first, @Name("path2") Path second) {
         if (first == null) return second;
         if (second == null) return first;
 
@@ -71,8 +71,8 @@ public class Paths {
         return builder.build();
     }
 
-    @UserFunction
-    @Description("apoc.path.elements(path) - returns a list of node-relationship-node-...")
+    @UserFunction("apoc.path.elements")
+    @Description("Converts the given path into a list of nodes and relationships.")
     public List<Object> elements(@Name("path") Path path) {
         if (path == null) return null;
         return Iterables.asList((Iterable)path);

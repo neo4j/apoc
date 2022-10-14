@@ -66,8 +66,9 @@ public class Grouping {
         }
     }
 
-    @Procedure
-    @Description("Group all nodes and their relationships by given keys, create virtual nodes and relationships for the summary information, you can provide an aggregations map [{kids:'sum',age:['min','max','avg'],gender:'collect'},{`*`,'count'}]")
+    @Procedure("apoc.nodes.group")
+    @Description("Allows for the aggregation of nodes based on the given properties.\n" +
+            "This procedure returns virtual nodes.")
     public Stream<GroupResult> group(@Name("labels") List<String> labelNames, @Name("groupByProperties") List<String> groupByProperties,
                                      @Name(value = "aggregations", defaultValue = "[{`*`:\"count\"},{`*`:\"count\"}]") List<Map<String, Object>> aggregations,
                                      @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {

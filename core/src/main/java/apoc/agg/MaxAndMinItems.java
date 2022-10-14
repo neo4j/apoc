@@ -34,13 +34,13 @@ import java.util.List;
 public class MaxAndMinItems {
 
     @UserAggregationFunction("apoc.agg.maxItems")
-    @Description("apoc.agg.maxItems(item, value, groupLimit: -1) - returns a map {items:[], value:n} where `value` is the maximum value present, and `items` are all items with the same value. The number of items can be optionally limited.")
+    @Description("Returns a map {items:[], value:n} where the `value` key is the maximum value present, and `items` represent all items with the same value.")
     public MaxOrMinItemsFunction maxItems() {
         return new MaxOrMinItemsFunction(true);
     }
 
     @UserAggregationFunction("apoc.agg.minItems")
-    @Description("apoc.agg.minItems(item, value, groupLimit: -1) - returns a map {items:[], value:n} where `value` is the minimum value present, and `items` are all items with the same value. The number of items can be optionally limited.")
+    @Description("Returns a map {items:[], value:n} where the `value` key is the minimum value present, and `items` represent all items with the same value.")
     public MaxOrMinItemsFunction minItems() {
         return new MaxOrMinItemsFunction(false);
     }

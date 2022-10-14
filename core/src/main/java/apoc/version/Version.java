@@ -11,7 +11,7 @@ import org.neo4j.procedure.UserFunction;
 public class Version {
 
     @UserFunction("apoc.version")
-    @Description("RETURN apoc.version() | return the current APOC installed version")
+    @Description("Returns the APOC version currently installed.")
     public String version() {
         return Version.class.getPackage().getImplementationVersion();
     }

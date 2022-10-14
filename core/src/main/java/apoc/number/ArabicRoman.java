@@ -10,15 +10,15 @@ import static apoc.number.ArabicRoman.RomanNumerals.toArabic;
 
 public class ArabicRoman {
 
-    @UserFunction
-    @Description("apoc.number.romanToArabic(romanNumber)  | convert roman numbers to arabic")
+    @UserFunction("apoc.number.romanToArabic")
+    @Description("Converts the given Roman numbers to Arabic numbers.")
     public Number romanToArabic(final @Name("romanNumber") String number) {
         if (number == null || number.isEmpty()) return 0;
         return toArabic(number.toUpperCase());
     }
 
-    @UserFunction
-    @Description("apoc.number.arabicToRoman(number)  | convert arabic numbers to roman")
+    @UserFunction("apoc.number.arabicToRoman")
+    @Description("Converts the given Arabic numbers to Roman numbers.")
     public String arabicToRoman(final @Name("number") Object value) {
         Number number = validateNumberParam(value);
         if (number == null) return null;

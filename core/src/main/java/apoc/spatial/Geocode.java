@@ -320,14 +320,15 @@ public class Geocode {
         }
     }
 
-    @Procedure
-    @Description("apoc.spatial.geocodeOnce('address', $config) YIELD location, latitude, longitude, description, osmData - look up geographic location of address from a geocoding service (the default one is OpenStreetMap)")
+    @Procedure("apoc.spatial.geocodeOnce")
+    @Description("Returns the geographic location (latitude, longitude, and description) of the given address using a geocoding service (default: OpenStreetMap).\n" +
+            "This procedure returns at most one result.")
     public Stream<GeoCodeResult> geocodeOnce(@Name("location") String address, @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
         return geocode(address, 1L, false, config);
     }
 
-    @Procedure
-    @Description("apoc.spatial.geocode('address', maxResults, quotaException, $config) YIELD location, latitude, longitude, description, osmData - look up geographic location of address from a geocoding service (the default one is OpenStreetMap)")
+    @Procedure("apoc.spatial.geocode")
+    @Description("Returns the geographic location (latitude, longitude, and description) of the given address using a geocoding service (default: OpenStreetMap).")
     public Stream<GeoCodeResult> geocode(@Name("location") String address, @Name(value = "maxResults",defaultValue = "100") long maxResults, @Name(value = "quotaException",defaultValue = "false") boolean quotaException, @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
         if (address == null || address.isEmpty())
             return Stream.empty();
@@ -341,8 +342,9 @@ public class Geocode {
         }
     }
 
-    @Procedure
-    @Description("apoc.spatial.reverseGeocode(latitude,longitude, quotaException, $config) YIELD location, latitude, longitude, description - look up address from latitude and longitude from a geocoding service (the default one is OpenStreetMap)")
+    @Procedure("apoc.spatial.reverseGeocode")
+    @Description("Returns a textual address from the given geographic location (latitude, longitude) using a geocoding service (default: OpenStreetMap).\n" +
+            "This procedure returns at most one result.")
     public Stream<GeoCodeResult> reverseGeocode(@Name("latitude") double latitude, @Name("longitude") double longitude, @Name(value = "quotaException",defaultValue = "false") boolean quotaException, @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
         try {
             return getSupplier(config).reverseGeocode(latitude, longitude);

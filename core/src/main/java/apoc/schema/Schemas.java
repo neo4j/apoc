@@ -67,46 +67,48 @@ public class Schemas {
     @Context
     public KernelTransaction ktx;
 
-    @Procedure(value = "apoc.schema.assert", mode = Mode.SCHEMA)
-    @Description("apoc.schema.assert({indexLabel:[[indexKeys]], ...}, {constraintLabel:[constraintKeys], ...}, dropExisting : true) yield label, key, keys, unique, action - drops all other existing indexes and constraints when `dropExisting` is `true` (default is `true`), and asserts that at the end of the operation the given indexes and unique constraints are there, each label:key pair is considered one constraint/label. Non-constraint indexes can define compound indexes with label:[key1,key2...] pairings.")
+    @Procedure(name = "apoc.schema.assert", mode = Mode.SCHEMA)
+    @Description("Drops all other existing indexes and constraints when `dropExisting` is `true` (default is `true`).\n" +
+            "Asserts at the end of the operation that the given indexes and unique constraints are there.")
     public Stream<AssertSchemaResult> schemaAssert(@Name("indexes") Map<String, List<Object>> indexes, @Name("constraints") Map<String, List<Object>> constraints, @Name(value = "dropExisting", defaultValue = "true") boolean dropExisting) throws ExecutionException, InterruptedException {
         return Stream.concat(
                 assertIndexes(indexes, dropExisting).stream(),
                 assertConstraints(constraints, dropExisting).stream());
     }
 
-    @Procedure(value = "apoc.schema.nodes", mode = Mode.SCHEMA)
+    @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
     @Description("CALL apoc.schema.nodes([config]) yield name, label, properties, status, type")
     public Stream<IndexConstraintNodeInfo> nodes(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) throws IndexNotFoundKernelException {
         return indexesAndConstraintsForNode(config);
     }
 
-    @Procedure(value = "apoc.schema.relationships", mode = Mode.SCHEMA)
-    @Description("CALL apoc.schema.relationships([config]) yield name, startLabel, type, endLabel, properties, status")
+    @Procedure(name = "apoc.schema.relationships", mode = Mode.SCHEMA)
+    @Description("Returns the indexes and constraints information for all the relationship types in the database.\n" +
+            "It is possible to define a set of relationship types to include or exclude in the config parameters.")
     public Stream<IndexConstraintRelationshipInfo> relationships(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         return indexesAndConstraintsForRelationships(config);
     }
 
-    @UserFunction(value = "apoc.schema.node.indexExists")
-    @Description("RETURN apoc.schema.node.indexExists(labelName, propertyNames)")
+    @UserFunction(name = "apoc.schema.node.indexExists")
+    @Description("Returns a boolean depending on whether or not an index exists for the given node label with the given property names.")
     public Boolean indexExistsOnNode(@Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
         return indexExists(labelName, propertyNames);
     }
 
     @UserFunction(value = "apoc.schema.relationship.indexExists")
-    @Description("RETURN apoc.schema.relationship.indexExists(relName, propertyNames)")
+    @Description("Returns a boolean depending on whether or not an index exists for the given relationship type with the given property names.")
     public Boolean indexExistsOnRelationship(@Name("labelName") String relName, @Name("propertyName") List<String> propertyNames) {
         return indexExistsForRelationship(relName, propertyNames);
     }
 
-    @UserFunction(value = "apoc.schema.node.constraintExists")
-    @Description("RETURN apoc.schema.node.constraintExists(labelName, propertyNames)")
+    @UserFunction(name = "apoc.schema.node.constraintExists")
+    @Description("Returns a boolean depending on whether or not a constraint exists for the given node label with the given property names.")
     public Boolean constraintExistsOnNode(@Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
         return constraintsExists(labelName, propertyNames);
     }
 
-    @UserFunction(value = "apoc.schema.relationship.constraintExists")
-    @Description("RETURN apoc.schema.relationship.constraintExists(type, propertyNames)")
+    @UserFunction(name = "apoc.schema.relationship.constraintExists")
+    @Description("Returns a boolean depending on whether or not a constraint exists for the given relationship type with the given property names.")
     public Boolean constraintExistsOnRelationship(@Name("type") String type, @Name("propertyName") List<String> propertyNames) {
         return constraintsExistsForRelationship(type, propertyNames);
     }
