@@ -1,9 +1,12 @@
 package apoc.util;
 
 import java.net.URLStreamHandler;
-import java.net.URLStreamHandlerFactory;
+import java.net.spi.URLStreamHandlerProvider;
 
-public class ApocUrlStreamHandlerFactory implements URLStreamHandlerFactory {
+
+
+public class ApocUrlStreamHandlerFactory extends URLStreamHandlerProvider
+{
 
     @Override
     public URLStreamHandler createURLStreamHandler(String protocol) {
