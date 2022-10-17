@@ -97,7 +97,7 @@ public class Schemas {
 
     @UserFunction(value = "apoc.schema.relationship.indexExists")
     @Description("Returns a boolean depending on whether or not an index exists for the given relationship type with the given property names.")
-    public Boolean indexExistsOnRelationship(@Name("labelName") String relName, @Name("propertyName") List<String> propertyNames) {
+    public Boolean indexExistsOnRelationship(@Name("type") String relName, @Name("propertyName") List<String> propertyNames) {
         return indexExistsForRelationship(relName, propertyNames);
     }
 

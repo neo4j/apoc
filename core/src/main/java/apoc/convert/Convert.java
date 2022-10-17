@@ -107,7 +107,7 @@ public class Convert {
 
 	@UserFunction("apoc.convert.toRelationshipList")
 	@Description("Converts the given value into a list of relationships.")
-	public List<Relationship> toRelationshipList(@Name("list") Object list) {
+	public List<Relationship> toRelationshipList(@Name("relList") Object list) {
         return convertToList(list, Relationship.class);
 	}
 }

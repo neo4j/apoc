@@ -31,11 +31,11 @@ public class Graph {
         private Set<Relationship> plainRels = new HashSet<>();
 
         @UserAggregationUpdate
-        public void aggregate(@Name("element") Object element) {
+        public void aggregate(@Name("path") Object element) {
             consume(element);
         }
 
-        public void consume(@Name("element") Object element) {
+        public void consume(@Name("path") Object element) {
             if (element instanceof Node) {
                 nodes.add((Node)element);
             }

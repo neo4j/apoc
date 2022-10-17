@@ -41,7 +41,7 @@ public class CollAggregation {
         private int index;
 
         @UserAggregationUpdate
-        public void nth(@Name("value") Object value, @Name("value") long target) {
+        public void nth(@Name("value") Object value, @Name("offset") long target) {
             if (value != null) {
                 if (target == index++ || target == -1) {
                     this.value = value;

@@ -56,7 +56,7 @@ public class MaxAndMinItems {
         }
 
         @UserAggregationUpdate
-        public void maxOrMinItems(@Name("item") final Object item, @Name("value") final Object inputValue,
+        public void maxOrMinItems(@Name("items") final Object item, @Name("value") final Object inputValue,
                                   @Name(value = "groupLimit", defaultValue = "-1") final Long groupLimitParam) {
             int groupLimit = groupLimitParam.intValue();
             boolean noGroupLimit = groupLimit < 0;
