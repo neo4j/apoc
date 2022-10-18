@@ -106,14 +106,14 @@ public class Json {
         }
     }
 
-    @UserFunction("apoc.json.getJsonProperty")
+    @UserFunction("apoc.convert.getJsonProperty")
     @Description("Converts a serialized JSON object from the property of the given node into the equivalent Cypher structure (e.g. map, list).")
     public Object getJsonProperty(@Name("node") Node node, @Name("key") String key,@Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         String value = (String) node.getProperty(key, null);
         return JsonUtil.parse(value, path, Object.class, pathOptions);
     }
 
-    @UserFunction("apoc.json.getJsonPropertyMap")
+    @UserFunction("apoc.convert.getJsonPropertyMap")
     @Description("Converts a serialized JSON object from the property of the given node into a Cypher map.")
     public Map<String,Object> getJsonPropertyMap(@Name("node") Node node, @Name("key") String key,@Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         String value = (String) node.getProperty(key, null);

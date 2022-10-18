@@ -218,7 +218,7 @@ public class Strings {
         return jaroWinklerDistance.apply(text1, text2);
     }
 
-    @UserFunction("apoc.text.sorensenDiceSimilarityWithLanguage")
+    @UserFunction("apoc.text.sorensenDiceSimilarity")
     @Description("Compares the two given strings using the Sørensen–Dice coefficient formula, with the provided IETF language tag.")
     public Double sorensenDiceSimilarity(final @Name("text1") String text1, final @Name("text2") String text2, final @Name(value = "languageTag", defaultValue = "en") String languageTag) {
         if (text1 == null || text2 == null || languageTag == null) {
