@@ -12,6 +12,10 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static org.neo4j.graphdb.QueryExecutionType.QueryType.READ_ONLY;
+import static org.neo4j.graphdb.QueryExecutionType.QueryType.READ_WRITE;
+import static org.neo4j.graphdb.QueryExecutionType.QueryType.WRITE;
+
 /**
  * @author mh
  * @since 20.09.16
@@ -53,7 +57,8 @@ public class Trigger {
     @Description("Adds a trigger to the given Cypher statement.\n" +
             "The selector for this procedure is {phase:'before/after/rollback/afterAsync'}.")
     public Stream<TriggerInfo> add(@Name("name") String name, @Name("statement") String statement, @Name(value = "selector"/*, defaultValue = "{}"*/)  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
-        Util.validateQuery(db, statement);
+        Util.validateQuery(db, statement,
+                READ_ONLY, WRITE, READ_WRITE);
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
         Map<String, Object> removed = triggerHandler.add(name, statement, selector, params);
         if (removed != null) {

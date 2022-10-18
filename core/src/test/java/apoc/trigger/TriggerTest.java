@@ -23,8 +23,10 @@ import java.util.concurrent.TimeUnit;
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.testCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 
 /**
@@ -371,5 +373,16 @@ public class TriggerTest {
                 , (value) -> value, 30L, TimeUnit.SECONDS);
     }
 
+    @Test
+    public void testTriggerWithSchemaOperation() {
+        try {
+            testCall(db, "CALL apoc.trigger.add('triggerSchema','CREATE INDEX periodicIdx FOR (n:Bar) ON (n.first_name, n.last_name)', {phase: 'before'})",
+                    (row) -> fail("Should fail because of unsupported schema operation"));
+        } catch (RuntimeException e) {
+            final String expected = "Failed to invoke procedure `apoc.trigger.add`: " +
+                    "Caused by: java.lang.RuntimeException: Supported query types for the operation are [READ_ONLY, WRITE, READ_WRITE]";
+            assertEquals(expected, e.getMessage());
+        }
+    }
 
 }
