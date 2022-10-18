@@ -80,6 +80,18 @@ public class PeriodicTest {
     }
 
     @Test
+    public void testSubmitWithSchemaOperation() {
+        try {
+            testCall(db, "CALL apoc.periodic.submit('subSchema','CREATE INDEX periodicIdx FOR (n:Bar) ON (n.first_name, n.last_name)')",
+                    (row) -> fail("Should fail because of unsupported schema operation"));
+        } catch (RuntimeException e) {
+            final String expected = "Failed to invoke procedure `apoc.periodic.submit`: " +
+                    "Caused by: java.lang.RuntimeException: Supported query types for the operation are [READ_ONLY, WRITE, READ_WRITE]";
+            assertEquals(expected, e.getMessage());
+        }
+    }
+
+    @Test
     public void testSubmitStatementWithParams() throws Exception {
         String callList = "CALL apoc.periodic.list()";
         // force pre-caching the queryplan
