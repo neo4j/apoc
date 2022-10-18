@@ -194,13 +194,13 @@ public class Create {
     }
 
     @Procedure("apoc.create.clonePathToVirtual")
-    @Description("apoc.create.clonePathToVirtual")
+    @Description("Takes the given path and returns a virtual representation of it.")
     public Stream<PathResult> clonePathToVirtual(@Name("path") Path path) {
         return Stream.of(createVirtualPath(path));
     }
 
     @Procedure("apoc.create.clonePathsToVirtual")
-    @Description("apoc.create.clonePathsToVirtual")
+    @Description("Takes the given paths and returns a virtual representation of them.")
     public Stream<PathResult> clonePathsToVirtual(@Name("paths") List<Path> paths) {
         return paths.stream().map(this::createVirtualPath);
     }
@@ -237,21 +237,21 @@ public class Create {
         return UUID.randomUUID().toString();
     }
 
-    @UserFunction
-    @Description("apoc.create.uuidBase64() - create a UUID encoded with Base64")
+    @UserFunction("apoc.create.uuidBase64")
+    @Description("Returns a UUID encoded with base64.")
     public String uuidBase64() {
         return UuidUtil.generateBase64Uuid(UUID.randomUUID());
     }
 
-    @UserFunction
-    @Description("apoc.create.uuidBase64ToHex() - convert between a UUID encoded with Base64 to HEX format")
+    @UserFunction("apoc.create.uuidBase64ToHex")
+    @Description("Takes the given base64 encoded UUID and returns it as a hexadecimal string.")
     public String uuidBase64ToHex(@Name("base64Uuid") String base64Uuid) {
         return UuidUtil.fromBase64ToHex(base64Uuid);
     }
 
-    @UserFunction
-    @Description("apoc.create.uuidHexToBase64() - convert a UUID in HEX format to encoded with Base64")
-    public String uuidHexToBase64(@Name("uuidHex") String uuidHex) {
+    @UserFunction("apoc.create.uuidHexToBase64")
+    @Description("Takes the given UUID represented as a hexadecimal string and returns it encoded with base64.")
+    public String uuidHexToBase64(@Name("uuid") String uuidHex) {
         return UuidUtil.fromHexToBase64(uuidHex);
     }
 
