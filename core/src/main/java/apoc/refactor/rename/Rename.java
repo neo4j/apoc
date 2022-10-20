@@ -65,7 +65,7 @@ public class Rename {
 		oldLabel = Util.sanitize(oldLabel);
 		newLabel = Util.sanitize(newLabel);
 		String cypherIterate = nodes != null && !nodes.isEmpty() ? "UNWIND $nodes AS n WITH n WHERE n:`"+oldLabel+"` RETURN n" : "MATCH (n:`"+oldLabel+"`) RETURN n";
-        String cypherAction = "SET n:`"+newLabel+"` REMOVE n:`"+oldLabel+"`";
+		String cypherAction = "REMOVE n:`"+oldLabel+"` SET n:`" + newLabel + "`";
         Map<String, Object> parameters = MapUtil.map("batchSize", 100000, "parallel", true, "iterateList", true, "params", MapUtil.map("nodes", nodes));
 		return getResultOfBatchAndTotalWithInfo( newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, oldLabel, null, null);
 	}
@@ -124,7 +124,7 @@ public class Rename {
 		oldName = Util.sanitize(oldName);
 		newName = Util.sanitize(newName);
 		String cypherIterate = nodes != null && ! nodes.isEmpty() ? "UNWIND $nodes AS n WITH n WHERE n.`"+oldName+"` IS NOT NULL return n" : "match (n) where n.`"+oldName+"` IS NOT NULL return n";
-		String cypherAction = "set n.`"+newName+"`= n.`"+oldName+"` remove n.`"+oldName+"`";
+		String cypherAction = "WITH n, n. `" + oldName + "` AS propVal REMOVE n.`" + oldName + "` SET n.`"+newName+"` = propVal";
 		final Map<String, Object> params = MapUtil.map("nodes", nodes);
 		Map<String, Object> parameters = getPeriodicConfig(config, params);
 		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, null, null, oldName);
@@ -143,7 +143,7 @@ public class Rename {
 		newName = Util.sanitize(newName);
 		oldName = Util.sanitize(oldName);
 		String cypherIterate = rels != null && ! rels.isEmpty() ? "UNWIND $rels AS r WITH r WHERE r.`"+oldName+"` IS NOT NULL return r" : "match ()-[r]->() where r.`"+oldName+"` IS NOT NULL return r";
-		String cypherAction = "set r.`"+newName+"` = r.`"+oldName+"` remove r.`"+oldName+"`";
+		String cypherAction = "WITH r, r. `" + oldName + "` AS propVal REMOVE r.`"+oldName + "` SET r.`"+newName+"`= propVal";
 		final Map<String, Object> params = MapUtil.map("rels", rels);
 		Map<String, Object> parameters = getPeriodicConfig(config, params);
 		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, null, null, oldName);
