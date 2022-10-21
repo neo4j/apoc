@@ -43,8 +43,8 @@ public class Lock {
         }
     }
 
-    @Procedure(name = "apoc.lock.read.rels", mode = Mode.WRITE)
-    @Description("Acquires a read lock on the given relationships.")
+    @Procedure(name = "apoc.lock.nodes", mode = Mode.WRITE)
+    @Description("Acquires a write lock on the given relationships.")
     public void rels(@Name("rels") List<Relationship> rels) {
         for (Relationship rel : rels) {
             tx.acquireWriteLock(rel);
@@ -52,7 +52,7 @@ public class Lock {
     }
 
     @Procedure(name = "apoc.lock.read.rels", mode = Mode.READ)
-    @Description("Acquires a write lock on the given relationships.")
+    @Description("Acquires a read lock on the given relationships.")
     public void readLocksOnRels(@Name("rels") List<Relationship> rels) {
         for (Relationship rel : rels) {
             tx.acquireReadLock(rel);

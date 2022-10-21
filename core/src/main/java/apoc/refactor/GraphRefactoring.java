@@ -70,7 +70,7 @@ public class GraphRefactoring {
     @Procedure(name = "apoc.refactor.extractNode", mode = Mode.WRITE)
     @Description("Expands the given relationships into intermediate nodes.\n" +
             "The intermediate nodes are connected by the given 'OUT' and 'IN' types.")
-    public Stream<NodeRefactorResult> extractNode(@Name("relationships") Object rels, @Name("labels") List<String> labels, @Name("outType") String outType, @Name("inType") String inType) {
+    public Stream<NodeRefactorResult> extractNode(@Name("rels") Object rels, @Name("labels") List<String> labels, @Name("outType") String outType, @Name("inType") String inType) {
         return Util.relsStream(tx, rels).map((rel) -> {
             NodeRefactorResult result = new NodeRefactorResult(rel.getId());
             try {

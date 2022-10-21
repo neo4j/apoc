@@ -77,7 +77,8 @@ public class Schemas {
     }
 
     @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
-    @Description("CALL apoc.schema.nodes([config]) yield name, label, properties, status, type")
+    @Description("Returns all indexes and constraints information for all node labels in the database.\n" +
+            "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> nodes(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) throws IndexNotFoundKernelException {
         return indexesAndConstraintsForNode(config);
     }

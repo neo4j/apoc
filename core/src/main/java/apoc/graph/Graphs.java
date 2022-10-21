@@ -35,7 +35,7 @@ public class Graphs {
 
     @Procedure("apoc.graph.from")
     @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the given data.")
-    public Stream<VirtualGraph> from(@Name("data") Object data, @Name("name") String name, @Name("properties") Map<String,Object> properties) {
+    public Stream<VirtualGraph> from(@Name("data") Object data, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(10000);
         extract(data, nodes,rels);

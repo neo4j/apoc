@@ -374,7 +374,7 @@ public class Meta {
     // todo ask index for distinct values if index size < 10 or so
     // todo put index sizes for indexed properties
     @Procedure("apoc.meta.data")
-    @Description("Examines the given graph and returns a table of metadata.")
+    @Description("Examines the full graph and returns a table of metadata.")
     public Stream<MetaResult> data(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         return collectMetaData(new DatabaseSubGraph(transaction), metaConfig).values().stream().flatMap(x -> x.values().stream());
@@ -409,7 +409,7 @@ public class Meta {
      * metadata that is useful for generating "Tables 4 Labels" schema designs for RDBMSs, but in a more performant way.
      */
     @Procedure("apoc.meta.nodeTypeProperties")
-    @Description("Examines the given graph and returns a table of metadata with information about the nodes therein.")
+    @Description("Examines the full graph and returns a table of metadata with information about the nodes therein.")
     public Stream<Tables4LabelsProfile.NodeTypePropertiesEntry> nodeTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {
@@ -427,7 +427,7 @@ public class Meta {
      * RDBMSs, but in a more performant way.
      */
     @Procedure("apoc.meta.relTypeProperties")
-    @Description("Examines the given graph and returns a table of metadata with information about the relationships therein.")
+    @Description("Examines the full graph and returns a table of metadata with information about the relationships therein.")
     public Stream<Tables4LabelsProfile.RelTypePropertiesEntry> relTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {
@@ -858,7 +858,7 @@ public class Meta {
         }
     }
     @Procedure("apoc.meta.graph")
-    @Description("Examines the given graph and returns a meta-graph.")
+    @Description("Examines the full graph and returns a meta-graph.")
     public Stream<GraphResult> graph(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         return metaGraph(new DatabaseSubGraph(transaction), null, null, true, metaConfig);
@@ -992,7 +992,7 @@ public class Meta {
 
 
     @Procedure("apoc.meta.graphSample")
-    @Description("Examines the given graph and returns a meta-graph.\n" +
+    @Description("Examines the full graph and returns a meta-graph.\n" +
             "Unlike `apoc.meta.graph`, this procedure does not filter away non-existing paths.")
     public Stream<GraphResult> graphSample(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);

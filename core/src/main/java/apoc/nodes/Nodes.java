@@ -166,7 +166,7 @@ public class Nodes {
         return Stream.of(new LongResult(count));
     }
 
-    @Procedure("apoc.get.rels")
+    @Procedure("apoc.nodes.rels")
     @Description("Returns all relationships with the given ids.")
     public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
         return Util.relsStream(tx, ids).map(RelationshipResult::new);
@@ -464,7 +464,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.labels")
-    @Description("returns labels for (virtual) nodes")
+    @Description("Returns the labels for the given virtual node.")
     public List<String> labels(@Name("node") Node node) {
         if (node == null) return null;
         Iterator<Label> labels = node.getLabels().iterator();
@@ -478,7 +478,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.id")
-    @Description("Returns the labels for the given virtual node.")
+    @Description("Returns the id for the given virtual node.")
     public Long id(@Name("node") Node node) {
         return (node == null) ? null : node.getId();
     }

@@ -19,21 +19,21 @@ import static java.lang.Math.pow;
 public class Exact {
 
 	@UserFunction("apoc.number.exact.add")
-	@Description("Returns the sum of adding the two given large numbers (using Java BigDecimal).")
+	@Description("Returns the result of adding the two given large numbers (using Java BigDecimal).")
 	public String add(@Name("stringA")String stringA, @Name("stringB")String stringB){
 		if(stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
 		return new BigDecimal(stringA).add(new BigDecimal(stringB)).toPlainString();
 	}
 
 	@UserFunction("apoc.number.exact.sub")
-	@Description("Returns the sum of subtracting a given large number from another given large number (using Java BigDecimal).")
+	@Description("Returns the result of subtracting a given large number from another given large number (using Java BigDecimal).")
 	public String sub(@Name("stringA")String stringA, @Name("stringB")String stringB){
 		if(stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
 		return new BigDecimal(stringA).subtract(new BigDecimal(stringB)).toPlainString();
 	}
 
 	@UserFunction("apoc.number.exact.mul")
-	@Description("Returns the sum of multiplying two given large numbers (using Java BigDecimal).")
+	@Description("Returns the result of multiplying two given large numbers (using Java BigDecimal).")
 	public String mul(@Name("stringA")String stringA, @Name("stringB")String stringB, @Name(value = "precision" , defaultValue = "0")Long precision, @Name(value = "roundingMode", defaultValue = "HALF_UP")String roundingMode){
 		if(stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
 		String s = new BigDecimal(stringA).multiply(new BigDecimal(stringB), createMathContext(precision, roundingMode)).toPlainString();
@@ -41,7 +41,7 @@ public class Exact {
 	}
 
 	@UserFunction("apoc.number.exact.div")
-	@Description("Returns the sum of dividing a given large number with another given large number (using Java BigDecimal).")
+	@Description("Returns the result of dividing a given large number with another given large number (using Java BigDecimal).")
 	public String div(@Name("stringA")String stringA, @Name("stringB")String stringB, @Name(value = "precision" , defaultValue = "0")Long precision, @Name(value = "roundingMode", defaultValue = "HALF_UP")String roundingMode){
 		if(stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
 		return new BigDecimal(stringA).divide(new BigDecimal(stringB), createMathContext(precision, roundingMode)).toPlainString();

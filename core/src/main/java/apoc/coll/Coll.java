@@ -369,7 +369,7 @@ public class Coll {
     }
 
     @Procedure("apoc.coll.split")
-    @Description("Splits a collection by the given value.")
+    @Description("Splits a collection by the given value. The value itself will not be part of the resulting lists.")
     public Stream<ListResult> split(@Name("coll") List<Object> list, @Name("value") Object value) {
 	    if (list==null || list.isEmpty()) return Stream.empty();
         List<Object> l = new ArrayList<>(list);
@@ -478,7 +478,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.containsAllSorted")
-    @Description("Returns whether or not the given value exists in an already sorted collection (using a binary search).")
+    @Description("Returns whether or not all of the given values in the second list exist in an already sorted collection (using a binary search).")
     public boolean containsAllSorted(@Name("coll1") List<Object> coll, @Name("coll2") List<Object> values) {
         if (coll == null || values == null) return false;
         int batchSize = 5000-1; // Collections.binarySearchThreshold
@@ -542,7 +542,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sortMaps")
-    @Description("Sorts the given list into ascending order, based on the map property indicated by `name`.")
+    @Description("Sorts the given list into ascending order, based on the map property indicated by `prop`.")
     public List<Map<String,Object>> sortMaps(@Name("list") List<Map<String,Object>> coll, @Name("prop") String prop) {
 	    if (coll == null || coll.isEmpty()) return Collections.emptyList();
         List<Map<String,Object>> sorted = new ArrayList<>(coll);

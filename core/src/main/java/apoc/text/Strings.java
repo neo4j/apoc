@@ -93,7 +93,7 @@ public class Strings {
         return text.getBytes(charset).length;
     }
     @UserFunction("apoc.text.bytes")
-    @Description("Returns the give string as bytes.")
+    @Description("Returns the given string as bytes.")
     public List<Long> bytes(final @Name("text") String text, @Name(value = "charset", defaultValue = "UTF-8") String charset) throws UnsupportedEncodingException {
         byte[] bytes = text.getBytes(charset);
         List<Long> result = new ArrayList<>(bytes.length);

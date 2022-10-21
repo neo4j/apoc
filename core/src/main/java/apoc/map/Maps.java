@@ -56,7 +56,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromNodes")
-    @Description("Creates a map from the labels and properties of the given nodes.")
+    @Description("Returns a map of the given prop to the node of the given label.")
     public Map<String, Node> fromNodes(@Name("label") String label, @Name("prop") String property) {
         Map<String, Node> result = new LinkedHashMap<>(10000);
         try (ResourceIterator<Node> nodes = tx.findNodes(Label.label(label))) {
@@ -78,7 +78,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromLists")
-    @Description("Creates a map from the keys and values in the given list.")
+    @Description("Creates a map from the keys and values in the given lists.")
     public Map<String,Object> fromLists(@Name("keys") List<String> keys, @Name("values") List<Object> values) {
         return Util.mapFromLists(keys, values);
     }
@@ -178,13 +178,13 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.setValues")
-    @Description("apoc.map.setValues(map,[key1,value1,key2,value2])")
+    @Description("Adds or updates the alternating key/value pairs (e.g. [key1,value1,key2,value2]) in a map.")
     public Map<String,Object> setValues(@Name("map") Map<String,Object> map, @Name("pairs") List<Object> pairs) {
         return Util.merge(map, Util.map(pairs));
     }
 
     @UserFunction("apoc.map.removeKey")
-    @Description("Adds or updates the alternating key/value pairs (e.g. [key1,value1,key2,value2]) in a map.")
+    @Description("Removes the given key from the map (recursively if recursive is true).")
     public Map<String,Object> removeKey(@Name("map") Map<String,Object> map, @Name("key") String key,  @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
         if (!map.containsKey(key)) {
             return map;
@@ -330,7 +330,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.sortedProperties")
-    @Description("Returns a list of key/value pairs in a list.\n" +
+    @Description("Returns a list of key/value pairs.\n" +
             "The pairs are sorted by alphabetically by key, with optional case sensitivity.")
     public List<List<Object>> sortedProperties(@Name("map") Map<String, Object> map, @Name(value="ignoreCase", defaultValue = "true") boolean ignoreCase) {
         List<List<Object>> sortedProperties = new ArrayList<>();

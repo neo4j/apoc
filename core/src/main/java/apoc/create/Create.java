@@ -98,7 +98,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setLabels", mode = Mode.WRITE)
-    @Description("Sets the given labels to the given node(s).")
+    @Description("Sets the given labels to the given node(s). Non-matching labels are removed from the nodes.")
     public Stream<NodeResult> setLabels(@Name("nodes") Object nodes, @Name("label") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
@@ -146,13 +146,13 @@ public class Create {
 
     @Procedure("apoc.create.vNode")
     @Description("Returns a virtual node.")
-    public Stream<NodeResult> vNode(@Name("label") List<String> labelNames, @Name("props") Map<String, Object> props) {
+    public Stream<NodeResult> vNode(@Name("labels") List<String> labelNames, @Name("props") Map<String, Object> props) {
         return Stream.of(new NodeResult(vNodeFunction(labelNames, props)));
     }
 
     @UserFunction("apoc.create.vNode")
     @Description("Returns a virtual node.")
-    public Node vNodeFunction(@Name("label") List<String> labelNames, @Name(value = "props",defaultValue = "{}") Map<String, Object> props) {
+    public Node vNodeFunction(@Name("labels") List<String> labelNames, @Name(value = "props",defaultValue = "{}") Map<String, Object> props) {
         return new VirtualNode(Util.labels(labelNames), props);
     }
 
@@ -164,7 +164,7 @@ public class Create {
 
     @Procedure("apoc.create.vNodes")
     @Description("Returns virtual nodes.")
-    public Stream<NodeResult> vNodes(@Name("label") List<String> labelNames, @Name("props") List<Map<String, Object>> props) {
+    public Stream<NodeResult> vNodes(@Name("labels") List<String> labelNames, @Name("props") List<Map<String, Object>> props) {
         Label[] labels = Util.labels(labelNames);
         return props.stream().map(p -> new NodeResult(new VirtualNode(labels, p)));
     }
@@ -232,7 +232,7 @@ public class Create {
 
     @UserFunction(name = "apoc.create.uuid", deprecatedBy = "Neo4j randomUUID() function")
     @Deprecated
-    @Description("Returns creates a UUID.")
+    @Description("Returns a UUID.")
     public String uuid() {
         return UUID.randomUUID().toString();
     }

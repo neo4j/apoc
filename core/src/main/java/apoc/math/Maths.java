@@ -23,7 +23,7 @@ public class Maths {
     }
 
     @UserFunction("apoc.math.maxDouble")
-    @Description("Returns the largest positive finite value type double.")
+    @Description("Returns the largest positive finite value of type double.")
     public Double maxDouble(){
         return Double.MAX_VALUE;
     }
