@@ -87,14 +87,19 @@ public class JsonUtil {
     }
     
     public static Stream<Object> loadJson(Object urlOrBinary, Map<String,Object> headers, String payload, String path, boolean failOnError, String compressionAlgo, List<String> options) {
+        return loadJson(urlOrBinary, headers, payload, path, failOnError, compressionAlgo, options, false);
+    }
+    
+    public static Stream<Object> loadJson(Object urlOrBinary, Map<String,Object> headers, String payload, String path, boolean failOnError, String compressionAlgo, List<String> options, boolean allowBigNum) {
         try {
             if (urlOrBinary instanceof String) {
                 String url = (String) urlOrBinary;
                 urlOrBinary = Util.getLoadUrlByConfigFile("json", url, "url").orElse(url);
             }
             InputStream input = FileUtils.inputStreamFor(urlOrBinary, headers, payload, compressionAlgo);
-            JsonParser parser = OBJECT_MAPPER.getFactory().createParser(input);
-            MappingIterator<Object> it = OBJECT_MAPPER.readValues(parser, Object.class);
+            ObjectMapper objectMapper = allowBigNum ? getBigNumObjMapper() : OBJECT_MAPPER;
+            JsonParser parser = objectMapper.getFactory().createParser(input);
+            MappingIterator<Object> it = objectMapper.readValues(parser, Object.class);
             Stream<Object> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, 0), false);
             return StringUtils.isBlank(path) ? stream : stream.map((value) -> JsonPath.parse(value, getJsonPathConfig(options)).read(path));
         } catch (IOException e) {
@@ -104,6 +109,13 @@ public class JsonUtil {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static ObjectMapper getBigNumObjMapper() {
+        final SimpleModule bigNumModule = new SimpleModule("bigNum")
+                .addDeserializer(Number.class, new CustomNumberDeserializer(Number.class));
+        return OBJECT_MAPPER.copy()
+                .registerModule(bigNumModule);
     }
 
     public static Stream<Object> loadJson(String url) {

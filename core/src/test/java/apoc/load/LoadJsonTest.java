@@ -39,6 +39,7 @@ import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
 import static org.mockserver.model.HttpRequest.request;
@@ -84,6 +85,40 @@ public class LoadJsonTest {
                 map("url", fileToBinary(new File(ClassLoader.getSystemResource("multi.json").getPath()), CompressionAlgo.FRAMED_SNAPPY.name()),
                         "config", map(COMPRESSION, CompressionAlgo.FRAMED_SNAPPY.name())),
                 this::commonAssertionsLoadJsonMulti);
+    }
+
+    @Test
+    public void testLoadJsonShouldFailWithBigIntAndDefaultConfig() {
+        URL url = ClassLoader.getSystemResource("bigInt.json");
+        try {
+            testCall(db, "CALL apoc.load.json($url)",
+                    map("url", url.toString()),
+                    row -> fail("Should fail due to out of range"));
+        } catch (RuntimeException e) {
+            final String errorMessage = e.getMessage();
+            final boolean errorAssertion = errorMessage.contains("Numeric value (18446744062065078016) out of range of long (-9223372036854775808 - 9223372036854775807)");
+            assertTrue("Actual error message is: " + errorMessage, errorAssertion);
+        }
+    }
+
+    @Test
+    public void testLoadJsonWithBigInt() {
+        URL url = ClassLoader.getSystemResource("bigInt.json");
+        final String intStringNum = "18446744062065078016";
+        final String floatingStringNum = "189769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+
+        testCall(db, "CALL apoc.load.json($url, '', {allowBigNum: true})",
+                map("url", url.toString()),
+                (row) -> {
+                    final Map<String, Object> actual = (Map<String, Object>) row.get("value");
+                    final Map<String, Object> expected = map("foo", intStringNum,
+                            "bar", intStringNum,
+                            "expBigNum", floatingStringNum,
+                            "extSmallNum", 1.8976931348623157E30,
+                            "baz", 18446744062065078L,
+                            "floatNum", 18446.75);
+                    assertEquals(expected, actual);
+                });
     }
 
     @Test public void testLoadMultiJson() throws Exception {
