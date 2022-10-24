@@ -83,29 +83,31 @@ public class PeriodicTest {
 
     @Test
     public void testSubmitWithSchemaOperation() {
-        testSchemaOperationCommon("CREATE INDEX periodicIdx FOR (n:Bar) ON (n.first_name, n.last_name)");
+        String errMessage = "Supported query types for the operation are [READ_ONLY, WRITE, READ_WRITE]";
+        testSchemaOperationCommon("CREATE INDEX periodicIdx FOR (n:Bar) ON (n.first_name, n.last_name)", errMessage);
     }
 
     @Test
     public void testSubmitWithSchemaProcedure() {
-        testSchemaOperationCommon("CALL apoc.schema.assert({}, {})");
+        String errMessage = "Supported inner procedure modes for the operation are [READ, WRITE, DEFAULT]";
+        testSchemaOperationCommon("CALL apoc.schema.assert({}, {})", errMessage);
         
-        testSchemaOperationCommon("CALL apoc.cypher.runSchema('CREATE CONSTRAINT periodicIdx FOR (n:Bar) REQUIRE n.first_name IS UNIQUE', {})");
+        testSchemaOperationCommon("CALL apoc.cypher.runSchema('CREATE CONSTRAINT periodicIdx FOR (n:Bar) REQUIRE n.first_name IS UNIQUE', {})", errMessage);
         
         // inner schema procedure
         final String query = "CALL { WITH 1 AS one CALL apoc.schema.assert({}, {}) YIELD key RETURN key } " +
                 "IN TRANSACTIONS OF 1000 rows RETURN 1";
-        testSchemaOperationCommon(query);
+        testSchemaOperationCommon(query, errMessage);
     }
 
-    private void testSchemaOperationCommon(String query) {
+    private void testSchemaOperationCommon(String query, String errMessage) {
         try {
             testCall(db, "CALL apoc.periodic.submit('subSchema', $query)",
                     Map.of("query", query),
                     (row) -> fail("Should fail because of unsupported schema operation"));
         } catch (RuntimeException e) {
             final String expected = "Failed to invoke procedure `apoc.periodic.submit`: " +
-                    "Caused by: java.lang.RuntimeException: Supported query types for the operation are [READ_ONLY, WRITE, READ_WRITE]";
+                    "Caused by: java.lang.RuntimeException: " + errMessage;
             assertEquals(expected, e.getMessage());
         }
     }

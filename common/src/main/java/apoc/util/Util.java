@@ -62,6 +62,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -1003,22 +1004,26 @@ public class Util {
     }
 
     public static void validateQuery(GraphDatabaseService db, String statement, Set<Mode> supportedModes , QueryExecutionType.QueryType... supportedQueryTypes) {
-        final boolean isValid = db.executeTransactionally("EXPLAIN " + statement, Collections.emptyMap(), result -> {
+        db.executeTransactionally("EXPLAIN " + statement, Collections.emptyMap(), result -> {
             final boolean isQueryTypeValid = supportedQueryTypes == null || supportedQueryTypes.length == 0 || Stream.of(supportedQueryTypes)
                     .anyMatch(sqt -> sqt.equals(result.getQueryExecutionType().queryType()));
             
-            return isQueryTypeValid && procsAreValid(db, supportedModes, result);
+            if (!isQueryTypeValid) {
+                throw new RuntimeException("Supported query types for the operation are " + Arrays.toString(supportedQueryTypes));
+            }
+            
+            if (!procsAreValid(db, supportedModes, result)) {
+                throw new RuntimeException("Supported inner procedure modes for the operation are " + new TreeSet<>(supportedModes));
+            }
+            
+            return null;
         });
-
-        if (!isValid) {
-            throw new RuntimeException("Supported query types for the operation are " + Arrays.toString(supportedQueryTypes));
-        }
     }
 
     private static boolean procsAreValid(GraphDatabaseService db, Set<Mode> supportedModes, Result result) {
         if (supportedModes != null && !supportedModes.isEmpty()) {
             final ExecutionPlanDescription executionPlanDescription = result.getExecutionPlanDescription();
-            // get procedures used into the query
+            // get procedures used in the query
             Set<String> queryProcNames = new HashSet<>();
             getAllQueryProcs(executionPlanDescription, queryProcNames);
             
