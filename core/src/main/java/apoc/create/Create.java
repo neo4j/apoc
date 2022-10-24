@@ -32,7 +32,7 @@ public class Create {
 
     @Procedure(name = "apoc.create.addLabels", mode = Mode.WRITE)
     @Description("Adds the given labels to the given nodes.")
-    public Stream<NodeResult> addLabels(@Name("nodes") Object nodes, @Name("label") List<String> labelNames) {
+    public Stream<NodeResult> addLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
             Node node = r.node;
@@ -99,7 +99,7 @@ public class Create {
 
     @Procedure(name = "apoc.create.setLabels", mode = Mode.WRITE)
     @Description("Sets the given labels to the given node(s). Non-matching labels are removed from the nodes.")
-    public Stream<NodeResult> setLabels(@Name("nodes") Object nodes, @Name("label") List<String> labelNames) {
+    public Stream<NodeResult> setLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
             Node node = r.node;

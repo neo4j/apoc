@@ -43,7 +43,7 @@ public class Lock {
         }
     }
 
-    @Procedure(name = "apoc.lock.nodes", mode = Mode.WRITE)
+    @Procedure(name = "apoc.lock.rels", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given relationships.")
     public void rels(@Name("rels") List<Relationship> rels) {
         for (Relationship rel : rels) {
