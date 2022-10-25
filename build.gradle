@@ -58,7 +58,7 @@ task versions <<  {
         def apocVersion = findApocVersion(apocReleases, neo4jRelease)
 
         if (apocVersion != null) {
-            def url = apocReleases
+            def url = apocReleasesJSON
                     .find { it.tag_name == apocVersion }
                     .assets.find { it.browser_download_url.contains("apoc-${apocVersion}") }
                     .browser_download_url
