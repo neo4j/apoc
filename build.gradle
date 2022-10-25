@@ -49,7 +49,7 @@ task versions <<  {
     def reader = new JsonSlurper();
     def checksums = reader.parse(new File("checksums.json"))
     def previousVersions = reader.parse(new File("versions.json"))
-    def versions = []
+    def versions = previousVersions
 
     println(neo4jReleases)
     println(apocReleases)
@@ -78,14 +78,25 @@ task versions <<  {
                     config: [ "+:dbms.security.procedures.unrestricted": ["apoc.*"] ]
             ]
 
-            versions.add(version)
+            def shouldAdd = true
+            for (v in versions) {
+                if (v.neo4j == neo4jRelease && v.apoc == apocVersion) {
+                    shouldAdd = false
+                }
+            }
+
+            if (shouldAdd) {
+                versions.add(version)
+            }
         }
     }
 
-    assertVersionsGrew(previousVersions, versions)
-
-    def versionsFile = new File("build/versions.json")
-    versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
+    if (previousVersions.size > versions.size) {
+        def versionsFile = new File("build/versions.json")
+        versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
+    } else {
+        println("The file size is the same. No update needed.")
+    }
 }
 
 // TODO: Remove this once we begin signing APOC jars
@@ -126,14 +137,6 @@ task checksums <<  {
 
 static def normalizeVersion(str) {
     return str.split("[.-]").collect { it =~ "^\\d+\$" ? it.padLeft(4,"0") : it }.join(".") + "/"
-}
-
-// We have noticed in the past that the versions.json file sometimes gets wiped clean by the task when it's run in
-// TeamCity. We assume that this is due to one or several of the HTTP requests this job makes fails silently. In these
-// scenarios it is better to simply keep the old versions.json file. We detect this scenario by verifying the new
-// versions have at least as many keys as the previous versions
-static def assertVersionsGrew(previousVersions, versions) {
-    if (previousVersions.size() > versions.size()) throw new Exception("Error: versions file shrank.")
 }
 
 class Checksum {
