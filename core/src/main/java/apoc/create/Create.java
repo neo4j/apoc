@@ -25,7 +25,7 @@ public class Create {
 
     @Procedure(name = "apoc.create.node", mode = Mode.WRITE)
     @Description("Creates a node with the given dynamic labels.")
-    public Stream<NodeResult> node(@Name("label") List<String> labelNames, @Name("props") Map<String, Object> props) {
+    public Stream<NodeResult> node(@Name("labels") List<String> labelNames, @Name("props") Map<String, Object> props) {
         return Stream.of(new NodeResult(setProperties(tx.createNode(Util.labels(labelNames)),props)));
     }
 
@@ -117,7 +117,7 @@ public class Create {
 
     @Procedure(name = "apoc.create.removeLabels", mode = Mode.WRITE)
     @Description("Removes the given labels from the given node(s).")
-    public Stream<NodeResult> removeLabels(@Name("nodes") Object nodes, @Name("label") List<String> labelNames) {
+    public Stream<NodeResult> removeLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
             Node node = r.node;
@@ -130,7 +130,7 @@ public class Create {
 
     @Procedure(name = "apoc.create.nodes", mode = Mode.WRITE)
     @Description("Creates nodes with the given dynamic labels.")
-    public Stream<NodeResult> nodes(@Name("label") List<String> labelNames, @Name("props") List<Map<String, Object>> props) {
+    public Stream<NodeResult> nodes(@Name("labels") List<String> labelNames, @Name("props") List<Map<String, Object>> props) {
         Label[] labels = Util.labels(labelNames);
         return props.stream().map(p -> new NodeResult(setProperties(tx.createNode(labels), p)));
     }
