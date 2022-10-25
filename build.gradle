@@ -44,14 +44,15 @@ static def findApocVersion(apocReleases, neo4jRelease) {
 // Calculates which APOC version should be used for each known Neo4j version.
 task versions <<  {
     def neo4jReleases = neo4jReleases()
-    def apocReleases = apocReleases()
+    def apocReleasesJSON = apocReleases()
+    def apocReleases = apocReleasesJSON.collect { it.tag_name }
     def reader = new JsonSlurper();
     def checksums = reader.parse(new File("checksums.json"))
     def previousVersions = reader.parse(new File("versions.json"))
     def versions = []
 
     println(neo4jReleases)
-    println(apocReleases.collect { it.tag_name })
+    println(apocReleases)
 
     for (neo4jRelease in neo4jReleases) {
         def apocVersion = findApocVersion(apocReleases, neo4jRelease)
