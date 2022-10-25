@@ -11,7 +11,7 @@ public class GCStorageURLStreamHandlerFactory implements URLStreamHandlerFactory
 
     @Override
     public URLStreamHandler createURLStreamHandler(final String protocol) {
-        final SupportedProtocols supportedProtocols = SupportedProtocols.valueOf( protocol);
+        final SupportedProtocols supportedProtocols = SupportedProtocols.valueOf(protocol);
         return supportedProtocols == SupportedProtocols.gs ? new GCStorageURLStreamHandler() : null;
     }
 }

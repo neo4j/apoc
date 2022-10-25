@@ -2,7 +2,7 @@ package apoc.util;
 
 public enum SupportedProtocols
 {
-    http(true, null), //TODO remove elements with null
+    http(true, null),
     https(true, null),
     ftp(true, null),
     s3(Util.classExists("com.amazonaws.services.s3.AmazonS3"),
