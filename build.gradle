@@ -11,7 +11,7 @@ static def neo4jReleases() {
             .replace("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">", "")
 
     def rootNode = new XmlParser().parseText(htmlString)
-    def releases = []
+    def releases = initialiseNeo4jReleases()
 
     for (a in rootNode.body.main.pre.a) {
         def href = a.attributes()["href"]
@@ -23,6 +23,11 @@ static def neo4jReleases() {
             .findAll { it >= "5.0.0" }
             .sort { o1, o2 -> normalizeVersion(o1) <=> normalizeVersion(o2) }
             .reverse()
+}
+
+// In an ideal world this method would return an empty list. Alas, 5.0.0 was never published to mvn
+static def initialiseNeo4jReleases() {
+    return [ "5.0.0 "]
 }
 
 // Gets all APOC releases from Github
@@ -58,7 +63,7 @@ task versions <<  {
         def apocVersion = findApocVersion(apocReleases, neo4jRelease)
 
         if (apocVersion != null) {
-            def url = apocReleases
+            def url = apocReleasesJSON
                     .find { it.tag_name == apocVersion }
                     .assets.find { it.browser_download_url.contains("apoc-${apocVersion}") }
                     .browser_download_url
@@ -82,10 +87,18 @@ task versions <<  {
         }
     }
 
-    assertVersionsGrew(previousVersions, versions)
+    assertVersionsDidntShrink(previousVersions, versions)
 
     def versionsFile = new File("build/versions.json")
     versionsFile.write(JsonOutput.prettyPrint(JsonOutput.toJson(versions)))
+}
+
+// We have noticed in the past that the versions.json file sometimes gets wiped clean by the task when it's run in
+// TeamCity. We assume that this is due to one or several of the HTTP requests this job makes fails silently. In these
+// scenarios it is better to simply keep the old versions.json file. We detect this scenario by verifying the new
+// versions have at least as many keys as the previous versions
+static def assertVersionsDidntShrink(previousVersions, versions) {
+    if (previousVersions.size() > versions.size()) throw new Exception("Error: versions file shrank.")
 }
 
 // TODO: Remove this once we begin signing APOC jars
@@ -126,14 +139,6 @@ task checksums <<  {
 
 static def normalizeVersion(str) {
     return str.split("[.-]").collect { it =~ "^\\d+\$" ? it.padLeft(4,"0") : it }.join(".") + "/"
-}
-
-// We have noticed in the past that the versions.json file sometimes gets wiped clean by the task when it's run in
-// TeamCity. We assume that this is due to one or several of the HTTP requests this job makes fails silently. In these
-// scenarios it is better to simply keep the old versions.json file. We detect this scenario by verifying the new
-// versions have at least as many keys as the previous versions
-static def assertVersionsGrew(previousVersions, versions) {
-    if (previousVersions.size() > versions.size()) throw new Exception("Error: versions file shrank.")
 }
 
 class Checksum {
