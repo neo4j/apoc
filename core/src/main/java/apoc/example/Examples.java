@@ -21,8 +21,8 @@ public class Examples {
     @Context
     public Transaction tx;
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.example.movies() | Creates the sample movies graph")
+    @Procedure(name = "apoc.example.movies", mode = Mode.WRITE)
+    @Description("Seeds the database with the Neo4j movie dataset.")
     public Stream<ProgressInfo> movies() {
         long start = System.currentTimeMillis();
         String file = "movies.cypher";

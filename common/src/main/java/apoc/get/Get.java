@@ -20,7 +20,7 @@ public class Get {
         return Util.nodeStream(tx, ids).map(NodeResult::new);
     }
 
-    public Stream<RelationshipResult> rels(@Name("relationships") Object ids) {
+    public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
         return Util.relsStream(tx, ids).map(RelationshipResult::new);
     }
 

@@ -10,105 +10,105 @@ import org.neo4j.procedure.UserFunction;
  */
 public class Maths {
 
-    @UserFunction
-    @Description("apoc.math.maxLong() | return the maximum value a long can have")
+    @UserFunction("apoc.math.maxLong")
+    @Description("Returns the maximum value of a long.")
     public Long maxLong(){
         return Long.MAX_VALUE;
     }
 
-    @UserFunction
-    @Description("apoc.math.minLong() | return the minimum value a long can have")
+    @UserFunction("apoc.math.minLong")
+    @Description("Returns the minimum value of a long.")
     public Long minLong(){
         return Long.MIN_VALUE;
     }
 
-    @UserFunction
-    @Description("apoc.math.maxDouble() | return the largest positive finite value of type double")
+    @UserFunction("apoc.math.maxDouble")
+    @Description("Returns the largest positive finite value of type double.")
     public Double maxDouble(){
         return Double.MAX_VALUE;
     }
 
-    @UserFunction
-    @Description("apoc.math.minDouble() | return the smallest positive nonzero value of type double")
+    @UserFunction("apoc.math.minDouble")
+    @Description("Returns the smallest positive non-zero value of type double.")
     public Double minDouble(){
         return Double.MIN_VALUE;
     }
 
-    @UserFunction
-    @Description("apoc.math.maxInt() | return the maximum value an int can have")
+    @UserFunction("apoc.math.maxInt")
+    @Description("Returns the maximum value of an integer.")
     public Long maxInt(){
         return Long.valueOf(Integer.MAX_VALUE);
     }
 
-    @UserFunction
-    @Description("apoc.math.minInt() | return the minimum value an int can have")
+    @UserFunction("apoc.math.minInt")
+    @Description("Returns the minimum value of an integer.")
     public Long minInt(){
         return Long.valueOf(Integer.MIN_VALUE);
     }
 
-    @UserFunction
-    @Description("apoc.math.maxByte() | return the maximum value an byte can have")
+    @UserFunction("apoc.math.maxByte")
+    @Description("Returns the maximum value of a byte.")
     public Long maxByte(){
         return Long.valueOf(Byte.MAX_VALUE);
     }
 
-    @UserFunction
-    @Description("apoc.math.minByte() | return the minimum value an byte can have")
+    @UserFunction("apoc.math.minByte")
+    @Description("Returns the minimum value of a byte.")
     public Long minByte(){
         return Long.valueOf(Byte.MIN_VALUE);
     }
 
-    @UserFunction
-    @Description("apoc.math.sigmoid(val) | returns the sigmoid value")
+    @UserFunction("apoc.math.sigmoid")
+    @Description("Returns the sigmoid of the given value.")
     public Double sigmoid(@Name("value") Double value) {
         if (value == null) return null;
         return 1.0 / (1.0 + Math.exp(-value));
     }
 
-    @UserFunction
-    @Description("apoc.math.sigmoidPrime(val) | returns the sigmoid prime [ sigmoid(val) * (1 - sigmoid(val)) ]")
+    @UserFunction("apoc.math.sigmoidPrime")
+    @Description("Returns the sigmoid prime [ sigmoid(val) * (1 - sigmoid(val)) ] of the given value.")
     public Double sigmoidPrime(@Name("value") Double value) {
         if (value == null) return null;
         return sigmoid(value) * (1 - sigmoid(value));
     }
 
-    @UserFunction
-    @Description("apoc.math.tanh(val) | returns the hyperbolic tangent")
+    @UserFunction("apoc.math.tanh")
+    @Description("Returns the hyperbolic tangent of the given value.")
     public Double tanh(@Name("value") Double value) {
         if (value == null) return null;
         return sinh(value) / cosh(value);
     }
 
-    @UserFunction
-    @Description("apoc.math.coth(val) | returns the hyperbolic cotangent")
+    @UserFunction("apoc.math.coth")
+    @Description("Returns the hyperbolic cotangent.")
     public Double coth(@Name("value") Double value) {
         if (value == null || value.equals(0D)) return null;
         return cosh(value) / sinh(value);
     }
 
-    @UserFunction
-    @Description("apoc.math.cosh(val) | returns the hyperbolic cosin")
+    @UserFunction("apoc.math.cosh")
+    @Description("Returns the hyperbolic cosine.")
     public Double cosh(@Name("value") Double value) {
         if (value == null) return null;
         return (Math.exp(value) + Math.exp(-value)) / 2;
     }
 
-    @UserFunction
-    @Description("apoc.math.sinh(val) | returns the hyperbolic sin")
+    @UserFunction("apoc.math.sinh")
+    @Description("Returns the hyperbolic sine of the given value.")
     public Double sinh(@Name("value") Double value) {
         if (value == null) return null;
         return (Math.exp(value) - Math.exp(-value)) / 2;
     }
 
-    @UserFunction
-    @Description("apoc.math.sech(val) | returns the hyperbolic secant")
+    @UserFunction("apoc.math.sech")
+    @Description("Returns the hyperbolic secant of the given value.")
     public Double sech(@Name("value") Double value) {
         if (value == null) return null;
         return 1 / cosh(value);
     }
 
-    @UserFunction
-    @Description("apoc.math.csch(val) | returns the hyperbolic cosecant")
+    @UserFunction("apoc.math.csch")
+    @Description("Returns the hyperbolic cosecant.")
     public Double csch(@Name("value") Double value) {
         if (value == null || value.equals(0D)) return null;
         return 1 / sinh(value);

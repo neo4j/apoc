@@ -22,8 +22,8 @@ public class Cover {
     @Context
     public Transaction tx;
 
-    @Procedure
-    @Description("apoc.algo.cover(nodes) yield rel - returns all relationships between this set of nodes")
+    @Procedure("apoc.algo.cover")
+    @Description("Returns all relationships between a given set of nodes.")
     public Stream<RelationshipResult> cover(@Name("nodes") Object nodes) {
         Set<Node> nodeSet = Util.nodeStream(tx, nodes).collect(Collectors.toSet());
         /*return nodeSet.parallelStream()

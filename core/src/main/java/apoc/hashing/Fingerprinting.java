@@ -34,18 +34,21 @@ public class Fingerprinting {
     @Context
     public Log log;
 
-    @UserFunction
-    @Description("calculate a checksum (md5) over a node or a relationship. This deals gracefully with array properties. Two identical entities do share the same hash.")
-    public String fingerprint(@Name("some object") Object thing, @Name(value = "propertyExcludes", defaultValue = "[]") List<String> excludedPropertyKeys) {
+    @UserFunction("apoc.hashing.fingerprint")
+    @Description("Calculates a MD5 checksum over a node or a relationship (identical entities share the same checksum).\n" +
+            "Unsuitable for cryptographic use-cases.")
+    public String fingerprint(@Name("object") Object thing, @Name(value = "excludedPropertyKeys", defaultValue = "[]") List<String> excludedPropertyKeys) {
         FingerprintingConfig config = new FingerprintingConfig(Util.map("allNodesDisallowList", excludedPropertyKeys,
                 "allRelsDisallowList", excludedPropertyKeys, "mapDisallowList", excludedPropertyKeys,
                 "strategy", FingerprintingConfig.FingerprintStrategy.EAGER.toString()));
         return fingerprint(thing, config);
     }
 
-    @UserFunction
-    @Description("calculate a checksum (md5) over a node or a relationship. This deals gracefully with array properties. Two identical entities do share the same hash.")
-    public String fingerprinting(@Name("some object") Object thing, @Name(value = "conf", defaultValue = "{}") Map<String, Object> conf) {
+    @UserFunction("apoc.hashing.fingerprinting")
+    @Description("Calculates a MD5 checksum over a node or a relationship (identical entities share the same checksum).\n" +
+            "Unlike `apoc.hashing.fingerprint()`, this function supports a number of config parameters.\n" +
+            "Unsuitable for cryptographic use-cases.")
+    public String fingerprinting(@Name("object") Object thing, @Name(value = "config", defaultValue = "{}") Map<String, Object> conf) {
         FingerprintingConfig config = new FingerprintingConfig(conf);
         return fingerprint(thing, config);
     }
@@ -97,8 +100,10 @@ public class Fingerprinting {
                 });
     }
 
-    @UserFunction
-    @Description("calculate a checksum (md5) over a the full graph. Be aware that this function does use in-memomry datastructures depending on the size of your graph.")
+    @UserFunction("apoc.hashing.fingerprintGraph")
+    @Description("Calculates a MD5 checksum over the full graph.\n" +
+            "This function uses in-memory data structures.\n" +
+            "Unsuitable for cryptographic use-cases.")
     public String fingerprintGraph(@Name(value = "propertyExcludes", defaultValue = "[]") List<String> excludedPropertyKeys) {
         FingerprintingConfig config = new FingerprintingConfig(Util.map("allNodesDisallowList", excludedPropertyKeys,
                 "allRelsDisallowList", excludedPropertyKeys, "mapDisallowList", excludedPropertyKeys,

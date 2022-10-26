@@ -17,7 +17,7 @@ import static java.util.Arrays.asList;
  */
 public class Statistics {
     @UserAggregationFunction("apoc.agg.statistics")
-    @Description("apoc.agg.statistics(value,[percentiles = 0.5,0.75,0.9,0.95,0.99]) - returns numeric statistics (percentiles, min,minNonZero,max,total,mean,stdev) for values")
+    @Description("Returns the following statistics on the numerical values in the given collection: percentiles, min, minNonZero, max, total, mean, stdev.")
     public StatisticsFunction statistics() {
         return new StatisticsFunction();
     }

@@ -83,14 +83,14 @@ public class Xml {
     @Context
     public Log log;
 
-    @Procedure
-    @Description("apoc.load.xml('http://example.com/test.xml', 'xPath',config, false) YIELD value as doc CREATE (p:Person) SET p.name = doc.name - load from XML URL (e.g. web-api) to import XML as single nested map with attributes and _type, _text and _childrenx fields.")
+    @Procedure("apoc.load.xml")
+    @Description("Loads a single nested map from an XML URL (e.g. web-API).")
     public Stream<MapResult> xml(@Name("urlOrBinary") Object urlOrBinary, @Name(value = "path", defaultValue = "/") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config, @Name(value = "simple", defaultValue = "false") boolean simpleMode) throws Exception {
         return xmlXpathToMapResult(urlOrBinary, simpleMode, path ,config);
     }
 
     @UserFunction("apoc.xml.parse")
-    @Description("RETURN apoc.xml.parse(<xml string>, <xPath string>, config, false) AS value")
+    @Description("Parses the given XML string as a map.")
     public Map<String, Object> parse(@Name("data") String data, @Name(value = "path", defaultValue = "/") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config, @Name(value = "simple", defaultValue = "false") boolean simpleMode) throws Exception {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);
@@ -484,7 +484,7 @@ public class Xml {
     }
 
     @Procedure(mode = Mode.WRITE, value = "apoc.import.xml")
-    @Description("apoc.import.xml(file,config) - imports graph from provided file")
+    @Description("Imports a graph from the provided XML file.")
     public Stream<NodeResult> importToGraph(@Name("urlOrBinary") Object urlOrBinary, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws IOException, XMLStreamException {
         XmlImportConfig importConfig = new XmlImportConfig(config);
         //TODO: make labels, reltypes and magic properties configurable

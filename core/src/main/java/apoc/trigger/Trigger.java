@@ -49,9 +49,10 @@ public class Trigger {
 
     @Context public TriggerHandler triggerHandler;
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("add a trigger kernelTransaction under a name, in the kernelTransaction you can use {createdNodes}, {deletedNodes} etc., the selector is {phase:'before/after/rollback/afterAsync'} returns previous and new trigger information. Takes in an optional configuration.")
-    public Stream<TriggerInfo> add(@Name("name") String name, @Name("kernelTransaction") String statement, @Name(value = "selector"/*, defaultValue = "{}"*/)  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
+    @Procedure(name = "apoc.trigger.add", mode = Mode.WRITE)
+    @Description("Adds a trigger to the given Cypher statement.\n" +
+            "The selector for this procedure is {phase:'before/after/rollback/afterAsync'}.")
+    public Stream<TriggerInfo> add(@Name("name") String name, @Name("statement") String statement, @Name(value = "selector"/*, defaultValue = "{}"*/)  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         Util.validateQuery(db, statement);
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
         Map<String, Object> removed = triggerHandler.add(name, statement, selector, params);
@@ -63,8 +64,8 @@ public class Trigger {
         return Stream.of(new TriggerInfo(name,statement,selector, params,true, false));
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("remove previously added trigger, returns trigger information")
+    @Procedure(name = "apoc.trigger.remove", mode = Mode.WRITE)
+    @Description("Removes the given trigger.")
     public Stream<TriggerInfo> remove(@Name("name")String name) {
         Map<String, Object> removed = triggerHandler.remove(name);
         if (removed == null) {
@@ -73,8 +74,8 @@ public class Trigger {
         return Stream.of(new TriggerInfo(name,(String)removed.get("statement"), (Map<String, Object>) removed.get("selector"), (Map<String, Object>) removed.get("params"),false, false));
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("removes all previously added trigger, returns trigger information")
+    @Procedure(name = "apoc.trigger.removeAll", mode = Mode.WRITE)
+    @Description("Removes all previously added triggers.")
     public Stream<TriggerInfo> removeAll() {
         Map<String, Object> removed = triggerHandler.removeAll();
         if (removed == null) {
@@ -96,8 +97,8 @@ public class Trigger {
         return new TriggerInfo(name, null, null, false, false);
     }
 
-    @Procedure(mode = Mode.READ)
-    @Description("list all installed triggers")
+    @Procedure(name = "apoc.trigger.list", mode = Mode.READ)
+    @Description("Lists all installed triggers.")
     public Stream<TriggerInfo> list() {
         return triggerHandler.list().entrySet().stream()
                 .map( (e) -> new TriggerInfo(e.getKey(),
@@ -109,8 +110,8 @@ public class Trigger {
                 );
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.pause(name) | it pauses the trigger")
+    @Procedure(name = "apoc.trigger.pause", mode = Mode.WRITE)
+    @Description("Pauses the given trigger.")
     public Stream<TriggerInfo> pause(@Name("name")String name) {
         Map<String, Object> paused = triggerHandler.updatePaused(name, true);
 
@@ -120,8 +121,8 @@ public class Trigger {
                 (Map<String,Object>) paused.get("params"),true, true));
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.resume(name) | it resumes the paused trigger")
+    @Procedure(name = "apoc.trigger.resume", mode = Mode.WRITE)
+    @Description("Resumes the given paused trigger.")
     public Stream<TriggerInfo> resume(@Name("name")String name) {
         Map<String, Object> resume = triggerHandler.updatePaused(name, false);
 

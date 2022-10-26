@@ -31,10 +31,10 @@ public class ImportCsv {
     }
 
     @Procedure(name = "apoc.import.csv", mode = Mode.SCHEMA)
-    @Description("apoc.import.csv(nodes, relationships, config) - imports nodes and relationships from the provided CSV files with given labels and types")
+    @Description("Imports nodes and relationships with the given labels and types from the provided CSV file.")
     public Stream<ProgressInfo> importCsv(
             @Name("nodes") List<Map<String, Object>> nodes,
-            @Name("relationships") List<Map<String, Object>> relationships,
+            @Name("rels") List<Map<String, Object>> relationships,
             @Name("config") Map<String, Object> config
     ) throws Exception {
         ProgressInfo result =

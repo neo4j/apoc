@@ -1,5 +1,6 @@
 package apoc.stats;
 
+import apoc.Description;
 import apoc.Pools;
 import apoc.path.RelationshipTypeAndDirections;
 import apoc.util.kernel.MultiThreadedGlobalGraphOperations;
@@ -93,8 +94,9 @@ public class DegreeDistribution {
     @Context
     public Pools pools;
 
-    @Procedure
-    public Stream<DegreeStats.Result> degrees(@Name(value = "types", defaultValue = "") String types) {
+    @Procedure("apoc.stats.degrees")
+    @Description("Returns the percentile groupings of the degrees on the nodes connected by the given relationship types.")
+    public Stream<DegreeStats.Result> degrees(@Name(value = "relTypes", defaultValue = "") String types) {
         List<DegreeStats> stats = prepareStats(types);
 
         MultiThreadedGlobalGraphOperations.forAllNodes(db, pools.getDefaultExecutorService(), BATCHSIZE,

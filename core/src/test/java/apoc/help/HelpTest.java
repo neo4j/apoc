@@ -31,9 +31,9 @@ public class HelpTest {
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","bitwise"), (row) -> {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.bitwise.op",row.get("name"));
-            assertEquals(true, ((String) row.get("text")).contains("bitwise operations"));
+            assertEquals(true, ((String) row.get("text")).contains("bitwise operation"));
         });
-        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","operations+"), (row) -> assertEquals("apoc.bitwise.op",row.get("name")));
+        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","operation+"), (row) -> assertEquals("apoc.bitwise.op",row.get("name")));
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","toSet"), (row) -> {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.coll.toSet",row.get("name"));

@@ -27,8 +27,8 @@ public class LoadJson {
     public GraphDatabaseService db;
 
     @SuppressWarnings("unchecked")
-    @Procedure
-    @Description("apoc.load.jsonArray('url') YIELD value - load array from JSON URL (e.g. web-api) to import JSON as stream of values")
+    @Procedure("apoc.load.jsonArray")
+    @Description("Loads array from a JSON URL (e.g. web-API) to then import the given JSON file as a stream of values.")
     public Stream<ObjectResult> jsonArray(@Name("url") String url, @Name(value = "path",defaultValue = "") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         return JsonUtil.loadJson(url, null, null, path, true, (List<String>) config.get("pathOptions"))
                 .flatMap((value) -> {
@@ -42,15 +42,17 @@ public class LoadJson {
         // throw new RuntimeException("Incompatible Type " + (value == null ? "null" : value.getClass()));
     }
 
-    @Procedure
-    @Description("apoc.load.json('urlOrKeyOrBinary',path, config) YIELD value - import JSON as stream of values if the JSON was an array or a single value if it was a map")
+    @Procedure("apoc.load.json")
+    @Description("Imports JSON file as a stream of values if the given JSON file is an array.\n" +
+            "If the given JSON file is a map, this procedure imports a single value instead.")
     public Stream<MapResult> json(@Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary, @Name(value = "path",defaultValue = "") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         return jsonParams(urlOrKeyOrBinary,null,null, path, config);
     }
 
     @SuppressWarnings("unchecked")
-    @Procedure
-    @Description("apoc.load.jsonParams('urlOrKeyOrBinary',{header:value},payload, config) YIELD value - load from JSON URL (e.g. web-api) while sending headers / payload to import JSON as stream of values if the JSON was an array or a single value if it was a map")
+    @Procedure("apoc.load.jsonParams")
+    @Description("Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is an array.\n" +
+            "If the given JSON file is a map, this procedure imports a single value instead.")
     public Stream<MapResult> jsonParams(@Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary, @Name("headers") Map<String,Object> headers, @Name("payload") String payload, @Name(value = "path",defaultValue = "") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);

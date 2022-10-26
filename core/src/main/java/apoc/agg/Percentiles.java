@@ -16,7 +16,7 @@ import static java.util.Arrays.asList;
  */
 public class Percentiles {
     @UserAggregationFunction("apoc.agg.percentiles")
-    @Description("apoc.agg.percentiles(value,[percentiles = 0.5,0.75,0.9,0.95,0.99]) - returns given percentiles for values")
+    @Description("Returns the given percentiles over the range of numerical values in the given collection.")
     public PercentilesFunction percentiles() {
         return new PercentilesFunction();
     }

@@ -18,9 +18,9 @@ import java.util.Locale;
  */
 public class Numbers {
 
-  @UserFunction
-  @Description("apoc.number.format(number)  | format a long or double using the default system pattern and language to produce a string")
-  public String format(final @Name("number") Object value,@Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "lang", defaultValue = "") String lang) {
+  @UserFunction("apoc.number.format")
+  @Description("Formats the given long or double using the given pattern and language to produce a string.")
+  public String format(final @Name("number") Object value,@Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "language", defaultValue = "") String lang) {
     Number number = validateNumberParam(value);
     if (number == null) return null;
     DecimalFormat format = buildFormatter(pattern, lang);
@@ -29,8 +29,8 @@ public class Numbers {
   }
 
   @UserFunction("apoc.number.parseInt")
-  @Description("apoc.number.parseInt(text)  | parse a text using the default system pattern and language to produce a long")
-  public Long parseInt(final @Name("text") String text, @Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "lang",defaultValue = "") String lang) {
+  @Description("Parses the given string using the given pattern and language to produce a long.")
+  public Long parseInt(final @Name("text") String text, @Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "language",defaultValue = "") String lang) {
     Number res = parseNumber(text, pattern, lang);
     return res == null ? null : res.longValue();
   }
@@ -47,8 +47,8 @@ public class Numbers {
   }
 
   @UserFunction("apoc.number.parseFloat")
-  @Description("apoc.number.parseFloat(text)  | parse a text using the default system pattern and language to produce a double")
-  public Double parseFloat(final @Name("text") String text, @Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "lang",defaultValue = "") String lang) {
+  @Description("Parses the given string using the given pattern and language to produce a double.")
+  public Double parseFloat(final @Name("text") String text, @Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "language",defaultValue = "") String lang) {
     Number res = parseNumber(text, pattern, lang);
     return res == null ? null : res.doubleValue();
   }

@@ -8,7 +8,7 @@ import org.neo4j.procedure.*;
  */
 public class Product {
     @UserAggregationFunction("apoc.agg.product")
-    @Description("apoc.agg.product(number) - returns given product for non-null values")
+    @Description("Returns the product of all non-null numerical values in the collection.")
     public ProductFunction product() {
         return new ProductFunction();
     }
@@ -21,7 +21,7 @@ public class Product {
         private int count = 0;
 
         @UserAggregationUpdate
-        public void aggregate(@Name("number") Number number) {
+        public void aggregate(@Name("value") Number number) {
             if (number != null) {
                 if (number instanceof Long) {
                     longProduct = Math.multiplyExact(longProduct,number.longValue());

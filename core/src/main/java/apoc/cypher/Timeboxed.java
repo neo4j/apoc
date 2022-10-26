@@ -38,9 +38,9 @@ public class Timeboxed {
 
     private final static Map<String,Object> POISON = Collections.singletonMap("__magic", "POISON");
 
-    @Procedure
-    @Description("apoc.cypher.runTimeboxed('cypherStatement',{params}, timeout) - abort kernelTransaction after timeout ms if not finished")
-    public Stream<MapResult> runTimeboxed(@Name("cypher") String cypher, @Name("params") Map<String, Object> params, @Name("timeout") long timeout) {
+    @Procedure("apoc.cypher.runTimeboxed")
+    @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
+    public Stream<MapResult> runTimeboxed(@Name("statement") String cypher, @Name("params") Map<String, Object> params, @Name("timeout") long timeout) {
 
         final BlockingQueue<Map<String, Object>> queue = new ArrayBlockingQueue<>(100);
         final AtomicReference<Transaction> txAtomic = new AtomicReference<>();

@@ -30,7 +30,7 @@ public class ImportJson {
     public TerminationGuard terminationGuard;
 
     @Procedure(value = "apoc.import.json", mode = Mode.WRITE)
-    @Description("apoc.import.json(urlOrBinaryFile,config) - imports the json list to the provided file")
+    @Description("Imports a graph from the provided JSON file.")
     public Stream<ProgressInfo> all(@Name("urlOrBinaryFile") Object urlOrBinaryFile, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         ProgressInfo result =
                 Util.inThread(pools, () -> {

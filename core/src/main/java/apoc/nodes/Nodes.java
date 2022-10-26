@@ -75,8 +75,9 @@ public class Nodes {
     @Context
     public Pools pools;
     
-    @Procedure
-    @Description("CALL apoc.nodes.cycles([nodes], $config) - Detect all path cycles from node list")
+    @Procedure("apoc.nodes.cycles")
+    @Description("Detects all path cycles in the given node list.\n" +
+            "This procedure can be limited on relationships as well.")
     public Stream<PathResult> cycles(@Name("nodes") List<Node> nodes, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         NodesConfig conf = new NodesConfig(config);
         final List<String> types = conf.getRelTypes();
@@ -127,8 +128,8 @@ public class Nodes {
         return paths.map(PathResult::new);
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.nodes.link([nodes],'REL_TYPE', conf) - creates a linked list of nodes from first to last")
+    @Procedure(name = "apoc.nodes.link", mode = Mode.WRITE)
+    @Description("Creates a linked list of the given nodes connected by the given relationship type.")
     public void link(@Name("nodes") List<Node> nodes, @Name("type") String type, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         RefactorConfig conf = new RefactorConfig(config);
         Iterator<Node> it = nodes.iterator();
@@ -146,14 +147,14 @@ public class Nodes {
         }
     }
 
-    @Procedure
-    @Description("apoc.nodes.get(node|nodes|id|[ids]) - quickly returns all nodes with these ids")
+    @Procedure("apoc.nodes.get")
+    @Description("Returns all nodes with the given ids.")
     public Stream<NodeResult> get(@Name("nodes") Object ids) {
         return Util.nodeStream(tx, ids).map(NodeResult::new);
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.nodes.delete(node|nodes|id|[ids]) - quickly delete all nodes with these ids")
+    @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE)
+    @Description("Deletes all nodes with the given ids.")
     public Stream<LongResult> delete(@Name("nodes") Object ids, @Name("batchSize") long batchSize) {
         Iterator<Node> it = Util.nodeStream(tx, ids).iterator();
         long count = 0;
@@ -165,15 +166,15 @@ public class Nodes {
         return Stream.of(new LongResult(count));
     }
 
-    @Procedure
-    @Description("apoc.get.rels(rel|id|[ids]) - quickly returns all relationships with these ids")
-    public Stream<RelationshipResult> rels(@Name("relationships") Object ids) {
+    @Procedure("apoc.nodes.rels")
+    @Description("Returns all relationships with the given ids.")
+    public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
         return Util.relsStream(tx, ids).map(RelationshipResult::new);
     }
 
     @UserFunction("apoc.node.relationship.exists")
-    @Description("apoc.node.relationship.exists(node, rel-direction-pattern) - returns true when the node has the relationships of the pattern")
-    public boolean hasRelationship(@Name("node") Node node, @Name(value = "types", defaultValue = "") String types) {
+    @Description("Returns a boolean based on whether the given node has a relationship (or whether the given node has a relationship of the given type and direction).")
+    public boolean hasRelationship(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
         if (types == null || types.isEmpty()) return node.hasRelationship();
         long id = node.getId();
         try ( NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
@@ -209,8 +210,9 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.connected")
-    @Description("apoc.nodes.connected(start, end, rel-direction-pattern) - returns true when the node is connected to the other node, optimized for dense nodes")
-    public boolean connected(@Name("start") Node start, @Name("start") Node end, @Name(value = "types", defaultValue = "") String types)  {
+    @Description("Returns true when a given node is directly connected to another given node.\n" +
+            "This function is optimized for dense nodes.")
+    public boolean connected(@Name("startNode") Node start, @Name("endNode") Node end, @Name(value = "types", defaultValue = "") String types)  {
         if (start == null || end == null) return false;
         if (start.equals(end)) return true;
 
@@ -246,8 +248,9 @@ public class Nodes {
         }
     }
 
-    @Procedure
-    @Description("apoc.nodes.collapse([nodes...],[{properties:'overwrite' or 'discard' or 'combine'}]) yield from, rel, to merge nodes onto first in list")
+    @Procedure("apoc.nodes.collapse")
+    @Description("Merges nodes together in the given list.\n" +
+            "The nodes are then combined to become one node, with all labels of the previous nodes attached to it, and all relationships pointing to it.")
     public Stream<VirtualPathResult> collapse(@Name("nodes") List<Node> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
         if (nodes.size() == 1) return Stream.of(new VirtualPathResult(nodes.get(0), null, null));
@@ -461,7 +464,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.labels")
-    @Description("returns labels for (virtual) nodes")
+    @Description("Returns the labels for the given virtual node.")
     public List<String> labels(@Name("node") Node node) {
         if (node == null) return null;
         Iterator<Label> labels = node.getLabels().iterator();
@@ -475,38 +478,39 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.id")
-    @Description("returns id for (virtual) nodes")
+    @Description("Returns the id for the given virtual node.")
     public Long id(@Name("node") Node node) {
         return (node == null) ? null : node.getId();
     }
 
     @UserFunction("apoc.rel.id")
-    @Description("returns id for (virtual) relationships")
+    @Description("Returns the id for the given virtual relationship.")
     public Long relId(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getId();
     }
 
     @UserFunction("apoc.rel.startNode")
-    @Description("returns startNode for (virtual) relationships")
+    @Description("Returns the start node for the given virtual relationship.")
     public Node startNode(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getStartNode();
     }
 
     @UserFunction("apoc.rel.endNode")
-    @Description("returns endNode for (virtual) relationships")
+    @Description("Returns the end node for the given virtual relationship.")
     public Node endNode(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getEndNode();
     }
 
     @UserFunction("apoc.rel.type")
-    @Description("returns type for (virtual) relationships")
+    @Description("Returns the type for the given virtual relationship.")
     public String type(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getType().name();
     }
 
     @UserFunction("apoc.any.properties")
-    @Description("returns properties for virtual and real, nodes, rels and maps")
-    public Map<String,Object> properties(@Name("thing") Object thing, @Name(value = "keys",defaultValue = "null") List<String> keys) {
+    @Description("Returns all properties of the given object.\n" +
+            "The object can be a virtual node, a real node, a virtual relationship, a real relationship, or a map.")
+    public Map<String,Object> properties(@Name("object") Object thing, @Name(value = "keys", defaultValue = "null") List<String> keys) {
         if (thing == null) return null;
         if (thing instanceof Map) {
             Map<String, Object> map = (Map<String, Object>) thing;
@@ -521,8 +525,9 @@ public class Nodes {
     }
 
     @UserFunction("apoc.any.property")
-    @Description("returns property for virtual and real, nodes, rels and maps")
-    public Object property(@Name("thing") Object thing, @Name(value = "key") String key) {
+    @Description("Returns the property for the given key from an object.\n" +
+            "The object can be a virtual node, a real node, a virtual relationship, a real relationship, or a map.")
+    public Object property(@Name("object") Object thing, @Name(value = "key") String key) {
         if (thing == null || key == null) return null;
         if (thing instanceof Map) {
             return ((Map<String, Object>) thing).get(key);
@@ -534,8 +539,8 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree")
-    @Description("apoc.node.degree(node, rel-direction-pattern) - returns total degrees of the given relationships in the pattern, can use '>' or '<' for all outgoing or incoming relationships")
-    public long degree(@Name("node") Node node, @Name(value = "types",defaultValue = "") String types) {
+    @Description("Returns the total degrees for the given node.")
+    public long degree(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String types) {
         if (types==null || types.isEmpty()) return node.getDegree();
         long degree = 0;
         for (Pair<RelationshipType, Direction> pair : parse(types)) {
@@ -545,8 +550,8 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree.in")
-    @Description("apoc.node.degree.in(node, relationshipName) - returns total number number of incoming relationships")
-    public long degreeIn(@Name("node") Node node, @Name(value = "types",defaultValue = "") String type) {
+    @Description("Returns the total number of incoming relationships to the given node.")
+    public long degreeIn(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String type) {
 
         if (type==null || type.isEmpty()) {
             return node.getDegree(Direction.INCOMING);
@@ -557,8 +562,8 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree.out")
-    @Description("apoc.node.degree.out(node, relationshipName) - returns total number number of outgoing relationships")
-    public long degreeOut(@Name("node") Node node, @Name(value = "types",defaultValue = "") String type) {
+    @Description("Returns the total number of outgoing relationships from the given node.")
+    public long degreeOut(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String type) {
 
         if (type==null || type.isEmpty()) {
             return node.getDegree(Direction.OUTGOING);
@@ -570,8 +575,8 @@ public class Nodes {
 
 
     @UserFunction("apoc.node.relationship.types")
-    @Description("apoc.node.relationship.types(node, rel-direction-pattern) - returns a list of distinct relationship types")
-    public List<String> relationshipTypes(@Name("node") Node node, @Name(value = "types",defaultValue = "") String types) {
+    @Description("Returns a list of distinct relationship types for the given node.")
+    public List<String> relationshipTypes(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String types) {
         if (node==null) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).collect(Collectors.toList());
         if (types == null || types.isEmpty()) return relTypes;
@@ -586,10 +591,8 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.relationship.types")
-    @Description("apoc.nodes.relationship.types(node|nodes|id|[ids], rel-direction-pattern) - returns " +
-            "a list of maps where each one has two fields: `node` which is the node subject of the analysis " +
-            "and `types` which is a list of distinct relationship types")
-    public List<Map<String, Object>> nodesRelationshipTypes(@Name("ids") Object ids, @Name(value = "types",defaultValue = "") String types) {
+    @Description("Returns a list of distinct relationship types from the given list of nodes.")
+    public List<Map<String, Object>> nodesRelationshipTypes(@Name("nodes") Object ids, @Name(value = "types",defaultValue = "") String types) {
         if (ids == null) return null;
         return Util.nodeStream(tx, ids)
                 .map(node -> {
@@ -605,8 +608,8 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.relationships.exist")
-    @Description("apoc.node.relationships.exist(node, rel-direction-pattern) - returns a map with rel-pattern, boolean for the given relationship patterns")
-    public Map<String,Boolean> relationshipExists(@Name("node") Node node, @Name(value = "types", defaultValue = "") String types) {
+    @Description("Returns a boolean based on whether the given node has relationships (or whether the given nodes has relationships of the given type and direction).")
+    public Map<String,Boolean> relationshipExists(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
         if (node == null || types == null || types.isEmpty()) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).toList();
         Map<String,Boolean> result =  new HashMap<>();
@@ -619,10 +622,8 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.relationships.exist")
-    @Description("apoc.nodes.relationships.exist(node|nodes|id|[ids], rel-direction-pattern) - returns " +
-            "a list of maps where each one has two fields: `node` which is the node subject of the analysis " +
-            "and `exists` which is a map with rel-pattern, boolean for the given relationship patterns")
-    public List<Map<String, Object>> nodesRelationshipExists(@Name("ids") Object ids, @Name(value = "types", defaultValue = "") String types) {
+    @Description("Returns a boolean based on whether or not the given nodes have the given relationships.")
+    public List<Map<String, Object>> nodesRelationshipExists(@Name("nodes") Object ids, @Name(value = "types", defaultValue = "") String types) {
         if (ids == null) return null;
         return Util.nodeStream(tx, ids)
                 .map(node -> {
@@ -637,8 +638,8 @@ public class Nodes {
                 .collect(Collectors.toList());
     }
 
-    @UserFunction
-    @Description("apoc.nodes.isDense(node) - returns true if it is a dense node")
+    @UserFunction("apoc.nodes.isDense")
+    @Description("Returns true if the given node is a dense node.")
     public boolean isDense(@Name("node") Node node) {
         try (NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
             final long id = node.getId();

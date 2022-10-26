@@ -46,8 +46,8 @@ public class Periodic {
     @Context public Transaction tx;
 
     @Admin
-    @Procedure(mode = Mode.SCHEMA)
-    @Description("apoc.periodic.truncate({config}) - removes all entities (and optionally indexes and constraints) from db using the apoc.periodic.iterate under the hood")
+    @Procedure(name = "apoc.periodic.truncate", mode = Mode.SCHEMA)
+    @Description("Removes all entities (and optionally indexes and constraints) from the database using the `apoc.periodic.iterate` procedure.")
     public void truncate(@Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
 
         iterate("MATCH ()-[r]->() RETURN id(r) as id", "MATCH ()-[r]->() WHERE id(r) = id DELETE r", config);
@@ -60,14 +60,14 @@ public class Periodic {
         }
     }
 
-    @Procedure
-    @Description("apoc.periodic.list - list all jobs")
+    @Procedure("apoc.periodic.list")
+    @Description("Returns a list of all background jobs.")
     public Stream<JobInfo> list() {
         return pools.getJobList().entrySet().stream().map( (e) -> e.getKey().update(e.getValue()));
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.periodic.commit(statement,params) - runs the given statement in separate transactions until it returns 0")
+    @Procedure(name = "apoc.periodic.commit", mode = Mode.WRITE)
+    @Description("Runs the given statement in separate batched transactions.")
     public Stream<RundownResult> commit(@Name("statement") String statement, @Name(value = "params", defaultValue = "{}") Map<String,Object> parameters) throws ExecutionException, InterruptedException {
         validateQuery(statement);
         Map<String,Object> params = parameters == null ? Collections.emptyMap() : parameters;
@@ -144,8 +144,8 @@ public class Periodic {
         });
     }
 
-    @Procedure
-    @Description("apoc.periodic.cancel(name) - cancel job with the given name")
+    @Procedure("apoc.periodic.cancel")
+    @Description("Cancels the given background job.")
     public Stream<JobInfo> cancel(@Name("name") String name) {
         JobInfo info = new JobInfo(name);
         Future future = pools.getJobList().remove(info);
@@ -156,15 +156,16 @@ public class Periodic {
         return Stream.empty();
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.periodic.submit('name',statement,params) - submit a one-off background statement; parameter 'params' is optional and can contain query parameters for Cypher statement")
+    @Procedure(name = "apoc.periodic.submit", mode = Mode.WRITE)
+    @Description("Creates a background job which runs the given Cypher statement once.")
     public Stream<JobInfo> submit(@Name("name") String name, @Name("statement") String statement, @Name(value = "params", defaultValue = "{}") Map<String,Object> config) {
         validateQuery(statement);
         return submitProc(name, statement, config, db, log, pools);
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.periodic.repeat('name',statement,repeat-rate-in-seconds, config) submit a repeatedly-called background statement. Fourth parameter 'config' is optional and can contain 'params' entry for nested statement.")
+    @Procedure(name = "apoc.periodic.repeat", mode = Mode.WRITE)
+    @Description("Runs a repeatedly called background job.\n" +
+            "To stop this procedure, use `apoc.periodic.cancel`.")
     public Stream<JobInfo> repeat(@Name("name") String name, @Name("statement") String statement, @Name("rate") long rate, @Name(value = "config", defaultValue = "{}") Map<String,Object> config ) {
         validateQuery(statement);
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
@@ -180,8 +181,8 @@ public class Periodic {
                 QueryType.READ_ONLY, QueryType.WRITE, QueryType.READ_WRITE);
     }
 
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.periodic.countdown('name',statement,repeat-rate-in-seconds) submit a repeatedly-called background statement until it returns 0")
+    @Procedure(name = "apoc.periodic.countdown", mode = Mode.WRITE)
+    @Description("Runs a repeatedly called background statement until it returns 0.")
     public Stream<JobInfo> countdown(@Name("name") String name, @Name("statement") String statement, @Name("rate") long rate) {
         validateQuery(statement);
         JobInfo info = submitJob(name, new Countdown(name, statement, rate, log), log, pools);
@@ -209,8 +210,9 @@ public class Periodic {
      * @param cypherIterate
      * @param cypherAction
      */
-    @Procedure(mode = Mode.WRITE)
-    @Description("apoc.periodic.iterate('statement returning items', 'statement per item', {batchSize:1000,iterateList:true,parallel:false,params:{},concurrency:<NUM_PROCESSORS>,retries:0}) YIELD batches, total - run the second statement for each item returned by the first statement. Returns number of batches and total processed rows")
+    @Procedure(name = "apoc.periodic.iterate", mode = Mode.WRITE)
+    @Description("Runs the second statement for each item returned by the first statement.\n" +
+            "This procedure returns the number of batches and the total number of processed rows.")
     public Stream<BatchAndTotalResult> iterate(
             @Name("cypherIterate") String cypherIterate,
             @Name("cypherAction") String cypherAction,

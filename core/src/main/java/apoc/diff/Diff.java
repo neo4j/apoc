@@ -20,8 +20,8 @@ public class Diff {
     @Context
     public Transaction tx;
 
-    @UserFunction()
-    @Description("apoc.diff.nodes([leftNode],[rightNode]) returns a detailed diff of both nodes")
+    @UserFunction("apoc.diff.nodes")
+    @Description("Returns a list detailing the differences between the two given nodes.")
     public Map<String, Object> nodes(@Name("leftNode") Node leftNode, @Name("rightNode") Node rightNode) {
         leftNode = Util.rebind(tx, leftNode);
         rightNode = Util.rebind(tx, rightNode);

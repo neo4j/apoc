@@ -54,7 +54,7 @@ public class ExportGraphML {
     public TerminationGuard terminationGuard;
 
     @Procedure(name = "apoc.import.graphml",mode = Mode.WRITE)
-    @Description("apoc.import.graphml(urlOrBinaryFile,config) - imports graphml file")
+    @Description("Imports a graph from the provided GraphML file.")
     public Stream<ProgressInfo> file(@Name("urlOrBinaryFile") Object urlOrBinaryFile, @Name("config") Map<String, Object> config) throws Exception {
         ProgressInfo result =
         Util.inThread(pools, () -> {
@@ -80,23 +80,23 @@ public class ExportGraphML {
         });
         return Stream.of(result);
     }
-    @Procedure
-    @Description("apoc.export.graphml.all(file,config) - exports whole database as graphml to the provided file")
+    @Procedure("apoc.export.graphml.all")
+    @Description("Exports the full database to the provided GraphML file.")
     public Stream<ProgressInfo> all(@Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportGraphML(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config));
     }
 
-    @Procedure
-    @Description("apoc.export.graphml.data(nodes,rels,file,config) - exports given nodes and relationships as graphml to the provided file")
+    @Procedure("apoc.export.graphml.data")
+    @Description("Exports the given nodes and relationships to the provided GraphML file.")
     public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
 
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
         return exportGraphML(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config));
     }
-    @Procedure
-    @Description("apoc.export.graphml.graph(graph,file,config) - exports given graph object as graphml to the provided file")
+    @Procedure("apoc.export.graphml.graph")
+    @Description("Exports the given graph to the provided GraphML file.")
     public Stream<ProgressInfo> graph(@Name("graph") Map<String,Object> graph, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
@@ -105,9 +105,9 @@ public class ExportGraphML {
         return exportGraphML(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config));
     }
 
-    @Procedure
-    @Description("apoc.export.graphml.query(query,file,config) - exports nodes and relationships from the cypher statement as graphml to the provided file")
-    public Stream<ProgressInfo> query(@Name("query") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
+    @Procedure("apoc.export.graphml.query")
+    @Description("Exports the given nodes and relationships from the Cypher statement to the provided GraphML file.")
+    public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(query);
         SubGraph graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween());
