@@ -40,117 +40,69 @@ import static apoc.util.Util.readHttpInputStream;
  */
 public class FileUtils {
 
-    public enum SupportedProtocols {
-        http(true, null),
-        https(true, null),
-        ftp(true, null),
-        s3(Util.classExists("com.amazonaws.services.s3.AmazonS3"),
-                "apoc.util.s3.S3UrlStreamHandlerFactory"),
-        gs(Util.classExists("com.google.cloud.storage.Storage"),
-                "apoc.util.google.cloud.GCStorageURLStreamHandlerFactory"),
-        hdfs(Util.classExists("org.apache.hadoop.fs.FileSystem"),
-                "org.apache.hadoop.fs.FsUrlStreamHandlerFactory"),
-        file(true, null);
-
-        private final boolean enabled;
-
-        private final String urlStreamHandlerClassName;
-
-        SupportedProtocols(boolean enabled, String urlStreamHandlerClassName) {
-            this.enabled = enabled;
-            this.urlStreamHandlerClassName = urlStreamHandlerClassName;
-        }
-
-        public StreamConnection getStreamConnection(String urlAddress, Map<String, Object> headers, String payload) throws IOException {
-            switch (this) {
-                case s3:
-                    return FileUtils.openS3InputStream(urlAddress);
-                case hdfs:
-                    return FileUtils.openHdfsInputStream(urlAddress);
-                case ftp:
-                case http:
-                case https:
-                case gs:
-                    return readHttpInputStream(urlAddress, headers, payload);
-                default:
-                    try {
-                        return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
-                    } catch (IllegalArgumentException iae) {
-                        try {
-                            return new StreamConnection.FileStreamConnection(new URL(urlAddress).getFile());
-                        } catch (MalformedURLException mue) {
-                            if (mue.getMessage().contains("no protocol")) {
-                                return new StreamConnection.FileStreamConnection(urlAddress);
-                            }
-                            throw mue;
-                        }
+    public static StreamConnection getStreamConnection(SupportedProtocols protocol, String urlAddress, Map<String, Object> headers, String payload) throws IOException {
+        switch (protocol) {
+        case s3:
+            return FileUtils.openS3InputStream(urlAddress);
+        case hdfs:
+            return FileUtils.openHdfsInputStream(urlAddress);
+        case ftp:
+        case http:
+        case https:
+        case gs:
+            return readHttpInputStream(urlAddress, headers, payload);
+        default:
+            try {
+                return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
+            } catch (IllegalArgumentException iae) {
+                try {
+                    return new StreamConnection.FileStreamConnection(new URL(urlAddress).getFile());
+                } catch (MalformedURLException mue) {
+                    if (mue.getMessage().contains("no protocol")) {
+                        return new StreamConnection.FileStreamConnection(urlAddress);
                     }
+                    throw mue;
+                }
             }
         }
+    }
 
-        public OutputStream getOutputStream(String fileName, ExportConfig config) {
-            if (fileName == null) return null;
-            final CompressionAlgo compressionAlgo = CompressionAlgo.valueOf(config.getCompressionAlgo());
-            final OutputStream outputStream;
-            try {
-                switch (this) {
-                    case s3:
-                        outputStream = S3UploadUtils.writeFile(fileName);
-                        break;
-                    case hdfs:
-                        outputStream = HDFSUtils.writeFile(fileName);
-                        break;
-                    default:
-                        final Path path = resolvePath(fileName);
-                        outputStream = new FileOutputStream(path.toFile());
-                }
-                return new BufferedOutputStream(compressionAlgo.getOutputStream(outputStream));
-            } catch (Exception e) {
+    public static URLStreamHandler createURLStreamHandler(SupportedProtocols protocol) {
+        URLStreamHandler handler = Optional.ofNullable(protocol.getUrlStreamHandlerClassName())
+                                           .map(Util::createInstanceOrNull)
+                                           .map(urlStreamHandlerFactory -> ((URLStreamHandlerFactory) urlStreamHandlerFactory).createURLStreamHandler(protocol.name()))
+                                           .orElse(null);
+        return handler;
+    }
+
+    public static SupportedProtocols of(String name) {
+        try {
+            return SupportedProtocols.valueOf(name);
+        } catch (Exception e) {
+            return SupportedProtocols.file;
+        }
+    }
+
+    public static SupportedProtocols from(URL url) {
+        return of(url.getProtocol());
+    }
+
+    public static SupportedProtocols from(String source) {
+        try {
+            final URL url = new URL(source);
+            return from(url);
+        } catch (MalformedURLException e) {
+            if (!e.getMessage().contains("no protocol")) {
+                try {
+                    // in case new URL(source) throw e.g. unknown protocol: hdfs, because of missing jar,
+                    // we retrieve the related enum and throw the associated MissingDependencyException(..)
+                    // otherwise we return unknown protocol: yyyyy
+                    return SupportedProtocols.valueOf(new URI(source).getScheme());
+                } catch (Exception ignored) {}
                 throw new RuntimeException(e);
             }
+            return SupportedProtocols.file;
         }
-
-        public boolean isEnabled() {
-            return enabled;
-        }
-
-        public URLStreamHandler createURLStreamHandler() {
-            return Optional.ofNullable(urlStreamHandlerClassName)
-                    .map(Util::createInstanceOrNull)
-                    .map(urlStreamHandlerFactory -> ((URLStreamHandlerFactory) urlStreamHandlerFactory).createURLStreamHandler(this.name()))
-                    .orElse(null);
-        }
-
-        public static SupportedProtocols from(String source) {
-            try {
-                final URL url = new URL(source);
-                return from(url);
-            } catch (MalformedURLException e) {
-                if (!e.getMessage().contains("no protocol")) {
-                    try {
-                        // in case new URL(source) throw e.g. unknown protocol: hdfs, because of missing jar, 
-                        // we retrieve the related enum and throw the associated MissingDependencyException(..)
-                        // otherwise we return unknown protocol: yyyyy
-                        return SupportedProtocols.valueOf(new URI(source).getScheme());
-                    } catch (Exception ignored) {}
-                    throw new RuntimeException(e);
-                }
-                return SupportedProtocols.file;
-            }
-        }
-
-        public static SupportedProtocols from(URL url) {
-            return SupportedProtocols.of(url.getProtocol());
-        }
-
-        public static SupportedProtocols of(String name) {
-            try {
-                return SupportedProtocols.valueOf(name);
-            } catch (Exception e) {
-                return file;
-            }
-        }
-
     }
 
     public static final String ERROR_READ_FROM_FS_NOT_ALLOWED = "Import file %s not enabled, please set " + APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM + "=true in your neo4j.conf";
@@ -251,7 +203,7 @@ public class FileUtils {
     }
 
     public static boolean isFile(String fileName) {
-        return SupportedProtocols.from(fileName) == SupportedProtocols.file;
+        return from(fileName) == SupportedProtocols.file;
     }
 
     public static OutputStream getOutputStream(String fileName) {
@@ -262,7 +214,27 @@ public class FileUtils {
         if (fileName.equals("-")) {
             return null;
         }
-        return SupportedProtocols.from(fileName).getOutputStream(fileName, config);
+        return getOutputStream(from(fileName), fileName, config);
+    }
+
+    public static OutputStream getOutputStream(SupportedProtocols protocol, String fileName, ExportConfig config) {
+        if (fileName == null) return null;
+        final CompressionAlgo compressionAlgo = CompressionAlgo.valueOf(config.getCompressionAlgo());
+        final OutputStream outputStream;
+        try {
+            switch ( protocol )
+            {
+            case s3 -> outputStream = S3UploadUtils.writeFile( fileName );
+            case hdfs -> outputStream = HDFSUtils.writeFile( fileName );
+            default -> {
+                final Path path = resolvePath( fileName );
+                outputStream = new FileOutputStream( path.toFile() );
+            }
+            }
+            return new BufferedOutputStream(compressionAlgo.getOutputStream(outputStream));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static boolean isImportUsingNeo4jConfig() {
