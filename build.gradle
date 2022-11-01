@@ -129,8 +129,6 @@ subprojects {
 }
 
 ext {
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ?
-            project.getProperty("neo4jVersionOverride")
-            : (System.env.CI != null) ? "5.2.0-dev" : "5.2.0-SNAPSHOT"
+    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.2.0"
     testContainersVersion = '1.16.2'
 }
