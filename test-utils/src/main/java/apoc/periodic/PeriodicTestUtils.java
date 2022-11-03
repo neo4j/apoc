@@ -1,6 +1,7 @@
 package apoc.periodic;
 
 import apoc.util.collection.Iterators;
+import java.util.concurrent.TimeUnit;
 import org.neo4j.common.DependencyResolver;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.impl.api.KernelTransactions;
@@ -43,10 +44,13 @@ public class PeriodicTestUtils {
     public static void testTerminatePeriodicQuery(DbmsRule db, String periodicQuery) {
         killPeriodicQueryAsync(db);
         try {
-            testResult(db, periodicQuery, result -> {
-                Map<String, Object> row = Iterators.single(result);
-                assertEquals( periodicQuery + " result: " + row.toString(), true, row.get("wasTerminated"));
-            });
+            org.neo4j.test.assertion.Assert.assertEventually( () ->
+                db.executeTransactionally(periodicQuery, Map.of(),
+                    result -> {
+                        Map<String, Object> row = Iterators.single(result);
+                        return row.get("wasTerminated");
+                    }),
+                (value) -> true, 10L, TimeUnit.SECONDS);
             fail("Should have terminated");
         } catch(Exception tfe) {
             assertEquals(tfe.getMessage(),true, tfe.getMessage().contains("terminated"));
