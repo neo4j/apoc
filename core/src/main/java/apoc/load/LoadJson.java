@@ -4,9 +4,11 @@ import apoc.result.MapResult;
 import apoc.result.ObjectResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
+import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.TerminationGuard;
 
 import java.util.Collections;
 import java.util.List;
@@ -17,6 +19,9 @@ import static apoc.load.LoadJsonUtils.loadJsonStream;
 import static apoc.util.CompressionConfig.COMPRESSION;
 
 public class LoadJson {
+    
+    @Context
+    public TerminationGuard terminationGuard;
 
     @SuppressWarnings("unchecked")
     @Procedure("apoc.load.jsonArray")
@@ -49,7 +54,7 @@ public class LoadJson {
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);
         String compressionAlgo = (String) config.getOrDefault(COMPRESSION, CompressionAlgo.NONE.name());
         List<String> pathOptions = (List<String>) config.get("pathOptions");
-        return loadJsonStream(urlOrKeyOrBinary, headers, payload, path, failOnError, compressionAlgo, pathOptions);
+        return loadJsonStream(urlOrKeyOrBinary, headers, payload, path, failOnError, compressionAlgo, pathOptions, terminationGuard);
     }
 
 }

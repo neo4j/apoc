@@ -4,6 +4,7 @@ import apoc.schema.Schemas;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
+import apoc.util.TransactionTestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import junit.framework.TestCase;
@@ -17,7 +18,6 @@ import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.test.rule.DbmsRule;
@@ -34,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
@@ -196,31 +195,8 @@ public class ImportJsonTest {
         String filename = "https://devrel-data-science.s3.us-east-2.amazonaws.com/twitch_all.json";
 
         final String query = "CALL apoc.import.json($file)";
-        new Thread(() -> db.executeTransactionally(query,  map("file", filename))).start();
 
-        // waiting for 'apoc.import.json() query to cancel when it is found
-        final String transactionId = TestUtil.singleResultFirstColumn(db, 
-                "SHOW TRANSACTIONS YIELD currentQuery, transactionId WHERE currentQuery = $query RETURN transactionId",
-                map("query", query));
-        
-        assertEventually(() -> db.executeTransactionally("TERMINATE TRANSACTION $transactionId",
-                map("transactionId", transactionId),
-                result -> {
-                    final ResourceIterator<String> msgIterator = result.columnAs("message");
-                    return msgIterator.hasNext() && msgIterator.next().equals("Transaction terminated.");
-                }), (value) -> value, 10L, TimeUnit.SECONDS);
-
-        // checking for query cancellation
-        assertEventually(() -> {
-            final String transactionListCommand = "SHOW TRANSACTIONS";
-            return db.executeTransactionally(transactionListCommand,
-                    map("query", query),
-                    result -> {
-                        final ResourceIterator<String> queryIterator = result.columnAs("currentQuery");
-                        final String first = queryIterator.next();
-                        return first.equals(transactionListCommand) && !queryIterator.hasNext();
-                    } );
-        }, (value) -> value, 10L, TimeUnit.SECONDS);
+        TransactionTestUtil.checkTerminationGuard(db, query, map("file", filename));
     }
 
     @Test

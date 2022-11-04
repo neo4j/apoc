@@ -1,5 +1,6 @@
 package apoc.periodic;
 
+import apoc.util.TransactionTestUtil;
 import apoc.util.collection.Iterators;
 import java.util.concurrent.TimeUnit;
 import org.neo4j.common.DependencyResolver;
@@ -41,8 +42,19 @@ public class PeriodicTestUtils {
         return numberOfKilledTransactions > 0;
     }
 
+    // todo - we could get rid of this method (and related code), and leverage the testTerminateWithCommand
     public static void testTerminatePeriodicQuery(DbmsRule db, String periodicQuery) {
         killPeriodicQueryAsync(db);
+        checkPeriodicTerminated(db, periodicQuery);
+    }
+
+    public static void testTerminateWithCommand(DbmsRule db, String periodicQuery) {
+        TransactionTestUtil.terminateTransactionAsync(db, periodicQuery);
+        checkPeriodicTerminated(db, periodicQuery);
+        TransactionTestUtil.checkTransactionNotInList(db, periodicQuery);
+    }
+
+    private static void checkPeriodicTerminated(DbmsRule db, String periodicQuery) {
         try {
             org.neo4j.test.assertion.Assert.assertEventually( () ->
                 db.executeTransactionally(periodicQuery, Map.of(),
