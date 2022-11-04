@@ -4,6 +4,7 @@ import apoc.cypher.Cypher;
 import apoc.schema.Schemas;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
+import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
@@ -14,6 +15,8 @@ import org.neo4j.common.DependencyResolver;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.TransactionStatusFailureException;
+import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.graphdb.TransientTransactionFailureException;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -35,6 +38,8 @@ import java.util.stream.Stream;
 import static apoc.periodic.Periodic.applyPlanner;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
+import static apoc.util.TransactionTestUtil.checkTransactionNotInList;
+import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -222,6 +227,42 @@ public class PeriodicTest {
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})");
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})");
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
+    }
+
+    @Test
+    public void testTerminateIterateWithTerminateTransactionCommand()  {
+        // apoc.periodic.iterate
+        PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.iterate('UNWIND range(0,9999999) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})");
+        PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.iterate('UNWIND range(0,9999999) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})");
+        PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.iterate('UNWIND range(0,9999999) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
+        PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.iterate('CALL apoc.util.sleep(19999) RETURN 1 as id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
+        
+        // apoc.periodic.commit
+        PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.commit('UNWIND range(0,999999) as id WITH id CREATE (n:Foo {id: id}) RETURN n limit 1000', {})");
+    }
+    
+    @Test
+    public void testWithTerminationInnerTransaction() {
+        // terminating the apoc.util.sleep should instantly terminate the periodic query without any creation
+        final String innerLongQuery = "CALL apoc.util.sleep(99999) RETURN 0";
+        final String query = "CALL apoc.periodic.iterate($innerQuery, 'WITH $id as id CREATE (:Foo {id: $id})', {params: {innerQuery: $innerQuery}})";
+
+        terminateTransactionAsync(db, innerLongQuery);
+
+        // assert query terminated (RETURN 0 nodesCreated)
+        try {
+            TestUtil.testCall(db, query,
+                    Map.of("innerQuery", innerLongQuery),
+                    row -> {
+                        final Object actual = ((Map) row.get("updateStatistics")).get("nodesCreated");
+                        assertEquals(0L, actual);
+                    });
+            fail("Should have terminated");
+        } catch (TransactionStatusFailureException e) {
+            assertEquals("Unable to complete transaction.: Explicitly terminated by the user.", e.getMessage());
+        }
+
+        checkTransactionNotInList(db, query);
     }
 
     /**
