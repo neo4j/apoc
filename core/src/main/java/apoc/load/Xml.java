@@ -8,6 +8,7 @@ import apoc.result.NodeResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
 import apoc.util.FileUtils;
+import apoc.util.Util;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Label;
@@ -19,6 +20,7 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.TerminationGuard;
 import org.neo4j.procedure.UserFunction;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.Document;
@@ -81,6 +83,9 @@ public class Xml {
 
     @Context
     public Log log;
+
+    @Context
+    public TerminationGuard terminationGuard;
 
     @Procedure("apoc.load.xml")
     @Description("Loads a single nested map from an XML URL (e.g. web-API).")
@@ -176,6 +181,7 @@ public class Xml {
     }
 
     private void handleNode(Deque<Map<String, Object>> stack, Node node, boolean simpleMode) {
+        terminationGuard.check();
 
         // Handle document node
         if (node.getNodeType() == Node.DOCUMENT_NODE) {
