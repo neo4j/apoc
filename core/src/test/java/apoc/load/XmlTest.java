@@ -2,6 +2,7 @@ package apoc.load;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
+import apoc.util.TransactionTestUtil;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import apoc.xml.XmlTestUtils;
@@ -56,6 +57,14 @@ public class XmlTest {
 
     @Test
     public void testLoadXml() {
+        testCall(db, "CALL apoc.load.xml('file:databases.xml')", //  YIELD value RETURN value
+                (row) -> {
+                    assertEquals(XmlTestUtils.XML_AS_NESTED_MAP, row.get("value"));
+                });
+    }
+
+    @Test
+    public void testTerminateLoadXml() {
         testCall(db, "CALL apoc.load.xml('file:databases.xml')", //  YIELD value RETURN value
                 (row) -> {
                     assertEquals(XmlTestUtils.XML_AS_NESTED_MAP, row.get("value"));
@@ -548,5 +557,15 @@ public class XmlTest {
         Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof RuntimeException);
         assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+    }
+
+    @Test
+    public void testParseWithXPath222() throws Exception {
+        // todo - testare senza guard
+        final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
+        TransactionTestUtil.checkTerminationGuard(db, "call apoc.load.xml($file)", Map.of("file", file));
+//        testCall(db, "RETURN apoc.xml.parse($xmlString, '/catalog/book[title=\"Maeve Ascendant\"]/.') AS result",
+//                map("xmlString", xmlString),
+//                (r) -> assertEquals(XmlTestUtils.XML_XPATH_AS_NESTED_MAP, r.get("result")));
     }
 }

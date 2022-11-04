@@ -36,6 +36,9 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
+import static apoc.util.TransactionTestUtil.checkTransactionNotInList;
+import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -162,6 +165,43 @@ public class CypherTest {
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10000)', null, $timeout)",
                 singletonMap("timeout", 100),
                 result -> result.hasNext()));
+    }
+
+    @Test
+    public void testWithTermination() {
+        final String query = "CALL apoc.cypher.runTimeboxed('unwind range (0, 10) as id CALL apoc.util.sleep(2000) return 0', null, 20000)";
+        checkTerminationGuard(db, query);
+    }
+
+    @Test
+    public void testWithTerminationInnerTransaction() {
+        final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
+
+        terminateTransactionAsync(db, innerLongQuery);
+
+        final long l = System.currentTimeMillis();
+        
+        // assert query terminated (RETURN 0)
+        TestUtil.testCall(db, query,
+                Map.of("innerQuery", innerLongQuery),
+                row -> assertEquals(Map.of("0", 0L), row.get("value")));
+
+        final long l1 = System.currentTimeMillis() - l;
+        System.out.println("l - System.currentTimeMillis() = " + l1);
+        checkTransactionNotInList(db, query);
+    }
+
+    @Test
+    public void testDoItWithTermination() {
+        final String query = "CALL apoc.cypher.run('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
+        checkTerminationGuard(db, query);
+        
+        final String query2 = "CALL apoc.cypher.doIt('CALL apoc.util.sleep(20000) return 0', {})";
+        checkTerminationGuard(db, query2);
+        
+        final String query3 = "CALL apoc.cypher.doIt('unwind range (0, 9999) as id CREATE (n:Test) return n', {})";
+        checkTerminationGuard(db, query3);
     }
 
     @Test
