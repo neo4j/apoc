@@ -6,14 +6,11 @@ import apoc.schema.Schemas;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.test.rule.DbmsRule;
@@ -580,7 +577,6 @@ public class ExportCypherTest {
     }
 
     @Test
-    @Ignore("non-deterministic index order")
     public void testExportAllCypherPlainOptimized() throws Exception {
         String fileName = "queryPlainOptimized.cypher";
         TestUtil.testCall(db, "CALL apoc.export.cypher.query('MATCH (f:Foo)-[r:KNOWS]->(b:Bar) return f,r,b', $file,{format:'cypher-shell', useOptimizations: {type: 'unwind_batch'}})",
@@ -683,31 +679,23 @@ public class ExportCypherTest {
                 });
     }
 
-    @Ignore("It doesn't fail anymore because it skips not supported indexes")
-    @Test(expected = QueryExecutionException.class)
-    public void shouldFailExportMultiTokenIndexForRelationship() {
+    @Test
+    public void shouldNotExportFulltextIndexForRelationship() {
         // given
-        db.executeTransactionally("CREATE (n:TempNode {value:'value'})");
-        db.executeTransactionally("CREATE (n:TempNode2 {value:'value'})");
-        db.executeTransactionally("CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode|TempNode2) ON EACH [n.value]");
-
-        // TODO: We can't manage full-text rel indexes because of this bug: https://github.com/neo4j/neo4j/issues/12304
         db.executeTransactionally("CREATE (s:TempNode)-[:REL{rel_value: 'the rel value'}]->(e:TempNode2)");
         db.executeTransactionally("CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.rel_value]");
         String query = "MATCH (t:TempNode) return t";
         String file = null;
         Map<String, Object> config = map("awaitForIndexes", 3000);
 
-        try {
-            // when
-            TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
-                    map("query", query, "file", file, "config", config),
-                    (r) -> {});
-        } catch (Exception e) {
-            String expected = "Full-text indexes on relationships are not supported, please delete them in order to complete the process";
-            assertEquals(expected, ExceptionUtils.getRootCause(e).getMessage());
-            throw e;
-        }
+        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+                map("query", query, "file", file, "config", config),
+                (r) -> {
+                    // then
+                    // Fulltext rel indexes are not supported and will be skipped
+                   final String cypherStatements = (String) r.get("cypherStatements");
+                   assertFalse(cypherStatements.contains("MyCoolRelFulltextIndex"));
+                });
     }
 
     @Test
@@ -1051,8 +1039,6 @@ public class ExportCypherTest {
                 "SCHEMA AWAIT%n");
 
         public static final String EXPECTED_INDEXES_AWAIT = String.format("CALL db.awaitIndexes(300);%n");
-
-        private static final String EXPECTED_INDEXES_AWAIT_QUERY = String.format("CALL db.awaitIndex(300);%n");
 
         static final String EXPECTED_RELATIONSHIPS = String.format("BEGIN%n" +
                 "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);%n" +
@@ -1464,13 +1450,13 @@ public class ExportCypherTest {
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED = EXPECTED_QUERY_NODES
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
                 .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT_QUERY)
+                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
                 .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
 
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2 = EXPECTED_QUERY_NODES2
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
                 .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT_QUERY)
+                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
                 .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
 
         static final String EXPECTED_CYPHER_SHELL_OPTIMIZED = EXPECTED_NEO4J_SHELL_OPTIMIZED
