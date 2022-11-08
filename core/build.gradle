@@ -68,7 +68,7 @@ dependencies {
 
     // These will be dependencies packaged with the .jar
     implementation project(":common")
-    implementation group: 'com.opencsv', name: 'opencsv', version: '4.6'
+    implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1'
     implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
     implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
     implementation group: 'org.apache.arrow', name: 'arrow-vector', version: '7.0.0', {
