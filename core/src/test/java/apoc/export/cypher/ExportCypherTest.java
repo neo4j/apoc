@@ -1404,60 +1404,23 @@ public class ExportCypherTest {
 
         static final String EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_PARAMS_BATCH_SIZE_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + DROP_UNIQUE_OPTIMIZED_BATCH;
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND = EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND);
 
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD = EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_QUERY_NODES);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED = EXPECTED_QUERY_NODES
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2 = convertToCypherShellFormat(EXPECTED_QUERY_NODES2);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2 = EXPECTED_QUERY_NODES2
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3 = convertToCypherShellFormat(EXPECTED_QUERY_NODES3);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3 = EXPECTED_QUERY_NODES3
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4 = convertToCypherShellFormat(EXPECTED_QUERY_NODES4);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4 = EXPECTED_QUERY_NODES4
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED);
 
-        static final String EXPECTED_CYPHER_SHELL_OPTIMIZED = EXPECTED_NEO4J_OPTIMIZED
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
-
-        static final String EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE = EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE);
 
         static final String EXPECTED_PLAIN_OPTIMIZED_BATCH_SIZE = EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE
                 .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin())
@@ -1466,11 +1429,7 @@ public class ExportCypherTest {
 
         static final String EXPECTED_NEO4J_SHELL = EXPECTED_NODES + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_CYPHER_SHELL = EXPECTED_NEO4J_SHELL
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL);
 
         static final String EXPECTED_PLAIN = EXPECTED_NEO4J_SHELL
                 .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin()).replace(NEO4J_SHELL.commit(), PLAIN_FORMAT.commit())
@@ -1478,8 +1437,7 @@ public class ExportCypherTest {
 
         static final String EXPECTED_NEO4J_MERGE = EXPECTED_NODES_MERGE + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS_MERGE + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL = EXPECTED_ONLY_SCHEMA_NEO4J_SHELL.replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit()).replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait()) + EXPECTED_INDEXES_AWAIT;
+        static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL);
 
         static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT = String.format("BEGIN%n" +
                 "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;%n" +
@@ -1496,11 +1454,7 @@ public class ExportCypherTest {
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT = EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        static final String EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT);
 
         static final String EXPECTED_PLAIN_FORMAT_WITH_COMPOUND_CONSTRAINT = String.format("CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;%n" +
                 "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n" +
@@ -1552,6 +1506,13 @@ public class ExportCypherTest {
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);
                 """;
-    }
 
+        private static String convertToCypherShellFormat(String input) {
+            return input
+                .replace( NEO4J_SHELL.begin(), CYPHER_SHELL.begin() )
+                .replace( NEO4J_SHELL.commit(), CYPHER_SHELL.commit() )
+                .replace( NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT )
+                .replace( NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait() );
+        }
+    }
 }
