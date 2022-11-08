@@ -51,7 +51,6 @@ public class PeriodicTestUtils {
                         return row.get("wasTerminated");
                     }),
                 (value) -> true, 10L, TimeUnit.SECONDS);
-            fail("Should have terminated");
         } catch(Exception tfe) {
             assertEquals(tfe.getMessage(),true, tfe.getMessage().contains("terminated"));
         }
