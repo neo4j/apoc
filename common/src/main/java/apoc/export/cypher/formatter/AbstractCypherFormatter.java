@@ -37,7 +37,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 	private static final String STATEMENT_DROP_CONSTRAINTS = "DROP CONSTRAINT %s;";
 
 	private static final String STATEMENT_NODE_FULLTEXT_IDX = "CREATE FULLTEXT INDEX %s FOR (n:%s) ON EACH [%s];";
-	private static final String STATEMENT_REL_FULLTEXT_IDX = "CREATE FULLTEXT INDEX %s FOR ()-[rel:%s]-() ON EACH [%s]);";
+	private static final String STATEMENT_REL_FULLTEXT_IDX = "CREATE FULLTEXT INDEX %s FOR ()-[rel:%s]-() ON EACH [%s];";
 	public static final String PROPERTY_QUOTING_FORMAT = "%s.`%s`";
 	private static final String ID_REL_KEY = "id";
 

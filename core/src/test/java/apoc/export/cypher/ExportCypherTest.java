@@ -684,21 +684,43 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldNotExportFulltextIndexForRelationship() {
+    public void shouldExportFulltextIndexForRelationship() {
         // given
         db.executeTransactionally("CREATE (s:TempNode)-[:REL{rel_value: 'the rel value'}]->(e:TempNode2)");
         db.executeTransactionally("CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.rel_value]");
-        String query = "MATCH (t:TempNode) return t";
+        String query = "MATCH (t:TempNode)-[r:REL{rel_value: 'the rel value'}]->(e:TempNode2) return t,r";
         String file = null;
         Map<String, Object> config = map("awaitForIndexes", 3000);
+        String expected = String.format(":begin%n" +
+                "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.`rel_value`];%n" +
+                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
+                ":commit%n" +
+                "CALL db.awaitIndexes(3000);%n" +
+                ":begin%n" +
+                "UNWIND [{_id:3, properties:{}}] AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n" +
+                "UNWIND [{_id:4, properties:{}}] AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode2;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:\"the rel value\"}}] AS row%n" +
+                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
+                "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})%n" +
+                "CREATE (start)-[r:REL]->(end) SET r += row.properties;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
+                ":commit%n");
 
+        // when
         TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
                 map("query", query, "file", file, "config", config),
                 (r) -> {
                     // then
-                    // Fulltext rel indexes are not supported and will be skipped
-                   final String cypherStatements = (String) r.get("cypherStatements");
-                   assertFalse(cypherStatements.contains("MyCoolRelFulltextIndex"));
+                    assertEquals(expected, r.get("cypherStatements"));
                 });
     }
 
