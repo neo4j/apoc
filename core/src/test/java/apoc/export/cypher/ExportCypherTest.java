@@ -591,7 +591,11 @@ public class ExportCypherTest {
                     assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
                 });
         String actual = readFile(fileName);
-        assertTrue("expected generated output",EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED.equals(actual) || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2.equals(actual));
+        assertTrue("expected generated output ",
+                EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED.equals(actual) ||
+                        EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2.equals(actual) ||
+                        EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3.equals(actual) ||
+                        EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4.equals(actual));
     }
 
     @Test
@@ -1249,6 +1253,7 @@ public class ExportCypherTest {
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n" +
                 "COMMIT%n");
 
+        // The order in UNWIND is non-deterministic so we need to check for all 4 combinations of orders
         static final String EXPECTED_QUERY_NODES_OPTIMIZED = String.format("BEGIN%n" +
                 "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
@@ -1260,6 +1265,20 @@ public class ExportCypherTest {
                 "UNWIND [{_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}] AS row%n" +
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
                 "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
+                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
+                "COMMIT%n");
+
+        static final String EXPECTED_QUERY_NODES_OPTIMIZED3 = String.format("BEGIN%n" +
+                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
+                "UNWIND [{name:\"bar2\", properties:{age:44}}, {name:\"bar\", properties:{age:42}}] AS row%n" +
+                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
+                "COMMIT%n");
+
+        static final String EXPECTED_QUERY_NODES_OPTIMIZED4 = String.format("BEGIN%n" +
+                "UNWIND [{_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}] AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
+                "UNWIND [{name:\"bar2\", properties:{age:44}}, {name:\"bar\", properties:{age:42}}] AS row%n" +
                 "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
                 "COMMIT%n");
 
@@ -1420,6 +1439,8 @@ public class ExportCypherTest {
 
         static final String EXPECTED_QUERY_NODES =  EXPECTED_SCHEMA_OPTIMIZED + EXPECTED_QUERY_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + DROP_UNIQUE_OPTIMIZED;
         static final String EXPECTED_QUERY_NODES2 =  EXPECTED_SCHEMA_OPTIMIZED + EXPECTED_QUERY_NODES_OPTIMIZED2 + EXPECTED_RELATIONSHIPS_OPTIMIZED + DROP_UNIQUE_OPTIMIZED;
+        static final String EXPECTED_QUERY_NODES3 =  EXPECTED_SCHEMA_OPTIMIZED + EXPECTED_QUERY_NODES_OPTIMIZED3 + EXPECTED_RELATIONSHIPS_OPTIMIZED + DROP_UNIQUE_OPTIMIZED;
+        static final String EXPECTED_QUERY_NODES4 =  EXPECTED_SCHEMA_OPTIMIZED + EXPECTED_QUERY_NODES_OPTIMIZED4 + EXPECTED_RELATIONSHIPS_OPTIMIZED + DROP_UNIQUE_OPTIMIZED;
 
         static final String EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND = EXPECTED_SCHEMA_OPTIMIZED + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_UNWIND + EXPECTED_RELATIONSHIPS_OPTIMIZED + DROP_UNIQUE_OPTIMIZED_BATCH;
 
@@ -1454,6 +1475,18 @@ public class ExportCypherTest {
                 .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
 
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2 = EXPECTED_QUERY_NODES2
+                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
+                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
+                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
+                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3 = EXPECTED_QUERY_NODES3
+                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
+                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
+                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
+                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+
+        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4 = EXPECTED_QUERY_NODES4
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
                 .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
