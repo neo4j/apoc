@@ -409,7 +409,7 @@ public class ExportCypherS3Test {
                 (r) -> assertResultsOptimized(s3Url, r));
         verifyUpload("allDefaultOptimized.nodes.cypher", EXPECTED_NODES_OPTIMIZED);
         verifyUpload("allDefaultOptimized.relationships.cypher", EXPECTED_RELATIONSHIPS_OPTIMIZED);
-        verifyUpload("allDefaultOptimized.schema.cypher", EXPECTED_SCHEMA_OPTIMIZED);
+        verifyUpload("allDefaultOptimized.schema.cypher", EXPECTED_SCHEMA);
         verifyUpload("allDefaultOptimized.cleanup.cypher", EXPECTED_CLEAN_UP);
     }
 
@@ -549,7 +549,7 @@ public class ExportCypherS3Test {
                 ":begin%n" +
                 "DROP CONSTRAINT uniqueConstraint;%n" +
                 ":commit%n", expectedDropNum, expectedDropNum);
-        String expected = (EXPECTED_SCHEMA_OPTIMIZED + expectedNodes + EXPECTED_RELATIONSHIPS_PARAMS_ODD + expectedDrop)
+        String expected = (EXPECTED_SCHEMA + expectedNodes + EXPECTED_RELATIONSHIPS_PARAMS_ODD + expectedDrop)
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
                 .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
