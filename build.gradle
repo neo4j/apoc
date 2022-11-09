@@ -27,7 +27,7 @@ static def neo4jReleases() {
 
 // In an ideal world this method would return an empty list. Alas, 5.0.0 was never published to mvn
 static def initialiseNeo4jReleases() {
-    return [ "5.0.0 "]
+    return [ "5.0.0"]
 }
 
 // Gets all APOC releases from Github
