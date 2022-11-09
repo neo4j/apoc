@@ -27,7 +27,7 @@ static def neo4jReleases() {
 
 // In an ideal world this method would return an empty list. Alas, 5.0.0 was never published to mvn
 static def initialiseNeo4jReleases() {
-    return [ "5.0.0"]
+    return [ "5.0.0" ]
 }
 
 // Gets all APOC releases from Github
@@ -37,13 +37,17 @@ static def apocReleases() {
     return releases.findAll { !(it.prerelease || it.draft) }
 }
 
-// Any major version of Neo4j should use the latest corresponding major version of APOC
+// Any major.minor version of Neo4j should use the latest corresponding major.minor version of APOC
+// E.g Neo4j 5.2.0 should find the APOC 5.2.x release with the largest patch (x value)
 static def findApocVersion(apocReleases, neo4jRelease) {
     def majorNeoVersion = neo4jRelease.substring(0, 1)
+    def minorNeoVersion = neo4jRelease.substring(2, 3)
     def candidates = apocReleases
-            .findAll { it.substring(0, 1) == majorNeoVersion }
+            .findAll { it.substring(0, 1) == majorNeoVersion &&
+                        it.substring(2,3) == minorNeoVersion
+            }
             .sort { o1, o2 -> normalizeVersion(o1) <=> normalizeVersion(o2) }
-    return candidates[-1]
+    return candidates.size() > 0 ? candidates[-1] : null
 }
 
 // Calculates which APOC version should be used for each known Neo4j version.
