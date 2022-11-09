@@ -18,7 +18,6 @@ import java.nio.charset.Charset;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@Ignore
 public class UtilIT {
 
     @Rule
@@ -64,6 +63,7 @@ public class UtilIT {
         assertTrue(page.contains("<title>Google</title>"));
     }
 
+    @Ignore
     @Test(expected = RuntimeException.class)
     public void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() throws IOException {
         try {
