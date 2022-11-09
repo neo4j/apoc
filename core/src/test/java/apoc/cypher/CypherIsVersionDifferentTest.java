@@ -16,7 +16,7 @@ public class CypherIsVersionDifferentTest {
         assertFalse(isVersionDifferent("3.5.12", "3.5.1.9"));
         assertFalse(isVersionDifferent("4.4.5", "4.4.0.4"));
         assertFalse(isVersionDifferent("5.1.1", "5.1.0"));
-        assertTrue(isVersionDifferent("5.1.0", "5.2.0"));
+        assertTrue(isVersionDifferent("5.1.0", "5.2.1"));
         assertFalse(isVersionDifferent("5.1-aura", "5.1.0"));
         assertTrue(isVersionDifferent("4.4-aura", "5.1.0"));
         assertTrue(isVersionDifferent("5.2-aura", "5.1.0"));
