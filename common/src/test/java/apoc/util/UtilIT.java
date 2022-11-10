@@ -5,7 +5,6 @@ import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -26,18 +25,19 @@ public class UtilIT {
     private GenericContainer httpServer;
 
     private static final String WITH_URL_LOCATION = "WithUrlLocation";
-    private static final String WITH_FILE_LOCATION = "WithFileLocation";
 
     @Before
     public void setUp() throws Exception {
         new ApocConfig();  // empty test configuration, ensure ApocConfig.apocConfig() can be used
+        boolean isHttpTest = testName.getMethodName().endsWith(WITH_URL_LOCATION);
         TestUtil.ignoreException(() -> {
             httpServer = new GenericContainer("alpine")
                     .withCommand("/bin/sh", "-c", String.format("while true; do { echo -e 'HTTP/1.1 301 Moved Permanently\\r\\nLocation: %s'; echo ; } | nc -l -p 8000; done",
-                            testName.getMethodName().endsWith(WITH_URL_LOCATION) ? "http://www.google.com" : "file:/etc/passwd"))
+                            isHttpTest ? "http://www.google.com" : "file:/etc/passwd"))
                     .withExposedPorts(8000);
-            httpServer.waitingFor(Wait.forHttp("/")
-                    .forStatusCode(301));
+            if (isHttpTest) {
+                httpServer.waitingFor(Wait.forHttp("/").forStatusCode(301));
+            }
             httpServer.start();
         }, Exception.class);
         Assume.assumeNotNull(httpServer);
@@ -63,7 +63,6 @@ public class UtilIT {
         assertTrue(page.contains("<title>Google</title>"));
     }
 
-    @Ignore
     @Test(expected = RuntimeException.class)
     public void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() throws IOException {
         try {
