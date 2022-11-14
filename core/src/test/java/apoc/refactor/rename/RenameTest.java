@@ -2,7 +2,6 @@ package apoc.refactor.rename;
 
 import apoc.util.TestUtil;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -331,21 +330,23 @@ public class RenameTest {
 	}
 
 	@Test
-	@Ignore("in 4.3 it should be hard to reproduce")
 	public void testDeadlockException() {
-		String query = "UNWIND RANGE(1, 100) AS ID \n" +
-				"MERGE (account1:Account{ID: ID})\n" +
-				"MERGE (account2:Account{ID: toInteger(rand() * 100)})\n" +
-				"MERGE (account3:Account{ID: toInteger(rand() * 100)})\n" +
-				"MERGE (account1)-[:SIMILAR_TO]->(account2)\n" +
-				"MERGE (account1)-[:SIMILAR_TO]->(account3)\n" +
-				"MERGE (account2)-[:SIMILAR_TO]->(account3)";
+		String query = """
+				UNWIND RANGE(1, 50) AS ID
+				MERGE (account1:Account{ID: ID})
+				MERGE (account2:Account{ID: toInteger(rand() * 100)})
+				MERGE (account3:Account{ID: toInteger(rand() * 100)})
+				WITH account1, account2, account3
+				UNWIND RANGE(1, 150) AS ID_REL
+				MERGE (account1)-[:SIMILAR_TO {id: ID_REL}]->(account2)
+				MERGE (account1)-[:SIMILAR_TO {id: ID_REL}]->(account3)
+				MERGE (account2)-[:SIMILAR_TO {id: ID_REL}]->(account3)""";
 		db.executeTransactionally(query);
 
 		String testQuery = "MATCH (:Account)-[r:SIMILAR_TO]->(:Account)\n" +
 				"WITH COLLECT(r) as rs\n" +
-				"CALL apoc.refactor.rename.type('SIMILAR_TO','SIMILAR_TO_'+rand(),rs, {batchSize:10}) YIELD committedOperations, batches, failedBatches, total, errorMessages, batch\n" +
-				"RETURN committedOperations, batches, failedBatches, total, errorMessages, batch";
+				"CALL apoc.refactor.rename.type('SIMILAR_TO','SIMILAR_TO_'+rand(),rs, {batchSize:10}) YIELD batch\n" +
+				"RETURN batch";
 		testResult(db, testQuery, Collections.emptyMap(), (r) -> {
 			final Map<String, Object> batch = r.<Map<String, Object>>columnAs("batch").next();
 			final Map<String, Object> errors = (Map<String, Object>) batch.get("errors");
