@@ -1,50 +1,43 @@
 package apoc.util;
 
 import apoc.ApocConfig;
+import inet.ipaddr.IPAddressString;
+import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.neo4j.configuration.Config;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class UtilIT {
-
-    @Rule
-    public TestName testName = new TestName();
-
     private GenericContainer httpServer;
 
-    private static final String WITH_URL_LOCATION = "WithUrlLocation";
-    private static final String WITH_FILE_LOCATION = "WithFileLocation";
-
-    @Before
-    public void setUp() {
-        new ApocConfig();  // empty test configuration, ensure ApocConfig.apocConfig() can be used
+    private void setUpServer(Config neo4jConfig, String redirectURL) {
+        new ApocConfig(neo4jConfig);
         TestUtil.ignoreException(() -> {
             httpServer = new GenericContainer("alpine")
                     .withCommand("/bin/sh", "-c", String.format("while true; do { echo -e 'HTTP/1.1 301 Moved Permanently\\r\\nLocation: %s'; echo ; } | nc -l -p 8000; done",
-                            testName.getMethodName().endsWith(WITH_URL_LOCATION) ? "http://www.google.com" : "file:/etc/passwd"))
+                            redirectURL))
                     .withExposedPorts(8000);
-            httpServer.waitingFor(Wait.forHttp("/")
-                    .forStatusCode(301));
             httpServer.start();
         }, Exception.class);
         Assume.assumeNotNull(httpServer);
         Assume.assumeTrue(httpServer.isRunning());
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (httpServer != null) {
             httpServer.stop();
@@ -53,6 +46,7 @@ public class UtilIT {
 
     @Test
     public void redirectShouldWorkWhenProtocolNotChangesWithUrlLocation() throws IOException {
+        setUpServer(null, "http://www.google.com");
         // given
         String url = getServerUrl();
 
@@ -63,10 +57,26 @@ public class UtilIT {
         assertTrue(page.contains("<title>Google</title>"));
     }
 
-    @Ignore
+    @Test
+    public void redirectWithBlockedIPsWithUrlLocation() {
+        List<IPAddressString> blockedIPs = List.of(new IPAddressString("127.168.0.1/8"));
+
+        Config neo4jConfig = mock(Config.class);
+        when(neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist)).thenReturn(blockedIPs);
+
+        setUpServer(neo4jConfig, "http://127.168.0.1");
+        String url = getServerUrl();
+
+        IOException e = Assert.assertThrows(IOException.class,
+                () -> Util.openInputStream(url, null, null, null)
+        );
+        TestCase.assertTrue(e.getMessage().contains("access to /127.168.0.1 is blocked via the configuration property internal.dbms.cypher_ip_blocklist"));
+    }
+
     @Test(expected = RuntimeException.class)
     public void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() throws IOException {
         try {
+            setUpServer(null, "file:/etc/passwd");
             // given
             String url = getServerUrl();
 

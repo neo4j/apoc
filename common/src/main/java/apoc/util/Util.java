@@ -335,17 +335,19 @@ public class Util {
         URL src = new URL(url);
         URLConnection con = src.openConnection();
         con.setRequestProperty("User-Agent", "APOC Procedures for Neo4j");
-        if (headers != null) {
-            Object method = headers.get("method");
-            if (method != null && con instanceof HttpURLConnection) {
+        if (con instanceof HttpURLConnection) {
                 HttpURLConnection http = (HttpURLConnection) con;
-                http.setRequestMethod(method.toString());
-                http.setChunkedStreamingMode(1024*1024);
-                http.setInstanceFollowRedirects(true);
+                http.setInstanceFollowRedirects(false);
+            if (headers != null) {
+                Object method = headers.get("method");
+                if (method != null) {
+                    http.setRequestMethod(method.toString());
+                    http.setChunkedStreamingMode(1024 * 1024);
+                }
+                headers.forEach((k, v) -> con.setRequestProperty(k, v == null ? "" : v.toString()));
             }
-            headers.forEach((k,v) -> con.setRequestProperty(k, v == null ? "" : v.toString()));
         }
-//        con.setDoInput(true);
+
         con.setConnectTimeout(apocConfig().getInt("apoc.http.timeout.connect",10_000));
         con.setReadTimeout(apocConfig().getInt("apoc.http.timeout.read",60_000));
         return con;
@@ -412,7 +414,7 @@ public class Util {
         return new CountingInputStream(stream, sc.getLength());
     }
 
-    private static StreamConnection getStreamConnection(String urlAddress, Map<String, Object> headers, String payload) throws IOException {
+    public static StreamConnection getStreamConnection(String urlAddress, Map<String, Object> headers, String payload) throws IOException {
         return FileUtils.getStreamConnection( FileUtils.from( urlAddress), urlAddress, headers, payload);
     }
 
