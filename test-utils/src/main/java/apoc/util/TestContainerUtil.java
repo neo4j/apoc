@@ -42,7 +42,7 @@ public class TestContainerUtil {
     public static final String neo4jEnterpriseDockerImageVersion = System.getProperty("neo4jDockerImage");
     public static final String neo4jCommunityDockerImageVersion = System.getProperty("neo4jCommunityDockerImage");
 
-    public static final String password = "apoc";
+    public static final String password = "apoc12345";
 
     private TestContainerUtil() {}
 
