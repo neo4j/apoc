@@ -74,7 +74,6 @@ dependencies {
 
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(':test-utils')
-    testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.348'
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
     testImplementation group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'

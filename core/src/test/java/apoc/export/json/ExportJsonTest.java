@@ -3,7 +3,7 @@ package apoc.export.json;
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
-import apoc.util.JsonUtil;
+import apoc.util.FileTestUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.junit.Before;
@@ -563,13 +563,7 @@ public class ExportJsonTest {
         assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
     }
 
-    private void assertStreamEquals(String fileName, String actualText) { 
-        String expectedText = TestUtil.readFileToString(new File(directoryExpected, fileName));
-        String[] actualArray = actualText.split("\n");
-        String[] expectArray = expectedText.split("\n");
-        assertEquals(expectArray.length, actualArray.length);
-        for (int i = 0; i < actualArray.length; i++) {
-            assertEquals(JsonUtil.parse(expectArray[i],null, Object.class), JsonUtil.parse(actualArray[i],null, Object.class));
-        }
+    private void assertStreamEquals(String fileName, String actualText) {
+        FileTestUtil.assertStreamEquals(directory, fileName, actualText);
     }
 }
