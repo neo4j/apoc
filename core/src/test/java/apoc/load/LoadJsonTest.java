@@ -183,17 +183,6 @@ public class LoadJsonTest {
                     assertEquals(map("foo",asList(1L,2L,3L)), row.get("value"));
                 });
     }
-    @Test public void testLoadJsonGraphCommons() throws Exception {
-		String url = "https://graphcommons.com/graphs/8da5327d-7829-4dfe-b60b-4c0bda956b2a.json";
-		testCall(db, "CALL apoc.load.json($url)",map("url", url), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    Map value = (Map)row.get("value");
-                    assertEquals(true, value.containsKey("graph"));
-                    Map graph = (Map)value.get("graph");
-                    assertEquals(true, graph.containsKey("users"));
-                    assertEquals(true, graph.containsKey("nodes"));
-                });
-    }
 
     @Test public void testLoadJsonStackOverflow() throws Exception {
         String url = "https://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&tagged=neo4j&site=stackoverflow&filter=!5-i6Zw8Y)4W7vpy91PMYsKM-k9yzEsSC1_Uxlf";
