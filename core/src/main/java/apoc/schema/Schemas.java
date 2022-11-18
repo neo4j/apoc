@@ -574,14 +574,15 @@ public class Schemas {
                 .mapToObj(tokens::propertyKeyGetName)
                 .collect(Collectors.toList());
         try {
-            return new IndexConstraintRelationshipInfo(getSchemaInfoName(relName, properties), relName, properties, schemaRead.indexGetState(indexDescriptor).toString());
+            return new IndexConstraintRelationshipInfo(getSchemaInfoName(relName, properties), "INDEX", properties, schemaRead.indexGetState(indexDescriptor).toString(), relName);
         } catch (IndexNotFoundKernelException e) {
             return new IndexConstraintRelationshipInfo(
                     // Pretty print for index name
                     getSchemaInfoName(relName, properties),
-                    relName,
+                    "INDEX",
                     properties,
-                    "NOT_FOUND"
+                    "NOT_FOUND",
+                    relName
             );
         }
     }
@@ -597,7 +598,8 @@ public class Schemas {
                 String.format("CONSTRAINT %s", constraintDefinition.toString()),
                 constraintDefinition.getConstraintType().name(),
                 Iterables.asList(constraintDefinition.getPropertyKeys()),
-                ""
+                "",
+                constraintDefinition.getRelationshipType().name()
         );
     }
 
