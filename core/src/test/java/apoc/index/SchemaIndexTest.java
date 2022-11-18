@@ -48,6 +48,7 @@ SchemaIndexTest {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.address)");
         db.executeTransactionally("CREATE CONSTRAINT FOR (p:Person) REQUIRE p.id IS UNIQUE");
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
+        db.executeTransactionally("CREATE INDEX rel_range_index_name FOR ()-[r:KNOWS]-() ON (r.since)");
         db.executeTransactionally("CREATE (f:Foo {bar:'three'}), (f2a:Foo {bar:'four'}), (f2b:Foo {bar:'four'})");
         personIds = LongStream.range(firstPerson, lastPerson+1).boxed().collect(Collectors.toList());
         personNames = IntStream.range(firstPerson, lastPerson+1).mapToObj(Integer::toString).map(i -> "name"+i).sorted().collect(Collectors.toList());
@@ -68,6 +69,14 @@ SchemaIndexTest {
         testCall(db,"CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", "Person","key", "name"),
                 (row) -> assertEquals(new HashSet<>(personNames), new HashSet<>((Collection<String>) row.get("value")))
+        );
+    }
+
+    @Test
+    public void testPropertiesDistinctDoesntReturnRelIndexes() {
+        testCall(db, "CALL apoc.schema.properties.distinct(\"\", $key)",
+                map("key", "since"), // since is a relationship prop index
+                (row) -> assertEquals(new HashSet<>(), new HashSet<>((Collection<String>) row.get("value")))
         );
     }
 

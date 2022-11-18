@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -67,7 +68,8 @@ public class MetaTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"))
             .withSetting(newBuilder( "internal.dbms.debug.track_cursor_close", BOOL, false ).build(), false)
-            .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false);
+            .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false)
+            .withSetting(GraphDatabaseInternalSettings.rel_unique_constraints, true);
 
     @Before
     public void setUp() {
@@ -1389,6 +1391,27 @@ public class MetaTest {
                         String.format("CALL apoc.meta.data.of(graph) YIELD %s ", keys) +
                         "RETURN " + keys,
                 assertResult);
+    }
+    @Test
+    public void testMetaDataOfWithRelConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKES]-() REQUIRE like.score IS UNIQUE");
+        db.executeTransactionally("CREATE (gem:Person {name: \"Gem\"})-[:LIKES {score: 10}]->(cake:Cake {type: \"Chocolate\"})");
+        Set<Map<String, Object>> expectedResult = new HashSet<>();
+        expectedResult.add(MapUtil.map("other",List.of("Cake"),"count",1L,"existence",false,"index",false,"label","LIKES","right",0L,"type","RELATIONSHIP","sample",null,"array",false,"left",1L,"unique",false,"property","Person","elementType","relationship","otherLabels",List.of()));
+        expectedResult.add(MapUtil.map("other",List.of(),"count",0L,"existence",false,"index",true,"label","LIKES","right",0L,"type","INTEGER","sample",null,"array",false,"left",0L,"unique",false,"property","score","elementType","relationship","otherLabels",List.of()));
+        expectedResult.add(MapUtil.map("other",List.of(),"count",0L,"existence",false,"index",false,"label","Cake","right",0L,"type","STRING","sample",null,"array",false,"left",0L,"unique",false,"property","type","elementType","node","otherLabels",List.of()));
+        expectedResult.add(MapUtil.map("other",List.of("Cake"),"count",1L,"existence",false,"index",false,"label","Person","right",0L,"type","RELATIONSHIP","sample",null,"array",false,"left",1L,"unique",false,"property","LIKES","elementType","node","otherLabels",List.of()));
+        expectedResult.add(MapUtil.map("other",List.of(),"count",0L,"existence",false,"index",false,"label","Person","right",0L,"type","STRING","sample",null,"array",false,"left",0L,"unique",false,"property","name","elementType","node","otherLabels",List.of()));
+
+        Set<Map<String, Object>> actualResult = new HashSet<>();
+
+        TestUtil.testResult(db, "CALL apoc.meta.data.of('MATCH p = ()-[:LIKES]->() RETURN p')",
+                result -> {
+                    while (result.hasNext()) {
+                        actualResult.add(result.next());
+                    }
+                    assertEquals(actualResult, expectedResult);
+                });
     }
 
     @Test

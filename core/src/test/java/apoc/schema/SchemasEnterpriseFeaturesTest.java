@@ -1,16 +1,21 @@
 package apoc.schema;
 
+import apoc.result.AssertSchemaResult;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
+import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
+import org.neo4j.driver.exceptions.ClientException;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -100,6 +105,137 @@ public class SchemasEnterpriseFeaturesTest {
             Map<String, Object> firstResult = result.get(0).asMap();
             assertThat( (String) firstResult.get( "createStatement" ) )
                     .contains( "CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS NODE KEY" );
+            tx.commit();
+            return null;
+        });
+    }
+
+
+    @Test
+    public void testRelKeyConstraintIsKeptAndDropped() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT rel_con_since FOR ()-[since:SINCE]-() REQUIRE (since.day, since.year) IS RELATIONSHIP KEY");
+            tx.run("CREATE CONSTRAINT rel_con_knows FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");
+            tx.commit();
+            return null;
+        });
+
+        HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
+        AssertSchemaResult sinceConstraint = new AssertSchemaResult("SINCE", List.of("day", "year"));
+        sinceConstraint.unique = true;
+        expectedResult.add(sinceConstraint);
+
+        AssertSchemaResult knowsConstraint = new AssertSchemaResult("KNOWS", List.of("day", "year"));
+        knowsConstraint.unique = true;
+        knowsConstraint.action = "DROPPED";
+        expectedResult.add(knowsConstraint);
+
+        HashSet<AssertSchemaResult> actualResult = new HashSet<>();
+
+
+        testResult(session, "CALL apoc.schema.assert({},{SINCE:[[\"day\", \"year\"]]})", (result) -> {
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                AssertSchemaResult con = new AssertSchemaResult(r.get("label"), (List<String>) r.get("keys"));
+                con.unique = (boolean) r.get("unique");
+                con.action = (String) r.get("action");
+                actualResult.add(con);
+
+                assertEquals(1, expectedResult.stream().filter(
+                        c -> c.keys.containsAll(con.keys) &&
+                                c.action.equals(con.action) &&
+                                c.label.equals(con.label) &&
+                                c.unique == con.unique
+                ).toList().size());
+            }
+
+            assertEquals(expectedResult.size(), actualResult.size());
+        });
+
+        session.writeTransaction(tx -> {
+            tx.run("DROP CONSTRAINT rel_con_since");
+            tx.commit();
+            return null;
+        });
+    }
+
+    @Test
+    public void testSchemaRelationshipsExclude() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        testResult(session, "CALL apoc.schema.relationships({excludeRelationships:['LIKED']})", (result) -> assertFalse(result.hasNext()));
+
+        session.writeTransaction(tx -> {
+            tx.run("DROP CONSTRAINT rel_con_liked");
+            tx.commit();
+            return null;
+        });
+    }
+
+    @Test
+    public void testRelationshipConstraintsArentReturnedInNodesCheck() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
+            tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");
+            tx.commit();
+            return null;
+        });
+
+        testResult(session, "CALL apoc.schema.nodes({})", (result) -> assertFalse(result.hasNext()));
+
+        session.writeTransaction(tx -> {
+            tx.run("DROP CONSTRAINT rel_con_liked");
+            tx.run("DROP CONSTRAINT rel_con");
+            tx.commit();
+            return null;
+        });
+    }
+    @Test
+    public void testRelExistenceConstraintIsKeptAndDropped() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
+            tx.run("CREATE CONSTRAINT rel_con_since FOR ()-[since:SINCE]-() REQUIRE (since.day) IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
+        AssertSchemaResult sinceConstraint = new AssertSchemaResult("SINCE", "day");
+        sinceConstraint.unique = true;
+        expectedResult.add(sinceConstraint);
+
+        AssertSchemaResult likedConstraint = new AssertSchemaResult("LIKED", "day");
+        likedConstraint.unique = true;
+        likedConstraint.action = "DROPPED";
+        expectedResult.add(likedConstraint);
+
+        HashSet<AssertSchemaResult> actualResult = new HashSet<>();
+
+        testResult(session, "CALL apoc.schema.assert({},{SINCE:[\"day\"]})", (result) -> {
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                AssertSchemaResult con = new AssertSchemaResult((String) r.get("label"), (String) r.get("key"));
+                con.unique = (boolean) r.get("unique");
+                con.action = (String) r.get("action");
+                actualResult.add(con);
+
+                assertEquals(1, expectedResult.stream().filter(
+                        c -> c.key.equals(con.key) &&
+                                c.action.equals(con.action) &&
+                                c.label.equals(con.label) &&
+                                c.unique == con.unique
+                ).toList().size());
+            }
+
+            assertEquals(expectedResult.size(), actualResult.size());
+        });
+
+        session.writeTransaction(tx -> {
+            tx.run("DROP CONSTRAINT rel_con_since");
             tx.commit();
             return null;
         });
@@ -427,6 +563,112 @@ public class SchemasEnterpriseFeaturesTest {
             tx.commit();
             return null;
         });
+    }
+
+    @Test
+    public void testConstraintsRelationshipsAndExcludeRelationshipsValuatedShouldFail() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
+            tx.run("CREATE CONSTRAINT since_con FOR ()-[since:SINCE]-() REQUIRE since.year IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        ClientException e = Assert.assertThrows(ClientException.class,
+                () ->  testResult(session, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
+        );
+        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excluderelationships are both valuated. Please check parameters and valuate only one."));
+
+        session.writeTransaction(tx -> {
+            tx.run("DROP CONSTRAINT like_con");
+            tx.run("DROP CONSTRAINT since_con");
+            tx.commit();
+            return null;
+        });
+    }
+
+    @Test
+    public void testRelationshipKeyConstraint() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");
+            tx.commit();
+            return null;
+        });
+
+        testResult(session, "CALL apoc.schema.relationships({})",
+                result -> {
+                    Map<String, Object> r = result.next();
+
+                    assertEquals("CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE (knows.day,knows.year) IS RELATIONSHIP KEY", r.get("name"));
+                    assertEquals("RELATIONSHIP_KEY", r.get("type"));
+                    assertEquals(List.of("day", "year"), r.get("properties"));
+
+                    r = result.next();
+
+                    assertEquals(":KNOWS(day,year)", r.get("name"));
+                    assertEquals("KNOWS", r.get("type")); // This is currently a bug that needs to be fixed separately
+                    assertEquals(List.of("day", "year"), r.get("properties"));
+                    assertFalse(result.hasNext());
+                }
+        );
+
+        session.writeTransaction(tx -> {
+            tx.run("DROP CONSTRAINT rel_con");
+            tx.commit();
+            return null;
+        });
+    }
+
+    @Test
+    public void testNodeConstraintExists() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "RETURN apoc.schema.node.constraintExists(\"Bar\", [\"foobar\"]) AS output;",
+                (r) -> assertEquals(true, r.get("output"))
+        );
+    }
+    @Test
+    public void testNodeConstraintDoesntExist() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS NOT NULL");
+            tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (foo:Foo) REQUIRE foo.barfoo IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "RETURN apoc.schema.node.constraintExists(\"Bar\", [\"foobar\", \"barfoo\"]) AS output;",
+                (r) -> assertEquals(false, r.get("output"))
+        );
+    }
+
+    @Test
+    public void testRelationshipConstraintExists() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "RETURN apoc.schema.relationship.constraintExists(\"LIKED\", [\"day\"]) AS output;",
+                (r) -> assertEquals(true, r.get("output"))
+        );
+    }
+    @Test
+    public void testRelationshipConstraintDoesntExist() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
+            tx.run("CREATE CONSTRAINT since_con FOR ()-[since:SINCE]-() REQUIRE since.year IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "RETURN apoc.schema.relationship.constraintExists(\"LIKED\", [\"day\", \"year\"]) AS output;",
+                (r) -> assertEquals(false, r.get("output"))
+        );
     }
 
     private static void assertMatchesAll( List<String> expectedCreateStatements, List<String> actualCreateStatements )

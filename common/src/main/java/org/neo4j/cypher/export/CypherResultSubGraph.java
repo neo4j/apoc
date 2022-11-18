@@ -1,5 +1,6 @@
 package org.neo4j.cypher.export;
 
+import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
@@ -69,7 +70,7 @@ public class CypherResultSubGraph implements SubGraph {
             }
         }
         for (ConstraintDefinition def : tx.schema().getConstraints()) {
-            if (graph.getLabels().contains(def.getLabel())) {
+            if (Util.isNodeCategory( def.getConstraintType() ) && graph.getLabels().contains(def.getLabel())) {
                 graph.addConstraint(def);
             }
         } if (addBetween) {
@@ -161,6 +162,7 @@ public class CypherResultSubGraph implements SubGraph {
     @Override
     public Iterable<ConstraintDefinition> getConstraints(Label label) {
         return constraints.stream()
+                .filter(c -> Util.isNodeCategory(c.getConstraintType()))
                 .filter(c -> c.getLabel().equals(label))
                 .collect(Collectors.toSet());
     }
@@ -168,6 +170,7 @@ public class CypherResultSubGraph implements SubGraph {
     @Override
     public Iterable<ConstraintDefinition> getConstraints(RelationshipType type) {
         return constraints.stream()
+                .filter(c -> Util.isRelationshipCategory(c.getConstraintType()))
                 .filter(c -> c.getRelationshipType().equals(type))
                 .collect(Collectors.toSet());
     }
@@ -175,6 +178,7 @@ public class CypherResultSubGraph implements SubGraph {
     @Override
     public Iterable<IndexDefinition> getIndexes(Label label) {
         return indexes.stream()
+                .filter(IndexDefinition::isNodeIndex)
                 .filter(idx -> StreamSupport.stream(idx.getLabels().spliterator(), false).anyMatch(lb -> lb.equals(label)))
                 .collect(Collectors.toSet());
     }
@@ -182,6 +186,7 @@ public class CypherResultSubGraph implements SubGraph {
     @Override
     public Iterable<IndexDefinition> getIndexes(RelationshipType type) {
         return indexes.stream()
+                .filter(IndexDefinition::isRelationshipIndex)
                 .filter(idx -> StreamSupport.stream(idx.getRelationshipTypes().spliterator(), false)
                         .anyMatch(relType -> relType.name().equals(type.name())))
                 .collect(Collectors.toSet());

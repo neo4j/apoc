@@ -119,7 +119,7 @@ public class Schemas {
         Schema schema = tx.schema();
 
         for (ConstraintDefinition definition : schema.getConstraints()) {
-            String label = definition.isConstraintType(ConstraintType.RELATIONSHIP_PROPERTY_EXISTENCE) ? definition.getRelationshipType().name() : definition.getLabel().name();
+            String label = Util.isRelationshipCategory(definition.getConstraintType()) ? definition.getRelationshipType().name() : definition.getLabel().name();
             AssertSchemaResult info = new AssertSchemaResult(label, Iterables.asList(definition.getPropertyKeys())).unique();
             if (!checkIfConstraintExists(label, constraints, info)) {
                 if (dropExisting) {
@@ -351,7 +351,7 @@ public class Schemas {
             Iterable<IndexDescriptor> indexesIterator;
             Iterable<ConstraintDescriptor> constraintsIterator;
 
-            final Predicate<ConstraintDescriptor> isNodeConstraint = constraint -> !constraint.isRelationshipPropertyExistenceConstraint();
+            final Predicate<ConstraintDescriptor> isNodeConstraint = Util::isNodeCategory;
             if (includeLabels.isEmpty()) {
 
                 Iterator<IndexDescriptor> allIndex = schemaRead.indexesGetAll();
@@ -432,7 +432,7 @@ public class Schemas {
             Iterable<IndexDescriptor> indexesIterator;
 
             final Predicate<ConstraintDefinition> isRelConstraint = constraintDefinition ->
-                    constraintDefinition.isConstraintType(ConstraintType.RELATIONSHIP_PROPERTY_EXISTENCE);
+                    Util.isRelationshipCategory(constraintDefinition.getConstraintType());
 
             if(!includeRelationships.isEmpty()) {
                 constraintsIterator = includeRelationships.stream()

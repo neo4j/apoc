@@ -1,17 +1,21 @@
 package apoc.schema;
 
+import apoc.result.IndexConstraintRelationshipInfo;
 import apoc.util.collection.Iterables;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import junit.framework.TestCase;
 import org.assertj.core.api.Assertions;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -24,7 +28,6 @@ import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
-import static apoc.util.TestUtil.ignoreException;
 import static apoc.util.TestUtil.registerProcedure;
 import static apoc.util.TestUtil.singleResultFirstColumn;
 import static apoc.util.TestUtil.testCall;
@@ -45,7 +48,8 @@ public class SchemasTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
+            .withSetting(GraphDatabaseInternalSettings.rel_unique_constraints, true);
 
     private static void accept(Result result) {
         Map<String, Object> r = result.next();
@@ -427,6 +431,32 @@ public class SchemasTest {
     }
 
     @Test
+    public void testRelUniquenessConstraintIsKeptAndDropped() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE knows.since IS UNIQUE");
+        awaitIndexesOnline();
+
+        testResult(db, "CALL apoc.schema.assert({},{SINCE:[\"year\"]})", (result) -> {
+            Map<String, Object> r = result.next();
+
+            assertEquals("SINCE", r.get("label"));
+            assertEquals("year", r.get("key"));
+            assertEquals("year", ((List<String>) r.get("keys")).get(0));
+            assertEquals(true, r.get("unique"));
+            assertEquals("KEPT", r.get("action"));
+
+            r = result.next();
+            assertEquals("KNOWS", r.get("label"));
+            assertEquals("since", r.get("key"));
+            assertEquals("since", ((List<String>) r.get("keys")).get(0));
+            assertEquals(true, r.get("unique"));
+            assertEquals("DROPPED", r.get("action"));
+
+            assertFalse(result.hasNext());
+        });
+    }
+
+    @Test
     public void testDropCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
@@ -640,57 +670,123 @@ public class SchemasTest {
     }
 
     @Test
-    public void testSchemaRelationshipsExclude() {
-        ignoreException(() -> {
-            db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
-            testResult(db, "CALL apoc.schema.relationships({excludeRelationships:['LIKED']})", (result) -> assertFalse(result.hasNext()));
-        }, QueryExecutionException.class);
-    }
-
-    @Test
     public void testSchemaNodesExclude() {
-        ignoreException(() -> {
-            db.executeTransactionally("CREATE CONSTRAINT FOR (book:Book) REQUIRE book.isbn IS UNIQUE");
-            testResult(db, "CALL apoc.schema.nodes({excludeLabels:['Book']})", (result) -> assertFalse(result.hasNext()));
-
-        }, QueryExecutionException.class);
+        db.executeTransactionally("CREATE CONSTRAINT FOR (book:Book) REQUIRE book.isbn IS UNIQUE");
+        testResult(db, "CALL apoc.schema.nodes({excludeLabels:['Book']})", (result) -> assertFalse(result.hasNext()));
     }
-
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testIndexesLabelsAndExcludeLabelsValuatedShouldFail() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally("CREATE INDEX FOR (n:Bar) ON (n.foo)");
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE INDEX FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
-        try (Transaction tx = db.beginTx()) {
-            tx.schema().awaitIndexesOnline(5, TimeUnit.SECONDS);
-            tx.commit();
-            testResult(db, "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})", (result) -> {});
-        } catch (IllegalArgumentException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof IllegalArgumentException);
-            assertEquals("Parameters labels and excludelabels are both valuated. Please check parameters and valuate only one.", except.getMessage());
-            throw e;
-        }
 
+        QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+                () ->  testResult(db, "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})", (result) -> {})
+        );
+        TestCase.assertTrue(e.getMessage().contains("Parameters labels and excludelabels are both valuated. Please check parameters and valuate only one."));
     }
 
-    @Test(expected = QueryExecutionException.class)
-    public void testConstraintsRelationshipsAndExcludeRelationshipsValuatedShouldFail() {
-        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
-        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[knows:SINCE]-() REQUIRE since.year IS NOT NULL");
+    @Test
+    public void testRelationshipConstraintsArentReturnedInNodesCheck() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS UNIQUE");
         awaitIndexesOnline();
-        try (Transaction tx = db.beginTx()) {
-            tx.schema().awaitIndexesOnline(5, TimeUnit.SECONDS);
-            tx.commit();
-            testResult(db, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {});
-        } catch (IllegalArgumentException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof IllegalArgumentException);
-            assertEquals("Parameters relationships and excluderelationships are both valuated. Please check parameters and valuate only one.", except.getMessage());
-            throw e;
-        }
+
+        testResult(db, "CALL apoc.schema.nodes({})", (result) -> assertFalse(result.hasNext()));
+    }
+
+    @Test
+    public void testConstraintsRelationshipsAndExcludeRelationshipsValuatedShouldFail() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+
+        QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+                () ->  testResult(db, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
+        );
+        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excluderelationships are both valuated. Please check parameters and valuate only one."));
+    }
+
+    @Test
+    public void testUniqueRelationshipConstraint() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+        awaitIndexesOnline();
+
+        testResult(db, "CALL apoc.schema.relationships({})",
+                    result -> {
+                        Map<String, Object> r = result.next();
+                        assertEquals("CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE", r.get("name"));
+                        assertEquals("RELATIONSHIP_UNIQUENESS", r.get("type"));
+                        assertEquals("year", ((List<String>) r.get("properties")).get(0));
+
+                        r = result.next();
+
+                        assertEquals(":SINCE(year)", r.get("name"));
+                        assertEquals("SINCE", r.get("type")); // This is currently a bug that needs to be fixed separately
+                        assertEquals("year", ((List<String>) r.get("properties")).get(0));
+                        assertTrue(!result.hasNext());
+                    }
+        );
+    }
+
+    @Test
+    public void testMultipleUniqueRelationshipConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[knows:KNOW]-() REQUIRE knows.how IS UNIQUE");
+        awaitIndexesOnline();
+
+        ArrayList<IndexConstraintRelationshipInfo> relConstraints = new ArrayList<>();
+        relConstraints.add(new IndexConstraintRelationshipInfo(
+                "CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE",
+                "RELATIONSHIP_UNIQUENESS",
+                List.of("year"),
+                ""
+        ));
+        relConstraints.add(new IndexConstraintRelationshipInfo(
+                ":SINCE(year)",
+                "SINCE",
+                List.of("year"),
+                "ONLINE"
+        ));
+        relConstraints.add(new IndexConstraintRelationshipInfo(
+                "CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.when IS UNIQUE",
+                "RELATIONSHIP_UNIQUENESS",
+                List.of("when"),
+                ""
+        ));
+        relConstraints.add(new IndexConstraintRelationshipInfo(
+                ":LIKED(when)",
+                "LIKED",
+                List.of("when"),
+                "ONLINE"
+        ));
+        relConstraints.add(new IndexConstraintRelationshipInfo(
+                "CONSTRAINT FOR ()-[know:KNOW]-() REQUIRE know.how IS UNIQUE",
+                "RELATIONSHIP_UNIQUENESS",
+                List.of("how"),
+                ""
+        ));
+        relConstraints.add(new IndexConstraintRelationshipInfo(
+                ":KNOW(how)",
+                "KNOW",
+                List.of("how"),
+                "ONLINE"
+        ));
+
+        testResult(db, "CALL apoc.schema.relationships({})",
+                    result -> {
+                        while  (result.hasNext()) {
+                            Map<String, Object> r = result.next();
+
+                            assertEquals(1, relConstraints.stream().filter(
+                                    c -> c.name.equals(r.get("name")) &&
+                                            c.properties.containsAll((List<String>) r.get("properties")) &&
+                                            c.type.equals(r.get("type"))
+                            ).toList().size());
+                        }
+                    }
+        );
     }
 
     @Test
@@ -758,6 +854,67 @@ public class SchemasTest {
             assertEquals(List.of("TYPE_1", "TYPE_2"), r.get("relationshipType"));
             assertEquals(List.of("alpha", "beta"), r.get("properties"));
             assertEquals("INDEX", r.get("type"));
+        });
+    }
+
+    @Test
+    public void testNodeConstraintExists() {
+        db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT userId FOR (user:User) REQUIRE user.id IS UNIQUE");
+        awaitIndexesOnline();
+
+        testCall(db, "RETURN apoc.schema.node.constraintExists(\"Person\", [\"name\"]) AS output;", (r) -> {
+            assertEquals(true, r.get("output"));
+        });
+    }
+    @Test
+    public void testNodeConstraintDoesntExist() {
+        db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT userId FOR (user:User) REQUIRE user.id IS UNIQUE");
+        awaitIndexesOnline();
+
+        testCall(db, "RETURN apoc.schema.node.constraintExists(\"Person\", [\"name\", \"id\"]) AS output;", (r) -> {
+            assertEquals(false, r.get("output"));
+        });
+    }
+    @Test
+    public void testNodeDoesntCheckRelationshipConstraintExist() {
+        db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
+        awaitIndexesOnline();
+
+        testCall(db, "RETURN apoc.schema.node.constraintExists(\"LIKED\", [\"when\"]) AS output;", (r) -> {
+            assertEquals(false, r.get("output"));
+        });
+    }
+    @Test
+    public void testRelationshipConstraintExists() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
+        awaitIndexesOnline();
+
+        testCall(db, "RETURN apoc.schema.relationship.constraintExists(\"SINCE\", [\"year\"]) AS output;", (r) -> {
+            assertEquals(true, r.get("output"));
+        });
+    }
+    @Test
+    public void testRelationshipConstraintDoesntExist() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
+        awaitIndexesOnline();
+
+        testCall(db, "RETURN apoc.schema.relationship.constraintExists(\"SINCE\", [\"year\", \"when\"]) AS output;", (r) -> {
+            assertEquals(false, r.get("output"));
+        });
+    }
+    @Test
+    public void testRelationshipDoesntCheckNodesConstraintExist() {
+        db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
+        awaitIndexesOnline();
+
+        testCall(db, "RETURN apoc.schema.relationship.constraintExists(\"Person\", [\"name\"]) AS output;", (r) -> {
+            assertEquals(false, r.get("output"));
         });
     }
 }

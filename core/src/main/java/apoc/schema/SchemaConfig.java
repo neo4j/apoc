@@ -36,11 +36,11 @@ public class SchemaConfig {
         validateParameters(this.labels, this.excludeLabels, "labels");
         this.relationships = new HashSet<>((Collection<String>)config.getOrDefault("relationships", Collections.EMPTY_SET));
         this.excludeRelationships = new HashSet<>((Collection<String>)config.getOrDefault("excludeRelationships", Collections.EMPTY_SET));
-        validateParameters(this.labels, this.excludeLabels, "relationships");
+        validateParameters(this.relationships, this.excludeRelationships, "relationships");
     }
 
-    private void validateParameters(Set<String> include, Set<String> exclude, String parametrType){
+    private void validateParameters(Set<String> include, Set<String> exclude, String parameterType){
         if(!include.isEmpty() && !exclude.isEmpty())
-            throw new IllegalArgumentException(String.format("Parameters %s and exclude%s are both valuated. Please check parameters and valuate only one.", parametrType, parametrType));
+            throw new IllegalArgumentException(String.format("Parameters %s and exclude%s are both valuated. Please check parameters and valuate only one.", parameterType, parameterType));
     }
 }
