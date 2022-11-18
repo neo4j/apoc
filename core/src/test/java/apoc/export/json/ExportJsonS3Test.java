@@ -29,6 +29,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     public void setUp() throws Exception {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportJson.class, Graphs.class);
+        db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");
     }
 
     @Test
@@ -42,7 +43,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertResults(s3Url, r, "database");
                 }
         );
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -64,7 +65,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -80,7 +81,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -96,7 +97,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -112,7 +113,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -128,7 +129,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -145,7 +146,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -161,7 +162,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -177,7 +178,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -191,7 +192,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                         "RETURN *",
                 map("s3", s3Url),
                 (r) -> assertResults(s3Url, r, "graph"));
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -207,7 +208,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -223,7 +224,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -239,7 +240,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -255,7 +256,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -271,7 +272,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -290,7 +291,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -305,7 +306,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -321,7 +322,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -338,7 +339,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -354,7 +355,7 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
 
     @Test
@@ -371,12 +372,12 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, s3Url);
+        assertStreamStringEquals(directoryExpected, filename, s3Url);
     }
     
-    private void assertStreamStringEquals(File directoryExpected, String s3Url) {
+    private void assertStreamStringEquals(File directoryExpected, String filename, String s3Url) {
         final String actual = readS3FileToString(s3Url);
-        assertStreamEquals(directoryExpected, s3Url, actual);
+        assertStreamEquals(directoryExpected, filename, actual);
     }
 
     private void assertResults(String filename, Map<String, Object> r, final String source) {

@@ -564,6 +564,6 @@ public class ExportJsonTest {
     }
 
     private void assertStreamEquals(String fileName, String actualText) {
-        FileTestUtil.assertStreamEquals(directory, fileName, actualText);
+        FileTestUtil.assertStreamEquals(directoryExpected, fileName, actualText);
     }
 }

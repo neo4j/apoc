@@ -178,9 +178,9 @@ public class ExportGraphMLTestUtil {
         TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class);
         
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, 
-                Boolean.toString(!testName.getMethodName().endsWith("WithNoImportConfig")));
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, 
                 Boolean.toString(!testName.getMethodName().endsWith("WithNoExportConfig")));
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, 
+                Boolean.toString(!testName.getMethodName().endsWith("WithNoImportConfig")));
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
 
         db.executeTransactionally("CREATE (f:Foo:Foo2:Foo0 {name:'foo', born:Date('2018-10-10'), place:point({ longitude: 56.7, latitude: 12.78, height: 100 })})-[:KNOWS]->(b:Bar {name:'bar',age:42, place:point({ longitude: 56.7, latitude: 12.78})}),(c:Bar {age:12,values:[1,2,3]})");
