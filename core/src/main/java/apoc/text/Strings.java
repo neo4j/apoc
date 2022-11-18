@@ -17,6 +17,7 @@ import org.neo4j.procedure.UserFunction;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.security.SecureRandom;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -339,7 +340,7 @@ public class Strings {
 
         StringBuilder output = new StringBuilder( toIntExact(length) );
 
-        ThreadLocalRandom rand = ThreadLocalRandom.current();
+        Random rand = new SecureRandom();
 
         while ( output.length() < length ) {
             output.append( valid.charAt( rand.nextInt(valid.length()) ) );

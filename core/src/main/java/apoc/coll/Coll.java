@@ -19,6 +19,7 @@ import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
 
 import java.lang.reflect.Array;
+import java.security.SecureRandom;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +35,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.RandomAccess;
 import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -655,7 +655,7 @@ public class Coll {
             return coll.get(0);
         }
 
-        return coll.get(ThreadLocalRandom.current().nextInt(coll.size()));
+        return coll.get(new SecureRandom().nextInt(coll.size()));
     }
 
     @UserFunction("apoc.coll.randomItems")
@@ -667,7 +667,7 @@ public class Coll {
 
         List<Object> pickList = new ArrayList<>(coll);
         List<Object> randomItems = new ArrayList<>((int)itemCount);
-        Random random = ThreadLocalRandom.current();
+        Random random = new SecureRandom();
 
         if (!allowRepick && itemCount >= coll.size()) {
             Collections.shuffle(pickList);
