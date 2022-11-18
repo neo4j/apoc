@@ -28,6 +28,7 @@ import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.MapUtil.map;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class ExportCsvNeo4jAdminTest {
 
@@ -203,18 +204,16 @@ public class ExportCsvNeo4jAdminTest {
                 .collect(Collectors.toList());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testCypherExportCsvForAdminNeo4jImportExceptionBulk() {
         String fileName = "query_nodes.csv";
-        try {
-            TestUtil.testCall(db, "CALL apoc.export.csv.query('MATCH (n) return (n)',$fileName,{bulkImport: true})",
-                    Util.map("fileName", fileName), (r) -> {});
-        } catch (Exception e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals("You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph", except.getMessage());
-            throw e;
-        }
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> TestUtil.testCall(db, "CALL apoc.export.csv.query('MATCH (n) return (n)',$fileName,{bulkImport: true})",
+                    Util.map("fileName", fileName), (r) -> {})
+        );
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals("You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph", except.getMessage());
     }
 
     private void assertResults(String fileName, Map<String, Object> r, final String source) {

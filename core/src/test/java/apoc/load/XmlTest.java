@@ -201,7 +201,7 @@ public class XmlTest {
 
     @Test
     public void testLoadXmlWithBlockedIP () {
-        QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
                 () -> testCall(db,
                         "CALL apoc.load.xml('http://127.0.0.0/fake.xml') yield value as result",
                         map(),
@@ -463,95 +463,91 @@ public class XmlTest {
                 (r) -> assertEquals(XmlTestUtils.XML_XPATH_AS_NESTED_MAP, r.get("result")));
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testLoadXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
-        try {
-            testResult(db, "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "')", (r) -> {
-                r.next();
-                r.close();
-            });
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "')", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testLoadXmlPreventBillionLaughVulnerabilityThrowsQueryExecutionException() {
-        try {
-            testResult(db, "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/billion_laughs.xml") + "')", (r) -> {
-                r.next();
-                r.close();
-            });
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/billion_laughs.xml") + "')", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testXmlParsePreventXXEVulnerabilityThrowsQueryExecutionException() {
-        try {
-            final var xml = "<?xml version=\"1.0\"?><!DOCTYPE GVI [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>";
-            testResult(db, "RETURN apoc.xml.parse('" + xml + "')", (r) -> {
-                r.next();
-                r.close();
-            });
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
-            throw e;
-        }
+        final var xml = "<?xml version=\"1.0\"?><!DOCTYPE GVI [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>";
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "RETURN apoc.xml.parse('" + xml + "')", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testXmlParsePreventBillionLaughsVulnerabilityThrowsQueryExecutionException() {
-        try {
-            final var xml = "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\"><!ENTITY lol1 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\">]><foo>&lol1;</foo>";
-            testResult(db, "RETURN apoc.xml.parse('" + xml + "')", (r) -> {
-                r.next();
-                r.close();
-            });
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
-            throw e;
-        }
+        final var xml = "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\"><!ENTITY lol1 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\">]><foo>&lol1;</foo>";
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () ->  testResult(db, "RETURN apoc.xml.parse('" + xml + "')", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testImportXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
-        try {
-            testResult(db, "CALL apoc.import.xml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "')", (r) -> {
-                r.next();
-                r.close();
-            });
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.import.xml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "')", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testImportXmlPreventBillionLaughsVulnerabilityThrowsQueryExecutionException() {
-        try {
-            testResult(db, "CALL apoc.import.xml('" + TestUtil.getUrlFileName("xml/billion_laughs.xml") + "')", (r) -> {
-                r.next();
-                r.close();
-            });
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof RuntimeException);
-            assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.import.xml('" + TestUtil.getUrlFileName("xml/billion_laughs.xml") + "')", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 }

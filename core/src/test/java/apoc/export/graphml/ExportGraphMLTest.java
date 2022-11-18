@@ -53,6 +53,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
@@ -332,17 +333,16 @@ public class ExportGraphMLTest {
         );
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testImportGraphMLWithNoImportConfig() {
         File output = new File(directory, "all.graphml");
-        try {
-            TestUtil.testCall(db, "CALL apoc.import.graphml($file,{readLabels:true})", map("file", output.getAbsolutePath()), (r) -> assertResults(output, r, "database"));
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            TestCase.assertTrue(except instanceof RuntimeException);
-            assertEquals("Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf", except.getMessage());
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> TestUtil.testCall(db, "CALL apoc.import.graphml($file,{readLabels:true})", map("file", output.getAbsolutePath()),
+                        (r) -> assertResults(output, r, "database"))
+        );
+        Throwable except = ExceptionUtils.getRootCause(e);
+        TestCase.assertTrue(except instanceof RuntimeException);
+        assertEquals("Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf", except.getMessage());
     }
 
     @Test
@@ -503,17 +503,16 @@ public class ExportGraphMLTest {
         assertXMLEquals(output, EXPECTED_TYPES);
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testExportGraphGraphMLTypesWithNoExportConfig() {
         File output = new File(directory, "all.graphml");
-        try {
-            TestUtil.testCall(db, "CALL apoc.export.graphml.all($file,null)", map("file", output.getAbsolutePath()), (r) -> assertResults(output, r, "database"));
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            TestCase.assertTrue(except instanceof RuntimeException);
-            assertEquals(EXPORT_TO_FILE_ERROR, except.getMessage());
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> TestUtil.testCall(db, "CALL apoc.export.graphml.all($file,null)", map("file", output.getAbsolutePath()),
+                        (r) -> assertResults(output, r, "database"))
+        );
+        Throwable except = ExceptionUtils.getRootCause(e);
+        TestCase.assertTrue(except instanceof RuntimeException);
+        assertEquals(EXPORT_TO_FILE_ERROR, except.getMessage());
     }
 
     @Test
@@ -679,18 +678,18 @@ public class ExportGraphMLTest {
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAPTION_TINKER);
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testExportGraphGraphMLQueryGephiWithStringCaption() {
         File output = new File(directory, "query.graphml");
-        try {
-        TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'gephi', caption: 'name'}) ", map("file", output.getAbsolutePath()),
-                (r) -> {});
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            TestCase.assertTrue(except instanceof RuntimeException);
-            assertEquals("Only array of Strings are allowed!", except.getMessage());
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> TestUtil.testCall(db,
+                        "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'gephi', caption: 'name'}) ",
+                        map("file", output.getAbsolutePath()),
+                        (r) -> {})
+        );
+        Throwable except = ExceptionUtils.getRootCause(e);
+        TestCase.assertTrue(except instanceof RuntimeException);
+        assertEquals("Only array of Strings are allowed!", except.getMessage());
     }
 
     @Test

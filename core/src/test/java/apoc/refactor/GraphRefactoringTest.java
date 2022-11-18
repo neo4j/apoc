@@ -48,6 +48,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
@@ -1034,7 +1035,7 @@ public class GraphRefactoringTest {
                 });
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testRefactorCategorizeExceptionWithNoConstraint() {
         // given
         final String label = "Country";
@@ -1047,16 +1048,15 @@ public class GraphRefactoringTest {
                 )""");
 
         // when
-        try {
-            db.executeTransactionally("CALL apoc.refactor.categorize('country', 'OPERATES_IN', true, $label, $targetKey, [], 1)",
-                    map("label", label, "targetKey", targetKey));
-        } catch (QueryExecutionException e) {
-            // then
-            String expectedMessage = "Before execute this procedure you must define an unique constraint for the label and the targetKey:\n" +
-                    "CREATE CONSTRAINT FOR (n:`" + label + "`) REQUIRE n.`" + targetKey + "` IS UNIQUE";
-            assertEquals(expectedMessage, ExceptionUtils.getRootCause(e).getMessage());
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> db.executeTransactionally("CALL apoc.refactor.categorize('country', 'OPERATES_IN', true, $label, $targetKey, [], 1)",
+                        map("label", label, "targetKey", targetKey))
+        );
+
+        // then
+        String expectedMessage = "Before execute this procedure you must define an unique constraint for the label and the targetKey:\n" +
+                "CREATE CONSTRAINT FOR (n:`" + label + "`) REQUIRE n.`" + targetKey + "` IS UNIQUE";
+        assertEquals(expectedMessage, ExceptionUtils.getRootCause(e).getMessage());
     }
 
     @Test

@@ -25,6 +25,8 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 
 /**
@@ -257,9 +259,13 @@ public class TriggerTest {
         });
     }
 
-    @Test(expected = QueryExecutionException.class)
-    public void showThrowAnException() {
-        db.executeTransactionally("CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = , n.txTime = $commitTime',{})");
+    @Test
+    public void showThrowAnExceptionOnBrokenCypherQuery() {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () ->  db.executeTransactionally("CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = , n.txTime = $commitTime',{})")
+
+        );
+        assertTrue(e.getMessage().contains("Failed to invoke procedure `apoc.trigger.add`: Caused by: org.neo4j.exceptions.SyntaxException: Invalid input"));
     }
 
     @Test

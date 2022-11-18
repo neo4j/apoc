@@ -36,11 +36,14 @@ public class GeocodeTest {
                 map("url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"));
     }
     
-    @Test(expected = QueryExecutionException.class)
-    public void testWrongUrlWithOpenCage() throws Exception {
+    @Test
+    public void testWrongUrlWithOpenCage() {
         // overwrite ApocConfig provider
-        testGeocodeWithThrottling("osm", false, 
-                map("provider", "opencage", "url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"));
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testGeocodeWithThrottling("osm", false,
+                        map("provider", "opencage", "url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"))
+        );
+        assertTrue(e.getMessage().contains("Server returned HTTP response code: 401 for URL"));
     }
     
     // -- with apoc config

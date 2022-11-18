@@ -31,6 +31,7 @@ import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class SpatialTest {
@@ -142,44 +143,41 @@ public class SpatialTest {
         geocodeOnceCommon(config);
     }    
     
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGeocodeOpencageWrongUrlFormat() {
         // with provider different from osm/google we have to explicit an url correctly formatted (i.e. with 'PLACE' string)
-        try {
-            final Map<String, Object> conf = map("provider", "opencage",
+        final Map<String, Object> conf = map("provider", "opencage",
                     "url", "wrongUrl",
                     "reverseUrl", REVERSE_URL);
-            geocodeOnceCommon(conf);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Missing 'PLACE' in url template"));
-            throw e;
-        }
+
+         RuntimeException e = assertThrows(RuntimeException.class,
+                 () -> geocodeOnceCommon(conf)
+         );
+         assertTrue(e.getMessage().contains("Missing 'PLACE' in url template"));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGeocodeOpencageMissingKey() {
         // with provider (via config map) different from osm/google we have to explicit the key
-        try {
-            final Map<String, Object> conf = map("provider", "opencage",
+        final Map<String, Object> conf = map("provider", "opencage",
                     "url", URL, "reverseUrl", REVERSE_URL);
-            geocodeOnceCommon(conf);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
-            throw e;
-        }
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> geocodeOnceCommon(conf)
+         );
+         assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testGeocodeOpencageMissingKeyViaApocConfig() {
         // with provider(via apocConfig()) different from osm/google we have to explicit the key
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "something");
-        try {
-            final Map<String, Object> conf = map("url", URL, "reverseUrl", REVERSE_URL);
-            geocodeOnceCommon(conf);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
-            throw e;
-        }
+        final Map<String, Object> conf = map("url", URL, "reverseUrl", REVERSE_URL);
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> geocodeOnceCommon(conf)
+         );
+         assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
     }
 
     @Test
@@ -201,19 +199,18 @@ public class SpatialTest {
         geocodeOnceCommon(config);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testSimpleGeocodeWithWrongProvider() {
-        try {
-            // just to make sure that the spatial.json is well implemented
-            // we pass a well-formatted url, reverse url and key but an incorrect provider
-            final Map<String, Object> config = map("provider", "incorrect",
-                    "url", URL, "reverseUrl", REVERSE_URL,
-                    "key", "myOwnMockKey");
-            geocodeOnceCommon(config);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains(WRONG_PROVIDER_ERR));
-            throw e;
-        }
+        // just to make sure that the spatial.json is well implemented
+        // we pass a well-formatted url, reverse url and key but an incorrect provider
+        final Map<String, Object> config = map("provider", "incorrect",
+                "url", URL, "reverseUrl", REVERSE_URL,
+                "key", "myOwnMockKey");
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> geocodeOnceCommon(config)
+         );
+         assertTrue(e.getMessage().contains(WRONG_PROVIDER_ERR));
     }
 
     @Test
@@ -312,44 +309,41 @@ public class SpatialTest {
         reverseGeocodeCommon(config);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testReverseGeocodeOpencageWrongUrlFormat() {
         // with provider different from osm/google we have to explicit an url correctly formatted (i.e. with 'PLACE' string)
-        try {
-            final Map<String, Object> conf = map("provider", "opencage",
-                    "url", "wrongUrl",
-                    "reverseUrl", REVERSE_URL);
-            reverseGeocodeCommon(conf);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Missing 'PLACE' in url template"));
-            throw e;
-        }
+        final Map<String, Object> conf = map("provider", "opencage",
+                "url", "wrongUrl",
+                "reverseUrl", REVERSE_URL);
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> reverseGeocodeCommon(conf)
+        );
+         assertTrue(e.getMessage().contains("Missing 'PLACE' in url template"));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testReverseGeocodeOpencageMissingKey() {
         // with provider (via config map) different from osm/google we have to explicit the key
-        try {
-            final Map<String, Object> conf = map("provider", "opencage",
-                    "url", URL, "reverseUrl", REVERSE_URL);
-            reverseGeocodeCommon(conf);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
-            throw e;
-        }
+        final Map<String, Object> conf = map("provider", "opencage",
+                "url", URL, "reverseUrl", REVERSE_URL);
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> reverseGeocodeCommon(conf)
+        );
+         assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testReverseGeocodeOpencageMissingKeyViaApocConfig() {
         // with provider(via apocConfig()) different from osm/google we have to explicit the key
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "something");
-        try {
-            final Map<String, Object> conf = map("url", URL, "reverseUrl", REVERSE_URL);
-            reverseGeocodeCommon(conf);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
-            throw e;
-        }
+        final Map<String, Object> conf = map("url", URL, "reverseUrl", REVERSE_URL);
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> reverseGeocodeCommon(conf)
+        );
+         assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
     }
 
     @Test
@@ -371,18 +365,17 @@ public class SpatialTest {
         reverseGeocodeCommon(config);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testSimpleReverseGeocodeWithWrongProvider() {
-        try {
-            // just to make sure that the spatial.json is well implemented
-            final Map<String, Object> config = map("provider", "incorrect",
-                    "url", URL, "reverseUrl", REVERSE_URL,
-                    "key", "myOwnMockKey");
-            reverseGeocodeCommon(config);
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains(WRONG_PROVIDER_ERR));
-            throw e;
-        }
+        // just to make sure that the spatial.json is well implemented
+        final Map<String, Object> config = map("provider", "incorrect",
+                "url", URL, "reverseUrl", REVERSE_URL,
+                "key", "myOwnMockKey");
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> reverseGeocodeCommon(config)
+        );
+         assertTrue(e.getMessage().contains(WRONG_PROVIDER_ERR));
     }
 
     @Test

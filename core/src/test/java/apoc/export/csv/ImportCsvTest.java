@@ -49,6 +49,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
@@ -719,24 +721,30 @@ public class ImportCsvTest {
         assertThat(pairs, Matchers.contains("Jane 26 <6> John 25", "John 25 <3> Jane 26"));
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testNoDuplicateEndpointsCreated() {
         // some of the endpoints of the edges in 'knows.csv' do not exist,
         // hence this should throw an exception
-        db.executeTransactionally("CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)",
-                map("nodeFile", "file:/persons.csv",
-                    "relFile", "file:/knows.csv",
-                    "config", map("stringIds", false)));
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () ->  db.executeTransactionally("CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)",
+                        map("nodeFile", "file:/persons.csv",
+                                "relFile", "file:/knows.csv",
+                                "config", map("stringIds", false)))
+        );
+        assertTrue(e.getMessage().contains("Node for id space __CSV_DEFAULT_IDSPACE and id 10 not found"));
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testIgnoreDuplicateNodes() {
-        db.executeTransactionally(
-                "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
-                map(
-                        "file", "file:/id-with-duplicates.csv",
-                        "config", map("delimiter", '|', "stringIds", false, "ignoreDuplicateNodes", false)
-                ));
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> db.executeTransactionally(
+                        "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
+                        map(
+                                "file", "file:/id-with-duplicates.csv",
+                                "config", map("delimiter", '|', "stringIds", false, "ignoreDuplicateNodes", false)
+                        ))
+        );
+        assertTrue(e.getMessage().contains("Duplicate node with id 1 found on line 2"));
     }
 
     @Test

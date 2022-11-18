@@ -5,6 +5,7 @@ import apoc.schema.Schemas;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.neo4j.driver.internal.util.Iterables.count;
@@ -169,9 +171,12 @@ public class PeriodicTest {
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) RETURN n limit 1000', {})");
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testPeriodicCommitWithoutLimitShouldFail() {
-        db.executeTransactionally("CALL apoc.periodic.commit('return 0')");
+        QueryExecutionException e = assertThrows( QueryExecutionException.class,
+                () -> db.executeTransactionally("CALL apoc.periodic.commit('return 0')")
+        );
+        assertTrue(e.getMessage().contains("the statement sent to apoc.periodic.commit must contain a `limit`"));
     }
 
     @Test
@@ -542,53 +547,62 @@ public class PeriodicTest {
         return count;
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testCommitFail() {
         final String query = "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (::Foo {id: id}) limit 1000', {})";
-        testFail(query);
+        testCypherFail(query);
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testSubmitFail() {
         final String query = "CALL apoc.periodic.submit('foo','create (::Foo)')";
-        testFail(query);
+        testCypherFail(query);
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testRepeatFail() {
         final String query = "CALL apoc.periodic.repeat('repeat-params', 'MERGE (person:Person {name: $nameValue})', 2, {params: {nameValue: 'John Doe'}}) YIELD name RETURN nam";
-        testFail(query);
+        testCypherFail(query);
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testCountdownFail() {
         final String query = "CALL apoc.periodic.countdown('decrement', 'MATCH (counter:Counter) SET counter.c == counter.c - 1 RETURN counter.c as count', 1)";
-        testFail(query);
+        testCypherFail(query);
     }
 
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testIterateQueryFail() {
         final String query = "CALL apoc.periodic.iterate('UNWIND range(0, 1000) as id RETURN ids', " +
                 "'WITH $id as id CREATE (:Foo {id: $id})', " +
                 "{batchSize:1,parallel:true})";
-        testFail(query);
+        testCypherFail(query);
     }
 
-    @Test(expected = QueryExecutionException.class, timeout = 1000)
+    @Test
     public void testIterateQueryFailInvalidConcurrency() {
         final String query = "CALL apoc.periodic.iterate('UNWIND range(0, 10) AS x RETURN x', " +
                 "'RETURN x', " +
                 "{concurrency:0 ,parallel:true})";
-        testFail(query);
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testCall(db, query, row -> fail("The test should fail but it didn't"))
+        );
+        assertTrue(e.getMessage().contains("concurrency parameter must be > 0"));
     }
 
-    @Test(expected = QueryExecutionException.class, timeout = 1000)
+    @Test
     public void testIterateQueryFailInvalidBatchSize() {
         final String query = "CALL apoc.periodic.iterate('UNWIND range(0, 10) AS x RETURN x', " +
                 "'RETURN x', " +
                 "{batchSize:0 ,parallel:true})";
-        testFail(query);
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testCall(db, query, row -> fail("The test should fail but it didn't"))
+        );
+        assertTrue(e.getMessage().contains("batchSize parameter must be > 0"));
+
     }
 
     @Test
@@ -651,7 +665,10 @@ public class PeriodicTest {
         }
     }
 
-    private void testFail(String query) {
-        testCall(db, query, row -> fail("The test should fail but it didn't"));
+    private void testCypherFail(String query) {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () ->  testCall(db, query, row -> fail("The test should fail but it didn't"))
+        );
+        assertTrue(ExceptionUtils.getRootCause(e) instanceof org.neo4j.exceptions.SyntaxException);
     }
 }

@@ -39,6 +39,7 @@ import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
 import static org.mockserver.model.HttpRequest.request;
@@ -110,7 +111,7 @@ public class LoadJsonTest {
         var protocols = List.of("https", "http", "ftp");
 
         for (var protocol: protocols) {
-            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+            QueryExecutionException e = assertThrows(QueryExecutionException.class,
                                             () -> testCall(db,
                                                            "CALL apoc.load.json('" + protocol + "://127.168.0.0/test.csv')",
                                                            map(),
@@ -310,19 +311,16 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testLoadJsonByUrlInConfigFileWrongKey() {
-
-        try {
-            testResult(db, "CALL apoc.load.json($key)",map("key","foo"), (r) -> r.hasNext());
-        } catch (QueryExecutionException e) {
-            Throwable except = ExceptionUtils.getRootCause(e);
-            assertTrue(except instanceof IOException);
-            final String message = except.getMessage();
-            assertTrue(message.startsWith("Cannot open file "));
-            assertTrue(message.endsWith("foo for reading."));
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.load.json($key)",map("key","foo"), (r) -> r.hasNext())
+        );
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof IOException);
+        final String message = except.getMessage();
+        assertTrue(message.startsWith("Cannot open file "));
+        assertTrue(message.endsWith("foo for reading."));
     }
 
     @Test

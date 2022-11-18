@@ -13,10 +13,12 @@ import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class WarmupEnterpriseTest {
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testWarmupIsntAllowedWithOtherStorageEngines() {
         Neo4jContainerExtension neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
                 .withNeo4jConfig(GraphDatabaseInternalSettings.include_versions_under_development.name(), "true")
@@ -24,7 +26,8 @@ public class WarmupEnterpriseTest {
         neo4jContainer.start();
         Session session = neo4jContainer.getSession();
 
-        testCall(session, "CALL apoc.warmup.run()", (r) -> {});
+        RuntimeException e = assertThrows(RuntimeException.class, () -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}));
+        assertTrue(e.getMessage().contains("Record engine type unsupported"));
 
         session.close();
         neo4jContainer.close();

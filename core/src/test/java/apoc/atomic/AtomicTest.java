@@ -2,11 +2,13 @@ package apoc.atomic;
 
 import apoc.util.TestUtil;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
@@ -18,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 /**
@@ -162,19 +166,31 @@ public class AtomicTest {
 		assertTrue(ages.length == 0);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testRemoveOutOfArrayIndex(){
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
-        testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",map("property","age","position",5,"times",5), (r) -> {});
-		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-		assertThat(ArrayUtils.toObject(ages), Matchers.arrayContaining(40L, 50L, 60L));
+
+		QueryExecutionException e = assertThrows(QueryExecutionException.class,
+				() ->  testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",
+						map("property","age","position",5,"times",5), (r) -> {})
+
+		);
+		Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+		assertEquals("Attention your position out of range or higher than array length, that is 3", except.getMessage());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testRemoveEmptyArray(){
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: []})");
-        testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove($node,$property,$position,$times) YIELD container RETURN count(*)",map("property","age","position",5,"times",5), (r) -> {});
-		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
+
+		QueryExecutionException e = assertThrows(QueryExecutionException.class,
+				() -> testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",
+						map("property","age","position",1,"times",5), (r) -> {})
+		);
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+		assertEquals("Attention your position out of range or higher than array length, that is 0", except.getMessage());
     }
 
 	@Test
