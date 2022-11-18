@@ -24,11 +24,9 @@ public class CollEnterpriseTest {
     @BeforeAll
     public static void beforeAll() {
         assumeFalse(isRunningInCI());
-        TestUtil.ignoreException(() -> {
-            // We build the project, the artifact will be placed into ./build/libs
-            neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
-            neo4jContainer.start();
-        }, Exception.class);
+        // We build the project, the artifact will be placed into ./build/libs
+        neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
+        neo4jContainer.start();
         assumeTrue(neo4jContainer.isRunning());
         assumeNotNull(neo4jContainer);
         assumeTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());

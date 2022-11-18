@@ -32,10 +32,8 @@ public class ExportCsvIT {
     @BeforeClass
     public static void beforeAll() {
         assumeFalse(isRunningInCI());
-        TestUtil.ignoreException(() -> {
-            neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
-            neo4jContainer.start();
-        }, Exception.class);
+        neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
+        neo4jContainer.start();
         assumeNotNull(neo4jContainer);
         assumeTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());
         session = neo4jContainer.getSession();
