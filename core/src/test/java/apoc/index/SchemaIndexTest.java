@@ -9,6 +9,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -42,6 +43,16 @@ SchemaIndexTest {
     public static void setUp() {
         TestUtil.registerProcedure(db, SchemaIndex.class);
         db.executeTransactionally("CREATE (city:City {name:'London'}) WITH city UNWIND range("+firstPerson+","+lastPerson+") as id CREATE (:Person {name:'name'+id, id:id, age:id % 100, address:id+'Main St.'})-[:LIVES_IN]->(city)");
+        // dataset for fulltext indexes
+        db.executeTransactionally("""
+                CREATE (:Label1 {prop1: "Michael", prop2: 111}),
+                    (:Label1 {prop1: "AA", prop2: 1}),
+                    (:Label1 {prop1: "EE", prop2: 111}),
+                    (:Label1 {prop1: "Ryan", prop2: 1}),
+                    (:Label1 {prop1: "UU", prop2: 111}),
+                    (:Label1 {prop1: "Ryan", prop2: 1}),
+                    (:Label1 {prop1: "Ryan", prop3: 'qwerty'}),
+                    (:Label2 {prop1: "Ryan", prop3: 'abcde'})""");
         //
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.age)");
@@ -69,6 +80,81 @@ SchemaIndexTest {
         testCall(db,"CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", "Person","key", "name"),
                 (row) -> assertEquals(new HashSet<>(personNames), new HashSet<>((Collection<String>) row.get("value")))
+        );
+    }
+
+
+    @Test(timeout = 5000L)
+    public void testDistinctWithoutIndexWaitingShouldNotHangs() throws Exception {
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltextLabel1 FOR (n:Label1) ON EACH [n.prop1]");
+        // executing the apoc.schema.properties.distinct without CALL db.awaitIndexes() will throw an "Index is still populating" exception
+        
+        // todo - assertions
+        db.executeTransactionally("CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", "Label1","key", "prop1"),
+                r -> r.resultAsString(),
+                Duration.ofSeconds(10));
+
+        db.executeTransactionally("DROP INDEX fulltextLabel1");
+    }
+
+    @Test(timeout = 5000L)
+    public void testDistinctWithFullTextIndexShouldNotHangs() throws Exception {
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltextLabel1 FOR (n:Label1) ON EACH [n.prop1]");
+
+        db.executeTransactionally("CALL db.awaitIndexes()");
+
+        testCall(db, "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", "Label1", "key", "prop1"), 
+                row -> assertEquals(Set.of("AA", "EE", "UU", "Ryan", "Michael"), Set.copyOf((List)row.get("value"))) 
+        );
+
+        testResult(db, "CALL apoc.schema.properties.distinctCount($label, $key)",
+                map("label", "Label1", "key", "prop1"),
+                res -> {
+                    assertDistinctCountProperties("Label1", "prop1", List.of("AA", "EE", "UU"), () -> 1L, res);
+                    assertDistinctCountProperties("Label1", "prop1", List.of("Ryan"), () -> 3L, res);
+                    assertDistinctCountProperties("Label1", "prop1", List.of("Michael"), () -> 1L, res);
+                    assertFalse(res.hasNext());
+                });
+
+        db.executeTransactionally("DROP INDEX fulltextLabel1");
+    }
+
+    @Test(timeout = 5000L)
+    public void testDistinctWithMultiLabelFullTextIndexShouldNotHangs() throws Exception {
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltextLabel1 FOR (n:Label1|Label2) ON EACH [n.prop1,n.prop3]");
+        // insert a non-fulltext index, with the same label and prop
+        db.executeTransactionally("CREATE RANGE INDEX FOR (n:One) ON (n.prop1)");
+        
+        db.executeTransactionally("CALL db.awaitIndexes");
+
+        testCall(db, "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", "Label1", "key", "prop1"),
+                row -> assertEquals(Set.of("AA", "EE", "UU", "Ryan", "Michael", "abcde", "qwerty"), Set.copyOf((List)row.get("value")))
+        );
+
+        testResult(db, "CALL apoc.schema.properties.distinctCount($label, $key) " +
+                        "YIELD label, key, value, count RETURN * ORDER BY label",
+                map("label", "Label1", "key", "prop1"),
+                res -> {
+                    // todo - more assertions
+                    res.close();
+                });
+        
+        db.executeTransactionally("DROP INDEX fulltextLabel1");
+    }
+
+    @Test(timeout = 5000L)
+    public void testDistinctWithNoPreviousNodesShouldNotHangs() throws Exception {
+        db.executeTransactionally("CREATE INDEX FOR (n:LabelNotExistent) ON n.prop");
+        
+        testCall(db, """
+                        CREATE (:LabelNotExistent {prop:2})
+                        WITH *
+                        CALL apoc.schema.properties.distinct("LabelNotExistent", "prop")
+                        YIELD value RETURN *""", 
+                r -> assertEquals(Collections.emptyList(), r.get("value"))
         );
     }
 
