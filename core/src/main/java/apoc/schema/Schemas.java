@@ -534,7 +534,7 @@ public class Schemas {
                     labelName,
                     properties,
                     schemaRead.indexGetState(indexDescriptor).toString(),
-                    !indexDescriptor.isUnique() ? "INDEX" : "UNIQUENESS",
+                    getIndexType(indexDescriptor),
                     schemaRead.indexGetState(indexDescriptor).equals(InternalIndexState.FAILED) ? schemaRead.indexGetFailure(indexDescriptor) : "NO FAILURE",
                     schemaRead.indexGetPopulationProgress(indexDescriptor).getCompleted() / schemaRead.indexGetPopulationProgress(indexDescriptor).getTotal() * 100,
                     schemaRead.indexSize(indexDescriptor),
@@ -548,7 +548,7 @@ public class Schemas {
                     labelName,
                     properties,
                     "NOT_FOUND",
-                    !indexDescriptor.isUnique() ? "INDEX" : "UNIQUENESS",
+                    getIndexType(indexDescriptor),
                     "NOT_FOUND",
                     0,0,0,
                     indexDescriptor.userDescription(tokens)
@@ -579,7 +579,7 @@ public class Schemas {
             return new IndexConstraintRelationshipInfo(
                     // Pretty print for index name
                     getSchemaInfoName(relName, properties),
-                    "INDEX",
+                    getIndexType(indexDescriptor),
                     properties,
                     "NOT_FOUND",
                     relName
@@ -601,6 +601,10 @@ public class Schemas {
                 "",
                 constraintDefinition.getRelationshipType().name()
         );
+    }
+
+    private static String getIndexType(IndexDescriptor indexDescriptor) {
+        return indexDescriptor.isUnique() ? "UNIQUENESS" : "INDEX";
     }
 
     private String getSchemaInfoName(Object labelOrType, List<String> properties) {
