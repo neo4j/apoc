@@ -697,6 +697,21 @@ public class Util {
         return with.isEmpty() ? with : " WITH "+with+" ";
     }
 
+    public static boolean isWriteableInstance(GraphDatabaseService db) {
+        return isWriteableInstance(db, db.databaseName());
+    }
+//    public static boolean isWriteableInstance(GraphDatabaseService db, String dbName) {
+//        try {
+//            String role = db.executeTransactionally("CALL dbms.cluster.role($databaseName)",
+//                    Collections.singletonMap("databaseName", dbName),
+//                    result -> Iterators.single(result.columnAs("role")));
+//            return role.equalsIgnoreCase("LEADER");
+//        } catch(QueryExecutionException e) {
+//            if (e.getStatusCode().equalsIgnoreCase("Neo.ClientError.Procedure.ProcedureNotFound")) return true;
+//            throw e;
+//        }
+//    }
+
     public static boolean isWriteableInstance( GraphDatabaseAPI db )
     {
         var socketAddress = db.getDependencyResolver().resolveDependency( Config.class ).get( BoltConnector.advertised_address ).toString();

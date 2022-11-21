@@ -45,7 +45,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.plugin_dir;
 import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_root_path;
 
 public class ApocConfig extends LifecycleAdapter {
-    protected static final String SUN_JAVA_COMMAND = "sun.java.command";
+    public static final String SUN_JAVA_COMMAND = "sun.java.command";
     public static final String APOC_IMPORT_FILE_ENABLED = "apoc.import.file.enabled";
     public static final String APOC_EXPORT_FILE_ENABLED = "apoc.export.file.enabled";
     public static final String APOC_IMPORT_FILE_USE_NEO4J_CONFIG = "apoc.import.file.use_neo4j_config";
@@ -214,6 +214,15 @@ public class ApocConfig extends LifecycleAdapter {
         return systemDb;
     }
 
+    public GraphDatabaseService getDatabase(String databaseName) {
+        try {
+            return databaseManagementService.database(databaseName);
+        } catch (Exception e)
+        {
+            throw new RuntimeException( e );
+        }
+    }
+    
     // added because with binary file there isn't an url
     public void isImportFileEnabled() {
         if (!config.getBoolean(APOC_IMPORT_FILE_ENABLED)) {
