@@ -66,7 +66,6 @@ public class GeocodeTest {
 
     private long testGeocode(String provider, long throttle, boolean reverseGeocode, Map<String, Object> config) throws Exception {
         setupSupplier(provider, throttle);
-//        testConfig(provider);
         InputStream is = getClass().getResourceAsStream("/spatial.json");
         Map tests = JsonUtil.OBJECT_MAPPER.readValue(is, Map.class);
         long start = System.currentTimeMillis();
