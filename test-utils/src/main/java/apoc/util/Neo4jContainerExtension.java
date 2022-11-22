@@ -98,11 +98,6 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
             }
         }
     }
-
-    public Driver getDriver() {
-        return driver;
-    }
-
     public Session getSession() {
         return session;
     }

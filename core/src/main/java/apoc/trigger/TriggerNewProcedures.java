@@ -2,8 +2,8 @@ package apoc.trigger;
 
 import apoc.ApocConfig;
 import apoc.util.Util;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -20,7 +20,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 
 public class TriggerNewProcedures {
     // public for testing purpose
-    public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a LEADER system database";
+    public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a writer system database";
 
     public static class TriggerInfo {
         public String name;
@@ -48,14 +48,14 @@ public class TriggerNewProcedures {
         }
     }
 
-    @Context public GraphDatabaseService db;
+    @Context public GraphDatabaseAPI db;
     
     @Context public Log log;
 
     private void checkInSystemLeader() {
         TriggerHandlerWrite.checkEnabled();
         // routing check
-        if (!db.databaseName().equals(SYSTEM_DATABASE_NAME) || !Util.isWriteableInstance(db, SYSTEM_DATABASE_NAME)) {
+        if (!db.databaseName().equals(SYSTEM_DATABASE_NAME) || !Util.isWriteableInstance(db)) {
             throw new RuntimeException(TRIGGER_NOT_ROUTED_ERROR);
         }
     }
@@ -79,9 +79,6 @@ public class TriggerNewProcedures {
     @Description("CALL apoc.trigger.install(databaseName, name, statement, selector, config) | add a trigger kernelTransaction under a name, in the kernelTransaction you can use $createdNodes, $deletedNodes etc., the selector is {phase:'before/after/rollback/afterAsync'} returns previous and new trigger information. Takes in an optional configuration.")
     public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("kernelTransaction") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         checkInSystemLeader();
-        // TODO - to be deleted in 5.x, because in a cluster, not all DBMS host all the databases on them,
-        // so we have to assume that the leader of the system database doesn't have access to this user database
-        Util.validateQuery(ApocConfig.apocConfig().getDatabase(databaseName), statement);
 
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
         Map<String, Object> removed = TriggerHandlerWrite.install(databaseName, name, statement, selector, params);

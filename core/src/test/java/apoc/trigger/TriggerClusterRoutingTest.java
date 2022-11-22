@@ -10,14 +10,13 @@ import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
-import org.neo4j.driver.Transaction;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static apoc.trigger.Trigger.SYS_NON_LEADER_ERROR;
+import static apoc.trigger.Trigger.SYS_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -52,13 +51,13 @@ public class TriggerClusterRoutingTest {
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, SYS_NON_LEADER_ERROR, GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysLeaderMemberCommon(query, SYS_NON_LEADER_ERROR, GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
     }
 
     @Test
@@ -84,26 +83,25 @@ public class TriggerClusterRoutingTest {
                 continue;
             }
             Session session = driver.session(SessionConfig.forDatabase(dbName));
-            session.writeTransaction(tx -> {
-                if (sysIsLeader(tx)) {
-                    tx.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
-                } else {
-                    try {
-                        tx.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
-                        fail("Should fail because of non leader trigger addition");
-                    } catch (Exception e) {
-                        String errorMsg = e.getMessage();
-                        assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
-                    }
+            final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+            if (dbName && dbIsWriter(session, dbName, address)) {
+                session.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
+            } else {
+                try {
+                    session.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
+                    fail("Should fail because of non writer trigger addition");
+                } catch (Exception e) {
+                    String errorMsg = e.getMessage();
+                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
                 }
-                return null;
-            });
+            }
         }
     }
 
-    private static boolean sysIsLeader(Transaction tx) {
-        final String systemRole = tx.run("CALL dbms.cluster.role('system')")
-                .single().get("role").asString();
-        return "LEADER".equals(systemRole);
+    private static boolean dbIsWriter(Session session, String dbName, String address) {
+        return session.run( "SHOW DATABASE $dbName WHERE address = $address", 
+                        Map.of("dbName", dbName, "address", address) )
+                .single().get("writer")
+                .asBoolean();
     }
 }

@@ -1,8 +1,7 @@
 package apoc.trigger;
 
 import apoc.util.Util;
-import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -22,10 +21,10 @@ import static apoc.trigger.TriggerNewProcedures.TriggerInfo;
 
 public class Trigger {
     // public for testing purpose
-    public static final String SYS_NON_LEADER_ERROR = "It's not possible to write into a cluster member with a non-LEADER system database.\n";
+    public static final String SYS_NON_WRITER_ERROR = "It's not possible to write into a cluster member with a non-writer role system database.\n";
     
     @Context
-    public GraphDatabaseService db;
+    public GraphDatabaseAPI db;
 
     @Context public TriggerHandler triggerHandler;
 
@@ -38,8 +37,8 @@ public class Trigger {
 
         log.warn(msgDeprecation);
 
-        if (!Util.isWriteableInstance(db, GraphDatabaseSettings.SYSTEM_DATABASE_NAME)) {
-            throw new RuntimeException(SYS_NON_LEADER_ERROR + msgDeprecation);
+        if (!Util.isWriteableInstance(db)) {
+            throw new RuntimeException(SYS_NON_WRITER_ERROR + msgDeprecation);
         }
     }
 

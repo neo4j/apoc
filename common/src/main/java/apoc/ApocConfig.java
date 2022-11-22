@@ -213,15 +213,6 @@ public class ApocConfig extends LifecycleAdapter {
         }
         return systemDb;
     }
-
-    public GraphDatabaseService getDatabase(String databaseName) {
-        try {
-            return databaseManagementService.database(databaseName);
-        } catch (Exception e)
-        {
-            throw new RuntimeException( e );
-        }
-    }
     
     // added because with binary file there isn't an url
     public void isImportFileEnabled() {
