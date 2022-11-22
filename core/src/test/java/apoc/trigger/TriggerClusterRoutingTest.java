@@ -29,10 +29,12 @@ public class TriggerClusterRoutingTest {
     @BeforeClass
     public static void setupCluster() {
         cluster = TestContainerUtil
-                .createEnterpriseCluster(3, 1, Collections.emptyMap(), Map.of(
-                        "NEO4J_dbms_routing_enabled", "true",
-                        "apoc.trigger.enabled", "true"
-                ));
+                .createEnterpriseCluster( List.of(TestContainerUtil.ApocPackage.CORE), 
+                        3, 1, 
+                        Collections.emptyMap(), 
+                        Map.of( "NEO4J_dbms_routing_enabled", "true", 
+                                "apoc.trigger.enabled", "true" )
+                );
     }
 
     @AfterClass
@@ -84,7 +86,7 @@ public class TriggerClusterRoutingTest {
             }
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
-            if (dbName && dbIsWriter(session, dbName, address)) {
+            if (dbIsWriter(session, dbName, address)) {
                 session.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
             } else {
                 try {

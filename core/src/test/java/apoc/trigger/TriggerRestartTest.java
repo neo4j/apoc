@@ -2,7 +2,6 @@ package apoc.trigger;
 
 import apoc.ApocConfig;
 import apoc.util.TestUtil;
-import apoc.util.collection.Iterators;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;

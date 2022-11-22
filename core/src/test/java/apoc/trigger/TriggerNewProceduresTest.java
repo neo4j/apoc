@@ -362,12 +362,6 @@ public class TriggerNewProceduresTest {
         });
     }
 
-    // TODO - it should be removed/ignored in 5.x, due to Util.validateQuery(..) removal
-    @Test(expected = QueryExecutionException.class)
-    public void showThrowAnException() {
-        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', 'test','UNWIND $createdNodes AS n SET n.txId = , n.txTime = $commitTime',{})");
-    }
-
     @Test
     public void testCreatedRelationshipsAsync() {
         db.executeTransactionally("CREATE (:A {name: \"A\"})-[:R1]->(:Z {name: \"Z\"})");
@@ -507,28 +501,6 @@ public class TriggerNewProceduresTest {
                     r -> fail("Should fail because of user db execution"));
         } catch (QueryExecutionException e) {
             assertTrue(e.getMessage().contains(TRIGGER_NOT_ROUTED_ERROR));
-        }
-    }
-    
-    // TODO - it should be removed/ignored in 5.x, due to Util.validateQuery(..) removal
-    @Test
-    public void testInstallTriggerInWrongDb() {
-        try {
-            testCall(sysDb, "CALL apoc.trigger.install('notExistent', 'name', 'RETURN 1',{})", 
-                    r -> fail("Should fail because of database not found"));
-        } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains(DatabaseNotFoundException.class.getName()));
-        }
-    }
-
-    // TODO - it should be removed/ignored in 5.x, due to Util.validateQuery(..) removal
-    @Test
-    public void testInstallTriggerInSystemDb() {
-        try {
-            testCall(sysDb, "CALL apoc.trigger.install('system', 'name', 'RETURN 1',{})", 
-                    r -> fail("Should fail because of unrecognised system procedure"));
-        } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("Not a recognised system command or procedure"));
         }
     }
 

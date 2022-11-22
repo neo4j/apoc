@@ -1,6 +1,5 @@
 package apoc.trigger;
 
-import apoc.ApocConfig;
 import apoc.util.Util;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;

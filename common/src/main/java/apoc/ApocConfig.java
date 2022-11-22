@@ -213,7 +213,7 @@ public class ApocConfig extends LifecycleAdapter {
         }
         return systemDb;
     }
-    
+
     // added because with binary file there isn't an url
     public void isImportFileEnabled() {
         if (!config.getBoolean(APOC_IMPORT_FILE_ENABLED)) {
