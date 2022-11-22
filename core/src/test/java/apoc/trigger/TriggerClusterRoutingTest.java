@@ -6,7 +6,6 @@ import apoc.util.TestcontainersCausalCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
@@ -22,6 +21,8 @@ import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
+import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 public class TriggerClusterRoutingTest {
 
@@ -54,25 +55,25 @@ public class TriggerClusterRoutingTest {
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerInstallAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerDropAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.drop('neo4j', $name)";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
     private static void triggerInSysLeaderMemberCommon(String query, String triggerNotRoutedError, String dbName) {
@@ -87,7 +88,7 @@ public class TriggerClusterRoutingTest {
             }
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
-            if (dbIsWriter(session, dbName, address)) {
+            if (dbName.equals(SYSTEM_DATABASE_NAME) && dbIsWriter(session, dbName, address)) {
                 final String name = UUID.randomUUID().toString();
                 testCall( session, query,
                         Map.of("name", name),

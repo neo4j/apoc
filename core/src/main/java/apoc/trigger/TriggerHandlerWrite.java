@@ -11,7 +11,7 @@ import org.neo4j.graphdb.Transaction;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
@@ -61,7 +61,6 @@ public class TriggerHandlerWrite {
             node.setProperty(SystemPropertyKeys.paused.name(), false);
 
             setLastUpdate(databaseName, tx);
-            return null;
         });
 
         return previous;
@@ -78,7 +77,6 @@ public class TriggerHandlerWrite {
                             });
             
             setLastUpdate(databaseName, tx);
-            return null;
         });
 
         return previous;
@@ -97,7 +95,6 @@ public class TriggerHandlerWrite {
                     });
 
             setLastUpdate(databaseName, tx);
-            return null;
         });
 
         return result;
@@ -116,7 +113,6 @@ public class TriggerHandlerWrite {
                         node.delete();
                     });
             setLastUpdate(databaseName, tx);
-            return null;
         });
 
         return previous;
@@ -136,11 +132,10 @@ public class TriggerHandlerWrite {
                 SystemPropertyKeys.name.name(), name);
     }
 
-    public static <T> T withSystemDb(Function<Transaction, T> action) {
+    public static void withSystemDb(Consumer<Transaction> consumer) {
         try (Transaction tx = apocConfig().getSystemDb().beginTx()) {
-            T result = action.apply(tx);
+            consumer.accept(tx);
             tx.commit();
-            return result;
         }
     }
 
@@ -150,7 +145,8 @@ public class TriggerHandlerWrite {
             node = tx.createNode(SystemLabels.ApocTriggerMeta);
             node.setProperty(SystemPropertyKeys.database.name(), databaseName);
         }
-        node.setProperty(SystemPropertyKeys.lastUpdated.name(), System.currentTimeMillis());
+        final long value = System.currentTimeMillis();
+        node.setProperty(SystemPropertyKeys.lastUpdated.name(), value);
     }
     
 }

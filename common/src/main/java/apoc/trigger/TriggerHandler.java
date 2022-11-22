@@ -83,15 +83,17 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         withSystemDb(tx -> {
             tx.findNodes(SystemLabels.ApocTrigger,
                     SystemPropertyKeys.database.name(), db.databaseName()).forEachRemaining(
-                    node -> activeTriggers.put(
-                            (String) node.getProperty(SystemPropertyKeys.name.name()),
-                            MapUtil.map(
-                                    "statement", node.getProperty(SystemPropertyKeys.statement.name()),
-                                    "selector", Util.fromJson((String) node.getProperty(SystemPropertyKeys.selector.name()), Map.class),
-                                    "params", Util.fromJson((String) node.getProperty(SystemPropertyKeys.params.name()), Map.class),
-                                    "paused", node.getProperty(SystemPropertyKeys.paused.name())
-                            )
-                    )
+                    node -> {
+                        activeTriggers.put(
+                                (String) node.getProperty(SystemPropertyKeys.name.name()),
+                                MapUtil.map(
+                                        "statement", node.getProperty(SystemPropertyKeys.statement.name()),
+                                        "selector", Util.fromJson((String) node.getProperty(SystemPropertyKeys.selector.name()), Map.class),
+                                        "params", Util.fromJson((String) node.getProperty(SystemPropertyKeys.params.name()), Map.class),
+                                        "paused", node.getProperty(SystemPropertyKeys.paused.name())
+                                )
+                        );
+                    }
             );
             return null;
         });
@@ -274,7 +276,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         updateCache();
         long refreshInterval = apocConfig().getInt(TRIGGER_REFRESH, 60000);
         restoreTriggerHandler = jobScheduler.scheduleRecurring(Group.STORAGE_MAINTENANCE, () -> {
-            if (getLastUpdate() > lastUpdate) {
+            if (getLastUpdate() >= lastUpdate) {
                 updateCache();
             }
         }, refreshInterval, refreshInterval, TimeUnit.MILLISECONDS);

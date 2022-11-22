@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
-import org.neo4j.dbms.api.DatabaseNotFoundException;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -113,7 +112,6 @@ public class TriggerNewProceduresTest {
             assertEquals(query, row.get("query"));
             assertEquals(true, row.get("installed"));
         }, TIMEOUT);
-
     }
 
     @Test
@@ -191,8 +189,8 @@ public class TriggerNewProceduresTest {
         testCallCount(sysDb, "CALL apoc.trigger.dropAll('neo4j')", 0);
         testCallCountEventually(db, "call apoc.trigger.list", 0, TIMEOUT);
 
-        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed-1','RETURN 1',{}) YIELD name RETURN name", 1);
-        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed-2','RETURN 2',{}) YIELD name RETURN name", 1);
+        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed-1','RETURN 1',{})", 1);
+        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed-2','RETURN 2',{})", 1);
 
         testCallCountEventually(db, "call apoc.trigger.list", 2, TIMEOUT);
         
@@ -227,36 +225,45 @@ public class TriggerNewProceduresTest {
 
     @Test
     public void testTxId() throws Exception {
-        long start = System.currentTimeMillis();
-        String name = "txinfo";
-        String query = "UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime";
-        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, $query, {phase:'after'})", 
+        final long start = System.currentTimeMillis();
+        db.executeTransactionally("CREATE (f:Another)");
+        final String name = "txinfo";
+        final String query = """
+                UNWIND $createdNodes AS n
+                MATCH (a:Another) WITH a, n
+                SET a.txId = $transactionId, a.txTime = $commitTime""";
+        
+        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, $query, {phase:'after'})",
                 Map.of("name", name, "query", query));
         awaitTriggerDiscovered(db, name, query);
-        
         db.executeTransactionally("CREATE (f:Bar)");
-        testCall(db, "MATCH (f:Bar) RETURN f", (row) -> {
+        TestUtil.testCall(db, "MATCH (f:Another) RETURN f", (row) -> {
             assertTrue((Long) ((Node) row.get("f")).getProperty("txId") > -1L);
             assertTrue((Long) ((Node) row.get("f")).getProperty("txTime") > start);
         });
+        db.executeTransactionally("MATCH (n:Another) DELETE n");
     }
 
     @Test
     public void testMetaDataBefore() {
-        testMetaData("before");
+        String triggerQuery = "UNWIND $createdNodes AS n SET n.label = labels(n)[0], n += $metaData";
+        String matchQuery = "MATCH (n:Bar) RETURN n";
+        testMetaData(triggerQuery, "before", matchQuery);
     }
 
     @Test
     public void testMetaDataAfter() {
-        testMetaData("after");
+        db.executeTransactionally("CREATE (n:Another)");
+        String triggerQuery = "UNWIND $createdNodes AS n MATCH (a:Another) SET a.label = labels(n)[0], a += $metaData";
+        String matchQuery = "MATCH (n:Another) RETURN n";
+        testMetaData(triggerQuery, "after", matchQuery);
     }
 
-    private void testMetaData(String phase) {
+    private void testMetaData(String triggerQuery, String phase, String matchQuery) {
         String name = "txinfo";
-        String query = "UNWIND $createdNodes AS n SET n += $metaData";
         sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, $query, {phase:$phase})",
-                Map.of("name", name, "query", query, "phase", phase));
-        awaitTriggerDiscovered(db, name, query);
+                Map.of("name", name, "query", triggerQuery, "phase", phase));
+        awaitTriggerDiscovered(db, name, triggerQuery);
 
         try (Transaction tx = db.beginTx()) {
             KernelTransaction ktx = ((TransactionImpl)tx).kernelTransaction();
@@ -264,8 +271,11 @@ public class TriggerNewProceduresTest {
             tx.execute("CREATE (f:Bar)");
             tx.commit();
         }
-        testCall(db, "MATCH (f:Bar) RETURN f", (row) -> {
-            assertEquals("hello",  ((Node) row.get("f")).getProperty("txMeta") );
+        
+        testCall(db, matchQuery, (row) -> {
+            final Node node = (Node) row.get("n");
+            assertEquals("Bar", node.getProperty("label"));
+            assertEquals("hello",  node.getProperty("txMeta"));
         });
     }
 
