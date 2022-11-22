@@ -20,12 +20,12 @@ import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 public class TriggerClusterRoutingTest {
-
+    private static final String NO_WRITE_OPS_ALLOWED = "No write operations are allowed directly on this database";
+    
     private static TestcontainersCausalCluster cluster;
 
     @BeforeClass
@@ -55,30 +55,32 @@ public class TriggerClusterRoutingTest {
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, List.of(SYS_NON_WRITER_ERROR, NO_WRITE_OPS_ALLOWED), DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysLeaderMemberCommon(query, SYS_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, List.of(SYS_NON_WRITER_ERROR, NO_WRITE_OPS_ALLOWED), DEFAULT_DATABASE_NAME);
     }
 
     @Test
-    public void testTriggerInstallAllowedOnlyInSysLeaderMember() {
+    public void testTriggerInstallAllowedOnlyInSysWriterMember() {
         final String query = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, List.of(TRIGGER_NOT_ROUTED_ERROR), SYSTEM_DATABASE_NAME);
     }
 
     @Test
-    public void testTriggerDropAllowedOnlyInSysLeaderMember() {
+    public void testTriggerDropAllowedOnlyInSysWriterMember() {
         final String query = "CALL apoc.trigger.drop('neo4j', $name)";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, List.of(TRIGGER_NOT_ROUTED_ERROR), SYSTEM_DATABASE_NAME);
     }
 
-    private static void triggerInSysLeaderMemberCommon(String query, String triggerNotRoutedError, String dbName) {
+    private static void triggerInSysWriterMemberCommon(String query, List<String> triggerNotRoutedError, String dbName) {
         final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
         assertEquals(4, members.size());
+        int writeErrors = 0;
+        final boolean systemDb = dbName.equals(SYSTEM_DATABASE_NAME);
         for (Neo4jContainerExtension container: members) {
             // we skip READ_REPLICA members
             final String readReplica = TestcontainersCausalCluster.ClusterInstanceType.READ_REPLICA.toString();
@@ -88,22 +90,25 @@ public class TriggerClusterRoutingTest {
             }
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
-            if (dbName.equals(SYSTEM_DATABASE_NAME) && dbIsWriter(session, dbName, address)) {
-                final String name = UUID.randomUUID().toString();
+            final String name = UUID.randomUUID().toString();
+            if (systemDb && dbIsWriter(session, dbName, address)) {
                 testCall( session, query,
                         Map.of("name", name),
                         row -> assertEquals(name, row.get("name")) );
             } else {
                 try {
-                    testCall(session, query,
-                            Map.of("name", UUID.randomUUID().toString()),
-                            row -> fail("Should fail because of non writer trigger addition"));
+                    testCall( session, query,
+                            Map.of("name", name),
+                            row -> assertEquals(name, row.get("name")) );
                 } catch (Exception e) {
+                    writeErrors++;
                     String errorMsg = e.getMessage();
-                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
+                    final boolean errorMatched = triggerNotRoutedError.stream().anyMatch(errorMsg::contains);
+                    assertTrue("The actual message is: " + errorMsg, errorMatched);
                 }
             }
         }
+        assertEquals(systemDb ? 1 : 3, writeErrors);
     }
 
     private static boolean dbIsWriter(Session session, String dbName, String address) {
