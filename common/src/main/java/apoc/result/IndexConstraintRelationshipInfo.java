@@ -17,9 +17,9 @@ public class IndexConstraintRelationshipInfo {
     
     public final Object relationshipType;
 
-    public IndexConstraintRelationshipInfo(String name, String type, List<String> properties, String status, Object relationshipType) {
+    public IndexConstraintRelationshipInfo(String name, String schemaType, List<String> properties, String status, Object relationshipType) {
         this.name = name;
-        this.type = type;
+        this.type = schemaType;
         this.properties = properties;
         this.status = status;
         this.relationshipType = relationshipType;
