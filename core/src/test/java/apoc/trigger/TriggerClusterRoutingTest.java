@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static apoc.trigger.Trigger.SYS_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
+import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -87,11 +88,15 @@ public class TriggerClusterRoutingTest {
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
             if (dbIsWriter(session, dbName, address)) {
-                session.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
+                final String name = UUID.randomUUID().toString();
+                testCall( session, query,
+                        Map.of("name", name),
+                        row -> assertEquals(name, row.get("name")) );
             } else {
                 try {
-                    session.run(query, Map.of("name", UUID.randomUUID().toString())).consume();
-                    fail("Should fail because of non writer trigger addition");
+                    testCall(session, query,
+                            Map.of("name", UUID.randomUUID().toString()),
+                            row -> fail("Should fail because of non writer trigger addition"));
                 } catch (Exception e) {
                     String errorMsg = e.getMessage();
                     assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
