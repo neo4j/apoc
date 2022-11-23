@@ -587,7 +587,7 @@ public class PeriodicTest {
                 "{concurrency:0 ,parallel:true})";
 
         QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                () -> testCall(db, query, row -> fail("The test should fail but it didn't"))
+                () -> testCall(db, query, (r) -> {})
         );
         assertTrue(e.getMessage().contains("concurrency parameter must be > 0"));
     }

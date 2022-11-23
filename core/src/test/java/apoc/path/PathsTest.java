@@ -54,9 +54,7 @@ public class PathsTest {
     @Test
     public void combineFail() {
         QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                () -> TestUtil.testCall(db, "MATCH p1 = (a:A)-[:NEXT]->(b:B), p2 = (c:C)-[:NEXT]->() RETURN apoc.path.combine(p1,p2) AS p",
-                        (row) -> fail("Should have failed"))
-
+                () -> TestUtil.testCall(db, "MATCH p1 = (a:A)-[:NEXT]->(b:B), p2 = (c:C)-[:NEXT]->() RETURN apoc.path.combine(p1,p2) AS p", (r) -> {})
         );
         assertTrue(e.getMessage().contains("Paths don't connect on their end and start-nodes"));
     }

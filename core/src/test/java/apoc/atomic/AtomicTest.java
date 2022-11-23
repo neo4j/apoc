@@ -177,7 +177,7 @@ public class AtomicTest {
 		);
 		Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof RuntimeException);
-		assertEquals("Attention your position out of range or higher than array length, that is 3", except.getMessage());
+		assertEquals("Position 5 is out of range for array of length 3", except.getMessage());
     }
 
     @Test
@@ -190,7 +190,7 @@ public class AtomicTest {
 		);
         Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof RuntimeException);
-		assertEquals("Attention your position out of range or higher than array length, that is 0", except.getMessage());
+		assertEquals("Position 1 is out of range for array of length 0", except.getMessage());
     }
 
 	@Test

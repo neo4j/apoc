@@ -83,7 +83,7 @@ public class UtilTest {
     @Test
     public void testValidateQuery() {
         QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                () -> Util.validateQuery(db, "Match (n) return m")
+                () -> Util.validateQuery(db, "MATCH (n) RETURN m")
         );
         assertTrue(e.getMessage().contains("Variable `m` not defined"));
     }
