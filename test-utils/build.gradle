@@ -22,9 +22,9 @@ dependencies {
     api group: 'org.neo4j.community', name: 'it-test-support', version: neo4jVersionEffective // , classifier: "tests"
     api group: 'org.neo4j', name: 'log-test-utils', version: neo4jVersionEffective // , classifier: "tests"
     api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '4.0.0'
-    api group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.3.3', withoutServers
-    api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.3.3', withoutServers
-    api group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: '3.3.3', withoutServers
+    api group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.3.4', withoutServers
+    api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.3.4', withoutServers
+    api group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: '3.3.4', withoutServers
     api group: 'org.testcontainers', name: 'testcontainers', version: testContainersVersion
     api group: 'org.testcontainers', name: 'neo4j', version: testContainersVersion
     api group: 'org.testcontainers', name: 'elasticsearch', version: testContainersVersion

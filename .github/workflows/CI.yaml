@@ -24,7 +24,7 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
       - name: Snyk test dependencies
-        run: snyk test --all-projects --severity-threshold=medium --fail-on=upgradable --fail-on=patchable
+        run: snyk test --all-projects --severity-threshold=medium --fail-on=all
 
   snyk-monitor:
     runs-on: ubuntu-latest
