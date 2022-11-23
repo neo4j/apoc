@@ -10,7 +10,6 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.test.rule.DbmsRule;
@@ -35,6 +34,7 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class XmlTest {
@@ -43,8 +43,6 @@ public class XmlTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @Before
     public void setUp() throws Exception {
@@ -257,11 +255,12 @@ public class XmlTest {
 
     @Test
     public void testLoadXmlWithNextWordRels() {
-        thrown.expect(QueryExecutionException.class);
-        thrown.expectMessage("usage of `createNextWordRelationships` is no longer allowed. Use `{relType:'NEXT_WORD', label:'XmlWord'}` instead.");
-
-        db.executeTransactionally("call apoc.import.xml('file:" + FILE_SHORTENED + "', " +
-                "{createNextWordRelationships: true, filterLeadingWhitespace: true}) yield node");
+        assertThrows(
+            "usage of `createNextWordRelationships` is no longer allowed. Use `{relType:'NEXT_WORD', label:'XmlWord'}` instead.",
+            QueryExecutionException.class,
+            () -> db.executeTransactionally("call apoc.import.xml('file:" + FILE_SHORTENED + "', " +
+                "{createNextWordRelationships: true, filterLeadingWhitespace: true}) yield node")
+        );
     }
 
     @Test
