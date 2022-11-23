@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static apoc.trigger.Trigger.SYS_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertEquals;
@@ -55,32 +54,31 @@ public class TriggerClusterRoutingTest {
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysWriterMemberCommon(query, List.of(SYS_NON_WRITER_ERROR, NO_WRITE_OPS_ALLOWED), DEFAULT_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, NO_WRITE_OPS_ALLOWED, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysWriterMemberCommon(query, List.of(SYS_NON_WRITER_ERROR, NO_WRITE_OPS_ALLOWED), DEFAULT_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, NO_WRITE_OPS_ALLOWED, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerInstallAllowedOnlyInSysWriterMember() {
         final String query = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
-        triggerInSysWriterMemberCommon(query, List.of(TRIGGER_NOT_ROUTED_ERROR), SYSTEM_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerDropAllowedOnlyInSysWriterMember() {
         final String query = "CALL apoc.trigger.drop('neo4j', $name)";
-        triggerInSysWriterMemberCommon(query, List.of(TRIGGER_NOT_ROUTED_ERROR), SYSTEM_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
-    private static void triggerInSysWriterMemberCommon(String query, List<String> triggerNotRoutedError, String dbName) {
+    private static void triggerInSysWriterMemberCommon(String query, String triggerNotRoutedError, String dbName) {
         final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
         assertEquals(4, members.size());
-        int writeErrors = 0;
-        final boolean systemDb = dbName.equals(SYSTEM_DATABASE_NAME);
+        int errorCounter = 0;
         for (Neo4jContainerExtension container: members) {
             // we skip READ_REPLICA members
             final String readReplica = TestcontainersCausalCluster.ClusterInstanceType.READ_REPLICA.toString();
@@ -91,7 +89,7 @@ public class TriggerClusterRoutingTest {
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
             final String name = UUID.randomUUID().toString();
-            if (systemDb && dbIsWriter(session, dbName, address)) {
+            if (dbName.equals(SYSTEM_DATABASE_NAME) && dbIsWriter(session, dbName, address)) {
                 testCall( session, query,
                         Map.of("name", name),
                         row -> assertEquals(name, row.get("name")) );
@@ -101,14 +99,13 @@ public class TriggerClusterRoutingTest {
                             Map.of("name", name),
                             row -> assertEquals(name, row.get("name")) );
                 } catch (Exception e) {
-                    writeErrors++;
+                    errorCounter++;
                     String errorMsg = e.getMessage();
-                    final boolean errorMatched = triggerNotRoutedError.stream().anyMatch(errorMsg::contains);
-                    assertTrue("The actual message is: " + errorMsg, errorMatched);
+                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
                 }
             }
         }
-        assertEquals(systemDb ? 1 : 3, writeErrors);
+        assertEquals(1, errorCounter);
     }
 
     private static boolean dbIsWriter(Session session, String dbName, String address) {
