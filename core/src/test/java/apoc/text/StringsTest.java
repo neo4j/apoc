@@ -5,9 +5,7 @@ import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -36,9 +34,6 @@ import static org.junit.Assert.*;
  * @since 05.05.16
  */
 public class StringsTest {
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
@@ -388,11 +383,13 @@ public class StringsTest {
 
     @Test
     public void testUrlDecodeFailure() {
-        thrown.expect(QueryExecutionException.class);
-        thrown.expectMessage("Failed to invoke function `apoc.text.urldecode`: Caused by: java.lang.IllegalArgumentException: URLDecoder: Incomplete trailing escape (%) pattern");
-        testCall(db,
-                "RETURN apoc.text.urldecode('ab+cd%3Dgh%26ij%3')  AS value",
-                row -> assertEquals("ab cd=gh&ij?", row.get("value"))
+        assertThrows(
+                "Failed to invoke function `apoc.text.urldecode`: Caused by: java.lang.IllegalArgumentException: URLDecoder: Incomplete trailing escape (%) pattern",
+                QueryExecutionException.class,
+                () -> testCall(db,
+                    "RETURN apoc.text.urldecode('ab+cd%3Dgh%26ij%3')  AS value",
+                    row -> {}
+                )
         );
     }
 

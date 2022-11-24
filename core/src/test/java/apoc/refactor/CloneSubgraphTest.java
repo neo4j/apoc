@@ -9,11 +9,11 @@ import apoc.util.TestUtil;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.util.Collections;
 import java.util.List;
 
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -22,12 +22,10 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 
 public class CloneSubgraphTest {
     private static final String STANDIN_SYNTAX_EXCEPTION_MSG = "\'standinNodes\' must be a list of node pairs";
-
-    @Rule
-    public ExpectedException exceptionGrabber = ExpectedException.none();
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
@@ -407,67 +405,55 @@ public class CloneSubgraphTest {
 
     @Test
     public void testCloneSubgraph_With_A_1_Element_Standin_Pair_Should_Throw_Exception()  {
-        exceptionGrabber.expectMessage(STANDIN_SYNTAX_EXCEPTION_MSG);
-
-        TestUtil.testCall(db,
-                "MATCH (root:Root{name:'A'})-[*]-(node) " +
-                        "WITH root, collect(DISTINCT node) as nodes " +
-                        "CALL apoc.refactor.cloneSubgraph(nodes, [], {standinNodes:[[root]]}) YIELD input, output, error " +
-                        "WITH collect(output) as clones, collect(output.name) as cloneNames " +
-                        "RETURN cloneNames, size(cloneNames) as cloneCount, none(clone in clones WHERE (clone)--()) as noRelationshipsOnClones, " +
-                        " single(clone in clones WHERE clone.name = 'node5' AND clone:Oddball) as oddballNode5Exists, " +
-                        " size([clone in clones WHERE clone:Node]) as nodesWithNodeLabel",
-                (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat(row.get("cloneCount"), is(10L));
-                    assertThat(row.get("noRelationshipsOnClones"), is(true));
-                    assertThat(row.get("oddballNode5Exists"), is(true));
-                    assertThat(row.get("nodesWithNodeLabel"), is(10L));
-                }
+        assertThrows(
+            STANDIN_SYNTAX_EXCEPTION_MSG,
+            QueryExecutionException.class,
+            () -> TestUtil.testCall(db,
+                    "MATCH (root:Root{name:'A'})-[*]-(node) " +
+                            "WITH root, collect(DISTINCT node) as nodes " +
+                            "CALL apoc.refactor.cloneSubgraph(nodes, [], {standinNodes:[[root]]}) YIELD input, output, error " +
+                            "WITH collect(output) as clones, collect(output.name) as cloneNames " +
+                            "RETURN cloneNames, size(cloneNames) as cloneCount, none(clone in clones WHERE (clone)--()) as noRelationshipsOnClones, " +
+                            " single(clone in clones WHERE clone.name = 'node5' AND clone:Oddball) as oddballNode5Exists, " +
+                            " size([clone in clones WHERE clone:Node]) as nodesWithNodeLabel",
+                    (row) -> {}
+            )
         );
     }
 
     @Test
     public void testCloneSubgraph_With_A_3_Element_Standin_Pair_Should_Throw_Exception()  {
-        exceptionGrabber.expectMessage(STANDIN_SYNTAX_EXCEPTION_MSG);
-
-        TestUtil.testCall(db,
-                "MATCH (root:Root{name:'A'})-[*]-(node) " +
-                        "WITH root, collect(DISTINCT node) as nodes " +
-                        "CALL apoc.refactor.cloneSubgraph(nodes, [], {standinNodes:[[root, root, root]]}) YIELD input, output, error " +
-                        "WITH collect(output) as clones, collect(output.name) as cloneNames " +
-                        "RETURN cloneNames, size(cloneNames) as cloneCount, none(clone in clones WHERE (clone)--()) as noRelationshipsOnClones, " +
-                        " single(clone in clones WHERE clone.name = 'node5' AND clone:Oddball) as oddballNode5Exists, " +
-                        " size([clone in clones WHERE clone:Node]) as nodesWithNodeLabel",
-                (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat(row.get("cloneCount"), is(10L));
-                    assertThat(row.get("noRelationshipsOnClones"), is(true));
-                    assertThat(row.get("oddballNode5Exists"), is(true));
-                    assertThat(row.get("nodesWithNodeLabel"), is(10L));
-                }
+        assertThrows(
+            STANDIN_SYNTAX_EXCEPTION_MSG,
+            QueryExecutionException.class,
+            () -> TestUtil.testCall(db,
+                    "MATCH (root:Root{name:'A'})-[*]-(node) " +
+                            "WITH root, collect(DISTINCT node) as nodes " +
+                            "CALL apoc.refactor.cloneSubgraph(nodes, [], {standinNodes:[[root, root, root]]}) YIELD input, output, error " +
+                            "WITH collect(output) as clones, collect(output.name) as cloneNames " +
+                            "RETURN cloneNames, size(cloneNames) as cloneCount, none(clone in clones WHERE (clone)--()) as noRelationshipsOnClones, " +
+                            " single(clone in clones WHERE clone.name = 'node5' AND clone:Oddball) as oddballNode5Exists, " +
+                            " size([clone in clones WHERE clone:Node]) as nodesWithNodeLabel",
+                    (row) -> {}
+            )
         );
     }
 
     @Test
     public void testCloneSubgraph_With_A_Null_Element_In_Standin_Pair_Should_Throw_Exception()  {
-        exceptionGrabber.expectMessage(STANDIN_SYNTAX_EXCEPTION_MSG);
-
-        TestUtil.testCall(db,
-                "MATCH (root:Root{name:'A'})-[*]-(node) " +
-                        "WITH root, collect(DISTINCT node) as nodes " +
-                        "CALL apoc.refactor.cloneSubgraph(nodes, [], {standinNodes:[[root, null]]}) YIELD input, output, error " +
-                        "WITH collect(output) as clones, collect(output.name) as cloneNames " +
-                        "RETURN cloneNames, size(cloneNames) as cloneCount, none(clone in clones WHERE (clone)--()) as noRelationshipsOnClones, " +
-                        " single(clone in clones WHERE clone.name = 'node5' AND clone:Oddball) as oddballNode5Exists, " +
-                        " size([clone in clones WHERE clone:Node]) as nodesWithNodeLabel",
-                (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat(row.get("cloneCount"), is(10L));
-                    assertThat(row.get("noRelationshipsOnClones"), is(true));
-                    assertThat(row.get("oddballNode5Exists"), is(true));
-                    assertThat(row.get("nodesWithNodeLabel"), is(10L));
-                }
+        assertThrows(
+            STANDIN_SYNTAX_EXCEPTION_MSG,
+            QueryExecutionException.class,
+            () -> TestUtil.testCall(db,
+                    "MATCH (root:Root{name:'A'})-[*]-(node) " +
+                            "WITH root, collect(DISTINCT node) as nodes " +
+                            "CALL apoc.refactor.cloneSubgraph(nodes, [], {standinNodes:[[root, null]]}) YIELD input, output, error " +
+                            "WITH collect(output) as clones, collect(output.name) as cloneNames " +
+                            "RETURN cloneNames, size(cloneNames) as cloneCount, none(clone in clones WHERE (clone)--()) as noRelationshipsOnClones, " +
+                            " single(clone in clones WHERE clone.name = 'node5' AND clone:Oddball) as oddballNode5Exists, " +
+                            " size([clone in clones WHERE clone:Node]) as nodesWithNodeLabel",
+                    (row) -> {}
+            )
         );
     }
 
