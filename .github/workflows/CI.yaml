@@ -38,7 +38,7 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
       - name: Snyk monitor dependencies
-        run: snyk monitor --all-projects --target-reference=${GITHUB_BASE_REF}
+        run: snyk monitor --all-projects --target-reference=${GITHUB_REF}
 
   build:
     runs-on: ubuntu-latest
