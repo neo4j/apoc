@@ -382,6 +382,7 @@ public class SchemasEnterpriseFeaturesTest {
             Map<String, Object> r = result.next();
             assertEquals("CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
             assertEquals("RELATIONSHIP_PROPERTY_EXISTENCE", r.get("type"));
+            assertEquals("LIKED", r.get("relationshipType"));
             assertEquals(asList("day"), r.get("properties"));
             assertEquals(StringUtils.EMPTY, r.get("status"));
             assertFalse(result.hasNext());
@@ -401,12 +402,13 @@ public class SchemasEnterpriseFeaturesTest {
             tx.commit();
             return null;
         });
-        testResult(session, "CALL apoc.schema.relationships() YIELD name, type, properties, status " +
+        testResult(session, "CALL apoc.schema.relationships() YIELD name, type, properties, status, relationshipType " +
                 "WHERE type <> '<any-types>' " +
                 "RETURN *", (result) -> {
             Map<String, Object> r = result.next();
             assertEquals("CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
             assertEquals("RELATIONSHIP_PROPERTY_EXISTENCE", r.get("type"));
+            assertEquals("LIKED", r.get("relationshipType"));
             assertEquals(asList("day"), r.get("properties"));
             assertEquals(StringUtils.EMPTY, r.get("status"));
             assertFalse(result.hasNext());
