@@ -78,7 +78,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllJson() throws Exception {
+    public void shouldImportAllJson() {
         shouldImportAllCommon(Collections.emptyMap(), 9, 1L);
     }
 
@@ -98,7 +98,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllJsonWithPropertyMappings() throws Exception {
+    public void shouldImportAllJsonWithPropertyMappings() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS UNIQUE");
         // given
         String filename = "all.json";

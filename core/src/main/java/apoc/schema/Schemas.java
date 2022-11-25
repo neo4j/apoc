@@ -114,7 +114,7 @@ public class Schemas {
         return constraintsExistsForRelationship(type, propertyNames);
     }
 
-    public List<AssertSchemaResult> assertConstraints(Map<String, List<Object>> constraints0, boolean dropExisting) throws ExecutionException, InterruptedException {
+    public List<AssertSchemaResult> assertConstraints(Map<String, List<Object>> constraints0, boolean dropExisting) {
         Map<String, List<Object>> constraints = copyMapOfObjects(constraints0);
         List<AssertSchemaResult> result = new ArrayList<>(constraints.size());
         Schema schema = tx.schema();
@@ -172,7 +172,7 @@ public class Schemas {
         return new AssertSchemaResult(lbl, key).unique().created();
     }
 
-    public List<AssertSchemaResult> assertIndexes(Map<String, List<Object>> indexes0, boolean dropExisting) throws ExecutionException, InterruptedException, IllegalArgumentException {
+    public List<AssertSchemaResult> assertIndexes(Map<String, List<Object>> indexes0, boolean dropExisting) throws IllegalArgumentException {
         Schema schema = tx.schema();
         Map<String, List<Object>> indexes = copyMapOfObjects(indexes0);
         List<AssertSchemaResult> result = new ArrayList<>(indexes.size());

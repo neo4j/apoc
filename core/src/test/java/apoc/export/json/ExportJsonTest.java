@@ -60,7 +60,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJson() throws Exception {
+    public void testExportAllJson() {
         String filename = "all.json";
         TestUtil.testCall(db, "CALL apoc.export.json.all($file,null)",
                 map("file", filename),
@@ -177,7 +177,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportPointMapDatetimeJson() throws Exception {
+    public void testExportPointMapDatetimeJson() {
         String filename = "mapPointDatetime.json";
         String query = "return {data: 1, value: {age: 12, name:'Mike', data: {number: [1,3,5], born: date('2018-10-29'), place: point({latitude: 13.1, longitude: 33.46789})}}} as map, " +
                 "datetime('2015-06-24T12:50:35.556+0100') AS theDateTime, " +
@@ -198,7 +198,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportPointMapDatetimeStreamJson() throws Exception {
+    public void testExportPointMapDatetimeStreamJson() {
         String filename = "mapPointDatetime.json";
         String query = "return {data: 1, value: {age: 12, name:'Mike', data: {number: [1,3,5], born: date('2018-10-29'), place: point({latitude: 13.1, longitude: 33.46789})}}} as map, " +
                 "datetime('2015-06-24T12:50:35.556+0100') AS theDateTime, " +
@@ -216,7 +216,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportListNode() throws Exception {
+    public void testExportListNode() {
         String filename = "listNode.json";
 
         String query = "MATCH (u:User) RETURN COLLECT(u) as list";
@@ -247,7 +247,7 @@ public class ExportJsonTest {
     }
     
     @Test
-    public void testExportListRel() throws Exception {
+    public void testExportListRel() {
         String filename = "listRel.json";
 
         String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) as list";
@@ -262,7 +262,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportListPath() throws Exception {
+    public void testExportListPath() {
         String filename = "listPath.json";
 
         String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) as list";
@@ -278,7 +278,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMap() throws Exception {
+    public void testExportMap() {
         String filename = "MapNode.json";
 
         String query = "MATCH (u:User)-[r:KNOWS]->(d:User) RETURN u {.*}, d {.*}, r {.*}";
@@ -293,7 +293,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMapPath() throws Exception {
+    public void testExportMapPath() {
         db.executeTransactionally("CREATE (f:User {name:'Mike',age:78,male:true})-[:KNOWS {since: 1850}]->(b:User {name:'John',age:18}),(c:User {age:39})");
         String filename = "MapPath.json";
 
@@ -310,7 +310,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMapRel() throws Exception {
+    public void testExportMapRel() {
         String filename = "MapRel.json";
 
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel {.*}";
@@ -326,7 +326,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMapComplex() throws Exception {
+    public void testExportMapComplex() {
         String filename = "MapComplex.json";
 
         String query = "RETURN {value:1, data:[10,'car',null, point({ longitude: 56.7, latitude: 12.78 }), point({ longitude: 56.7, latitude: 12.78, height: 8 }), point({ x: 2.3, y: 4.5 }), point({ x: 2.3, y: 4.5, z: 2 }),date('2018-10-10'), datetime('2018-10-18T14:21:40.004Z'), localdatetime({ year:1984, week:10, dayOfWeek:3, hour:12, minute:31, second:14, millisecond: 645 }), {x:1, y:[1,2,3,{age:10}]}]} as key";
@@ -342,7 +342,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportGraphJson() throws Exception {
+    public void testExportGraphJson() {
         String filename = "graph.json";
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
                         "CALL apoc.export.json.graph(graph, $file) " +
@@ -353,7 +353,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryJson() throws Exception {
+    public void testExportQueryJson() {
         String filename = "query.json";
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
@@ -367,7 +367,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryNodesJson() throws Exception {
+    public void testExportQueryNodesJson() {
         String filename = "query_nodes.json";
         String query = "MATCH (u:User) return u";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
@@ -381,7 +381,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryTwoNodesJson() throws Exception {
+    public void testExportQueryTwoNodesJson() {
         String filename = "query_two_nodes.json";
         String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) return u, l";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query),
@@ -395,7 +395,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryNodesJsonParams() throws Exception {
+    public void testExportQueryNodesJsonParams() {
         String filename = "query_nodes_param.json";
         String query = "MATCH (u:User) WHERE u.age > $age return u";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file,{params:{age:10}})",
@@ -409,7 +409,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryNodesJsonCount() throws Exception {
+    public void testExportQueryNodesJsonCount() {
         String filename = "query_nodes_count.json";
         String query = "MATCH (n) return count(n)";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
@@ -423,7 +423,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportData() throws Exception {
+    public void testExportData() {
         String filename = "data.json";
         TestUtil.testCall(db, "MATCH (nod:User) " +
                         "MATCH ()-[reels:KNOWS]->() " +
@@ -440,7 +440,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportDataPath() throws Exception {
+    public void testExportDataPath() {
         String filename = "query_nodes_path.json";
         String query = "MATCH p = (u:User)-[rel]->(u2:User) return u, rel, u2, p, u.name";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
@@ -453,7 +453,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllWithWriteNodePropertiesJson() throws Exception {
+    public void testExportAllWithWriteNodePropertiesJson() {
         String filename = "with_node_properties.json";
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
 
@@ -468,7 +468,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllWithDefaultWriteNodePropertiesJson() throws Exception {
+    public void testExportAllWithDefaultWriteNodePropertiesJson() {
         String filename = "with_node_properties.json";
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
 
@@ -484,7 +484,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllWithoutWriteNodePropertiesJson() throws Exception {
+    public void testExportAllWithoutWriteNodePropertiesJson() {
         String filename = "without_node_properties.json";
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
 
@@ -499,7 +499,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryOrderJson() throws Exception {
+    public void testExportQueryOrderJson() {
         db.executeTransactionally("CREATE (f:User12:User1:User0:User {name:'Alan'})");
         String filename = "query_node_labels.json";
         String query = "MATCH (u:User) WHERE u.name='Alan' RETURN u";

@@ -98,7 +98,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCreateIndex() throws Exception {
+    public void testCreateIndex() {
         testCall(db, "CALL apoc.schema.assert({Foo:['bar']},null)", (r) -> {
             assertEquals("Foo", r.get("label"));
             assertEquals("bar", r.get("key"));
@@ -114,7 +114,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCreateSchema() throws Exception {
+    public void testCreateSchema() {
         testCall(db, "CALL apoc.schema.assert(null,{Foo:['bar']})", (r) -> {
             assertEquals("Foo", r.get("label"));
             assertEquals("bar", r.get("key"));
@@ -132,7 +132,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexWhenUsingDropExisting() throws Exception {
+    public void testDropIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally("CREATE FULLTEXT INDEX titlesAndDescriptions FOR (n:Movie|Book) ON EACH [n.title, n.description]");
         testCall(db, "CALL apoc.schema.assert(null,null)", (r) -> {
@@ -149,7 +149,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexAndCreateIndexWhenUsingDropExisting() throws Exception {
+    public void testDropIndexAndCreateIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "CALL apoc.schema.assert({Bar:['foo']},null)", (result) -> {
             Map<String, Object> r = result.next();
@@ -171,7 +171,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRetainIndexWhenNotUsingDropExisting() throws Exception {
+    public void testRetainIndexWhenNotUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "CALL apoc.schema.assert({Bar:['foo', 'bar']}, null, false)", (result) -> {
             Map<String, Object> r = result.next();
@@ -199,7 +199,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropSchemaWhenUsingDropExisting() throws Exception {
+    public void testDropSchemaWhenUsingDropExisting() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testCall(db, "CALL apoc.schema.assert(null,null)", (r) -> {
             assertEquals("Foo", r.get("label"));
@@ -214,7 +214,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropSchemaAndCreateSchemaWhenUsingDropExisting() throws Exception {
+    public void testDropSchemaAndCreateSchemaWhenUsingDropExisting() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testResult(db, "CALL apoc.schema.assert(null, {Bar:['foo']})", (result) -> {
             Map<String, Object> r = result.next();
@@ -236,7 +236,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRetainSchemaWhenNotUsingDropExisting() throws Exception {
+    public void testRetainSchemaWhenNotUsingDropExisting() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testResult(db, "CALL apoc.schema.assert(null, {Bar:['foo', 'bar']}, false)", (result) -> {
             Map<String, Object> r = result.next();
@@ -264,12 +264,12 @@ public class SchemasTest {
     }
 
     @Test
-    public void testKeepIndex() throws Exception {
+    public void testKeepIndex() {
         keepIndexCommon(false);
     }
 
     @Test
-    public void testKeepIndexWithDropExisting() throws Exception {
+    public void testKeepIndexWithDropExisting() {
         keepIndexCommon(true);
     }
 
@@ -298,7 +298,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testKeepSchema() throws Exception {
+    public void testKeepSchema() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testResult(db, "CALL apoc.schema.assert(null,{Foo:['bar', 'foo']})", (result) -> {
             Map<String, Object> r = result.next();
@@ -426,7 +426,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropCompoundIndexWhenUsingDropExisting() throws Exception {
+    public void testDropCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert(null,null,true)", (result) -> {
@@ -443,7 +443,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropCompoundIndexAndRecreateWithDropExisting() throws Exception {
+    public void testDropCompoundIndexAndRecreateWithDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testCall(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null,true)", (r) -> {
@@ -459,7 +459,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDoesntDropCompoundIndexWhenSupplyingSameCompoundIndex() throws Exception {
+    public void testDoesntDropCompoundIndexWhenSupplyingSameCompoundIndex() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null,false)", (result) -> {
@@ -476,7 +476,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCompoundIndexDoesntAllowCypherInjection() throws Exception {
+    public void testCompoundIndexDoesntAllowCypherInjection() {
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert({Foo:[['bar`) MATCH (n) DETACH DELETE n; //','baa']]},null,false)", (result) -> {
             Map<String, Object> r = result.next();
@@ -494,12 +494,12 @@ public class SchemasTest {
         This is only for 3.2+
     */
     @Test
-    public void testKeepCompoundIndex() throws Exception {
+    public void testKeepCompoundIndex() {
         testKeepCompoundCommon(false);
     }
     
     @Test
-    public void testKeepCompoundIndexWithDropExisting() throws Exception {
+    public void testKeepCompoundIndexWithDropExisting() {
         testKeepCompoundCommon(true);
     }
 
@@ -529,7 +529,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexAndCreateCompoundIndexWhenUsingDropExisting() throws Exception {
+    public void testDropIndexAndCreateCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert({Bar:[['foo','bar']]},null)", (result) -> {
@@ -589,7 +589,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropCompoundIndexAndCreateCompoundIndexWhenUsingDropExisting() throws Exception {
+    public void testDropCompoundIndexAndCreateCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testCall(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null)", (r) -> {

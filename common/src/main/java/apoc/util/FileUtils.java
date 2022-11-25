@@ -191,7 +191,7 @@ public class FileUtils {
         return urlPath;
     }
 
-    private static boolean pathStartsWithOther(Path resolvedPath, Path basePath) throws IOException {
+    private static boolean pathStartsWithOther(Path resolvedPath, Path basePath) {
         try {
             return resolvedPath.toRealPath().startsWith(basePath.toRealPath());
         } catch (Exception e) {

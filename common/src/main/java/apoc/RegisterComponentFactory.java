@@ -53,7 +53,7 @@ public class RegisterComponentFactory extends ExtensionFactory<RegisterComponent
         }
 
         @Override
-        public void init() throws Exception {
+        public void init() {
 
             for (ApocGlobalComponents c: Services.loadAll(ApocGlobalComponents.class)) {
                 for (Class clazz: c.getContextClasses()) {

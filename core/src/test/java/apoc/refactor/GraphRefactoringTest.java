@@ -81,7 +81,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnect() throws Exception {
+    public void deleteAndReconnect() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {c:'d', e:'f'}]->(c:Three)-[:GAMMA]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -115,7 +115,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithTerminalNodes() throws Exception {
+    public void deleteAndReconnectWithTerminalNodes() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(c:Two)-[:GAMMA]->(e:Three {foo: 'bar', baz: 'baa'})");
 
         // - terminal node
@@ -149,7 +149,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectConsecutiveNodes() throws Exception {
+    public void deleteAndReconnectConsecutiveNodes() {
         db.executeTransactionally("CREATE (f:Alpha)-[:REL_1 {a:'b'}]->(b:Beta)-[:REL_2 {c:'d', e:'f'}]->(c:Gamma)-[:REL_3]->(d:Delta)-[:REL_4 {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Epsilon {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -182,7 +182,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithIncomingRelConfig() throws Exception {
+    public void deleteAndReconnectWithIncomingRelConfig() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {c:'d', e:'f'}]->(c:Three)-[:GAMMA]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -211,7 +211,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithOutgoingRelConfig() throws Exception {
+    public void deleteAndReconnectWithOutgoingRelConfig() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {c:'d', e:'f'}]->(c:Three)-[:GAMMA]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -244,7 +244,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithMergeRelConfig() throws Exception {
+    public void deleteAndReconnectWithMergeRelConfig() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {a:'d', e:'f', g: 'h'}]->(c:Three)-[:GAMMA {aa: 'one'}]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -278,7 +278,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithMergeRelConfigAndPropertiesCombine() throws Exception {
+    public void deleteAndReconnectWithMergeRelConfigAndPropertiesCombine() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {a:'d', e:'f', g: 'h'}]->(c:Three)-[:GAMMA {aa: 'one'}]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -312,7 +312,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithMergeRelConfigAndPropertiesOverride() throws Exception {
+    public void deleteAndReconnectWithMergeRelConfigAndPropertiesOverride() {
         db.executeTransactionally("CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {a:'d', e:'f', g: 'h'}]->(c:Three)-[:GAMMA {aa: 'one'}]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
@@ -346,7 +346,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testDeleteOneNode() throws Exception {
+    public void testDeleteOneNode() {
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) DELETE o RETURN n as node",
                       map("oldID", 1L, "newID",2L),
@@ -359,7 +359,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testEagernessMergeNodesFails() throws Exception {
+    public void testEagernessMergeNodesFails() {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.ID)");
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) CALL apoc.refactor.mergeNodes([o,n]) yield node return node",
@@ -373,7 +373,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesEagerAggregation() throws Exception {
+    public void testMergeNodesEagerAggregation() {
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) WITH head(collect([o,n])) as nodes CALL apoc.refactor.mergeNodes(nodes) yield node return node",
                       map("oldID", 1L, "newID",2L),
@@ -386,7 +386,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesEagerIndex() throws Exception {
+    public void testMergeNodesEagerIndex() {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.ID)");
         db.executeTransactionally("CALL db.awaitIndexes()");
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
@@ -400,7 +400,7 @@ public class GraphRefactoringTest {
                 });
     }
     @Test
-    public void testMergeNodesIndexConflict() throws Exception {
+    public void testMergeNodesIndexConflict() {
         /*
         CREATE CONSTRAINT FOR (a:A) REQUIRE a.prop1 IS UNIQUE;
 CREATE CONSTRAINT FOR (a:B) REQUIRE a.prop2 IS UNIQUE;
@@ -506,7 +506,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testExtractNode() throws Exception {
+    public void testExtractNode() {
         Long id = db.executeTransactionally("CREATE (f:Foo)-[rel:FOOBAR {a:1}]->(b:Bar) RETURN id(rel) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "CALL apoc.refactor.extractNode($ids,['FooBar'],'FOO','BAR')", map("ids", singletonList(id)),
                 (r) -> {
@@ -519,7 +519,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 });
     }
     @Test
-    public void testInvertRelationship() throws Exception {
+    public void testInvertRelationship() {
         long id = db.executeTransactionally("CREATE (f:Foo)-[rel:FOOBAR {a:1}]->(b:Bar) RETURN id(rel) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH ()-[r]->() WHERE id(r) = $id CALL apoc.refactor.invert(r) yield input, output RETURN *", map("id", id),
                 (r) -> {
@@ -548,7 +548,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
     
     @Test
-    public void testCollapseNode() throws Exception {
+    public void testCollapseNode() {
         Long id = db.executeTransactionally("CREATE (f:Foo)-[:FOO {a:1}]->(b:Bar {c:3})-[:BAR {b:2}]->(f) RETURN id(b) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "CALL apoc.refactor.collapseNode($ids,'FOOBAR')", map("ids", singletonList(id)),
                 (r) -> {
@@ -564,7 +564,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testNormalizeAsBoolean() throws Exception {
+    public void testNormalizeAsBoolean() {
         db.executeTransactionally("CREATE ({prop: 'Y', id:1}),({prop: 'Yes', id: 2}),({prop: 'NO', id: 3}),({prop: 'X', id: 4})");
 
         testResult(
@@ -621,12 +621,12 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testCategorizeOutgoing() throws Exception {
+    public void testCategorizeOutgoing() {
         categorizeWithDirection(Direction.OUTGOING);
     }
 
     @Test
-    public void testCategorizeIncoming() throws Exception {
+    public void testCategorizeIncoming() {
         categorizeWithDirection(Direction.INCOMING);
     }
 
@@ -656,7 +656,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testCloneNodes() throws Exception {
+    public void testCloneNodes() {
         Long nodeId = db.executeTransactionally("CREATE (f:Foo {name:'foo',age:42})-[:FB]->(:Bar) RETURN id(f) AS nodeId", emptyMap(),
                 result -> Iterators.single(result.columnAs("nodeId")));
         TestUtil.testCall(db, "MATCH (n:Foo) WHERE id(n) = $nodeId CALL apoc.refactor.cloneNodes([n]) yield output as node return properties(node) as props,[(node)-[r]->() | type(r)] as types",
@@ -690,7 +690,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeNodesWithConstraints() throws Exception {
+    public void testMergeNodesWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (p:Person) REQUIRE p.name IS UNIQUE");
         long id = db.executeTransactionally("CREATE (p1:Person {name:'Foo'}), (p2:Person {surname:'Bar'}) RETURN id(p1) as id",
                 emptyMap(),
@@ -707,7 +707,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeNodesWithIngoingRelationships() throws Exception {
+    public void testMergeNodesWithIngoingRelationships() {
         long lisaId = db.executeTransactionally("CREATE \n" +
                 "(alice:Person {name:'Alice'}),\n" +
                 "(bob:Person {name:'Bob'}),\n" +
@@ -734,7 +734,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeNodesWithSelfRelationships() throws Exception {
+    public void testMergeNodesWithSelfRelationships() {
         Map<String, Object> result = db.executeTransactionally("CREATE \n" +
                 "(alice:Person {name:'Alice'}),\n" +
                 "(bob:Person {name:'Bob'}),\n" +
@@ -757,7 +757,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeRelsOverwriteEagerAggregation() throws Exception {
+    public void testMergeRelsOverwriteEagerAggregation() {
         long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
                 + "Create (d)-[:GOES_TO {year:2010}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
                 emptyMap(),
@@ -779,7 +779,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeRelsCombineEagerAggregation() throws Exception {
+    public void testMergeRelsCombineEagerAggregation() {
         long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
                 + "Create (d)-[:GOES_TO {year:2010, reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
                 emptyMap(),
@@ -801,7 +801,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeRelsEagerAggregationCombineSingleValuesProperty() throws Exception {
+    public void testMergeRelsEagerAggregationCombineSingleValuesProperty() {
         long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
                 + "Create (d)-[:GOES_TO {year:2010, reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
                 emptyMap(),
@@ -823,7 +823,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeRelsEagerAggregationCombineArrayDifferentValuesTypeProperties() throws Exception {
+    public void testMergeRelsEagerAggregationCombineArrayDifferentValuesTypeProperties() {
         long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
                 + "Create (d)-[:GOES_TO {year:[\"2010\",\"2015\"], reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
                 emptyMap(),
@@ -935,7 +935,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeRelsOverridePropertiesEagerAggregation() throws Exception {
+    public void testMergeRelsOverridePropertiesEagerAggregation() {
         long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
                 + "Create (d)-[:GOES_TO {year:2010}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
                 emptyMap(),
@@ -957,7 +957,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeNodesOverridePropertiesEagerAggregation() throws Exception {
+    public void testMergeNodesOverridePropertiesEagerAggregation() {
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
@@ -972,7 +972,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeNodesOnArrayValues() throws Exception {
+    public void testMergeNodesOnArrayValues() {
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN id(p1) as id ",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
@@ -988,7 +988,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeNodesOnArrayValuesPreventTypeChange() throws Exception {
+    public void testMergeNodesOnArrayValuesPreventTypeChange() {
         long id = db.executeTransactionally("CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN id(p1) as id ",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));

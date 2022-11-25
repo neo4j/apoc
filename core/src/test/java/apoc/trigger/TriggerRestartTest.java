@@ -47,7 +47,7 @@ public class TriggerRestartTest {
     }
 
     @Test
-    public void testTriggerRunsAfterRestart() throws Exception {
+    public void testTriggerRunsAfterRestart() {
 
 //        db.execute("CALL apoc.trigger.add('myTrigger', 'unwind $createdNodes as n set n.trigger=true', {phase:'before'})");
         TestUtil.testResult(db, "CALL apoc.trigger.add('myTrigger', 'unwind $createdNodes as n set n.trigger=true', {phase:'before'})",

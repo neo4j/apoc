@@ -54,7 +54,7 @@ public class PeriodicTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void initDb() throws Exception {
+    public void initDb() {
         TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class);
         db.executeTransactionally("call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
@@ -154,7 +154,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSlottedRuntime() throws Exception {
+    public void testSlottedRuntime() {
         assertEquals("cypher runtime=slotted MATCH (n:cypher) RETURN n", Periodic.slottedRuntime("MATCH (n:cypher) RETURN n"));
         assertTrue(Periodic.slottedRuntime("MATCH (n) RETURN n").contains("cypher runtime=slotted "));
         assertFalse(Periodic.slottedRuntime(" cypher runtime=compiled MATCH (n) RETURN n").contains("cypher runtime=slotted "));
@@ -165,7 +165,7 @@ public class PeriodicTest {
 
     }
     @Test
-    public void testTerminateCommit() throws Exception {
+    public void testTerminateCommit() {
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) RETURN n limit 1000', {})");
     }
 
@@ -175,7 +175,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testRunDown() throws Exception {
+    public void testRunDown() {
         db.executeTransactionally("UNWIND range(1,$count) AS id CREATE (n:Person {id:id})", MapUtil.map("count", RUNDOWN_COUNT));
 
         String query = "MATCH (p:Person) WHERE NOT p:Processed WITH p LIMIT $limit SET p:Processed RETURN count(*)";
@@ -210,7 +210,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testTerminateIterate() throws Exception {
+    public void testTerminateIterate() {
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})");
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})");
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
@@ -272,7 +272,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIteratePrefixGiven() throws Exception {
+    public void testIteratePrefixGiven() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'WITH $p as p SET p.lastname =p.name REMOVE p.name', {batchSize:10,parallel:true})", result -> {
@@ -288,7 +288,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterate() throws Exception {
+    public void testIterate() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'SET p.lastname =p.name REMOVE p.name', {batchSize:10,parallel:true})", result -> {
@@ -304,7 +304,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateWithQueryPlanner() throws Exception {
+    public void testIterateWithQueryPlanner() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         String cypherIterate = "match (p:Person) return p";
@@ -380,7 +380,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIteratePrefix() throws Exception {
+    public void testIteratePrefix() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'SET p.lastname =p.name REMOVE p.name', {batchSize:10,parallel:true})", result -> {
@@ -396,7 +396,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIteratePassThroughBatch() throws Exception {
+    public void testIteratePassThroughBatch() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'UNWIND $_batch AS batch WITH batch.p AS p  SET p.lastname =p.name REMOVE p.name', {batchSize:10,parallel:true, batchMode: 'BATCH_SINGLE'})", result -> {
@@ -412,7 +412,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateBatch() throws Exception {
+    public void testIterateBatch() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'SET p.lastname = p.name REMOVE p.name', {batchSize:10, iterateList:true, parallel:true})", result -> {
@@ -428,7 +428,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateBatchPrefix() throws Exception {
+    public void testIterateBatchPrefix() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'SET p.lastname = p.name REMOVE p.name', {batchSize:10, iterateList:true, parallel:true})", result -> {
@@ -444,7 +444,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateWithReportingFailed() throws Exception {
+    public void testIterateWithReportingFailed() {
         testResult(db, "CALL apoc.periodic.iterate('UNWIND range(-5, 5) AS x RETURN x', 'return sum(1000/x)', {batchSize:3, failedParams:9999})", result -> {
             Map<String, Object> row = Iterators.single(result);
             assertEquals(4L, row.get("batches"));
@@ -461,7 +461,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateRetries() throws Exception {
+    public void testIterateRetries() {
         testResult(db, "CALL apoc.periodic.iterate('return 1', 'CREATE (n {prop: 1/$_retry})', {retries:1})", result -> {
             Map<String, Object> row = Iterators.single(result);
             assertEquals(1L, row.get("batches"));
@@ -471,7 +471,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateFail() throws Exception {
+    public void testIterateFail() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
         testResult(db, "CALL apoc.periodic.iterate('match (p:Person) return p', 'WITH $p as p SET p.lastname = p.name REMOVE x.name', {batchSize:10,parallel:true})", result -> {
             Map<String, Object> row = Iterators.single(result);

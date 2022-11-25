@@ -31,13 +31,13 @@ public class CollTest {
     }
 
     @Test
-    public void testRunningTotal() throws Exception {
+    public void testRunningTotal() {
         testCall(db, "RETURN apoc.coll.runningTotal([1,2,3,4,5.5,1]) as value",
                 (row) -> assertEquals(asList(1L, 3L, 6L, 10L, 15.5D, 16.5D), row.get("value")));
     }
 
     @Test
-    public void testStandardDeviation() throws Exception {
+    public void testStandardDeviation() {
         testCall(db, "RETURN apoc.coll.stdev([10, 12, 23, 23, 16, 23, 21, 16]) as value",
                 (row) -> assertEquals(5.237229365663817D, row.get("value")));
 
@@ -50,7 +50,7 @@ public class CollTest {
     }
 
     @Test
-    public void testZip() throws Exception {
+    public void testZip() {
         testCall(db, "RETURN apoc.coll.zip([1,2,3],[4,5]) as value",
                 (row) -> {
                     Object value = row.get("value");
@@ -60,43 +60,43 @@ public class CollTest {
     }
 
     @Test
-    public void testPairs() throws Exception {
+    public void testPairs() {
         testCall(db, "RETURN apoc.coll.pairs([1,2,3]) as value",
                 (row) -> assertEquals(asList(asList(1L, 2L), asList(2L, 3L), asList(3L, null)), row.get("value")));
     }
 
     @Test
-    public void testPairsMin() throws Exception {
+    public void testPairsMin() {
         testCall(db, "RETURN apoc.coll.pairsMin([1,2,3]) as value",
                 (row) -> assertEquals(asList(asList(1L, 2L), asList(2L, 3L)), row.get("value")));
     }
 
     @Test
-    public void testPairsMinListResult() throws Exception {
+    public void testPairsMinListResult() {
         testCall(db, "RETURN apoc.coll.pairsMin([1,2,3])[0][0] as result",
                 (row) -> assertEquals(1L, row.get("result")));
     }
 
     @Test
-    public void testToSet() throws Exception {
+    public void testToSet() {
         testCall(db, "RETURN apoc.coll.toSet([1,2,1,3]) as value",
                 (row) -> assertEquals(asList(1L, 2L, 3L), row.get("value")));
     }
 
     @Test
-    public void testSum() throws Exception {
+    public void testSum() {
         testCall(db, "RETURN apoc.coll.sum([1,2,3]) as value",
                 (row) -> assertEquals(6D, row.get("value")));
     }
 
     @Test
-    public void testAvg() throws Exception {
+    public void testAvg() {
         testCall(db, "RETURN apoc.coll.avg([1.4,2,3.2]) as value",
                 (row) -> assertEquals(2.2D, (double) row.get("value"), 0.1));
     }
 
     @Test
-    public void testMin() throws Exception {
+    public void testMin() {
         testCall(db, "RETURN apoc.coll.min([1,2]) as value",
                 (row) -> assertEquals(1L, row.get("value")));
         testCall(db, "RETURN apoc.coll.min([1,2,3]) as value",
@@ -106,7 +106,7 @@ public class CollTest {
     }
 
     @Test
-    public void testMax() throws Exception {
+    public void testMax() {
         testCall(db, "RETURN apoc.coll.max([1,2,3]) as value",
                 (row) -> assertEquals(3L, row.get("value")));
         testCall(db, "RETURN apoc.coll.max([0.5,1,2.3]) as value",
@@ -114,7 +114,7 @@ public class CollTest {
     }
 
     @Test
-    public void testMaxDate() throws Exception {
+    public void testMaxDate() {
         testCall(db, "RETURN apoc.coll.max([date('2020-04-01'), date('2020-03-01')]) as value",
                 (row) -> assertEquals("2020-04-01", row.get("value").toString()));
         testCall(db, "RETURN apoc.coll.max([datetime('2020-03-30T12:17:43.175Z'), datetime('2020-03-30T12:17:39.982Z')]) as value",
@@ -124,7 +124,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPartitionProcedure() throws Exception {
+    public void testPartitionProcedure() {
         testResult(db, "CALL apoc.coll.partition([1,2,3,4,5],2)",
                 (result) -> {
                     Map<String, Object> row = result.next();
@@ -138,7 +138,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPartitionFunction() throws Exception {
+    public void testPartitionFunction() {
         testResult(db, "UNWIND apoc.coll.partition([1,2,3,4,5],2) AS value RETURN value",
                 (result) -> {
                     Map<String, Object> row = result.next();
@@ -152,25 +152,25 @@ public class CollTest {
     }
 
     @Test
-    public void testSumLongs() throws Exception {
+    public void testSumLongs() {
         testCall(db, "RETURN apoc.coll.sumLongs([1,2,3]) AS value",
                 (row) -> assertEquals(6L, row.get("value")));
     }
 
     @Test
-    public void testSort() throws Exception {
+    public void testSort() {
         testCall(db, "RETURN apoc.coll.sort([3,2,1]) as value",
                 (row) -> assertEquals(asList(1L, 2L, 3L), row.get("value")));
     }
 
     @Test
-    public void testIN() throws Exception {
+    public void testIN() {
         testCall(db, "RETURN apoc.coll.contains([1,2,3],1) AS value",
                 (res) -> assertEquals(true, res.get("value")));
     }
 
     @Test
-    public void testIndexOf() throws Exception {
+    public void testIndexOf() {
         testCall(db, "RETURN apoc.coll.indexOf([1,2,3],1) AS value", r -> assertEquals(0L, r.get("value")));
         testCall(db, "RETURN apoc.coll.indexOf([1,2,3],2) AS value", r -> assertEquals(1L, r.get("value")));
         testCall(db, "RETURN apoc.coll.indexOf([1,2,3],3) AS value", r -> assertEquals(2L, r.get("value")));
@@ -180,7 +180,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSplit() throws Exception {
+    public void testSplit() {
         testResult(db, "CALL apoc.coll.split([1,2,3,2,4,5],2)", r -> {
             assertEquals(asList(1L), r.next().get("value"));
             assertEquals(asList(3L), r.next().get("value"));
@@ -207,7 +207,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSet() throws Exception {
+    public void testSet() {
         testCall(db, "RETURN apoc.coll.set(null,0,4) AS value", r -> assertNull(r.get("value")));
         testCall(db, "RETURN apoc.coll.set([1,2,3],-1,4) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
         testCall(db, "RETURN apoc.coll.set([1,2,3],0,null) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
@@ -218,7 +218,7 @@ public class CollTest {
     }
 
     @Test
-    public void testInsert() throws Exception {
+    public void testInsert() {
         testCall(db, "RETURN apoc.coll.insert(null,0,4) AS value", r -> assertNull(r.get("value")));
         testCall(db, "RETURN apoc.coll.insert([1,2,3],-1,4) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
         testCall(db, "RETURN apoc.coll.insert([1,2,3],0,null) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
@@ -229,7 +229,7 @@ public class CollTest {
     }
 
     @Test
-    public void testInsertList() throws Exception {
+    public void testInsertList() {
         testCall(db, "RETURN apoc.coll.insertAll(null,0,[4,5,6]) AS value", r -> assertNull(r.get("value")));
         testCall(db, "RETURN apoc.coll.insertAll([1,2,3],-1,[4,5,6]) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
         testCall(db, "RETURN apoc.coll.insertAll([1,2,3],0,null) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
@@ -240,7 +240,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRemove() throws Exception {
+    public void testRemove() {
         testCall(db, "RETURN apoc.coll.remove(null,0,0) AS value", r -> assertNull(r.get("value")));
         testCall(db, "RETURN apoc.coll.remove([1,2,3],-1,0) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
         testCall(db, "RETURN apoc.coll.remove([1,2,3],0,-1) AS value", r -> assertEquals(asList(1L,2L,3L), r.get("value")));
@@ -253,7 +253,7 @@ public class CollTest {
 
 
     @Test
-    public void testContainsAll() throws Exception {
+    public void testContainsAll() {
         testCall(db, "RETURN apoc.coll.containsAll([1,2,3],[1,2]) AS value", (res) -> assertEquals(true, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAll([1,2,3],[2,1]) AS value", (res) -> assertEquals(true, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAll([1,2,3],[1,4]) AS value", (res) -> assertEquals(false, res.get("value")));
@@ -267,7 +267,7 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsAllSorted() throws Exception {
+    public void testContainsAllSorted() {
         testCall(db, "RETURN apoc.coll.containsAllSorted([1,2,3],[1,2]) AS value", (res) -> assertEquals(true, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAllSorted([1,2,3],[1,4]) AS value", (res) -> assertEquals(false, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAllSorted([1,2,3],[]) AS value", (res) -> assertEquals(true, res.get("value")));
@@ -276,7 +276,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIsEqualCollection() throws Exception {
+    public void testIsEqualCollection() {
         testCall(db, "RETURN apoc.coll.isEqualCollection([1,2,3],[1,2,3]) AS value", (res) -> assertEquals(true, res.get("value")));
         testCall(db, "RETURN apoc.coll.isEqualCollection([1,2,3],[3,2,1]) AS value", (res) -> assertEquals(true, res.get("value")));
         testCall(db, "RETURN apoc.coll.isEqualCollection([1,1,2,2,3],[1,1,2,2,3]) AS value", (res) -> assertEquals(true, res.get("value")));
@@ -295,7 +295,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIN2() throws Exception {
+    public void testIN2() {
         int elements = 1_000_000;
         ArrayList<Long> list = new ArrayList<>(elements);
         for (long i = 0; i < elements; i++) {
@@ -310,7 +310,7 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsSorted() throws Exception {
+    public void testContainsSorted() {
         int elements = 1_000_000;
         ArrayList<Long> list = new ArrayList<>(elements);
         for (long i = 0; i < elements; i++) {
@@ -325,7 +325,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortNodes() throws Exception {
+    public void testSortNodes() {
         testCall(db,
                 "CREATE (n {name:'foo'}),(m {name:'bar'}) WITH n,m RETURN apoc.coll.sortNodes([n,m], 'name') AS nodes",
                 (row) -> {
@@ -336,7 +336,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortNodesReverse() throws Exception {
+    public void testSortNodesReverse() {
         testCall(db,
                 "CREATE (n {name:'foo'}),(m {name:'bar'}) WITH n,m RETURN apoc.coll.sortNodes([n,m], '^name') AS nodes",
                 (row) -> {
@@ -347,7 +347,7 @@ public class CollTest {
     }
 
     @Test
-    public void testElements() throws Exception {
+    public void testElements() {
         testCall(db,
                 "CREATE p=(n {name:'foo'})-[r:R]->(n) WITH n,r,p CALL apoc.coll.elements([0,null,n,r,p,42,3.14,true,[42],{a:42},13], 9,1) YIELD elements,_1,_7,_10,_2n,_3r,_4p,_5i,_5f,_6i,_6f,_7b,_8l,_9m RETURN *",
                 (row) -> {
@@ -368,7 +368,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMaps() throws Exception {
+    public void testSortMaps() {
         testCall(db,
                 "RETURN apoc.coll.sortMaps([{name:'foo'},{name:'bar'}], 'name') as maps",
                 (row) -> {
@@ -379,7 +379,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMapsMulti() throws Exception {
+    public void testSortMapsMulti() {
         testCall(db,
                 "RETURN apoc.coll.sortMulti([{name:'foo'},{name:'bar',age:32},{name:'bar',age:42}], ['^name','age'],1,1) as maps",
                 (row) -> {
@@ -391,7 +391,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMapsCount() throws Exception {
+    public void testSortMapsCount() {
 
         testCall(db,
                 "WITH ['a','b','c','c','c','b','a','d'] AS l RETURN apoc.coll.sortMaps(apoc.coll.frequencies(l),'count') as maps",
@@ -406,7 +406,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMapsCountReverse() throws Exception {
+    public void testSortMapsCountReverse() {
 
         testCall(db,
                 "WITH ['b','a','c','c','c','b','a','d'] AS l RETURN apoc.coll.sortMaps(apoc.coll.frequencies(l),'^count') as maps",
@@ -421,7 +421,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSetOperations() throws Exception {
+    public void testSetOperations() {
         testCall(db, "RETURN apoc.coll.union([1,2],[3,2]) AS value", r -> assertEquals(asSet(asList(1L, 2L, 3L)), asSet((Iterable) r.get("value"))));
         testCall(db, "RETURN apoc.coll.intersection([1,2],[3,2]) AS value", r -> assertEquals(asSet(asList(2L)), asSet((Iterable) r.get("value"))));
         testCall(db, "RETURN apoc.coll.intersection([1,2],[2,3]) AS value", r -> assertEquals(asSet(asList(2L)), asSet((Iterable) r.get("value"))));
@@ -447,7 +447,7 @@ public class CollTest {
     }
 
     @Test
-    public void testShuffleOnNullAndEmptyList() throws Exception {
+    public void testShuffleOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.shuffle([]) as value",
                 (row) -> assertEquals(Collections.EMPTY_LIST, row.get("value")));
 
@@ -456,7 +456,7 @@ public class CollTest {
     }
 
     @Test
-    public void testShuffle() throws Exception {
+    public void testShuffle() {
         // with 10k elements, very remote chance of randomly getting same order
         int elements = 10_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -477,7 +477,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemOnNullAndEmptyList() throws Exception {
+    public void testRandomItemOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.randomItem([]) as value",
                 (row) -> {
                     Object result = row.get("value");
@@ -492,7 +492,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItem() throws Exception {
+    public void testRandomItem() {
         testCall(db, "RETURN apoc.coll.randomItem([1,2,3,4,5]) as value",
                 (row) -> {
                     Long result = (Long) row.get("value");
@@ -501,7 +501,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemsOnNullAndEmptyList() throws Exception {
+    public void testRandomItemsOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.randomItems([], 5) as value",
                 (row) -> {
                     List<Object> result = (List<Object>) row.get("value");
@@ -528,7 +528,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItems() throws Exception {
+    public void testRandomItems() {
         // with 100k elements, very remote chance of randomly getting same order
         int elements = 100_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -549,7 +549,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemsLargerThanOriginal() throws Exception {
+    public void testRandomItemsLargerThanOriginal() {
         // with 10k elements, very remote chance of randomly getting same order
         int elements = 10_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -570,7 +570,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemsLargerThanOriginalAllowingRepick() throws Exception {
+    public void testRandomItemsLargerThanOriginalAllowingRepick() {
         // with 100k elements, very remote chance of randomly getting same order
         int elements = 100_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -590,19 +590,19 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsDuplicatesOnNullAndEmptyList() throws Exception {
+    public void testContainsDuplicatesOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.containsDuplicates([]) AS value", r -> assertEquals(false, r.get("value")));
         testCall(db, "RETURN apoc.coll.containsDuplicates(null) AS value", r -> assertEquals(false, r.get("value")));
     }
 
     @Test
-    public void testContainsDuplicates() throws Exception {
+    public void testContainsDuplicates() {
         testCall(db, "RETURN apoc.coll.containsDuplicates([1,2,3,9,7,5]) AS value", r -> assertEquals(false, r.get("value")));
         testCall(db, "RETURN apoc.coll.containsDuplicates([1,2,1,5,4]) AS value", r -> assertEquals(true, r.get("value")));
     }
 
     @Test
-    public void testDuplicatesOnNullAndEmptyList() throws Exception {
+    public void testDuplicatesOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.duplicates([]) as value",
                 (row) -> assertEquals(Collections.EMPTY_LIST, row.get("value")));
         testCall(db, "RETURN apoc.coll.duplicates(null) as value",
@@ -610,13 +610,13 @@ public class CollTest {
     }
 
     @Test
-    public void testDuplicates() throws Exception {
+    public void testDuplicates() {
         testCall(db, "RETURN apoc.coll.duplicates([1,2,1,3,2,5,2,3,1,2]) as value",
                 (row) -> assertEquals(asList(1L, 2L, 3L), row.get("value")));
     }
 
     @Test
-    public void testDuplicatesWithCountOnNullAndEmptyList() throws Exception {
+    public void testDuplicatesWithCountOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.duplicatesWithCount([]) as value",
                 (row) -> assertEquals(Collections.EMPTY_LIST, row.get("value")));
         testCall(db, "RETURN apoc.coll.duplicatesWithCount(null) as value",
@@ -624,7 +624,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDuplicatesWithCount() throws Exception {
+    public void testDuplicatesWithCount() {
         testCall(db, "RETURN apoc.coll.duplicatesWithCount([1,2,1,3,2,5,2,3,1,2]) as value",
                 (row) -> {
                     Map<Long, Long> expectedMap = new HashMap<>(3);
@@ -650,7 +650,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFrequenciesOnNullAndEmptyList() throws Exception {
+    public void testFrequenciesOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.frequencies([]) as value",
                 (row) -> assertEquals(Collections.EMPTY_LIST, row.get("value")));
         testCall(db, "RETURN apoc.coll.frequencies(null) as value",
@@ -658,7 +658,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFrequencies() throws Exception {
+    public void testFrequencies() {
         testCall(db, "RETURN apoc.coll.frequencies([1,2,1,3,2,5,2,3,1,2]) as value",
                 (row) -> {
                     Map<Long, Long> expectedMap = new HashMap<>(4);
@@ -685,7 +685,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFrequenciesAsMapAsMap() throws Exception {
+    public void testFrequenciesAsMapAsMap() {
         testCall(db, "RETURN apoc.coll.frequenciesAsMap([]) as value",
                 (row) -> assertEquals(Collections.emptyMap(), row.get("value")));
         testCall(db, "RETURN apoc.coll.frequenciesAsMap(null) as value",
@@ -724,7 +724,7 @@ public class CollTest {
     }
 
     @Test
-    public void testOccurrencesOnNullAndEmptyList() throws Exception {
+    public void testOccurrencesOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.occurrences([], 5) as value",
                 (row) -> assertEquals(0l, row.get("value")));
         testCall(db, "RETURN apoc.coll.occurrences(null, 5) as value",
@@ -732,7 +732,7 @@ public class CollTest {
     }
 
     @Test
-    public void testOccurrences() throws Exception {
+    public void testOccurrences() {
         testCall(db, "RETURN apoc.coll.occurrences([1,2,1,3,2,5,2,3,1,2], 1) as value",
                 (row) -> assertEquals(3l, row.get("value")));
         testCall(db, "RETURN apoc.coll.occurrences([1,2,1,3,2,5,2,3,1,2], 2) as value",
@@ -746,43 +746,43 @@ public class CollTest {
     }
 
     @Test
-    public void testFlatten() throws Exception {
+    public void testFlatten() {
         testCall(db, "RETURN apoc.coll.flatten([[1,2],[3,4],[4],[5,6,7]]) as value",
                 (row) -> assertEquals(asList(1L,2L,3L,4L,4L,5L,6L,7L), row.get("value")));
     }
 
     @Test
-    public void testCombinationsWith0() throws Exception {
+    public void testCombinationsWith0() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], 0) as value",
                 (row) -> assertEquals(Collections.emptyList(), row.get("value")));
     }
 
     @Test
-    public void testCombinationsWithNegative() throws Exception {
+    public void testCombinationsWithNegative() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], -1) as value",
                 (row) -> assertEquals(Collections.emptyList(), row.get("value")));
     }
 
     @Test
-    public void testCombinationsWithEmptyCollection() throws Exception {
+    public void testCombinationsWithEmptyCollection() {
         testCall(db, "RETURN apoc.coll.combinations([], 0) as value",
                 (row) -> assertEquals(Collections.emptyList(), row.get("value")));
     }
 
     @Test
-    public void testCombinationsWithNullCollection() throws Exception {
+    public void testCombinationsWithNullCollection() {
         testCall(db, "RETURN apoc.coll.combinations(null, 0) as value",
                 (row) -> assertEquals(Collections.emptyList(), row.get("value")));
     }
 
     @Test
-    public void testCombinationsWithTooLargeSelect() throws Exception {
+    public void testCombinationsWithTooLargeSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], 6) as value",
                 (row) -> assertEquals(Collections.emptyList(), row.get("value")));
     }
 
     @Test
-    public void testCombinationsWithListSizeSelect() throws Exception {
+    public void testCombinationsWithListSizeSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], 5) as value",
                 (row) -> {
                     List<List<Object>> result = new ArrayList<>();
@@ -792,7 +792,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithSingleSelect() throws Exception {
+    public void testCombinationsWithSingleSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], 3) as value",
                 (row) -> {
                     List<List<Object>> result = new ArrayList<>();
@@ -811,7 +811,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithMinSelectGreaterThanMax() throws Exception {
+    public void testCombinationsWithMinSelectGreaterThanMax() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4], 3, 2) as value",
                 (row) -> {
                     assertEquals(Collections.emptyList(), row.get("value"));
@@ -819,7 +819,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithMinAndMaxSelect() throws Exception {
+    public void testCombinationsWithMinAndMaxSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4], 2, 3) as value",
                 (row) -> {
                     List<List<Object>> result = new ArrayList<>();
@@ -839,7 +839,7 @@ public class CollTest {
     }
 
     @Test
-    public void testVerifyAllValuesAreDifferent() throws Exception {
+    public void testVerifyAllValuesAreDifferent() {
         testCall(db, "RETURN apoc.coll.different([1, 2, 3]) as value",
                 (row) -> {
                     assertEquals(true, row.get("value"));
@@ -855,7 +855,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursNodes() throws Exception {
+    public void testDropNeighboursNodes() {
         db.executeTransactionally("CREATE (n:Person {name:'Foo'}) " +
                 "CREATE (b:Person {name:'Bar'}) " +
                 "CREATE (n)-[:KNOWS]->(n)-[:LIVES_WITH]->(n)");
@@ -867,7 +867,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursNumbers() throws Exception {
+    public void testDropNeighboursNumbers() {
         testResult(db, "WITH [1,2,3,4,4,5,6,6,4,7] AS values RETURN apoc.coll.dropDuplicateNeighbors(values) as value",
                 (row) -> {
                     assertEquals(asList(1L,2L,3L,4L,5L,6L,4L,7L), row.next().get("value"));
@@ -875,7 +875,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursStrings() throws Exception {
+    public void testDropNeighboursStrings() {
         testResult(db, "WITH ['a','a','hello','hello','hello','foo','bar','apoc','apoc!','hello'] AS values RETURN apoc.coll.dropDuplicateNeighbors(values) as value",
                 (row) -> {
                     assertEquals(asList("a","hello","foo","bar","apoc","apoc!","hello"), row.next().get("value"));
@@ -883,7 +883,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursDifferentTypes() throws Exception {
+    public void testDropNeighboursDifferentTypes() {
         testResult(db, "WITH ['a','a',1,1,'hello','foo','bar','apoc','apoc!',1] AS values RETURN apoc.coll.dropDuplicateNeighbors(values) as value",
                 (row) -> {
                     assertEquals(asList("a",1L,"hello","foo","bar","apoc","apoc!",1L), row.next().get("value"));
@@ -891,7 +891,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFill() throws Exception {
+    public void testFill() {
         testResult(db, "RETURN apoc.coll.fill('abc',2) as value",
                 (row) -> {
                     assertEquals(asList("abc","abc"), row.next().get("value"));
@@ -899,7 +899,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortText() throws Exception {
+    public void testSortText() {
         testCall(db, "RETURN apoc.coll.sortText(['b', 'a']) as value",
                 (row) -> assertEquals(asList("a", "b"), row.get("value")));
         testCall(db, "RETURN apoc.coll.sortText(['Єльська', 'Гусак'], {locale: 'ru'}) as value",
@@ -907,7 +907,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPairWithOffsetFn() throws Exception {
+    public void testPairWithOffsetFn() {
         testCall(db, "RETURN apoc.coll.pairWithOffset([1,2,3,4], 2) AS value",
                 (row) -> assertEquals(asList(asList(1L, 3L), asList(2L, 4L), asList(3L, null), asList(4L, null)), row.get("value")));
         testCall(db, "RETURN apoc.coll.pairWithOffset([1,2,3,4], -2) AS value",
@@ -915,7 +915,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPairWithOffset() throws Exception {
+    public void testPairWithOffset() {
         testResult(db, "CALL apoc.coll.pairWithOffset([1,2,3,4], 2)",
                 (result) -> {
                     assertEquals(asList(1L, 3L), result.next().get("value"));

@@ -50,7 +50,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testIndexOfSubstring() throws Exception {
+    public void testIndexOfSubstring() {
         String query = "WITH 'Hello World!' as text\n" +
                 "WITH text, size(text) as len, apoc.text.indexOf(text, 'World',3) as index\n" +
                 "RETURN substring(text, case index when -1 then len-1 else index end, len) as value;\n";
@@ -58,7 +58,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testIndexOf() throws Exception {
+    public void testIndexOf() {
         String text = "The quick brown fox.";
         Object[][] data = {
                 {"Hello World!", "World", 0, 6L},
@@ -83,7 +83,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testIndexesOf() throws Exception {
+    public void testIndexesOf() {
         String text = "The quick brown box.";
         Object[][] data = {
                 {"Hello World!", "o", 0, 12L, new Object[]{4L, 7L}},
@@ -119,7 +119,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testReplace() throws Exception {
+    public void testReplace() {
         String text = "&N[]eo 4 #J-(3.0)  ";
         String regex = "[^a-zA-Z0-9]";
         String replacement = "";
@@ -132,7 +132,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testReplaceAllWithNull() throws Exception {
+    public void testReplaceAllWithNull() {
         String text = "&N[]eo 4 #J-(3.0)  ";
         String regex = "[^a-zA-Z0-9]";
         String replacement = "";
@@ -151,7 +151,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testSplit() throws Exception {
+    public void testSplit() {
         String text = "1,  2, 3,4";
         String regex = ", *";
 
@@ -167,7 +167,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testSplitWithNull() throws Exception {
+    public void testSplitWithNull() {
         String text = "Hello World";
         String regex = " ";
 
@@ -193,7 +193,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testJoin() throws Exception {
+    public void testJoin() {
         List<String> texts = asList("1", "2", "3", "4");
         String delimiter = ",";
         String expected = "1,2,3,4";
@@ -205,7 +205,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testJoinWithNull() throws Exception {
+    public void testJoinWithNull() {
         List<String> texts = asList("Hello", null);
         String delimiter = " ";
         String expected = "Hello null";
@@ -226,28 +226,28 @@ public class StringsTest {
 
 
     @Test
-    public void testCleanWithNull() throws Exception {
+    public void testCleanWithNull() {
         testCall(db,
                 "RETURN apoc.text.clean(null) AS value",
                 row -> assertEquals(null, row.get("value")));
     }
 
     @Test
-    public void testCleanNonLatin() throws Exception {
+    public void testCleanNonLatin() {
         testCall(db,
                 "RETURN apoc.text.clean('А .::Б В=Г Д-Е Ж%Ѕ Ꙁ И І К Л М Н О П+++Р С Т ОУ Ф Х Ѡ Ц Ч,.,.Ш Щ Ъ ЪІ Ь Ѣ Ꙗ Ѥ Ю Ѫ Ѭ Ѧ Ѩ Ѯ Ѱ Ѳ Ѵ Ҁ') AS value",
                 row -> assertEquals("абвгдежѕꙁиіклмнопрстоуфхѡцчшщъъіьѣꙗѥюѫѭѧѩѯѱѳѵҁ", row.get("value")));
     }
 
     @Test
-    public void testCleanNonLatinChinese() throws Exception {
+    public void testCleanNonLatinChinese() {
         testCall(db,
                 "RETURN apoc.text.clean('桃 .::山= 區 %') AS value",
                 row -> assertEquals("桃山區", row.get("value")));
     }
 
     @Test
-    public void testCompareCleaned() throws Exception {
+    public void testCompareCleaned() {
         String string1 = "&N[]eo 4 #J-(3.0)  ";
         String string2 = " neo4j-<30";
         testCall(db,
@@ -257,7 +257,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testCompareCleanedWithNull() throws Exception {
+    public void testCompareCleanedWithNull() {
         String string1 = "&N[]eo 4 #J-(3.0)  ";
         String string2 = " neo4j-<30";
         testCall(db,
@@ -271,7 +271,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testCompareCleanedInQuery() throws Exception {
+    public void testCompareCleanedInQuery() {
         testCall(db,
                 "WITH apoc.text.clean($a) as clean_a, " +
                         "apoc.text.clean($b) as clean_b " +
@@ -341,21 +341,21 @@ public class StringsTest {
     // These are here to verify the claims made in string.adoc
 
     @Test
-    public void testDocReplace() throws Exception {
+    public void testDocReplace() {
         testCall(db,
                 "RETURN apoc.text.regreplace('Hello World!', '[^a-zA-Z]', '')  AS value",
                 row -> assertEquals("HelloWorld", row.get("value")));
     }
 
     @Test
-    public void testDocJoin() throws Exception {
+    public void testDocJoin() {
         testCall(db,
                 "RETURN apoc.text.join(['Hello', 'World'], ' ') AS value",
                 row -> assertEquals("Hello World", row.get("value")));
     }
 
     @Test
-    public void testDocClean() throws Exception {
+    public void testDocClean() {
         testCall(db,
                 "RETURN apoc.text.clean($text) AS value",
                 map("text", "Hello World!"),
@@ -363,7 +363,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testDocCompareCleaned() throws Exception {
+    public void testDocCompareCleaned() {
         testCall(db,
                 "RETURN apoc.text.compareCleaned($text1, $text2) AS value",
                 map("text1", "Hello World!", "text2", "_hello-world_"),
@@ -737,7 +737,7 @@ public class StringsTest {
     }
 
     @Test
-    public void testToCypher() throws Exception {
+    public void testToCypher() {
         Map<String, Entity> data = TestUtil.singleResultFirstColumn(db,
                 "CREATE (f:Foo {foo:'foo',answer:42})-[fb:`F B` {fb:'fb',`an swer`:31}]->(b:`B ar` {bar:'bar',answer:41}) RETURN {f:f,fb:fb,b:b} AS data");
 

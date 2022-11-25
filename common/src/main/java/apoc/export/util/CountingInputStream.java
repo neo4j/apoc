@@ -21,7 +21,7 @@ public class CountingInputStream extends FilterInputStream implements SizeCounte
         super(toBufferedStream(Files.newInputStream(file.toPath())));
         this.total = file.length();
     }
-    public CountingInputStream(InputStream stream, long total) throws FileNotFoundException {
+    public CountingInputStream(InputStream stream, long total) {
         super(toBufferedStream(stream));
         this.total = total;
     }

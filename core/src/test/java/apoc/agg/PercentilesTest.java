@@ -24,7 +24,7 @@ public class PercentilesTest {
     }
 
     @Test
-    public void testPercentiles() throws Exception {
+    public void testPercentiles() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.percentiles(value) as p",
                 (row) -> {
                     assertEquals(asList(null,null,null,null,null,null), row.get("p"));
@@ -43,7 +43,7 @@ public class PercentilesTest {
                 });
     }
     @Test
-    public void testPercentilesDoubles() throws Exception {
+    public void testPercentilesDoubles() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.percentiles(value) as p",
                 (row) -> {
                     assertEquals(asList(null,null,null,null,null,null), row.get("p"));

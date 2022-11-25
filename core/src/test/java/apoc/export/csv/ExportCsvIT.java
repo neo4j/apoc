@@ -8,7 +8,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.driver.Session;
 
-import java.io.IOException;
 import java.util.List;
 
 import static apoc.util.MapUtil.map;
@@ -43,14 +42,14 @@ public class ExportCsvIT {
     }
 
     @AfterClass
-    public static void afterAll() throws IOException, InterruptedException {
+    public static void afterAll() {
         if (neo4jContainer != null && neo4jContainer.isRunning()) {
             neo4jContainer.close();
         }
     }
 
     @Test
-    public void testExportQueryCsvIssue1188() throws Exception {
+    public void testExportQueryCsvIssue1188() {
         String copyright = "\n" +
                 "(c) 2018 Hovsepian, Albanese, et al. \"\"ASCB(r),\"\" \"\"The American Society for Cell Biology(r),\"\" and \"\"Molecular Biology of the Cell(r)\"\" are registered trademarks of The American Society for Cell Biology.\n" +
                 "2018\n" +

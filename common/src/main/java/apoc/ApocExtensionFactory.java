@@ -84,7 +84,7 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         }
 
         @Override
-        public void init() throws Exception {
+        public void init() {
             withNonSystemDatabase(db, aVoid -> {
                 for (ApocGlobalComponents c: apocGlobalComponents) {
                     services.putAll(c.getServices(db, dependencies));

@@ -47,7 +47,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testListTriggers() throws Exception {
+    public void testListTriggers() {
         String query = "MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])";
 
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('count-removals',$query,{}) YIELD name RETURN name",
@@ -61,7 +61,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveNode() throws Exception {
+    public void testRemoveNode() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)");
         db.executeTransactionally("CALL apoc.trigger.add('count-removals','MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])',{})");
@@ -82,7 +82,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveRelationship() throws Exception {
+    public void testRemoveRelationship() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)-[:X]->(f)");
         db.executeTransactionally("CALL apoc.trigger.add('count-removed-rels','MATCH (c:Counter) SET c.count = c.count + size($deletedRelationships)',{})");
@@ -93,7 +93,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveTrigger() throws Exception {
+    public void testRemoveTrigger() {
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed','RETURN 1',{}) YIELD name RETURN name", 1);
         TestUtil.testCall(db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
@@ -115,7 +115,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveAllTrigger() throws Exception {
+    public void testRemoveAllTrigger() {
         TestUtil.testCallCount(db, "CALL apoc.trigger.removeAll()", 0);
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed-1','RETURN 1',{}) YIELD name RETURN name", 1);
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed-2','RETURN 2',{}) YIELD name RETURN name", 1);
@@ -136,7 +136,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTimeStampTrigger() throws Exception {
+    public void testTimeStampTrigger() {
         db.executeTransactionally("CALL apoc.trigger.add('timestamp','UNWIND $createdNodes AS n SET n.ts = timestamp()',{})");
         db.executeTransactionally("CREATE (f:Foo)");
         TestUtil.testCall(db, "MATCH (f:Foo) RETURN f", (row) -> {
@@ -145,7 +145,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTxIdAfterAsync() throws Exception {
+    public void testTxIdAfterAsync() {
         db.executeTransactionally("CALL apoc.trigger.add('txinfo','UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime',{phase:'afterAsync'})");
         db.executeTransactionally("CREATE (f:Bar)");
         org.neo4j.test.assertion.Assert.assertEventually(() ->
@@ -201,7 +201,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testPauseResult() throws Exception {
+    public void testPauseResult() {
         db.executeTransactionally("CALL apoc.trigger.add('pausedTest', 'UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime', {phase: 'after'})");
         TestUtil.testCall(db, "CALL apoc.trigger.pause('pausedTest')", (row) -> {
             assertEquals("pausedTest", row.get("name"));
@@ -211,7 +211,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testPauseOnCallList() throws Exception {
+    public void testPauseOnCallList() {
         db.executeTransactionally("CALL apoc.trigger.add('test', 'UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime', {phase: 'after'})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
         TestUtil.testCall(db, "CALL apoc.trigger.list()", (row) -> {
@@ -222,7 +222,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testResumeResult() throws Exception {
+    public void testResumeResult() {
         db.executeTransactionally("CALL apoc.trigger.add('test', 'UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime', {phase: 'after'})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
         TestUtil.testCall(db, "CALL apoc.trigger.resume('test')", (row) -> {
@@ -233,7 +233,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTriggerPause() throws Exception {
+    public void testTriggerPause() {
         db.executeTransactionally("CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime',{})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
         db.executeTransactionally("CREATE (f:Foo {name:'Michael'})");
@@ -245,7 +245,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTriggerResume() throws Exception {
+    public void testTriggerResume() {
         db.executeTransactionally("CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime',{})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
         db.executeTransactionally("CALL apoc.trigger.resume('test')");
@@ -258,12 +258,12 @@ public class TriggerTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void showThrowAnException() throws Exception {
+    public void showThrowAnException() {
         db.executeTransactionally("CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = , n.txTime = $commitTime',{})");
     }
 
     @Test
-    public void testCreatedRelationshipsAsync() throws Exception {
+    public void testCreatedRelationshipsAsync() {
         db.executeTransactionally("CREATE (:A {name: \"A\"})-[:R1]->(:Z {name: \"Z\"})");
         db.executeTransactionally("CALL apoc.trigger.add('trigger-after-async', 'UNWIND $createdRelationships AS r\n" +
                 "MATCH (a:A)-[r]->(z:Z)\n" +
@@ -353,7 +353,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testDeleteRelationships() throws Exception {
+    public void testDeleteRelationships() {
         db.executeTransactionally("CREATE (a:A {name: \"A\"})-[:R1]->(z:Z {name: \"Z\"}), (a)-[:R2]->(z)");
         db.executeTransactionally("CALL apoc.trigger.add('trigger-after', 'UNWIND $deletedRelationships AS r\n" +
                 "MERGE (a:AA{name: \"AA\"})\n" +

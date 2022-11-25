@@ -50,7 +50,7 @@ public class RelationshipTypeAndDirectionsTest {
     public Iterable<Pair<RelationshipType, Direction>> expected;
 
     @Test
-    public void parse() throws Exception {
+    public void parse() {
         assertEquals(expected, RelationshipTypeAndDirections.parse(input));
     }
 

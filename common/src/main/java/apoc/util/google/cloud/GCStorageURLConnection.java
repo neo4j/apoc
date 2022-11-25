@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.neo4j.util.VisibleForTesting;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -82,7 +81,7 @@ public class GCStorageURLConnection extends URLConnection {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() {
         if (!connected) {
             connect();
         }

@@ -51,7 +51,7 @@ public class PathFindingTest {
 
 
     @Before
-   	public void setUp() throws Exception {
+   	public void setUp() {
    		TestUtil.registerProcedure(db, PathFinding.class);
    	}
 

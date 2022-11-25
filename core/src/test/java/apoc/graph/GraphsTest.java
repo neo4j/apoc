@@ -66,13 +66,13 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromData() throws Exception {
+    public void testFromData() {
         TestUtil.testCall(db,"MATCH (n)-[r]->(m) CALL apoc.graph.fromData([n,m],[r],'test',{answer:42}) YIELD graph RETURN *",
                 r -> assertEquals(graph, r.get("graph")));
     }
 
     @Test
-    public void testFromPath() throws Exception {
+    public void testFromPath() {
         TestUtil.testCall(db,"MATCH path = (n)-[r]->(m) CALL apoc.graph.fromPath(path,'test',{answer:42}) YIELD graph RETURN *",
                 r -> assertEquals(graph, r.get("graph")));
     }
@@ -98,7 +98,7 @@ public class GraphsTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testFromDB() throws Exception {
+    public void testFromDB() {
         TestUtil.testCall(db," CALL apoc.graph.fromDB('test',{answer:42})",
                 r -> {
                     Map graph1 = new HashMap((Map)r.get("graph"));
@@ -109,7 +109,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromCypher() throws Exception {
+    public void testFromCypher() {
         TestUtil.testCall(db,"CALL apoc.graph.fromCypher('MATCH (n)-[r]->(m) RETURN *',null,'test',{answer:42}) YIELD graph RETURN *",
                 r -> assertEquals(graph, r.get("graph")));
     }
@@ -489,7 +489,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testValidateDocumentWithCutErrorFormatter() throws Exception {
+    public void testValidateDocumentWithCutErrorFormatter() {
         String json = "{\"quiz\":{\"sport\":{\"q1\":{\"question\":\"Which one is correct team name in NBA?\",\"options\":[\"New York Bulls\",\"Los Angeles Kings\",\"Golden State Warriros\",\"Huston Rocket\"],\"answer\":\"Huston Rocket\"}},\"maths\":{\"q1\":{\"question\":\"5 + 7 = ?\",\"options\":[\"10\",\"11\",\"12\",\"13\"],\"answer\":\"12\"},\"q2\":{\"question\":\"12 - 8 = ?\",\"options\":[\"1\",\"2\",\"3\",\"4\"],\"answer\":\"4\"}}}}";
 
         Set<String> errors = new HashSet<>();
@@ -579,7 +579,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentWithNestedStructure() throws Exception {
+    public void testFromDocumentWithNestedStructure() {
         Map<String, Object> jamesMap = Util.map("id", 1L, "type", "Father", "name", "James");
         Map<String, Object> johnMap = Util.map("id", 2L, "type", "Father", "name", "John");
         Map<String, Object> robertMap = Util.map("id", 1L, "type", "Person", "name", "Robert");

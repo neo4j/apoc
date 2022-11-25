@@ -20,7 +20,7 @@ public class FormatUtilsTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Test
-    public void formatString() throws Exception {
+    public void formatString() {
         assertEquals("\"\\n\"",FormatUtils.formatString("\n"));
         assertEquals("\"\\t\"",FormatUtils.formatString("\t"));
         assertEquals("\"\\\"\"",FormatUtils.formatString("\""));
@@ -32,7 +32,7 @@ public class FormatUtilsTest {
     }
 
     @Test
-    public void joinLabels() throws Exception {
+    public void joinLabels() {
         final String delimiter = ":";
         try (Transaction tx = db.beginTx()) {
             Node node = tx.createNode();

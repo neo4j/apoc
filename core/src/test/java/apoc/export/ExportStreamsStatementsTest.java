@@ -26,7 +26,6 @@ public class ExportStreamsStatementsTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        //apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, ExportCypher.class, ExportJson.class);
         db.executeTransactionally("CREATE (f:User:Customer {name:'Foo', age:42})-[:BOUGHT]->(b:Product {name:'Apple Watch Series 4'})");
     }

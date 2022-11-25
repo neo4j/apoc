@@ -26,7 +26,7 @@ public class EqualityTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @Test
-    public void testSpecial() throws Exception {
+    public void testSpecial() {
         shouldNotMatch((byte) 23, 23.5);
     }
 
@@ -47,7 +47,7 @@ public class EqualityTest {
     }
 
     @Test
-    public void testPropertyEquality() throws Exception {
+    public void testPropertyEquality() {
         shouldMatch(true, true);
         shouldMatch(false, false);
         shouldNotMatch(true, false);
@@ -160,7 +160,7 @@ public class EqualityTest {
     }
 
     @Test
-    public void testGraphEntities() throws Exception {
+    public void testGraphEntities() {
 
         try (Transaction tx = db.beginTx()) {
             Node n1 = tx.createNode();
@@ -193,7 +193,7 @@ public class EqualityTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testIn() throws Exception {
+    public void testIn() {
         Set<Object> set = new HashSet(asList(0, 1, 2.0D, 3.0F, 4L, 'A', "B", new int[]{0, 1, 2, 3}, asList(0, 1L, 2F, 3D), true, null)) {
             @Override
             public boolean add(Object o) {

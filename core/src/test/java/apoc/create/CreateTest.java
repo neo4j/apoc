@@ -41,7 +41,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateNode() throws Exception {
+    public void testCreateNode() {
         testCall(db, "CALL apoc.create.node(['Person'],{name:'John'})",
                 (row) -> {
                     Node node = (Node) row.get("node");
@@ -51,7 +51,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateNodeWithArrayProps() throws Exception {
+    public void testCreateNodeWithArrayProps() {
         testCall(db, "CALL apoc.create.node(['Person'],{name:['John','Doe'],kids:[],age:[32,10]})",
                 (row) -> {
                     Node node = (Node) row.get("node");
@@ -63,7 +63,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetProperty() throws Exception {
+    public void testSetProperty() {
         testResult(db, "CREATE (n),(m) WITH n,m CALL apoc.create.setProperty([id(n),m],'name','John') YIELD node RETURN node",
                 (result) -> {
                     Map<String, Object> row = result.next();
@@ -75,7 +75,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testRemoveProperty() throws Exception {
+    public void testRemoveProperty() {
         testCall(db, "CREATE (n:Foo {name:'foo'}) WITH n CALL apoc.create.setProperty(n,'name',null) YIELD node RETURN node",
                 (row) -> assertEquals(false, ((Node) row.get("node")).hasProperty("name")));
         testCall(db, "CREATE (n:Foo {name:'foo'}) WITH n CALL apoc.create.removeProperties(n,['name']) YIELD node RETURN node",
@@ -83,7 +83,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testRemoveRelProperty() throws Exception {
+    public void testRemoveRelProperty() {
         testCall(db, "CREATE (n)-[r:TEST {name:'foo'}]->(m) WITH r CALL apoc.create.setRelProperty(r,'name',null) YIELD rel RETURN rel",
                 (row) -> assertEquals(false, ((Relationship) row.get("rel")).hasProperty("name")));
         testCall(db, "CREATE (n)-[r:TEST {name:'foo'}]->(m) WITH r CALL apoc.create.removeRelProperties(r,['name']) YIELD rel RETURN rel",
@@ -91,7 +91,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetRelProperties() throws Exception {
+    public void testSetRelProperties() {
         testResult(db, "CREATE (n)-[r:X]->(m),(m)-[r2:Y]->(n) WITH r,r2 CALL apoc.create.setRelProperties([id(r),r2],['name','age'],['John',42]) YIELD rel RETURN rel",
                 (result) -> {
                     Map<String, Object> row = result.next();
@@ -107,7 +107,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetRelProperty() throws Exception {
+    public void testSetRelProperty() {
         testResult(db, "CREATE (n)-[r:X]->(m),(m)-[r2:Y]->(n) WITH r,r2 CALL apoc.create.setRelProperty([id(r),r2],'name','John') YIELD rel RETURN rel",
                 (result) -> {
                     Map<String, Object> row = result.next();
@@ -119,7 +119,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetProperties() throws Exception {
+    public void testSetProperties() {
         testResult(db, "CREATE (n),(m) WITH n,m CALL apoc.create.setProperties([id(n),m],['name','age'],['John',42]) YIELD node RETURN node",
                 (result) -> {
                     Map<String, Object> row = result.next();
@@ -133,7 +133,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualNode() throws Exception {
+    public void testVirtualNode() {
         testCall(db, "CALL apoc.create.vNode(['Person'],{name:'John'})",
                 (row) -> {
                     Node node = (Node) row.get("node");
@@ -143,7 +143,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualNodeFunction() throws Exception {
+    public void testVirtualNodeFunction() {
         testCall(db, "RETURN apoc.create.vNode(['Person'],{name:'John'}) as node",
                 (row) -> {
                     Node node = (Node) row.get("node");
@@ -153,7 +153,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateNodes() throws Exception {
+    public void testCreateNodes() {
         testResult(db, "CALL apoc.create.nodes(['Person'],[{name:'John'},{name:'Jane'}])",
                 (res) -> {
                     Node node = (Node) res.next().get("node");
@@ -167,7 +167,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateRelationship() throws Exception {
+    public void testCreateRelationship() {
         testCall(db, "CREATE (n),(m) WITH n,m CALL apoc.create.relationship(n,'KNOWS',{since:2010}, m) YIELD rel RETURN rel",
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
@@ -177,7 +177,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateVirtualRelationship() throws Exception {
+    public void testCreateVirtualRelationship() {
         testCall(db, "CREATE (n),(m) WITH n,m CALL apoc.create.vRelationship(n,'KNOWS',{since:2010}, m) YIELD rel RETURN rel",
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
@@ -187,7 +187,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateVirtualRelationshipFunction() throws Exception {
+    public void testCreateVirtualRelationshipFunction() {
         testCall(db, "CREATE (n),(m) WITH n,m RETURN apoc.create.vRelationship(n,'KNOWS',{since:2010}, m) AS rel",
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
@@ -197,7 +197,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreatePattern() throws Exception {
+    public void testCreatePattern() {
         testCall(db, "CALL apoc.create.virtualPath(['Person'],{name:'John'},'KNOWS',{since:2010},['Person'],{name:'Jane'})",
                 (row) -> {
                     Node john = (Node) row.get("from");
@@ -213,7 +213,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualFromNodeFunction() throws Exception {
+    public void testVirtualFromNodeFunction() {
         testCall(db, "CREATE (n:Person{name:'Vincent', born: 1974} )  RETURN apoc.create.virtual.fromNode(n, ['name']) as node",
                 (row) -> {
                     Node node = (Node) row.get("node");

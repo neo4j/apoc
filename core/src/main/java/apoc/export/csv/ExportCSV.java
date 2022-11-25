@@ -94,7 +94,7 @@ public class ExportCSV {
         }
     }
 
-    private Stream<ProgressInfo> exportCsv(@Name("file") String fileName, String source, Object data, ExportConfig exportConfig) throws Exception {
+    private Stream<ProgressInfo> exportCsv(@Name("file") String fileName, String source, Object data, ExportConfig exportConfig) {
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "csv";
         ProgressInfo progressInfo = new ProgressInfo(fileName, source, format);

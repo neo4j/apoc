@@ -86,7 +86,7 @@ public class Graphs {
 
     @Procedure(name = "apoc.graph.fromDocument", mode = Mode.WRITE)
     @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given JSON file.")
-    public Stream<VirtualGraph> fromDocument(@Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) throws Exception {
+    public Stream<VirtualGraph> fromDocument(@Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         DocumentToGraph documentToGraph = new DocumentToGraph(tx, new GraphsConfig(config));
         return Stream.of(documentToGraph.create(document));
     }

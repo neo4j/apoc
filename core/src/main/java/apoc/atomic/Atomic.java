@@ -108,7 +108,7 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.insert", mode = Mode.WRITE)
     @Description("Inserts a value at position into the array value of a property.\n" +
             "The procedure then sets the result back on the property.")
-    public Stream<AtomicResults> insert(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name("value") Object value, @Name(value = "times", defaultValue = "5") Long times) throws ClassNotFoundException {
+    public Stream<AtomicResults> insert(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name("value") Object value, @Name(value = "times", defaultValue = "5") Long times) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];

@@ -17,7 +17,7 @@ public class SetBackedListTest {
 
 
     @Test
-    public void testEmptyList() throws Exception {
+    public void testEmptyList() {
         SetBackedList list = new SetBackedList(EMPTY_SET);
         assertEquals(0,list.size());
         assertEquals(true,list.isEmpty());
@@ -29,7 +29,7 @@ public class SetBackedListTest {
         assertEquals(0, it.nextIndex());
     }
     @Test
-    public void testSingleList() throws Exception {
+    public void testSingleList() {
         SetBackedList list = new SetBackedList(singleton(1));
         assertEquals(1,list.size());
         assertEquals(false,list.isEmpty());
@@ -52,7 +52,7 @@ public class SetBackedListTest {
 
 
     @Test
-    public void testDoubleList() throws Exception {
+    public void testDoubleList() {
         SetBackedList list = new SetBackedList(new LinkedHashSet<>(asList(1,2)));
         assertEquals(2,list.size());
         assertEquals(false,list.isEmpty());
@@ -86,7 +86,7 @@ public class SetBackedListTest {
     }
 
     @Test
-    public void testReverse() throws Exception {
+    public void testReverse() {
         LinkedHashSet set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
         SetBackedList list = new SetBackedList(set);
         assertEquals(asList(1,2,3,4,5),list);
@@ -100,7 +100,7 @@ public class SetBackedListTest {
     }
 
     @Test
-    public void testContains() throws Exception {
+    public void testContains() {
         LinkedHashSet set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
         SetBackedList list = new SetBackedList(set);
         assertEquals(true, list.contains(1));

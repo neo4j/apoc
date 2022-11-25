@@ -20,7 +20,7 @@ public class ProductAggregationTest {
     }
 
     @Test
-    public void testProduct() throws Exception {
+    public void testProduct() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.product(value) as p",
                 (row) -> {
                     assertEquals(0D, row.get("p"));

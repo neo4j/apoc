@@ -21,7 +21,7 @@ public class LabelTest {
     }
 
     @Test
-    public void testVerifyNodeLabelExistence() throws Exception {
+    public void testVerifyNodeLabelExistence() {
 
         db.executeTransactionally("create (a:Person{name:'Foo'})");
 
@@ -36,7 +36,7 @@ public class LabelTest {
     }
 
     @Test
-    public void testVerifyRelTypeExistence() throws Exception {
+    public void testVerifyRelTypeExistence() {
 
         db.executeTransactionally("create (a:Person{name:'Foo'}), (b:Person{name:'Bar'}), (a)-[:LOVE{since:2010}]->(b)");
 

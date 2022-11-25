@@ -48,7 +48,7 @@ public class StringCleanTest {
     public String clean;
 
     @Test
-    public void testClean() throws Exception {
+    public void testClean() {
         testCall(db,
                 "RETURN apoc.text.clean($a) AS value",
                 map("a", dirty),

@@ -42,7 +42,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testBasicMax() throws Exception {
+    public void testBasicMax() {
         testCall(db, "UNWIND RANGE(0,10) as value " +
                         "WITH apoc.agg.maxItems(value, value) as maxResult " +
                         "RETURN maxResult.value as value, maxResult.items as items",
@@ -65,7 +65,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testBasicMin() throws Exception {
+    public void testBasicMin() {
         testCall(db, "UNWIND RANGE(0,10) as value " +
                         "WITH apoc.agg.minItems(value, value) as minResult " +
                         "RETURN minResult.value as value, minResult.items as items",
@@ -88,7 +88,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMaxWithGrouping() throws Exception {
+    public void testMaxWithGrouping() {
         /** comparing to:
           MATCH (p:Person)
           WHERE p.born <= 1974
@@ -112,7 +112,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMinWithGrouping() throws Exception {
+    public void testMinWithGrouping() {
         /** comparing to:
          MATCH (p:Person)
          WHERE p.born >= 1930
@@ -137,7 +137,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMaxWithLimitedGrouping() throws Exception {
+    public void testMaxWithLimitedGrouping() {
         /** comparing to:
          MATCH (p:Person)
          WHERE p.born <= 1974
@@ -163,7 +163,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMinWithLimitedGrouping() throws Exception {
+    public void testMinWithLimitedGrouping() {
         /** comparing to:
          MATCH (p:Person)
          WHERE p.born >= 1930
@@ -189,7 +189,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMaxWithNullValuesProducesNoResults() throws Exception {
+    public void testMaxWithNullValuesProducesNoResults() {
         testCall(db,  "MATCH (p:Person) " +
                         "WITH apoc.agg.maxItems(p, p.doesNotExist) as maxResult " +
                         "RETURN maxResult.value as value, [person in maxResult.items | person.name] as persons",
@@ -200,7 +200,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMinWithNullValuesProducesNoResults() throws Exception {
+    public void testMinWithNullValuesProducesNoResults() {
         testCall(db,  "MATCH (p:Person) " +
                         "WITH apoc.agg.minItems(p, p.doesNotExist) as minResult " +
                         "RETURN minResult.value as value, [person in minResult.items | person.name] as persons",

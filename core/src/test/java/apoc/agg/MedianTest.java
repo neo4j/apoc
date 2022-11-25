@@ -20,7 +20,7 @@ public class MedianTest {
     }
 
     @Test
-    public void testMedian() throws Exception {
+    public void testMedian() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.median(value) as p",
                 (row) -> {
                     assertEquals(null, row.get("p"));

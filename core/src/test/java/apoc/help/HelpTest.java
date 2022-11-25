@@ -27,7 +27,7 @@ public class HelpTest {
     }
 
     @Test
-    public void info() throws Exception {
+    public void info() {
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","bitwise"), (row) -> {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.bitwise.op",row.get("name"));

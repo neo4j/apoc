@@ -24,7 +24,7 @@ public static DbmsRule db = new ImpermanentDbmsRule();
     }
 
     @Test
-    public void testCalculateRegr() throws Throwable {
+    public void testCalculateRegr() {
         db.executeTransactionally("CREATE " +
                 "(:REGR_TEST {x_property: 1 , y_property: 2 })," +
                 "(:REGR_TEST {x_property: 2 , y_property: 3 })," +
@@ -48,7 +48,7 @@ public static DbmsRule db = new ImpermanentDbmsRule();
     }
 
     @Test
-    public void testRegrR2isOne() throws Throwable {
+    public void testRegrR2isOne() {
         db.executeTransactionally("CREATE " +
                 "(:REGR_TEST2 {x_property: 1 , y_property: 1 })," +
                 "(:REGR_TEST2 {x_property: 1 , y_property: 1 })," +

@@ -29,11 +29,11 @@ public class PathsTest {
     }
 
     @Test
-    public void createFull() throws Exception {
+    public void createFull() {
         TestUtil.testCall(db, "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.create(a, relationships(path)) as p",(row) -> assertPath(row, 3, "A", "D"));
     }
     @Test
-    public void createEmpty() throws Exception {
+    public void createEmpty() {
         TestUtil.testCall(db, "RETURN apoc.path.create(null) as p",(row) -> assertNull(row.get("p")));
 
         TestUtil.testCall(db, "MATCH (a:A) RETURN apoc.path.create(a) as p",(row) -> assertPath(row, 0, "A", "A"));
@@ -42,7 +42,7 @@ public class PathsTest {
     }
 
     @Test
-    public void slice() throws Exception {
+    public void slice() {
         TestUtil.testCall(db, "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.slice(path,1,1) as p",(row) -> assertPath(row, 1, "B", "C"));
         TestUtil.testCall(db, "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.slice(path,1) as p",(row) -> assertPath(row, 2, "B", "D"));
         TestUtil.testCall(db, "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.slice(path,1,100) as p",(row) -> assertPath(row, 2, "B", "D"));
@@ -52,18 +52,18 @@ public class PathsTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void combineFail() throws Exception {
+    public void combineFail() {
         TestUtil.testCall(db, "MATCH p1 = (a:A)-[:NEXT]->(b:B), p2 = (c:C)-[:NEXT]->() RETURN apoc.path.combine(p1,p2) AS p", (row) -> fail("Should have failed"));
     }
     @Test
-    public void combine() throws Exception {
+    public void combine() {
         TestUtil.testCall(db, "MATCH p1 = (a:A)-[:NEXT]->(b:B), p2 = (b)-[:NEXT]->() RETURN apoc.path.combine(p1,p2) as p",(row) -> assertPath(row, 2, "A", "C"));
         TestUtil.testCall(db, "MATCH p1 = (a:A)-[:NEXT]->(b:B) RETURN apoc.path.combine(p1,null) as p",(row) -> assertPath(row, 1, "A", "B"));
         TestUtil.testCall(db, "MATCH p1 = (a:A)-[:NEXT]->(b:B) RETURN apoc.path.combine(null,p1) as p",(row) -> assertPath(row, 1, "A", "B"));
     }
 
     @Test
-    public void elements() throws Exception {
+    public void elements() {
         TestUtil.testCall(db, "MATCH p = (a:A) RETURN apoc.path.elements(p) as e",(row) -> {
             List<Entity> pc = (List<Entity>) row.get("e");
             assertEquals(1,pc.size());

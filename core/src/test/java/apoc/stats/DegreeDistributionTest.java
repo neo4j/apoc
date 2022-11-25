@@ -29,7 +29,7 @@ public class DegreeDistributionTest {
     }
 
     @Test
-    public void degrees() throws Exception {
+    public void degrees() {
         TestUtil.testCall(db, "CALL apoc.stats.degrees()", row -> {
             assertEquals(null,row.get("type"));
             assertEquals("BOTH",row.get("direction"));
@@ -52,7 +52,7 @@ public class DegreeDistributionTest {
         });
     }
     @Test
-    public void allDegrees() throws Exception {
+    public void allDegrees() {
         TestUtil.testResult(db, "CALL apoc.stats.degrees('*')", result -> {
             Map<String, Object> row = result.next();
             assertEquals("BAR",row.get("type"));

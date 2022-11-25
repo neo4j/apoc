@@ -25,7 +25,7 @@ public class CoverTest {
     }
 
     @Test
-    public void testCover() throws Exception {
+    public void testCover() {
         TestUtil.testCall(db,
                 "match (n) with collect(id(n)) as nodes call apoc.algo.cover(nodes) yield rel return count(*) as c",
                 (r) -> assertEquals(3L,r.get("c")));
