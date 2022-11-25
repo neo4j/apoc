@@ -771,7 +771,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     assertEquals(id, node.getId());
                     assertEquals(true, node.hasLabel(Label.label("Country")));
                     assertEquals("USA", node.getProperty("name"));
-                    assertEquals(new Long(1),totRel);
+                    assertEquals(Long.valueOf(1),totRel);
                     assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals("work", rel.getProperty("reason"));
                     assertEquals(2010L, rel.getProperty("year"));
@@ -793,7 +793,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     assertEquals(id, node.getId());
                     assertEquals(true, node.hasLabel(Label.label("Country")));
                     assertEquals("USA", node.getProperty("name"));
-                    assertEquals(new Long(1),totRel);
+                    assertEquals(Long.valueOf(1),totRel);
                     assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals("work", rel.getProperty("reason"));
                     assertEquals(1995L, rel.getProperty("year"));
@@ -815,7 +815,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     assertEquals(id, node.getId());
                     assertEquals(true, node.hasLabel(Label.label("Country")));
                     assertEquals("USA", node.getProperty("name"));
-                    assertEquals(new Long(1),totRel);
+                    assertEquals(Long.valueOf(1),totRel);
                     assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
                     assertEquals(Arrays.asList(1995L, 2010L).toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
@@ -837,7 +837,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     assertEquals(id, node.getId());
                     assertEquals(true, node.hasLabel(Label.label("Country")));
                     assertEquals("USA", node.getProperty("name"));
-                    assertEquals(new Long(1),totRel);
+                    assertEquals(Long.valueOf(1),totRel);
                     assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
                     assertEquals(Arrays.asList("1995", "2010", "2015").toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
@@ -949,7 +949,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     assertEquals(id, node.getId());
                     assertEquals(true, node.hasLabel(Label.label("Country")));
                     assertEquals("USA", node.getProperty("name"));
-                    assertEquals(new Long(1),totRel);
+                    assertEquals(Long.valueOf(1),totRel);
                     assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals("work", rel.getProperty("reason"));
                     assertEquals(2010L, rel.getProperty("year"));
