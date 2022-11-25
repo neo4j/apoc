@@ -3,6 +3,7 @@ package apoc.export;
 import apoc.export.csv.ExportCSV;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
+import apoc.util.Util;
 import apoc.util.s3.S3BaseTest;
 import com.amazonaws.services.s3.model.S3Object;
 import org.junit.BeforeClass;
@@ -14,6 +15,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.stream.IntStream;
 
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
@@ -45,11 +47,8 @@ public class ExportS3PerformanceTest extends S3BaseTest {
     @Test
     public void testExportAllCsvS3() throws Exception {
         System.out.println("Data creation started.");
-        // create large data (> 100 MB)
-        for (int i=0; i<555000; i++) {
-            String query = String.format("CREATE (f:User1:User {name:'foo%d',age:%d,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar%d',age:%d}),(c:User {age:12})", i, i, i, i );
-            db.executeTransactionally(query);
-        }
+        final String query = Util.readResourceFile("movies.cypher");
+        IntStream.range(0, 5000).forEach(__-> db.executeTransactionally(query));
         System.out.println("Data creation finished.");
 
         System.out.println("Test started.");
