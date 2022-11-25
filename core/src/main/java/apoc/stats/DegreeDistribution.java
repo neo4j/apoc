@@ -1,6 +1,5 @@
 package apoc.stats;
 
-import apoc.Description;
 import apoc.Pools;
 import apoc.path.RelationshipTypeAndDirections;
 import apoc.util.kernel.MultiThreadedGlobalGraphOperations;
@@ -15,6 +14,7 @@ import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.token.api.NamedToken;

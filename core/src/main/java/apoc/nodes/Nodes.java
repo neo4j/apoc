@@ -653,20 +653,20 @@ public class Nodes {
     }
 
     @UserFunction("apoc.any.isDeleted")
-    @Description("returns boolean value for nodes and rele existance")
-    public boolean isDeleted(@Name("thing") Object thing) {
-        if (thing == null) return true;
+    @Description("Returns true if the given node or relationship no longer exists.")
+    public boolean isDeleted(@Name("object") Object object) {
+        if (object == null) return true;
         final String query;
-        if (thing instanceof Node) {
+        if (object instanceof Node) {
             query = "MATCH (n) WHERE ID(n) = $id RETURN COUNT(n) = 1 AS exists";
         }
-        else if (thing instanceof Relationship){
+        else if (object instanceof Relationship){
             query = "MATCH ()-[r]->() WHERE ID(r) = $id RETURN COUNT(r) = 1 AS exists";
         }
         else {
-            throw new IllegalArgumentException("expected Node or Relationship but was " + thing.getClass().getSimpleName());
+            throw new IllegalArgumentException("expected Node or Relationship but was " + object.getClass().getSimpleName());
         }
-        return !(boolean) tx.execute(query, Map.of("id",((Entity)thing).getId())).next().get("exists");
+        return !(boolean) tx.execute(query, Map.of("id",((Entity)object).getId())).next().get("exists");
     }
 
     // works in cases when relType is null
