@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public final class NodeEvaluators {
     // non-instantiable
-    private NodeEvaluators() {};
+    private NodeEvaluators() {}
 
     /**
      * Returns an evaluator which handles end nodes and terminator nodes

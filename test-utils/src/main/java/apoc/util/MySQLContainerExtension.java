@@ -19,5 +19,5 @@ public class MySQLContainerExtension extends MySQLContainer<MySQLContainerExtens
                 .withStartupTimeout(Duration.ofMinutes(2)));
 
         addExposedPort(3306);
-    };
+    }
 }
