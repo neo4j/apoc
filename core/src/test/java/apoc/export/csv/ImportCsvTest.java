@@ -189,8 +189,6 @@ public class ImportCsvTest {
     
     @Test
     public void testImportCsvTerminate() {
-        // todo - implementare
-//        checkTerminationGuard(db, );
         TestUtil.testCall(db, "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
                 map("nodeFile", "file:/largeFile.csv",
                         "config", map("batchSize", 100L)),
