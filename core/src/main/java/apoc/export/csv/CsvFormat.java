@@ -16,7 +16,6 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.procedure.TerminationGuard;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -253,7 +252,6 @@ public class CsvFormat {
             } else {
                 csvWriter.writeNext(headerNode.toArray(new String[headerNode.size()]), false);
             }
-
             rows.forEach(row -> csvWriter.writeNext(row.toArray(new String[row.size()]), false));
         } catch (IOException e) {
             throw new RuntimeException(e);

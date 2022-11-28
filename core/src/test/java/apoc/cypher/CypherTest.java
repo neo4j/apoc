@@ -168,40 +168,40 @@ public class CypherTest {
     }
 
     @Test
-    public void testWithTermination() {
+    public void testRunTimeboxedWithTermination() {
         final String query = "CALL apoc.cypher.runTimeboxed('unwind range (0, 10) as id CALL apoc.util.sleep(2000) return 0', null, 20000)";
         checkTerminationGuard(db, query);
     }
 
     @Test
-    public void testWithTerminationInnerTransaction() {
+    public void testRunTimeboxedWithTerminationInnerTransaction() {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
         terminateTransactionAsync(db, innerLongQuery);
-
-        final long l = System.currentTimeMillis();
         
         // assert query terminated (RETURN 0)
         TestUtil.testCall(db, query,
                 Map.of("innerQuery", innerLongQuery),
                 row -> assertEquals(Map.of("0", 0L), row.get("value")));
 
-        final long l1 = System.currentTimeMillis() - l;
-        System.out.println("l - System.currentTimeMillis() = " + l1);
         checkTransactionNotInList(db, query);
     }
 
     @Test
-    public void testDoItWithTermination() {
-        final String query = "CALL apoc.cypher.run('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
-        checkTerminationGuard(db, query);
+    public void testRunAndDoItWithTermination() {
+        final String queryRun = "CALL apoc.cypher.run('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
+        checkTerminationGuard(db, queryRun);
         
-        final String query2 = "CALL apoc.cypher.doIt('CALL apoc.util.sleep(20000) return 0', {})";
-        checkTerminationGuard(db, query2);
+        final String queryDoIt = "CALL apoc.cypher.run('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
+        checkTerminationGuard(db, queryDoIt);
         
-        final String query3 = "CALL apoc.cypher.doIt('unwind range (0, 9999) as id CREATE (n:Test) return n', {})";
-        checkTerminationGuard(db, query3);
+        final String queryRunLongSleep = "CALL apoc.cypher.run('CALL apoc.util.sleep(20000) return 0', {})";
+        checkTerminationGuard(db, queryRunLongSleep);
+
+        final String queryDoItLongSleep = "CALL apoc.cypher.doIt('CALL apoc.util.sleep(20000) return 0', {})";
+        checkTerminationGuard(db, queryDoItLongSleep);
+        
     }
 
     @Test

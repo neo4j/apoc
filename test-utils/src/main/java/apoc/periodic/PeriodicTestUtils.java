@@ -40,7 +40,7 @@ public class PeriodicTestUtils {
         return numberOfKilledTransactions > 0;
     }
 
-    // todo - we could get rid of this method (and related code), and leverage the testTerminateWithCommand
+    // todo - we could get rid of this method (and related code), and leverage the TransactionTestUtil.testTerminateWithCommand
     public static void testTerminatePeriodicQuery(DbmsRule db, String periodicQuery) {
         killPeriodicQueryAsync(db);
         checkPeriodicTerminated(db, periodicQuery);

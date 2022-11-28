@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
@@ -36,9 +35,7 @@ import static apoc.util.CompressionAlgo.DEFLATE;
 import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.CompressionAlgo.NONE;
 import static apoc.util.MapUtil.map;
-import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
-import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
@@ -145,29 +142,6 @@ public class ExportCsvTest {
     
     private String readFile(String fileName, Charset charset, CompressionAlgo compression) {
         return BinaryTestUtil.readFileToString(new File(directory, fileName), charset, compression);
-    }
-    
-    @Test
-    public void testExportInvalidQuoteValue1() throws Exception {
-        final String query = Util.readResourceFile("movies.cypher");
-        IntStream.range(0, 3999).forEach(__-> db.executeTransactionally(query));
-        String fileName = "allEEEE.csv";
-        System.out.println("im here");
-        final long l = System.currentTimeMillis();
-        testCall(db, "CALL apoc.export.csv.all($file,{})", Map.of("file", fileName), r -> {
-            System.out.println("r" + r.values());
-        });
-        System.out.println("time=" + (System.currentTimeMillis() - l));
-//        checkTerminationGuard(db, "CALL apoc.export.csv.all($file,{})", Map.of("file", fileName));
-//        try {
-//            TestUtil.testCall(db, "CALL apoc.export.csv.all($file,{})",
-//                    map("file", fileName),
-//                    (r) -> assertResults(fileName, r, "database"));
-//            fail();
-//        } catch (RuntimeException e) {
-//            final String expectedMessage = "Failed to invoke procedure `apoc.export.csv.all`: Caused by: java.lang.RuntimeException: The string value of the field quote is not valid";
-//            assertEquals(expectedMessage, e.getMessage());
-//        }
     }
 
     @Test
