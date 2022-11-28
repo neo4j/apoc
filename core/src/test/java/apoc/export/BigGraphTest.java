@@ -58,21 +58,21 @@ public class BigGraphTest {
     }
 
     @Test
-    public void testTerminateExportCsv() throws Exception {
+    public void testTerminateExportCsv() {
         checkTerminationGuard(db, "CALL apoc.export.csv.all('testTerminate.csv',{bulkImport: true})");
         
         checkTerminationGuard(db, "CALL apoc.import.csv([{fileName: 'testTerminate.nodes.Other.csv', labels: ['Other']}], [], {})");
     }
 
     @Test
-    public void testTerminateExportGraphMl() throws Exception {
+    public void testTerminateExportGraphMl() {
         checkTerminationGuard(db, "CALL apoc.export.graphml.all('testTerminate.graphml', {})");
         
         checkTerminationGuard(db, "CALL apoc.import.graphml('testTerminate.graphml', {})");
     }
 
     @Test
-    public void testTerminateExportCypher() throws Exception {
+    public void testTerminateExportCypher() {
         checkTerminationGuard(db, "CALL apoc.export.cypher.all('testTerminate.cypher',{})");
     }
 
