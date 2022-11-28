@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.testCall;
+import static apoc.util.TestUtil.testCallCount;
+import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -17,7 +20,8 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class TransactionTestUtil {
     public static final String TRANSACTION_LIST = "SHOW TRANSACTIONS";
-    
+    private static final long DEF_TIMEOUT = 10L;
+
     public static void checkTerminationGuard(GraphDatabaseService db, String query) {
         checkTerminationGuard(db, query, emptyMap());
     }
@@ -27,11 +31,11 @@ public class TransactionTestUtil {
     }
     
     public static void checkTerminationGuard(GraphDatabaseService db, String query, Map<String, Object> params) {
-        checkTerminationGuard(db, 10L, query, params);
+        checkTerminationGuard(db, DEF_TIMEOUT, query, params);
     }
     
     public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query, Map<String, Object> params) {
-        terminateTransactionAsync(db, query);
+        terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
@@ -50,7 +54,7 @@ public class TransactionTestUtil {
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
         // checking for query cancellation from transaction list command
-        TestUtil.testResult(db, TRANSACTION_LIST,
+        testResult(db, TRANSACTION_LIST,
                 map("query", query),
                 result -> {
                     final boolean currentQuery = result.columnAs("currentQuery")
@@ -61,6 +65,10 @@ public class TransactionTestUtil {
     }
 
     public static void terminateTransactionAsync(GraphDatabaseService db, String query) {
+        terminateTransactionAsync(db, DEF_TIMEOUT, query);
+    }
+
+    public static void terminateTransactionAsync(GraphDatabaseService db, long timeout, String query) {
         new Thread(() -> {
             // waiting for apoc query to cancel when it is found
             final String[] transactionId = new String[1];
@@ -76,9 +84,9 @@ public class TransactionTestUtil {
                         }
                         transactionId[0] = msgIterator.next();
                         return transactionId[0] != null;
-                    }), (value) -> value, 5L, TimeUnit.SECONDS);
+                    }), (value) -> value, timeout, TimeUnit.SECONDS);
     
-            TestUtil.testCall(db, "TERMINATE TRANSACTION $transactionId",
+            testCall(db, "TERMINATE TRANSACTION $transactionId",
                     map("transactionId", transactionId[0]),
                     result -> assertEquals("Transaction terminated.", result.get("message")));
         }).start();
