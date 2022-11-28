@@ -40,7 +40,7 @@ public class TriggerTest {
     private long start;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         start = System.currentTimeMillis();
         TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
         apocConfig().setProperty(APOC_TRIGGER_ENABLED, true);

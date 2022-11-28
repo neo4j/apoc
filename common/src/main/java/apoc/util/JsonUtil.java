@@ -61,7 +61,7 @@ public class JsonUtil {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
         }
     }
 

@@ -26,7 +26,7 @@ public class CollTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass public static void setUp() {
         TestUtil.registerProcedure(db, Coll.class, Json.class);
     }
 

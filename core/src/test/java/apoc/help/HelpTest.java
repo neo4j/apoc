@@ -22,7 +22,7 @@ public class HelpTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Help.class, BitwiseOperations.class,Coll.class);
     }
 

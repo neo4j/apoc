@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
  */
 public class SortedArraySetTest {
     @Test
-    public void add() throws Exception {
+    public void add() {
         SortedArraySet<Integer> set = new SortedArraySet<>(Integer.class, 3);
         assertEquals(3, set.getCapacity());
         assertEquals(0, set.getSize());

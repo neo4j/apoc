@@ -23,7 +23,7 @@ public class BitwiseOperationsTest {
     private int a,b;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, BitwiseOperations.class);
     }
 

@@ -23,7 +23,7 @@ public class LabelSequenceTest {
             .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false);
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         db.executeTransactionally("create (s:Start{name:'start'})-[:REL]->(:A{name:'a'})-[:REL]->(:B{name:'b'})-[:REL]->(:A:C{name:'ac'})-[:REL]->(:B:A{name:'ba'})-[:REL]->(:D:A{name:'da'})");
     }

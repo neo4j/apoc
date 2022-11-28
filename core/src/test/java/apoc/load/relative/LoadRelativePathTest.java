@@ -34,7 +34,8 @@ public class LoadRelativePathTest {
     public LoadRelativePathTest() throws URISyntaxException {
     }
 
-    @Before public void setUp() throws Exception {
+    @Before
+    public void setUp() {
         TestUtil.registerProcedure(db, LoadJson.class, Xml.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }

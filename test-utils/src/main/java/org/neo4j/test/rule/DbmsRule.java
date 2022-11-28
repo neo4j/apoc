@@ -293,7 +293,7 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
         return this;
     }
 
-    public GraphDatabaseAPI restartDatabase() throws IOException
+    public GraphDatabaseAPI restartDatabase()
     {
         return restartDatabase( Map.of() );
     }

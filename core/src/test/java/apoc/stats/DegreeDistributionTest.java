@@ -23,7 +23,7 @@ public class DegreeDistributionTest {
 
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, DegreeDistribution.class);
         db.executeTransactionally("UNWIND range(1,10) as rels CREATE (f:Foo) WITH * UNWIND range(1,rels) as r CREATE (f)-[:BAR]->(f)");
     }

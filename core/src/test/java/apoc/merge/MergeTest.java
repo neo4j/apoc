@@ -23,7 +23,7 @@ public class MergeTest {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Merge.class);
     }
 

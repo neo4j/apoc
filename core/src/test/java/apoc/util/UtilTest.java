@@ -34,7 +34,7 @@ public class UtilTest {
     private static Node node;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, Utils.class);
         try (Transaction tx = db.beginTx()) {
             node = tx.createNode(Label.label("User"));

@@ -144,7 +144,7 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.remove", mode = Mode.WRITE)
     @Description("Removes the element at position from the array value of a property.\n" +
             "The procedure then sets the property to the resulting array value.")
-    public Stream<AtomicResults> remove(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name(value = "times", defaultValue = "5") Long times) throws ClassNotFoundException {
+    public Stream<AtomicResults> remove(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name(value = "times", defaultValue = "5") Long times) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];

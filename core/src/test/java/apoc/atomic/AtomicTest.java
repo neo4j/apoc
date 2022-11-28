@@ -30,7 +30,8 @@ public class AtomicTest {
 	@Rule
 	public DbmsRule db = new ImpermanentDbmsRule();
 
-	@Before public void setUp() throws Exception {
+	@Before
+	public void setUp() {
 		TestUtil.registerProcedure(db, Atomic.class);
 	}
 

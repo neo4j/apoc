@@ -34,7 +34,7 @@ public class PropertiesManagerTest {
 					+ "MATCH (d)-[l:FLIGHTS_TO]->(p) return r as rel1,h as rel2";
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		TestUtil.registerProcedure(db, GraphRefactoring.class);
 	}
 

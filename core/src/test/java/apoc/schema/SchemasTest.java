@@ -92,7 +92,7 @@ public class SchemasTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         registerProcedure(db, Schemas.class);
         dropSchema();
     }

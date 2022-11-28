@@ -34,7 +34,7 @@ public class TriggerDisabledTest {
     public ExpectedException exceptionRule = ExpectedException.none();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         apocConfig().setProperty(APOC_TRIGGER_ENABLED, false);
         exceptionRule.expect(RuntimeException.class);
         exceptionRule.expectMessage(TriggerHandler.NOT_ENABLED_ERROR);

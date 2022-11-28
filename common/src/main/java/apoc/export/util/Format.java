@@ -11,6 +11,6 @@ import java.io.Reader;
  * @since 17.01.14
  */
 public interface Format {
-    ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) throws Exception;
+    ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config);
     ProgressInfo dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) throws Exception;
 }

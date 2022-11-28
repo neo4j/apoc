@@ -108,7 +108,7 @@ public class SpatialTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Date.class);
         TestUtil.registerProcedure(db, MockGeocode.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);

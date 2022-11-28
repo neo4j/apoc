@@ -39,7 +39,8 @@ public class RenameTest {
 	public DbmsRule db = new ImpermanentDbmsRule()
 			.withSetting(lock_acquisition_timeout, Duration.ofSeconds(5));
 
-	@Before public void setUp() throws Exception {
+	@Before
+	public void setUp() {
 		TestUtil.registerProcedure(db, Rename.class, Coll.class, Lock.class, Utils.class);
 	}
 

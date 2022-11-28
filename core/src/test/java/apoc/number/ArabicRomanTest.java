@@ -18,7 +18,7 @@ public class ArabicRomanTest {
 
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, ArabicRoman.class);
     }
 

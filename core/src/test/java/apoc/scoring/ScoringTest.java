@@ -19,7 +19,7 @@ public class ScoringTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db,Scoring.class);
     }
 

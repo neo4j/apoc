@@ -27,7 +27,7 @@ public class GroupingTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Grouping.class);
     }
 

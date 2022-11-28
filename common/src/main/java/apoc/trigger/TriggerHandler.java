@@ -282,7 +282,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() {
         updateCache();
         long refreshInterval = apocConfig().getInt(TRIGGER_REFRESH, 60000);
         restoreTriggerHandler = jobScheduler.scheduleRecurring(Group.STORAGE_MAINTENANCE, () -> {

@@ -57,7 +57,7 @@ public class NodesTest {
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"));
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Nodes.class, Create.class);
     }
 
@@ -221,7 +221,7 @@ public class NodesTest {
     }
 
     @Test
-    public void delete() throws Exception {
+    public void delete() {
         db.executeTransactionally("UNWIND range(1,100) as id CREATE (n:Foo {id:id})-[:X]->(n)");
 
         long count = TestUtil.singleResultFirstColumn(db, "MATCH (n:Foo) WITH collect(n) as nodes call apoc.nodes.delete(nodes,1) YIELD value as count RETURN count");

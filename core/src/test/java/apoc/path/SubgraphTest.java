@@ -34,7 +34,7 @@ public class SubgraphTest {
 	public static DbmsRule db = new ImpermanentDbmsRule();
 
 	@BeforeClass
-	public static void setUp() throws Exception {
+	public static void setUp() {
 		TestUtil.registerProcedure(db, PathExplorer.class, Cover.class);
 		String movies = Util.readResourceFile("movies.cypher");
 		String bigbrother = "MATCH (per:Person) MERGE (bb:BigBrother {name : 'Big Brother' })  MERGE (bb)-[:FOLLOWS]->(per)";

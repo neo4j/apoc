@@ -50,7 +50,7 @@ public class ExportCypherMultiRelTest {
             .withSetting(newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false).build(), false);
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, ExportCypher.class, Cypher.class);
         db.executeTransactionally("create (pers:Person {name: 'MyName'})-[:WORKS_FOR {id: 1}]->(proj:Project {a: 1}), \n" +
                 "(pers)-[:WORKS_FOR {id: 2}]->(proj), " +

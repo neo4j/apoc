@@ -22,7 +22,7 @@ public class Neo4jLogStreamTest {
     private GraphDatabaseService db;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         DatabaseManagementService dbManagementService = new TestDatabaseManagementServiceBuilder(
                 Paths.get("target", UUID.randomUUID().toString()).toAbsolutePath()).build();
         apocConfig().setProperty("server.directories.logs", "");

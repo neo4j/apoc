@@ -68,7 +68,7 @@ public class Periodic {
 
     @Procedure(name = "apoc.periodic.commit", mode = Mode.WRITE)
     @Description("Runs the given statement in separate batched transactions.")
-    public Stream<RundownResult> commit(@Name("statement") String statement, @Name(value = "params", defaultValue = "{}") Map<String,Object> parameters) throws ExecutionException, InterruptedException {
+    public Stream<RundownResult> commit(@Name("statement") String statement, @Name(value = "params", defaultValue = "{}") Map<String,Object> parameters) {
         validateQuery(statement);
         Map<String,Object> params = parameters == null ? Collections.emptyMap() : parameters;
         long total = 0, executions = 0, updates = 0;

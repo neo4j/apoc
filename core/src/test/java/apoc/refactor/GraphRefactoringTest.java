@@ -71,7 +71,7 @@ public class GraphRefactoringTest {
             .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false);
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, GraphRefactoring.class);
     }
 

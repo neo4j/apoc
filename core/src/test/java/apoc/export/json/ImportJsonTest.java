@@ -67,7 +67,7 @@ public class ImportJsonTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, ImportJson.class, Schemas.class, Utils.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }

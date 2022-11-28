@@ -54,7 +54,7 @@ public class ExportJson {
 
     @Procedure("apoc.export.json.all")
     @Description("Exports the full database to the provided JSON file.")
-    public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
+    public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportJson(fileName, source, new DatabaseSubGraph(tx), config);
@@ -62,7 +62,7 @@ public class ExportJson {
 
     @Procedure("apoc.export.json.data")
     @Description("Exports the given nodes and relationships to the provided JSON file.")
-    public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
+    public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         // initialize empty lists if nodes or rels are null
         nodes = nodes == null ? Collections.emptyList() : nodes;
         rels = rels == null ? Collections.emptyList() : rels;
@@ -72,7 +72,7 @@ public class ExportJson {
     }
     @Procedure("apoc.export.json.graph")
     @Description("Exports the given graph to the provided JSON file.")
-    public Stream<ProgressInfo> graph(@Name("graph") Map<String,Object> graph, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
+    public Stream<ProgressInfo> graph(@Name("graph") Map<String,Object> graph, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
@@ -82,7 +82,7 @@ public class ExportJson {
 
     @Procedure("apoc.export.json.query")
     @Description("Exports the results from the Cypher statement to the provided JSON file.")
-    public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
+    public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         Map<String,Object> params = config == null ? Collections.emptyMap() : (Map<String,Object>)config.getOrDefault("params", Collections.emptyMap());
         Result result = tx.execute(query,params);
         String source = String.format("statement: cols(%d)", result.columns().size());

@@ -56,7 +56,7 @@ public class GraphsTest {
             .withSetting(SettingImpl.newBuilder("internal.dbms.debug.trace_cursors", SettingValueParsers.BOOL, false).build(), false);
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db,Graphs.class);
         db.executeTransactionally("CREATE (a:Actor {name:'Tom Hanks'})-[r:ACTED_IN {roles:'Forrest'}]->(m:Movie {title:'Forrest Gump'}) RETURN [a,m] as nodes, [r] as relationships", Collections.emptyMap(),
                 result -> {
@@ -958,7 +958,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testIncludeMappingsAsProperties() throws IOException {
+    public void testIncludeMappingsAsProperties() {
         Map<String, Object> json = map("id", 1,
                 "text", "Text",
                 "data", "02-11-2019",
@@ -991,7 +991,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testValidationCustomIdAsProperties() throws IOException {
+    public void testValidationCustomIdAsProperties() {
         Map<String, Object> json = map("id", 1,
                 "text", "Text",
                 "data", "02-11-2019",

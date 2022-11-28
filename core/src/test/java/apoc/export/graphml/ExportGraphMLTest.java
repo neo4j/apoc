@@ -29,7 +29,6 @@ import org.xmlunit.util.Nodes;
 
 import javax.xml.namespace.QName;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -203,7 +202,7 @@ public class ExportGraphMLTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class);
 
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, Boolean.toString(!testName.getMethodName().endsWith(TEST_WITH_NO_EXPORT)));
@@ -459,7 +458,7 @@ public class ExportGraphMLTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void testImportGraphMLWithNoImportConfig() throws Exception {
+    public void testImportGraphMLWithNoImportConfig() {
         File output = new File(directory, "all.graphml");
         try {
             TestUtil.testCall(db, "CALL apoc.import.graphml($file,{readLabels:true})", map("file", output.getAbsolutePath()), (r) -> assertResults(output, r, "database"));
@@ -849,7 +848,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphmlQueryWithStringCaptionCamelCase() throws FileNotFoundException {
+    public void testExportGraphmlQueryWithStringCaptionCamelCase() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE (f:Foo:Foo2:Foo0 {firstName:'foo'})-[:KNOWS]->(b:Bar {name:'bar',ageNow:42}),(c:Bar {age:12,values:[1,2,3]})");
         File output = new File(directory, "query.graphml");

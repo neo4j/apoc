@@ -19,7 +19,7 @@ public class PercentilesTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass public static void setUp() {
         TestUtil.registerProcedure(db, Percentiles.class);
     }
 

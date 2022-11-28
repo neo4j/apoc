@@ -62,7 +62,7 @@ public class ExportCypherTest {
     private static final String ODD = "OddDataset";
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCypher.class, Graphs.class, Schemas.class);
         db.executeTransactionally("CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name)");
