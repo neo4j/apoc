@@ -254,8 +254,6 @@ public class CsvFormat {
                 csvWriter.writeNext(headerNode.toArray(new String[headerNode.size()]), false);
             }
 
-//            terminationGuard.check();
-            // todo - here...
             rows.forEach(row -> csvWriter.writeNext(row.toArray(new String[row.size()]), false));
         } catch (IOException e) {
             throw new RuntimeException(e);

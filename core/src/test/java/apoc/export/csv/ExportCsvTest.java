@@ -147,7 +147,6 @@ public class ExportCsvTest {
         return BinaryTestUtil.readFileToString(new File(directory, fileName), charset, compression);
     }
     
-    // todo - db.executeTransactionally(Util.readResourceFile("movies.cypher")); - basta questo?
     @Test
     public void testExportInvalidQuoteValue1() throws Exception {
         final String query = Util.readResourceFile("movies.cypher");
