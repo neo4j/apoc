@@ -172,7 +172,7 @@ public class CypherTest {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
-        terminateTransactionAsync(db, innerLongQuery);
+        terminateTransactionAsync(db, 10L, innerLongQuery);
         
         // assert query terminated (RETURN 0)
         TestUtil.testCall(db, query,
@@ -183,19 +183,12 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunAndDoItWithTermination() {
+    public void testRunAndDoItUnwindSleepWithTermination() {
         final String queryRun = "CALL apoc.cypher.run('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
         checkTerminationGuard(db, queryRun);
-        
-        final String queryDoIt = "CALL apoc.cypher.run('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
-        checkTerminationGuard(db, queryDoIt);
-        
-        final String queryRunLongSleep = "CALL apoc.cypher.run('CALL apoc.util.sleep(20000) return 0', {})";
-        checkTerminationGuard(db, queryRunLongSleep);
 
-        final String queryDoItLongSleep = "CALL apoc.cypher.doIt('CALL apoc.util.sleep(20000) return 0', {})";
-        checkTerminationGuard(db, queryDoItLongSleep);
-        
+        final String queryDoIt = "CALL apoc.cypher.doIt('unwind range (0, 99) as id CALL apoc.util.sleep(2000) return 0', {})";
+        checkTerminationGuard(db, queryDoIt);
     }
 
     @Test
