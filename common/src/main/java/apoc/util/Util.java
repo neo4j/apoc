@@ -16,6 +16,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.api.iterator.LongIterator;
 import org.neo4j.graphdb.ExecutionPlanDescription;
 import org.neo4j.graphdb.Result;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.NullLog;
 import org.neo4j.procedure.Mode;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
@@ -1089,7 +1090,7 @@ public class Util {
     }
 
     public static boolean isSelfRel(Relationship rel) {
-        return rel.getStartNodeId() == rel.getEndNodeId();
+        return Objects.equals(rel.getStartNode().getElementId(), rel.getEndNode().getElementId());
     }
 
     public static String toCypherMap(Map<String, Object> map) {
@@ -1145,5 +1146,12 @@ public class Util {
     public static <T extends Entity> T withTransactionAndRebind(GraphDatabaseService db, Transaction transaction, Function<Transaction, T> action) {
         T result = retryInTx(NullLog.getInstance(), db, action, 0, 0, r -> {});
         return rebind(transaction, result);
+    }
+
+    public static long getNodeId(InternalTransaction tx, String elementId) {
+        return tx.elementIdMapper().nodeId(elementId);
+    }
+    public static  String getNodeElementId(InternalTransaction tx, long id) {
+        return tx.elementIdMapper().nodeElementId(id);
     }
 }

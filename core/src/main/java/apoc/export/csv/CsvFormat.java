@@ -17,6 +17,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -39,6 +40,7 @@ import static apoc.export.util.MetaInformation.collectPropTypesForNodes;
 import static apoc.export.util.MetaInformation.collectPropTypesForRelationships;
 import static apoc.export.util.MetaInformation.getLabelsString;
 import static apoc.export.util.MetaInformation.updateKeyTypes;
+import static apoc.util.Util.getNodeId;
 import static apoc.util.Util.joinLabels;
 
 /**
@@ -48,13 +50,15 @@ import static apoc.util.Util.joinLabels;
 public class CsvFormat implements Format {
     public static final String ID = "id";
     private final GraphDatabaseService db;
+    private final InternalTransaction tx;
     private boolean applyQuotesToAll = true;
 
     private static final String[] NODE_HEADER_FIXED_COLUMNS = {"_id:id", "_labels:label"};
     private static final String[] REL_HEADER_FIXED_COLUMNS = {"_start:id", "_end:id", "_type:label"};
 
-    public CsvFormat(GraphDatabaseService db) {
+    public CsvFormat(GraphDatabaseService db, InternalTransaction tx) {
         this.db = db;
+        this.tx = tx;
     }
 
     @Override
@@ -179,7 +183,7 @@ public class CsvFormat implements Format {
                                 return joinLabels(entrySet.getKey(), config.getArrayDelim());
                             }
                             String prop = s.split(":")[0];
-                            return "".equals(prop) ? String.valueOf(n.getId()) : cleanPoint(FormatUtils.toString(n.getProperty(prop, "")));
+                            return "".equals(prop) ? String.valueOf(getNodeId(tx, n.getElementId())) : cleanPoint(FormatUtils.toString(n.getProperty(prop, "")));
                         }).collect(Collectors.toList());
                     })
                     .collect(Collectors.toList());
@@ -200,14 +204,14 @@ public class CsvFormat implements Format {
                         return headerRel.stream().map(s -> {
                             switch (s) {
                                 case ":START_ID":
-                                    return String.valueOf(r.getStartNodeId());
+                                    return String.valueOf(getNodeId(tx, r.getStartNode().getElementId()));
                                 case ":END_ID":
-                                    return String.valueOf(r.getEndNodeId());
+                                    return String.valueOf(getNodeId(tx, r.getEndNode().getElementId()));
                                 case ":TYPE":
                                     return entrySet.getKey().name();
                                 default:
                                     String prop = s.split(":")[0];
-                                    return "".equals(prop) ? String.valueOf(r.getId()) : cleanPoint(FormatUtils.toString(r.getProperty(prop, "")));
+                                    return "".equals(prop) ? String.valueOf(getNodeId(tx, r.getElementId())) : cleanPoint(FormatUtils.toString(r.getProperty(prop, "")));
                             }
                         }).collect(Collectors.toList());
                     })
@@ -286,8 +290,8 @@ public class CsvFormat implements Format {
         String[] row=new String[cols];
         int nodes = 0;
         for (Node node : graph.getNodes()) {
-            row[0]=String.valueOf(node.getId());
-            row[1]=getLabelsString(node);
+            row[0] = String.valueOf(getNodeId(tx, node.getElementId()));
+            row[1] = getLabelsString(node);
             collectProps(header, node, reporter, row, 2, delimiter);
             out.writeNext(row, applyQuotesToAll);
             nodes++;
@@ -315,16 +319,16 @@ public class CsvFormat implements Format {
     }
 
     private void writeRels(SubGraph graph, CSVWriter out, Reporter reporter, List<String> relHeader, int cols, int offset, int batchSize, String delimiter) {
-        String[] row=new String[cols];
+        String[] row = new String[cols];
         int rels = 0;
         for (Relationship rel : graph.getRelationships()) {
-            row[offset]=String.valueOf(rel.getStartNode().getId());
-            row[offset+1]=String.valueOf(rel.getEndNode().getId());
-            row[offset+2]=rel.getType().name();
+            row[offset] = String.valueOf(getNodeId(tx, rel.getStartNode().getElementId()));
+            row[offset+1] = String.valueOf(getNodeId(tx, rel.getEndNode().getElementId()));
+            row[offset+2] = rel.getType().name();
             collectProps(relHeader, rel, reporter, row, 3 + offset, delimiter);
             out.writeNext(row, applyQuotesToAll);
             rels++;
-            if (batchSize==-1 || rels % batchSize == 0) {
+            if (batchSize == -1 || rels % batchSize == 0) {
                 reporter.update(0, rels, 0);
                 rels = 0;
             }
