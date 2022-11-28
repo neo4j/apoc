@@ -5,6 +5,7 @@ import apoc.export.csv.ImportCsv;
 import apoc.export.cypher.ExportCypher;
 import apoc.export.graphml.ExportGraphML;
 import apoc.export.json.ExportJson;
+import apoc.export.json.ImportJson;
 import apoc.graph.Graphs;
 import apoc.meta.Meta;
 import apoc.refactor.GraphRefactoring;
@@ -33,7 +34,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemo
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
 public class BigGraphTest {
-    private static File directory = new File("target/import");
+    private static final File directory = new File("target/import");
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
     }
@@ -47,7 +48,8 @@ public class BigGraphTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        TestUtil.registerProcedure(db, Rename.class, ExportCSV.class, ExportJson.class, ExportCypher.class, ExportGraphML.class, Graphs.class, Meta.class, ImportCsv.class, GraphRefactoring.class);
+        TestUtil.registerProcedure(db, Rename.class, ExportCSV.class, ExportJson.class, ExportCypher.class, ExportGraphML.class, Graphs.class, Meta.class, ImportCsv.class, GraphRefactoring.class,
+                ImportCsv.class, ImportJson.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
 
@@ -56,23 +58,28 @@ public class BigGraphTest {
     }
 
     @Test
-    public void testTerminateExportCsv() {
-        checkTerminationGuard(db, "CALL apoc.export.csv.all('testTerminate.csv',{})");
+    public void testTerminateExportCsv() throws Exception {
+        checkTerminationGuard(db, "CALL apoc.export.csv.all('testTerminate.csv',{bulkImport: true})");
+        
+        checkTerminationGuard(db, "CALL apoc.import.csv([{fileName: 'testTerminate.nodes.Other.csv', labels: ['Other']}], [], {})");
     }
 
     @Test
-    public void testTerminateExportGraphMl() {
-        checkTerminationGuard(db, "CALL apoc.export.graphml.all('testTerminate.graphml', null)");
+    public void testTerminateExportGraphMl() throws Exception {
+        checkTerminationGuard(db, "CALL apoc.export.graphml.all('testTerminate.graphml', {})");
+        
+        checkTerminationGuard(db, "CALL apoc.import.graphml('testTerminate.graphml', {})");
     }
 
     @Test
-    public void testTerminateExportCypher() {
+    public void testTerminateExportCypher() throws Exception {
         checkTerminationGuard(db, "CALL apoc.export.cypher.all('testTerminate.cypher',{})");
     }
 
     @Test
     public void testTerminateExportJson() {
         checkTerminationGuard(db, "CALL apoc.export.json.all('testTerminate.json',{})");
+        checkTerminationGuard(db, "CALL apoc.import.json('testTerminate.json',{})");
     }
 
     @Test
@@ -105,8 +112,5 @@ public class BigGraphTest {
 
         checkTerminationGuard(db, "CALL apoc.refactor.cloneSubgraph($nodes)",
                 Map.of("nodes", nodes));
-
-        db.executeTransactionally("CREATE CONSTRAINT FOR (n:BornLabel) REQUIRE n.targetKey IS UNIQUE");
-        checkTerminationGuard(db, "CALL apoc.refactor.categorize('id', 'SOMETHING', true, 'BornLabel', 'targetKey', [], 1)");
     }
 }

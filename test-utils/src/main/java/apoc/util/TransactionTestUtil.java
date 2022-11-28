@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static apoc.util.MapUtil.map;
+import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -21,19 +22,23 @@ public class TransactionTestUtil {
     public static final String TRANSACTION_LIST = "SHOW TRANSACTIONS";
     
     public static void checkTerminationGuard(GraphDatabaseService db, String query) {
-        checkTerminationGuard(db, query, Collections.emptyMap());
+        checkTerminationGuard(db, query, emptyMap());
+    }
+    
+    public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query) {
+        checkTerminationGuard(db, timeout, query, emptyMap());
     }
     
     public static void checkTerminationGuard(GraphDatabaseService db, String query, Map<String, Object> params) {
+        checkTerminationGuard(db, 10L, query, params);
+    }
+    
+    public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query, Map<String, Object> params) {
         terminateTransactionAsync(db, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
         // todo 5, TimeUnit.SECONDS as parameter
-        
-//        db.executeTransactionally(query, params, r -> r.resultAsString());
-
-        final long l = System.currentTimeMillis();
-        try(Transaction transaction = db.beginTx(5, TimeUnit.SECONDS)) {
+        try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
             transaction.execute(query, params).resultAsString();
 //            System.out.println("s = " + s);
             transaction.commit();
@@ -45,8 +50,6 @@ public class TransactionTestUtil {
                     "Retry your operation in a new transaction, and you should see a successful result. Explicitly terminated by the user. ";
             assertEquals(expected, rootCause.getMessage());
         }
-        final long l1 = System.currentTimeMillis() - l;
-        System.out.println("l - System.currentTimeMillis() = " + l1);
         
         checkTransactionNotInList(db, query);
     }
@@ -82,14 +85,9 @@ public class TransactionTestUtil {
                         return transactionId[0] != null;
                     }), (value) -> value, 5L, TimeUnit.SECONDS);
     
-            // todo - delete
-            System.out.println("transactionId = " + transactionId[0]);
-            final long l = System.currentTimeMillis();
             TestUtil.testCall(db, "TERMINATE TRANSACTION $transactionId",
                     map("transactionId", transactionId[0]),
                     result -> assertEquals("Transaction terminated.", result.get("message")));
-            // todo - delete
-            System.out.println("time=" + (System.currentTimeMillis() - l));
         }).start();
 
     }
