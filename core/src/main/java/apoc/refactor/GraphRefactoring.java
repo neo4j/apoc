@@ -281,9 +281,9 @@ public class GraphRefactoring {
         nodesSet.stream().sorted(Comparator.comparingLong(Node::getId)).forEach(tx::acquireWriteLock);
 
         final Node first = nodes.get(0);
-        final List<Long> existingSelfRelIds = conf.isPreservingExistingSelfRels()
+        final List<String> existingSelfRelIds = conf.isPreservingExistingSelfRels()
                 ? StreamSupport.stream(first.getRelationships().spliterator(), false).filter(Util::isSelfRel)
-                    .map(Entity::getId)
+                    .map(Entity::getElementId)
                     .collect(Collectors.toList())
                 : Collections.emptyList();
 
@@ -586,14 +586,14 @@ public class GraphRefactoring {
         });
     }
 
-    private void mergeNodes(Node source, Node target, RefactorConfig conf, List<Long> excludeRelIds) {
+    private void mergeNodes(Node source, Node target, RefactorConfig conf, List<String> excludeRelIds) {
         try {
             Map<String, Object> properties = source.getAllProperties();
 
             copyRelationships(source, copyLabels(source, target), true, conf.isCreatingNewSelfRel());
             if (conf.getMergeRelsAllowed()) {
-                mergeRelsWithSameTypeAndDirectionInMergeNodes(target, conf, Direction.OUTGOING, excludeRelIds);
-                mergeRelsWithSameTypeAndDirectionInMergeNodes(target, conf, Direction.INCOMING, excludeRelIds);
+                mergeRelationshipsWithSameTypeAndDirection(target, conf, Direction.OUTGOING, excludeRelIds);
+                mergeRelationshipsWithSameTypeAndDirection(target, conf, Direction.INCOMING, excludeRelIds);
             }
             source.delete();
             PropertiesManager.mergeProperties(properties, target, conf);

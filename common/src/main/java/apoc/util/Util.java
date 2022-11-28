@@ -942,11 +942,11 @@ public class Util {
     }
 
     public static Node rebind(Transaction tx, Node node) {
-         return node instanceof VirtualNode ? node : tx.getNodeById(node.getId());
+         return node instanceof VirtualNode ? node : tx.getNodeByElementId(node.getElementId());
     }
 
     public static Relationship rebind(Transaction tx, Relationship rel) {
-         return rel instanceof VirtualRelationship ? rel : tx.getRelationshipById(rel.getId());
+         return rel instanceof VirtualRelationship ? rel : tx.getRelationshipByElementId(rel.getElementId());
     }
 
     public static <T extends Entity> T rebind(Transaction tx, T e) {

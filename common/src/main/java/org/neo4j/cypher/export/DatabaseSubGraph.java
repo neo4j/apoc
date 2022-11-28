@@ -42,7 +42,7 @@ public class DatabaseSubGraph implements SubGraph
     @Override
     public boolean contains( Relationship relationship )
     {
-        return transaction.getRelationshipById( relationship.getId() ) != null;
+        return transaction.getRelationshipByElementId( relationship.getElementId() ) != null;
     }
 
     @Override

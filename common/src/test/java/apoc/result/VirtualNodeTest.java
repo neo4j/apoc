@@ -55,7 +55,8 @@ public class VirtualNodeTest {
 
         RelationshipType relationshipType = RelationshipType.withName("TYPE");
         Relationship rel = start.createRelationshipTo(end, relationshipType);
-        assertTrue("the rel id should be < 0", rel.getId() < 0);
+        // Virtual Nodes/Relationships element ids are just String versions of ints.
+        assertTrue("the rel id should be < 0", rel.getElementId().startsWith("-"));
 
         assertEquals(1, Iterables.count(start.getRelationships()));
         assertEquals(0, Iterables.count(start.getRelationships(Direction.INCOMING)));
@@ -92,7 +93,8 @@ public class VirtualNodeTest {
 
         RelationshipType relationshipType = RelationshipType.withName("TYPE");
         Relationship rel = end.createRelationshipFrom(start, relationshipType);
-        assertTrue("the rel id should be < 0", rel.getId() < 0);
+        // Virtual Nodes/Relationships element ids are just String versions of ints.
+        assertTrue("the rel id should be < 0", rel.getElementId().startsWith("-"));
 
         assertEquals(1, Iterables.count(start.getRelationships()));
         assertEquals(0, Iterables.count(start.getRelationships(Direction.INCOMING)));
