@@ -47,7 +47,7 @@ public class CsvEntityLoader {
      * @throws IOException
      */
     public void loadNodes(final Object fileName, final List<String> labels, final GraphDatabaseService db,
-                          final Map<String, Map<String, Long>> idMapping) throws IOException {
+                          final Map<String, Map<String, String>> idMapping) throws IOException {
         
         try (final CountingReader reader = FileUtils.readerFor(fileName, clc.getCompressionAlgo())) {
             final String header = readFirstLine(reader);
@@ -65,7 +65,7 @@ public class CsvEntityLoader {
             final String idSpace = idField.isPresent() ? idField.get().getIdSpace() : CsvLoaderConstants.DEFAULT_IDSPACE;
 
             idMapping.putIfAbsent(idSpace, new HashMap<>());
-            final Map<String, Long> idspaceIdMapping = idMapping.get(idSpace);
+            final Map<String, String> idspaceIdMapping = idMapping.get(idSpace);
 
             final Map<String, Mapping> mapping = getMapping(fields);
 
@@ -104,7 +104,7 @@ public class CsvEntityLoader {
                     // create node and add its id to the mapping
                     final Node node = btx.getTransaction().createNode();
                     if (idField.isPresent()) {
-                        idspaceIdMapping.put(nodeCsvId, node.getId());
+                        idspaceIdMapping.put(nodeCsvId, node.getElementId());
                     }
 
                     // add labels
@@ -160,7 +160,7 @@ public class CsvEntityLoader {
             final Object data, 
             final String type,
             final GraphDatabaseService db,
-            final Map<String, Map<String, Long>> idMapping) throws IOException {
+            final Map<String, Map<String, String>> idMapping) throws IOException {
         
         try (final CountingReader reader = FileUtils.readerFor(data, clc.getCompressionAlgo())) {
             final String header = readFirstLine(reader);
@@ -196,18 +196,18 @@ public class CsvEntityLoader {
                         );
 
                         final Object startId = result.map.get(CsvLoaderConstants.START_ID_ATTR);
-                        final Object startInternalId = idMapping.get(startIdField.getIdSpace()).get(startId);
+                        final Object startInternalId = idMapping.get(startIdField.getIdSpace()).get(startId.toString());
                         if (startInternalId == null) {
                             throw new IllegalStateException("Node for id space " + endIdField.getIdSpace() + " and id " + startId + " not found");
                         }
-                        final Node source = btx.getTransaction().getNodeById((long) startInternalId);
+                        final Node source = btx.getTransaction().getNodeByElementId(startInternalId.toString());
 
                         final Object endId = result.map.get(CsvLoaderConstants.END_ID_ATTR);
-                        final Object endInternalId = idMapping.get(endIdField.getIdSpace()).get(endId);
+                        final Object endInternalId = idMapping.get(endIdField.getIdSpace()).get(endId.toString());
                         if (endInternalId == null) {
                             throw new IllegalStateException("Node for id space " + endIdField.getIdSpace() + " and id " + endId + " not found");
                         }
-                        final Node target = btx.getTransaction().getNodeById((long) endInternalId);
+                        final Node target = btx.getTransaction().getNodeByElementId(endInternalId.toString());
 
                         final String currentType;
                         final Object overridingType = result.map.get(CsvLoaderConstants.TYPE_ATTR);
