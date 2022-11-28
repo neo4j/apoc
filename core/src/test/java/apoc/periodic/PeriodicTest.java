@@ -16,7 +16,6 @@ import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionStatusFailureException;
-import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.graphdb.TransientTransactionFailureException;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;

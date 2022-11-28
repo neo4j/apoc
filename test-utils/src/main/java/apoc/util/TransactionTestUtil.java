@@ -2,12 +2,9 @@ package apoc.util;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.TransactionTerminatedException;
 
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -37,15 +34,12 @@ public class TransactionTestUtil {
         terminateTransactionAsync(db, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
-        // todo 5, TimeUnit.SECONDS as parameter
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
             transaction.execute(query, params).resultAsString();
-//            System.out.println("s = " + s);
             transaction.commit();
-            fail("Should fail because of TransactionFailureException");// todo - necessary this row?  fails with timeboxed
+            fail("Should fail because of TransactionFailureException");
         } catch (Exception e) {
             final Throwable rootCause = ExceptionUtils.getRootCause(e);
-            System.out.println("TransactionTestUtil.checkTerminationGuard");
             final String expected = "The transaction has been terminated. " +
                     "Retry your operation in a new transaction, and you should see a successful result. Explicitly terminated by the user. ";
             assertEquals(expected, rootCause.getMessage());
@@ -68,11 +62,10 @@ public class TransactionTestUtil {
 
     public static void terminateTransactionAsync(GraphDatabaseService db, String query) {
         new Thread(() -> {
-            System.out.println("TransactionTestUtil.terminateAndCheckTransaction");
             // waiting for apoc query to cancel when it is found
             final String[] transactionId = new String[1];
             
-            assertEventually(() -> db.executeTransactionally(TRANSACTION_LIST + " YIELD currentQuery, transactionId " +
+            assertEventually(() -> db.executeTransactionally(TRANSACTION_LIST + " YIELD currentQuery, transactionId " + 
                             "WHERE currentQuery CONTAINS $query AND NOT currentQuery STARTS WITH $transactionList " +
                             "RETURN transactionId",
                     map("query", query, "transactionList", TRANSACTION_LIST),

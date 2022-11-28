@@ -8,7 +8,6 @@ import apoc.result.NodeResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
 import apoc.util.FileUtils;
-import apoc.util.Util;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Label;
