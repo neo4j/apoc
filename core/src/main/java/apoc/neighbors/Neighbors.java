@@ -6,6 +6,7 @@ import apoc.result.NodeListResult;
 import apoc.result.NodeResult;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -35,6 +36,13 @@ public class Neighbors {
         return node.getRelationships(typesAndDirection.getRight(), typesAndDirection.getLeft());
     }
 
+    private long getNodeId(String elementId) {
+        return ((InternalTransaction) tx).elementIdMapper().nodeId(elementId);
+    }
+    private String getNodeElementId(long id) {
+        return ((InternalTransaction) tx).elementIdMapper().nodeElementId(id);
+    }
+
     @Procedure("apoc.neighbors.tohop")
     @Description("Returns all nodes connected by the given relationship types within the specified distance.\n" +
             "Nodes are returned individually for each row.")
@@ -42,13 +50,14 @@ public class Neighbors {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
 
-        final long startNodeId = node.getId();
+        final long startNodeId = getNodeId(node.getElementId());
 
         // Initialize bitmaps for iteration
         Roaring64NavigableMap seen = new Roaring64NavigableMap();
         Roaring64NavigableMap nextA = new Roaring64NavigableMap();
         Roaring64NavigableMap nextB = new Roaring64NavigableMap();
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId(nodeElementId);
         seen.addLong(nodeId);
         Iterator<Long> iterator;
 
@@ -57,7 +66,7 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                nextB.addLong(r.getOtherNodeId(nodeId));
+                nextB.addLong(getNodeId(r.getOtherNode(node).getElementId()));
             }
         }
 
@@ -68,11 +77,11 @@ public class Neighbors {
             nextA.clear();
             iterator = nextB.iterator();
             while (iterator.hasNext()) {
-                nodeId = iterator.next();
-                node = tx.getNodeById(nodeId);
+                nodeElementId = getNodeElementId(iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        nextA.add((r.getOtherNodeId(nodeId)));
+                        nextA.add(getNodeId(r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -85,11 +94,11 @@ public class Neighbors {
                 nextB.clear();
                 iterator = nextA.iterator();
                 while (iterator.hasNext()) {
-                    nodeId = iterator.next();
-                    node = tx.getNodeById(nodeId);
+                    nodeElementId = getNodeElementId(iterator.next());
+                    node = tx.getNodeByElementId(nodeElementId);
                     for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                         for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                            nextB.add(r.getOtherNodeId(nodeId));
+                            nextB.add(getNodeId(r.getOtherNode(node).getElementId()));
                         }
                     }
                 }
@@ -103,8 +112,9 @@ public class Neighbors {
         // remove starting node
         seen.removeLong(startNodeId);
 
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(seen.iterator(), Spliterator.SORTED), false)
-                .map(x -> new NodeResult(tx.getNodeById(x)));
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(seen.iterator(), Spliterator.SORTED), false)
+                .map(x -> new NodeResult(tx.getNodeByElementId(getNodeElementId(x))));
     }
 
     @Procedure("apoc.neighbors.tohop.count")
@@ -113,13 +123,14 @@ public class Neighbors {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
 
-        final long startNodeId = node.getId();
+        final long startNodeId = getNodeId(node.getElementId());
 
         // Initialize bitmaps for iteration
         Roaring64NavigableMap seen = new Roaring64NavigableMap();
         Roaring64NavigableMap nextA = new Roaring64NavigableMap();
         Roaring64NavigableMap nextB = new Roaring64NavigableMap();
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId(nodeElementId);
         seen.add(nodeId);
         Iterator<Long> iterator;
 
@@ -127,7 +138,8 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                nextB.add(r.getOtherNodeId(nodeId));
+                nextB.add(getNodeId(r.getOtherNode(node).getElementId()));
+
             }
         }
 
@@ -138,11 +150,11 @@ public class Neighbors {
             nextA.clear();
             iterator = nextB.iterator();
             while (iterator.hasNext()) {
-                nodeId = iterator.next();
-                node = tx.getNodeById(nodeId);
+                nodeElementId = getNodeElementId(iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        nextA.add(r.getOtherNodeId(nodeId));
+                        nextA.add(getNodeId(r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -155,11 +167,11 @@ public class Neighbors {
                 nextB.clear();
                 iterator = nextA.iterator();
                 while (iterator.hasNext()) {
-                    nodeId = iterator.next();
-                    node = tx.getNodeById(nodeId);
+                    nodeElementId = getNodeElementId(iterator.next());
+                    node = tx.getNodeByElementId(nodeElementId);
                     for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                         for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                            nextB.add(r.getOtherNodeId(nodeId));
+                            nextB.add(getNodeId(r.getOtherNode(node).getElementId()));
                         }
                     }
                 }
@@ -187,7 +199,8 @@ public class Neighbors {
         for(int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId(nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -195,17 +208,18 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId(r.getOtherNode(node).getElementId()));
             }
         }
 
         for(int i = 1; i < distance; i++) {
             iterator = seen[i-1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId(iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId(r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -217,7 +231,7 @@ public class Neighbors {
 
         return Arrays.stream(seen).map(x -> new NodeListResult(
                 StreamSupport.stream(Spliterators.spliteratorUnknownSize(x.iterator(), Spliterator.SORTED), false)
-                        .map(y -> tx.getNodeById((long) y))
+                        .map(y -> tx.getNodeByElementId(getNodeElementId(y)))
                         .collect(Collectors.toList())));
     }
 
@@ -232,7 +246,8 @@ public class Neighbors {
         for(int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId(nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -240,17 +255,19 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId(r.getOtherNode(node).getElementId()));
+
             }
         }
 
         for(int i = 1; i < distance; i++) {
             iterator = seen[i-1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId(iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId(r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -279,7 +296,8 @@ public class Neighbors {
         for(int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId(nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -287,17 +305,18 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId(r.getOtherNode(node).getElementId()));
             }
         }
 
         for(int i = 1; i < distance; i++) {
             iterator = seen[i-1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId(iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId(r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -308,7 +327,8 @@ public class Neighbors {
         }
 
         return StreamSupport
-                .stream(Spliterators.spliteratorUnknownSize(seen[distance.intValue() - 1].iterator(), Spliterator.SORTED), false).map(y -> new NodeResult(tx.getNodeById(y)));
+                .stream(Spliterators.spliteratorUnknownSize(seen[distance.intValue() - 1].iterator(), Spliterator.SORTED), false)
+                .map(y -> new NodeResult(tx.getNodeByElementId(getNodeElementId(y))));
     }
 
     @Procedure("apoc.neighbors.athop.count")
@@ -322,7 +342,8 @@ public class Neighbors {
         for (int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId(nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -330,17 +351,18 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId(r.getOtherNode(node).getElementId()));
             }
         }
 
         for (int i = 1; i < distance; i++) {
             iterator = seen[i - 1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId(iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId(r.getOtherNode(node).getElementId()));
                     }
                 }
             }
