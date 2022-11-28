@@ -15,12 +15,13 @@ public class MedianTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass
+    public static void setUp() {
         TestUtil.registerProcedure(db, Median.class);
     }
 
     @Test
-    public void testMedian() throws Exception {
+    public void testMedian() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.median(value) as p",
                 (row) -> {
                     assertEquals(null, row.get("p"));

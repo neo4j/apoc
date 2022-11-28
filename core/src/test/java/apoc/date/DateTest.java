@@ -51,46 +51,46 @@ public class DateTest {
 	private static final long SECONDS_PER_DAY = SECONDS_PER_HOUR * 24;
 
 	@BeforeClass
-	public static void sUp() throws Exception {
+	public static void sUp() {
 		TestUtil.registerProcedure(db, Date.class, TemporalProcedures.class);
 	}
 
-	@Test public void testToDays() throws Exception {
+	@Test public void testToDays() {
 		testCall(db,
 				"RETURN apoc.date.parse($date,'d') AS value",
 				map("date",testDateAsString),
 				row -> assertEquals(testDate.toInstant(), Instant.ofEpochSecond (SECONDS_PER_DAY * (long) row.get("value"))));
 	}
 
-	@Test public void testToHours() throws Exception {
+	@Test public void testToHours() {
 		testCall(db,
 				"RETURN apoc.date.parse($date,'h') AS value",
 				map("date",testDateAsString),
 				row -> assertEquals(testDate.toInstant(), Instant.ofEpochSecond (SECONDS_PER_HOUR * (long) row.get("value"))));
 	}
 
-	@Test public void testToMinutes() throws Exception {
+	@Test public void testToMinutes() {
 		testCall(db,
 				"RETURN apoc.date.parse($date,'m') AS value",
 				map("date",testDateAsString),
 				row -> assertEquals(testDate.toInstant(), Instant.ofEpochSecond (SECONDS_PER_MINUTE * (long) row.get("value"))));
 	}
 
-	@Test public void testToUnixtime() throws Exception {
+	@Test public void testToUnixtime() {
 		testCall(db,
 				"RETURN apoc.date.parse($date,'s') AS value",
 				map("date",epochAsString),
 				row -> assertEquals(Instant.EPOCH, Instant.ofEpochSecond((long) row.get("value"))));
 	}
 
-	@Test public void testToMillis() throws Exception {
+	@Test public void testToMillis() {
 		testCall(db,
 				"RETURN apoc.date.parse($date,'ms') AS value",
 				map("date",epochAsString),
 				row -> assertEquals(Instant.EPOCH, Instant.ofEpochMilli((long) row.get("value"))));
 	}
 
-	@Test public void testToUnixtimeWithCorrectFormat() throws Exception {
+	@Test public void testToUnixtimeWithCorrectFormat() {
 		String pattern = "MM/dd/yyyy HH:mm:ss";
 		SimpleDateFormat customFormat = formatInUtcZone(pattern);
 		String reference = customFormat.format(new java.util.Date(0L));
@@ -100,25 +100,25 @@ public class DateTest {
 				row -> assertEquals(Instant.EPOCH, Instant.ofEpochSecond((long) row.get("value"))));
 	}
 
-	@Test public void testToUnixtimeWithIncorrectPatternFormat() throws Exception {
+	@Test public void testToUnixtimeWithIncorrectPatternFormat() {
 		expected.expect(instanceOf(QueryExecutionException.class));
 		testCall(db,
 				"RETURN apoc.date.parse('12/12/1945 12:12:12','s','MM/dd/yyyy HH:mm:ss/neo4j') AS value",
 				row -> assertEquals(Instant.EPOCH, Instant.ofEpochSecond((long) row.get("value"))));
 	}
 
-	@Test public void testToUnixtimeWithNullInput() throws Exception {
+	@Test public void testToUnixtimeWithNullInput() {
 		testCall(db,
 				"RETURN apoc.date.parse(NULL,'s') AS value",
 				row -> assertNull(row.get("value")));
 	}
 
 	@Test 
-	public void testToUnixtimeWithEmptyInput() throws Exception {
+	public void testToUnixtimeWithEmptyInput() {
 		testCall(db, "RETURN apoc.date.parse(' ','s') AS value", row -> assertNull(row.get("value")));
 	}
 
-	@Test public void testFromUnixtime() throws Exception {
+	@Test public void testFromUnixtime() {
 		testCall(db,
 				"RETURN apoc.date.format(0,'s') AS value",
 				row -> {
@@ -130,34 +130,34 @@ public class DateTest {
 				});
 	}
 
-	@Test public void testFromUnixtimeWithNullInputReturnsNull() throws Exception {
+	@Test public void testFromUnixtimeWithNullInputReturnsNull() {
 		testCall(db,
 				"RETURN apoc.date.format(null,'s') AS value",
 				row -> assertEquals(null, row.get("value")));
 	}
 
-	@Test public void testParseAsZonedDateTimeWithCorrectFormat() throws Exception {
+	@Test public void testParseAsZonedDateTimeWithCorrectFormat() {
 		testCall(db,
 				"RETURN apoc.temporal.toZonedTemporal('03/23/1965 00:00:00','MM/dd/yyyy HH:mm:ss','America/New_York') AS value",
 				row -> assertEquals(ZonedDateTime.of(LocalDateTime.of(1965, 3, 23, 0, 0), ZoneId.of("America/New_York")),
 						row.get("value")));
 	}
 
-	@Test public void testParseAsZonedDateTimeWithDefaultTimezone() throws Exception {
+	@Test public void testParseAsZonedDateTimeWithDefaultTimezone() {
 		testCall(db,
 				"RETURN apoc.temporal.toZonedTemporal('03/23/1965 00:00:00','MM/dd/yyyy HH:mm:ss') AS value",
 				row -> assertEquals(ZonedDateTime.of(LocalDateTime.of(1965, 3, 23, 0, 0), ZoneId.of("UTC")),
 						row.get("value")));
 	}
 
-	@Test public void testParseAsZonedDateTimeWithDefaultFormatAndTimezone() throws Exception {
+	@Test public void testParseAsZonedDateTimeWithDefaultFormatAndTimezone() {
 		testCall(db,
 				"RETURN apoc.temporal.toZonedTemporal('1965-03-23 00:00:00') AS value",
 				row -> assertEquals(ZonedDateTime.of(LocalDateTime.of(1965, 3, 23, 0, 0), ZoneId.of("UTC")),
 						row.get("value")));
 	}
 
-	@Test public void testParseAsZonedDateTimeWithIncorrectPatternFormat() throws Exception {
+	@Test public void testParseAsZonedDateTimeWithIncorrectPatternFormat() {
 		expected.expect(instanceOf(QueryExecutionException.class));
 		testCall(db,
 				"RETURN apoc.temporal.toZonedTemporal('03/23/1965 00:00:00','MM/dd/yyyy HH:mm:ss/neo4j','America/New_York') AS value",
@@ -165,25 +165,25 @@ public class DateTest {
 						row.get("value")));
 	}
 
-	@Test public void testToZonedDateTimeWithNullInput() throws Exception {
+	@Test public void testToZonedDateTimeWithNullInput() {
 		testCall(db,
 				"RETURN apoc.temporal.toZonedTemporal(NULL) AS value",
 				row -> assertNull(row.get("value")));
 	}
 
-	@Test public void testToISO8601() throws Exception {
+	@Test public void testToISO8601() {
 		testCall(db,
 				"RETURN apoc.date.toISO8601(0) AS value",
 				row -> assertEquals("1970-01-01T00:00:00.000Z", row.get("value")));
 	}
 
-	@Test public void testFromISO8601() throws Exception {
+	@Test public void testFromISO8601() {
 		testCall(db,
 				"RETURN apoc.date.fromISO8601('1970-01-01T00:00:00.000Z') AS value",
 				row -> assertEquals(0L, row.get("value")));
 	}
 
-	@Test public void testFromUnixtimeWithCorrectFormat() throws Exception {
+	@Test public void testFromUnixtimeWithCorrectFormat() {
 		String pattern = "MM/dd/yyyy HH:mm:ss";
 		SimpleDateFormat customFormat = formatInUtcZone(pattern);
 		testCall(db,
@@ -198,7 +198,7 @@ public class DateTest {
 				});
 	}
 
-	@Test public void testFromUnixtimeWithCorrectFormatAndTimeZone() throws Exception {
+	@Test public void testFromUnixtimeWithCorrectFormatAndTimeZone() {
 		String pattern = "MM/dd/yyyy HH:mm:ss";
 		String timezone = "America/New_York";
 		SimpleDateFormat customFormat = formatInCustomTimeZone(pattern, timezone);
@@ -214,35 +214,35 @@ public class DateTest {
 				});
 	}
 
-	@Test public void testFromUnixtimeWithIncorrectPatternFormat() throws Exception {
+	@Test public void testFromUnixtimeWithIncorrectPatternFormat() {
 		expected.expect(instanceOf(QueryExecutionException.class));
 		testCall(db,
 				"RETURN apoc.date.format(0,'s','MM/dd/yyyy HH:mm:ss/neo4j') AS value",
 				row -> {});
 	}
 
-	@Test public void testFromUnixtimeWithIncorrectPatternFormatAndTimeZone() throws Exception {
+	@Test public void testFromUnixtimeWithIncorrectPatternFormatAndTimeZone() {
 		expected.expect(instanceOf(QueryExecutionException.class));
 		testCall(db,
 				"RETURN apoc.date.formatTimeZone(0,'s','MM/dd/yyyy HH:mm:ss/neo4j','Neo4j/Apoc') AS value",
 				row -> {});
 	}
 
-	@Test public void testFromUnixtimeWithNegativeInputDoesNotThrowException() throws Exception {
+	@Test public void testFromUnixtimeWithNegativeInputDoesNotThrowException() {
 		testCall(db, "RETURN apoc.date.format(-1,'s') AS value", row -> {});
 	}
 
-	@Test public void testWrongUnitDoesThrowException() throws Exception {
+	@Test public void testWrongUnitDoesThrowException() {
 		expected.expect(instanceOf(RuntimeException.class));
 		testCall(db, "RETURN apoc.date.format(-1,'wrong') AS value", row -> {});
 	}
 
-	@Test public void testWrongPatternDoesThrowException() throws Exception {
+	@Test public void testWrongPatternDoesThrowException() {
 		expected.expect(instanceOf(RuntimeException.class));
 		testCall(db, "RETURN apoc.date.format(-1,'s','aaaa-bb-cc') AS value", row -> {});
 	}
 
-	@Test public void testOrderByDate() throws Exception {
+	@Test public void testOrderByDate() {
 		SimpleDateFormat format = formatInUtcZone("yyyy-MM-dd HH:mm:ss");
 		try (Transaction tx = db.beginTx()) {
 			for (int i = 0 ; i < 8; i++) {
@@ -275,7 +275,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfields() throws Exception {
+	public void testfields() {
 		testCall(db,
 				"RETURN apoc.date.fields('2015-01-02 03:04:05') AS value",
 				row -> {
@@ -291,7 +291,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfieldsCustomFormat() throws Exception {
+	public void testfieldsCustomFormat() {
 		testCall(db,
 				"RETURN apoc.date.fields('2015-01-02 03:04:05 EET', 'yyyy-MM-dd HH:mm:ss zzz') AS m",
 				row -> {
@@ -339,7 +339,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfieldsNullInput() throws Exception {
+	public void testfieldsNullInput() {
 		testCall(db,
 				"RETURN apoc.date.fields(NULL, 'yyyy-MM-dd HH:mm:ss zzz') AS value",
 				row -> {
@@ -349,7 +349,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfield() throws Exception {
+	public void testfield() {
 		long epoch = LocalDateTime.of( 1982, 1, 23, 22, 30, 42 )
 				.atZone( ZoneId.of( "UTC" ) )
 				.toInstant()
@@ -360,7 +360,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfieldCustomField() throws Exception {
+	public void testfieldCustomField() {
 		long epoch = LocalDateTime.of( 1982, 1, 23, 22, 30 )
 				.atZone( ZoneId.of( "UTC" ) )
 				.toInstant()
@@ -371,7 +371,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfieldAll() throws Exception {
+	public void testfieldAll() {
 		long epoch = LocalDateTime.of(2015, 1, 2, 3, 4, 5)
 				.atZone(ZoneId.of("UTC"))
 				.toInstant()
@@ -395,31 +395,31 @@ public class DateTest {
 	}
 
 	@Test
-	public void testfieldNullInput() throws Exception {
+	public void testfieldNullInput() {
 		testCall(db,
 				"RETURN apoc.date.field(NULL) AS value",
 				row -> assertTrue(isNull(row.get("value"))));
 	}
 
 	@Test
-	public void testDateParserDifference() throws Exception {
+	public void testDateParserDifference() {
 		String dateDelta = "RETURN apoc.date.parse('2012-10-04','ms','yyyy-MM-dd') - apoc.date.parse('2012-10-04 00:00:00') as delta";
 		testCall(db, dateDelta, row -> assertTrue(3600*1000*24 > (long)row.get("delta")));
 	}
 
 	@Test
-	public void toYears() throws Exception {
+	public void toYears() {
 		testCall(db, "RETURN apoc.date.toYears('2012-10-04','YYYY-MM-dd') as years", row -> assertEquals(2012d, (double)row.get("years"),0.5d));
 		testCall(db, "RETURN apoc.date.toYears(apoc.date.parse('2012','ms','YYYY') - apoc.date.parse('2008','ms','YYYY')) as years", row -> assertEquals(4d, (double)row.get("years"),0.5d));
 	}
 
 	@Test
-	public void testGetTimezone() throws Exception {
+	public void testGetTimezone() {
 		testCall(db, "RETURN apoc.date.systemTimezone() as tz", row -> assertEquals(TimeZone.getDefault().getID(), row.get("tz").toString()));
 	}
 
 	@Test
-	public void testConvert() throws Exception {
+	public void testConvert() {
 		Long firstOf2017ms = 1483228800000l;
 		Long firstOf2017d = 17167l;
 		Map<String, Object> params = new HashMap<>();
@@ -428,7 +428,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testAdd() throws Exception {
+	public void testAdd() {
 		Long firstOf2017ms = 1483228800000l;
 		Long firstOf2017Plus5Daysms = 1483660800000l;
 		Map<String, Object> params = new HashMap<>();
@@ -437,7 +437,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testAddNegative() throws Exception {
+	public void testAddNegative() {
 		Long firstOf2017ms = 1483228800000l;
 		Long firstOf2017Minus5Daysms = 1482796800000l;
 		Map<String, Object> params = new HashMap<>();
@@ -446,7 +446,7 @@ public class DateTest {
 	}
 
 	@Test
-	public void testConvertFormats() throws Exception {
+	public void testConvertFormats() {
 		String rfcDateTime = "Tue, 14 May 2019 14:52:06 -0400";
 		String isoDateTime = "2019-05-14T14:52:06-04:00";
 		Map<String, Object> params = new HashMap<>();

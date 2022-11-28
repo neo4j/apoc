@@ -26,5 +26,5 @@ public enum SystemPropertyKeys  {
     // uuid handler
     label,
     addToSetLabel,
-    propertyName;
+    propertyName
 }

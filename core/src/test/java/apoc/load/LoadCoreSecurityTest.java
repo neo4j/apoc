@@ -51,7 +51,7 @@ public class LoadCoreSecurityTest {
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, import_folder);
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, LoadJson.class, Xml.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, false);
     }

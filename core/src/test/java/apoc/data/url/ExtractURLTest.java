@@ -22,7 +22,7 @@ public class ExtractURLTest {
     private static HashMap<String,Map<String,Object>> testCases;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, ExtractURL.class);
 
         // Test cases map URLs to an array of strings representing what their correct answers should

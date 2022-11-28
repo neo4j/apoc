@@ -25,7 +25,7 @@ public class ExactTest {
 	@ClassRule
 	public static DbmsRule db = new ImpermanentDbmsRule();
 
-	@BeforeClass public static void sUp() throws Exception {
+	@BeforeClass public static void sUp() {
 		TestUtil.registerProcedure(db, Exact.class);
 	}
 

@@ -39,7 +39,7 @@ SchemaIndexTest {
     private static final int lastPerson = 200;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, SchemaIndex.class);
         db.executeTransactionally("CREATE (city:City {name:'London'}) WITH city UNWIND range("+firstPerson+","+lastPerson+") as id CREATE (:Person {name:'name'+id, id:id, age:id % 100, address:id+'Main St.'})-[:LIVES_IN]->(city)");
         //
@@ -64,7 +64,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctPropertiesOnFirstIndex() throws Exception {
+    public void testDistinctPropertiesOnFirstIndex() {
         testCall(db,"CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", "Person","key", "name"),
                 (row) -> assertEquals(new HashSet<>(personNames), new HashSet<>((Collection<String>) row.get("value")))
@@ -72,7 +72,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctPropertiesOnSecondIndex() throws Exception {
+    public void testDistinctPropertiesOnSecondIndex() {
         testCall(db,"CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", "Person","key", "address"),
                 (row) -> assertEquals(new HashSet<>(personAddresses), new HashSet<>((Collection<String>) row.get("value")))
@@ -80,7 +80,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnFirstIndex() throws Exception {
+    public void testDistinctCountPropertiesOnFirstIndex() {
         String label = "Person";
         String key = "name";
         testResult(db,"CALL apoc.schema.properties.distinctCount($label, $key) YIELD label,key,value,count RETURN * ORDER BY value",
@@ -92,7 +92,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnSecondIndex() throws Exception {
+    public void testDistinctCountPropertiesOnSecondIndex() {
         String label = "Person";
         String key = "address";
         testResult(db,"CALL apoc.schema.properties.distinctCount($label, $key) YIELD label,key,value,count RETURN * ORDER BY value",
@@ -104,7 +104,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnEmptyLabel() throws Exception {
+    public void testDistinctCountPropertiesOnEmptyLabel() {
         String key = "name";
         testResult(db,"CALL apoc.schema.properties.distinctCount($label, $key) YIELD label,key,value,count RETURN * ORDER BY value",
                 map("label","","key",key),
@@ -115,7 +115,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnEmptyKey() throws Exception {
+    public void testDistinctCountPropertiesOnEmptyKey() {
         String label = "Person";
         testResult(db,"CALL apoc.schema.properties.distinctCount($label, $key) YIELD label,key,value,count RETURN * ORDER BY key,value",
                 map("label",label,"key",""),
@@ -129,7 +129,7 @@ SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnEmptyLabelAndEmptyKey() throws Exception {
+    public void testDistinctCountPropertiesOnEmptyLabelAndEmptyKey() {
         testResult(db,"CALL apoc.schema.properties.distinctCount($label, $key) YIELD label,key,value,count RETURN * ORDER BY label,key,value",
                 map("label","","key",""),
                 (result) -> {

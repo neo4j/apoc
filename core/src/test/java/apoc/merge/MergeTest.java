@@ -23,12 +23,12 @@ public class MergeTest {
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Merge.class);
     }
 
     @Test
-    public void testMergeNode() throws Exception {
+    public void testMergeNode() {
         testMergeNodeCommon(false);
     }
 
@@ -58,7 +58,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeWithPreExisting() throws Exception {
+    public void testMergeNodeWithPreExisting() {
         db.executeTransactionally("CREATE (p:Person{ssid:'123', name:'Jim'})");
         testCall(db, "CALL apoc.merge.node(['Person'],{ssid:'123'}, {name:'John'}) YIELD node RETURN node",
                 (row) -> {
@@ -74,7 +74,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeRelationships() throws Exception {
+    public void testMergeRelationships() {
         db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
 
         testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'KNOWS', {rid:123}, {since:'Thu'}, e) YIELD rel RETURN rel",
@@ -152,7 +152,7 @@ public class MergeTest {
 
 
     @Test
-    public void testMergeEagerNode() throws Exception {
+    public void testMergeEagerNode() {
         testMergeEagerCommon(false);
     }
     
@@ -181,7 +181,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerNodeWithOnCreate() throws Exception {
+    public void testMergeEagerNodeWithOnCreate() {
         testCall(db, "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'},{occupation:'juggler'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
@@ -194,7 +194,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerNodeWithOnMatch() throws Exception {
+    public void testMergeEagerNodeWithOnMatch() {
         db.executeTransactionally("CREATE (p:Person:Bastard {ssid:'123'})");
         testCall(db, "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'}, {occupation:'juggler'}) YIELD node RETURN node",
                 (row) -> {
@@ -208,7 +208,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerNodesWithOnMatchCanMergeOnMultipleMatches() throws Exception {
+    public void testMergeEagerNodesWithOnMatchCanMergeOnMultipleMatches() {
         db.executeTransactionally("UNWIND range(1,5) as index MERGE (:Person:`Bastard Man`{ssid:'123', index:index})");
 
         try (Transaction tx = db.beginTx()) {
@@ -229,7 +229,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerRelationships() throws Exception {
+    public void testMergeEagerRelationships() {
         testMergeRelsCommon(false);
     }
     
@@ -289,7 +289,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerRelationshipsWithOnMatch() throws Exception {
+    public void testMergeEagerRelationshipsWithOnMatch() {
         db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
 
         testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship.eager(s, 'KNOWS', {rid:123}, {since:'Thu'}, e,{until:'Saturday'}) YIELD rel RETURN rel",
@@ -311,7 +311,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerRelationshipsWithOnMatchCanMergeOnMultipleMatches() throws Exception {
+    public void testMergeEagerRelationshipsWithOnMatchCanMergeOnMultipleMatches() {
         db.executeTransactionally("CREATE (foo:Person{name:'Foo'}), (bar:Person{name:'Bar'}) WITH foo, bar UNWIND range(1,3) as index CREATE (foo)-[:KNOWS {rid:123}]->(bar)");
 
         try (Transaction tx = db.beginTx()) {

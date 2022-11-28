@@ -62,7 +62,7 @@ public class LoadJsonTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString("127.168.0.0/8")));
 
-	@Before public void setUp() throws Exception {
+	@Before public void setUp() {
 	    apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
 	    apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
 	    apocConfig().setProperty("apoc.json.zip.url", "https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true!person.json");
@@ -70,7 +70,7 @@ public class LoadJsonTest {
         TestUtil.registerProcedure(db, LoadJson.class);
     }
 
-    @Test public void testLoadJson() throws Exception {
+    @Test public void testLoadJson() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
@@ -86,7 +86,7 @@ public class LoadJsonTest {
                 this::commonAssertionsLoadJsonMulti);
     }
 
-    @Test public void testLoadMultiJson() throws Exception {
+    @Test public void testLoadMultiJson() {
         URL url = ClassLoader.getSystemResource("multi.json");
         testResult(db, "CALL apoc.load.json($url)",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 (result) -> {
@@ -106,7 +106,7 @@ public class LoadJsonTest {
         assertFalse(result.hasNext());
     }
     
-    @Test public void testLoadJsonFromBlockedIpRange() throws Exception {
+    @Test public void testLoadJsonFromBlockedIpRange() {
         var protocols = List.of("https", "http", "ftp");
 
         for (var protocol: protocols) {
@@ -120,19 +120,19 @@ public class LoadJsonTest {
             assertTrue(e.getMessage().contains("access to /127.168.0.0 is blocked via the configuration property internal.dbms.cypher_ip_blocklist"));
         }
     }
-    @Test public void testLoadMultiJsonPaths() throws Exception {
+    @Test public void testLoadMultiJsonPaths() {
 		URL url = ClassLoader.getSystemResource("multi.json");
 		testResult(db, "CALL apoc.load.json($url,'$')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 this::commonAssertionsLoadJsonMulti);
     }
-    @Test public void testLoadJsonPath() throws Exception {
+    @Test public void testLoadJsonPath() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.json($url,'$.foo')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
                     assertEquals(map("result",asList(1L,2L,3L)), row.get("value"));
                 });
     }
-    @Test public void testLoadJsonPathRoot() throws Exception {
+    @Test public void testLoadJsonPathRoot() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.json($url,'$')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
@@ -141,7 +141,7 @@ public class LoadJsonTest {
     }
     
     @Test
-    public void testLoadJsonWithPathOptions() throws Exception {
+    public void testLoadJsonWithPathOptions() {
         URL url = ClassLoader.getSystemResource("columns.json");
 
         // -- load.json
@@ -169,14 +169,14 @@ public class LoadJsonTest {
                 (res) -> assertEquals(List.of(EXPECTED_AS_PATH_LIST), Iterators.asList(res.columnAs("value"))));
     }
     
-    @Test public void testLoadJsonArrayPath() throws Exception {
+    @Test public void testLoadJsonArrayPath() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.jsonArray($url,'$.foo')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
                     assertEquals(asList(1L,2L,3L), row.get("value"));
                 });
     }
-    @Test public void testLoadJsonArrayPathRoot() throws Exception {
+    @Test public void testLoadJsonArrayPathRoot() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.jsonArray($url,'$')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
@@ -184,7 +184,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonStackOverflow() throws Exception {
+    @Test public void testLoadJsonStackOverflow() {
         String url = "https://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&tagged=neo4j&site=stackoverflow&filter=!5-i6Zw8Y)4W7vpy91PMYsKM-k9yzEsSC1_Uxlf";
         testCall(db, "CALL apoc.load.json($url)",map("url", url), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
@@ -196,7 +196,7 @@ public class LoadJsonTest {
     }
 
 
-    @Test public void testLoadJsonNoFailOnError() throws Exception {
+    @Test public void testLoadJsonNoFailOnError() {
         String url = "file.json";
         testResult(db, "CALL apoc.load.json($url,null, {failOnError:false})",map("url", url), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
@@ -204,7 +204,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonZip() throws Exception {
+    @Test public void testLoadJsonZip() {
         URL url = ClassLoader.getSystemResource("testload.zip");
         testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
                 (row) -> {
@@ -215,7 +215,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonTar() throws Exception {
+    @Test public void testLoadJsonTar() {
         URL url = ClassLoader.getSystemResource("testload.tar");
         testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
                 (row) -> {
@@ -226,7 +226,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonTarGz() throws Exception {
+    @Test public void testLoadJsonTarGz() {
         URL url = ClassLoader.getSystemResource("testload.tar.gz");
         testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
                 (row) -> {
@@ -237,7 +237,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonTgz() throws Exception {
+    @Test public void testLoadJsonTgz() {
         URL url = ClassLoader.getSystemResource("testload.tgz");
         testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
                 (row) -> {
@@ -292,7 +292,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonZipByUrlInConfigFile() throws Exception {
+    @Test public void testLoadJsonZipByUrlInConfigFile() {
         testCall(db, "CALL apoc.load.json($key)",map("key","zip"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
@@ -302,7 +302,7 @@ public class LoadJsonTest {
                 });
     }
 
-    @Test public void testLoadJsonByUrlInConfigFile() throws Exception {
+    @Test public void testLoadJsonByUrlInConfigFile() {
 
         testCall(db, "CALL apoc.load.json($key)",map("key","simpleJson"), // 'file:map.json' YIELD value RETURN value
                 (row) -> {
@@ -311,7 +311,7 @@ public class LoadJsonTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void testLoadJsonByUrlInConfigFileWrongKey() throws Exception {
+    public void testLoadJsonByUrlInConfigFileWrongKey() {
 
         try {
             testResult(db, "CALL apoc.load.json($key)",map("key","foo"), (r) -> r.hasNext());
@@ -386,7 +386,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonParams() throws Exception {
+    public void testLoadJsonParams() {
         new MockServerClient("localhost", 1080)
                 .when(
                         request()

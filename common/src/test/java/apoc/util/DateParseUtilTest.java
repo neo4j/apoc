@@ -22,7 +22,7 @@ public class DateParseUtilTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void dateParseErrorTest() throws Exception {
+    public void dateParseErrorTest() {
         try {
             dateParse("10/01/2010", LocalDateTime.class, parseList);
         } catch (Exception e) {

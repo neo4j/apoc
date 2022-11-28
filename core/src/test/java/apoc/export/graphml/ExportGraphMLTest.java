@@ -29,7 +29,6 @@ import org.xmlunit.util.Nodes;
 
 import javax.xml.namespace.QName;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -203,7 +202,7 @@ public class ExportGraphMLTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class);
 
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, Boolean.toString(!testName.getMethodName().endsWith(TEST_WITH_NO_EXPORT)));
@@ -459,7 +458,7 @@ public class ExportGraphMLTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void testImportGraphMLWithNoImportConfig() throws Exception {
+    public void testImportGraphMLWithNoImportConfig() {
         File output = new File(directory, "all.graphml");
         try {
             TestUtil.testCall(db, "CALL apoc.import.graphml($file,{readLabels:true})", map("file", output.getAbsolutePath()), (r) -> assertResults(output, r, "database"));
@@ -484,7 +483,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLNodeEdgeWithBinary() throws Exception {
+    public void testImportGraphMLNodeEdgeWithBinary() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         
         commonAssertionImportNodeEdge(null, "CALL apoc.import.graphml($file,{readLabels:true, compression: 'DEFLATE'})",
@@ -534,7 +533,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportDataGraphML() throws Exception {
+    public void testExportDataGraphML() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         db.executeTransactionally("CREATE (p:Person {name: 'Foo'})");
         db.executeTransactionally("CREATE (p:Person {name: 'Bar'})");
@@ -554,7 +553,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportAllGraphML() throws Exception {
+    public void testExportAllGraphML() {
         File output = new File(directory, "all.graphml");
         TestUtil.testCall(db, "CALL apoc.export.graphml.all($file,null)", map("file", output.getAbsolutePath()),
                 (r) -> assertResults(output, r, "database"));
@@ -607,7 +606,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphML() throws Exception {
+    public void testExportGraphGraphML() {
         File output = new File(directory, "graph.graphml");
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
                         "CALL apoc.export.graphml.graph(graph, $file,null) " +
@@ -648,7 +647,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLTypes() throws Exception {
+    public void testExportGraphGraphMLTypes() {
         File output = new File(directory, "graph.graphml");
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
                         "CALL apoc.export.graphml.graph(graph, $file,{useTypes:true}) " +
@@ -659,7 +658,7 @@ public class ExportGraphMLTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void testExportGraphGraphMLTypesWithNoExportConfig() throws Exception {
+    public void testExportGraphGraphMLTypesWithNoExportConfig() {
         File output = new File(directory, "all.graphml");
         try {
             TestUtil.testCall(db, "CALL apoc.export.graphml.all($file,null)", map("file", output.getAbsolutePath()), (r) -> assertResults(output, r, "database"));
@@ -713,7 +712,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephi() throws Exception {
+    public void testExportGraphGraphMLQueryGephi() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'gephi'}) ", map("file", output.getAbsolutePath()),
                 (r) -> {
@@ -732,7 +731,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaption() throws Exception {
+    public void testExportGraphGraphMLQueryGephiWithArrayCaption() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'gephi', caption: ['bar','name','foo']}) ", map("file", output.getAbsolutePath()),
                 (r) -> {
@@ -751,7 +750,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() throws Exception {
+    public void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'gephi', caption: ['c','d','e']}) ", map("file", output.getAbsolutePath()),
                 (r) -> {
@@ -770,7 +769,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportAllGraphMLTinker() throws Exception {
+    public void testExportAllGraphMLTinker() {
         File output = new File(directory, "all.graphml");
         TestUtil.testCall(db, "CALL apoc.export.graphml.all($file, {format:'tinkerpop'})", map("file", output.getAbsolutePath()),
                 (r) -> assertResults(output, r, "database"));
@@ -778,7 +777,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryTinkerPop() throws Exception {
+    public void testExportGraphGraphMLQueryTinkerPop() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'tinkerpop'}) ", map("file", output.getAbsolutePath()),
                 (r) -> {
@@ -797,7 +796,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryTinkerPopWithArrayCaption() throws Exception {
+    public void testExportGraphGraphMLQueryTinkerPopWithArrayCaption() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'tinkerpop', caption: ['bar','name','foo']}) ", map("file", output.getAbsolutePath()),
                 (r) -> {
@@ -816,7 +815,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryTinkerPopWithArrayCaptionWrong() throws Exception {
+    public void testExportGraphGraphMLQueryTinkerPopWithArrayCaptionWrong() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'tinkerpop', caption: ['c','d','e']}) ", map("file", output.getAbsolutePath()),
                 (r) -> {
@@ -835,7 +834,7 @@ public class ExportGraphMLTest {
     }
 
     @Test(expected = QueryExecutionException.class)
-    public void testExportGraphGraphMLQueryGephiWithStringCaption() throws Exception {
+    public void testExportGraphGraphMLQueryGephiWithStringCaption() {
         File output = new File(directory, "query.graphml");
         try {
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$file,{useTypes:true, format: 'gephi', caption: 'name'}) ", map("file", output.getAbsolutePath()),
@@ -849,7 +848,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphmlQueryWithStringCaptionCamelCase() throws FileNotFoundException {
+    public void testExportGraphmlQueryWithStringCaptionCamelCase() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE (f:Foo:Foo2:Foo0 {firstName:'foo'})-[:KNOWS]->(b:Bar {name:'bar',ageNow:42}),(c:Bar {age:12,values:[1,2,3]})");
         File output = new File(directory, "query.graphml");
@@ -895,7 +894,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportAllGraphMLStream() throws Exception {
+    public void testExportAllGraphMLStream() {
         TestUtil.testCall(db, "CALL apoc.export.graphml.all(null, {stream: true})",
                 (r) -> {
                     assertStreamResults(r, "database");

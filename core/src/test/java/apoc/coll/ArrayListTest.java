@@ -17,7 +17,7 @@ public class ArrayListTest {
 
 
     @Test
-    public void testEmptyList() throws Exception {
+    public void testEmptyList() {
         ArrayList list = new ArrayList(EMPTY_SET);
         assertEquals(0,list.size());
         assertEquals(true,list.isEmpty());
@@ -29,7 +29,7 @@ public class ArrayListTest {
         assertEquals(0, it.nextIndex());
     }
     @Test
-    public void testSingleList() throws Exception {
+    public void testSingleList() {
         ArrayList list = new ArrayList(singleton(1));
         assertEquals(1,list.size());
         assertEquals(false,list.isEmpty());
@@ -52,7 +52,7 @@ public class ArrayListTest {
 
 
     @Test
-    public void testDoubleList() throws Exception {
+    public void testDoubleList() {
         ArrayList list = new ArrayList(new LinkedHashSet<>(asList(1,2)));
         assertEquals(2,list.size());
         assertEquals(false,list.isEmpty());
@@ -86,7 +86,7 @@ public class ArrayListTest {
     }
 
     @Test
-    public void testReverse() throws Exception {
+    public void testReverse() {
         LinkedHashSet set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
         ArrayList list = new ArrayList(set);
         assertEquals(asList(1,2,3,4,5),list);
@@ -97,15 +97,5 @@ public class ArrayListTest {
         while (it.hasPrevious()) { result.add(it.previous()); }
 
         assertEquals(asList(5,4,3,2,1),result);
-    }
-
-    @Test
-    public void testListIterator() throws Exception {
-
-    }
-
-    @Test
-    public void testContains() throws Exception {
-
     }
 }

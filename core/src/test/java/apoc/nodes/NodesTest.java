@@ -57,12 +57,12 @@ public class NodesTest {
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"));
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Nodes.class, Create.class);
     }
 
     @Test
-    public void isDense() throws Exception {
+    public void isDense() {
         db.executeTransactionally("CREATE (f:Foo) CREATE (b:Bar) WITH f UNWIND range(1,100) as id CREATE (f)-[:SELF]->(f)");
 
         TestUtil.testCall(db, "MATCH (n) WITH n, apoc.nodes.isDense(n) as dense " +
@@ -199,7 +199,7 @@ public class NodesTest {
     }
 
     @Test
-    public void link() throws Exception {
+    public void link() {
         db.executeTransactionally("UNWIND range(1,10) as id CREATE (n:Foo {id:id}) WITH collect(n) as nodes call apoc.nodes.link(nodes,'BAR') RETURN size(nodes) as len");
 
         long len = TestUtil.singleResultFirstColumn( db,"MATCH (n:Foo {id:1})-[r:BAR*9]->() RETURN size(r) as len");
@@ -221,7 +221,7 @@ public class NodesTest {
     }
 
     @Test
-    public void delete() throws Exception {
+    public void delete() {
         db.executeTransactionally("UNWIND range(1,100) as id CREATE (n:Foo {id:id})-[:X]->(n)");
 
         long count = TestUtil.singleResultFirstColumn(db, "MATCH (n:Foo) WITH collect(n) as nodes call apoc.nodes.delete(nodes,1) YIELD value as count RETURN count");
@@ -232,7 +232,7 @@ public class NodesTest {
     }
 
     @Test
-    public void types() throws Exception {
+    public void types() {
         db.executeTransactionally("CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(f) CREATE (f)-[:X]->(f)");
         TestUtil.testCall(db, "MATCH (n:Foo) RETURN apoc.node.relationship.types(n) AS value", (r) -> assertEquals(asSet("X","Y"), asSet(((List)r.get("value")).toArray())));
         TestUtil.testCall(db, "MATCH (n:Foo) RETURN apoc.node.relationship.types(n,'X') AS value", (r) -> assertEquals(asList("X"), r.get("value")));
@@ -242,7 +242,7 @@ public class NodesTest {
     }
 
     @Test
-    public void nodesTypes() throws Exception {
+    public void nodesTypes() {
         // given
         db.executeTransactionally("CREATE (f:Foo), (f)-[:Y]->(f), (f)-[:X]->(f)");
         db.executeTransactionally("CREATE (f:Bar), (f)-[:YY]->(f), (f)-[:XX]->(f)");
@@ -266,7 +266,7 @@ public class NodesTest {
     }
 
     @Test
-    public void nodesHasRelationship() throws Exception {
+    public void nodesHasRelationship() {
         // given
         db.executeTransactionally("CREATE (f:Foo), (f)-[:X]->(f)");
         db.executeTransactionally("CREATE (b:Bar), (b)-[:Y]->(b)");
@@ -295,7 +295,7 @@ public class NodesTest {
 
 
     @Test
-    public void hasRelationhip() throws Exception {
+    public void hasRelationhip() {
         db.executeTransactionally("CREATE (:Foo)-[:Y]->(:Bar),(n:FooBar) WITH n UNWIND range(1,100) as _ CREATE (n)-[:X]->(n)");
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationship.exists(n,'Y') AS value",(r)-> assertEquals(true,r.get("value")));
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationship.exists(n,'Y>') AS value", (r)-> assertEquals(true,r.get("value")));
@@ -314,7 +314,7 @@ public class NodesTest {
     }
 
     @Test
-    public void hasRelationhips() throws Exception {
+    public void hasRelationhips() {
         db.executeTransactionally("CREATE (:Foo)-[:Y]->(:Bar),(n:FooBar) WITH n UNWIND range(1,100) as _ CREATE (n)-[:X]->(n)");
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationships.exist(n,'Y') AS value",(r)-> assertEquals(map("Y",true),r.get("value")));
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationships.exist(n,'Y>') AS value", (r)-> assertEquals(map("Y>",true),r.get("value")));
@@ -333,7 +333,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testConnected() throws Exception {
+    public void testConnected() {
         db.executeTransactionally("CREATE (st:StartThin),(et:EndThin),(ed:EndDense)");
         int relCount = 20;
         for (int rel=0;rel<relCount;rel++) {

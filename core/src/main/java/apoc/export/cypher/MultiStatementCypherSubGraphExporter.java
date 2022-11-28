@@ -31,32 +31,6 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
  */
 public class MultiStatementCypherSubGraphExporter {
 
-    /*private enum IndexType {
-        NODE_LABEL_PROPERTY("node_label_property"),
-        NODE_UNIQUE_PROPERTY("node_unique_property"),
-        REL_TYPE_PROPERTY("relationship_type_property"),
-        NODE_FULLTEXT("node_fulltext"),
-        RELATIONSHIP_FULLTEXT("relationship_fulltext");
-
-        private final String typeName;
-
-        IndexType(String typeName) {
-            this.typeName = typeName;
-        }
-
-        static IndexType from(String type, String entityType, String uniqueness) {
-            if (uniqueness.equals("UNIQUE") && entityType.equals("NODE")) {
-                return NODE_UNIQUE_PROPERTY
-            }
-
-            return Stream.of(IndexType.values()).filter(type -> type.typeName().equals(stringType)).findFirst().orElseThrow();
-        }
-
-        public String typeName() {
-            return typeName;
-        }
-    }*/
-
     private final SubGraph graph;
     private final Map<String, Set<String>> uniqueConstraints = new HashMap<>();
     private Set<String> indexNames        = new LinkedHashSet<>();

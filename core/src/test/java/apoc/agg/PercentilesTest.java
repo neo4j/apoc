@@ -19,12 +19,12 @@ public class PercentilesTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass public static void setUp() {
         TestUtil.registerProcedure(db, Percentiles.class);
     }
 
     @Test
-    public void testPercentiles() throws Exception {
+    public void testPercentiles() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.percentiles(value) as p",
                 (row) -> {
                     assertEquals(asList(null,null,null,null,null,null), row.get("p"));
@@ -43,7 +43,7 @@ public class PercentilesTest {
                 });
     }
     @Test
-    public void testPercentilesDoubles() throws Exception {
+    public void testPercentilesDoubles() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.percentiles(value) as p",
                 (row) -> {
                     assertEquals(asList(null,null,null,null,null,null), row.get("p"));

@@ -25,13 +25,13 @@ public class GraphAggregationTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass public static void setUp() {
         TestUtil.registerProcedure(db, Graph.class);
         db.executeTransactionally("CREATE (a:A {id:'a'})-[:AB {id:'ab'}]->(b:B {id:'b'})-[:BC {id:'bc'}]->(c:C {id:'c'}),(a)-[:AC {id:'ac'}]->(c)");
     }
 
     @Test
-    public void testGraph() throws Exception {
+    public void testGraph() {
         Map<String, Entity> pcs = db.executeTransactionally("MATCH (n) RETURN n.id as id, n UNION ALL MATCH ()-[n]->() RETURN n.id as id, n", Collections.emptyMap(),
                 result -> result.stream().collect(Collectors.toMap(row -> row.get("id").toString(), row -> (Entity) row.get("n"))));
 

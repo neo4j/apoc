@@ -26,12 +26,12 @@ public class NumbersTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void sUp() throws Exception {
+    public static void sUp() {
         TestUtil.registerProcedure(db, Numbers.class);
     }
 
     @Test
-    public void testFormat() throws Exception {
+    public void testFormat() {
         testCall(db, "RETURN apoc.number.format(12345) AS value", row -> assertEquals("12,345", row.get("value")));
         testCall(db, "RETURN apoc.number.format('aaa') AS value", row -> assertEquals(null, row.get("value")));
         testCall(db, "RETURN apoc.number.format(12345, '', 'it') AS value", row -> assertEquals("12.345", row.get("value")));
@@ -45,7 +45,7 @@ public class NumbersTest {
     }
 
     @Test
-    public void testParseInt() throws Exception {
+    public void testParseInt() {
         testCall(db, "RETURN apoc.number.parseInt('12,345') AS value", row -> assertEquals(new Long(12345), row.get("value")));
         testCall(db, "RETURN apoc.number.parseInt('12.345', '' ,'it') AS value", row -> assertEquals(new Long(12345), row.get("value")));
         testCall(db, "RETURN apoc.number.parseInt('12,345', '#,##0.00;(#,##0.00)') AS value", row -> assertEquals(new Long(12345), row.get("value")));
@@ -57,7 +57,7 @@ public class NumbersTest {
     // Parse Double
 
     @Test
-    public void testParseFloat() throws Exception {
+    public void testParseFloat() {
         testCall(db, "RETURN apoc.number.parseFloat('12,345.67') AS value", row -> assertEquals(new Double(12345.67), row.get("value")));
         testCall(db, "RETURN apoc.number.parseFloat('12.345,67', '', 'it') AS value", row -> assertEquals(new Double(12345.67), row.get("value")));
         testCall(db, "RETURN apoc.number.parseFloat('12,345.67', '#,##0.00;(#,##0.00)') AS value", row -> assertEquals(new Double(12345.67), row.get("value")));

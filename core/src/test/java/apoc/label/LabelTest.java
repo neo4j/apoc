@@ -16,12 +16,12 @@ public class LabelTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, Label.class);
     }
 
     @Test
-    public void testVerifyNodeLabelExistence() throws Exception {
+    public void testVerifyNodeLabelExistence() {
 
         db.executeTransactionally("create (a:Person{name:'Foo'})");
 
@@ -36,7 +36,7 @@ public class LabelTest {
     }
 
     @Test
-    public void testVerifyRelTypeExistence() throws Exception {
+    public void testVerifyRelTypeExistence() {
 
         db.executeTransactionally("create (a:Person{name:'Foo'}), (b:Person{name:'Bar'}), (a)-[:LOVE{since:2010}]->(b)");
 

@@ -108,7 +108,7 @@ public class SpatialTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Date.class);
         TestUtil.registerProcedure(db, MockGeocode.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
@@ -275,7 +275,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testAllTheThings() throws Exception {
+    public void testAllTheThings() {
         String query = "WITH apoc.date.parse('2016-06-01 00:00:00','h') as due_date,\n" +
                 "     point({latitude: 48.8582532, longitude: 2.294287}) as eiffel\n" +
                 "MATCH (e:Event)\n" +

@@ -19,12 +19,12 @@ public class ExamplesTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db,Examples.class);
     }
 
     @Test
-    public void testMovies() throws Exception {
+    public void testMovies() {
         TestUtil.testCall(db,"CALL apoc.example.movies", r -> {
             assertEquals("movies.cypher",r.get("file"));
             assertEquals(169L,r.get("nodes"));

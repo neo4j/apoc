@@ -60,7 +60,7 @@ public abstract class ExternalResource implements TestRule
      *
      * @throws Throwable if setup fails (which will disable {@code after}
      */
-    protected void before() throws Throwable
+    protected void before()
     {
         // do nothing
     }
@@ -68,7 +68,7 @@ public abstract class ExternalResource implements TestRule
     /**
      * Override to tear down your specific external resource.
      */
-    protected void after( boolean successful ) throws Throwable
+    protected void after( boolean successful )
     {
         // do nothing
     }

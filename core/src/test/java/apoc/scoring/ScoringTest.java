@@ -19,18 +19,18 @@ public class ScoringTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db,Scoring.class);
     }
 
     @Test
-    public void existence() throws Exception {
+    public void existence() {
         TestUtil.testCall(db, "RETURN apoc.scoring.existence(10,true) as score", (row) -> assertEquals(10D,row.get("score")));
         TestUtil.testCall(db, "RETURN apoc.scoring.existence(10,false) as score", (row) -> assertEquals(0D,row.get("score")));
     }
 
     @Test
-    public void pareto() throws Exception {
+    public void pareto() {
         TestUtil.testResult(db, "UNWIND [0,1,2,8,10,100] as value RETURN value, apoc.scoring.pareto(2,8,10,value) as score", (r) -> {
             assertEquals(0d,r.next().get("score"));
             assertEquals(0d,r.next().get("score"));

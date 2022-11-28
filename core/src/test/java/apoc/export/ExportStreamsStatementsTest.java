@@ -25,8 +25,7 @@ public class ExportStreamsStatementsTest {
             .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false);
 
     @BeforeClass
-    public static void setUp() throws Exception {
-        //apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
+    public static void setUp() {
         TestUtil.registerProcedure(db, ExportCSV.class, ExportCypher.class, ExportJson.class);
         db.executeTransactionally("CREATE (f:User:Customer {name:'Foo', age:42})-[:BOUGHT]->(b:Product {name:'Apple Watch Series 4'})");
     }

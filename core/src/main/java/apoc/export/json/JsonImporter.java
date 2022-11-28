@@ -12,7 +12,6 @@ import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.PointValue;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -352,7 +351,7 @@ public class JsonImporter implements Closeable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         flush();
         reporter.done();
     }

@@ -34,7 +34,7 @@ public class UtilTest {
     private static Node node;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, Utils.class);
         try (Transaction tx = db.beginTx()) {
             node = tx.createNode(Label.label("User"));
@@ -44,14 +44,14 @@ public class UtilTest {
     }
 
     @Test
-    public void testSubMap() throws Exception {
+    public void testSubMap() {
         assertEquals(map("b","c"),Util.subMap(map("a.b","c"),"a"));
         assertEquals(map("b","c"),Util.subMap(map("a.b","c"),"a."));
         assertEquals(map(),Util.subMap(map("a.b","c"),"x"));
     }
 
     @Test
-    public void testPartitionList() throws Exception {
+    public void testPartitionList() {
         List list = asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
         assertEquals(1,Util.partitionSubList(list,0).count());
         assertEquals(1,Util.partitionSubList(list,1).count());
@@ -69,7 +69,7 @@ public class UtilTest {
     }
 
     @Test
-    public void cleanPassword() throws Exception {
+    public void cleanPassword() {
         String url = "http://%slocalhost:7474/path?query#ref";
         assertEquals(format(url,""), Util.cleanUrl(format(url, "user:pass@")));
     }

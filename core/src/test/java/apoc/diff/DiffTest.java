@@ -31,7 +31,7 @@ public class DiffTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void setup() throws Exception {
+    public static void setup() {
         TestUtil.registerProcedure(db, Diff.class, Create.class);
 
         try (Transaction tx = db.beginTx()) {

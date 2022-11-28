@@ -25,7 +25,7 @@ public class RelSequenceTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         String movies = Util.readResourceFile("movies.cypher");
         String additionalLink = "match (p:Person{name:'Nora Ephron'}), (m:Movie{title:'When Harry Met Sally'}) create (p)-[:ACTED_IN]->(m)";
@@ -37,7 +37,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testBasicRelSequence() throws Throwable {
+    public void testBasicRelSequence() {
         String query = "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
             List<String> expectedNames = new ArrayList<>(Arrays.asList("Robert Zemeckis", "Mike Nichols", "Ron Howard", "Frank Darabont", "Tom Tykwer", "Andy Wachowski", "Lana Wachowski", "Tom Hanks", "John Patrick Stanley", "Nora Ephron", "Penny Marshall", "Rob Reiner"));
@@ -48,7 +48,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWithMinLevel() throws Throwable {
+    public void testRelSequenceWithMinLevel() {
         String query = "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie', minLevel:3}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
             List<String> expectedNames = new ArrayList<>(Arrays.asList("Robert Zemeckis", "Mike Nichols", "Ron Howard", "Frank Darabont", "Tom Tykwer", "Andy Wachowski", "Lana Wachowski", "John Patrick Stanley", "Nora Ephron", "Penny Marshall", "Rob Reiner"));
@@ -59,7 +59,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWithMaxLevel() throws Throwable {
+    public void testRelSequenceWithMaxLevel() {
         String query = "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie', maxLevel:2}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
             List<String> expectedNames = new ArrayList<>(Arrays.asList("Robert Zemeckis", "Mike Nichols", "Ron Howard", "Frank Darabont", "Tom Tykwer", "Andy Wachowski", "Lana Wachowski", "John Patrick Stanley", "Nora Ephron", "Penny Marshall", "Tom Hanks"));
@@ -70,7 +70,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWhenNotBeginningAtStart() throws Throwable {
+    public void testRelSequenceWhenNotBeginningAtStart() {
         String query = "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED,ACTED_IN>', labelFilter:'Movie,>Person', beginSequenceAtStart:false}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
             List<String> expectedNames = new ArrayList<>(Arrays.asList("Robert Zemeckis", "Mike Nichols", "Ron Howard", "Frank Darabont", "Tom Tykwer", "Andy Wachowski", "Lana Wachowski", "Tom Hanks", "John Patrick Stanley", "Nora Ephron", "Penny Marshall", "Rob Reiner"));

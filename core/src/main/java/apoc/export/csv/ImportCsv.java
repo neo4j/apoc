@@ -36,7 +36,7 @@ public class ImportCsv {
             @Name("nodes") List<Map<String, Object>> nodes,
             @Name("rels") List<Map<String, Object>> relationships,
             @Name("config") Map<String, Object> config
-    ) throws Exception {
+    ) {
         ProgressInfo result =
                 Util.inThread(pools, () -> {
 

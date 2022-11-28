@@ -21,48 +21,43 @@ public class TemporalProceduresTest
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass
+    public static void setUp() {
         TestUtil.registerProcedure(db, TemporalProcedures.class);
     }
 
     @Test
-    public void shouldFormatDate() throws Throwable
-    {
+    public void shouldFormatDate() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), \"yyyy-MM-dd\" ) as output");
         assertEquals("2018-12-10", output);
     }
 
     @Test
-    public void shouldFormatDateTime() throws Throwable
-    {
+    public void shouldFormatDateTime() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( datetime( { year: 2018, month: 12, day: 10, hour: 12, minute: 34, second: 56, nanosecond: 123456789 } ), \"yyyy-MM-dd'T'HH:mm:ss.SSSS\" ) as output");
         assertEquals("2018-12-10T12:34:56.1234", output);
     }
 
     @Test
-    public void shouldFormatLocalDateTime() throws Throwable
-    {
+    public void shouldFormatLocalDateTime() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( localdatetime( { year: 2018, month: 12, day: 10, hour: 12, minute: 34, second: 56, nanosecond: 123456789 } ), \"yyyy-MM-dd'T'HH:mm:ss.SSSS\" ) as output");
         assertEquals("2018-12-10T12:34:56.1234", output);
     }
 
     @Test
-    public void shouldFormatTime() throws Throwable
-    {
+    public void shouldFormatTime() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( time( { hour: 12, minute: 34, second: 56, nanosecond: 123456789, timezone: 'GMT' } ), \"HH:mm:ss.SSSSZ\" ) as output");
         assertEquals("12:34:56.1234+0000", output);
     }
 
     @Test
-    public void shouldFormatLocalTime() throws Throwable
-    {
+    public void shouldFormatLocalTime() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( localtime( { hour: 12, minute: 34, second: 56, nanosecond: 123456789 } ), \"HH:mm:ss.SSSS\" ) as output");
         assertEquals("12:34:56.1234", output);
     }
 
     @Test
-    public void shouldFormatDuration() throws Throwable
-    {
+    public void shouldFormatDuration() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( duration('P0M0DT4820.487660000S'), \"HH:mm:ss.SSSS\" ) as output");
         assertEquals("01:20:20.4876", output);
     }
@@ -99,77 +94,68 @@ public class TemporalProceduresTest
     }
 
     @Test
-    public void shouldFormatDurationTemporal() throws Throwable
-    {
+    public void shouldFormatDurationTemporal() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.formatDuration( duration('P0M0DT4820.487660000S'), \"HH:mm:ss\" ) as output");
         assertEquals("01:20:20", output);
     }
 
     @Test
-    public void shouldFormatDurationTemporalISO() throws Throwable
-    {
+    public void shouldFormatDurationTemporalISO() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.formatDuration( duration('P0M0DT4820.487660000S'), \"ISO_DATE_TIME\" ) as output");
         assertEquals("0000-00-00T01:20:20.48766", output);
     }
 
     @Test
-    public void shouldFormatIsoDate() throws Throwable
-    {
+    public void shouldFormatIsoDate() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'ISO_DATE' ) as output");
         assertEquals("2018-12-10", output);
     }
 
     @Test
-    public void shouldFormatIsoLocalDateTime() throws Throwable
-    {
+    public void shouldFormatIsoLocalDateTime() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( localdatetime( { year: 2018, month: 12, day: 10, hour: 12, minute: 34, second: 56, nanosecond: 123456789 } ), 'ISO_LOCAL_DATE_TIME' ) as output");
         assertEquals("2018-12-10T12:34:56.123456789", output);
     }
 
     @Test
-    public void shouldReturnTheDateWithDefault() throws Throwable
-    {
+    public void shouldReturnTheDateWithDefault() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( localdatetime( { year: 2018, month: 12, day: 10, hour: 12, minute: 34, second: 56, nanosecond: 123456789 } )) as output");
         assertEquals("2018-12-10", output);
     }
 
     @Test
-    public void shouldReturnTheDateWithDefaultElastic() throws Throwable
-    {
+    public void shouldReturnTheDateWithDefaultElastic() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( localdatetime( { year: 2018, month: 12, day: 10, hour: 12, minute: 34, second: 56, nanosecond: 123456789 } ), 'DATE_HOUR_MINUTE_SECOND_FRACTION') as output");
         assertEquals("2018-12-10T12:34:56.123", output);
     }
 
     @Test
-    public void shouldFormatIsoDateWeek() throws Throwable
-    {
+    public void shouldFormatIsoDateWeek() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'date' ) as output");
         assertEquals("2018-12-10", output);
     }
 
     @Test
-    public void shouldFormatIsoYear() throws Throwable
-    {
+    public void shouldFormatIsoYear() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'date' ) as output");
         assertEquals("2018-12-10", output);
     }
 
     @Test
-    public void shouldFormatIsoOrdinalDate() throws Throwable
-    {
+    public void shouldFormatIsoOrdinalDate() {
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'ordinal_date' ) as output");
         assertEquals("2018-344", output);
     }
 
     @Test
-    public void shouldFormatIsoDateWeekError(){
+    public void shouldFormatIsoDateWeekError() {
     expected.expect(instanceOf(RuntimeException.class));
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'WRONG_FORMAT' ) as output");
         assertEquals("2018-12-10", output);
     }
 
     @Test
-    public void shouldFormatDurationIsoDateWeekError(){
+    public void shouldFormatDurationIsoDateWeekError() {
         expected.expect(instanceOf(RuntimeException.class));
         String output = TestUtil.singleResultFirstColumn(db, "RETURN apoc.temporal.formatDuration( date( { year: 2018, month: 12, day: 10 } ), 'wrongDuration' ) as output");
         assertEquals("2018-12-10", output);

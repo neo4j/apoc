@@ -41,7 +41,7 @@ public class Help {
 
     @Procedure("apoc.help")
     @Description("Returns descriptions of the available APOC procedures and functions.")
-    public Stream<HelpResult> info(@Name("proc") String name) throws Exception {
+    public Stream<HelpResult> info(@Name("proc") String name) {
         boolean searchText = false;
         if (name != null) {
             name = name.trim();

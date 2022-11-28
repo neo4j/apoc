@@ -46,7 +46,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -70,7 +69,7 @@ public class Schemas {
     @Procedure(name = "apoc.schema.assert", mode = Mode.SCHEMA)
     @Description("Drops all other existing indexes and constraints when `dropExisting` is `true` (default is `true`).\n" +
             "Asserts at the end of the operation that the given indexes and unique constraints are there.")
-    public Stream<AssertSchemaResult> schemaAssert(@Name("indexes") Map<String, List<Object>> indexes, @Name("constraints") Map<String, List<Object>> constraints, @Name(value = "dropExisting", defaultValue = "true") boolean dropExisting) throws ExecutionException, InterruptedException {
+    public Stream<AssertSchemaResult> schemaAssert(@Name("indexes") Map<String, List<Object>> indexes, @Name("constraints") Map<String, List<Object>> constraints, @Name(value = "dropExisting", defaultValue = "true") boolean dropExisting) {
         return Stream.concat(
                 assertIndexes(indexes, dropExisting).stream(),
                 assertConstraints(constraints, dropExisting).stream());
@@ -79,7 +78,7 @@ public class Schemas {
     @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
     @Description("Returns all indexes and constraints information for all node labels in the database.\n" +
             "It is possible to define a set of labels to include or exclude in the config parameters.")
-    public Stream<IndexConstraintNodeInfo> nodes(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) throws IndexNotFoundKernelException {
+    public Stream<IndexConstraintNodeInfo> nodes(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         return indexesAndConstraintsForNode(config);
     }
 
@@ -114,7 +113,7 @@ public class Schemas {
         return constraintsExistsForRelationship(type, propertyNames);
     }
 
-    public List<AssertSchemaResult> assertConstraints(Map<String, List<Object>> constraints0, boolean dropExisting) throws ExecutionException, InterruptedException {
+    public List<AssertSchemaResult> assertConstraints(Map<String, List<Object>> constraints0, boolean dropExisting) {
         Map<String, List<Object>> constraints = copyMapOfObjects(constraints0);
         List<AssertSchemaResult> result = new ArrayList<>(constraints.size());
         Schema schema = tx.schema();
@@ -172,7 +171,7 @@ public class Schemas {
         return new AssertSchemaResult(lbl, key).unique().created();
     }
 
-    public List<AssertSchemaResult> assertIndexes(Map<String, List<Object>> indexes0, boolean dropExisting) throws ExecutionException, InterruptedException, IllegalArgumentException {
+    public List<AssertSchemaResult> assertIndexes(Map<String, List<Object>> indexes0, boolean dropExisting) throws IllegalArgumentException {
         Schema schema = tx.schema();
         Map<String, List<Object>> indexes = copyMapOfObjects(indexes0);
         List<AssertSchemaResult> result = new ArrayList<>(indexes.size());

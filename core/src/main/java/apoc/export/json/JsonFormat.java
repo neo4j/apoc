@@ -40,7 +40,7 @@ public class JsonFormat implements Format {
     }
 
     @Override
-    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) throws Exception {
+    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) {
         return null;
     }
 

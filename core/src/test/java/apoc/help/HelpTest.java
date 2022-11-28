@@ -22,12 +22,12 @@ public class HelpTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Help.class, BitwiseOperations.class,Coll.class);
     }
 
     @Test
-    public void info() throws Exception {
+    public void info() {
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","bitwise"), (row) -> {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.bitwise.op",row.get("name"));

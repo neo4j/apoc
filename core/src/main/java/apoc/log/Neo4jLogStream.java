@@ -75,7 +75,7 @@ public class Neo4jLogStream {
 
             // Useful for tailing logfiles.
             if(config.containsKey("last")) {
-                return entries.sorted(Collections.reverseOrder()).limit(new Double(config.get("last").toString()).longValue());
+                return entries.sorted(Collections.reverseOrder()).limit(Double.valueOf(config.get("last").toString()).longValue());
             }
 
             return entries;

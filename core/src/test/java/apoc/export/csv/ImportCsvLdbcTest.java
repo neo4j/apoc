@@ -133,7 +133,7 @@ public class ImportCsvLdbcTest {
     }
 
     @Test
-    public void testLdbc() throws Exception {
+    public void testLdbc() {
         final List<Map<String, Object>> nodes = new ArrayList<>();
         for (final Map.Entry<String, List<String>> nodeCsv : nodeCsvTypes.entrySet()) {
             final String fileName = nodeCsv.getKey();

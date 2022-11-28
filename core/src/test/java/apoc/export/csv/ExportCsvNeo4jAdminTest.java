@@ -88,7 +88,7 @@ public class ExportCsvNeo4jAdminTest {
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
         db.executeTransactionally("CREATE (f:User1:User {name:'foo',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
@@ -142,7 +142,7 @@ public class ExportCsvNeo4jAdminTest {
     }
 
     @Test
-    public void testExportGraphNeo4jAdminCsv() throws Exception {
+    public void testExportGraphNeo4jAdminCsv() {
         String fileName = "graph.csv";
         File output = new File(directory, fileName);
         String separator = ";";
@@ -204,7 +204,7 @@ public class ExportCsvNeo4jAdminTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testCypherExportCsvForAdminNeo4jImportExceptionBulk() throws Exception {
+    public void testCypherExportCsvForAdminNeo4jImportExceptionBulk() {
         String fileName = "query_nodes.csv";
         try {
             TestUtil.testCall(db, "CALL apoc.export.csv.query('MATCH (n) return (n)',$fileName,{bulkImport: true})",
@@ -228,7 +228,7 @@ public class ExportCsvNeo4jAdminTest {
     }
 
     @Test
-    public void testExportCypherWithIdField() throws Exception {
+    public void testExportCypherWithIdField() {
         // given
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         final Map<String, Object> map = db.executeTransactionally("CREATE (source:User:Larus{id: 1, name: 'Andrea'})-[:KNOWS{id: 10}]->(target:User:Neo4j{id: 2, name: 'Michael'})\n" +

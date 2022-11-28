@@ -58,7 +58,7 @@ public class CsvFormat implements Format {
     }
 
     @Override
-    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) throws Exception {
+    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) {
         return null;
     }
 
@@ -113,7 +113,7 @@ public class CsvFormat implements Format {
     }
 
     public ProgressInfo dump(Result result, ExportFileManager writer, Reporter reporter, ExportConfig config) {
-        try (Transaction tx = db.beginTx(); PrintWriter printWriter = writer.getPrintWriter("csv");) {
+        try (Transaction tx = db.beginTx(); PrintWriter printWriter = writer.getPrintWriter("csv")) {
             CSVWriter out = getCsvWriter(printWriter, config);
             String[] header = writeResultHeader(result, out);
 

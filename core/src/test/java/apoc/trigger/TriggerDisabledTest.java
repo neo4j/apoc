@@ -31,7 +31,7 @@ public class TriggerDisabledTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         apocConfig().setProperty(APOC_TRIGGER_ENABLED, false);
         TestUtil.registerProcedure(db, Trigger.class);
     }

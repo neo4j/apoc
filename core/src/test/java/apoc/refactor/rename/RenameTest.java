@@ -39,12 +39,13 @@ public class RenameTest {
 	public DbmsRule db = new ImpermanentDbmsRule()
 			.withSetting(lock_acquisition_timeout, Duration.ofSeconds(5));
 
-	@Before public void setUp() throws Exception {
+	@Before
+	public void setUp() {
 		TestUtil.registerProcedure(db, Rename.class, Coll.class, Lock.class, Utils.class);
 	}
 
 	@Test
-	public void testRenameLabelForSomeNodes() throws Exception {
+	public void testRenameLabelForSomeNodes() {
 		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
 		testCall(db, "CALL apoc.refactor.rename.label($oldName,$newName, $nodes)",
 				map("oldName", "Foo", "newName", "Bar", "nodes", nodes.subList(0,3)), (r) -> {});
@@ -54,7 +55,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameLabel() throws Exception {
+	public void testRenameLabel() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})");
 		testCall(db, "CALL apoc.refactor.rename.label($oldName,$newName)",
 				map("oldName", "Foo", "newName", "Bar"), (r) -> {});
@@ -64,7 +65,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameLabelDoesntAllowCypherInjection() throws Exception {
+	public void testRenameLabelDoesntAllowCypherInjection() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})");
 		testCall(db, "CALL apoc.refactor.rename.label(" +
 						"  'Foo', " +
@@ -88,7 +89,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameLabelDoesntAllowCypherInjectionForSomeNodes() throws Exception {
+	public void testRenameLabelDoesntAllowCypherInjectionForSomeNodes() {
 		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
 		testCall(db, "CALL apoc.refactor.rename.label(" +
 						"  'Foo', " +
@@ -120,7 +121,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameRelationship() throws Exception {
+	public void testRenameRelationship() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 		testCall(db, "CALL apoc.refactor.rename.type($oldType,$newType)",
 				map("oldType", "KNOWS", "newType", "LOVES"), (r) -> {});
@@ -130,7 +131,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameTypeForSomeRelationships() throws Exception {
+	public void testRenameTypeForSomeRelationships() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 
 		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
@@ -143,7 +144,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameTypeDoesntAllowCypherInjection() throws Exception {
+	public void testRenameTypeDoesntAllowCypherInjection() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 		testCall(db, "CALL apoc.refactor.rename.type(" +
 						"  'KNOWS', " +
@@ -166,7 +167,7 @@ public class RenameTest {
 		assertEquals(10L, resultRelationshipsMatches( "KNOWS", null));
 	}
 	@Test
-	public void testRenameTypeDoesntAllowCypherInjectionForSomeRelationships() throws Exception {
+	public void testRenameTypeDoesntAllowCypherInjectionForSomeRelationships() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 
 		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 4");
@@ -202,7 +203,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameNodesProperty() throws Exception {
+	public void testRenameNodesProperty() {
 		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty($oldName,$newName)",
 				map("oldName", "name", "newName", "surname"), (r) -> {});
@@ -212,7 +213,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenamePropertyForSomeNodes() throws Exception {
+	public void testRenamePropertyForSomeNodes() {
 		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
 		db.executeTransactionally("Create constraint for (n:Foo) require n.name is UNIQUE");
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty($oldName,$newName,$nodes)",
@@ -223,7 +224,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenamePropertyDoesntAllowCypherInjection() throws Exception {
+	public void testRenamePropertyDoesntAllowCypherInjection() {
 		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id})");
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
 						"  'name', " +
@@ -246,7 +247,7 @@ public class RenameTest {
 		assertEquals(10L, resultNodesMatches(null, "name"));
 	}
 	@Test
-	public void testRenamePropertyDoesntAllowCypherInjectionForSomeNodes() throws Exception {
+	public void testRenamePropertyDoesntAllowCypherInjectionForSomeNodes() {
 		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty(" +
 						"  'name', " +
@@ -278,7 +279,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameTypeProperty() throws Exception {
+	public void testRenameTypeProperty() {
 		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
 		testCall(db, "CALL apoc.refactor.rename.typeProperty($oldName,$newName)",
 				map("oldName", "name", "newName", "surname"), (r) -> {});
@@ -288,7 +289,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameTypePropertyDoesntAllowCypherInjection() throws Exception {
+	public void testRenameTypePropertyDoesntAllowCypherInjection() {
 		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
 		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
 						"  'name', " +
@@ -312,7 +313,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenameTypePropertyDoesntAllowCypherInjectionForSomeRelationships() throws Exception {
+	public void testRenameTypePropertyDoesntAllowCypherInjectionForSomeRelationships() {
 		db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
 		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
 		testCall(db, "CALL apoc.refactor.rename.typeProperty(" +
@@ -372,7 +373,7 @@ public class RenameTest {
 	}
 
 	@Test
-	public void testRenamePropertyForSomeRelationship() throws Exception {
+	public void testRenamePropertyForSomeRelationship() {
 		db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' + id}]->(l:Fii {id: id})");
 		List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
 		testCall(db, "CALL apoc.refactor.rename.typeProperty($oldName,$newName,$rels)",

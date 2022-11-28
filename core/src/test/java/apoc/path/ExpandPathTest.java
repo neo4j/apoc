@@ -29,11 +29,8 @@ public class ExpandPathTest {
     @ClassRule
 	public static DbmsRule db = new ImpermanentDbmsRule();
 
-	public ExpandPathTest() throws Exception {
-	}  
-	
 	@BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         String movies = Util.readResourceFile("movies.cypher");
 		String bigbrother = "MATCH (per:Person) MERGE (bb:BigBrother {name : 'Big Brother' })  MERGE (bb)-[:FOLLOWS]->(per)";
@@ -50,7 +47,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testExplorePathAnyRelTypeTest() throws Throwable {
+	public void testExplorePathAnyRelTypeTest() {
 		TestUtil.testCall(db,
 				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'>','',0,2) yield path return count(*) as c",
 				(row) -> assertEquals(1L,row.get("c")));
@@ -67,19 +64,19 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testExplorePathRelationshipsTest() throws Throwable {
+	public void testExplorePathRelationshipsTest() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'<ACTED_IN|PRODUCED>|FOLLOWS','',0,2) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(11L,row.get("c")));
 	}
 
 	@Test
-	public void testExplorePathLabelWhiteListTest() throws Throwable {
+	public void testExplorePathLabelWhiteListTest() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'ACTED_IN|PRODUCED|FOLLOWS','+Person|+Movie',0,3) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(107L,row.get("c"))); // 59 with Uniqueness.RELATIONSHIP_GLOBAL
 	}
 
 	@Test
-	public void testExplorePathLabelBlackListTest() throws Throwable {
+	public void testExplorePathLabelBlackListTest() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,null,'-BigBrother',0,2) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(44L,row.get("c")));
 	}
@@ -102,7 +99,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testExplorePathWithFilterStartNodeFalseIgnoresLabelFilter() throws Throwable {
+	public void testExplorePathWithFilterStartNodeFalseIgnoresLabelFilter() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Person', maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(9L,row.get("c")));
 	}
@@ -295,7 +292,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testFilterStartNodeFalseDoesNotFilterStartNodeWhenBelowMinLevel() throws Throwable {
+	public void testFilterStartNodeFalseDoesNotFilterStartNodeWhenBelowMinLevel() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Person', minLevel:1, maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(8L,row.get("c")));
 	}
@@ -311,7 +308,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testFilterStartNodeDefaultsToFalse() throws Throwable {
+	public void testFilterStartNodeDefaultsToFalse() {
 		// was default true prior to 3.2.x
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Person'}) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(9L,row.get("c")));

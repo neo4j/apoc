@@ -16,14 +16,14 @@ public class ParallelNodeSearchTest {
 	public static DbmsRule db = new ImpermanentDbmsRule();
 
 	@BeforeClass
-    public static void initDb() throws Exception {
+    public static void initDb() {
 		TestUtil.registerProcedure(db, ParallelNodeSearch.class);
 
 		db.executeTransactionally(Util.readResourceFile("movies.cypher"));
     }
 
     @Test
-    public void testMultiSearchNode() throws Throwable {
+    public void testMultiSearchNode() {
     	String query = "call apoc.search.node('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield node as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(6L,row.get("c")));
     	query = "call apoc.search.node('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','STARTS WITH','Tom') yield node as n return count(n) as c";
@@ -33,7 +33,7 @@ public class ParallelNodeSearchTest {
     }
 
     @Test 
-    public void testMultiSearchNodeAll() throws Throwable {
+    public void testMultiSearchNodeAll() {
     	String query = "call apoc.search.nodeAll('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield node as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(6L,row.get("c")));
     	query = "call apoc.search.nodeAll('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','STARTS WITH','Tom') yield node as n return count(n) as c";
@@ -43,7 +43,7 @@ public class ParallelNodeSearchTest {
     }
     
     @Test 
-    public void testMultiSearchNodeReduced() throws Throwable {
+    public void testMultiSearchNodeReduced() {
     	String query = "call apoc.search.nodeReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield id as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(6L,row.get("c")));
     	query = "call apoc.search.nodeReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','STARTS WITH','Tom') yield values as n return count(n) as c";
@@ -53,7 +53,7 @@ public class ParallelNodeSearchTest {
     }
 
     @Test 
-    public void testMultiSearchNodeAllReduced() throws Throwable {
+    public void testMultiSearchNodeAllReduced() {
     	String query = "call apoc.search.nodeAllReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield labels as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(6L,row.get("c")));
     	query = "call apoc.search.nodeAllReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','STARTS WITH','Tom') yield values as n return count(n) as c";
@@ -62,7 +62,7 @@ public class ParallelNodeSearchTest {
 		TestUtil.testCall(db, query, (row) -> assertEquals(29L,row.get("c")));
     }
     @Test
-    public void testMultiSearchNodeAllReducedMapParam() throws Throwable {
+    public void testMultiSearchNodeAllReducedMapParam() {
     	String query = "call apoc.search.nodeAllReduced({Person: 'name', Movie: ['title','tagline']},'CONTAINS','her') yield labels as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(6L,row.get("c")));
     	query = "call apoc.search.nodeAllReduced({Person: 'name', Movie: ['title','tagline']},'STARTS WITH','Tom') yield values as n return count(n) as c";
@@ -71,13 +71,13 @@ public class ParallelNodeSearchTest {
 		TestUtil.testCall(db, query, (row) -> assertEquals(29L,row.get("c")));
     }
     @Test
-    public void testMultiSearchNodeNumberComparison() throws Throwable {
+    public void testMultiSearchNodeNumberComparison() {
     	String query = "call apoc.search.nodeAllReduced({Person: 'born', Movie: ['released']},'>',2000) yield labels as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(12L,row.get("c")));
     }
 
     @Test
-    public void testMultiSearchNodeNumberExactComparison() throws Throwable {
+    public void testMultiSearchNodeNumberExactComparison() {
     	String query = "call apoc.search.nodeAllReduced({Person: 'born', Movie: ['released']},'=',2000) yield labels as n return count(n) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(3L,row.get("c")));
     	query = "call apoc.search.nodeAllReduced({Person: 'born', Movie: ['released']},'exact',2000) yield labels as n return count(n) as c";

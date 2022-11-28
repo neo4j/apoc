@@ -29,7 +29,7 @@ public class UtilIT {
     private static final String WITH_FILE_LOCATION = "WithFileLocation";
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         new ApocConfig();  // empty test configuration, ensure ApocConfig.apocConfig() can be used
         TestUtil.ignoreException(() -> {
             httpServer = new GenericContainer("alpine")

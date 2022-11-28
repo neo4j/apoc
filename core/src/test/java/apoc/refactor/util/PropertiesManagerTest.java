@@ -34,7 +34,7 @@ public class PropertiesManagerTest {
 					+ "MATCH (d)-[l:FLIGHTS_TO]->(p) return r as rel1,h as rel2";
 
 	@Before
-	public void setUp() throws Exception {
+	public void setUp() {
 		TestUtil.registerProcedure(db, GraphRefactoring.class);
 	}
 
@@ -160,7 +160,7 @@ public class PropertiesManagerTest {
 
 
 	@Test
-	public void testMergeProperties() throws Exception {
+	public void testMergeProperties() {
 		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND [{name:'Joe',age:42,kids:'Jane'},{name:'Jane',age:32,kids:'June'}] AS data CREATE (p:Person) SET p = data RETURN p");
 		try (Transaction tx = db.beginTx()) {
 			Node target = Util.rebind(tx, nodes.get(0));

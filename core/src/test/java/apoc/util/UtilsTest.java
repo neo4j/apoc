@@ -36,12 +36,12 @@ public class UtilsTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, Utils.class);
     }
 
     @Test
-    public void testMultipleCharsetsCompressionWithDifferentResults() throws Exception {
+    public void testMultipleCharsetsCompressionWithDifferentResults() {
 
         List<String> listCompressed = new ArrayList<>();
 
@@ -93,7 +93,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValueMainCompressorAlgoOnSimpleString() throws Exception {
+    public void testValueMainCompressorAlgoOnSimpleString() {
 
         String TEST_TO_GZIP = "H4sIAAAAAAAA/wtJLS4BADLRTXgEAAAA";
         String TEST_TO_DEFLATE = "eJwLSS0uAQAD3QGh";
@@ -125,7 +125,7 @@ public class UtilsTest {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testWrongDecompressionFromPreviousDifferentCompressionAlgo() throws Exception {
+    public void testWrongDecompressionFromPreviousDifferentCompressionAlgo() {
         try {
             TestUtil.testCall(db, "WITH apoc.util.compress('test', {compression: 'GZIP'}) AS compressed RETURN apoc.util.decompress(compressed, {compression: 'DEFLATE'}) AS value", r -> {
             });
@@ -137,7 +137,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testWrongDecompressionFromPreviousDifferentCharset() throws Exception {
+    public void testWrongDecompressionFromPreviousDifferentCharset() {
 
         TestUtil.testCall(db,
                 "WITH apoc.util.compress($text, {charset: 'UTF-8'}) AS compressed RETURN apoc.util.decompress(compressed, {charset: 'UTF-8'}) AS value",
@@ -159,7 +159,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testCompressAndDecompressWithMultipleCompressionCharsetsReturningStartString() throws Exception {
+    public void testCompressAndDecompressWithMultipleCompressionCharsetsReturningStartString() {
 
         TestUtil.testCall(db,
                 "WITH apoc.util.compress($text) AS compressed RETURN apoc.util.decompress(compressed) AS value",
@@ -211,7 +211,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testCompressAndDecompressWithMultipleCompressionAlgosReturningStartString() throws Exception {
+    public void testCompressAndDecompressWithMultipleCompressionAlgosReturningStartString() {
 
         TestUtil.testCall(db,
                 "WITH apoc.util.compress($text) AS compressed RETURN apoc.util.decompress(compressed) AS value",
@@ -251,22 +251,22 @@ public class UtilsTest {
     }
 
     @Test
-    public void testSha1() throws Exception {
+    public void testSha1() {
         TestUtil.testCall(db, "RETURN apoc.util.sha1(['ABC']) AS value", r -> assertEquals("3c01bdbb26f358bab27f267924aa2c9a03fcfdb8", r.get("value")));
     }
 
     @Test
-    public void testMd5() throws Exception {
+    public void testMd5() {
         TestUtil.testCall(db, "RETURN apoc.util.md5(['ABC']) AS value", r -> assertEquals("902fbdd2b1df0c4f70b4a5d23525e932", r.get("value")));
     }
 
     @Test
-    public void testValidateFalse() throws Exception {
+    public void testValidateFalse() {
         TestUtil.testResult(db, "CALL apoc.util.validate(false,'message',null)", r -> assertEquals(false,r.hasNext()));
     }
 
     @Test
-    public void testValidateTrue() throws Exception {
+    public void testValidateTrue() {
         try {
             db.executeTransactionally("CALL apoc.util.validate(true,'message %d',[42])");
             fail("should have failed");
@@ -276,12 +276,12 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValidatePredicateReturn() throws Exception {
+    public void testValidatePredicateReturn() {
         TestUtil.testCall(db, "RETURN apoc.util.validatePredicate(false,'message',null) AS value", r -> assertEquals(true, r.get("value")));
     }
 
     @Test
-    public void testValidatePredicateTrue() throws Exception {
+    public void testValidatePredicateTrue() {
         db.executeTransactionally("CREATE (:Person {predicate: true})");
         TestUtil.testFail(db, "MATCH (n:Person) RETURN apoc.util.validatePredicate(n.predicate,'message %d',[42]) AS n", QueryExecutionException.class);
     }

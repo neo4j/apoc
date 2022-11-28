@@ -25,11 +25,8 @@ public class NodeFilterTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    public NodeFilterTest() throws Exception {
-    }
-
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         String movies = Util.readResourceFile("movies.cypher");
         try (Transaction tx = db.beginTx()) {
@@ -325,13 +322,13 @@ public class NodeFilterTest {
 
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresBlacklistNodes() throws Throwable {
+    public void testStartNodeWithFilterStartNodeFalseIgnoresBlacklistNodes() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{blacklistNodes:[m], maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(44L,row.get("c")));
     }
 
     @Test
-    public void testBlacklistNodesStillAppliesBelowMinLevel() throws Throwable {
+    public void testBlacklistNodesStillAppliesBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
@@ -346,13 +343,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresWhitelistNodesFilter() throws Throwable {
+    public void testStartNodeWithFilterStartNodeFalseIgnoresWhitelistNodesFilter() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{whitelistNodes:[k], minLevel:1, maxLevel:1, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L,row.get("c")));
     }
 
     @Test
-    public void testWhitelistNodesStillAppliesBelowMinLevel() throws Throwable {
+    public void testWhitelistNodesStillAppliesBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
@@ -367,25 +364,25 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresTerminatorNodesFilter() throws Throwable {
+    public void testStartNodeWithFilterStartNodeFalseIgnoresTerminatorNodesFilter() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{terminatorNodes:[m,k], maxLevel:2, filterStartNode:false}) yield path WITH k, path WHERE last(nodes(path)) = k RETURN count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L,row.get("c")));
     }
 
     @Test
-    public void testTerminatorNodesDoesNotApplyBelowMinLevel() throws Throwable {
+    public void testTerminatorNodesDoesNotApplyBelowMinLevel() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{terminatorNodes:[m,k], minLevel:1, maxLevel:2, filterStartNode:true}) yield path WITH k, path WHERE last(nodes(path)) = k RETURN count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L,row.get("c")));
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresEndNodesFilter() throws Throwable {
+    public void testStartNodeWithFilterStartNodeFalseIgnoresEndNodesFilter() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{endNodes:[m,k], maxLevel:2, filterStartNode:false}) yield path RETURN count(DISTINCT last(nodes(path))) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L,row.get("c")));
     }
 
     @Test
-    public void testEndNodesDoesNotApplyBelowMinLevel() throws Throwable {
+    public void testEndNodesDoesNotApplyBelowMinLevel() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{endNodes:[m,k], minLevel:1, maxLevel:2, filterStartNode:true}) yield path RETURN count(DISTINCT last(nodes(path))) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L,row.get("c")));
     }

@@ -44,7 +44,8 @@ public class ConvertJsonTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
 
-	@Before public void setUp() throws Exception {
+	@Before
+    public void setUp() {
         TestUtil.registerProcedure(db, Json.class);
     }
     
@@ -123,17 +124,17 @@ public class ConvertJsonTest {
         }
     }
 
-    @Test public void testToJsonList() throws Exception {
+    @Test public void testToJsonList() {
 	    testCall(db, "RETURN apoc.convert.toJson([1,2,3]) as value",
 	             (row) -> assertEquals("[1,2,3]", row.get("value")) );
     }
-    @Test public void testToJsonMap() throws Exception {
+    @Test public void testToJsonMap() {
 	    testCall(db, "RETURN apoc.convert.toJson({a:42,b:\"foo\",c:[1,2,3]}) as value",
 	             (row) -> assertEquals("{\"a\":42,\"b\":\"foo\",\"c\":[1,2,3]}", row.get("value")) );
     }
 
     @Test
-    public void testToJsonNode() throws Exception {
+    public void testToJsonNode() {
 	    testCall(db, "CREATE (a:Test {foo: 7}) RETURN apoc.convert.toJson(a) AS value",
 	             (row) -> {
 	                Map<String, Object> valueAsMap = Util.readMap((String) row.get("value"));
@@ -154,7 +155,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonNodeWithoutLabel() throws Exception {
+    public void testToJsonNodeWithoutLabel() {
         testCall(db, "CREATE (a {pippo:'pluto'}) RETURN apoc.convert.toJson(a) AS value",
                 (row) -> {
                     Map<String, Object> valueAsMap = Util.readMap((String) row.get("value"));
@@ -163,7 +164,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonCollectNodes() throws Exception {
+    public void testToJsonCollectNodes() {
         db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place: point({x: 56.7, y: 12.78, z: 1.1, crs: 'wgs-84-3d'})}),(b:User {name:'Jim',age:42}),(c:User {age:12}),(d:User),(e {pippo:'pluto'})");
         String query = "MATCH (u) RETURN apoc.convert.toJson(collect(u)) as list";
         TestUtil.testCall(db, query, (row) -> {
@@ -203,13 +204,13 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonProperties() throws Exception {
+    public void testToJsonProperties() {
         testCall(db, "CREATE (a:Test {foo: 7}) RETURN apoc.convert.toJson(properties(a)) AS value",
                 (row) -> assertMaps(Map.of("foo", 7L), Util.readMap((String) row.get("value"))) );
     }
 
     @Test
-    public void testToJsonMapOfNodes() throws Exception {
+    public void testToJsonMapOfNodes() {
         testCall(db, "CREATE (a:Test {foo: 7}), (b:Test {bar: 9}) RETURN apoc.convert.toJson({one: a, two: b}) AS value",
                 (row) -> {
                     Map<String, Object> map = Util.fromJson((String) row.get("value"), Map.class);
@@ -221,7 +222,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonRel() throws Exception {
+    public void testToJsonRel() {
         testCall(db, "CREATE (f:User {name:'Adam'})-[rel:KNOWS {since: 1993.1, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}) RETURN apoc.convert.toJson(rel) as value",
 	             (row) -> {
                      Map<String, Object> map = Util.fromJson((String) row.get("value"), Map.class);
@@ -233,7 +234,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonPath() throws Exception {
+    public void testToJsonPath() {
 	    testCall(db, "CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baz {a:'b'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www', two:2, three: localdatetime('2020-01-01')}) RETURN apoc.convert.toJson(p) AS value",
 	             (row) -> {
                      List<String> test = List.of("Test");
@@ -261,7 +262,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonListOfPath() throws Exception {
+    public void testToJsonListOfPath() {
         testCall( db, """
                           CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'}), q=(:Omega {alpha: 'beta'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'})
                           WITH collect(p) AS collectP, q RETURN apoc.convert.toJson(collectP+q) AS value""",
@@ -294,13 +295,13 @@ public class ConvertJsonTest {
                  });
     }
 
-    @Test public void testFromJsonList() throws Exception {
+    @Test public void testFromJsonList() {
 	    testCall(db, "RETURN apoc.convert.fromJsonList('[1,2,3]') as value",
 	             (row) -> assertEquals(asList(1L,2L,3L), row.get("value")) );
 	    testCall(db, "RETURN apoc.convert.fromJsonList('{\"foo\":[1,2,3]}','$.foo') as value",
 	             (row) -> assertEquals(asList(1L,2L,3L), row.get("value")) );
     }
-    @Test public void testFromJsonMap() throws Exception {
+    @Test public void testFromJsonMap() {
 	    testCall(db, "RETURN apoc.convert.fromJsonMap('{\"a\":42,\"b\":\"foo\",\"c\":[1,2,3]}')  as value",
 	             (row) -> {
 		           Map value = (Map)row.get("value");
@@ -310,25 +311,25 @@ public class ConvertJsonTest {
 		         });
     }
 
-    @Test public void testSetJsonProperty() throws Exception {
+    @Test public void testSetJsonProperty() {
         testCall(db, "CREATE (n) WITH n CALL apoc.convert.setJsonProperty(n, 'json', [1,2,3]) RETURN n",
                 (row) -> assertEquals("[1,2,3]", ((Node)row.get("n")).getProperty("json")));
     }
 
-    @Test public void testGetJsonProperty() throws Exception {
+    @Test public void testGetJsonProperty() {
         testCall(db, "CREATE (n {json:'[1,2,3]'}) RETURN apoc.convert.getJsonProperty(n, 'json') AS value",
                 (row) -> assertEquals(asList(1L,2L,3L), row.get("value")) );
         testCall(db, "CREATE (n {json:'{\"foo\":[1,2,3]}'}) RETURN apoc.convert.getJsonProperty(n, 'json','$.foo') AS value",
                 (row) -> assertEquals(asList(1L,2L,3L), row.get("value")) );
     }
-    @Test public void testGetJsonPropertyMap() throws Exception {
+    @Test public void testGetJsonPropertyMap() {
         testCall(db, "CREATE (n {json:'{a:[1,2,3]}'}) RETURN apoc.convert.getJsonProperty(n, 'json') as value",
                 (row) -> assertEquals(map("a",asList(1L,2L,3L)), row.get("value")) );
         testCall(db, "CREATE (n {json:'{a:[1,2,3]}'}) RETURN apoc.convert.getJsonProperty(n, 'json','$.a') as value",
                 (row) -> assertEquals(asList(1L,2L,3L), row.get("value")) );
     }
 
-    @Test public void testToTreeIssue1685() throws Exception {
+    @Test public void testToTreeIssue1685() {
         String movies = Util.readResourceFile("movies.cypher");
         db.executeTransactionally(movies);
 
@@ -380,7 +381,7 @@ public class ConvertJsonTest {
 	    db.executeTransactionally("MATCH (n:TreeNode) DETACH DELETE n");
     }
 
-    @Test public void testToTree() throws Exception {
+    @Test public void testToTree() {
         testCall(db, "CREATE p1=(m:Movie {title:'M'})<-[:ACTED_IN {role:'R1'}]-(:Actor {name:'A1'}), " +
                 " p2 = (m)<-[:ACTED_IN  {role:'R2'}]-(:Actor {name:'A2'}) WITH [p1,p2] as paths " +
                 " CALL apoc.convert.toTree(paths) YIELD value RETURN value",
@@ -394,7 +395,7 @@ public class ConvertJsonTest {
                     assertEquals(true, actors.get(0).get("acted_in.role").toString().matches("R[12]"));
                 });
     }
-    @Test public void testToTreeUpperCaseRels() throws Exception {
+    @Test public void testToTreeUpperCaseRels() {
         testCall(db, "CREATE p1=(m:Movie {title:'M'})<-[:ACTED_IN {role:'R1'}]-(:Actor {name:'A1'}), " +
                 " p2 = (m)<-[:ACTED_IN  {role:'R2'}]-(:Actor {name:'A2'}) WITH [p1,p2] as paths " +
                 " CALL apoc.convert.toTree(paths,false) YIELD value RETURN value",
@@ -408,7 +409,7 @@ public class ConvertJsonTest {
                     assertEquals(true, actors.get(0).get("ACTED_IN.role").toString().matches("R[12]"));
                 });
     }
-    @Test public void testTreeOfEmptyList() throws Exception {
+    @Test public void testTreeOfEmptyList() {
         testCall(db, " CALL apoc.convert.toTree([]) YIELD value RETURN value",
                 (row) -> {
                     Map root = (Map) row.get("value");
@@ -416,7 +417,7 @@ public class ConvertJsonTest {
                 });
     }
 
-    @Test public void testToTreeLeafNodes() throws Exception {
+    @Test public void testToTreeLeafNodes() {
         String createStatement = "CREATE\n" +
                 "  (c1:Category {name: 'PC'}),\n" +
                 "    (c1)-[:subcategory {id:1}]->(c2:Category {name: 'Parts'}),\n" +
@@ -446,12 +447,12 @@ public class ConvertJsonTest {
                     assertEquals("CPU", cpu.get("name"));
                 });
     }
-    @Test public void testToJsonMapSortingProperties() throws Exception {
+    @Test public void testToJsonMapSortingProperties() {
         testCall(db, "WITH {b:8, d:3, a:2, E: 12, C:9} as map RETURN apoc.convert.toSortedJsonMap(map, false) as value",
                 (row) -> assertEquals("{\"C\":9,\"E\":12,\"a\":2,\"b\":8,\"d\":3}", row.get("value")) );
     }
 
-    @Test public void testToJsonMapSortingPropertiesIgnoringCase() throws Exception {
+    @Test public void testToJsonMapSortingPropertiesIgnoringCase() {
         testCall(db, "WITH {b:8, d:3, a:2, E: 12, C:9} as map RETURN apoc.convert.toSortedJsonMap(map) as value",
                 (row) -> assertEquals("{\"a\":2,\"b\":8,\"C\":9,\"d\":3,\"E\":12}", row.get("value")) );
     }

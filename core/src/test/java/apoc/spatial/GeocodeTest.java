@@ -24,7 +24,7 @@ public class GeocodeTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void initDb() throws Exception {
+    public void initDb() {
         TestUtil.registerProcedure(db, Geocode.class);
     }
 

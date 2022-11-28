@@ -25,7 +25,7 @@ public class WarmupTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Warmup.class);
         // Create enough nodes and relationships to span 2 pages
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.foo IS UNIQUE");
@@ -40,7 +40,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmup() throws Exception {
+    public void testWarmup() {
         TestUtil.testCall(db, "CALL apoc.warmup.run()", r -> {
             assertEquals(4L, r.get("nodesTotal"));
             assertNotEquals(0L, r.get("nodePages"));
@@ -50,7 +50,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupProperties() throws Exception {
+    public void testWarmupProperties() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true)", r -> {
             assertEquals(true, r.get("propertiesLoaded"));
             assertNotEquals(0L, r.get("propPages"));
@@ -58,7 +58,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupDynamicProperties() throws Exception {
+    public void testWarmupDynamicProperties() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true,true)", r -> {
             assertEquals(true, r.get("propertiesLoaded"));
             assertEquals(true, r.get("dynamicPropertiesLoaded"));
@@ -67,7 +67,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupIndexes() throws Exception {
+    public void testWarmupIndexes() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true,true,true)", r -> {
             assertEquals(true, r.get("indexesLoaded"));
             assertNotEquals( 0L, r.get("indexPages") );
@@ -75,7 +75,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupOnDifferentStorageEngines() throws Exception {
+    public void testWarmupOnDifferentStorageEngines() {
         final List<String> supportedTypes = Arrays.asList("standard", "aligned");
         for (String storageType : supportedTypes) {
             db.restartDatabase(Map.of(GraphDatabaseSettings.db_format, storageType));

@@ -27,7 +27,7 @@ public class GroupingTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         TestUtil.registerProcedure(db, Grouping.class);
     }
 
@@ -47,7 +47,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupAllNodes() throws Exception {
+    public void testGroupAllNodes() {
       createGraph();
       Map<String, Object> female = map("gender", "female", "count_*", 2L, "min_age", 28L);
       Map<String, Object> male = map("gender", "male", "count_*", 1L, "min_age", 42L);
@@ -95,7 +95,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupNode() throws Exception {
+    public void testGroupNode() {
         createGraph();
         Map<String, Object> female = map("gender", "female", "count_*", 2L, "sum_kids", 3L, "min_age", 28L, "max_age", 32L, "avg_age", 30D);
         Map<String, Object> male = map("gender", "male", "count_*", 1L, "sum_kids", 3L, "min_age", 42L, "max_age", 42L, "avg_age", 42D);
@@ -133,14 +133,14 @@ public class GroupingTest {
     }
 
     @Test
-    public void testRemoveOrphans() throws Exception {
+    public void testRemoveOrphans() {
         db.executeTransactionally("CREATE (u:User {gender:'male'})");
         TestUtil.testCallCount(db, "CALL apoc.nodes.group(['User'],['gender'],null,{orphans:false})", 0);
         TestUtil.testCallCount(db, "CALL apoc.nodes.group(['User'],['gender'],null,{orphans:true})", 1);
     }
 
     @Test
-    public void testSelfRels() throws Exception {
+    public void testSelfRels() {
         db.executeTransactionally("CREATE (u:User {gender:'male'})-[:REL]->(u)");
 
         Relationship rel = TestUtil.singleResultFirstColumn(db, "CALL apoc.nodes.group(['User'],['gender'],null,{selfRels:true}) yield relationship return relationship");
@@ -151,7 +151,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterMin() throws Exception {
+    public void testFilterMin() {
         db.executeTransactionally("CREATE (:User {name:'Joe',gender:'male'}), (:User {gender:'female',name:'Jane'}), (:User {gender:'female',name:'Jenny'})");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['User'],['gender'],null,{filter:{`User.count_*.min`:2}})",
                 result -> {
@@ -162,7 +162,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterMax() throws Exception {
+    public void testFilterMax() {
         db.executeTransactionally("CREATE (:User {name:'Joe',gender:'male'}), (:User {gender:'female',name:'Jane'}), (:User {gender:'female',name:'Jenny'})");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['User'],['gender'],null,{filter:{`User.count_*.max`:1}})",
                 result -> {
@@ -173,19 +173,19 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterRelationshipsInclude() throws Exception {
+    public void testFilterRelationshipsInclude() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         assertEquals("KNOWS", TestUtil.singleResultFirstColumn(db, "CALL apoc.nodes.group(['User'],['gender'],null,{includeRels:'KNOWS'}) yield relationship return type(relationship)"));
     }
 
     @Test
-    public void testFilterRelationshipsExclude() throws Exception {
+    public void testFilterRelationshipsExclude() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         assertEquals("KNOWS", TestUtil.singleResultFirstColumn(db, "CALL apoc.nodes.group(['User'],['gender'],null,{excludeRels:'LOVES'}) yield relationship return type(relationship)"));
     }
 
     @Test
-    public void testGroupAllLabels() throws Exception {
+    public void testGroupAllLabels() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['*'],['gender'])",
                 result -> {
@@ -195,7 +195,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testLimitNodes() throws Exception {
+    public void testLimitNodes() {
         db.executeTransactionally("CREATE (:User {name:'Joe',gender:'male'}), (:User {name:'Jane',gender:'female'})");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['User'],['gender'],null, {limitNodes:1})",
                 result -> {
@@ -205,7 +205,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testLimitRelsNodes() throws Exception {
+    public void testLimitRelsNodes() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u), (u)-[:HATES]->(u)");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['User'],['gender'],null, {relsPerNode:1})",
                 result -> {

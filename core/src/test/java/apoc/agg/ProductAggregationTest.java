@@ -15,12 +15,13 @@ public class ProductAggregationTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @BeforeClass public static void setUp() throws Exception {
+    @BeforeClass
+    public static void setUp() {
         TestUtil.registerProcedure(db, Product.class);
     }
 
     @Test
-    public void testProduct() throws Exception {
+    public void testProduct() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.product(value) as p",
                 (row) -> {
                     assertEquals(0D, row.get("p"));

@@ -86,7 +86,7 @@ public class Pools extends LifecycleAdapter {
     }
 
     @Override
-    public void shutdown() throws Exception {
+    public void shutdown() {
         Stream.of(singleExecutorService, defaultExecutorService, scheduledExecutorService).forEach( service -> {
             try {
                 service.shutdown();

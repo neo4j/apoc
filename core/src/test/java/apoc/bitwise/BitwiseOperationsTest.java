@@ -23,7 +23,7 @@ public class BitwiseOperationsTest {
     private int a,b;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, BitwiseOperations.class);
     }
 
@@ -34,7 +34,7 @@ public class BitwiseOperationsTest {
     }
 
     @Test
-    public void testOperations() throws Throwable {
+    public void testOperations() {
         a = 0b0011_1100;
         b = 0b0000_1101;
         testOperation("&", 12L);
@@ -48,7 +48,7 @@ public class BitwiseOperationsTest {
     }
 
     @Test
-    public void testOperations2() throws Throwable {
+    public void testOperations2() {
         a = 0b0011_1100;
         b = 2;
         testOperation("<<", 240L);

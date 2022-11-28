@@ -24,7 +24,6 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -54,16 +53,9 @@ public class ExportCypher {
     @Context
     public Pools pools;
 
-    public ExportCypher(GraphDatabaseService db) {
-        this.db = db;
-    }
-
-    public ExportCypher() {
-    }
-
     @Procedure("apoc.export.cypher.all")
     @Description("Exports the full database (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
-    public Stream<DataProgressInfo> all(@Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) throws IOException {
+    public Stream<DataProgressInfo> all(@Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), false);
@@ -71,7 +63,7 @@ public class ExportCypher {
 
     @Procedure("apoc.export.cypher.data")
     @Description("Exports the given nodes and relationships (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
-    public Stream<DataProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) throws IOException {
+    public Stream<DataProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
         return exportCypher(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config), false);
@@ -79,7 +71,7 @@ public class ExportCypher {
 
     @Procedure("apoc.export.cypher.graph")
     @Description("Exports the given graph (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
-    public Stream<DataProgressInfo> graph(@Name("graph") Map<String, Object> graph, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) throws IOException {
+    public Stream<DataProgressInfo> graph(@Name("graph") Map<String, Object> graph, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
@@ -90,7 +82,7 @@ public class ExportCypher {
 
     @Procedure("apoc.export.cypher.query")
     @Description("Exports the nodes and relationships from the given Cypher query (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
-    public Stream<DataProgressInfo> query(@Name("statement") String query, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) throws IOException {
+    public Stream<DataProgressInfo> query(@Name("statement") String query, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(query);
@@ -103,13 +95,13 @@ public class ExportCypher {
 
     @Procedure("apoc.export.cypher.schema")
     @Description("Exports all schema indexes and constraints to Cypher statements.")
-    public Stream<DataProgressInfo> schema(@Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) throws IOException {
+    public Stream<DataProgressInfo> schema(@Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), true);
     }
 
-    private Stream<DataProgressInfo> exportCypher(@Name("file") String fileName, String source, SubGraph graph, ExportConfig c, boolean onlySchema) throws IOException {
+    private Stream<DataProgressInfo> exportCypher(@Name("file") String fileName, String source, SubGraph graph, ExportConfig c, boolean onlySchema) {
         apocConfig.checkWriteAllowed(c, fileName);
 
         ProgressInfo progressInfo = new ProgressInfo(fileName, source, "cypher");

@@ -26,7 +26,7 @@ public class LockTest {
             .withSetting(GraphDatabaseSettings.lock_acquisition_timeout, Duration.ofSeconds(1));
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, Lock.class);
     }
 

@@ -293,13 +293,12 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
         return this;
     }
 
-    public GraphDatabaseAPI restartDatabase() throws IOException
+    public GraphDatabaseAPI restartDatabase()
     {
         return restartDatabase( Map.of() );
     }
 
-    public GraphDatabaseAPI restartDatabase( Map<Setting<?>,Object> configChanges ) throws IOException
-    {
+    public GraphDatabaseAPI restartDatabase( Map<Setting<?>,Object> configChanges ) {
         managementService.shutdown();
         database = null;
         // This DatabaseBuilder has already been configured with the global settings as well as any test-specific settings,

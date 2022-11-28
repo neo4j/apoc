@@ -55,7 +55,7 @@ public class ExportGraphML {
 
     @Procedure(name = "apoc.import.graphml",mode = Mode.WRITE)
     @Description("Imports a graph from the provided GraphML file.")
-    public Stream<ProgressInfo> file(@Name("urlOrBinaryFile") Object urlOrBinaryFile, @Name("config") Map<String, Object> config) throws Exception {
+    public Stream<ProgressInfo> file(@Name("urlOrBinaryFile") Object urlOrBinaryFile, @Name("config") Map<String, Object> config) {
         ProgressInfo result =
         Util.inThread(pools, () -> {
             ExportConfig exportConfig = new ExportConfig(config);
