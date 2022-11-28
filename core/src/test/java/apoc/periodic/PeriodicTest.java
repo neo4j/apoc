@@ -14,7 +14,6 @@ import org.neo4j.common.DependencyResolver;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.TransactionStatusFailureException;
 import org.neo4j.graphdb.TransientTransactionFailureException;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -254,7 +253,7 @@ public class PeriodicTest {
                         assertEquals(0L, actual);
                     });
             fail("Should have terminated");
-        } catch (TransactionStatusFailureException e) {
+        } catch (Exception e) {
             assertEquals("Unable to complete transaction.: Explicitly terminated by the user.", e.getMessage());
         }
 
