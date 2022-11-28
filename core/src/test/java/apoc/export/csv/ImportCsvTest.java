@@ -43,7 +43,6 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
-import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
