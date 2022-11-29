@@ -43,6 +43,7 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -188,10 +189,9 @@ public class ImportCsvTest {
     
     @Test
     public void testImportCsvTerminate() {
-        TestUtil.testCall(db, "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
+        checkTerminationGuard(db, "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
                 map("nodeFile", "file:/largeFile.csv",
-                        "config", map("batchSize", 100L)),
-                (r) -> assertEquals(664850L, r.get("nodes")));
+                        "config", map("batchSize", 100L)));
     }
 
     @Test

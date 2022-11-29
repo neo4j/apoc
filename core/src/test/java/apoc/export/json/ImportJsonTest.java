@@ -43,6 +43,7 @@ import static apoc.export.json.JsonImporter.MISSING_CONSTRAINT_ERROR_MSG;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.lang.String.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -304,6 +305,12 @@ public class ImportJsonTest {
                 (r) -> assertionsAllJsonProgressInfo(r, true));
 
         assertionsAllJsonDbResult();
+    }
+
+    @Test
+    public void shouldTerminateImportJson()  {
+        createConstraints(List.of("Movie", "Other", "Person"));
+        checkTerminationGuard(db, "CALL apoc.import.json('testTerminate.json',{})");
     }
 
     private void assertionsAllJsonProgressInfo(Map<String, Object> r, boolean isBinary) {
