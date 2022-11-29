@@ -53,7 +53,7 @@ public class BigGraphTest {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
 
-        final String query = Util.readResourceFile("movies.cypher");
+        final String query = Util.readResourceFile("moviesMod.cypher");
         IntStream.range(0, 20000).forEach(__-> db.executeTransactionally(query));
     }
 

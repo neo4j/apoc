@@ -46,10 +46,11 @@ public class PeriodicTestUtils {
         checkPeriodicTerminated(db, periodicQuery);
     }
 
-    public static void testTerminateWithCommand(DbmsRule db, String periodicQuery) {
-        TransactionTestUtil.terminateTransactionAsync(db, periodicQuery);
+    public static void testTerminateWithCommand(DbmsRule db, String periodicQuery, String iterateQuery) {
+        long timeBefore = System.currentTimeMillis();
+        TransactionTestUtil.terminateTransactionAsync(db, iterateQuery);
         checkPeriodicTerminated(db, periodicQuery);
-        TransactionTestUtil.checkTransactionNotInList(db, periodicQuery);
+        TransactionTestUtil.lastTransactionChecks(db, periodicQuery, timeBefore);
     }
 
     private static void checkPeriodicTerminated(DbmsRule db, String periodicQuery) {
