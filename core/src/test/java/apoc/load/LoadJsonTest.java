@@ -37,6 +37,7 @@ import static apoc.convert.ConvertJsonTest.EXPECTED_PATH_WITH_NULLS;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -421,8 +422,9 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void shouldTerminateLoadWhenTransactionIsTimedOut() {
-        final String query = "CALL apoc.load.json('https://github.com/knowitall/yelp-dataset-challenge/blob/master/data/yelp_phoenix_academic_dataset/yelp_academic_dataset_review.json?raw=truehttps://github.com/knowitall/yelp-dataset-challenge/blob/master/data/yelp_phoenix_academic_dataset/yelp_academic_dataset_review.json?raw=true')";
-        TransactionTestUtil.checkTerminationGuard(db, query);
+    public void shouldTerminateLoadJson()  {
+        URL url = ClassLoader.getSystemResource("exportJSON/testTerminate.json");
+        checkTerminationGuard(db, "CALL apoc.load.json($file)",
+                Map.of("file", url.toString()));
     }
 }
