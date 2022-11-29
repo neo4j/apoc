@@ -81,13 +81,13 @@ public class ExportArrow {
 
     @Procedure("apoc.export.arrow.all")
     @Description("Exports the full database as an arrow file.")
-    public Stream<ProgressInfo> all(@Name("fileName") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         return new ExportArrowService(db, pools, terminationGuard, logger).file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config));
     }
 
     @Procedure("apoc.export.arrow.graph")
     @Description("Exports the given graph as an arrow file.")
-    public Stream<ProgressInfo> graph(@Name("fileName") String fileName, @Name("graph") Object graph, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ProgressInfo> graph(@Name("file") String fileName, @Name("graph") Object graph, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         final SubGraph subGraph;
         if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;
@@ -107,7 +107,7 @@ public class ExportArrow {
 
     @Procedure("apoc.export.arrow.query")
     @Description("Exports the results from the given Cypher query as an arrow file.")
-    public Stream<ProgressInfo> query(@Name("fileName") String fileName, @Name("query") String query, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ProgressInfo> query(@Name("file") String fileName, @Name("query") String query, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         Map<String, Object> params = config == null ? Collections.emptyMap() : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
         Result result = tx.execute(query, params);
         return new ExportArrowService(db, pools, terminationGuard, logger).file(fileName, result, new ArrowConfig(config));

@@ -111,7 +111,7 @@ public class LoadArrow {
     @Procedure(name = "apoc.load.arrow")
     @Description("Imports nodes and relationships from the provided arrow file.")
     public Stream<MapResult> file(
-            @Name("source") String fileName,
+            @Name("file") String fileName,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws IOException {
         final SeekableByteChannel channel = FileUtils.inputStreamFor(fileName, null, null, null)
                 .asChannel();
