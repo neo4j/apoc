@@ -20,7 +20,7 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class TransactionTestUtil {
     public static final String TRANSACTION_LIST = "SHOW TRANSACTIONS";
-    private static final long DEF_TIMEOUT = 10L;
+    public static final long DEFAULT_TIMEOUT = 10L;
 
     public static void checkTerminationGuard(GraphDatabaseService db, String query) {
         checkTerminationGuard(db, query, emptyMap());
@@ -29,16 +29,18 @@ public class TransactionTestUtil {
     public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query) {
         checkTerminationGuard(db, timeout, query, emptyMap());
     }
-    
+
     public static void checkTerminationGuard(GraphDatabaseService db, String query, Map<String, Object> params) {
-        checkTerminationGuard(db, DEF_TIMEOUT, query, params);
+        checkTerminationGuard(db, DEFAULT_TIMEOUT, query, params);
     }
-    
+
     public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query, Map<String, Object> params) {
         terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
+        long timeBefore = 0L;
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
+            timeBefore = System.currentTimeMillis();
             transaction.execute(query, params).resultAsString();
             transaction.commit();
             fail("Should fail because of TransactionFailureException");
@@ -48,8 +50,24 @@ public class TransactionTestUtil {
                     "Retry your operation in a new transaction, and you should see a successful result. Explicitly terminated by the user. ";
             assertEquals(expected, rootCause.getMessage());
         }
-        
+
+        lastTransactionChecks(db, timeout, query, timeBefore);
+    }
+
+    public static void lastTransactionChecks(GraphDatabaseService db, long timeout, String query, long timeBefore) {
+        checkTransactionTime(timeout, timeBefore);
         checkTransactionNotInList(db, query);
+    }
+
+    public static void lastTransactionChecks(GraphDatabaseService db, String query, long timeBefore) {
+        checkTransactionTime(DEFAULT_TIMEOUT, timeBefore);
+        checkTransactionNotInList(db, query);
+    }
+
+    private static void checkTransactionTime(long timeout, long timeBefore) {
+        final long timeAfterSecs = (System.currentTimeMillis() - timeBefore) / 1000L;
+        assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timeAfterSecs + " seconds",
+                timeAfterSecs < timeout);
     }
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
@@ -65,7 +83,7 @@ public class TransactionTestUtil {
     }
 
     public static void terminateTransactionAsync(GraphDatabaseService db, String query) {
-        terminateTransactionAsync(db, DEF_TIMEOUT, query);
+        terminateTransactionAsync(db, DEFAULT_TIMEOUT, query);
     }
 
     public static void terminateTransactionAsync(GraphDatabaseService db, long timeout, String query) {
