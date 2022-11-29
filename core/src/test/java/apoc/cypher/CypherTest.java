@@ -36,7 +36,7 @@ import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
-import static apoc.util.TransactionTestUtil.checkTransactionNotInList;
+import static apoc.util.TransactionTestUtil.lastTransactionChecks;
 import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
 import static java.util.Collections.emptyMap;
@@ -172,14 +172,15 @@ public class CypherTest {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
-        terminateTransactionAsync(db, 10L, innerLongQuery);
-        
+        terminateTransactionAsync(db, innerLongQuery);
+
+        long timeBefore = System.currentTimeMillis();
         // assert query terminated (RETURN 0)
         TestUtil.testCall(db, query,
                 Map.of("innerQuery", innerLongQuery),
                 row -> assertEquals(Map.of("0", 0L), row.get("value")));
-
-        checkTransactionNotInList(db, query);
+        
+        lastTransactionChecks(db, query, timeBefore);
     }
 
     @Test
