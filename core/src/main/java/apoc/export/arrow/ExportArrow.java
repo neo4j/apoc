@@ -46,13 +46,13 @@ public class ExportArrow {
     public TerminationGuard terminationGuard;
 
     @Procedure("apoc.export.arrow.stream.all")
-    @Description("apoc.export.arrow.stream.all(config) - exports whole database as arrow byte[] result")
+    @Description("Exports the full database as an arrow byte array.")
     public Stream<ByteArrayResult> all(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         return new ExportArrowService(db, pools, terminationGuard, logger).stream(new DatabaseSubGraph(tx), new ArrowConfig(config));
     }
 
     @Procedure("apoc.export.arrow.stream.graph")
-    @Description("apoc.export.arrow.stream.graph(graph, config) - exports given nodes and relationships as arrow byte[] result")
+    @Description("Exports the given graph as an arrow byte array.")
     public Stream<ByteArrayResult> graph(@Name("graph") Object graph, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         final SubGraph subGraph;
         if (graph instanceof Map) {
@@ -72,7 +72,7 @@ public class ExportArrow {
     }
 
     @Procedure("apoc.export.arrow.stream.query")
-    @Description("apoc.export.arrow.stream.query(query, config) - exports results from the cypher statement as arrow byte[] result")
+    @Description("Exports the given Cypher query as an arrow byte array.")
     public Stream<ByteArrayResult> query(@Name("query") String query, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         Map<String, Object> params = config == null ? Collections.emptyMap() : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
         Result result = tx.execute(query, params);
@@ -80,13 +80,13 @@ public class ExportArrow {
     }
 
     @Procedure("apoc.export.arrow.all")
-    @Description("apoc.export.arrow.all(fileName, config) - exports whole database as arrow file")
+    @Description("Exports the full database as an arrow file.")
     public Stream<ProgressInfo> all(@Name("fileName") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         return new ExportArrowService(db, pools, terminationGuard, logger).file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config));
     }
 
     @Procedure("apoc.export.arrow.graph")
-    @Description("apoc.export.arrow.graph(fileName, graph, config) - exports given nodes and relationships as arrow file")
+    @Description("Exports the given graph as an arrow file.")
     public Stream<ProgressInfo> graph(@Name("fileName") String fileName, @Name("graph") Object graph, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         final SubGraph subGraph;
         if (graph instanceof Map) {
@@ -106,7 +106,7 @@ public class ExportArrow {
     }
 
     @Procedure("apoc.export.arrow.query")
-    @Description("apoc.export.arrow.query(fileName, query, config) - exports results from the cypher statement as arrow file")
+    @Description("Exports the results from the given Cypher query as an arrow file.")
     public Stream<ProgressInfo> query(@Name("fileName") String fileName, @Name("query") String query, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         Map<String, Object> params = config == null ? Collections.emptyMap() : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
         Result result = tx.execute(query, params);

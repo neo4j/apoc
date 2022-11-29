@@ -364,7 +364,7 @@ public class Coll {
     @UserFunction("apoc.coll.partition")
     @Description("Partitions the original list into sub-lists of the given batch size.\n" +
             "The final list may be smaller than the given batch size.")
-    public List<Object> partitionFn(@Name("values") List<Object> list, @Name("batchSize") long batchSize) {
+    public List<Object> partitionFn(@Name("coll") List<Object> list, @Name("batchSize") long batchSize) {
         if (list==null || list.isEmpty()) return new ArrayList<>();
         return partitionList(list, (int) batchSize).collect(Collectors.toList());
     }
@@ -966,7 +966,7 @@ public class Coll {
 
     @Procedure("apoc.coll.pairWithOffset")
     @Description("Returns a list of pairs defined by the offset.")
-    public Stream<ListResult> pairWithOffset(@Name("values") List<Object> values, @Name("offset") long offset) {
+    public Stream<ListResult> pairWithOffset(@Name("coll") List<Object> values, @Name("offset") long offset) {
         return pairWithOffsetFn(values, offset).stream()
                 .map(ListResult::new);
     }
