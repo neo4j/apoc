@@ -605,46 +605,7 @@ public class ExportCypherTest {
                 map("file", fileName),
                 (r) -> {});
         db.executeTransactionally("MATCH (n:Bar {name:'bar3',age:35}), (n1:Bar {name:'bar4',age:36}) DELETE n, n1");
-        String expectedNodes = String.format(":begin%n" +
-                ":param rows => [{_id:4, properties:{age:12}}, {_id:5, properties:{age:4}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n" +
-                ":param rows => [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                ":param rows => [{_id:1, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:2, properties:{born:date('2016-03-12'), name:\"foo3\"}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                ":param rows => [{name:\"bar\", properties:{age:42}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                ":param rows => [{name:\"bar2\", properties:{age:44}}, {name:\"bar3\", properties:{age:35}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                ":param rows => [{name:\"bar4\", properties:{age:36}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                ":commit%n");
-        int expectedDropNum = 3;
-        String expectedDrop = String.format(":begin%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
-                ":commit%n", expectedDropNum, expectedDropNum);
-        String expected = (EXPECTED_SCHEMA + expectedNodes + EXPECTED_RELATIONSHIPS_PARAMS_ODD + expectedDrop)
-                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
-                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
-                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
-                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
-        assertEquals(expected, readFile(fileName));
+        assertEquals(EXPECTED_QUERY_PARAMS_ODD, readFile(fileName));
     }
 
     @Test
@@ -1506,6 +1467,47 @@ public class ExportCypherTest {
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);
                 """;
+        
+        static final String EXPECTED_NODES_PARAMS_ODD = String.format(":begin%n" +
+                ":param rows => [{_id:4, properties:{age:12}}, {_id:5, properties:{age:4}}]%n" +
+                "UNWIND $rows AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n" +
+                ":param rows => [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}]%n" +
+                "UNWIND $rows AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                ":param rows => [{_id:1, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:2, properties:{born:date('2016-03-12'), name:\"foo3\"}}]%n" +
+                "UNWIND $rows AS row%n" +
+                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
+                ":param rows => [{name:\"bar\", properties:{age:42}}]%n" +
+                "UNWIND $rows AS row%n" +
+                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                ":param rows => [{name:\"bar2\", properties:{age:44}}, {name:\"bar3\", properties:{age:35}}]%n" +
+                "UNWIND $rows AS row%n" +
+                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
+                ":param rows => [{name:\"bar4\", properties:{age:36}}]%n" +
+                "UNWIND $rows AS row%n" +
+                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
+                ":commit%n");
+        
+        static final String EXPECTED_DROP_PARAMS_ODD = String.format(":begin%n" +
+                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
+                ":commit%n" +
+                ":begin%n" +
+                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
+                ":commit%n", 3);
+        
+        static final String EXPECTED_QUERY_PARAMS_ODD = (EXPECTED_SCHEMA + EXPECTED_NODES_PARAMS_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + EXPECTED_DROP_PARAMS_ODD)
+                .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
+                .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
+                .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
+                .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
 
         private static String convertToCypherShellFormat(String input) {
             return input

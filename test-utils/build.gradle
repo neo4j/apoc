@@ -44,6 +44,7 @@ dependencies {
     implementation group: 'org.neo4j', name: 'neo4j-io', version: neo4jVersionEffective, classifier: "tests"
     implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '7.2'
     implementation group: 'org.jetbrains', name: 'annotations', version: "17.0.0"
+    implementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.348'
 }
 
 
