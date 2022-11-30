@@ -1,5 +1,6 @@
 package apoc.schema;
 
+import apoc.result.AssertSchemaResult;
 import apoc.result.IndexConstraintRelationshipInfo;
 import apoc.util.collection.Iterables;
 import junit.framework.TestCase;
@@ -436,23 +437,30 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE knows.since IS UNIQUE");
         awaitIndexesOnline();
 
+        ArrayList<AssertSchemaResult> schemaResult = new ArrayList<>();
+
+        AssertSchemaResult since = new AssertSchemaResult("SINCE", "year");
+        since.unique = true;
+        schemaResult.add(since);
+
+        AssertSchemaResult knows = new AssertSchemaResult("KNOWS", "since");
+        knows.unique = true;
+        knows.action = "DROPPED";
+        schemaResult.add(knows);
+
         testResult(db, "CALL apoc.schema.assert({},{SINCE:[\"year\"]})", (result) -> {
-            Map<String, Object> r = result.next();
 
-            assertEquals("SINCE", r.get("label"));
-            assertEquals("year", r.get("key"));
-            assertEquals("year", ((List<String>) r.get("keys")).get(0));
-            assertEquals(true, r.get("unique"));
-            assertEquals("KEPT", r.get("action"));
+            while  (result.hasNext()) {
+                Map<String, Object> r = result.next();
 
-            r = result.next();
-            assertEquals("KNOWS", r.get("label"));
-            assertEquals("since", r.get("key"));
-            assertEquals("since", ((List<String>) r.get("keys")).get(0));
-            assertEquals(true, r.get("unique"));
-            assertEquals("DROPPED", r.get("action"));
-
-            assertFalse(result.hasNext());
+                assertEquals(1, schemaResult.stream().filter(
+                        c -> c.label.equals(r.get("label")) &&
+                                c.keys.containsAll((List<String>) r.get("keys")) &&
+                                c.key.equals(r.get("key")) &&
+                                c.action.equals(r.get("action")) &&
+                                c.unique == (boolean) r.get("unique")
+                ).toList().size());
+            }
         });
     }
 
@@ -717,12 +725,14 @@ public class SchemasTest {
                         Map<String, Object> r = result.next();
                         assertEquals("CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE", r.get("name"));
                         assertEquals("RELATIONSHIP_UNIQUENESS", r.get("type"));
+                        assertEquals("SINCE", r.get("relationshipType"));
                         assertEquals("year", ((List<String>) r.get("properties")).get(0));
 
                         r = result.next();
 
                         assertEquals(":SINCE(year)", r.get("name"));
-                        assertEquals("SINCE", r.get("type")); // This is currently a bug that needs to be fixed separately
+                        assertEquals("SINCE", r.get("relationshipType"));
+                        assertEquals("year", ((List<String>) r.get("properties")).get(0));
                         assertEquals("year", ((List<String>) r.get("properties")).get(0));
                         assertTrue(!result.hasNext());
                     }
@@ -741,37 +751,43 @@ public class SchemasTest {
                 "CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE",
                 "RELATIONSHIP_UNIQUENESS",
                 List.of("year"),
-                ""
+                "",
+                "SINCE"
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 ":SINCE(year)",
-                "SINCE",
+                "INDEX",
                 List.of("year"),
-                "ONLINE"
+                "ONLINE",
+                "SINCE"
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 "CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.when IS UNIQUE",
                 "RELATIONSHIP_UNIQUENESS",
                 List.of("when"),
-                ""
+                "",
+                "LIKED"
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 ":LIKED(when)",
-                "LIKED",
+                "INDEX",
                 List.of("when"),
-                "ONLINE"
+                "ONLINE",
+                "LIKED"
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 "CONSTRAINT FOR ()-[know:KNOW]-() REQUIRE know.how IS UNIQUE",
                 "RELATIONSHIP_UNIQUENESS",
                 List.of("how"),
-                ""
+                "",
+                "KNOW"
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 ":KNOW(how)",
-                "KNOW",
+                "INDEX",
                 List.of("how"),
-                "ONLINE"
+                "ONLINE",
+                "KNOW"
         ));
 
         testResult(db, "CALL apoc.schema.relationships({})",
@@ -782,7 +798,8 @@ public class SchemasTest {
                             assertEquals(1, relConstraints.stream().filter(
                                     c -> c.name.equals(r.get("name")) &&
                                             c.properties.containsAll((List<String>) r.get("properties")) &&
-                                            c.type.equals(r.get("type"))
+                                            c.type.equals(r.get("type")) &&
+                                            c.relationshipType.equals(r.get("relationshipType"))
                             ).toList().size());
                         }
                     }

@@ -601,12 +601,14 @@ public class SchemasEnterpriseFeaturesTest {
 
                     assertEquals("CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE (knows.day,knows.year) IS RELATIONSHIP KEY", r.get("name"));
                     assertEquals("RELATIONSHIP_KEY", r.get("type"));
+                    assertEquals("KNOWS", r.get("relationshipType"));
                     assertEquals(List.of("day", "year"), r.get("properties"));
 
                     r = result.next();
 
                     assertEquals(":KNOWS(day,year)", r.get("name"));
-                    assertEquals("KNOWS", r.get("type")); // This is currently a bug that needs to be fixed separately
+                    assertEquals("INDEX", r.get("type"));
+                    assertEquals("KNOWS", r.get("relationshipType"));
                     assertEquals(List.of("day", "year"), r.get("properties"));
                     assertFalse(result.hasNext());
                 }
