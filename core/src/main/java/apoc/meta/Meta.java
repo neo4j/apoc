@@ -520,7 +520,7 @@ public class Meta {
         Map<String, Set<String>> relIndexes = new HashMap<>();
         for (RelationshipType type : graph.getAllRelationshipTypesInUse()) {
             metaData.put(Set.of(Types.RELATIONSHIP.name(), type.name()), new LinkedHashMap<>(10));
-            relConstraints.put(type.name(),graph.getConstraints(type));
+            relConstraints.put(type.name(), graph.getConstraints(type));
             relIndexes.put(type.name(), getIndexedProperties(graph.getIndexes(type)));
         }
         for (Label label : graph.getAllLabelsInUse()) {
@@ -758,6 +758,7 @@ public class Meta {
                                     res.addLabel(l.name());
                             });
                         }
+                        case RELATIONSHIP_UNIQUENESS -> res.unique = true;
                         case NODE_PROPERTY_EXISTENCE, RELATIONSHIP_PROPERTY_EXISTENCE -> res.existence = true;
                     }
                 }
