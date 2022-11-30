@@ -1151,7 +1151,14 @@ public class Util {
     public static long getNodeId(InternalTransaction tx, String elementId) {
         return tx.elementIdMapper().nodeId(elementId);
     }
+
+    public static long getRelationshipId(InternalTransaction tx, String elementId) {
+        return tx.elementIdMapper().relationshipId(elementId);
+    }
     public static  String getNodeElementId(InternalTransaction tx, long id) {
         return tx.elementIdMapper().nodeElementId(id);
+    }
+    public static  String getRelationshipElementId(InternalTransaction tx, long id) {
+        return tx.elementIdMapper().relationshipElementId(id);
     }
 }

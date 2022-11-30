@@ -41,6 +41,7 @@ import static apoc.export.util.MetaInformation.collectPropTypesForRelationships;
 import static apoc.export.util.MetaInformation.getLabelsString;
 import static apoc.export.util.MetaInformation.updateKeyTypes;
 import static apoc.util.Util.getNodeId;
+import static apoc.util.Util.getRelationshipId;
 import static apoc.util.Util.joinLabels;
 
 /**
@@ -211,7 +212,7 @@ public class CsvFormat implements Format {
                                     return entrySet.getKey().name();
                                 default:
                                     String prop = s.split(":")[0];
-                                    return "".equals(prop) ? String.valueOf(getNodeId(tx, r.getElementId())) : cleanPoint(FormatUtils.toString(r.getProperty(prop, "")));
+                                    return "".equals(prop) ? String.valueOf(getRelationshipId(tx, r.getElementId())) : cleanPoint(FormatUtils.toString(r.getProperty(prop, "")));
                             }
                         }).collect(Collectors.toList());
                     })

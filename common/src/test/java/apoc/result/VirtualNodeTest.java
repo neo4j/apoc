@@ -109,4 +109,14 @@ public class VirtualNodeTest {
         assertEquals(start, end.getRelationships().iterator().next().getOtherNode(end));
     }
 
+    @Test
+    public void testVirtualNodesEqualEachother() {
+        VirtualNode node1 = new VirtualNode(1L);
+        VirtualNode node2 = new VirtualNode(2L);
+
+        assertEquals(node1, node1);
+        assertEquals(node2, node2);
+        assertNotEquals(node1, node2);
+    }
+
 }
