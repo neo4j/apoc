@@ -6,6 +6,7 @@ import apoc.result.NodeListResult;
 import apoc.result.NodeResult;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -18,6 +19,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static apoc.path.RelationshipTypeAndDirections.parse;
+import static apoc.util.Util.getNodeElementId;
+import static apoc.util.Util.getNodeId;
 
 public class Neighbors {
 
@@ -42,13 +45,14 @@ public class Neighbors {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
 
-        final long startNodeId = node.getId();
+        final long startNodeId = getNodeId((InternalTransaction) tx, node.getElementId());
 
         // Initialize bitmaps for iteration
         Roaring64NavigableMap seen = new Roaring64NavigableMap();
         Roaring64NavigableMap nextA = new Roaring64NavigableMap();
         Roaring64NavigableMap nextB = new Roaring64NavigableMap();
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId((InternalTransaction) tx, nodeElementId);
         seen.addLong(nodeId);
         Iterator<Long> iterator;
 
@@ -57,7 +61,7 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                nextB.addLong(r.getOtherNodeId(nodeId));
+                nextB.addLong(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
             }
         }
 
@@ -68,11 +72,11 @@ public class Neighbors {
             nextA.clear();
             iterator = nextB.iterator();
             while (iterator.hasNext()) {
-                nodeId = iterator.next();
-                node = tx.getNodeById(nodeId);
+                nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        nextA.add((r.getOtherNodeId(nodeId)));
+                        nextA.add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -85,11 +89,11 @@ public class Neighbors {
                 nextB.clear();
                 iterator = nextA.iterator();
                 while (iterator.hasNext()) {
-                    nodeId = iterator.next();
-                    node = tx.getNodeById(nodeId);
+                    nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                    node = tx.getNodeByElementId(nodeElementId);
                     for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                         for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                            nextB.add(r.getOtherNodeId(nodeId));
+                            nextB.add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                         }
                     }
                 }
@@ -103,8 +107,9 @@ public class Neighbors {
         // remove starting node
         seen.removeLong(startNodeId);
 
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(seen.iterator(), Spliterator.SORTED), false)
-                .map(x -> new NodeResult(tx.getNodeById(x)));
+        return StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(seen.iterator(), Spliterator.SORTED), false)
+                .map(x -> new NodeResult(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, x))));
     }
 
     @Procedure("apoc.neighbors.tohop.count")
@@ -113,13 +118,14 @@ public class Neighbors {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
 
-        final long startNodeId = node.getId();
+        final long startNodeId = getNodeId((InternalTransaction) tx, node.getElementId());
 
         // Initialize bitmaps for iteration
         Roaring64NavigableMap seen = new Roaring64NavigableMap();
         Roaring64NavigableMap nextA = new Roaring64NavigableMap();
         Roaring64NavigableMap nextB = new Roaring64NavigableMap();
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId((InternalTransaction) tx, nodeElementId);
         seen.add(nodeId);
         Iterator<Long> iterator;
 
@@ -127,7 +133,8 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                nextB.add(r.getOtherNodeId(nodeId));
+                nextB.add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+
             }
         }
 
@@ -138,11 +145,11 @@ public class Neighbors {
             nextA.clear();
             iterator = nextB.iterator();
             while (iterator.hasNext()) {
-                nodeId = iterator.next();
-                node = tx.getNodeById(nodeId);
+                nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        nextA.add(r.getOtherNodeId(nodeId));
+                        nextA.add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -155,11 +162,11 @@ public class Neighbors {
                 nextB.clear();
                 iterator = nextA.iterator();
                 while (iterator.hasNext()) {
-                    nodeId = iterator.next();
-                    node = tx.getNodeById(nodeId);
+                    nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                    node = tx.getNodeByElementId(nodeElementId);
                     for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                         for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                            nextB.add(r.getOtherNodeId(nodeId));
+                            nextB.add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                         }
                     }
                 }
@@ -187,7 +194,8 @@ public class Neighbors {
         for(int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId((InternalTransaction) tx, nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -195,17 +203,18 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
             }
         }
 
         for(int i = 1; i < distance; i++) {
             iterator = seen[i-1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -217,7 +226,7 @@ public class Neighbors {
 
         return Arrays.stream(seen).map(x -> new NodeListResult(
                 StreamSupport.stream(Spliterators.spliteratorUnknownSize(x.iterator(), Spliterator.SORTED), false)
-                        .map(y -> tx.getNodeById((long) y))
+                        .map(y -> tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, y)))
                         .collect(Collectors.toList())));
     }
 
@@ -232,7 +241,8 @@ public class Neighbors {
         for(int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId((InternalTransaction) tx, nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -240,17 +250,19 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+
             }
         }
 
         for(int i = 1; i < distance; i++) {
             iterator = seen[i-1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -279,7 +291,8 @@ public class Neighbors {
         for(int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId((InternalTransaction) tx, nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -287,17 +300,18 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
             }
         }
 
         for(int i = 1; i < distance; i++) {
             iterator = seen[i-1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                     }
                 }
             }
@@ -308,7 +322,8 @@ public class Neighbors {
         }
 
         return StreamSupport
-                .stream(Spliterators.spliteratorUnknownSize(seen[distance.intValue() - 1].iterator(), Spliterator.SORTED), false).map(y -> new NodeResult(tx.getNodeById(y)));
+                .stream(Spliterators.spliteratorUnknownSize(seen[distance.intValue() - 1].iterator(), Spliterator.SORTED), false)
+                .map(y -> new NodeResult(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, y))));
     }
 
     @Procedure("apoc.neighbors.athop.count")
@@ -322,7 +337,8 @@ public class Neighbors {
         for (int i = 0; i < distance; i++) {
             seen[i] = new Roaring64NavigableMap();
         }
-        long nodeId = node.getId();
+        String nodeElementId = node.getElementId();
+        long nodeId = getNodeId((InternalTransaction) tx, nodeElementId);
 
         Iterator<Long> iterator;
 
@@ -330,17 +346,18 @@ public class Neighbors {
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
             for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(r.getOtherNodeId(nodeId));
+                seen[0].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
             }
         }
 
         for (int i = 1; i < distance; i++) {
             iterator = seen[i - 1].iterator();
             while (iterator.hasNext()) {
-                node = tx.getNodeById(iterator.next());
+                nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
+                node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
                     for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(r.getOtherNodeId(node.getId()));
+                        seen[i].add(getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
                     }
                 }
             }

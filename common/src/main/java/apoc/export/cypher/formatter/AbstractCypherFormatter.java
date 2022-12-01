@@ -156,7 +156,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 		AtomicInteger nodeCount = new AtomicInteger(0);
 		Function<Node, Map.Entry<Set<String>, Set<String>>> keyMapper = (node) -> {
 			try (Transaction tx = db.beginTx()) {
-				node = tx.getNodeById(node.getId());
+				node = tx.getNodeByElementId(node.getElementId());
 				Set<String> idProperties = CypherFormatterUtils.getNodeIdProperties(node, uniqueConstraints).keySet();
 				Set<String> labels = getLabels(node);
 				tx.commit();
@@ -266,7 +266,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
 		Function<Relationship, Map<String, Object>> keyMapper = (rel) -> {
 			try (Transaction tx = db.beginTx()) {
-				rel = tx.getRelationshipById(rel.getId());
+				rel = tx.getRelationshipByElementId(rel.getElementId());
 				Node start = rel.getStartNode();
 				Set<String> startLabels = getLabels(start);
 

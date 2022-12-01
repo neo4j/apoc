@@ -78,7 +78,7 @@ public class Distance {
 
     private void checkNodeHasGeo(Node node) {
         if (!node.hasProperty(LATITUDE) || !node.hasProperty(LONGITUDE)) {
-            throw new IllegalArgumentException(String.format("Node with id %s has invalid geo properties", node.getId()));
+            throw new IllegalArgumentException(String.format("Node with id %s has invalid geo properties", node.getElementId()));
         }
     }
 

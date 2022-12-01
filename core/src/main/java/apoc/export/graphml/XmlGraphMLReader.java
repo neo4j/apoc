@@ -202,7 +202,7 @@ public class XmlGraphMLReader {
     }
 
     public long parseXML(Reader input) throws XMLStreamException {
-        Map<String, Long> cache = new HashMap<>(1024*32);
+        Map<String, String> cache = new HashMap<>(1024*32);
         XMLInputFactory inputFactory = XMLInputFactory.newInstance();
         inputFactory.setProperty("javax.xml.stream.isCoalescing", true);
         inputFactory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, true);
@@ -276,7 +276,7 @@ public class XmlGraphMLReader {
                         if (storeNodeIds) node.setProperty("id", id);
                         setDefaults(nodeKeys, node);
                         last = node;
-                        cache.put(id, node.getId());
+                        cache.put(id, node.getElementId());
                         if (reporter != null) reporter.update(1, 0, 0);
                         count++;
                         continue;
@@ -328,16 +328,16 @@ public class XmlGraphMLReader {
         }
     }
 
-    private Node getByNodeId(Map<String, Long> cache, Transaction tx, StartElement element, XmlNodeExport.NodeType nodeType) {
+    private Node getByNodeId(Map<String, String> cache, Transaction tx, StartElement element, XmlNodeExport.NodeType nodeType) {
         final XmlNodeExport.ExportNode xmlNodeInterface = nodeType.get();
         final ExportConfig.NodeConfig nodeConfig = xmlNodeInterface.getNodeConfigReader(this);
         
         final String sourceTargetValue = getAttribute(element, QName.valueOf(nodeType.getName()));
         
-        final Long id = cache.get(sourceTargetValue);
+        final String id = cache.get(sourceTargetValue);
         // without source/target config, we look for the internal id
         if (StringUtils.isBlank(nodeConfig.label)) {
-            return tx.getNodeById(id);
+            return tx.getNodeByElementId(id);
         }
         // with source/target configured, we search a node with a specified label 
         // and with a type specified in sourceType, if present, or string by default

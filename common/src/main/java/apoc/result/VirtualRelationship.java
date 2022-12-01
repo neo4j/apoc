@@ -153,8 +153,8 @@ public class VirtualRelationship implements Relationship {
 
     @Override
     public boolean equals(Object o) {
-        return this == o || o instanceof Relationship && id == ((Relationship) o).getId();
-
+        return this == o || o instanceof Relationship &&
+                Objects.equals(getElementId(), ((Relationship) o).getElementId());
     }
 
     @Override

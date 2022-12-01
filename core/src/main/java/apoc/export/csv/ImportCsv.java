@@ -50,7 +50,7 @@ public class ImportCsv {
                     final ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "csv"));
                     final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log);
 
-                    final Map<String, Map<String, Long>> idMapping = new HashMap<>();
+                    final Map<String, Map<String, String>> idMapping = new HashMap<>();
                     for (Map<String, Object> node : nodes) {
                         final Object data = node.getOrDefault("fileName", node.get("data"));
                         final List<String> labels = (List<String>) node.get("labels");

@@ -214,7 +214,7 @@ public class WrappedNode implements Node {
 
     @Override
     public boolean equals(Object o) {
-        return this == o || o instanceof Node && id == ((Node) o).getId();
+        return this == o || o instanceof Node && Objects.equals(getElementId(), ((Node) o).getElementId());
 
     }
 

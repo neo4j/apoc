@@ -12,10 +12,10 @@ import static apoc.util.Util.isSelfRel;
 
 public class RefactorUtil {
 
-    public static void mergeRelsWithSameTypeAndDirectionInMergeNodes(Node node, RefactorConfig config, Direction dir, List<Long> excludeRelIds) {
+    public static void mergeRelationshipsWithSameTypeAndDirection(Node node, RefactorConfig config, Direction dir, List<String> excludeRelIds) {
         for (RelationshipType type : node.getRelationshipTypes()) {
             StreamSupport.stream(node.getRelationships(dir,type).spliterator(), false)
-                    .filter(rel -> !excludeRelIds.contains(rel.getId()))
+                    .filter(rel -> !excludeRelIds.contains(rel.getElementId()))
                     .collect(Collectors.groupingBy(rel -> Pair.of(rel.getStartNode(), rel.getEndNode())))
                     .values().stream()
                     .filter(list -> !list.isEmpty())

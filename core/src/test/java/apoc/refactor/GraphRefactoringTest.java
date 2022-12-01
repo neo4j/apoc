@@ -45,7 +45,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertNull;
@@ -346,41 +345,28 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testDeleteOneNode() {
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) DELETE o RETURN n as node",
-                      map("oldID", 1L, "newID",2L),
-                (r) -> {
-                    Node node = (Node) r.get("node");
-                    assertNotEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(2L, node.getProperty("ID"));
-                });
-    }
-
-    @Test
     public void testEagernessMergeNodesFails() {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.ID)");
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
+        String id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) CALL apoc.refactor.mergeNodes([o,n]) yield node return node",
                       map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertEquals(2L, node.getProperty("ID"));
                 });
     }
 
     @Test
     public void testMergeNodesEagerAggregation() {
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
+        String id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) WITH head(collect([o,n])) as nodes CALL apoc.refactor.mergeNodes(nodes) yield node return node",
                       map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertEquals(2L, node.getProperty("ID"));
                 });
     }
@@ -389,35 +375,27 @@ public class GraphRefactoringTest {
     public void testMergeNodesEagerIndex() {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.ID)");
         db.executeTransactionally("CALL db.awaitIndexes()");
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
+        String id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) USING INDEX o:Person(ID) USING INDEX n:Person(ID) CALL apoc.refactor.mergeNodes([o,n]) yield node return node",
                       map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertEquals(2L, node.getProperty("ID"));
                 });
     }
     @Test
     public void testMergeNodesIndexConflict() {
-        /*
-        CREATE CONSTRAINT FOR (a:A) REQUIRE a.prop1 IS UNIQUE;
-CREATE CONSTRAINT FOR (a:B) REQUIRE a.prop2 IS UNIQUE;
-CREATE (a:A) SET a.prop1 = 1;
-CREATE (b:B) SET b.prop2 = 99;
-
-MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b]) YIELD node RETURN node;
-         */
         db.executeTransactionally("CREATE CONSTRAINT FOR (a:A) REQUIRE a.prop1 IS UNIQUE;");
         db.executeTransactionally("CREATE CONSTRAINT FOR (b:B) REQUIRE b.prop2 IS UNIQUE;");
         db.executeTransactionally("CALL db.awaitIndexes()");
-        long id = db.executeTransactionally("CREATE (a:A) SET a.prop1 = 1 CREATE (b:B) SET b.prop2 = 99 RETURN id(a) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
+        String id = db.executeTransactionally("CREATE (a:A) SET a.prop1 = 1 CREATE (b:B) SET b.prop2 = 99 RETURN elementId(a) as id ", emptyMap(), result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b]) YIELD node RETURN node",
                       map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
+                    assertEquals(id, node.getElementId());
                     assertTrue(node.hasLabel(Label.label("A")));
                     assertTrue(node.hasLabel(Label.label("B")));
                     assertEquals(1L, node.getProperty("prop1"));
@@ -438,11 +416,11 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
         testCall(db, "MATCH (b1:BLabel {name:'b1'}), (b2:BLabel {name:'b2'}), (b3:BLabel {name:'b3'}), (b4:BLabel {name:'b4'}) " +
                 "     WITH head(collect([b1,b2,b3,b4])) as nodes CALL apoc.refactor.mergeNodes(nodes) yield node return node",
                 row -> {
-                    assertTrue(row.get("node") != null);
+                    assertNotNull(row.get("node"));
                     assertTrue(row.get("node") instanceof Node);
                     Node resultingNode = (Node)(row.get("node"));
-                    assertTrue(resultingNode.getDegree(Direction.OUTGOING) == 0);
-                    assertTrue(resultingNode.getDegree(Direction.INCOMING) == 4);
+                    assertEquals(0, resultingNode.getDegree(Direction.OUTGOING));
+                    assertEquals(4, resultingNode.getDegree(Direction.INCOMING));
                 }
         );
     }
@@ -461,14 +439,15 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 row -> {
                     Node node = (Node) row.get("node");
                     assertNotNull(node);
-                    assertTrue(node.getDegree(Direction.OUTGOING) == 3);
-                    assertTrue(node.getDegree(Direction.INCOMING) == 0);
+                    assertEquals(3, node.getDegree(Direction.OUTGOING));
+                    assertEquals(0, node.getDegree(Direction.INCOMING));
                 }
         );
 
-        testResult(db, "MATCH (a:ALabel) return count(*) as count", result -> {
-            assertEquals( "other ALabel nodes have been deleted", 1, (long)Iterators.single(result.columnAs("count")));
-        });
+        testResult(
+                db, "MATCH (a:ALabel) return count(*) as count",
+                result -> assertEquals( "other ALabel nodes have been deleted", 1, (long)Iterators.single(result.columnAs("count")))
+        );
     }
 
     @Test
@@ -480,8 +459,8 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 row -> {
                     Node node = (Node) row.get("node");
                     assertNotNull(node);
-                    assertTrue(node.getDegree(Direction.OUTGOING) == 1);
-                    assertTrue(node.getDegree(Direction.INCOMING) == 0);
+                    assertEquals(1, node.getDegree(Direction.OUTGOING));
+                    assertEquals(0, node.getDegree(Direction.INCOMING));
                 }
         );
     }
@@ -499,8 +478,8 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 row -> {
                     Node node = (Node) row.get("node");
                     assertNotNull(node);
-                    assertTrue(node.getDegree(Direction.OUTGOING) == 2);
-                    assertTrue(node.getDegree(Direction.INCOMING) == 0);
+                    assertEquals(2, node.getDegree(Direction.OUTGOING));
+                    assertEquals(0, node.getDegree(Direction.INCOMING));
                 }
         );
     }
@@ -512,7 +491,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 (r) -> {
                     assertEquals(id, r.get("input"));
                     Node node = (Node) r.get("output");
-                    assertEquals(true, node.hasLabel(Label.label("FooBar")));
+                    assertTrue(node.hasLabel(label("FooBar")));
                     assertEquals(1L, node.getProperty("a"));
                     assertNotNull(node.getSingleRelationship(RelationshipType.withName("FOO"), Direction.OUTGOING));
                     assertNotNull(node.getSingleRelationship(RelationshipType.withName("BAR"), Direction.INCOMING));
@@ -525,8 +504,8 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 (r) -> {
                     assertEquals(id, r.get("input"));
                     Relationship rel = (Relationship) r.get("output");
-                    assertEquals(true, rel.getStartNode().hasLabel(Label.label("Bar")));
-                    assertEquals(true, rel.getEndNode().hasLabel(Label.label("Foo")));
+                    assertTrue(rel.getStartNode().hasLabel(label("Bar")));
+                    assertTrue(rel.getEndNode().hasLabel(label("Foo")));
                     assertEquals(1L, rel.getProperty("a"));
                 });
     }
@@ -554,7 +533,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 (r) -> {
                     assertEquals(id, r.get("input"));
                     Relationship rel = (Relationship) r.get("output");
-                    assertEquals(true, rel.isType(RelationshipType.withName("FOOBAR")));
+                    assertTrue(rel.isType(RelationshipType.withName("FOOBAR")));
                     assertEquals(1L, rel.getProperty("a"));
                     assertEquals(2L, rel.getProperty("b"));
                     assertEquals(3L, rel.getProperty("c"));
@@ -589,7 +568,7 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                         "CREATE ({prop: 'C', k: 'c', id: 6})");
 
 
-        final boolean outgoing = direction == Direction.OUTGOING ? true : false;
+        final boolean outgoing = direction == Direction.OUTGOING;
         final String label = "Letter";
         final String targetKey = "name";
         db.executeTransactionally("CREATE CONSTRAINT constraint FOR (n:`" + label + "`) REQUIRE n.`" + targetKey + "` IS UNIQUE");
@@ -692,15 +671,15 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     @Test
     public void testMergeNodesWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (p:Person) REQUIRE p.name IS UNIQUE");
-        long id = db.executeTransactionally("CREATE (p1:Person {name:'Foo'}), (p2:Person {surname:'Bar'}) RETURN id(p1) as id",
+        String id = db.executeTransactionally("CREATE (p1:Person {name:'Foo'}), (p2:Person {surname:'Bar'}) RETURN elementId(p1) as id",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id"))
         );
         testCall(db, "MATCH (o:Person {name:'Foo'}), (n:Person {surname:'Bar'}) CALL apoc.refactor.mergeNodes([o,n]) yield node return node",
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertEquals("Foo", node.getProperty("name"));
                     assertEquals("Bar", node.getProperty("surname"));
                 });
@@ -708,23 +687,24 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeNodesWithIngoingRelationships() {
-        long lisaId = db.executeTransactionally("CREATE \n" +
-                "(alice:Person {name:'Alice'}),\n" +
-                "(bob:Person {name:'Bob'}),\n" +
-                "(john:Person {name:'John'}),\n" +
-                "(lisa:Person {name:'Lisa'}),\n" +
-                "(alice)-[:knows]->(bob),\n" +
-                "(lisa)-[:knows]->(alice),\n" +
-                "(bob)-[:knows]->(john) return id(lisa) as lisaId", emptyMap(),
+        String lisaId = db.executeTransactionally("""
+                        CREATE
+                        (alice:Person {name:'Alice'}),
+                        (bob:Person {name:'Bob'}),
+                        (john:Person {name:'John'}),
+                        (lisa:Person {name:'Lisa'}),
+                        (alice)-[:knows]->(bob),
+                        (lisa)-[:knows]->(alice),
+                        (bob)-[:knows]->(john) return elementId(lisa) as lisaId""", emptyMap(),
                 result -> Iterators.single(result.columnAs("lisaId")));
 
-        //Merge (Bob) into (Lisa).
+        // Merge (Bob) into (Lisa).
         // The updated node should have one ingoing edge from (Alice), and two outgoing edges to (John) and (Alice).
         testCall(db,
                 "MATCH (bob:Person {name:'Bob'}), (lisa:Person {name:'Lisa'}) CALL apoc.refactor.mergeNodes([lisa, bob]) yield node return node, bob",
                 (r)-> {
                     Node node = (Node) r.get("node");
-                    assertEquals(lisaId, node.getId());
+                    assertEquals(lisaId, node.getElementId());
                     assertEquals("Bob", node.getProperty("name"));
                     assertEquals(1, node.getDegree(Direction.INCOMING));
                     assertEquals(2, node.getDegree(Direction.OUTGOING));
@@ -735,11 +715,12 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeNodesWithSelfRelationships() {
-        Map<String, Object> result = db.executeTransactionally("CREATE \n" +
-                "(alice:Person {name:'Alice'}),\n" +
-                "(bob:Person {name:'Bob'}),\n" +
-                "(bob)-[:likes]->(bob) RETURN id(alice) AS aliceId, id(bob) AS bobId", emptyMap(),
-                innerResult -> Iterators.single(innerResult));
+        Map<String, Object> result = db.executeTransactionally("""
+                        CREATE
+                        (alice:Person {name:'Alice'}),
+                        (bob:Person {name:'Bob'}),
+                        (bob)-[:likes]->(bob) RETURN elementId(alice) AS aliceId, id(bob) AS bobId""", emptyMap(),
+                Iterators::single);
 
         // Merge (bob) into (alice).
         // The updated node should have one self relationship.
@@ -748,31 +729,41 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                 "MATCH (alice:Person {name:'Alice'}), (bob:Person {name:'Bob'}) WITH * LIMIT 1 CALL apoc.refactor.mergeNodes([alice, bob]) yield node return node",
                 (r)-> {
                     Node node = (Node) r.get("node");
-                    assertEquals(result.get("aliceId"), node.getId());
+                    assertEquals(result.get("aliceId"), node.getElementId());
                     assertEquals("Bob", node.getProperty("name"));
                     assertEquals(1, node.getDegree(Direction.INCOMING));
                     assertEquals(1, node.getDegree(Direction.OUTGOING));
-                    assertTrue(node.getSingleRelationship(RelationshipType.withName("likes"), Direction.OUTGOING).getEndNode().equals(node));
+                    assertEquals(node.getSingleRelationship(RelationshipType.withName("likes"), Direction.OUTGOING).getEndNode(), node);
                 });
     }
 
     @Test
     public void testMergeRelsOverwriteEagerAggregation() {
-        long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:2010}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
+        String id = db.executeTransactionally("""
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:2010}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN elementId(p) as id""",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "MATCH (d:Person {name:'Daniele'})\n" + "MATCH (p:Country {name:'USA'})\n" + "MATCH (d)-[r:TRAVELS_TO]->(p)\n" + "MATCH (d)-[h:GOES_TO]->(p)\n"
-                        + "MATCH (d)-[l:FLIGHTS_TO]->(p)\n" + "call apoc.refactor.mergeRelationships([r,h,l],{properties:\"overwrite\"}) yield rel\n MATCH (d)-[u]->(p) " + "return p,d,u,u.to as to, count(u) as totRel",
+        testCall(db, """
+                        MATCH (d:Person {name:'Daniele'})
+                        MATCH (p:Country {name:'USA'})
+                        MATCH (d)-[r:TRAVELS_TO]->(p)
+                        MATCH (d)-[h:GOES_TO]->(p)
+                        MATCH (d)-[l:FLIGHTS_TO]->(p)
+                        CALL apoc.refactor.mergeRelationships([r,h,l],{properties:"overwrite"}) YIELD rel
+                         MATCH (d)-[u]->(p) return p, d, u, u.to as to, count(u) as totRel""",
                 (r) -> {
                     Node node = (Node) r.get("p");
                     Long totRel = (Long) r.get("totRel");
                     Relationship rel = (Relationship) r.get("u");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Country")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Country")));
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
-                    assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
+                    assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals("work", rel.getProperty("reason"));
                     assertEquals(2010L, rel.getProperty("year"));
                 });
@@ -780,21 +771,31 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeRelsCombineEagerAggregation() {
-        long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:2010, reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
+        String id = db.executeTransactionally("""
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:2010, reason:"fun"}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN elementId(p) as id\s""",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "MATCH (d:Person {name:'Daniele'})\n" + "MATCH (p:Country {name:'USA'})\n" + "MATCH (d)-[r:TRAVELS_TO]->(p)\n" + "MATCH (d)-[h:GOES_TO]->(p)\n"
-                        + "MATCH (d)-[l:FLIGHTS_TO]->(p)\n" + "call apoc.refactor.mergeRelationships([r,h,l],{properties:\"discard\"}) yield rel\n MATCH (d)-[u]->(p) " + "return p,d,u,u.to as to, count(u) as totRel",
+        testCall(db, """
+                        MATCH (d:Person {name:'Daniele'})
+                        MATCH (p:Country {name:'USA'})
+                        MATCH (d)-[r:TRAVELS_TO]->(p)
+                        MATCH (d)-[h:GOES_TO]->(p)
+                        MATCH (d)-[l:FLIGHTS_TO]->(p)
+                        call apoc.refactor.mergeRelationships([r,h,l],{properties:"discard"}) yield rel
+                         MATCH (d)-[u]->(p) return p,d,u,u.to as to, count(u) as totRel""",
                 (r) -> {
                     Node node = (Node) r.get("p");
                     Long totRel = (Long) r.get("totRel");
                     Relationship rel = (Relationship) r.get("u");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Country")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Country")));
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
-                    assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
+                    assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals("work", rel.getProperty("reason"));
                     assertEquals(1995L, rel.getProperty("year"));
                 });
@@ -802,21 +803,31 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeRelsEagerAggregationCombineSingleValuesProperty() {
-        long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:2010, reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
+        String id = db.executeTransactionally("""
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:2010, reason:"fun"}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN elementId(p) as id""",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "MATCH (d:Person {name:'Daniele'})\n" + "MATCH (p:Country {name:'USA'})\n" + "MATCH (d)-[r:TRAVELS_TO]->(p)\n" + "MATCH (d)-[h:GOES_TO]->(p)\n"
-                        + "MATCH (d)-[l:FLIGHTS_TO]->(p)\n" + "call apoc.refactor.mergeRelationships([r,h,l],{properties:\"combine\"}) yield rel\n MATCH (d)-[u]->(p) " + "return p,d,u,u.to as to, count(u) as totRel",
+        testCall(db, """
+                        MATCH (d:Person {name:'Daniele'})
+                        MATCH (p:Country {name:'USA'})
+                        MATCH (d)-[r:TRAVELS_TO]->(p)
+                        MATCH (d)-[h:GOES_TO]->(p)
+                        MATCH (d)-[l:FLIGHTS_TO]->(p)
+                        call apoc.refactor.mergeRelationships([r,h,l],{properties:"combine"}) yield rel
+                         MATCH (d)-[u]->(p) return p,d,u,u.to as to, count(u) as totRel""",
                 (r) -> {
                     Node node = (Node) r.get("p");
                     Long totRel = (Long) r.get("totRel");
                     Relationship rel = (Relationship) r.get("u");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Country")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Country")));
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
-                    assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
+                    assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
                     assertEquals(Arrays.asList(1995L, 2010L).toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
                 });
@@ -824,21 +835,31 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeRelsEagerAggregationCombineArrayDifferentValuesTypeProperties() {
-        long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:[\"2010\",\"2015\"], reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
+        String id = db.executeTransactionally("""
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:["2010","2015"], reason:"fun"}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN elementId(p) as id""",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "MATCH (d:Person {name:'Daniele'})\n" + "MATCH (p:Country {name:'USA'})\n" + "MATCH (d)-[r:TRAVELS_TO]->(p)\n" + "MATCH (d)-[h:GOES_TO]->(p)\n"
-                        + "MATCH (d)-[l:FLIGHTS_TO]->(p)\n" + "call apoc.refactor.mergeRelationships([r,h,l],{properties:\"combine\"}) yield rel\n MATCH (d)-[u]->(p) " + "return p,d,u,u.to as to, count(u) as totRel",
+        testCall(db, """
+                        MATCH (d:Person {name:'Daniele'})
+                        MATCH (p:Country {name:'USA'})
+                        MATCH (d)-[r:TRAVELS_TO]->(p)
+                        MATCH (d)-[h:GOES_TO]->(p)
+                        MATCH (d)-[l:FLIGHTS_TO]->(p)
+                        CALL apoc.refactor.mergeRelationships([r,h,l],{properties:"combine"}) YIELD rel
+                         MATCH (d)-[u]->(p) RETURN p,d,u,u.to as to, count(u) AS totRel""",
                 (r) -> {
                     Node node = (Node) r.get("p");
                     Long totRel = (Long) r.get("totRel");
                     Relationship rel = (Relationship) r.get("u");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Country")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Country")));
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
-                    assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
+                    assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
                     assertEquals(Arrays.asList("1995", "2010", "2015").toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
                 });
@@ -935,22 +956,32 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
     }
 
     @Test
-    public void testMergeRelsOverridePropertiesEagerAggregation() {
-        long id = db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:2010}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ",
+    public void testMergeRelsOverridePropertiesEagerAggregation() throws Exception {
+        String id = db.executeTransactionally("""
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:2010}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN elementId(p) as id""",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "MATCH (d:Person {name:'Daniele'})\n" + "MATCH (p:Country {name:'USA'})\n" + "MATCH (d)-[r:TRAVELS_TO]->(p)\n" + "MATCH (d)-[h:GOES_TO]->(p)\n"
-                        + "MATCH (d)-[l:FLIGHTS_TO]->(p)\n" + "call apoc.refactor.mergeRelationships([r,h,l],{properties:\"override\"}) yield rel\n MATCH (d)-[u]->(p) " + "return p,d,u,u.to as to, count(u) as totRel",
+        testCall(db, """
+                        MATCH (d:Person {name:'Daniele'})
+                        MATCH (p:Country {name:'USA'})
+                        MATCH (d)-[r:TRAVELS_TO]->(p)
+                        MATCH (d)-[h:GOES_TO]->(p)
+                        MATCH (d)-[l:FLIGHTS_TO]->(p)
+                        CALL apoc.refactor.mergeRelationships([r,h,l],{properties:"override"}) YIELD rel
+                         MATCH (d)-[u]->(p) RETURN p, d, u, u.to AS to, count(u) AS totRel""",
                 (r) -> {
                     Node node = (Node) r.get("p");
                     Long totRel = (Long) r.get("totRel");
                     Relationship rel = (Relationship) r.get("u");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Country")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Country")));
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
-                    assertEquals(true, rel.isType(RelationshipType.withName("TRAVELS_TO")));
+                    assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
                     assertEquals("work", rel.getProperty("reason"));
                     assertEquals(2010L, rel.getProperty("year"));
                 });
@@ -958,30 +989,30 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeNodesOverridePropertiesEagerAggregation() {
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN id(p1) as id ",
+        String id = db.executeTransactionally("CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id ",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) WITH head(collect([o,n])) as nodes CALL apoc.refactor.mergeNodes(nodes, {properties:\"override\"}) yield node return node",
                 map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertEquals(2L, node.getProperty("ID"));
                 });
     }
 
     @Test
     public void testMergeNodesOnArrayValues() {
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN id(p1) as id ",
+        String id = db.executeTransactionally("CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN elementId(p1) as id ",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) WITH head(collect([o,n])) as nodes CALL apoc.refactor.mergeNodes(nodes, {properties:'combine'}) yield node return node",
                 map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertArrayEquals(new long[] {1L, 2L}, (long[]) node.getProperty("ID"));
                     assertEquals("foo", node.getProperty("prop"));
                 });
@@ -989,15 +1020,15 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
 
     @Test
     public void testMergeNodesOnArrayValuesPreventTypeChange() {
-        long id = db.executeTransactionally("CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN id(p1) as id ",
+        String id = db.executeTransactionally("CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN elementId(p1) as id ",
                 emptyMap(),
                 result -> Iterators.single(result.columnAs("id")));
         testCall(db, "MATCH (o:Person {ID:$oldID}), (n:Person {ID:$newID}) WITH head(collect([o,n])) as nodes CALL apoc.refactor.mergeNodes(nodes, {properties:'combine', singleElementAsArray: true}) yield node return node",
                 map("oldID", 1L, "newID",2L),
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    assertEquals(id, node.getId());
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertEquals(id, node.getElementId());
+                    assertTrue(node.hasLabel(label("Person")));
                     assertArrayEquals(new long[] {1L, 2L}, (long[]) node.getProperty("ID"));
                     assertArrayEquals(new String[] {"foo"}, (String[]) node.getProperty("prop"));
                 });
@@ -1008,11 +1039,12 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
         // given
         final String label = "Country";
         final String targetKey = "name";
-        db.executeTransactionally("with [\"IT\", \"DE\"] as countries\n" +
-                "unwind countries as country\n" +
-                "foreach (no in RANGE(1, 4) |\n" +
-                "  create (n:Company {name: country + no, country: country})\n" +
-                ")");
+        db.executeTransactionally("""
+                WITH ["IT", "DE"] AS countries
+                UNWIND countries AS country
+                foreach (no in RANGE(1, 4) |
+                  CREATE (n:Company {name: country + no, country: country})
+                )""");
 
         // when
         try {
@@ -1033,11 +1065,12 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
         final String label = "Country";
         final String targetKey = "name";
         db.executeTransactionally("CREATE CONSTRAINT constraint FOR (n:`" + label + "`) REQUIRE n.`" + targetKey + "` IS UNIQUE");
-        db.executeTransactionally("with [\"IT\", \"DE\"] as countries\n" +
-                "unwind countries as country\n" +
-                "foreach (no in RANGE(1, 4) |\n" +
-                "  create (n:Company {name: country + no, country: country})\n" +
-                ")");
+        db.executeTransactionally("""
+                WITH ["IT", "DE"] AS countries
+                UNWIND countries AS country
+                foreach (no in RANGE(1, 4) |
+                  CREATE (n:Company {name: country + no, country: country})
+                )""");
 
         // when
         db.executeTransactionally("CALL apoc.refactor.categorize('country', 'OPERATES_IN', true, $label, $targetKey, [], 1)",
@@ -1059,11 +1092,12 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
         final String label = "Country";
         final String targetKey = "name";
         db.executeTransactionally("CREATE CONSTRAINT constraint FOR (n:`" + label + "`) REQUIRE n.`" + targetKey + "` IS UNIQUE");
-        db.executeTransactionally("with [\"IT\", \"DE\"] as countries\n" +
-                "unwind countries as country\n" +
-                "foreach (no in RANGE(1, 4) |\n" +
-                "  create (n:Company {name: country + no, country: country})\n" +
-                ")");
+        db.executeTransactionally("""
+                WITH ["IT", "DE"] as countries
+                UNWIND countries as country
+                foreach (no in RANGE(1, 4) |
+                  CREATE (n:Company {name: country + no, country: country})
+                )""");
 
         // when
         db.executeTransactionally("CALL apoc.refactor.categorize('country', 'FOO`]->() WITH n SET n = {} RETURN n//', true, $label, $targetKey, [], 1)",
@@ -1187,8 +1221,10 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     List<Relationship> relationships = IteratorUtils.toList(node.getRelationships().iterator());
 
                     assertEquals(4, relationships.size());
-                    relationships.sort(Comparator.comparingLong(Relationship::getStartNodeId)
-                            .thenComparingLong(Relationship::getEndNodeId));
+                    relationships.sort(
+                            Comparator.comparing(rel -> ((Relationship) rel).getStartNode().getElementId())
+                                    .thenComparing(rel -> ((Relationship) rel).getEndNode().getElementId())
+                    );
 
                     // two A-A rels: the existing one and the new one after merge
                     Relationship firstSelfRel = relationships.get(0);
@@ -1228,8 +1264,10 @@ MATCH (a:A {prop1:1}) MATCH (b:B {prop2:99}) CALL apoc.refactor.mergeNodes([a, b
                     List<Relationship> relationships = IteratorUtils.toList(node.getRelationships().iterator());
 
                     assertEquals(3, relationships.size());
-                    relationships.sort(Comparator.comparingLong(Relationship::getStartNodeId)
-                            .thenComparingLong(Relationship::getEndNodeId));
+                    relationships.sort(
+                            Comparator.comparing(rel -> ((Relationship) rel).getStartNode().getElementId())
+                                    .thenComparing(rel -> ((Relationship) rel).getEndNode().getElementId())
+                    );
 
                     Relationship firstRel = relationships.get(0);
                     assertEquals("A", firstRel.getStartNode().getLabels().iterator().next().name());

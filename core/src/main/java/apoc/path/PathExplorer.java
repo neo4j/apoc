@@ -11,6 +11,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.traversal.*;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -23,6 +24,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static apoc.path.PathExplorer.NodeFilter.*;
+import static apoc.util.Util.getNodeElementId;
 
 public class PathExplorer {
 	public static final Uniqueness UNIQUENESS = Uniqueness.RELATIONSHIP_PATH;
@@ -114,7 +116,7 @@ public class PathExplorer {
 			return Collections.singletonList((Node) start);
 		}
 		if (start instanceof Number) {
-			return Collections.singletonList(tx.getNodeById(((Number) start).longValue()));
+			return Collections.singletonList(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, ((Number) start).longValue())));
 		}
 		if (start instanceof List) {
 			List list = (List) start;
@@ -124,7 +126,7 @@ public class PathExplorer {
 			if (first instanceof Node) return (List<Node>)list;
 			if (first instanceof Number) {
                 List<Node> nodes = new ArrayList<>();
-                for (Number n : ((List<Number>)list)) nodes.add(tx.getNodeById(n.longValue()));
+                for (Number n : ((List<Number>)list)) nodes.add(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, n.longValue())));
                 return nodes;
             }
 		}

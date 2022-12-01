@@ -236,7 +236,7 @@ public class Meta {
                 : nodes.stream().filter(Objects::nonNull).map(String::trim).map(Label::label);
 
         final boolean isIncludeRels = CollectionUtils.isEmpty(conf.getIncludesRels());
-        Set<Long> visitedNodes = new HashSet<>();
+        Set<String> visitedNodes = new HashSet<>();
         return labels
                 .flatMap(label -> isIncludeRels ? Stream.of(subGraph.countsForNode(label)) : conf.getIncludesRels()
                         .stream()
@@ -261,8 +261,8 @@ public class Meta {
                         })
                         .flatMap(pair -> transaction.findNodes(label)
                                 .map(node -> {
-                                    if (!visitedNodes.contains(node.getId()) && node.hasRelationship(pair.getLeft(), RelationshipType.withName(pair.getRight()))) {
-                                        visitedNodes.add(node.getId());
+                                    if (!visitedNodes.contains(node.getElementId()) && node.hasRelationship(pair.getLeft(), RelationshipType.withName(pair.getRight()))) {
+                                        visitedNodes.add(node.getElementId());
                                         return 1L;
                                     } else {
                                         return 0L;
