@@ -2,6 +2,7 @@ package apoc.help;
 
 import apoc.bitwise.BitwiseOperations;
 import apoc.coll.Coll;
+import apoc.diff.Diff;
 import apoc.util.TestUtil;
 import org.junit.Before;
 import org.junit.Rule;
@@ -23,7 +24,7 @@ public class HelpTest {
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, Help.class, BitwiseOperations.class,Coll.class);
+        TestUtil.registerProcedure(db, Help.class, BitwiseOperations.class, Coll.class, Diff.class);
     }
 
     @Test
@@ -38,6 +39,11 @@ public class HelpTest {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.coll.toSet",row.get("name"));
             assertEquals(true, ((String) row.get("text")).contains("unique list"));
+        });
+        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","diff.nodes"), (row) -> {
+            assertEquals("function",row.get("type"));
+            assertEquals("apoc.diff.nodes",row.get("name"));
+            assertEquals(true, ((String) row.get("text")).contains("Returns a list"));
         });
     }
 

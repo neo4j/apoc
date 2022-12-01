@@ -92,7 +92,7 @@ public class PathFinding {
     }
 
     @Procedure("apoc.algo.allSimplePaths")
-    @Description("runs a search algorithm to find all of the simple paths between the given relationships, " +
+    @Description("Runs a search algorithm to find all of the simple paths between the given relationships, " +
             "up to a max depth described by maxNodes.")
     public Stream<PathResult> allSimplePaths(
             @Name("startNode") Node startNode,

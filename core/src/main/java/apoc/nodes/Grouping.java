@@ -1,6 +1,5 @@
 package apoc.nodes;
 
-import apoc.Description;
 import apoc.Pools;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
@@ -9,6 +8,7 @@ import apoc.util.collection.Iterables;
 import org.neo4j.graphdb.*;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 

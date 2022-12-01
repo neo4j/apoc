@@ -91,7 +91,7 @@ public class LoadArrow {
     }
 
     @Procedure(name = "apoc.load.arrow.stream")
-    @Description("apoc.load.arrow.stream(source, config) - imports nodes and relationships from the provided byte[]")
+    @Description("Imports nodes and relationships from the provided arrow byte array.")
     public Stream<MapResult> stream(
             @Name("source") byte[] source,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws IOException {
@@ -109,9 +109,9 @@ public class LoadArrow {
     }
 
     @Procedure(name = "apoc.load.arrow")
-    @Description("apoc.load.arrow(fileName, config) - imports nodes and relationships from the provided file")
+    @Description("Imports nodes and relationships from the provided arrow file.")
     public Stream<MapResult> file(
-            @Name("source") String fileName,
+            @Name("file") String fileName,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws IOException {
         final SeekableByteChannel channel = FileUtils.inputStreamFor(fileName, null, null, null)
                 .asChannel();

@@ -201,7 +201,7 @@ public class Strings {
     }
 
     @UserFunction("apoc.text.hammingDistance")
-    @Description("compares the two given strings using the Hamming distance algorithm.")
+    @Description("Compares the two given strings using the Hamming distance algorithm.")
     public Long hammingDistance(final @Name("text1") String text1, @Name("text2")final String text2) {
         if (text1 == null || text2 == null) {
             return null;
