@@ -44,8 +44,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -64,6 +62,7 @@ import java.util.stream.Stream;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.FileUtils.getInputStreamFromBinary;
 import static apoc.util.Util.ERROR_BYTES_OR_STRING;
+import static apoc.util.Util.getStreamConnection;
 
 public class Xml {
 
@@ -164,8 +163,7 @@ public class Xml {
             String url = (String) urlOrBinary;
             apocConfig.checkReadAllowed(url);
             url = FileUtils.changeFileUrlIfImportDirectoryConstrained(url);
-            URLConnection urlConnection = new URL(url).openConnection();
-            inputStream = urlConnection.getInputStream();
+            inputStream = getStreamConnection(url, null, null).getInputStream();
         } else if (urlOrBinary instanceof byte[]) {
             inputStream = getInputStreamFromBinary((byte[]) urlOrBinary, config.getCompressionAlgo());
         } else {

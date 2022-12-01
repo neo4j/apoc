@@ -105,8 +105,11 @@ public class ApocConfig extends LifecycleAdapter {
     }
 
     // use only for unit tests
-    public ApocConfig() {
-        this.neo4jConfig = null;
+    public ApocConfig(Config neo4jConfig) {
+        this.neo4jConfig = neo4jConfig;
+        if (neo4jConfig != null) {
+            this.blockedIpRanges = neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist);
+        }
         this.log = NullLog.getInstance();
         this.databaseManagementService = null;
         theInstance = this;
