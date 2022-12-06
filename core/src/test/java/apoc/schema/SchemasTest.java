@@ -731,8 +731,8 @@ public class SchemasTest {
                         r = result.next();
 
                         assertEquals(":SINCE(year)", r.get("name"));
+                        assertEquals("INDEX", r.get("type"));
                         assertEquals("SINCE", r.get("relationshipType"));
-                        assertEquals("year", ((List<String>) r.get("properties")).get(0));
                         assertEquals("year", ((List<String>) r.get("properties")).get(0));
                         assertTrue(!result.hasNext());
                     }
