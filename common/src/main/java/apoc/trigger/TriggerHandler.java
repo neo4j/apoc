@@ -25,7 +25,6 @@ import org.neo4j.scheduler.Group;
 import org.neo4j.scheduler.JobHandle;
 import org.neo4j.scheduler.JobScheduler;
 
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -127,10 +126,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
                 databaseManagementService.unregisterTransactionEventListener(db.databaseName(), this);
             }
         }
-    }
-
-    public Map<String, Object> add(String name, String statement, Map<String,Object> selector) {
-        return add(name, statement, selector, Collections.emptyMap());
     }
 
     public Map<String, Object> add(String name, String statement, Map<String,Object> selector, Map<String,Object> params) {

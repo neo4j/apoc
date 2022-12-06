@@ -1,6 +1,5 @@
 package apoc.util;
 
-import org.apache.commons.io.FileUtils;
 import org.neo4j.driver.AuthToken;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
@@ -10,21 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
-import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.containers.wait.strategy.WaitAllStrategy;
-import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.ext.ScriptUtils;
 import org.testcontainers.containers.wait.strategy.Wait;
 import static apoc.util.TestContainerUtil.Neo4jVersion;
 import static apoc.util.TestContainerUtil.Neo4jVersion.ENTERPRISE;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Scanner;
-
-import static java.net.HttpURLConnection.HTTP_OK;
 
 /**
  * Extension for the Neo4jcontainer class of Testcontainers
@@ -122,13 +114,6 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
 
     public Neo4jContainerExtension withLogging() {
         withLogConsumer(new Slf4jLogConsumer(logger));
-        return this;
-    }
-
-    public Neo4jContainerExtension withDebugger() {
-        withEnv("NEO4J_dbms_jvm_additional","-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005");
-        addFixedExposedPort(5005, 5005);
-        withExposedPorts(5005);
         return this;
     }
 

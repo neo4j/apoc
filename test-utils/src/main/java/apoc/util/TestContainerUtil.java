@@ -183,10 +183,6 @@ public class TestContainerUtil {
         }
     }
 
-    public static void executeGradleTasks(String... tasks) {
-        executeGradleTasks(baseDir, tasks);
-    }
-
     public static void testCall(Session session, String call, Map<String,Object> params, Consumer<Map<String, Object>> consumer) {
         testResult(session, call, params, (res) -> {
             try {
@@ -236,10 +232,6 @@ public class TestContainerUtil {
                 throw t;
             }
         });
-    }
-
-    public static void testResultInReadTransaction(Session session, String call, Consumer<Iterator<Map<String, Object>>> resultConsumer) {
-        testResultInReadTransaction(session, call, null, resultConsumer);
     }
 
     public static void testResultInReadTransaction(Session session, String call, Map<String,Object> params, Consumer<Iterator<Map<String, Object>>> resultConsumer) {

@@ -22,11 +22,6 @@ public class DatabaseSubGraph implements SubGraph
         this.transaction = transaction;
     }
 
-    public static SubGraph from( Transaction transaction )
-    {
-        return new DatabaseSubGraph( transaction );
-    }
-
     @Override
     public Iterable<Node> getNodes()
     {
@@ -40,21 +35,9 @@ public class DatabaseSubGraph implements SubGraph
     }
 
     @Override
-    public boolean contains( Relationship relationship )
-    {
-        return transaction.getRelationshipByElementId( relationship.getElementId() ) != null;
-    }
-
-    @Override
     public Iterable<IndexDefinition> getIndexes()
     {
         return transaction.schema().getIndexes();
-    }
-
-    @Override
-    public Iterable<ConstraintDefinition> getConstraints()
-    {
-        return transaction.schema().getConstraints();
     }
 
     @Override

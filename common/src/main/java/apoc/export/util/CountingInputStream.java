@@ -5,7 +5,6 @@ import org.apache.commons.io.input.BOMInputStream;
 
 import java.io.*;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
 
 /**
  * @author mh
@@ -17,10 +16,6 @@ public class CountingInputStream extends FilterInputStream implements SizeCounte
     private long count=0;
     private long newLines;
 
-    public CountingInputStream(File file) throws IOException {
-        super(toBufferedStream(Files.newInputStream(file.toPath())));
-        this.total = file.length();
-    }
     public CountingInputStream(InputStream stream, long total) {
         super(toBufferedStream(stream));
         this.total = total;
@@ -71,10 +66,6 @@ public class CountingInputStream extends FilterInputStream implements SizeCounte
     public long getPercent() {
         if (total <= 0) return 0;
         return count*100 / total;
-    }
-
-    public InputStream getStream() {
-	   return in;
     }
 
 	public CountingReader asReader() throws IOException {

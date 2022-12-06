@@ -56,10 +56,6 @@ public class BatchAndTotalCollector {
                 failedParamsMap, updateStatistics);
     }
 
-    public long getBatches() {
-        return batches.get();
-    }
-
     public long getCount() {
         return count.get();
     }
@@ -86,10 +82,6 @@ public class BatchAndTotalCollector {
 
     public Map<String, Long> getOperationErrors() {
         return operationErrors;
-    }
-
-    public Map<String, List<Map<String, Object>>> getFailedParamsMap() {
-        return failedParamsMap;
     }
 
     public void amendFailedParamsMap(List<Map<String, Object>> batch) {

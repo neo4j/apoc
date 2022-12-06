@@ -13,7 +13,6 @@ import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.collections.api.iterator.LongIterator;
 import org.neo4j.graphdb.ExecutionPlanDescription;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.schema.ConstraintType;
@@ -60,11 +59,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.PrimitiveIterator;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -85,7 +81,6 @@ import javax.lang.model.SourceVersion;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.connectors.BoltConnector;
 import org.neo4j.dbms.api.DatabaseManagementService;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -93,7 +88,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotInTransactionException;
 import org.neo4j.graphdb.QueryExecutionType;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
@@ -107,7 +101,6 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.formatProperties;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.formatToString;
 import static apoc.util.DateFormatUtil.getOrCreate;
-import static java.lang.String.format;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 import static org.eclipse.jetty.util.URIUtil.encodePath;
@@ -154,28 +147,6 @@ public class Util {
         return new Label[]{Label.label(labelNames.toString())};
     }
 
-    public static RelationshipType type(Object type) {
-        if (type == null) throw new RuntimeException("No relationship-type provided");
-        return RelationshipType.withName(type.toString());
-    }
-
-    @SuppressWarnings("unchecked")
-    public static LongStream ids(Object ids) {
-        if (ids == null) return LongStream.empty();
-        if (ids instanceof Number) return LongStream.of(((Number)ids).longValue());
-        if (ids instanceof Node) return LongStream.of(((Node)ids).getId());
-        if (ids instanceof Relationship) return LongStream.of(((Relationship)ids).getId());
-        if (ids instanceof Collection) {
-            Collection<Object> coll = (Collection<Object>) ids;
-            return coll.stream().mapToLong( (o) -> ((Number)o).longValue());
-        }
-        if (ids instanceof Iterable) {
-            Spliterator<Object> spliterator = ((Iterable) ids).spliterator();
-            return StreamSupport.stream(spliterator,false).mapToLong( (o) -> ((Number)o).longValue());
-        }
-        throw new RuntimeException("Can't convert "+ids.getClass()+" to a stream of long ids");
-    }
-
     public static Stream<Object> stream(Object values) {
         return ConvertUtils.convertToList(values).stream();
     }
@@ -203,30 +174,6 @@ public class Util {
     public static double doubleValue(Entity pc, String prop, Number defaultValue) {
         return toDouble(pc.getProperty(prop, defaultValue));
 
-    }
-
-    public static double doubleValue(Entity pc, String prop) {
-        return doubleValue(pc, prop, 0);
-    }
-
-    public static Direction parseDirection(String direction) {
-        if (null == direction) {
-            return Direction.BOTH;
-        }
-        try {
-            return Direction.valueOf(direction.toUpperCase());
-        } catch (Exception e) {
-            throw new RuntimeException(format("Cannot convert value '%s' to Direction. Legal values are '%s'",
-                    direction, Arrays.toString(Direction.values())));
-        }
-    }
-
-    public static RelationshipType[] toRelTypes(List<String> relTypeStrings) {
-        RelationshipType[] relTypes = new RelationshipType[relTypeStrings.size()];
-        for (int i = 0; i < relTypes.length; i++) {
-            relTypes[i] = RelationshipType.withName(relTypeStrings.get(i));
-        }
-        return relTypes;
     }
 
     public static <T> T retryInTx(Log log, GraphDatabaseService db, Function<Transaction, T> function, long retry, long maxRetries, Consumer<Long> callbackForRetry) {
@@ -516,24 +463,6 @@ public class Util {
         return runNumericQuery(tx,REL_COUNT,null);
     }
 
-    public static LongStream toLongStream(LongIterator it) {
-        PrimitiveIterator.OfLong iterator = new PrimitiveIterator.OfLong() {
-
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-
-            @Override
-            public long nextLong() {
-                return it.next();
-            }
-        };
-        return StreamSupport.longStream(Spliterators.spliteratorUnknownSize(
-                iterator,
-                Spliterator.ORDERED | Spliterator.IMMUTABLE | Spliterator.NONNULL), false);
-    }
-
     public static String readResourceFile(String name) {
         InputStream is = Util.class.getClassLoader().getResourceAsStream(name);
         return new Scanner(is).useDelimiter("\\Z").next();
@@ -759,32 +688,6 @@ public class Util {
         return String.format(Locale.ENGLISH, "`%s`", value);
     }
 
-    /**
-     * This is a literal copy of {@code javax.lang.model.SourceVersion#isIdentifier(CharSequence)} included here to
-     * be not dependent on the compiler module.
-     *
-     * @param name A possible Java identifier
-     * @return True, if {@code name} represents an identifier.
-     */
-    public static boolean isIdentifier(CharSequence name) {
-        String id = name.toString();
-
-        if (id.length() == 0) {
-            return false;
-        }
-        int cp = id.codePointAt(0);
-        if (!Character.isJavaIdentifierStart(cp)) {
-            return false;
-        }
-        for (int i = Character.charCount(cp); i < id.length(); i += Character.charCount(cp)) {
-            cp = id.codePointAt(i);
-            if (!Character.isJavaIdentifierPart(cp)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public static String param(String var) {
         return var.charAt(0) == '$' ? var : '$'+quote(var);
     }
@@ -926,10 +829,6 @@ public class Util {
             return '\0';
         }
         return separator.charAt(0);
-    }
-
-    public static Map<String, Object> flattenMap(Map<String, Object> map) {
-        return flattenMap(map, null);
     }
 
     public static Map<String, Object> flattenMap(Map<String, Object> map, String prefix) {
@@ -1207,8 +1106,5 @@ public class Util {
     }
     public static  String getNodeElementId(InternalTransaction tx, long id) {
         return tx.elementIdMapper().nodeElementId(id);
-    }
-    public static  String getRelationshipElementId(InternalTransaction tx, long id) {
-        return tx.elementIdMapper().relationshipElementId(id);
     }
 }

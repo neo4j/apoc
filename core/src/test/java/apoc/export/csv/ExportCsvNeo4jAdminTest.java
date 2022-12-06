@@ -183,10 +183,6 @@ public class ExportCsvNeo4jAdminTest {
         assertEquals(expectedList, actualList);
     }
 
-    private List<Map<String, Object>> convertCSVString(String csv) {
-        return convertCSVString(csv, ",");
-    }
-
     private List<Map<String, Object>> convertCSVString(String csv, String separator) {
         List<String> lines = List.of(csv.split("\n"));
         if (lines.size() <= 1) return List.of();

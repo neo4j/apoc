@@ -21,7 +21,6 @@ import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,11 +59,6 @@ public class CsvFormat implements Format {
     public CsvFormat(GraphDatabaseService db, InternalTransaction tx) {
         this.db = db;
         this.tx = tx;
-    }
-
-    @Override
-    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) {
-        return null;
     }
 
     @Override

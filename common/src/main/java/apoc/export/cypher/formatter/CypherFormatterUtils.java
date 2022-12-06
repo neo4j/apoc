@@ -203,18 +203,6 @@ public class CypherFormatterUtils {
 
     // ---- to string ----
 
-    public static String quote(Iterable<String> ids) {
-        StringBuilder builder = new StringBuilder();
-        for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
-            String id = iterator.next();
-            builder.append(Util.quote(id));
-            if (iterator.hasNext()) {
-                builder.append(",");
-            }
-        }
-        return builder.toString();
-    }
-
     public static String label(String id) {
         return ":" + Util.quote(id);
     }

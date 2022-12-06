@@ -28,7 +28,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 
 /**
  * @author mh
@@ -171,10 +170,6 @@ public class TestUtil {
         }
     }
 
-    public static void assumeRunningInCI() {
-        assumeFalse("we're running in CI, so skipping", isRunningInCI());
-    }
-
     public static boolean isRunningInCI() {
         return "true".equals(System.getenv("CI")) || System.getenv("TEAMCITY_VERSION") != null;
     }
@@ -214,10 +209,6 @@ public class TestUtil {
 
     public static <T> T singleResultFirstColumn(GraphDatabaseService db, String cypher, Map<String,Object> params) {
         return db.executeTransactionally(cypher, params, result -> Iterators.singleOrNull(iteratorSingleColumn(result)));
-    }
-
-    public static <T> List<T> firstColumn(GraphDatabaseService db, String cypher, Map<String,Object> params) {
-        return db.executeTransactionally(cypher , params, result -> Iterators.asList(iteratorSingleColumn(result)));
     }
 
     public static <T> List<T> firstColumn(GraphDatabaseService db, String cypher) {

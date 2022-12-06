@@ -175,18 +175,6 @@ public class Xml {
         return FACTORY.createXMLStreamReader(inputStream);
     }
 
-
-    private boolean proceedReader(XMLStreamReader reader) throws XMLStreamException {
-        if (reader.hasNext()) {
-            do {
-                reader.next();
-            } while (reader.isWhiteSpace());
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private void handleNode(Deque<Map<String, Object>> stack, Node node, boolean simpleMode) {
 
         // Handle document node

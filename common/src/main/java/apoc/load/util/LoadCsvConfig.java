@@ -80,10 +80,6 @@ public class LoadCsvConfig extends CompressionConfig {
         return separator;
     }
 
-    public char getArraySep() {
-        return arraySep;
-    }
-
     public long getSkip() {
         return skip;
     }
@@ -110,10 +106,6 @@ public class LoadCsvConfig extends CompressionConfig {
 
     public List<String> getNullValues() {
         return nullValues;
-    }
-
-    public Map<String, Map<String, Object>> getMapping() {
-        return mapping;
     }
 
     public Map<String, Mapping> getMappings() {

@@ -329,12 +329,4 @@ public class FileUtils {
     public static CountingInputStream getInputStreamFromBinary(byte[] urlOrBinary, String compressionAlgo) {
         return CompressionAlgo.valueOf(compressionAlgo).toInputStream(urlOrBinary);
     }
-
-    public static CountingReader getReaderFromBinary(byte[] urlOrBinary, String compressionAlgo) {
-        try {
-            return getInputStreamFromBinary(urlOrBinary, compressionAlgo).asReader();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }

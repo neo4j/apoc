@@ -1,7 +1,6 @@
 package apoc.export.util;
 
 import apoc.result.ProgressInfo;
-import org.neo4j.graphdb.QueryStatistics;
 
 import java.io.PrintWriter;
 import java.util.function.Consumer;
@@ -85,15 +84,6 @@ public class ProgressReporter implements Reporter {
         }
         if (consumer != null) {
             consumer.accept(ProgressInfo.EMPTY);
-        }
-    }
-
-    public static void update(QueryStatistics queryStatistics, Reporter reporter) {
-        if (queryStatistics.containsUpdates()) {
-            reporter.update(
-                    queryStatistics.getNodesCreated() - queryStatistics.getNodesDeleted(),
-                    queryStatistics.getRelationshipsCreated() - queryStatistics.getRelationshipsDeleted(),
-                    queryStatistics.getPropertiesSet());
         }
     }
 

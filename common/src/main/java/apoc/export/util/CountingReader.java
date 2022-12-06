@@ -12,10 +12,6 @@ public class CountingReader extends FilterReader implements SizeCounter {
     private long count=0;
     private long newLines;
 
-    public CountingReader(File file) throws FileNotFoundException {
-        super(new BufferedReader(new FileReader(file), BUFFER_SIZE));
-        this.total = file.length();
-    }
     public CountingReader(Reader reader, long total) {
         super(new BufferedReader(reader, BUFFER_SIZE));
         this.total = total;

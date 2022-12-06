@@ -43,13 +43,6 @@ public class DocumentToGraph {
         this.documentToNodes = new DocumentToNodes(initialNodes, tx);
     }
 
-    public <T> Set<T> toSet(Iterable<T> collection) {
-        HashSet<T> set = new HashSet<T>();
-        for (T item: collection)
-            set.add(item);
-        return set;
-    }
-
     private boolean hasId(Map<String, Object> map, String path) {
         List<String> ids = config.idsForPath(path);
         if (ids.isEmpty()) {
@@ -244,14 +237,6 @@ public class DocumentToGraph {
             coll = Arrays.asList((Map) document);
         }
         return coll;
-    }
-
-    public VirtualGraph createWithoutMutatingOriginal(Object documentObj) {
-        List<Map<String, Object>> original = getDocumentCollection(documentObj);
-
-        List<Map<String, Object>> coll = original.stream().map(HashMap::new).collect(Collectors.toList());
-
-        return getVirtualGraph(coll);
     }
 
     public VirtualGraph create(Object documentObj) {

@@ -35,7 +35,6 @@ public enum JsonFormatSerializer {
             jsonGenerator.writeEndObject();
         }
 
-        @Override
         public void serializeProperties(JsonGenerator jsonGenerator, Map<String, Object> properties) throws IOException {
             if(properties != null && !properties.isEmpty()) {
                 jsonGenerator.writeObjectFieldStart("properties");
@@ -103,8 +102,6 @@ public enum JsonFormatSerializer {
     public abstract void writeNode(JsonGenerator jsonGenerator, Node node, ExportConfig config) throws IOException;
 
     public abstract void writeRelationship(JsonGenerator jsonGenerator, Relationship relationship, ExportConfig config) throws IOException;
-
-    public abstract void serializeProperties(JsonGenerator jsonGenerator, Map<String,Object> properties) throws IOException;
 
     public abstract void serializeProperty(JsonGenerator jsonGenerator, String key, Object value, boolean writeKey) throws IOException;
 

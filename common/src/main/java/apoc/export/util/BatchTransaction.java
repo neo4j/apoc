@@ -25,26 +25,14 @@ public class BatchTransaction implements AutoCloseable {
     public void increment() {
         count++;batchCount++;
         if (batchCount >= batchSize) {
-            doCommit(true);
+            doCommit();
         }
     }
 
-    public void commit() {
-        doCommit(true);
-    }
-
-    public int getCount() {
-        return count;
-    }
-
-    public void manualCommit(boolean log) {
-        doCommit(log);
-    }
-
-    private void doCommit(boolean log) {
+    private void doCommit() {
         tx.commit();
         tx.close();
-        if (log && reporter!=null) reporter.progress("commit after " + count + " row(s) ");
+        if (reporter!=null) reporter.progress("commit after " + count + " row(s) ");
         tx = beginTx();
         batchCount = 0;
     }

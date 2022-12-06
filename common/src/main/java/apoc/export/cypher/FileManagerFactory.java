@@ -80,11 +80,6 @@ public class FileManagerFactory {
         }
 
         @Override
-        public String getFileName() {
-            return this.fileName;
-        }
-
-        @Override
         public Boolean separatedFiles() {
             return this.separatedFiles;
         }
@@ -128,11 +123,6 @@ public class FileManagerFactory {
                 return Util.getStringOrCompressedData(writer, config);
             }
             else return null;
-        }
-
-        @Override
-        public String getFileName() {
-            return null;
         }
 
         @Override

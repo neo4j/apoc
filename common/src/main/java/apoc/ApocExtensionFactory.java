@@ -3,7 +3,6 @@ package apoc;
 import org.neo4j.annotations.service.ServiceProvider;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.internal.kernel.api.Procedures;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.availability.AvailabilityGuard;
 import org.neo4j.kernel.availability.AvailabilityListener;
@@ -41,7 +40,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
     public interface Dependencies {
         GraphDatabaseAPI graphdatabaseAPI();
         JobScheduler scheduler();
-        Procedures procedures();
         LogService log();
         AvailabilityGuard availabilityGuard();
         DatabaseManagementService databaseManagementService();
