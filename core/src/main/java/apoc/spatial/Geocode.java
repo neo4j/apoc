@@ -3,8 +3,6 @@ package apoc.spatial;
 import apoc.util.JsonUtil;
 import apoc.util.Util;
 import org.apache.commons.configuration2.Configuration;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.util.AbstractMap;
@@ -25,13 +23,7 @@ public class Geocode {
     public static final String GEOCODE_PROVIDER_KEY = "provider";
 
     @Context
-    public GraphDatabaseService db;
-
-    @Context
     public TerminationGuard terminationGuard;
-
-    @Context
-    public Log log;
 
     interface GeocodeSupplier {
         Stream<GeoCodeResult> geocode(String params, long maxResults);

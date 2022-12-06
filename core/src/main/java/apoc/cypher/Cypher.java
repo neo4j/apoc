@@ -8,7 +8,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -53,9 +52,6 @@ public class Cypher {
 
     @Context
     public GraphDatabaseService db;
-
-    @Context
-    public Log log;
 
     @Context
     public TerminationGuard terminationGuard;

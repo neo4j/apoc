@@ -6,8 +6,6 @@ import apoc.util.Util;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
@@ -23,9 +21,6 @@ import java.util.stream.Stream;
  * @since 29.05.16
  */
 public class Convert {
-
-    @Context
-    public Log log;
 
     @UserFunction("apoc.convert.toMap")
     @Description("Converts the given value into a map.")

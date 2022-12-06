@@ -69,9 +69,6 @@ public class Meta {
     public Transaction tx;
 
     @Context
-    public GraphDatabaseService db;
-
-    @Context
     public KernelTransaction kernelTx;
 
     @Context

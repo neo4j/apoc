@@ -2,10 +2,8 @@ package apoc.spatial;
 
 import org.neo4j.procedure.Description;
 import apoc.result.DistancePathResult;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
-import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
@@ -16,9 +14,6 @@ public class Distance {
 
     private static final String LATITUDE = "latitude";
     private static final String LONGITUDE = "longitude";
-
-    @Context
-    public GraphDatabaseService db;
 
     @Procedure("apoc.spatial.sortByDistance")
     @Description("Sorts the given collection of paths by the sum of their distance based on the latitude/longitude values on the nodes.")

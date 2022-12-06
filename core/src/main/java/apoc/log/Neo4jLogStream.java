@@ -2,7 +2,6 @@ package apoc.log;
 
 import apoc.util.FileUtils;
 import org.neo4j.procedure.*;
-import org.neo4j.logging.Log;
 
 import java.nio.file.NoSuchFileException;
 import java.util.Collections;
@@ -19,8 +18,6 @@ import java.util.stream.Stream;
  * @since 27.02.19
  */
 public class Neo4jLogStream {
-    @Context
-    public Log log;
 
     public static class FileEntry implements Comparable<FileEntry> {
         public final long lineNo;

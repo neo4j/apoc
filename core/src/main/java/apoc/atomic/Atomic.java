@@ -7,7 +7,6 @@ import apoc.util.Util;
 import org.apache.commons.lang3.ArrayUtils;
 import org.neo4j.exceptions.Neo4jException;
 import org.neo4j.graphdb.Entity;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.*;
@@ -25,9 +24,6 @@ import java.util.stream.Stream;
  * @since 20-06-17
  */
 public class Atomic {
-
-    @Context
-    public GraphDatabaseService db;
 
     @Context
     public Transaction tx;

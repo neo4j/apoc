@@ -1,6 +1,5 @@
 package apoc.lock;
 
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -9,9 +8,6 @@ import org.neo4j.procedure.*;
 import java.util.List;
 
 public class Lock {
-
-    @Context
-    public GraphDatabaseService db;
 
     @Context
     public Transaction tx;

@@ -1,6 +1,5 @@
 package apoc.load;
 
-import apoc.Pools;
 import apoc.result.MapResult;
 import apoc.util.FileUtils;
 import apoc.util.JsonUtil;
@@ -14,13 +13,9 @@ import org.apache.arrow.vector.ipc.ArrowFileReader;
 import org.apache.arrow.vector.ipc.ArrowReader;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.util.Text;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.logging.Log;
-import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
-import org.neo4j.procedure.TerminationGuard;
 import org.neo4j.values.storable.Values;
 
 import java.io.ByteArrayInputStream;
@@ -40,18 +35,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class LoadArrow {
-
-    @Context
-    public GraphDatabaseService db;
-
-    @Context
-    public Pools pools;
-
-    @Context
-    public Log log;
-
-    @Context
-    public TerminationGuard terminationGuard;
 
     private static class ArrowSpliterator extends Spliterators.AbstractSpliterator<MapResult> {
 

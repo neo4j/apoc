@@ -8,7 +8,6 @@ import apoc.util.collection.Iterables;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.EntityType;
 import org.neo4j.common.TokenNameLookup;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
@@ -57,8 +56,6 @@ import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_LABEL;
 import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_REL_TYPE;
 
 public class Schemas {
-    @Context
-    public GraphDatabaseService db;
 
     @Context
     public Transaction tx;

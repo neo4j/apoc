@@ -12,7 +12,6 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.traversal.*;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
-import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -31,9 +30,6 @@ public class PathExplorer {
 	public static final boolean BFS = true;
 	@Context
     public Transaction tx;
-
-	@Context
-    public Log log;
 
 	@Procedure("apoc.path.expand")
 	@Description("Returns paths expanded from the start node following the given relationship types from min-depth to max-depth.")

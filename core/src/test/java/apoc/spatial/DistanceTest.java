@@ -57,7 +57,6 @@ public class DistanceTest {
     @Test
     public void testSortingPathsOnDistance() {
         Distance distanceProc = new Distance();
-        distanceProc.db = db;
         createPoints();
         int i = 0;
         try (Transaction tx = db.beginTx()) {

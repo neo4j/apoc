@@ -1,14 +1,11 @@
 package apoc.label;
 
 import org.neo4j.graphdb.*;
-import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
 
 public class Label {
-
-    @Context public GraphDatabaseService db;
 
     @UserFunction("apoc.label.exists")
     @Description("Returns true or false depending on whether or not the given label exists.")
