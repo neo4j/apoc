@@ -22,7 +22,7 @@ public class CsvHeaderFields {
 
         final List<CsvHeaderField> fieldEntries =
                 IntStream.range(0, attributes.size())
-                        .mapToObj(i -> CsvHeaderField.parse(i, attributes.get(i), quotationCharacter))
+                        .mapToObj(i -> CsvHeaderField.parse(attributes.get(i), quotationCharacter))
                         .collect(Collectors.toList());
 
         return fieldEntries;

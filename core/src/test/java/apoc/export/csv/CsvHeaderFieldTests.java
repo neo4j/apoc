@@ -26,7 +26,7 @@ public class CsvHeaderFieldTests {
 
     @Test
     public void testCsvField1() {
-        CsvHeaderField field = CsvHeaderField.parse(0, TEST_FIELD_1, '"');
+        CsvHeaderField field = CsvHeaderField.parse(TEST_FIELD_1, '"');
         assertEquals(TEST_NAME,    field.getName());
         assertEquals(TEST_TYPE,    field.getType());
         assertEquals(TEST_IDSPACE, field.getIdSpace());
@@ -35,7 +35,7 @@ public class CsvHeaderFieldTests {
 
     @Test
     public void testCsvField2() {
-        CsvHeaderField field = CsvHeaderField.parse(0, TEST_FIELD_2, '"');
+        CsvHeaderField field = CsvHeaderField.parse(TEST_FIELD_2, '"');
         assertEquals(TEST_NAME,    field.getName());
         assertEquals(TEST_TYPE,    field.getType());
         assertEquals(TEST_IDSPACE, field.getIdSpace());
@@ -44,7 +44,7 @@ public class CsvHeaderFieldTests {
 
     @Test
     public void testCsvField3() {
-        CsvHeaderField field = CsvHeaderField.parse(0, TEST_FIELD_3, '"');
+        CsvHeaderField field = CsvHeaderField.parse(TEST_FIELD_3, '"');
         assertEquals(TEST_NAME, field.getName());
         assertEquals(TEST_TYPE, field.getType());
         assertEquals(CsvLoaderConstants.DEFAULT_IDSPACE, field.getIdSpace());
@@ -53,7 +53,7 @@ public class CsvHeaderFieldTests {
 
     @Test
     public void testCsvField4() {
-        CsvHeaderField field = CsvHeaderField.parse(0, TEST_FIELD_4, '"');
+        CsvHeaderField field = CsvHeaderField.parse(TEST_FIELD_4, '"');
         assertEquals(TEST_NAME, field.getName());
         assertEquals(Types.STRING.name(), field.getType());
         assertEquals(CsvLoaderConstants.DEFAULT_IDSPACE, field.getIdSpace());
