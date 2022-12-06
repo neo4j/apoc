@@ -48,7 +48,7 @@ public class ExportS3PerformanceTest extends S3BaseTest {
     public void testExportAllCsvS3() throws Exception {
         System.out.println("Data creation started.");
         final String query = Util.readResourceFile("movies.cypher");
-        IntStream.range(0, 5000).forEach(__-> db.executeTransactionally(query));
+        IntStream.range(0, 2000).forEach(__-> db.executeTransactionally(query));
         System.out.println("Data creation finished.");
 
         System.out.println("Test started.");
