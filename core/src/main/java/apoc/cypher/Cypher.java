@@ -65,12 +65,12 @@ public class Cypher {
         return runCypherQuery(tx, statement, params);
     }
 
-    private Stream<RowResult> runManyStatements(Reader reader, Map<String, Object> params, boolean schemaOperation, boolean addStatistics, int timeout, int queueCapacity) {
+    private Stream<RowResult> runManyStatements(Reader reader, Map<String, Object> params, boolean schemaOperation, boolean addStatistics, int queueCapacity) {
         BlockingQueue<RowResult> queue = runInSeparateThreadAndSendTombstone(queueCapacity, internalQueue -> {
             if (schemaOperation) {
-                runSchemaStatementsInTx(reader, internalQueue, params, addStatistics, timeout);
+                runSchemaStatementsInTx(reader, internalQueue, params, addStatistics);
             } else {
-                runDataStatementsInTx(reader, internalQueue, params, addStatistics, timeout);
+                runDataStatementsInTx(reader, internalQueue, params, addStatistics);
             }
         }, RowResult.TOMBSTONE);
         return StreamSupport.stream(new QueueBasedSpliterator<>(queue, RowResult.TOMBSTONE, terminationGuard, Integer.MAX_VALUE), false);
@@ -100,7 +100,7 @@ public class Cypher {
         return queue;
     }
 
-    private void runDataStatementsInTx(Reader reader, BlockingQueue<RowResult> queue, Map<String, Object> params, boolean addStatistics, long timeout) {
+    private void runDataStatementsInTx(Reader reader, BlockingQueue<RowResult> queue, Map<String, Object> params, boolean addStatistics) {
         Scanner scanner = new Scanner(reader);
         scanner.useDelimiter(";\r?\n");
         while (scanner.hasNext()) {
@@ -108,12 +108,12 @@ public class Cypher {
             if (stmt.trim().isEmpty()) continue;
             if (!isSchemaOperation(stmt)) {
                 if (isPeriodicOperation(stmt)) {
-                    Util.inThread(pools , () -> db.executeTransactionally(stmt, params, result -> consumeResult(result, queue, addStatistics, timeout)));
+                    Util.inThread(pools , () -> db.executeTransactionally(stmt, params, result -> consumeResult(result, queue, addStatistics)));
                 }
                 else {
                     Util.inTx(db, pools, threadTx -> {
                         try (Result result = threadTx.execute(stmt, params)) {
-                            return consumeResult(result, queue, addStatistics, timeout);
+                            return consumeResult(result, queue, addStatistics);
                         }
                     });
                 }
@@ -121,7 +121,7 @@ public class Cypher {
         }
     }
 
-    private void runSchemaStatementsInTx(Reader reader, BlockingQueue<RowResult> queue, Map<String, Object> params, boolean addStatistics, long timeout) {
+    private void runSchemaStatementsInTx(Reader reader, BlockingQueue<RowResult> queue, Map<String, Object> params, boolean addStatistics) {
         Scanner scanner = new Scanner(reader);
         scanner.useDelimiter(";\r?\n");
         while (scanner.hasNext()) {
@@ -130,7 +130,7 @@ public class Cypher {
             if (isSchemaOperation(stmt)) {
                 Util.inTx(db, pools, txInThread -> {
                     try (Result result = txInThread.execute(stmt, params)) {
-                        return consumeResult(result, queue, addStatistics, timeout);
+                        return consumeResult(result, queue, addStatistics);
                     }
                 });
             }
@@ -141,11 +141,10 @@ public class Cypher {
     @Description("Runs each semicolon separated statement and returns a summary of the statement outcomes.")
     public Stream<RowResult> runMany(@Name("statement") String cypher, @Name("params") Map<String,Object> params, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         boolean addStatistics = Util.toBoolean(config.getOrDefault("statistics",true));
-        int timeout = Util.toInteger(config.getOrDefault("timeout",1));
         int queueCapacity = Util.toInteger(config.getOrDefault("queueCapacity",100));
 
         StringReader stringReader = new StringReader(cypher);
-        return runManyStatements(stringReader ,params, false, addStatistics, timeout, queueCapacity);
+        return runManyStatements(stringReader ,params, false, addStatistics, queueCapacity);
     }
 
     @Procedure(name = "apoc.cypher.runManyReadOnly", mode = READ)
@@ -156,7 +155,7 @@ public class Cypher {
 
     private final static Pattern shellControl = Pattern.compile("^:?\\b(begin|commit|rollback)\\b", Pattern.CASE_INSENSITIVE);
 
-    private Object consumeResult(Result result, BlockingQueue<RowResult> queue, boolean addStatistics, long timeout) {
+    private Object consumeResult(Result result, BlockingQueue<RowResult> queue, boolean addStatistics) {
         try {
             long time = System.currentTimeMillis();
             int row = 0;

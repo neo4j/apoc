@@ -45,7 +45,6 @@ public class ExportConfig extends CompressionConfig {
     private final NodeConfig target;
 
     private int batchSize;
-    private boolean silent;
     private boolean multipleRelationshipsWithType; 
     private boolean saveIndexNames;
     private boolean bulkImport = false;
@@ -73,20 +72,12 @@ public class ExportConfig extends CompressionConfig {
         return batchSize;
     }
 
-    public boolean isSilent() {
-        return silent;
-    }
-
     public boolean isBulkImport() {
         return bulkImport;
     }
 
     public char getDelimChar() {
         return delim.charAt(0);
-    }
-
-    public String getDelim() {
-        return delim;
     }
 
     public String isQuotes() {
@@ -110,7 +101,6 @@ public class ExportConfig extends CompressionConfig {
     public ExportConfig(Map<String,Object> config) {
         super(config);
         config = config != null ? config : Collections.emptyMap();
-        this.silent = toBoolean(config.getOrDefault("silent",false));
         this.saveIndexNames = toBoolean(config.getOrDefault("saveIndexNames",false));
         this.delim = delim(config.getOrDefault("delim", DEFAULT_DELIM).toString());
         this.arrayDelim = delim(config.getOrDefault("arrayDelim", DEFAULT_ARRAY_DELIM).toString());
