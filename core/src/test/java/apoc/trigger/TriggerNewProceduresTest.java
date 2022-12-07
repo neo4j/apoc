@@ -25,17 +25,20 @@ import java.io.FileWriter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static apoc.ApocConfig.SUN_JAVA_COMMAND;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
+import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testCallCountEventually;
 import static apoc.util.TestUtil.testCallEventually;
 import static apoc.util.TestUtil.testResult;
+import static apoc.util.TestUtil.waitDbsAvailable;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -64,11 +67,11 @@ public class TriggerNewProceduresTest {
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        // we cannot set via ApocConfig.apocConfig().setProperty("apoc.trigger.refresh", "100") in `setUp`, because is too late
+        // we cannot set via ApocConfig.apocConfig().setProperty("apoc.trigger.refresh", "2000") in `setUp`, because is too late
         final File conf = new File(directory, "apoc.conf");
         try (FileWriter writer = new FileWriter(conf)) {
             writer.write(String.join("\n",
-                    "apoc.trigger.refresh=100",
+                    "apoc.trigger.refresh=" + TRIGGER_DEFAULT_REFRESH,
                     "apoc.trigger.enabled=true"));
         }
 
@@ -79,6 +82,7 @@ public class TriggerNewProceduresTest {
                 .build();
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
+        waitDbsAvailable(db, sysDb);
         TestUtil.registerProcedure(sysDb, TriggerNewProcedures.class, Nodes.class);
         TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
         
@@ -104,7 +108,7 @@ public class TriggerNewProceduresTest {
     public void testListTriggers() {
         String name = "count-removals";
         String query = "MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])";
-        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', $name, $query,{}) YIELD name RETURN name",
+        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', $name, $query,{})",
                 map("query", query, "name", name),
                 1);
 
@@ -164,7 +168,7 @@ public class TriggerNewProceduresTest {
 
     @Test
     public void testRemoveTrigger() throws Exception {
-        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed','RETURN 1',{}) YIELD name RETURN name", 1);
+        testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed','RETURN 1',{})", 1);
         testCallEventually(db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
             assertEquals("RETURN 1", row.get("query"));
@@ -542,6 +546,36 @@ public class TriggerNewProceduresTest {
         } catch (QueryExecutionException e) {
             assertTrue(e.getMessage().contains(TRIGGER_NOT_ROUTED_ERROR));
         }
+    }
+
+    @Test
+    public void testEventualConsistency() {
+        long count = 0L;
+        final String name = UUID.randomUUID().toString();
+        final String query = "UNWIND $createdNodes AS n SET n.count = " + count;
+
+        // this does nothing, just to test consistency with multiple triggers
+        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, 'return 1', {})",
+                map("name", UUID.randomUUID().toString()) );
+
+        // create trigger
+        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, $query, {})",
+                map("name", name, "query", query));
+        awaitTriggerDiscovered(db, name, query);
+        db.executeTransactionally("CREATE (n:Something)");
+
+        // check trigger
+        testCall(db, "MATCH (c:Something) RETURN c.count as count",
+                (row) -> assertEquals(count, row.get("count")));
+
+        // stop trigger
+        sysDb.executeTransactionally("CALL apoc.trigger.stop('neo4j', $name)",
+                map("name", name, "query", query));
+        awaitTriggerDiscovered(db, name, query, true);
+
+        // this does nothing, just to test consistency with multiple triggers
+        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, 'return 1', {})",
+                map("name", UUID.randomUUID().toString()) );
     }
 
 }

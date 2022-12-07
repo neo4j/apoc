@@ -8,7 +8,8 @@ import static apoc.util.TestUtil.testCallEventually;
 import static org.junit.Assert.assertEquals;
 
 public class TriggerTestUtil {
-    public static final long TIMEOUT = 40L;
+    public static final long TIMEOUT = 10L;
+    public static final long TRIGGER_DEFAULT_REFRESH = 3000;
 
     public static void awaitTriggerDiscovered(GraphDatabaseService db, String name, String query) {
         awaitTriggerDiscovered(db, name, query, false);
