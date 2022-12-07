@@ -18,7 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.values.storable.DurationValue;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.temporal.Temporal;
@@ -52,17 +51,6 @@ public class JsonUtil {
         module.addSerializer(Temporal.class, new TemporalSerializer());
         module.addSerializer(DurationValue.class, new DurationValueSerializer());
         OBJECT_MAPPER.registerModule(module);
-    }
-
-    static class NonClosingStream extends FilterInputStream {
-
-        protected NonClosingStream(InputStream in) {
-            super(in);
-        }
-
-        @Override
-        public void close() {
-        }
     }
 
     private static Configuration getJsonPathConfig(List<String> options) {

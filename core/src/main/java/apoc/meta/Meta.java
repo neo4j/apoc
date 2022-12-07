@@ -472,9 +472,6 @@ public class Meta {
             if (!excludes.contains(labelName) && (includeLabels.isEmpty() || includeLabels.contains(labelName))) {
                 // Skip if explicitly excluded or at least 1 include specified and not included
 
-                for (ConstraintDefinition cd : schema.getConstraints(label)) { profile.noteConstraint(label, cd); }
-                for (IndexDefinition index : schema.getIndexes(label)) { profile.noteIndex(label, index); }
-
                 long labelCount = countStore.get(labelName);
                 long sample = getSampleForLabelCount(labelCount, config.getSample());
 

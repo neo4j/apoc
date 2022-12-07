@@ -32,7 +32,7 @@ public class PropertyContainerProfile {
             if (profile.containsKey(propName)) {
                 tracker = profile.get(propName);
             } else {
-                tracker = new PropertyTracker(propName);
+                tracker = new PropertyTracker();
                 profile.put(propName, tracker);
             }
 

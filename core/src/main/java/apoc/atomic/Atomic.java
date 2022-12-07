@@ -40,7 +40,7 @@ public class Atomic {
         final Number[] oldValue = new Number[1];
         Entity entity = Util.rebind(tx, (Entity) container);
 
-        final ExecutionContext executionContext = new ExecutionContext(tx, entity, property);
+        final ExecutionContext executionContext = new ExecutionContext(tx, entity);
         retry(executionContext, (context) -> {
             oldValue[0] = (Number) entity.getProperty(property);
             newValue[0] = AtomicUtils.sum((Number) entity.getProperty(property), number);
@@ -63,7 +63,7 @@ public class Atomic {
         final Number[] newValue = new Number[1];
         final Number[] oldValue = new Number[1];
 
-        final ExecutionContext executionContext = new ExecutionContext(tx, entity, property);
+        final ExecutionContext executionContext = new ExecutionContext(tx, entity);
         retry(executionContext, (context) -> {
             oldValue[0] = (Number) entity.getProperty(property);
             newValue[0] = AtomicUtils.sub((Number) entity.getProperty(property), number);
@@ -86,7 +86,7 @@ public class Atomic {
         final String[] newValue = new String[1];
         final String[] oldValue = new String[1];
 
-        final ExecutionContext executionContext = new ExecutionContext(tx, entity, property);
+        final ExecutionContext executionContext = new ExecutionContext(tx, entity);
         retry(executionContext, (context) -> {
             oldValue[0] = entity.getProperty(property).toString();
             newValue[0] = oldValue[0].concat(string);
@@ -109,7 +109,7 @@ public class Atomic {
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
         final Object[] newValue = new Object[1];
-        final ExecutionContext executionContext = new ExecutionContext(tx, entity, property);
+        final ExecutionContext executionContext = new ExecutionContext(tx, entity);
 
         retry(executionContext, (context) -> {
             oldValue[0] = entity.getProperty(property);
@@ -145,7 +145,7 @@ public class Atomic {
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
         final Object[] newValue = new Object[1];
-        final ExecutionContext executionContext = new ExecutionContext(tx, entity, property);
+        final ExecutionContext executionContext = new ExecutionContext(tx, entity);
 
         retry(executionContext, (context) -> {
             Object[] arrayBackedList = new ArrayBackedList(entity.getProperty(property)).toArray();
@@ -181,7 +181,7 @@ public class Atomic {
         checkIsEntity(nodeOrRelationship);
         Entity entity = Util.rebind(tx, (Entity) nodeOrRelationship);
         final Object[] oldValue = new Object[1];
-        final ExecutionContext executionContext = new ExecutionContext(tx, entity, property);
+        final ExecutionContext executionContext = new ExecutionContext(tx, entity);
 
         retry(executionContext, (context) -> {
             oldValue[0] = entity.getProperty(property);
@@ -198,12 +198,9 @@ public class Atomic {
 
         private final Entity entity;
 
-        private final String propertyName;
-
-        public ExecutionContext(Transaction tx, Entity entity, String propertyName){
+        public ExecutionContext(Transaction tx, Entity entity){
             this.tx = tx;
             this.entity = entity;
-            this.propertyName = propertyName;
         }
     }
 

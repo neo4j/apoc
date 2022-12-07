@@ -26,7 +26,6 @@ public class DocumentToGraph {
     private static final String JSON_ROOT = "$";
     private final DocumentToNodes documentToNodes;
 
-    private Transaction tx;
     private RelationshipBuilder documentRelationBuilder;
     private LabelBuilder documentLabelBuilder;
     private GraphsConfig config;
@@ -36,7 +35,6 @@ public class DocumentToGraph {
     }
 
     public DocumentToGraph(Transaction tx, GraphsConfig config, Set<Node> initialNodes) {
-        this.tx = tx;
         this.documentRelationBuilder = new RelationshipBuilder(config);
         this.documentLabelBuilder = new LabelBuilder(config);
         this.config = config;

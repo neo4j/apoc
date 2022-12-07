@@ -48,7 +48,6 @@ import static apoc.util.Util.joinLabels;
  * @since 22.11.16
  */
 public class CsvFormat implements Format {
-    public static final String ID = "id";
     private final GraphDatabaseService db;
     private final InternalTransaction tx;
     private boolean applyQuotesToAll = true;

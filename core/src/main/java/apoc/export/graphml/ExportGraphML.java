@@ -66,7 +66,7 @@ public class ExportGraphML {
                 source = "file";
             }
             ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "graphml"));
-            XmlGraphMLReader graphMLReader = new XmlGraphMLReader(db, tx).reporter(reporter)
+            XmlGraphMLReader graphMLReader = new XmlGraphMLReader(db).reporter(reporter)
                     .batchSize(exportConfig.getBatchSize())
                     .relType(exportConfig.defaultRelationshipType())
                     .source(exportConfig.getSource())

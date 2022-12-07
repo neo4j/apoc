@@ -4,8 +4,6 @@ import apoc.result.MapResult;
 import apoc.result.ObjectResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
@@ -20,12 +18,6 @@ import static apoc.util.CompressionConfig.COMPRESSION;
 
 public class LoadJson {
 
-    private static final String AUTH_HEADER_KEY = "Authorization";
-    private static final String LOAD_TYPE = "json";
-
-    @Context
-    public GraphDatabaseService db;
-
     @SuppressWarnings("unchecked")
     @Procedure("apoc.load.jsonArray")
     @Description("Loads array from a JSON URL (e.g. web-API) to then import the given JSON file as a stream of values.")
@@ -39,7 +31,6 @@ public class LoadJson {
                     }
                     return Stream.of(new ObjectResult(value));
                 });
-        // throw new RuntimeException("Incompatible Type " + (value == null ? "null" : value.getClass()));
     }
 
     @Procedure("apoc.load.json")

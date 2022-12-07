@@ -68,7 +68,7 @@ public class Rename {
 		String cypherIterate = nodes != null && !nodes.isEmpty() ? "UNWIND $nodes AS n WITH n WHERE n:`"+oldLabel+"` RETURN n" : "MATCH (n:`"+oldLabel+"`) RETURN n";
 		String cypherAction = "REMOVE n:`"+oldLabel+"` SET n:`" + newLabel + "`";
         Map<String, Object> parameters = MapUtil.map("batchSize", 100000, "parallel", true, "iterateList", true, "params", MapUtil.map("nodes", nodes));
-		return getResultOfBatchAndTotalWithInfo( newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, oldLabel, null, null);
+		return getResultOfBatchAndTotalWithInfo( newPeriodic().iterate(cypherIterate, cypherAction, parameters), oldLabel, null, null);
 	}
 
     /**
@@ -90,7 +90,7 @@ public class Rename {
 		String cypherAction = "CREATE(a)-[newRel:`"+newType+"`]->(b)"+ "SET newRel+=oldRel DELETE oldRel";
 		final Map<String, Object> params = MapUtil.map("rels", rels);
 		Map<String, Object> parameters = getPeriodicConfig(config, params);
-		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, null, oldType, null);
+		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), null, oldType, null);
 	}
 
 	private Map<String, Object> getPeriodicConfig(Map<String, Object> config, Map<String, Object> params) {
@@ -130,7 +130,7 @@ public class Rename {
 		String cypherAction = "WITH n, n. `" + oldName + "` AS propVal REMOVE n.`" + oldName + "` SET n.`"+newName+"` = propVal";
 		final Map<String, Object> params = MapUtil.map("nodes", nodes);
 		Map<String, Object> parameters = getPeriodicConfig(config, params);
-		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, null, null, oldName);
+		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), null, null, oldName);
 	}
 
 	/**
@@ -150,7 +150,7 @@ public class Rename {
 		String cypherAction = "WITH r, r. `" + oldName + "` AS propVal REMOVE r.`"+oldName + "` SET r.`"+newName+"`= propVal";
 		final Map<String, Object> params = MapUtil.map("rels", rels);
 		Map<String, Object> parameters = getPeriodicConfig(config, params);
-		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), db, null, null, oldName);
+		return getResultOfBatchAndTotalWithInfo(newPeriodic().iterate(cypherIterate, cypherAction, parameters), null, null, oldName);
 	}
 
     /*
@@ -169,7 +169,7 @@ public class Rename {
 	/*
 	 * Create the response for rename apoc with impacted constraints and indexes
 	 */
-	private Stream<BatchAndTotalResultWithInfo> getResultOfBatchAndTotalWithInfo(Stream<BatchAndTotalResult> iterate, GraphDatabaseService db, String label, String rel, String prop) {
+	private Stream<BatchAndTotalResultWithInfo> getResultOfBatchAndTotalWithInfo(Stream<BatchAndTotalResult> iterate, String label, String rel, String prop) {
 		List<String> constraints = new ArrayList<>();
 		List<String> indexes = new ArrayList<>();
 

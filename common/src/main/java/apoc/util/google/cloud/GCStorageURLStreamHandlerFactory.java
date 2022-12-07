@@ -5,6 +5,7 @@ import apoc.util.SupportedProtocols;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
+@SuppressWarnings("unused") // used from SupportedProtocols
 public class GCStorageURLStreamHandlerFactory implements URLStreamHandlerFactory {
 
     public GCStorageURLStreamHandlerFactory() {}

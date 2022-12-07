@@ -31,7 +31,6 @@ import static java.time.temporal.ChronoField.*;
  */
 public class Date {
 	public static final String DEFAULT_FORMAT = DateUtils.DEFAULT_FORMAT;
-	private static final int MILLIS_IN_SECOND = 1000;
 	private static final String UTC_ZONE_ID = "UTC";
 	private static final List<TemporalQuery<Consumer<FieldResult>>> DT_FIELDS_SELECTORS = Arrays.asList(
 			temporalQuery(YEAR),

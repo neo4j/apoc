@@ -43,10 +43,6 @@ import static org.neo4j.procedure.Mode.WRITE;
  */
 public class Cypher {
 
-    public static final String COMPILED_PREFIX = "CYPHER runtime="+ Util.COMPILED;
-    public static final int PARTITIONS = 100 * Runtime.getRuntime().availableProcessors();
-    public static final int MAX_BATCH = 10000;
-
     @Context
     public Transaction tx;
 

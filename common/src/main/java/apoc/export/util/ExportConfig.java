@@ -47,7 +47,7 @@ public class ExportConfig extends CompressionConfig {
     private int batchSize;
     private boolean multipleRelationshipsWithType; 
     private boolean saveIndexNames;
-    private boolean bulkImport = false;
+    private boolean bulkImport;
     private boolean sampling;
     private String delim;
     private String quotes;

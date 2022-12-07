@@ -98,7 +98,7 @@ public class JsonImporter implements Closeable {
                 });
 
         updateReporter(type, properties);
-        param.put("properties", convertProperties(type, properties, null));
+        param.put("properties", convertProperties(type, properties));
 
         paramList.add(param);
         if (paramList.size() % txBatchSize == 0) {
@@ -110,16 +110,13 @@ public class JsonImporter implements Closeable {
     }
 
     private void writeUnwindBatch(Collection<List<Map<String, Object>>> results) {
-        try (final Transaction tx = db.beginTx()) {
-            results.forEach(resultList -> {
-                if (resultList.size() == unwindBatchSize) {
-                    write(tx, resultList);
-                } else {
-                    paramList.addAll(resultList);
-                }
-            });
-            tx.close();
-        }
+        results.forEach(resultList -> {
+            if (resultList.size() == unwindBatchSize) {
+                write(resultList);
+            } else {
+                paramList.addAll(resultList);
+            }
+        });
     }
 
     private void manageEntityType(String type) {
@@ -219,7 +216,7 @@ public class JsonImporter implements Closeable {
                 .collect(Collectors.toList());
     }
 
-    private Map<String, Object> convertProperties(String type, Map<String, Object> properties, String keyPrefix) {
+    private Map<String, Object> convertProperties(String type, Map<String, Object> properties) {
         return properties.entrySet().stream()
                 .flatMap(e -> {
                      if (e.getValue() instanceof Map) {
@@ -317,7 +314,7 @@ public class JsonImporter implements Closeable {
         return join.isBlank() ? join : (delimiter + join);
     }
 
-    private void write(Transaction tx, List<Map<String, Object>> resultList) {
+    private void write(List<Map<String, Object>> resultList) {
         if (resultList.isEmpty()) return;
         final String type = (String) resultList.get(0).get("type");
         String query;
@@ -359,9 +356,7 @@ public class JsonImporter implements Closeable {
     private void flush() {
         if (!paramList.isEmpty()) {
             final Collection<List<Map<String, Object>>> results = chunkData();
-            try (final Transaction tx = db.beginTx()) {
-                results.forEach(resultList -> write(tx, resultList));
-            }
+            results.forEach( this::write );
             paramList.clear();
         }
     }

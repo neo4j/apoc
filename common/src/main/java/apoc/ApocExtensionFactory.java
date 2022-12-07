@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -61,9 +60,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         private final GraphDatabaseAPI db;
         private final Dependencies dependencies;
         private final Map<String, Lifecycle> services = new HashMap<>();
-
-        // maps a component class to database name to resolver
-        private final Map<Class, Map<String, Object>> resolvers = new ConcurrentHashMap<>();
         private final Collection<ApocGlobalComponents> apocGlobalComponents;
         private final Collection<AvailabilityListener> registeredListeners = new ArrayList<>();
 

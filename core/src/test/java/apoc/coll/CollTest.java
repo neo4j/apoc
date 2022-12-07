@@ -304,7 +304,6 @@ public class CollTest {
         Map<String, Object> params = new HashMap<>();
         params.put("list", list);
         params.put("value", list.get(list.size() - 1));
-        long start = System.currentTimeMillis();
         testCall(db, "RETURN apoc.coll.contains($list,$value) AS value", params,
                 (res) -> assertEquals(true, res.get("value")));
     }
@@ -319,7 +318,6 @@ public class CollTest {
         Map<String, Object> params = new HashMap<>();
         params.put("list", list);
         params.put("value", list.get(list.size() / 2));
-        long start = System.currentTimeMillis();
         testCall(db, "RETURN apoc.coll.containsSorted($list,$value) AS value", params,
                 (res) -> assertEquals(true, res.get("value")));
     }

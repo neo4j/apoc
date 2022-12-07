@@ -204,7 +204,7 @@ public class RenameTest {
 
 	@Test
 	public void testRenameNodesProperty() {
-		List<Node> nodes = TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
+		TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
 		testCall(db, "CALL apoc.refactor.rename.nodeProperty($oldName,$newName)",
 				map("oldName", "name", "newName", "surname"), (r) -> {});
 

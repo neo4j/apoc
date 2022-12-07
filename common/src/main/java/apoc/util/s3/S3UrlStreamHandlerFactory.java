@@ -5,6 +5,7 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 
+@SuppressWarnings("unused") // used from SupportedProtocols
 public class S3UrlStreamHandlerFactory implements URLStreamHandlerFactory {
     @Override
     public URLStreamHandler createURLStreamHandler(String protocol) {

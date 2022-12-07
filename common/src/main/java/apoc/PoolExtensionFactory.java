@@ -9,6 +9,7 @@ import org.neo4j.kernel.lifecycle.Lifecycle;
 import org.neo4j.logging.internal.LogService;
 
 @ServiceProvider
+@SuppressWarnings("unused")
 public class PoolExtensionFactory extends ExtensionFactory<PoolExtensionFactory.Dependencies> {
 
     public PoolExtensionFactory() {

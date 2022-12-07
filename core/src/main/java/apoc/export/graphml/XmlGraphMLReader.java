@@ -31,7 +31,6 @@ public class XmlGraphMLReader {
 
     public static final String LABEL_SPLIT = " *: *";
     private final GraphDatabaseService db;
-    private final Transaction tx;
     private boolean storeNodeIds;
     private RelationshipType defaultRelType = RelationshipType.withName("UNKNOWN");
     private ExportConfig.NodeConfig source;
@@ -185,8 +184,6 @@ public class XmlGraphMLReader {
 
     public static final QName ID = QName.valueOf("id");
     public static final QName LABELS = QName.valueOf("labels");
-    public static final QName SOURCE = QName.valueOf("source");
-    public static final QName TARGET = QName.valueOf("target");
     public static final QName LABEL = QName.valueOf("label");
     public static final QName FOR = QName.valueOf("for");
     public static final QName NAME = QName.valueOf("attr.name");
@@ -194,9 +191,8 @@ public class XmlGraphMLReader {
     public static final QName LIST = QName.valueOf("attr.list");
     public static final QName KEY = QName.valueOf("key");
 
-    public XmlGraphMLReader(GraphDatabaseService db, Transaction tx) {
+    public XmlGraphMLReader(GraphDatabaseService db) {
         this.db = db;
-        this.tx = tx;
     }
 
     public long parseXML(Reader input) throws XMLStreamException {
