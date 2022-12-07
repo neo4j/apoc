@@ -66,6 +66,7 @@ public class SchemaIndex {
 
         Util.newDaemonThread(() ->
                 StreamSupport.stream(indexDefinitions.spliterator(), true)
+                        .filter(IndexDefinition::isNodeIndex)
                         .filter(indexDefinition -> isIndexCoveringProperty(indexDefinition, keyName))
                         .map(indexDefinition -> scanIndexDefinitionForKeys(indexDefinition, keyName, queue))
                         .collect(new QueuePoisoningCollector(queue, POISON))
@@ -138,11 +139,8 @@ public class SchemaIndex {
         }
     }
 
-    private boolean isIndexCoveringProperty(IndexDefinition indexDefinition, String properttyKeyName) {
-        try (Transaction threadTx = db.beginTx()) {
-            threadTx.commit();
-            return properttyKeyName.isEmpty() || contains(indexDefinition.getPropertyKeys(), properttyKeyName);
-        }
+    private boolean isIndexCoveringProperty(IndexDefinition indexDefinition, String propertyKeyName) {
+        return propertyKeyName.isEmpty() || contains(indexDefinition.getPropertyKeys(), propertyKeyName);
     }
 
     private boolean contains(Iterable<String> list, String search) {

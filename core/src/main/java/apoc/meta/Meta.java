@@ -454,7 +454,6 @@ public class Meta {
                 ConstraintTracker.nodeConstraints.put(cd.getLabel().name(),props);
 
             } else if (cd.isConstraintType(ConstraintType.RELATIONSHIP_PROPERTY_EXISTENCE)) {
-                List<ConstraintDefinition> tcd = new ArrayList<>( 10 );
                 List<String> props = new ArrayList<>( 10 );
                 if (ConstraintTracker.relConstraints.containsKey(cd.getRelationshipType().name())) {
                     props = ConstraintTracker.relConstraints.get(cd.getRelationshipType().name());
@@ -521,7 +520,7 @@ public class Meta {
         Map<String, Set<String>> relIndexes = new HashMap<>();
         for (RelationshipType type : graph.getAllRelationshipTypesInUse()) {
             metaData.put(Set.of(Types.RELATIONSHIP.name(), type.name()), new LinkedHashMap<>(10));
-            relConstraints.put(type.name(),graph.getConstraints(type));
+            relConstraints.put(type.name(), graph.getConstraints(type));
             relIndexes.put(type.name(), getIndexedProperties(graph.getIndexes(type)));
         }
         for (Label label : graph.getAllLabelsInUse()) {
@@ -752,14 +751,15 @@ public class Meta {
             for (String key : constraint.getPropertyKeys()) {
                 if (key.equals(prop)) {
                     switch (constraint.getConstraintType()) {
-                        case UNIQUENESS: res.unique = true;
+                        case UNIQUENESS -> {
+                            res.unique = true;
                             node.getLabels().forEach(l -> {
-                                if(res.label != l.name())
+                                if (res.label != l.name())
                                     res.addLabel(l.name());
                             });
-                            break;
-                        case NODE_PROPERTY_EXISTENCE:res.existence = true; break;
-                        case RELATIONSHIP_PROPERTY_EXISTENCE: res.existence = true; break;
+                        }
+                        case RELATIONSHIP_UNIQUENESS -> res.unique = true;
+                        case NODE_PROPERTY_EXISTENCE, RELATIONSHIP_PROPERTY_EXISTENCE -> res.existence = true;
                     }
                 }
             }

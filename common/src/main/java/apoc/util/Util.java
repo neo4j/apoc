@@ -16,6 +16,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.api.iterator.LongIterator;
 import org.neo4j.graphdb.ExecutionPlanDescription;
 import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.schema.ConstraintType;
+import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.NullLog;
 import org.neo4j.procedure.Mode;
@@ -1154,6 +1156,46 @@ public class Util {
     public static <T extends Entity> T withTransactionAndRebind(GraphDatabaseService db, Transaction transaction, Function<Transaction, T> action) {
         T result = retryInTx(NullLog.getInstance(), db, action, 0, 0, r -> {});
         return rebind(transaction, result);
+    }
+
+    public enum ConstraintCategory {
+        RELATIONSHIP,
+        NODE
+    }
+
+    public static ConstraintCategory getConstraintCategory(ConstraintType type) {
+        return switch (type) {
+            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS -> ConstraintCategory.NODE;
+            case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE -> ConstraintCategory.RELATIONSHIP;
+        };
+    }
+
+    public static ConstraintCategory getConstraintCategory(ConstraintDescriptor descriptor) {
+        if (descriptor.isNodeUniquenessConstraint() ||
+                descriptor.isNodePropertyExistenceConstraint() ||
+                descriptor.isNodeKeyConstraint()) {
+            return ConstraintCategory.NODE;
+        }
+        if (descriptor.isRelationshipKeyConstraint() ||
+                descriptor.isRelationshipPropertyExistenceConstraint() ||
+                descriptor.isRelationshipUniquenessConstraint()) {
+            return ConstraintCategory.RELATIONSHIP;
+        }
+        return ConstraintCategory.NODE;
+    }
+
+    public static boolean isNodeCategory(ConstraintType type) {
+        return getConstraintCategory(type) == ConstraintCategory.NODE;
+    }
+    public static boolean isRelationshipCategory(ConstraintType type) {
+        return getConstraintCategory(type) == ConstraintCategory.RELATIONSHIP;
+    }
+
+    public static boolean isNodeCategory(ConstraintDescriptor descriptor) {
+        return getConstraintCategory(descriptor) == ConstraintCategory.NODE;
+    }
+    public static boolean isRelationshipCategory(ConstraintDescriptor descriptor) {
+        return getConstraintCategory(descriptor) == ConstraintCategory.RELATIONSHIP;
     }
 
     public static long getNodeId(InternalTransaction tx, String elementId) {
