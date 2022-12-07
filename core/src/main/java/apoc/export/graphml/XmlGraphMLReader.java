@@ -153,16 +153,14 @@ public class XmlGraphMLReader {
     }
 
     static class Key {
-        String id;
-        String name;
+        String nameOrId;
         boolean forNode;
         Type listType;
         Type type;
         Object defaultValue;
 
-        public Key(String id, String name, String type, String listType, String forNode) {
-            this.id = id;
-            this.name = name;
+        public Key(String nameOrId, String type, String listType, String forNode) {
+            this.nameOrId = nameOrId;
             this.type = Type.forType(type);
             if (listType != null) {
                 this.listType = Type.forType(listType);
@@ -171,7 +169,7 @@ public class XmlGraphMLReader {
         }
 
         private static Key defaultKey(String id, boolean forNode) {
-            return new Key(id,id,"string", null, forNode ? "node" : "edge");
+            return new Key(id,"string", null, forNode ? "node" : "edge");
         }
 
         public void setDefault(String data) {
@@ -232,7 +230,7 @@ public class XmlGraphMLReader {
                     if (name.equals("graphml") || name.equals("graph")) continue;
                     if (name.equals("key")) {
                         String id = getAttribute(element, ID);
-                        Key key = new Key(id, getAttribute(element, NAME), getAttribute(element, TYPE), getAttribute(element, LIST), getAttribute(element, FOR));
+                        Key key = new Key(getAttribute(element, NAME), getAttribute(element, TYPE), getAttribute(element, LIST), getAttribute(element, FOR));
 
                         XMLEvent next = peek(reader);
                         if (next.isStartElement() && next.asStartElement().getName().getLocalPart().equals("default")) {
@@ -256,11 +254,11 @@ public class XmlGraphMLReader {
                             if (this.labels && isNode && id.equals("labels")) {
                                 addLabels((Node)last,value.toString());
                             } else if (!this.labels || isNode || !id.equals("label")) {
-                                last.setProperty(key.name, value);
+                                last.setProperty(key.nameOrId, value);
                                 if (reporter != null) reporter.update(0, 0, 1);
                             }
                         } else if (next.getEventType() == XMLStreamConstants.END_ELEMENT) {
-                            last.setProperty(key.name, StringUtils.EMPTY);
+                            last.setProperty(key.nameOrId, StringUtils.EMPTY);
                             reporter.update(0, 0, 1);
                         }
                         continue;
@@ -401,7 +399,7 @@ public class XmlGraphMLReader {
     private void setDefaults(Map<String, Key> keys, Entity pc) {
         if (keys.isEmpty()) return;
         for (Key key : keys.values()) {
-            if (key.defaultValue!=null) pc.setProperty(key.name,key.defaultValue);
+            if (key.defaultValue!=null) pc.setProperty(key.nameOrId,key.defaultValue);
         }
     }
 
