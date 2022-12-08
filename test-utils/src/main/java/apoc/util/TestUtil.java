@@ -3,7 +3,6 @@ package apoc.util;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import com.google.common.io.Files;
-import org.apache.commons.io.FileUtils;
 import org.hamcrest.Matcher;
 import org.neo4j.exceptions.KernelException;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -18,13 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -219,15 +215,6 @@ public class TestUtil {
         }
     }
 
-    public static Set<String> readFileLines(String fileName, File directory) {
-        try {
-            final List<String> fileLines = FileUtils.readLines(new File(directory, fileName), StandardCharsets.UTF_8);
-            return new HashSet<>(fileLines);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static <T> ResourceIterator<T> iteratorSingleColumn(Result result) {
         return result.columnAs(Iterables.single(result.columns()));
     }
@@ -243,7 +230,7 @@ public class TestUtil {
     public static <T> List<T> firstColumn(GraphDatabaseService db, String cypher) {
         return db.executeTransactionally(cypher , Collections.emptyMap(), result -> Iterators.asList(iteratorSingleColumn(result)));
     }
-    
+
     public static void waitDbsAvailable(GraphDatabaseService ...dbs) {
         waitDbsAvailable(5000, dbs);
     }
