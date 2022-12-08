@@ -2,7 +2,6 @@ package apoc.export.csv;
 
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.util.ExportConfig;
-import apoc.export.util.Format;
 import apoc.export.util.FormatUtils;
 import apoc.export.util.MetaInformation;
 import apoc.export.util.Reporter;
@@ -47,7 +46,7 @@ import static apoc.util.Util.joinLabels;
  * @author mh
  * @since 22.11.16
  */
-public class CsvFormat implements Format {
+public class CsvFormat {
     private final GraphDatabaseService db;
     private final InternalTransaction tx;
     private boolean applyQuotesToAll = true;
@@ -60,8 +59,7 @@ public class CsvFormat implements Format {
         this.tx = tx;
     }
 
-    @Override
-    public ProgressInfo dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) {
+    public void dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) {
         try (Transaction tx = db.beginTx()) {
             if (config.isBulkImport()) {
                 writeAllBulkImport(graph, reporter, config, writer);
@@ -73,7 +71,6 @@ public class CsvFormat implements Format {
             }
             tx.commit();
             reporter.done();
-            return reporter.getTotal();
         }
     }
 

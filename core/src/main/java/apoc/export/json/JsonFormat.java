@@ -2,7 +2,6 @@ package apoc.export.json;
 
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.util.ExportConfig;
-import apoc.export.util.Format;
 import apoc.export.util.Reporter;
 import apoc.meta.Types;
 import apoc.result.ProgressInfo;
@@ -26,7 +25,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 
-public class JsonFormat implements Format {
+public class JsonFormat {
     enum Format {JSON_LINES, ARRAY_JSON, JSON, JSON_ID_AS_KEYS}
     private final GraphDatabaseService db;
     private final Format format;
@@ -49,7 +48,6 @@ public class JsonFormat implements Format {
         return reporter.getTotal();
     }
 
-    @Override
     public ProgressInfo dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) throws Exception {
         isExportSubGraph = true;
         Consumer<JsonGenerator> consumer = (jsonGenerator) -> {
