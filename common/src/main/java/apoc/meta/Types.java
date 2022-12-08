@@ -5,11 +5,18 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetTime;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.google.common.primitives.Booleans;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Chars;
+import com.google.common.primitives.Floats;
+import com.google.common.primitives.Shorts;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
@@ -22,7 +29,7 @@ public enum Types {
 
     private String typeOfList = "ANY";
 
-    private static Map<Class<?>, Class<?>> primitivesMapping = new HashMap(){{
+    private static final Map<Class<?>, Class<?>> primitivesMapping = new HashMap(){{
         put(double.class, Double.class);
         put(float.class, Float.class);
         put(int.class, Integer.class);
@@ -33,12 +40,10 @@ public enum Types {
 
     @Override
     public String toString() {
-        switch (this){
-            case LIST:
-                return "LIST OF " + typeOfList;
-            default:
-                return super.toString();
+        if (this == Types.LIST) {
+            return "LIST OF " + typeOfList;
         }
+        return super.toString();
     }
 
     public static Types of(Object value) {
@@ -49,8 +54,29 @@ public enum Types {
         return type;
     }
 
+    public static Object[] toObjectArray(Object value) {
+        if (value instanceof int[]) {
+            return  Arrays.stream((int[]) value).boxed().toArray();
+        } else if (value instanceof long[]) {
+            return  Arrays.stream((long[]) value).boxed().toArray();
+        } else if (value instanceof double[]) {
+            return  Arrays.stream((double[]) value).boxed().toArray();
+        } else if (value instanceof boolean[]) {
+            return Booleans.asList((boolean[]) value).toArray();
+        } else if (value instanceof float[]) {
+            return Floats.asList((float[]) value).toArray();
+        } else if (value instanceof byte[]) {
+            return Bytes.asList((byte[]) value).toArray();
+        } else if (value instanceof char[]) {
+            return Chars.asList((char[]) value).toArray();
+        } else if (value instanceof short[]) {
+            return Shorts.asList((short[]) value).toArray();
+        }
+        return value.getClass().isArray() ? (Object[]) value : ((List<Object>) value).toArray();
+    }
+
     public static Types of(Class<?> type) {
-        if (type==null) return NULL;
+        if (type == null) return NULL;
         if (type.isArray()) {
             Types innerType = Types.of(type.getComponentType());
             Types returnType = LIST;

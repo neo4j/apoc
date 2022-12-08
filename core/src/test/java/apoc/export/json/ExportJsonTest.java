@@ -17,6 +17,8 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -40,8 +42,8 @@ import static apoc.export.json.JsonFormat.Format;
 public class ExportJsonTest {
 
     private static final String DEFLATE_EXT = ".zz";
-    private static File directory = new File("target/import");
-    private static File directoryExpected = new File("src/test/resources/exportJSON");
+    private static final File directory = new File("target/import");
+    private static final File directoryExpected = new File("src/test/resources/exportJSON");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
@@ -56,7 +58,23 @@ public class ExportJsonTest {
         TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-        db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");
+        db.executeTransactionally(
+                """
+                        CREATE (f:User {
+                            name:'Adam',
+                            age:42,
+                            male:true,
+                            kids:['Sam','Anna','Grace'],
+                            born:localdatetime('2015185T19:32:24'),
+                            place:point({latitude: 13.1, longitude: 33.46789})
+                          }
+                        )-[:KNOWS {
+                            since: 1993,
+                            bffSince: duration('P5M1.5D')
+                          }
+                        ]->(b:User {name:'Jim',age:42}),
+                        (c:User {age:12})
+                        """);
     }
 
     @Test
@@ -64,9 +82,7 @@ public class ExportJsonTest {
         String filename = "all.json";
         TestUtil.testCall(db, "CALL apoc.export.json.all($file,null)",
                 map("file", filename),
-                (r) -> {
-                    assertResults(filename, r, "database");
-                }
+                (r) -> assertResults(filename, r, "database")
         );
         assertFileEquals(filename);
     }
@@ -179,13 +195,27 @@ public class ExportJsonTest {
     @Test
     public void testExportPointMapDatetimeJson() {
         String filename = "mapPointDatetime.json";
-        String query = "return {data: 1, value: {age: 12, name:'Mike', data: {number: [1,3,5], born: date('2018-10-29'), place: point({latitude: 13.1, longitude: 33.46789})}}} as map, " +
-                "datetime('2015-06-24T12:50:35.556+0100') AS theDateTime, " +
-                "localdatetime('2015185T19:32:24') AS theLocalDateTime," +
-                "point({latitude: 13.1, longitude: 33.46789}) as point," +
-                "date('+2015-W13-4') as date," +
-                "time('125035.556+0100') as time," +
-                "localTime('12:50:35.556') as localTime";
+        String query =
+                """
+                RETURN {
+                    data: 1,
+                    value: {
+                        age: 12,
+                        name:'Mike',
+                        data: {
+                            number: [1,3,5],
+                            born: date('2018-10-29'),
+                            place: point({latitude: 13.1, longitude: 33.46789})
+                        }
+                    }
+                } AS map,
+                datetime('2015-06-24T12:50:35.556+0100') AS theDateTime,
+                localdatetime('2015185T19:32:24') AS theLocalDateTime,
+                point({latitude: 13.1, longitude: 33.46789}) AS point,
+                date('+2015-W13-4') AS date,
+                time('125035.556+0100') AS time,
+                localTime('12:50:35.556') AS localTime
+                """;
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
                 (r) -> {
@@ -200,13 +230,27 @@ public class ExportJsonTest {
     @Test
     public void testExportPointMapDatetimeStreamJson() {
         String filename = "mapPointDatetime.json";
-        String query = "return {data: 1, value: {age: 12, name:'Mike', data: {number: [1,3,5], born: date('2018-10-29'), place: point({latitude: 13.1, longitude: 33.46789})}}} as map, " +
-                "datetime('2015-06-24T12:50:35.556+0100') AS theDateTime, " +
-                "localdatetime('2015185T19:32:24') AS theLocalDateTime," +
-                "point({latitude: 13.1, longitude: 33.46789}) as point," +
-                "date('+2015-W13-4') as date," +
-                "time('125035.556+0100') as time," +
-                "localTime('12:50:35.556') as localTime";
+        String query =
+                """
+                RETURN {
+                    data: 1,
+                    value: {
+                        age: 12,
+                        name:'Mike',
+                        data: {
+                            number: [1,3,5],
+                            born: date('2018-10-29'),
+                            place: point({latitude: 13.1, longitude: 33.46789})
+                        }
+                    }
+                } AS map,
+                datetime('2015-06-24T12:50:35.556+0100') AS theDateTime,
+                localdatetime('2015185T19:32:24') AS theLocalDateTime,
+                point({latitude: 13.1, longitude: 33.46789}) AS point,
+                date('+2015-W13-4') AS date,
+                time('125035.556+0100') AS time,
+                localTime('12:50:35.556') AS localTime
+                """;
         TestUtil.testCall(db, "CALL apoc.export.json.query($query, null, {stream: true})",
                 map("file", filename, "query", query),
                 (r) -> {
@@ -219,7 +263,7 @@ public class ExportJsonTest {
     public void testExportListNode() {
         String filename = "listNode.json";
 
-        String query = "MATCH (u:User) RETURN COLLECT(u) as list";
+        String query = "MATCH (u:User) RETURN COLLECT(u) AS list";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
@@ -229,7 +273,7 @@ public class ExportJsonTest {
 
     @Test
     public void testExportListNodeWithCompression() {
-        String query = "MATCH (u:User) RETURN COLLECT(u) as list";
+        String query = "MATCH (u:User) RETURN COLLECT(u) AS list";
         final CompressionAlgo algo = DEFLATE;
         String expectedFile = "listNode.json";
         String filename = expectedFile + DEFLATE_EXT;
@@ -250,7 +294,7 @@ public class ExportJsonTest {
     public void testExportListRel() {
         String filename = "listRel.json";
 
-        String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) as list";
+        String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) AS list";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)", map("file", filename,"query",query),
                 (r) -> {
@@ -265,7 +309,7 @@ public class ExportJsonTest {
     public void testExportListPath() {
         String filename = "listPath.json";
 
-        String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) as list";
+        String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) AS list";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
@@ -294,10 +338,18 @@ public class ExportJsonTest {
 
     @Test
     public void testExportMapPath() {
-        db.executeTransactionally("CREATE (f:User {name:'Mike',age:78,male:true})-[:KNOWS {since: 1850}]->(b:User {name:'John',age:18}),(c:User {age:39})");
+        db.executeTransactionally(
+                """
+                        CREATE (
+                            f:User {name:'Mike',age:78,male:true}
+                        )-[:KNOWS {since: 1850}]->(
+                            b:User {name:'John',age:18}),(c:User {age:39}
+                        )
+                        """
+        );
         String filename = "MapPath.json";
 
-        String query = "MATCH path = (u:User)-[rel:KNOWS]->(u2:User) RETURN {key:path} as map, 'Kate' as name";
+        String query = "MATCH path = (u:User)-[rel:KNOWS]->(u2:User) RETURN {key:path} AS map, 'Kate' AS name";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
@@ -312,7 +364,6 @@ public class ExportJsonTest {
     @Test
     public void testExportMapRel() {
         String filename = "MapRel.json";
-
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel {.*}";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
@@ -329,7 +380,25 @@ public class ExportJsonTest {
     public void testExportMapComplex() {
         String filename = "MapComplex.json";
 
-        String query = "RETURN {value:1, data:[10,'car',null, point({ longitude: 56.7, latitude: 12.78 }), point({ longitude: 56.7, latitude: 12.78, height: 8 }), point({ x: 2.3, y: 4.5 }), point({ x: 2.3, y: 4.5, z: 2 }),date('2018-10-10'), datetime('2018-10-18T14:21:40.004Z'), localdatetime({ year:1984, week:10, dayOfWeek:3, hour:12, minute:31, second:14, millisecond: 645 }), {x:1, y:[1,2,3,{age:10}]}]} as key";
+        String query =
+                """
+                    RETURN {
+                        value:1,
+                        data:[
+                            10,
+                            'car',
+                            null,
+                            point({ longitude: 56.7, latitude: 12.78 }),
+                            point({ longitude: 56.7, latitude: 12.78, height: 8 }),
+                            point({ x: 2.3, y: 4.5 }),
+                            point({ x: 2.3, y: 4.5, z: 2 }),
+                            date('2018-10-10'),
+                            datetime('2018-10-18T14:21:40.004Z'),
+                            localdatetime({ year:1984, week:10, dayOfWeek:3, hour:12, minute:31, second:14, millisecond: 645 }),
+                            {x:1, y:[1,2,3,{ age:10 }]}
+                        ]
+                    } AS key
+                """;
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
@@ -344,7 +413,7 @@ public class ExportJsonTest {
     @Test
     public void testExportGraphJson() {
         String filename = "graph.json";
-        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
+        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) YIELD graph " +
                         "CALL apoc.export.json.graph(graph, $file) " +
                         "YIELD nodes, relationships, properties, file, source,format, time " +
                         "RETURN *", map("file", filename),
@@ -355,7 +424,7 @@ public class ExportJsonTest {
     @Test
     public void testExportQueryJson() {
         String filename = "query.json";
-        String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
+        String query = "MATCH (u:User) RETURN u.age, u.name, u.male, u.kids, labels(u)";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
                 (r) -> {
@@ -369,7 +438,7 @@ public class ExportJsonTest {
     @Test
     public void testExportQueryNodesJson() {
         String filename = "query_nodes.json";
-        String query = "MATCH (u:User) return u";
+        String query = "MATCH (u:User) RETURN u";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename,"query",query),
                 (r) -> {
@@ -383,7 +452,7 @@ public class ExportJsonTest {
     @Test
     public void testExportQueryTwoNodesJson() {
         String filename = "query_two_nodes.json";
-        String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) return u, l";
+        String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) RETURN u, l";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query),
                 (r) -> {
                     assertTrue("Should get statement",r.get("source").toString().contains("statement: cols(2)"));
@@ -397,7 +466,7 @@ public class ExportJsonTest {
     @Test
     public void testExportQueryNodesJsonParams() {
         String filename = "query_nodes_param.json";
-        String query = "MATCH (u:User) WHERE u.age > $age return u";
+        String query = "MATCH (u:User) WHERE u.age > $age RETURN u";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file,{params:{age:10}})",
                 map("file", filename, "query", query),
                 (r) -> {
@@ -411,7 +480,7 @@ public class ExportJsonTest {
     @Test
     public void testExportQueryNodesJsonCount() {
         String filename = "query_nodes_count.json";
-        String query = "MATCH (n) return count(n)";
+        String query = "MATCH (n) RETURN count(n)";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
                 (r) -> {
@@ -427,9 +496,9 @@ public class ExportJsonTest {
         String filename = "data.json";
         TestUtil.testCall(db, "MATCH (nod:User) " +
                         "MATCH ()-[reels:KNOWS]->() " +
-                        "WITH collect(nod) as node, collect(reels) as rels "+
+                        "WITH collect(nod) AS node, collect(reels) AS rels "+
                         "CALL apoc.export.json.data(node, rels, $file, null) " +
-                        "YIELD nodes, relationships, properties, file, source,format, time " +
+                        "YIELD nodes, relationships, properties, file, source, format, time " +
                         "RETURN *",
                 map("file", filename),
                 (r) -> {
@@ -442,7 +511,7 @@ public class ExportJsonTest {
     @Test
     public void testExportDataPath() {
         String filename = "query_nodes_path.json";
-        String query = "MATCH p = (u:User)-[rel]->(u2:User) return u, rel, u2, p, u.name";
+        String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN u, rel, u2, p, u.name";
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$file)",
                 map("file", filename, "query", query),
                 (r) -> {
@@ -529,7 +598,40 @@ public class ExportJsonTest {
                 });
         
         db.executeTransactionally("MATCH (n:Position) DETACH DELETE n");
-        
+    }
+
+    @Test
+    public void testExportOfNodeIntArrays() {
+        db.executeTransactionally(
+                """
+                CREATE (test:Test {
+                    intArray: [1,2,3,4],
+                    boolArray: [true,false],
+                    floatArray: [1.0,2.0]
+                })
+                """);
+
+        TestUtil.testCall(db,
+                """
+                   CALL apoc.export.json.query(
+                        "MATCH (test:Test) RETURN test{.intArray, .boolArray, .floatArray} AS data",
+                        null,
+                        {stream:true}
+                    )
+                   YIELD data
+                   RETURN data
+                """,
+                (r) -> {
+                    String data = (String) r.get("data");
+                    Map<String, Object> map = Util.fromJson(data, Map.class);
+                    Map<String, Object> arrays = (Map<String, Object>) map.get("data");
+                    assertEquals(new ArrayList<>(Arrays.asList(1L, 2L, 3L, 4L)), arrays.get("intArray"));
+                    assertEquals(new ArrayList<>(Arrays.asList(true, false)), arrays.get("boolArray"));
+                    assertEquals(new ArrayList<>(Arrays.asList(1.0, 2.0)), arrays.get("floatArray"));
+                }
+        );
+
+        db.executeTransactionally("MATCH (n:Test) DETACH DELETE n");
     }
 
     private void assertResults(String filename, Map<String, Object> r, final String source) {
