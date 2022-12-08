@@ -84,7 +84,7 @@ public class TriggerNewProcedures {
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.install(databaseName, name, statement, selector, config) | add a trigger kernelTransaction under a name, in the kernelTransaction you can use $createdNodes, $deletedNodes etc., the selector is {phase:'before/after/rollback/afterAsync'} returns previous and new trigger information. Takes in an optional configuration.")
+    @Description("CALL apoc.trigger.install(databaseName, name, statement, selector, config) | eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
     public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("kernelTransaction") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         checkInSystemWriter();
 
@@ -102,7 +102,7 @@ public class TriggerNewProcedures {
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.drop(databaseName, name) | remove previously added trigger, returns trigger information")
+    @Description("CALL apoc.trigger.drop(databaseName, name) | eventually removes an existing trigger, returns the trigger's information")
     public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
         Map<String, Object> removed = TriggerHandlerNewProcedures.drop(databaseName, name);
@@ -116,7 +116,7 @@ public class TriggerNewProcedures {
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.dropAll(databaseName) | removes all previously added trigger, returns trigger information")
+    @Description("CALL apoc.trigger.dropAll(databaseName) | eventually removes all previously added trigger, returns triggers' information")
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
         Map<String, Object> removed = TriggerHandlerNewProcedures.dropAll(databaseName);
@@ -126,7 +126,7 @@ public class TriggerNewProcedures {
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.stop(databaseName, name) | it pauses the trigger")
+    @Description("CALL apoc.trigger.stop(databaseName, name) | eventually pauses the trigger")
     public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
         Map<String, Object> paused = TriggerHandlerNewProcedures.updatePaused(databaseName, name, true);
@@ -137,7 +137,7 @@ public class TriggerNewProcedures {
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Procedure(mode = Mode.WRITE)
-    @Description("CALL apoc.trigger.start(databaseName, name) | it resumes the paused trigger")
+    @Description("CALL apoc.trigger.start(databaseName, name) | eventually unpauses the paused trigger")
     public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
         Map<String, Object> resume = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false);
