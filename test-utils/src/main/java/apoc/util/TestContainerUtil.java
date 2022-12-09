@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -49,10 +48,6 @@ public class TestContainerUtil {
     private static File baseDir = Paths.get("..").toFile();
     private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
     private static File extendedDir = new File(baseDir, "extended");
-
-    public static TestcontainersCausalCluster createEnterpriseCluster(List<ApocPackage> apocPackages, int numOfCoreInstances, int numberOfReadReplica, Map<String, Object> neo4jConfig, Map<String, String> envSettings) {
-        return TestcontainersCausalCluster.create(apocPackages, numOfCoreInstances, numberOfReadReplica, Duration.ofMinutes(4), neo4jConfig, envSettings);
-    }
 
     public static Neo4jContainerExtension createDB(Neo4jVersion version, List<ApocPackage> apocPackages, boolean withLogging) {
         return switch(version) {
@@ -213,10 +208,6 @@ public class TestContainerUtil {
         });
     }
 
-    public static void testCallInReadTransaction(Session session, String call, Consumer<Map<String, Object>> consumer) {
-        testCallInReadTransaction(session, call, null, consumer);
-    }
-
     public static void testCallInReadTransaction(Session session, String call, Map<String,Object> params, Consumer<Map<String, Object>> consumer) {
         testResultInReadTransaction(session, call, params, (res) -> {
             try {
@@ -239,14 +230,6 @@ public class TestContainerUtil {
             tx.commit();
             return null;
         });
-    }
-
-    public static <T> T singleResultFirstColumn(Session session, String cypher, Map<String,Object> params) {
-        return (T) session.writeTransaction(tx -> tx.run(cypher, params).single().fields().get(0).value().asObject());
-    }
-
-    public static <T> T singleResultFirstColumn(Session session, String cypher) {
-        return singleResultFirstColumn(session, cypher, Map.of());
     }
 
     public static boolean isDockerImageAvailable(Exception ex) {
