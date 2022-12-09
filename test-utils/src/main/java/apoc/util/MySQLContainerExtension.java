@@ -5,6 +5,7 @@ import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 
 import java.time.Duration;
 
+@SuppressWarnings("unused") // used from extended
 public class MySQLContainerExtension extends MySQLContainer<MySQLContainerExtension> {
 
     public MySQLContainerExtension() {

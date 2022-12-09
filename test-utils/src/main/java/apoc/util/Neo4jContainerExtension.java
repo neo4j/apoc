@@ -103,6 +103,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
         return session;
     }
 
+    @SuppressWarnings("unused") // used from extended
     public Driver getDriver() {
         return driver;
     }

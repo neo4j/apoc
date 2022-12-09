@@ -48,6 +48,7 @@ public class RegisterComponentFactory extends ExtensionFactory<RegisterComponent
             classInstanceMap.put(databaseNamme, instance);
         }
 
+        @SuppressWarnings("unused") // used from extended
         public Map<Class, Map<String, Object>> getResolvers() {
             return resolvers;
         }
