@@ -11,6 +11,7 @@ import java.time.Duration;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 
+@SuppressWarnings("unused") // used from extended
 public class GoogleCloudStorageContainerExtension extends GenericContainer<GoogleCloudStorageContainerExtension> {
 
     public GoogleCloudStorageContainerExtension() {

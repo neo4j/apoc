@@ -33,6 +33,7 @@ public class VirtualNode implements Node {
         this.elementId = null;
     }
 
+    @SuppressWarnings("unused") // used from extended
     public VirtualNode(long nodeId, Label[] labels, Map<String, Object> props) {
         this.id = nodeId;
         addLabels(asList(labels));
