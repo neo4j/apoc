@@ -3,7 +3,6 @@ package apoc.spatial;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import org.junit.*;
-import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -34,16 +33,6 @@ public class GeocodeTest {
         // wrong url but doesn't fail because provider is osm, not opencage
         testGeocodeWithThrottling("osm", false, 
                 map("url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"));
-    }
-    
-    @Test
-    public void testWrongUrlWithOpenCage() {
-        // overwrite ApocConfig provider
-        QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                () -> testGeocodeWithThrottling("osm", false,
-                        map("provider", "opencage", "url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"))
-        );
-        assertTrue(e.getMessage().contains("Server returned HTTP response code: 401 for URL"));
     }
     
     // -- with apoc config
