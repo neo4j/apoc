@@ -132,20 +132,18 @@ public class UtilIT {
         }
     }
 
-    @Test(expected = RuntimeException.class)
-    public void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() throws IOException {
-        try {
-            httpServer = setUpServer(null, "file:/etc/passwd");
-            // given
-            String url = getServerUrl(httpServer);
+    @Test
+    public void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() {
+        httpServer =setUpServer(null, "file:/etc/passwd");
+        // given
+        String url = getServerUrl(httpServer);
 
-            // when
-            Util.openInputStream(url, null, null, null);
-        } catch (RuntimeException e) {
-            // then
-            assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
-            throw e;
-        }
+        // when
+        RuntimeException e = Assert.assertThrows( RuntimeException.class,
+                () -> Util.openInputStream(url, null, null, null)
+        );
+
+        assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
     }
 
     private String getServerUrl(GenericContainer httpServer) {

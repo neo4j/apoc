@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -79,14 +80,12 @@ public class UtilTest {
         assertNotNull(Util.merge(null, null));
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testValidateQuery() {
-        try {
-            Util.validateQuery(db, "Match (n) return m");
-        } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("Variable `m` not defined"));
-            throw e;
-        }
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> Util.validateQuery(db, "MATCH (n) RETURN m")
+        );
+        assertTrue(e.getMessage().contains("Variable `m` not defined"));
     }
 
     @Test

@@ -6,7 +6,7 @@ import java.time.*;
 
 import static apoc.util.DateParseUtil.dateParse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 public class DateParseUtilTest {
 
@@ -21,14 +21,11 @@ public class DateParseUtilTest {
         assertEquals(OffsetTime.of(10,15,30,0,ZoneOffset.of("+01:00")),dateParse("10:15:30+01:00", OffsetTime.class, parseList));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void dateParseErrorTest() {
-        try {
-            dateParse("10/01/2010", LocalDateTime.class, parseList);
-        } catch (Exception e) {
-            assertTrue(e instanceof RuntimeException);
-            assertEquals("Can't format the date with the pattern", e.getMessage());
-            throw e;
-        }
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> dateParse("10/01/2010", LocalDateTime.class, parseList)
+        );
+        assertEquals("Can't format the date with the pattern", e.getMessage());
     }
 }

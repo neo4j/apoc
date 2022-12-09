@@ -14,6 +14,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import static apoc.ApocConfig.EXPORT_TO_FILE_ERROR;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
@@ -45,17 +46,17 @@ public class ExportStreamsStatementsTest {
         TestUtil.testCall(db, statement, (res) -> assertEquals(expected, res.get("data")));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void shouldNotExportCSVData() {
-        try {
-            String statement = "CALL apoc.export.csv.all('file.csv', {})";
-            TestUtil.testCall(db, statement, (res) -> {});
-        } catch (RuntimeException e) {
-            String expectedMessage = "Failed to invoke procedure `apoc.export.csv.all`: " +
-                    "Caused by: java.lang.RuntimeException: " + EXPORT_TO_FILE_ERROR;
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        String statement = "CALL apoc.export.csv.all('file.csv', {})";
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> TestUtil.testCall(db, statement, (res) -> {})
+        );
+
+        String expectedMessage = "Failed to invoke procedure `apoc.export.csv.all`: " +
+                "Caused by: java.lang.RuntimeException: " + EXPORT_TO_FILE_ERROR;
+        assertEquals(expectedMessage, e.getMessage());
     }
 
     @Test
@@ -86,17 +87,16 @@ public class ExportStreamsStatementsTest {
         TestUtil.testCall(db, statement, (res) -> assertEquals(expected, res.get("cypherStatements")));
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void shouldNotExportCypherStatements() {
-        try {
-            String statement = "CALL apoc.export.cypher.all('file.cypher', {})";
-            TestUtil.testCall(db, statement, (res) -> {});
-        } catch (RuntimeException e) {
-            String expectedMessage = "Failed to invoke procedure `apoc.export.cypher.all`: " +
-                    "Caused by: java.lang.RuntimeException: " + EXPORT_TO_FILE_ERROR;
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        String statement = "CALL apoc.export.cypher.all('file.cypher', {})";
+
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () -> TestUtil.testCall(db, statement, (res) -> {})
+        );
+        String expectedMessage = "Failed to invoke procedure `apoc.export.cypher.all`: " +
+                "Caused by: java.lang.RuntimeException: " + EXPORT_TO_FILE_ERROR;
+        assertEquals(expectedMessage, e.getMessage());
     }
 
 }

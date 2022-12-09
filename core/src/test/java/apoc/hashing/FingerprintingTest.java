@@ -25,6 +25,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 
 public class FingerprintingTest  {
 
@@ -170,7 +171,7 @@ public class FingerprintingTest  {
         assertEquals(all, filtered);
     }
 
-    @Test(expected = QueryExecutionException.class)
+    @Test
     public void testConfigExceptionOnTheSameLabels() {
         db.executeTransactionally("CREATE (p1:Person{name:'Andrea', surname:'Santurbano'}), (p2:Person{name:'Stefan', surname:'Armbruster'}), " +
                 "(pr:Product{sku: 'Nintendo Switch'}), " +
@@ -178,18 +179,18 @@ public class FingerprintingTest  {
                 "(p1)-[:BOUGHT{when: 2017}]->(pr)");
         final Map<String, Object> conf = Util.map("nodeAllowMap", Util.map("Person", Arrays.asList("name")),
                 "nodeDisallowMap", Util.map("Person", Arrays.asList("surname")));
-        try {
-            TestUtil.singleResultFirstColumn(db, "MATCH p = (n)-[r]->(m) " +
-                            "WITH collect(p) AS paths " +
-                            "CALL apoc.graph.fromPaths(paths, '', {}) yield graph AS g " +
-                            "WITH {nodes: apoc.coll.toSet(g.nodes), rels: apoc.coll.toSet(g.relationships)} AS map " +
-                            "RETURN apoc.hashing.fingerprinting(map, $conf) as hash ",
-                    Collections.singletonMap("conf", conf));
-        } catch (Exception e) {
-            String expected = "You can't set the same labels for allow and disallow lists for nodes";
-            assertEquals(expected, ExceptionUtils.getRootCause(e).getMessage());
-            throw e;
-        }
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> TestUtil.singleResultFirstColumn(db, "MATCH p = (n)-[r]->(m) " +
+                                "WITH collect(p) AS paths " +
+                                "CALL apoc.graph.fromPaths(paths, '', {}) yield graph AS g " +
+                                "WITH {nodes: apoc.coll.toSet(g.nodes), rels: apoc.coll.toSet(g.relationships)} AS map " +
+                                "RETURN apoc.hashing.fingerprinting(map, $conf) as hash ",
+                        Collections.singletonMap("conf", conf))
+        );
+
+        String expected = "You can't set the same labels for allow and disallow lists for nodes";
+        assertEquals(expected, ExceptionUtils.getRootCause(e).getMessage());
     }
 
     private void compareGraph(String cypher, List<String> excludes, boolean shouldBeEqual) {

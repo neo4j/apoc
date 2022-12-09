@@ -124,16 +124,15 @@ public class UtilsTest {
         );
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testWrongDecompressionFromPreviousDifferentCompressionAlgo() {
-        try {
-            TestUtil.testCall(db, "WITH apoc.util.compress('test', {compression: 'GZIP'}) AS compressed RETURN apoc.util.decompress(compressed, {compression: 'DEFLATE'}) AS value", r -> {
-            });
-        } catch (RuntimeException e) {
-            String expectedMessage = "Failed to invoke function `apoc.util.decompress`: Caused by: java.util.zip.ZipException: incorrect header check";
-            assertEquals(expectedMessage, e.getMessage());
-            throw e;
-        }
+        RuntimeException e = assertThrows(RuntimeException.class,
+                () ->  TestUtil.testCall(db, "WITH apoc.util.compress('test', {compression: 'GZIP'}) AS compressed RETURN apoc.util.decompress(compressed, {compression: 'DEFLATE'}) AS value",
+                        r -> {})
+        );
+
+        String expectedMessage = "Failed to invoke function `apoc.util.decompress`: Caused by: java.util.zip.ZipException: incorrect header check";
+        assertEquals(expectedMessage, e.getMessage());
     }
 
     @Test
