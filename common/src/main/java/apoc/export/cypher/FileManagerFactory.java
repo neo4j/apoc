@@ -19,10 +19,6 @@ import static apoc.util.FileUtils.getOutputStream;
  * @since 06.12.17
  */
 public class FileManagerFactory {
-    public static ExportFileManager createFileManager(String fileName, boolean separatedFiles) {
-        return createFileManager(fileName, separatedFiles, ExportConfig.EMPTY);
-    }
-    
     public static ExportFileManager createFileManager(String fileName, boolean separatedFiles, ExportConfig config) {
         if (fileName == null || "".equals(fileName)) {
             return new StringExportCypherFileManager(separatedFiles, config);
