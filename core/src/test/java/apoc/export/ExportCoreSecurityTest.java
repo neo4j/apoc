@@ -38,6 +38,7 @@ import static org.junit.Assert.fail;
 public class ExportCoreSecurityTest {
 
     private static final File directory = new File("target/import");
+    private static final File directoryWithSamePrefix = new File("target/imported");
     private static final File subDirectory = new File("target/import/tests");
     private static final List<String> APOC_EXPORT_PROCEDURE_NAME = Arrays.asList("csv", "json", "graphml", "cypher");
 
@@ -46,6 +47,8 @@ public class ExportCoreSecurityTest {
         directory.mkdirs();
         //noinspection ResultOfMethodCallIgnored
         subDirectory.mkdirs();
+        //noinspection ResultOfMethodCallIgnored
+        directoryWithSamePrefix.mkdirs();
     }
 
     @ClassRule
@@ -293,8 +296,9 @@ public class ExportCoreSecurityTest {
         private static final String case5 = "'file://tests/../test.txt'";
         private static final String case6 = "'file:///tests//..//test.txt'";
         private static final String case7 = "'test.txt'";
+        private static final String case8 = "'file:///..//..//..//..//test.txt'";
 
-        private static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5, case6, case7);
+        private static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5, case6, case7, case8);
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
                 "query", cases.stream().map(
@@ -327,6 +331,59 @@ public class ExportCoreSecurityTest {
             File f = new File(directory.getAbsolutePath() + "/test.txt");
             TestCase.assertTrue(f.exists());
             TestCase.assertTrue(f.delete());
+        }
+    }
+
+    /*
+     * These test cases attempt to access a directory with the same prefix as the import directory. This is design to
+     * test "directoryName.startsWith" logic which is a common path traversal bug.
+     *
+     * All these tests should fail because they access a directory which isn't the configured directory
+     */
+    @RunWith(Parameterized.class)
+    public static class TestPathTraversalIsWithSimilarDirectoryName {
+        private final String apocProcedure;
+
+        public TestPathTraversalIsWithSimilarDirectoryName(String exportMethod, String exportMethodType, String exportMethodArguments) {
+            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+        }
+
+        private static final String case1 = "'../imported/test.txt'";
+        private static final String case2 = "'tests/../../imported/test.txt'";
+
+        private static final List<String> cases = Arrays.asList(case1, case2);
+
+        private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
+                "query", cases.stream().map(
+                        filePath -> "\"RETURN 1\", " + filePath + ", {}"
+                ).toList(),
+                "all", cases.stream().map(
+                        filePath -> filePath + ", {}"
+                ).toList(),
+                "data", cases.stream().map(
+                        filePath -> "[], [], " + filePath + ", {}"
+                ).toList(),
+                "graph", cases.stream().map(
+                        filePath -> "{nodes: [], relationships: []}, " + filePath + ", {}"
+                ).toList()
+        );
+
+        @Parameterized.Parameters
+        public static Collection<String[]> data() {
+            return ExportCoreSecurityTest.data(METHOD_ARGUMENTS);
+        }
+
+        @Test
+        public void testPathTraversal() {
+            setFileExport(true);
+
+            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+                    () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
+            );
+
+            assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
+
+            setFileExport(false);
         }
     }
 
