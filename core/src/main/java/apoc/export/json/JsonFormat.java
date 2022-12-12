@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -217,19 +216,19 @@ public class JsonFormat implements Format {
     private void write(Reporter reporter, JsonGenerator jsonGenerator, ExportConfig config, String keyName, Object value, boolean writeKey) throws IOException {
         Types type = Types.of(value);
         switch (type) {
-            case NODE:
+            case NODE -> {
                 writeFieldName(jsonGenerator, keyName, writeKey);
                 writeNode(reporter, jsonGenerator, (Node) value, config);
-                break;
-            case RELATIONSHIP:
+            }
+            case RELATIONSHIP -> {
                 writeFieldName(jsonGenerator, keyName, writeKey);
                 writeRel(reporter, jsonGenerator, (Relationship) value, config);
-                break;
-            case PATH:
+            }
+            case PATH -> {
                 writeFieldName(jsonGenerator, keyName, writeKey);
                 writePath(reporter, jsonGenerator, config, (Path) value);
-                break;
-            case MAP:
+            }
+            case MAP -> {
                 if (writeKey) {
                     jsonGenerator.writeObjectFieldStart(keyName);
                 } else {
@@ -241,23 +240,23 @@ public class JsonFormat implements Format {
                     write(reporter, jsonGenerator, config, entry.getKey(), entry.getValue(), writeKey);
                 }
                 jsonGenerator.writeEndObject();
-                break;
-            case LIST:
+            }
+            case LIST -> {
                 if (writeKey) {
                     jsonGenerator.writeArrayFieldStart(keyName);
                 } else {
                     jsonGenerator.writeStartArray();
                 }
-                Object[] list = value.getClass().isArray() ? (Object[]) value : ((List<Object>) value).toArray();
+                Object[] list = Types.toObjectArray(value);
                 for (Object elem : list) {
                     write(reporter, jsonGenerator, config, keyName, elem, false);
                 }
                 jsonGenerator.writeEndArray();
-                break;
-            default:
+            }
+            default -> {
                 JsonFormatSerializer.DEFAULT.serializeProperty(jsonGenerator, keyName, value, writeKey);
                 reporter.update(0, 0, 1);
-                break;
+            }
         }
     }
 
