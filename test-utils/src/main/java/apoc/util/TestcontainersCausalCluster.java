@@ -141,6 +141,10 @@ public class TestcontainersCausalCluster {
         this.session = driver.session();
     }
 
+    public List<Neo4jContainerExtension> getClusterMembers() {
+        return clusterMembers;
+    }
+
     public Driver getDriver() {
         return driver;
     }
