@@ -474,7 +474,7 @@ public class GraphsTest {
                 Util.map("name", "Daft Punk"));
 
         TestUtil.testResult(db, "CALL apoc.graph.validateDocument($json, $config) yield row",
-                Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(list), "config", Util.map("generateId", false, "defaultLabel", "")), result -> {
+                Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(list), "config", Util.map("generateId", false)), result -> {
                     Map<String, Object> row = (Map<String, Object>) result.next().get("row");
                     assertEquals(0L, row.get("index"));
                     assertEquals("The object `{\"type\":\"artist\",\"name\":\"Daft Punk\"}` must have `id` as id-field name", row.get("message"));
@@ -501,7 +501,7 @@ public class GraphsTest {
         errors.add("The object `{\"question\":\"5 + 7 = ?\",\"options\":[\"10\",\"11\",\"12\",\"13\"],\"answer\":\"12\"}` must have `id` as id-field name and `type` as label-field name");
         errors.add("The object `{\"question\":\"12 - 8 = ?\",\"options\":[\"1\",\"2\",\"3\",\"4\"],\"answer\":\"4\"}` must have `id` as id-field name and `type` as label-field name");
         TestUtil.testResult(db, "CALL apoc.graph.validateDocument($json, $config) yield row",
-                Util.map("json", json, "config", Util.map("generateId", false, "defaultLabel", "")), result -> {
+                Util.map("json", json, "config", Util.map("generateId", false)), result -> {
                     Map<String, Object> row = (Map<String, Object>) result.next().get("row");
                     assertEquals(0L, row.get("index"));
                     Set<String> message = messageToSet(row);
@@ -662,7 +662,7 @@ public class GraphsTest {
         try {
             TestUtil.testCall(db, "CALL apoc.graph.fromDocument($json, $config) yield graph",
                     Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisMap),
-                            "config", map("defaultLabel", "")),
+                            "config", map()),
                     result -> { });
         } catch (QueryExecutionException e) {
             Throwable rootCause = ExceptionUtils.getRootCause(e);
@@ -803,7 +803,7 @@ public class GraphsTest {
         );
 
         TestUtil.testResult(db, "CALL apoc.graph.validateDocument($json, $config)",
-                Util.map("json", data, "config", Util.map("generateId", false, "defaultLabel", "")), result -> {
+                Util.map("json", data, "config", Util.map("generateId", false)), result -> {
                     Map<String, Object> row = (Map<String, Object>) result.next().get("row");
                     assertEquals(0L, row.get("index"));
                     Set<String> errors = new HashSet<>();

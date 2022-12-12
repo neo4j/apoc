@@ -33,27 +33,6 @@ public class DistanceTest {
         TestUtil.registerProcedure(db, Distance.class);
     }
 
-    /* This test fails due to a bug in neo with Path objects returned in scala
-    @Test
-    public void testCalculateShortestDistanceAndReturnPath() {
-        createPoints();
-        int i = 0;
-        testCall(db, "MATCH (a:Point {name: \"bruges\"}), (b:Point {name: \"dresden\"}) " +
-                "MATCH p=(a)-[*]->(b) " +
-                "WITH collect(p) as paths " +
-                "CALL apoc.spatial.shortestDistancePath(paths) YIELD path RETURN path", (row) -> {
-            PathImpl path = (PathImpl) row.get("path");
-            List<Node> nodes = new ArrayList<>();
-            for (Node node : path.nodes()) {
-                nodes.add(node);
-            }
-            assertEquals(3, nodes.size());
-            assertEquals("brussels", nodes.get(1).getProperty(NAME));
-
-        });
-    }
-    */
-
     @Test
     public void testSortingPathsOnDistance() {
         Distance distanceProc = new Distance();

@@ -117,6 +117,14 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
         return this;
     }
 
+    @SuppressWarnings("unused") // can be used for debugging from TestContainerUtil
+    public Neo4jContainerExtension withDebugger() {
+        withEnv("NEO4J_dbms_jvm_additional","-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005");
+        addFixedExposedPort(5005, 5005);
+        withExposedPorts(5005);
+        return this;
+    }
+
     private Neo4jContainerExtension withWaitForDatabaseReady(
             String username, String password, String database, Duration timeout, TestContainerUtil.Neo4jVersion version) {
         if (version == ENTERPRISE) {

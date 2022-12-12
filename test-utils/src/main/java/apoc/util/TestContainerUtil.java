@@ -163,8 +163,6 @@ public class TestContainerUtil {
                 .forProjectDirectory(baseDir)
                 .useBuildDistribution()
                 .connect()) {
-//            String version = connection.getModel(ProjectPublications.class).getPublications().getAt(0).getId().getVersion();
-
             BuildLauncher buildLauncher = connection.newBuild().forTasks(tasks);
 
             String neo4jVersionOverride = System.getenv("NEO4JVERSION");
