@@ -6,6 +6,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
+import org.neo4j.procedure.Admin;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -21,7 +22,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 
 public class TriggerNewProcedures {
     // public for testing purpose
-    public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a writer system database";
+    public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a writer database";
     public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
 
     @Context public GraphDatabaseAPI db;
@@ -46,6 +47,7 @@ public class TriggerNewProcedures {
 
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
+    @Admin
     @Procedure(mode = Mode.WRITE)
     @Description("CALL apoc.trigger.install(databaseName, name, statement, selector, config) | eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
     public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("statement") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
@@ -64,6 +66,7 @@ public class TriggerNewProcedures {
 
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
+    @Admin
     @Procedure(mode = Mode.WRITE)
     @Description("CALL apoc.trigger.drop(databaseName, name) | eventually removes an existing trigger, returns the trigger's information")
     public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name")String name) {
@@ -78,6 +81,7 @@ public class TriggerNewProcedures {
     
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
+    @Admin
     @Procedure(mode = Mode.WRITE)
     @Description("CALL apoc.trigger.dropAll(databaseName) | eventually removes all previously added trigger, returns triggers' information")
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
@@ -88,6 +92,7 @@ public class TriggerNewProcedures {
 
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
+    @Admin
     @Procedure(mode = Mode.WRITE)
     @Description("CALL apoc.trigger.stop(databaseName, name) | eventually pauses the trigger")
     public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name")String name) {
@@ -99,6 +104,7 @@ public class TriggerNewProcedures {
 
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
+    @Admin
     @Procedure(mode = Mode.WRITE)
     @Description("CALL apoc.trigger.start(databaseName, name) | eventually unpauses the paused trigger")
     public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name")String name) {

@@ -3,6 +3,7 @@ package apoc.trigger;
 import apoc.util.Util;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
+import org.neo4j.procedure.Admin;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -20,7 +21,7 @@ import java.util.stream.Stream;
 
 public class Trigger {
     // public for testing purpose
-    public static final String SYS_NON_WRITER_ERROR = """
+    public static final String DB_NON_WRITER_ERROR = """
             This instance is not allowed to write to the database because it is a follower.
             Please use these procedures against the database leader.
             """;
@@ -41,10 +42,11 @@ public class Trigger {
         log.warn(msgDeprecation);
 
         if (!Util.isWriteableInstance(db)) {
-            throw new RuntimeException(SYS_NON_WRITER_ERROR + msgDeprecation);
+            throw new RuntimeException(DB_NON_WRITER_ERROR + msgDeprecation);
         }
     }
 
+    @Admin
     @Deprecated
     @Procedure(name = "apoc.trigger.add", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.install")
     @Description("Adds a trigger to the given Cypher statement.\n" +
@@ -63,6 +65,7 @@ public class Trigger {
         return Stream.of(new TriggerInfo(name,statement,selector, params,true, false));
     }
 
+    @Admin
     @Deprecated
     @Procedure(name = "apoc.trigger.remove", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.drop")
     @Description("Removes the given trigger.")
@@ -76,6 +79,7 @@ public class Trigger {
         return Stream.of(new TriggerInfo(name,(String)removed.get("statement"), (Map<String, Object>) removed.get("selector"), (Map<String, Object>) removed.get("params"),false, false));
     }
 
+    @Admin
     @Deprecated
     @Procedure(name = "apoc.trigger.removeAll", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.dropAll")
     @Description("Removes all previously added triggers.")
@@ -89,6 +93,7 @@ public class Trigger {
         return removed.entrySet().stream().map(TriggerInfo::entryToTriggerInfo);
     }
 
+    @Admin
     @Procedure(name = "apoc.trigger.list", mode = Mode.READ)
     @Description("Lists all installed triggers.")
     public Stream<TriggerInfo> list() {
@@ -102,6 +107,7 @@ public class Trigger {
                 );
     }
 
+    @Admin
     @Deprecated
     @Procedure(name = "apoc.trigger.pause", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.stop")
     @Description("Pauses the given trigger.")
@@ -116,6 +122,7 @@ public class Trigger {
                 (Map<String,Object>) paused.get("params"),true, true));
     }
 
+    @Admin
     @Deprecated
     @Procedure(name = "apoc.trigger.resume", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.start")
     @Description("Resumes the given paused trigger.")
