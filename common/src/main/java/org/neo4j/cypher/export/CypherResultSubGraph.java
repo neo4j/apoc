@@ -148,18 +148,8 @@ public class CypherResultSubGraph implements SubGraph {
     }
 
     @Override
-    public boolean contains(Relationship relationship) {
-        return relationships.containsKey(relationship.getElementId());
-    }
-
-    @Override
     public Iterable<IndexDefinition> getIndexes() {
         return indexes;
-    }
-
-    @Override
-    public Iterable<ConstraintDefinition> getConstraints() {
-        return constraints;
     }
 
     @Override

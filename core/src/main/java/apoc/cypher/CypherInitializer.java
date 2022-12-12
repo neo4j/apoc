@@ -42,10 +42,6 @@ public class CypherInitializer implements AvailabilityListener {
         return finished;
     }
 
-    public GraphDatabaseAPI getDb() {
-        return db;
-    }
-
     @Override
     public void available() {
 

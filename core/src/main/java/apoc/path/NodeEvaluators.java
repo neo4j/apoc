@@ -42,12 +42,12 @@ public final class NodeEvaluators {
         return null;
     }
 
-    public static Evaluator whitelistNodeEvaluator(boolean filterStartNode, int minLevel, List<Node> whitelistNodes) {
-        return new WhitelistNodeEvaluator(filterStartNode, minLevel, whitelistNodes);
+    public static Evaluator whitelistNodeEvaluator(boolean filterStartNode, List<Node> whitelistNodes) {
+        return new WhitelistNodeEvaluator(filterStartNode, whitelistNodes);
     }
 
-    public static Evaluator blacklistNodeEvaluator(boolean filterStartNode, int minLevel, List<Node> blacklistNodes) {
-        return new BlacklistNodeEvaluator(filterStartNode, minLevel, blacklistNodes);
+    public static Evaluator blacklistNodeEvaluator(boolean filterStartNode, List<Node> blacklistNodes) {
+        return new BlacklistNodeEvaluator(filterStartNode, blacklistNodes);
     }
 
     // The evaluators from pruneWhereEndNodeIs and includeWhereEndNodeIs interfere with each other, this makes them play nice
@@ -87,8 +87,8 @@ public final class NodeEvaluators {
     private static class BlacklistNodeEvaluator extends PathExpanderNodeEvaluator {
         private Set<Node> blacklistSet;
 
-        public BlacklistNodeEvaluator(boolean filterStartNode, int minLevel, List<Node> blacklistNodes) {
-            super(filterStartNode, minLevel);
+        public BlacklistNodeEvaluator(boolean filterStartNode, List<Node> blacklistNodes) {
+            super(filterStartNode);
             blacklistSet = new HashSet<>(blacklistNodes);
         }
 
@@ -102,8 +102,8 @@ public final class NodeEvaluators {
     private static class WhitelistNodeEvaluator extends PathExpanderNodeEvaluator {
         private Set<Node> whitelistSet;
 
-        public WhitelistNodeEvaluator(boolean filterStartNode, int minLevel, List<Node> whitelistNodes) {
-            super(filterStartNode, minLevel);
+        public WhitelistNodeEvaluator(boolean filterStartNode, List<Node> whitelistNodes) {
+            super(filterStartNode);
             whitelistSet = new HashSet<>(whitelistNodes);
         }
 
@@ -116,11 +116,9 @@ public final class NodeEvaluators {
 
     private static abstract class PathExpanderNodeEvaluator implements Evaluator {
         public final boolean filterStartNode;
-        public final int minLevel;
 
-        private PathExpanderNodeEvaluator(boolean filterStartNode, int minLevel) {
+        private PathExpanderNodeEvaluator(boolean filterStartNode) {
             this.filterStartNode = filterStartNode;
-            this.minLevel = minLevel;
         }
     }
 }

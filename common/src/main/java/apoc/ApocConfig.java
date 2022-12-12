@@ -278,10 +278,6 @@ public class ApocConfig extends LifecycleAdapter {
         return getConfig().getString(key, defaultValue);
     }
 
-    public <T> void setProperty(Setting<T> key, T value) {
-        getConfig().setProperty(key.name(), value);
-    }
-
     public void setProperty(String key, Object value) {
         getConfig().setProperty(key, value);
     }

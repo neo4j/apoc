@@ -54,11 +54,6 @@ public class NodesAndRelsSubGraph implements SubGraph {
     }
 
     @Override
-    public boolean contains(Relationship relationship) {
-        return rels.contains(relationship);
-    }
-
-    @Override
     public Iterable<IndexDefinition> getIndexes() {
         Schema schema = tx.schema();
         ArrayList<IndexDefinition> indexes = new ArrayList<>(labels.size() * 2);
@@ -66,16 +61,6 @@ public class NodesAndRelsSubGraph implements SubGraph {
             Iterables.addAll(indexes, schema.getIndexes(Label.label(label)));
         }
         return indexes;
-    }
-
-    @Override
-    public Iterable<ConstraintDefinition> getConstraints() {
-        Schema schema = tx.schema();
-        ArrayList<ConstraintDefinition> constraints = new ArrayList<>(labels.size() * 2);
-        for (String label : labels) {
-            Iterables.addAll(constraints, schema.getConstraints(Label.label(label)));
-        }
-        return constraints;
     }
 
     @Override

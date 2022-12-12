@@ -8,8 +8,6 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import java.io.File;
-
 import static org.junit.Assert.assertTrue;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
@@ -55,11 +53,5 @@ public class S3Container implements AutoCloseable {
                 key,
                 localstack.getDefaultCredentialsProvider().getCredentials().getAWSAccessKeyId(),
                 localstack.getDefaultCredentialsProvider().getCredentials().getAWSSecretKey());
-    }
-
-    public String putFile(String fileName) {
-        final File file = new File(fileName);
-        s3.putObject(S3_BUCKET_NAME, file.getName(), file);
-        return getUrl(file.getName());
     }
 }

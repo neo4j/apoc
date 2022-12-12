@@ -37,10 +37,6 @@ public class LabelMatcher {
         }
     };
 
-    public static LabelMatcher acceptsAllLabelMatcher() {
-        return ACCEPTS_ALL_LABEL_MATCHER;
-    }
-
     public LabelMatcher addLabel(String label) {
         if ("*".equals(label)) {
             return ACCEPTS_ALL_LABEL_MATCHER;

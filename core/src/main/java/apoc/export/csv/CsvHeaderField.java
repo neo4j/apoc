@@ -8,25 +8,19 @@ import java.util.regex.Matcher;
 
 public class CsvHeaderField {
 
-    private final int index;
     private final String name;
     private final String type;
     private final boolean array;
     private final String idSpace;
     private final Map<String, Object> optionalData;
 
-    private CsvHeaderField(int index, String name, String type, boolean array, String idSpace, Map<String, Object> optionalData) {
+    private CsvHeaderField(String name, String type, boolean array, String idSpace, Map<String, Object> optionalData) {
         super();
-        this.index = index;
         this.name = name;
         this.type = type;
         this.array = array;
         this.idSpace = idSpace;
         this.optionalData = optionalData;
-    }
-
-    public int getIndex() {
-        return index;
     }
 
     public String getName() {
@@ -63,7 +57,7 @@ public class CsvHeaderField {
         return CsvLoaderConstants.IGNORE_FIELD.equals(type);
     }
 
-    public static CsvHeaderField parse(final int index, final String attribute, final char quotationCharacter) {
+    public static CsvHeaderField parse(final String attribute, final char quotationCharacter) {
         final String attributeCleaned = attribute.replaceAll(String.valueOf(quotationCharacter), "");
 
         final Matcher matcher = CsvLoaderConstants.FIELD_PATTERN.matcher(attributeCleaned);
@@ -98,7 +92,7 @@ public class CsvHeaderField {
                 CsvLoaderConstants.ARRAY_PATTERN.equals(extractGroup(matcher, "array")) ||
                 "LABEL".equals(type);
 
-        return new CsvHeaderField(index, name, type, array, idSpace, optionalData);
+        return new CsvHeaderField(name, type, array, idSpace, optionalData);
     }
 
     private static String nameAndTypeToAttribute(String name, String type) {

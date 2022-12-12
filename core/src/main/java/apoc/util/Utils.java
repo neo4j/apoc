@@ -1,7 +1,6 @@
 package apoc.util;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.procedure.*;
 
@@ -14,8 +13,6 @@ import java.util.stream.Collectors;
  * @since 26.05.16
  */
 public class Utils {
-    @Context
-    public GraphDatabaseService db;
 
     @Context
     public TerminationGuard terminationGuard;

@@ -175,18 +175,6 @@ public class Xml {
         return FACTORY.createXMLStreamReader(inputStream);
     }
 
-
-    private boolean proceedReader(XMLStreamReader reader) throws XMLStreamException {
-        if (reader.hasNext()) {
-            do {
-                reader.next();
-            } while (reader.isWhiteSpace());
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     private void handleNode(Deque<Map<String, Object>> stack, Node node, boolean simpleMode) {
 
         // Handle document node
@@ -317,7 +305,7 @@ public class Xml {
     }
 
     public static class ParentAndChildPair {
-        private org.neo4j.graphdb.Node parent;
+        private final org.neo4j.graphdb.Node parent;
         private org.neo4j.graphdb.Node previousChild=null;
 
         public ParentAndChildPair(org.neo4j.graphdb.Node parent) {
@@ -326,10 +314,6 @@ public class Xml {
 
         public org.neo4j.graphdb.Node getParent() {
             return parent;
-        }
-
-        public void setParent(org.neo4j.graphdb.Node parent) {
-            this.parent = parent;
         }
 
         public org.neo4j.graphdb.Node getPreviousChild() {

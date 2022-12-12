@@ -3,7 +3,6 @@ package apoc.search;
 import apoc.result.NodeResult;
 import apoc.util.Util;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
@@ -139,11 +138,6 @@ public class ParallelNodeSearch {
         public Stream<Long> queryForNodeId() {
             String query = format("match (n:`%s`) where n.`%s` %s $value return id(n) AS id", label, prop, operator);
             return queryForNode(query, (row) -> (long) row.get("id")).stream();
-        }
-
-        public Stream<NodeResult> queryForNode() {
-            String query = format("match (n:`%s`) where n.`%s` %s $value return n", label, prop, operator);
-            return queryForNode(query, (row) -> new NodeResult((Node) row.get("n"))).stream();
         }
 
         public <T> List<T> queryForNode(String query, Function<Map<String, Object>, T> transformer) {

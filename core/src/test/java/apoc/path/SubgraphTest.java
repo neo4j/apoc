@@ -5,7 +5,6 @@ import apoc.result.NodeResult;
 import apoc.result.RelationshipResult;
 import apoc.util.TestUtil;
 import apoc.util.Util;
-import org.apache.commons.lang3.StringUtils;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 import org.junit.BeforeClass;
@@ -304,10 +303,6 @@ public class SubgraphTest {
 		private final Class<T> rootCause;
 		private final String message;
 		private Throwable cause;
-
-		public RootCauseMatcher(Class<T> rootCause) {
-			this(rootCause, StringUtils.EMPTY);
-		}
 
 		public RootCauseMatcher(Class<T> rootCause, String message) {
 			this.rootCause = rootCause;

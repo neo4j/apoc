@@ -9,7 +9,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -88,7 +87,7 @@ public class AtomicTest {
 	@Test
 	public void testAddLongRelationship(){
 		db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: 40}) CREATE (p)-[:KNOWS{since:1965}]->(c)");
-		Relationship rel = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) RETURN r;");
+		TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) RETURN r;");
 		testCall(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) CALL apoc.atomic.add(r,$property,$value,$times) YIELD container RETURN count(*)",map("property","since","value",10,"times",5), (r) -> {});
 		long since = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) RETURN r.since as since;");
 		assertEquals(1975L, since);
@@ -318,7 +317,7 @@ public class AtomicTest {
 	@Test
 	public void testConcurrentRemove() throws InterruptedException {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]}) CREATE (c:Person {name:'John',age: 40}) CREATE (a:Person {name:'Anne',age: 22})");
-        Node node = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) return n;");
+        TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) return n;");
 		ExecutorService executorService = Executors.newFixedThreadPool(2);
 
 		Runnable task = () -> {

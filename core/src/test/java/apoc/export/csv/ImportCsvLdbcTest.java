@@ -21,11 +21,6 @@ import static apoc.util.MapUtil.map;
 
 public class ImportCsvLdbcTest {
 
-    private final Collection<String> labels = Arrays.asList(
-            "Person", "Forum", "Place", "TagClass", "Tag",
-            "Message", "Post", "Comment",
-            "Organisation", "Company", "University");
-
     private final String postfix = ".csv";
 
     private final Map<String, List<String>> nodeCsvTypes = Collections.unmodifiableMap(Stream.of(

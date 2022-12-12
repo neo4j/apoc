@@ -3,14 +3,12 @@ package apoc.meta.tablesforlabels;
 import java.util.*;
 
 public class PropertyTracker {
-    public String name;
     public Set<String> types;
     public boolean mandatory;
     public long observations;
     public long nulls;
 
-    public PropertyTracker(String name) {
-        this.name = name;
+    public PropertyTracker() {
         types = new HashSet<>(3);
         mandatory = false;
         observations = 0L;

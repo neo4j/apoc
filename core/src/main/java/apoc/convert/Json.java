@@ -78,9 +78,6 @@ public class Json {
         return mapEntity;
     }
 
-    @Context
-    public org.neo4j.graphdb.GraphDatabaseService db;
-
     @UserFunction("apoc.json.path")
     @Description("Returns the given JSON path.")
     public Object path(@Name("json") String json, @Name(value = "path",defaultValue = "$") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {

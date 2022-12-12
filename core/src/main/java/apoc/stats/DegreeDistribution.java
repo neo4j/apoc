@@ -7,7 +7,6 @@ import org.HdrHistogram.AtomicHistogram;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.TokenRead;
@@ -42,8 +41,8 @@ public class DegreeDistribution {
         private final Direction direction;
         private transient AtomicHistogram histogram;
 
-        public void computeDegree(NodeCursor nodeCursor, CursorFactory cursors) {
-            int degree = DegreeUtil.degree(nodeCursor, cursors, type, direction);
+        public void computeDegree(NodeCursor nodeCursor) {
+            int degree = DegreeUtil.degree(nodeCursor, type, direction);
             record(degree);
         }
 
@@ -56,7 +55,7 @@ public class DegreeDistribution {
         }
 
         public DegreeStats(String typeName, int type, Direction direction, long total) {
-            this.typeName = typeName == null ? null : typeName;
+            this.typeName = typeName;
             this.type = type;
             this.direction = direction;
             this.total = total;
@@ -100,7 +99,7 @@ public class DegreeDistribution {
         List<DegreeStats> stats = prepareStats(types);
 
         MultiThreadedGlobalGraphOperations.forAllNodes(db, pools.getDefaultExecutorService(), BATCHSIZE,
-                (ktx,nodeCursor)-> stats.forEach((s) -> s.computeDegree(nodeCursor, ktx.cursors()))
+                nodeCursor -> stats.forEach((s) -> s.computeDegree(nodeCursor))
         );
         return stats.stream().map(DegreeStats::done);
     }

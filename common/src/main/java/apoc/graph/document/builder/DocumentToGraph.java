@@ -26,7 +26,6 @@ public class DocumentToGraph {
     private static final String JSON_ROOT = "$";
     private final DocumentToNodes documentToNodes;
 
-    private Transaction tx;
     private RelationshipBuilder documentRelationBuilder;
     private LabelBuilder documentLabelBuilder;
     private GraphsConfig config;
@@ -36,18 +35,10 @@ public class DocumentToGraph {
     }
 
     public DocumentToGraph(Transaction tx, GraphsConfig config, Set<Node> initialNodes) {
-        this.tx = tx;
         this.documentRelationBuilder = new RelationshipBuilder(config);
         this.documentLabelBuilder = new LabelBuilder(config);
         this.config = config;
         this.documentToNodes = new DocumentToNodes(initialNodes, tx);
-    }
-
-    public <T> Set<T> toSet(Iterable<T> collection) {
-        HashSet<T> set = new HashSet<T>();
-        for (T item: collection)
-            set.add(item);
-        return set;
     }
 
     private boolean hasId(Map<String, Object> map, String path) {
@@ -244,14 +235,6 @@ public class DocumentToGraph {
             coll = Arrays.asList((Map) document);
         }
         return coll;
-    }
-
-    public VirtualGraph createWithoutMutatingOriginal(Object documentObj) {
-        List<Map<String, Object>> original = getDocumentCollection(documentObj);
-
-        List<Map<String, Object>> coll = original.stream().map(HashMap::new).collect(Collectors.toList());
-
-        return getVirtualGraph(coll);
     }
 
     public VirtualGraph create(Object documentObj) {

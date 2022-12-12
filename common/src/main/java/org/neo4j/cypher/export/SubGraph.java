@@ -23,11 +23,7 @@ public interface SubGraph
 
     Iterable<Relationship> getRelationships();
 
-    boolean contains( Relationship relationship );
-
     Iterable<IndexDefinition> getIndexes();
-
-    Iterable<ConstraintDefinition> getConstraints();
 
     Iterable<ConstraintDefinition> getConstraints(Label label);
 

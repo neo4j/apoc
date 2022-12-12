@@ -80,14 +80,6 @@ public class SorensenDiceCoefficient {
       this.second = second;
     }
 
-    public char getFirst() {
-      return first;
-    }
-
-    public char getSecond() {
-      return second;
-    }
-
     @Override public int hashCode() {
       return Objects.hash(first, second);
     }

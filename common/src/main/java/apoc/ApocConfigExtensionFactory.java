@@ -14,6 +14,7 @@ import org.neo4j.logging.internal.LogService;
  * a kernel extension for the new apoc configuration mechanism
  */
 @ServiceProvider
+@SuppressWarnings("unused")
 public class ApocConfigExtensionFactory extends ExtensionFactory<ApocConfigExtensionFactory.Dependencies> {
 
     public interface Dependencies {

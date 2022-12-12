@@ -15,12 +15,10 @@ import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Entity;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -67,9 +65,6 @@ public class Meta {
 
     @Context
     public Transaction tx;
-
-    @Context
-    public GraphDatabaseService db;
 
     @Context
     public KernelTransaction kernelTx;
@@ -477,9 +472,6 @@ public class Meta {
             if (!excludes.contains(labelName) && (includeLabels.isEmpty() || includeLabels.contains(labelName))) {
                 // Skip if explicitly excluded or at least 1 include specified and not included
 
-                for (ConstraintDefinition cd : schema.getConstraints(label)) { profile.noteConstraint(label, cd); }
-                for (IndexDefinition index : schema.getIndexes(label)) { profile.noteIndex(label, index); }
-
                 long labelCount = countStore.get(labelName);
                 long sample = getSampleForLabelCount(labelCount, config.getSample());
 
@@ -784,38 +776,6 @@ public class Meta {
             res.add(name);
         }
         return res;
-    }
-
-    interface Sampler {
-        void sample(Label label, int count, Node node);
-        void sample(Label label, int count, Node node, RelationshipType type, Direction direction, int degree, Relationship rel);
-    }
-    public void sample(GraphDatabaseService db, Sampler sampler, int sampleSize) {
-        for (Label label : tx.getAllLabelsInUse()) {
-            ResourceIterator<Node> nodes = tx.findNodes(label);
-            int count = 0;
-            while (nodes.hasNext() && count++ < sampleSize) {
-                Node node = nodes.next();
-                sampler.sample(label,count,node);
-                for (RelationshipType type : node.getRelationshipTypes()) {
-                    sampleRels(sampleSize, sampler, label, count, node, type);
-                }
-            }
-            nodes.close();
-        }
-    }
-
-    private void sampleRels(int sampleSize, Sampler sampler, Label label, int count, Node node, RelationshipType type) {
-        Direction direction = Direction.OUTGOING;
-        int degree = node.getDegree(type, direction);
-        sampler.sample(label,count,node,type,direction,degree,null);
-        if (degree==0) return;
-        ResourceIterator<Relationship> relIt = ((ResourceIterable<Relationship>)node.getRelationships(direction, type)).iterator();
-        int relCount = 0;
-        while (relIt.hasNext() && relCount++ < sampleSize) {
-            sampler.sample(label,count,node,type,direction,degree,relIt.next());
-        }
-        relIt.close();
     }
 
     static class Pattern {

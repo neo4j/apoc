@@ -163,8 +163,6 @@ public class TestContainerUtil {
                 .forProjectDirectory(baseDir)
                 .useBuildDistribution()
                 .connect()) {
-//            String version = connection.getModel(ProjectPublications.class).getPublications().getAt(0).getId().getVersion();
-
             BuildLauncher buildLauncher = connection.newBuild().forTasks(tasks);
 
             String neo4jVersionOverride = System.getenv("NEO4JVERSION");
@@ -181,10 +179,6 @@ public class TestContainerUtil {
 
             buildLauncher.run();
         }
-    }
-
-    public static void executeGradleTasks(String... tasks) {
-        executeGradleTasks(baseDir, tasks);
     }
 
     public static void testCall(Session session, String call, Map<String,Object> params, Consumer<Map<String, Object>> consumer) {
@@ -236,10 +230,6 @@ public class TestContainerUtil {
                 throw t;
             }
         });
-    }
-
-    public static void testResultInReadTransaction(Session session, String call, Consumer<Iterator<Map<String, Object>>> resultConsumer) {
-        testResultInReadTransaction(session, call, null, resultConsumer);
     }
 
     public static void testResultInReadTransaction(Session session, String call, Map<String,Object> params, Consumer<Iterator<Map<String, Object>>> resultConsumer) {

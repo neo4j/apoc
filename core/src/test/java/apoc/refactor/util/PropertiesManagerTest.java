@@ -40,7 +40,7 @@ public class PropertiesManagerTest {
 
 	@Test
 	public void testCombinePropertiesTargetArrayValuesSourceSingleValuesSameType(){
-		long id = TestUtil.singleResultFirstColumn(db, "Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:[2010,2015], reason:\"work\"}]->(p)\n"
+		TestUtil.singleResultFirstColumn(db, "Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:[2010,2015], reason:\"work\"}]->(p)\n"
 				+ "Create (d)-[:GOES_TO {year:1995, reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
 		testCall(db, QUERY , (r) -> {
 			Relationship rel1 = (Relationship) r.get("rel1");
@@ -55,7 +55,7 @@ public class PropertiesManagerTest {
 
 	@Test
 	public void testCombinePropertiesTargetSingleValueSourceArrayValuesSameType(){
-		long id = TestUtil.singleResultFirstColumn(db, "Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
+		TestUtil.singleResultFirstColumn(db, "Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n" + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
 				+ "Create (d)-[:GOES_TO {year:[2010,2015], reason:\"fun\"}]->(p)\n" + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
 		testCall(db, QUERY , (r) -> {
 					Relationship rel1 = (Relationship) r.get("rel1");

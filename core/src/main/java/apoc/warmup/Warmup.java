@@ -9,7 +9,6 @@ import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 import java.io.File;
@@ -31,8 +30,6 @@ public class Warmup {
     public GraphDatabaseAPI db;
     @Context
     public TerminationGuard guard;
-    @Context
-    public Log log;
 
     static class PageResult {
         public final String file;

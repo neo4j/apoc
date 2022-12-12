@@ -160,7 +160,6 @@ public class Nodes {
         long count = 0;
         while (it.hasNext()) {
             final List<Node> batch = Util.take(it, (int)batchSize);
-//            count += Util.inTx(api,() -> batch.stream().peek( n -> {n.getRelationships().forEach(Relationship::delete);n.delete();}).count());
             count += Util.inTx(db, pools, (txInThread) -> {txInThread.execute("FOREACH (n in $nodes | DETACH DELETE n)",map("nodes",batch)).close();return batch.size();});
         }
         return Stream.of(new LongResult(count));
@@ -389,78 +388,6 @@ public class Nodes {
             result[inIdx] = tmp;
         }
         return result;
-    }
-
-    static class Degree implements Comparable<Degree> {
-        public final long node;
-        private final long group;
-        public final int degree;
-        public final long other;
-
-        public Degree(long node, long group, int degree, long other) {
-            this.node = node;
-            this.group = group;
-            this.degree = degree;
-            this.other = other;
-        }
-
-        @Override
-        public int compareTo(Degree o) {
-            return Integer.compare(degree, o.degree);
-        }
-
-        public boolean isConnected(Read read, RelationshipTraversalCursor relationship) {
-            read.relationships(node, group, RelationshipSelection.ALL_RELATIONSHIPS, relationship);
-            while (relationship.next()) {
-                if (relationship.otherNodeReference()==other) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-
-//    private boolean connectedDense(NodeCursor start, NodeCursor end, int[][] typedDirections) {
-//        List<Degree> degrees = new ArrayList<>(32);
-//
-//        Read read = ktx.dataRead();
-//
-//        try (RelationshipGroupCursor relationshipGroup = ktx.cursors().allocateRelationshipGroupCursor()) {
-//            addDegreesForNode(read, start, end, degrees, relationshipGroup, typedDirections);
-//            addDegreesForNode(read, end, start, degrees, relationshipGroup, typedDirections);
-//        }
-//
-//
-//        Collections.sort(degrees);
-//        try (RelationshipTraversalCursor relationship = ktx.cursors().allocateRelationshipTraversalCursor()) {
-//            for (Degree degree : degrees) {
-//                if (degree.isConnected(ktx.dataRead(), relationship)) return true;
-//            }
-//            return false;
-//        }
-//    }
-//
-//    private void addDegreesForNode(Read dataRead, NodeCursor node, NodeCursor other, List<Degree> degrees, RelationshipGroupCursor relationshipGroup, int[][] typedDirections) {
-//        long nodeId = node.nodeReference();
-//        long otherId = other.nodeReference();
-//
-//        dataRead.relationshipGroups(nodeId, node.relationshipGroupReference(), relationshipGroup);
-//        while (relationshipGroup.next()) {
-//            int type = relationshipGroup.type();
-//            if ((typedDirections==null) || (arrayContains(typedDirections[0], type))) {
-//                addDegreeWithDirection(degrees, relationshipGroup.outgoingReference(), relationshipGroup.outgoingCount(), nodeId, otherId);
-//            }
-//
-//            if ((typedDirections==null) || (arrayContains(typedDirections[1], type))) {
-//                addDegreeWithDirection(degrees, relationshipGroup.incomingReference(), relationshipGroup.incomingCount(), nodeId, otherId);
-//            }
-//        }
-//    }
-
-    private void addDegreeWithDirection(List<Degree> degrees, long relationshipGroup, int degree, long nodeId, long otherId) {
-        if (degree > 0 ) {
-            degrees.add(new Degree(nodeId, relationshipGroup, degree, otherId));
-        }
     }
 
     @UserFunction("apoc.node.labels")

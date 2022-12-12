@@ -3,7 +3,6 @@ package apoc;
 import org.neo4j.annotations.service.ServiceProvider;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.internal.kernel.api.Procedures;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.availability.AvailabilityGuard;
 import org.neo4j.kernel.availability.AvailabilityListener;
@@ -22,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -41,7 +39,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
     public interface Dependencies {
         GraphDatabaseAPI graphdatabaseAPI();
         JobScheduler scheduler();
-        Procedures procedures();
         LogService log();
         AvailabilityGuard availabilityGuard();
         DatabaseManagementService databaseManagementService();
@@ -63,9 +60,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         private final GraphDatabaseAPI db;
         private final Dependencies dependencies;
         private final Map<String, Lifecycle> services = new HashMap<>();
-
-        // maps a component class to database name to resolver
-        private final Map<Class, Map<String, Object>> resolvers = new ConcurrentHashMap<>();
         private final Collection<ApocGlobalComponents> apocGlobalComponents;
         private final Collection<AvailabilityListener> registeredListeners = new ArrayList<>();
 

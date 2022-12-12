@@ -5,15 +5,9 @@ import java.util.Arrays;
 
 public class FixedSizeStringWriter extends StringWriter {
 
-    public static final int MAX_SIZE = 1000;
-
     private final int fixedSize;
 
     private boolean exceeded = false;
-
-    public FixedSizeStringWriter() {
-        this(MAX_SIZE);
-    }
 
     public FixedSizeStringWriter(int maxSize) {
         super(maxSize);

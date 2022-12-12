@@ -513,8 +513,6 @@ public class ConvertJsonTest {
                                     "id", "google-oauth2|106707535753175966005",
                                     "flag.FlagType", 1L
                             )));
-
-                    Map<String, Object> mapFlag = subParts.get(0);
                     hasPart = has.get(1);
 
                     assertEquals("Comm", hasPart.get("_type"));

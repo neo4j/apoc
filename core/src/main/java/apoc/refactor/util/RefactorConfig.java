@@ -75,16 +75,6 @@ public class RefactorConfig {
 
 	}
 
-	public String getMergeModeVirtual(String name){
-		for (String key : propertiesManagement.keySet()) {
-			if (!key.equals(MATCH_ALL) && name.matches(key)) {
-				return propertiesManagement.get(key);
-			}
-		}
-		return propertiesManagement.getOrDefault(name,propertiesManagement.getOrDefault(MATCH_ALL, DISCARD));
-
-	}
-
 	public boolean getMergeRelsAllowed(){
 		return mergeRelsAllowed;
 	}
@@ -97,10 +87,6 @@ public class RefactorConfig {
 
 	public boolean isPreservingExistingSelfRels() {
 		return preserveExistingSelfRels;
-	}
-
-	public boolean hasProperties() {
-		return hasProperties;
 	}
 
 	public boolean isCountMerge() { return this.countMerge;	}

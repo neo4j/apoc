@@ -23,13 +23,6 @@ public class ImportCsv {
     @Context
     public Log log;
 
-    public ImportCsv(GraphDatabaseService db) {
-        this.db = db;
-    }
-
-    public ImportCsv() {
-    }
-
     @Procedure(name = "apoc.import.csv", mode = Mode.SCHEMA)
     @Description("Imports nodes and relationships with the given labels and types from the provided CSV file.")
     public Stream<ProgressInfo> importCsv(

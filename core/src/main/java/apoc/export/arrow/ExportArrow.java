@@ -1,6 +1,5 @@
 package apoc.export.arrow;
 
-import apoc.ApocConfig;
 import apoc.Pools;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.result.ByteArrayResult;
@@ -32,9 +31,6 @@ public class ExportArrow {
 
     @Context
     public GraphDatabaseService db;
-
-    @Context
-    public ApocConfig apocConfig;
 
     @Context
     public Pools pools;

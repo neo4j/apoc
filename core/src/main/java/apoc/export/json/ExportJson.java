@@ -45,13 +45,6 @@ public class ExportJson {
     @Context
     public TerminationGuard terminationGuard;
 
-    public ExportJson(GraphDatabaseService db) {
-        this.db = db;
-    }
-
-    public ExportJson() {
-    }
-
     @Procedure("apoc.export.json.all")
     @Description("Exports the full database to the provided JSON file.")
     public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {

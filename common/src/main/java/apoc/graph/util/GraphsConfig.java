@@ -103,7 +103,6 @@ public class GraphsConfig {
     private String labelField;
     private String idField;
     private boolean generateId;
-    private String defaultLabel;
     private Map<String, GraphMapping> mappings;
     private Map<String, String> relMapping;
 
@@ -117,7 +116,6 @@ public class GraphsConfig {
         generateId = toBoolean(config.getOrDefault("generateId", true));
         idField = config.getOrDefault("idField", "id").toString();
         labelField = config.getOrDefault("labelField", "type").toString();
-        defaultLabel = config.getOrDefault("defaultLabel", "DocNode").toString();
         mappings = toMappings((Map<String, String>) config.getOrDefault("mappings", Collections.emptyMap()));
         skipValidation = toBoolean(config.getOrDefault("skipValidation", false));
         relMapping = MapUtils.emptyIfNull((Map<String, String>) config.get("relMapping"));
@@ -143,10 +141,6 @@ public class GraphsConfig {
 
     public boolean isGenerateId() {
         return generateId;
-    }
-
-    public String getDefaultLabel() {
-        return defaultLabel;
     }
 
     public Map<String, String> getRelMapping() {

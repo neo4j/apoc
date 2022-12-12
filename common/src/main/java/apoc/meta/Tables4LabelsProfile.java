@@ -4,8 +4,6 @@ import apoc.meta.tablesforlabels.PropertyContainerProfile;
 import apoc.meta.tablesforlabels.OrderedLabels;
 import apoc.meta.tablesforlabels.PropertyTracker;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.schema.ConstraintDefinition;
-import org.neo4j.graphdb.schema.IndexDefinition;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -17,7 +15,6 @@ public class Tables4LabelsProfile {
     Map<String, PropertyContainerProfile> relMap;
     Map<OrderedLabels,Long> obsByNode;
     Map<String,Long> obsByRelType;
-    Map<String,Map<String,List<String>>> relGlobalMeta;
 
     /**
      * DAO class that the stored procedure returns
@@ -69,15 +66,6 @@ public class Tables4LabelsProfile {
         relMap = new LinkedHashMap(100);
         obsByNode = new LinkedHashMap(100);
         obsByRelType = new LinkedHashMap(100);
-        relGlobalMeta = new LinkedHashMap(100);
-    }
-
-    public void noteIndex(Label label, IndexDefinition id) {
-
-    }
-
-    public void noteConstraint(Label label, ConstraintDefinition cd) {
-
     }
 
     public PropertyContainerProfile getNodeProfile(OrderedLabels ol) {

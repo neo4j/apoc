@@ -2,7 +2,6 @@ package apoc.export.json;
 
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.util.ExportConfig;
-import apoc.export.util.Format;
 import apoc.export.util.Reporter;
 import apoc.meta.Types;
 import apoc.result.ProgressInfo;
@@ -19,14 +18,13 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 
-public class JsonFormat implements Format {
+public class JsonFormat {
     enum Format {JSON_LINES, ARRAY_JSON, JSON, JSON_ID_AS_KEYS}
     private final GraphDatabaseService db;
     private final Format format;
@@ -36,11 +34,6 @@ public class JsonFormat implements Format {
     public JsonFormat(GraphDatabaseService db, Format format) {
         this.db = db;
         this.format = format;
-    }
-
-    @Override
-    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) {
-        return null;
     }
 
     private ProgressInfo dump(Writer writer, Reporter reporter, Consumer<JsonGenerator> consumer) throws Exception {
@@ -54,7 +47,6 @@ public class JsonFormat implements Format {
         return reporter.getTotal();
     }
 
-    @Override
     public ProgressInfo dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) throws Exception {
         isExportSubGraph = true;
         Consumer<JsonGenerator> consumer = (jsonGenerator) -> {

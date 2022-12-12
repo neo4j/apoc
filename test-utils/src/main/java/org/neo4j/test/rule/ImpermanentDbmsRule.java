@@ -8,7 +8,6 @@ import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 /**
  * JUnit @Rule for configuring, creating and managing an ImpermanentGraphDatabase instance.
  */
-@Deprecated
 public class ImpermanentDbmsRule extends DbmsRule
 {
     private final LogProvider userLogProvider;

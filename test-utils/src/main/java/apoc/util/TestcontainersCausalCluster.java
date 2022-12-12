@@ -4,7 +4,6 @@ import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Session;
-import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.SocatContainer;
 
@@ -167,10 +166,5 @@ public class TestcontainersCausalCluster {
         getDriver().close();
         sidecar.stop();
         clusterMembers.forEach(Neo4jContainerExtension::stop);
-    }
-
-    public boolean isRunning() {
-        return clusterMembers.stream().allMatch(GenericContainer::isRunning)
-                && sidecar.isRunning();
     }
 }

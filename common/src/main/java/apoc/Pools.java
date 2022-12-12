@@ -33,7 +33,6 @@ public class Pools extends LifecycleAdapter {
     public final static int DEFAULT_SCHEDULED_THREADS = Runtime.getRuntime().availableProcessors() / 4;
     public final static int DEFAULT_POOL_THREADS = Runtime.getRuntime().availableProcessors() * 2;
     private final Log log;
-    private final GlobalProcedures globalProceduresRegistry;
     private final ApocConfig apocConfig;
 
     private ExecutorService singleExecutorService;
@@ -45,7 +44,6 @@ public class Pools extends LifecycleAdapter {
     public Pools(LogService log, GlobalProcedures globalProceduresRegistry, ApocConfig apocConfig) {
 
         this.log = log.getInternalLog(Pools.class);
-        this.globalProceduresRegistry = globalProceduresRegistry;
         this.apocConfig = apocConfig;
 
         // expose this config instance via `@Context ApocConfig config`

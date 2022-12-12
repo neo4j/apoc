@@ -2,7 +2,6 @@ package apoc.export.csv;
 
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.util.ExportConfig;
-import apoc.export.util.Format;
 import apoc.export.util.FormatUtils;
 import apoc.export.util.MetaInformation;
 import apoc.export.util.Reporter;
@@ -21,7 +20,6 @@ import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,8 +46,7 @@ import static apoc.util.Util.joinLabels;
  * @author mh
  * @since 22.11.16
  */
-public class CsvFormat implements Format {
-    public static final String ID = "id";
+public class CsvFormat {
     private final GraphDatabaseService db;
     private final InternalTransaction tx;
     private boolean applyQuotesToAll = true;
@@ -62,13 +59,7 @@ public class CsvFormat implements Format {
         this.tx = tx;
     }
 
-    @Override
-    public ProgressInfo load(Reader reader, Reporter reporter, ExportConfig config) {
-        return null;
-    }
-
-    @Override
-    public ProgressInfo dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) {
+    public void dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) {
         try (Transaction tx = db.beginTx()) {
             if (config.isBulkImport()) {
                 writeAllBulkImport(graph, reporter, config, writer);
@@ -80,7 +71,6 @@ public class CsvFormat implements Format {
             }
             tx.commit();
             reporter.done();
-            return reporter.getTotal();
         }
     }
 
@@ -158,8 +148,8 @@ public class CsvFormat implements Format {
         out.writeNext(header.toArray(new String[header.size()]), applyQuotesToAll);
         int cols = header.size();
 
-        writeNodes(graph, out, reporter, nodeHeader.subList(NODE_HEADER_FIXED_COLUMNS.length, nodeHeader.size()), cols, config.getBatchSize(), config.getDelim());
-        writeRels(graph, out, reporter, relHeader.subList(REL_HEADER_FIXED_COLUMNS.length, relHeader.size()), cols, nodeHeader.size(), config.getBatchSize(), config.getDelim());
+        writeNodes(graph, out, reporter, nodeHeader.subList(NODE_HEADER_FIXED_COLUMNS.length, nodeHeader.size()), cols, config.getBatchSize());
+        writeRels(graph, out, reporter, relHeader.subList(REL_HEADER_FIXED_COLUMNS.length, relHeader.size()), cols, nodeHeader.size(), config.getBatchSize());
     }
 
     private void writeAllBulkImport(SubGraph graph, Reporter reporter, ExportConfig config, ExportFileManager writer) {
@@ -287,13 +277,13 @@ public class CsvFormat implements Format {
         return result;
     }
 
-    private void writeNodes(SubGraph graph, CSVWriter out, Reporter reporter, List<String> header, int cols, int batchSize, String delimiter) {
+    private void writeNodes(SubGraph graph, CSVWriter out, Reporter reporter, List<String> header, int cols, int batchSize) {
         String[] row=new String[cols];
         int nodes = 0;
         for (Node node : graph.getNodes()) {
             row[0] = String.valueOf(getNodeId(tx, node.getElementId()));
             row[1] = getLabelsString(node);
-            collectProps(header, node, reporter, row, 2, delimiter);
+            collectProps(header, node, reporter, row, 2);
             out.writeNext(row, applyQuotesToAll);
             nodes++;
             if (batchSize==-1 || nodes % batchSize == 0) {
@@ -306,7 +296,7 @@ public class CsvFormat implements Format {
         }
     }
 
-    private void collectProps(Collection<String> fields, Entity pc, Reporter reporter, String[] row, int offset, String delimiter) {
+    private void collectProps(Collection<String> fields, Entity pc, Reporter reporter, String[] row, int offset) {
         for (String field : fields) {
             if (pc.hasProperty(field)) {
                 row[offset] = FormatUtils.toString(pc.getProperty(field));
@@ -319,14 +309,14 @@ public class CsvFormat implements Format {
         }
     }
 
-    private void writeRels(SubGraph graph, CSVWriter out, Reporter reporter, List<String> relHeader, int cols, int offset, int batchSize, String delimiter) {
+    private void writeRels(SubGraph graph, CSVWriter out, Reporter reporter, List<String> relHeader, int cols, int offset, int batchSize) {
         String[] row = new String[cols];
         int rels = 0;
         for (Relationship rel : graph.getRelationships()) {
             row[offset] = String.valueOf(getNodeId(tx, rel.getStartNode().getElementId()));
             row[offset+1] = String.valueOf(getNodeId(tx, rel.getEndNode().getElementId()));
             row[offset+2] = rel.getType().name();
-            collectProps(relHeader, rel, reporter, row, 3 + offset, delimiter);
+            collectProps(relHeader, rel, reporter, row, 3 + offset);
             out.writeNext(row, applyQuotesToAll);
             rels++;
             if (batchSize == -1 || rels % batchSize == 0) {

@@ -6,7 +6,6 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.Combinations;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
@@ -46,9 +45,6 @@ import static java.util.Arrays.asList;
 public class Coll {
 
     public static final char ASCENDING_ORDER_CHAR = '^';
-
-    @Context
-    public GraphDatabaseService db;
 
     @Context public Transaction tx;
 

@@ -38,8 +38,4 @@ public class BatchAndTotalResult {
         this.operations = Util.map("total",total,"failed",failedOperations,"committed", committedOperations,"errors",operationErrors);
         this.updateStatistics = updateStatistics;
     }
-
-    public LoopingBatchAndTotalResult inLoop(Object loop) {
-        return new LoopingBatchAndTotalResult(loop, batches, total);
-    }
 }
