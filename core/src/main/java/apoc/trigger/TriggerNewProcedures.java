@@ -1,6 +1,9 @@
 package apoc.trigger;
 
+import apoc.SystemPropertyKeys;
 import apoc.util.Util;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
@@ -38,21 +41,28 @@ public class TriggerNewProcedures {
 
         public TriggerInfo( String name, String query, Map<String,Object> selector, Map<String,Object> params, boolean installed, boolean paused )
         {
-            this.name = name;
-            this.query = query;
-            this.selector = selector;
+            this(name, query, selector, installed, paused);
             this.params = params;
-            this.installed = installed;
-            this.paused = paused;
+        }
+        
+        public static TriggerInfo from(Map<String, Object> mapInfo, boolean installed) {
+            return new TriggerInfo((String) mapInfo.get(SystemPropertyKeys.name.name()), 
+                    (String) mapInfo.get(SystemPropertyKeys.statement.name()), 
+                    (Map<String, Object>) mapInfo.get(SystemPropertyKeys.selector.name()),
+                    (Map<String, Object>) mapInfo.get(SystemPropertyKeys.params.name()), 
+                    installed,
+                    (boolean) mapInfo.getOrDefault(SystemPropertyKeys.paused.name(), true));
         }
     }
 
     @Context public GraphDatabaseAPI db;
     
     @Context public Log log;
+    
+    @Context public Transaction tx;
 
     private void checkInSystemWriter() {
-        TriggerHandlerWrite.checkEnabled();
+        TriggerHandlerNewProcedures.checkEnabled();
         // routing check
         if (!db.databaseName().equals(SYSTEM_DATABASE_NAME) || !Util.isWriteableInstance(db)) {
             throw new RuntimeException(TRIGGER_NOT_ROUTED_ERROR);
@@ -64,7 +74,7 @@ public class TriggerNewProcedures {
         if (e.getValue() instanceof Map) {
             try {
                 Map<String, Object> value = (Map<String, Object>) e.getValue();
-                return new TriggerInfo(name, (String) value.get("statement"), (Map<String, Object>) value.get("selector"), (Map<String, Object>) value.get("params"), false, false);
+                return TriggerInfo.from(value, false);
             } catch(Exception ex) {
                 return new TriggerInfo(name, ex.getMessage(), null, false, false);
             }
@@ -80,10 +90,10 @@ public class TriggerNewProcedures {
         checkInSystemWriter();
 
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
-        Map<String, Object> removed = TriggerHandlerWrite.install(databaseName, name, statement, selector, params);
-        if (!removed.isEmpty()) {
+        Map<String, Object> removed = TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params);
+        if (removed.containsKey(SystemPropertyKeys.statement.name())) {
             return Stream.of(
-                    new TriggerInfo( name, (String)removed.get( "statement"), (Map<String, Object>) removed.get( "selector"), (Map<String, Object>) removed.get( "params"), false, false),
+                    TriggerInfo.from(removed, false),
                     new TriggerInfo( name, statement, selector, params, true, false));
         }
         return Stream.of(new TriggerInfo( name, statement, selector, params, true, false));
@@ -96,11 +106,11 @@ public class TriggerNewProcedures {
     @Description("CALL apoc.trigger.drop(databaseName, name) | remove previously added trigger, returns trigger information")
     public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
-        Map<String, Object> removed = TriggerHandlerWrite.drop(databaseName, name);
-        if (removed.isEmpty()) {
+        Map<String, Object> removed = TriggerHandlerNewProcedures.drop(databaseName, name);
+        if (!removed.containsKey(SystemPropertyKeys.statement.name())) {
             return Stream.of(new TriggerInfo(name, null, null, false, false));
         }
-        return Stream.of(new TriggerInfo(name,(String)removed.get("statement"), (Map<String, Object>) removed.get("selector"), (Map<String, Object>) removed.get("params"),false, false));
+        return Stream.of(TriggerInfo.from(removed, false));
     }
     
     
@@ -110,7 +120,7 @@ public class TriggerNewProcedures {
     @Description("CALL apoc.trigger.dropAll(databaseName) | removes all previously added trigger, returns trigger information")
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
-        Map<String, Object> removed = TriggerHandlerWrite.dropAll(databaseName);
+        Map<String, Object> removed = TriggerHandlerNewProcedures.dropAll(databaseName);
         return removed.entrySet().stream().map(this::toTriggerInfo);
     }
 
@@ -120,12 +130,9 @@ public class TriggerNewProcedures {
     @Description("CALL apoc.trigger.stop(databaseName, name) | it pauses the trigger")
     public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
-        Map<String, Object> paused = TriggerHandlerWrite.updatePaused(databaseName, name, true);
+        Map<String, Object> paused = TriggerHandlerNewProcedures.updatePaused(databaseName, name, true);
 
-        return Stream.of(new TriggerInfo(name,
-                (String)paused.get("statement"),
-                (Map<String,Object>) paused.get("selector"),
-                (Map<String,Object>) paused.get("params"),true, true));
+        return Stream.of(TriggerInfo.from(paused,true));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -134,12 +141,21 @@ public class TriggerNewProcedures {
     @Description("CALL apoc.trigger.start(databaseName, name) | it resumes the paused trigger")
     public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
-        Map<String, Object> resume = TriggerHandlerWrite.updatePaused(databaseName, name, false);
+        Map<String, Object> resume = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false);
 
-        return Stream.of(new TriggerInfo(name,
-                (String)resume.get("statement"),
-                (Map<String,Object>) resume.get("selector"),
-                (Map<String,Object>) resume.get("params"),true, false));
+        return Stream.of(TriggerInfo.from(resume, true));
     }
 
+    // TODO - change with @SystemOnlyProcedure
+    @SystemProcedure
+    @Procedure(mode = Mode.READ)
+    @Description("CALL apoc.trigger.show(databaseName) | it lists all eventually installed triggers for a database")
+    public Stream<TriggerInfo> show(@Name("databaseName") String databaseName) {
+        checkInSystemWriter();
+
+        return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx)
+                .stream()
+                .map(trigger -> TriggerInfo.from(trigger, true)
+                );
+    }
 }
