@@ -2,7 +2,6 @@ package apoc.trigger;
 
 import apoc.SystemPropertyKeys;
 import apoc.util.Util;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
