@@ -4,7 +4,6 @@ import apoc.cypher.Cypher;
 import apoc.schema.Schemas;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
-import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;

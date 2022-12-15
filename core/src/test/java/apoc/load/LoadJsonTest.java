@@ -3,7 +3,6 @@ package apoc.load;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
-import apoc.util.TransactionTestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
