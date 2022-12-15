@@ -276,7 +276,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         updateCache();
         long refreshInterval = apocConfig().getInt(TRIGGER_REFRESH, 60000);
         restoreTriggerHandler = jobScheduler.scheduleRecurring(Group.STORAGE_MAINTENANCE, () -> {
-            if (getLastUpdate() >= lastUpdate) {
+            if (getLastUpdate() > lastUpdate) {
                 updateCache();
             }
         }, refreshInterval, refreshInterval, TimeUnit.MILLISECONDS);

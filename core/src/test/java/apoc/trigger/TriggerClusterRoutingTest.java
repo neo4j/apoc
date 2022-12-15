@@ -23,8 +23,6 @@ import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAM
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 public class TriggerClusterRoutingTest {
-    private static final String NO_WRITE_OPS_ALLOWED = "No write operations are allowed directly on this database";
-    
     private static TestcontainersCausalCluster cluster;
 
     @BeforeClass
@@ -44,41 +42,36 @@ public class TriggerClusterRoutingTest {
             cluster.close();
         }
     }
-
-    // TODO: making sure that a session against "system" can install triggers
-
-    // TODO: making sure that a session against "system" can drop triggers
     
     // TODO: fabric tests
 
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysWriterMemberCommon(query, NO_WRITE_OPS_ALLOWED, DEFAULT_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysWriterMemberCommon(query, NO_WRITE_OPS_ALLOWED, DEFAULT_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerInstallAllowedOnlyInSysWriterMember() {
         final String query = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
-        triggerInSysWriterMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, SYSTEM_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerDropAllowedOnlyInSysWriterMember() {
         final String query = "CALL apoc.trigger.drop('neo4j', $name)";
-        triggerInSysWriterMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        triggerInSysWriterMemberCommon(query, SYSTEM_DATABASE_NAME);
     }
 
-    private static void triggerInSysWriterMemberCommon(String query, String triggerNotRoutedError, String dbName) {
+    private static void triggerInSysWriterMemberCommon(String query, String dbName) {
         final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
         assertEquals(4, members.size());
-        int errorCounter = 0;
         for (Neo4jContainerExtension container: members) {
             // we skip READ_REPLICA members
             final String readReplica = TestcontainersCausalCluster.ClusterInstanceType.READ_REPLICA.toString();
@@ -87,31 +80,10 @@ public class TriggerClusterRoutingTest {
                 continue;
             }
             Session session = driver.session(SessionConfig.forDatabase(dbName));
-            final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
             final String name = UUID.randomUUID().toString();
-            if (dbName.equals(SYSTEM_DATABASE_NAME) && dbIsWriter(session, dbName, address)) {
-                testCall( session, query,
-                        Map.of("name", name),
-                        row -> assertEquals(name, row.get("name")) );
-            } else {
-                try {
-                    testCall( session, query,
-                            Map.of("name", name),
-                            row -> assertEquals(name, row.get("name")) );
-                } catch (Exception e) {
-                    errorCounter++;
-                    String errorMsg = e.getMessage();
-                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
-                }
-            }
+            testCall( session, query,
+                    Map.of("name", name),
+                    row -> assertEquals(name, row.get("name")) );
         }
-        assertEquals(1, errorCounter);
-    }
-
-    private static boolean dbIsWriter(Session session, String dbName, String address) {
-        return session.run( "SHOW DATABASE $dbName WHERE address = $address", 
-                        Map.of("dbName", dbName, "address", address) )
-                .single().get("writer")
-                .asBoolean();
     }
 }
