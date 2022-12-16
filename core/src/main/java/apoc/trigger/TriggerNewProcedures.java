@@ -22,6 +22,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 public class TriggerNewProcedures {
     // public for testing purpose
     public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a writer system database";
+    public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
 
     public static class TriggerInfo {
         public String name;
@@ -68,6 +69,12 @@ public class TriggerNewProcedures {
         }
     }
 
+    private void checkTargetDatabase(String databaseName) {
+        if (databaseName.equals(SYSTEM_DATABASE_NAME)) {
+            throw new RuntimeException(TRIGGER_BAD_TARGET_ERROR);
+        }
+    }
+
     public TriggerInfo toTriggerInfo(Map.Entry<String, Object> e) {
         String name = e.getKey();
         if (e.getValue() instanceof Map) {
@@ -85,9 +92,9 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Procedure(mode = Mode.WRITE)
     @Description("CALL apoc.trigger.install(databaseName, name, statement, selector, config) | eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
-    public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("kernelTransaction") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
+    public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("statement") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         checkInSystemWriter();
-
+        checkTargetDatabase(databaseName);
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
         Map<String, Object> removed = TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params);
         if (removed.containsKey(SystemPropertyKeys.statement.name())) {

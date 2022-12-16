@@ -23,10 +23,9 @@ import java.util.concurrent.TimeUnit;
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static apoc.util.TestUtil.testCall;
+import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 
 /**
@@ -47,6 +46,18 @@ public class TriggerTest {
         TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
         apocConfig().setProperty(APOC_TRIGGER_ENABLED, true);
     }
+
+    @Test
+    public void testInstallTriggerInSystemDb() {
+        // Can't add triggers for system because apoc.trigger.add is does not have the @System annotation
+        try {
+            final var system = db.getManagementService().database("system");
+            testCall(system, "CALL apoc.trigger.add('name', 'SHOW DATABASES', {})", r -> fail(""));
+        } catch (RuntimeException e) {
+            assertTrue(e.getMessage().contains("Not a recognised system command or procedure"));
+        }
+    }
+
 
     @Test
     public void testListTriggers() {
