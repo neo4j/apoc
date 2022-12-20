@@ -10,7 +10,6 @@ https://discord.gg/neo4j[image:https://img.shields.io/discord/787399249741479977
 
 = Awesome Procedures for Neo4j {branch}.x
 
-// tag::readme[]
 
 == Introduction
 
