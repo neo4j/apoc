@@ -12,6 +12,7 @@ https://discord.gg/neo4j[image:https://img.shields.io/discord/787399249741479977
 
 // tag::readme[]
 
+
 == Introduction
 
 // tag::intro[]
