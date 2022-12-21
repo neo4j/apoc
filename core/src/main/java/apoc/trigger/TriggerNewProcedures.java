@@ -24,37 +24,6 @@ public class TriggerNewProcedures {
     public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a writer system database";
     public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
 
-    public static class TriggerInfo {
-        public String name;
-        public String query;
-        public Map<String,Object> selector;
-        public Map<String, Object> params;
-        public boolean installed;
-        public boolean paused;
-        public TriggerInfo(String name, String query, Map<String, Object> selector, boolean installed, boolean paused) {
-            this.name = name;
-            this.query = query;
-            this.selector = selector;
-            this.installed = installed;
-            this.paused = paused;
-        }
-
-        public TriggerInfo( String name, String query, Map<String,Object> selector, Map<String,Object> params, boolean installed, boolean paused )
-        {
-            this(name, query, selector, installed, paused);
-            this.params = params;
-        }
-        
-        public static TriggerInfo from(Map<String, Object> mapInfo, boolean installed) {
-            return new TriggerInfo((String) mapInfo.get(SystemPropertyKeys.name.name()), 
-                    (String) mapInfo.get(SystemPropertyKeys.statement.name()), 
-                    (Map<String, Object>) mapInfo.get(SystemPropertyKeys.selector.name()),
-                    (Map<String, Object>) mapInfo.get(SystemPropertyKeys.params.name()), 
-                    installed,
-                    (boolean) mapInfo.getOrDefault(SystemPropertyKeys.paused.name(), true));
-        }
-    }
-
     @Context public GraphDatabaseAPI db;
     
     @Context public Log log;
@@ -73,19 +42,6 @@ public class TriggerNewProcedures {
         if (databaseName.equals(SYSTEM_DATABASE_NAME)) {
             throw new RuntimeException(TRIGGER_BAD_TARGET_ERROR);
         }
-    }
-
-    public TriggerInfo toTriggerInfo(Map.Entry<String, Object> e) {
-        String name = e.getKey();
-        if (e.getValue() instanceof Map) {
-            try {
-                Map<String, Object> value = (Map<String, Object>) e.getValue();
-                return TriggerInfo.from(value, false);
-            } catch(Exception ex) {
-                return new TriggerInfo(name, ex.getMessage(), null, false, false);
-            }
-        }
-        return new TriggerInfo(name, null, null, false, false);
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -127,7 +83,7 @@ public class TriggerNewProcedures {
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
         Map<String, Object> removed = TriggerHandlerNewProcedures.dropAll(databaseName);
-        return removed.entrySet().stream().map(this::toTriggerInfo);
+        return removed.entrySet().stream().map(TriggerInfo::entryToTriggerInfo);
     }
 
     // TODO - change with @SystemOnlyProcedure

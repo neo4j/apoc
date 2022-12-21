@@ -21,7 +21,7 @@ public class TriggerHandlerNewProcedures {
     public static final String NOT_ENABLED_ERROR = "Triggers have not been enabled." +
             " Set 'apoc.trigger.enabled=true' in your apoc.conf file located in the $NEO4J_HOME/conf/ directory.";
 
-    private static Map<String, Object> toTriggerInfo(Node node) {
+    private static Map<String, Object> toTriggerMap(Node node) {
         return node.getAllProperties()
                 .entrySet().stream()
                 .filter(e -> !SystemPropertyKeys.database.name().equals(e.getKey()))
@@ -54,7 +54,7 @@ public class TriggerHandlerNewProcedures {
                     Pair.of(SystemPropertyKeys.name.name(), triggerName));
             
             // we'll return previous trigger info
-            previous.putAll(toTriggerInfo(node));
+            previous.putAll(toTriggerMap(node));
             
             node.setProperty(SystemPropertyKeys.statement.name(), statement);
             node.setProperty(SystemPropertyKeys.selector.name(), Util.toJson(selector));
@@ -73,7 +73,7 @@ public class TriggerHandlerNewProcedures {
         withSystemDb(tx -> {
             getTriggerNodes(databaseName, tx, triggerName)
                     .forEachRemaining(node -> {
-                                previous.putAll(toTriggerInfo(node));
+                                previous.putAll(toTriggerMap(node));
                                 node.delete();
                             });
             
@@ -92,7 +92,7 @@ public class TriggerHandlerNewProcedures {
                         node.setProperty( SystemPropertyKeys.paused.name(), paused );
 
                         // we'll return previous trigger info
-                        result.putAll(toTriggerInfo(node));
+                        result.putAll(toTriggerMap(node));
                     });
 
             setLastUpdate(databaseName, tx);
@@ -110,7 +110,7 @@ public class TriggerHandlerNewProcedures {
                         String triggerName = (String) node.getProperty(SystemPropertyKeys.name.name());
 
                         // we'll return previous trigger info
-                        previous.put(triggerName, toTriggerInfo(node));
+                        previous.put(triggerName, toTriggerMap(node));
                         node.delete();
                     });
             setLastUpdate(databaseName, tx);
@@ -122,7 +122,7 @@ public class TriggerHandlerNewProcedures {
     public static List<Map<String, Object>> getTriggerNodesList(String databaseName, Transaction tx) {
         return getTriggerNodes(databaseName, tx)
                 .stream()
-                .map(TriggerHandlerNewProcedures::toTriggerInfo)
+                .map(TriggerHandlerNewProcedures::toTriggerMap)
                 .collect(Collectors.toList());
     }
 
