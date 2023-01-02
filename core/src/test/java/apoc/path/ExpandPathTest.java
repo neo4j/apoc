@@ -43,7 +43,7 @@ public class ExpandPathTest {
 
     @After
     public void removeOtherLabels() {
-		db.executeTransactionally("OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Blacklist) REMOVE c:Blacklist");
+		db.executeTransactionally("OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
 	}
 
 	@Test
@@ -70,13 +70,13 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testExplorePathLabelWhiteListTest() {
+	public void testExplorePathLabelAllowListTest() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'ACTED_IN|PRODUCED|FOLLOWS','+Person|+Movie',0,3) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(107L,row.get("c"))); // 59 with Uniqueness.RELATIONSHIP_GLOBAL
 	}
 
 	@Test
-	public void testExplorePathLabelBlackListTest() {
+	public void testExplorePathLabelDenyListTest() {
 		String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,null,'-BigBrother',0,2) yield path return count(*) as c";
 		TestUtil.testCall(db, query, (row) -> assertEquals(44L,row.get("c")));
 	}
@@ -168,7 +168,7 @@ public class ExpandPathTest {
 	// label filter precedence tests
 
 	@Test
-	public void testBlacklistBeforeWhitelist() {
+	public void testDenylistBeforeAllowlist() {
 		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
 		TestUtil.testResult(db,
@@ -182,7 +182,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testBlacklistBeforeTerminationFilter() {
+	public void testDenylistBeforeTerminationFilter() {
 		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
 		TestUtil.testResult(db,
@@ -196,7 +196,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testBlacklistBeforeEndNodeFilter() {
+	public void testDenylistBeforeEndNodeFilter() {
 		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
 		TestUtil.testResult(db,
@@ -210,7 +210,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testTerminationFilterBeforeWhitelist() {
+	public void testTerminationFilterBeforeAllowlist() {
 		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman', 'Christian Bale'] SET c:Western");
 
 		TestUtil.testResult(db,
@@ -242,7 +242,7 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testEndNodeFilterAsWhitelist() {
+	public void testEndNodeFilterAsAllowlist() {
 		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
 		TestUtil.testResult(db,
@@ -332,12 +332,12 @@ public class ExpandPathTest {
 	}
 
 	@Test
-	public void testCompoundLabelWorksInBlacklist() {
-		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Blacklist");
+	public void testCompoundLabelWorksInDenylist() {
+		db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
 		TestUtil.testResult(db,
 				"MATCH (k:Person {name:'Keanu Reeves'}) " +
-						"CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', labelFilter:'>Western|-Western:Blacklist', uniqueness: 'NODE_GLOBAL'}) yield node " +
+						"CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', labelFilter:'>Western|-Western:Denylist', uniqueness: 'NODE_GLOBAL'}) yield node " +
 						"return node",
 				result -> {
 

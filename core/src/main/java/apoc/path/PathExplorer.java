@@ -274,7 +274,7 @@ public class PathExplorer {
 			}
 
 			if (!blacklistNodes.isEmpty()) {
-				td = td.evaluator(NodeEvaluators.blacklistNodeEvaluator(filterStartNode, blacklistNodes));
+				td = td.evaluator(NodeEvaluators.denylistNodeEvaluator(filterStartNode, blacklistNodes));
 			}
 
 			Evaluator endAndTerminatorNodeEvaluator = NodeEvaluators.endAndTerminatorNodeEvaluator(filterStartNode, (int) minLevel, endNodes, terminatorNodes);
@@ -283,10 +283,10 @@ public class PathExplorer {
 			}
 
 			if (!whitelistNodes.isEmpty()) {
-				// ensure endNodes and terminatorNodes are whitelisted
+				// ensure endNodes and terminatorNodes are allowlisted
 				whitelistNodes.addAll(endNodes);
 				whitelistNodes.addAll(terminatorNodes);
-				td = td.evaluator(NodeEvaluators.whitelistNodeEvaluator(filterStartNode, whitelistNodes));
+				td = td.evaluator(NodeEvaluators.allowlistNodeEvaluator(filterStartNode, whitelistNodes));
 			}
 		}
 

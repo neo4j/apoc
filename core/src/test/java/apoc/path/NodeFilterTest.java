@@ -18,7 +18,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Test path expanders with node filters (where we already have the nodes that will be used for the whitelist, blacklist, endnodes, and terminator nodes
+ * Test path expanders with node filters (where we already have the nodes that will be used for the allowlist, denylist, endnodes, and terminator nodes
  */
 public class NodeFilterTest {
 
@@ -37,7 +37,7 @@ public class NodeFilterTest {
 
     @After
     public void removeOtherLabels() {
-        db.executeTransactionally("OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Blacklist) REMOVE c:Blacklist");
+        db.executeTransactionally("OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
     }
 
     @Test
@@ -59,7 +59,7 @@ public class NodeFilterTest {
 
     @Test
     public void testEndNodesContinueTraversal() {
-        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Blacklist");
+        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}) " +
@@ -78,7 +78,7 @@ public class NodeFilterTest {
 
     @Test
     public void testEndNodesAndTerminatorNodesReturnExpectedResults() {
-        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Blacklist");
+        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}) " +
@@ -97,7 +97,7 @@ public class NodeFilterTest {
 
     @Test
     public void testEndNodesAndTerminatorNodesReturnExpectedResultsReversed() {
-        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Blacklist");
+        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}) " +
@@ -114,7 +114,7 @@ public class NodeFilterTest {
 
     @Test
     public void testTerminatorNodesOverruleEndNodes1() {
-        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Blacklist");
+        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}) " +
@@ -131,7 +131,7 @@ public class NodeFilterTest {
 
     @Test
     public void testTerminatorNodesOverruleEndNodes2() {
-        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Blacklist");
+        db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}) " +
@@ -182,7 +182,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testBlacklistNodesInPathPrunesPath() {
+    public void testDenylistNodesInPathPrunesPath() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
@@ -199,7 +199,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testBlacklistNodesWithEndNodesPrunesPath() {
+    public void testDenylistNodesWithEndNodesPrunesPath() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
@@ -216,13 +216,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testBlacklistNodesOverridesAllOtherNodeFilters() {
+    public void testDenylistNodesOverridesAllOtherNodeFilters() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}), (unforgiven:Movie{title:'Unforgiven'}),  (replacements:Movie{title:'The Replacements'})\n" +
-                        "WITH k, clint, gene, [k, gene, clint, unforgiven, replacements] as whitelist\n" +
-                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', terminatorNodes:[clint], endNodes:[clint], whitelistNodes:whitelist, blacklistNodes:[clint]}) yield node return node",
+                        "WITH k, clint, gene, [k, gene, clint, unforgiven, replacements] as allowlist\n" +
+                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', terminatorNodes:[clint], endNodes:[clint], whitelistNodes:allowlist, blacklistNodes:[clint]}) yield node return node",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);
@@ -231,13 +231,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testWhitelistNodes() {
+    public void testAllowlistNodes() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}), (unforgiven:Movie{title:'Unforgiven'}),  (replacements:Movie{title:'The Replacements'})\n" +
-                        "WITH k, clint, gene, [k, gene, clint, unforgiven, replacements] as whitelist\n" +
-                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', endNodes:[clint, gene], whitelistNodes:whitelist}) yield node return node",
+                        "WITH k, clint, gene, [k, gene, clint, unforgiven, replacements] as allowlist\n" +
+                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', endNodes:[clint, gene], whitelistNodes:allowlist}) yield node return node",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);
@@ -250,13 +250,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testWhitelistNodesIncludesEndNodes() {
+    public void testAllowlistNodesIncludesEndNodes() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}), (unforgiven:Movie{title:'Unforgiven'}),  (replacements:Movie{title:'The Replacements'})\n" +
-                        "WITH k, clint, gene, [k, gene, unforgiven, replacements] as whitelist\n" +
-                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', endNodes:[clint, gene], whitelistNodes:whitelist}) yield node return node",
+                        "WITH k, clint, gene, [k, gene, unforgiven, replacements] as allowlist\n" +
+                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', endNodes:[clint, gene], whitelistNodes:allowlist}) yield node return node",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);
@@ -269,13 +269,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testWhitelistNodesIncludesTerminatorNodes() {
+    public void testAllowlistNodesIncludesTerminatorNodes() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (gene:Person {name:'Gene Hackman'}), (clint:Person {name:'Clint Eastwood'}), (unforgiven:Movie{title:'Unforgiven'}),  (replacements:Movie{title:'The Replacements'}) \n" +
-                        "WITH k, clint, gene, [k, gene, unforgiven, replacements] as whitelist \n" +
-                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', terminatorNodes:[clint], whitelistNodes:whitelist}) yield node return node",
+                        "WITH k, clint, gene, [k, gene, unforgiven, replacements] as allowlist \n" +
+                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', terminatorNodes:[clint], whitelistNodes:allowlist}) yield node return node",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);
@@ -286,13 +286,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testWhitelistNodesAndLabelFiltersMustAgreeToInclude1() {
+    public void testAllowlistNodesAndLabelFiltersMustAgreeToInclude1() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (replacements:Movie{title:'The Replacements'}) \n" +
-                        "WITH k, [k, replacements] as whitelist \n" +
-                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', labelFilter:'+Person', whitelistNodes:whitelist}) yield node return node",
+                        "WITH k, [k, replacements] as allowlist \n" +
+                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', labelFilter:'+Person', whitelistNodes:allowlist}) yield node return node",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);
@@ -303,13 +303,13 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testWhitelistNodesAndLabelFiltersMustAgreeToInclude2() {
+    public void testAllowlistNodesAndLabelFiltersMustAgreeToInclude2() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (replacements:Movie{title:'The Replacements'}) \n" +
-                        "WITH k, [k] as whitelist \n" +
-                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', labelFilter:'+Person|+Movie', whitelistNodes:whitelist}) yield node return node",
+                        "WITH k, [k] as allowlist \n" +
+                        "CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', labelFilter:'+Person|+Movie', whitelistNodes:allowlist}) yield node return node",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);
@@ -322,13 +322,13 @@ public class NodeFilterTest {
 
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresBlacklistNodes() {
+    public void testStartNodeWithFilterStartNodeFalseIgnoresDenylistNodes() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{blacklistNodes:[m], maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(44L,row.get("c")));
     }
 
     @Test
-    public void testBlacklistNodesStillAppliesBelowMinLevel() {
+    public void testDenylistNodesStillAppliesBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
@@ -343,19 +343,19 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresWhitelistNodesFilter() {
+    public void testStartNodeWithFilterStartNodeFalseIgnoresAllowlistNodesFilter() {
         String query = "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{whitelistNodes:[k], minLevel:1, maxLevel:1, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L,row.get("c")));
     }
 
     @Test
-    public void testWhitelistNodesStillAppliesBelowMinLevel() {
+    public void testAllowlistNodesStillAppliesBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(db,
                 "MATCH (k:Person {name:'Keanu Reeves'}), (replacements:Movie{title:'The Replacements'}), (gene:Person {name:'Gene Hackman'}), (unforgiven:Movie{title:'Unforgiven'}), (clint:Person {name:'Clint Eastwood'})\n" +
-                        "WITH clint, k, [k, replacements, gene, clint] as whitelist\n" +
-                        "CALL apoc.path.expandConfig(clint, {uniqueness:'NODE_GLOBAL', relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', terminatorNodes:[k], whitelistNodes:whitelist, minLevel:3}) yield path return last(nodes(path))",
+                        "WITH clint, k, [k, replacements, gene, clint] as allowlist\n" +
+                        "CALL apoc.path.expandConfig(clint, {uniqueness:'NODE_GLOBAL', relationshipFilter:'ACTED_IN|PRODUCED|DIRECTED', terminatorNodes:[k], whitelistNodes:allowlist, minLevel:3}) yield path return last(nodes(path))",
                 result -> {
 
                     List<Map<String, Object>> maps = Iterators.asList(result);

@@ -150,7 +150,7 @@ public class ExportGraphMLTestUtil {
                 .checkForSimilar()
                 .ignoreWhitespace()
                 .withAttributeFilter(attr -> !attrsWithNodeIds.contains(attr.getLocalName())) // ignore id properties
-                // similar to ElementSelectors.byNameAndAllAttributes, but ignore blacklistes attributes
+                // similar to ElementSelectors.byNameAndAllAttributes, but ignore denylisted attributes
                 .withNodeMatcher(new DefaultNodeMatcher((ElementSelector) (controlElement, testElement) -> {
                     if (!byName.canBeCompared(controlElement, testElement)) {
                         return false;

@@ -9,19 +9,19 @@ import java.util.Set;
 import static org.neo4j.graphdb.traversal.Evaluation.*;
 
 /**
- * A matcher for evaluating whether or not a node is accepted by a group of matchers comprised of a blacklist, whitelist, endNode and termination node matchers.
+ * A matcher for evaluating whether or not a node is accepted by a group of matchers comprised of a denylist, allowlist, endNode and termination node matchers.
  * Unlike a LabelMatcher, LabelMatcherGroups interpret context for labels according to filter symbols provided.
- * Labels can be added that are prefixed with filter symbols (+, -, /, &gt;) (for whitelist, blacklist, terminator, and end node respectively).
- * Lack of a symbol is interpreted as whitelisted.
- * If no labels are set as whitelisted, then all labels are considered whitelisted (if not otherwise disallowed by the blacklist).
- * The node will not be included if blacklisted, or not matched via the whitelist, end node, or termination node matchers.
+ * Labels can be added that are prefixed with filter symbols (+, -, /, &gt;) (for allowlist, denylist, terminator, and end node respectively).
+ * Lack of a symbol is interpreted as allowlisted.
+ * If no labels are set as allowlisted, then all labels are considered allowlisted (if not otherwise disallowed by the denylist).
+ * The node will not be included if denylisted, or not matched via the allowlist, end node, or termination node matchers.
  * If end nodes only, then the node will only be included if matched via the end node and termination node matchers.
- * The path will be pruned if matching the blacklist, the termination node matchers, or otherwise not included by any of the other matchers.
+ * The path will be pruned if matching the denylist, the termination node matchers, or otherwise not included by any of the other matchers.
  */
 public class LabelMatcherGroup {
     private boolean endNodesOnly;
-    private LabelMatcher whitelistMatcher = new LabelMatcher();
-    private LabelMatcher blacklistMatcher = new LabelMatcher();
+    private LabelMatcher allowlistMatcher = new LabelMatcher();
+    private LabelMatcher denylistMatcher = new LabelMatcher();
     private LabelMatcher endNodeMatcher = new LabelMatcher();
     private LabelMatcher terminatorNodeMatcher = new LabelMatcher();
 
@@ -55,13 +55,13 @@ public class LabelMatcherGroup {
                     filterString = filterString.substring(1);
                     break;
                 case '-':
-                    matcher = blacklistMatcher;
+                    matcher = denylistMatcher;
                     filterString = filterString.substring(1);
                     break;
                 case '+':
                     filterString = filterString.substring(1);
                 default:
-                    matcher = whitelistMatcher;
+                    matcher = allowlistMatcher;
             }
 
             matcher.addLabel(filterString);
@@ -74,7 +74,7 @@ public class LabelMatcherGroup {
         Set<String> nodeLabels = new HashSet<>();
         node.getLabels().forEach(label -> nodeLabels.add(label.name()));
 
-        if (blacklistMatcher.matchesLabels(nodeLabels)) {
+        if (denylistMatcher.matchesLabels(nodeLabels)) {
             return EXCLUDE_AND_PRUNE;
         }
 
@@ -86,7 +86,7 @@ public class LabelMatcherGroup {
             return belowMinLevel ? EXCLUDE_AND_CONTINUE : INCLUDE_AND_CONTINUE;
         }
 
-        if (whitelistMatcher.isEmpty() || whitelistMatcher.matchesLabels(nodeLabels)) {
+        if (allowlistMatcher.isEmpty() || allowlistMatcher.matchesLabels(nodeLabels)) {
             return endNodesOnly || belowMinLevel ? EXCLUDE_AND_CONTINUE : INCLUDE_AND_CONTINUE;
         }
 

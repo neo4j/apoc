@@ -12,7 +12,7 @@ import java.io.InputStream;
 class SkipWhitespaceInputStream extends FilterInputStream {
 
     boolean onlyWhitespaceSoFar;
-    final byte[] blacklist = {0x0a, 0x0d, 0x09, 0x20};
+    final byte[] denylist = {0x0a, 0x0d, 0x09, 0x20};
 
     public SkipWhitespaceInputStream(InputStream inputStream) {
         super(inputStream);
@@ -30,7 +30,7 @@ class SkipWhitespaceInputStream extends FilterInputStream {
 
     private boolean shouldSkipByte(byte b) {
         boolean shouldSkip = false;
-        if (ArrayUtils.contains(blacklist, b)) {
+        if (ArrayUtils.contains(denylist, b)) {
             if (b == 0x0a) { // drop LF and flag beginning of new line
                 onlyWhitespaceSoFar = true;
                 shouldSkip = true;

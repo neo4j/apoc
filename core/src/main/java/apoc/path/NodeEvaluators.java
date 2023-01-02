@@ -42,12 +42,12 @@ public final class NodeEvaluators {
         return null;
     }
 
-    public static Evaluator whitelistNodeEvaluator(boolean filterStartNode, List<Node> whitelistNodes) {
-        return new WhitelistNodeEvaluator(filterStartNode, whitelistNodes);
+    public static Evaluator allowlistNodeEvaluator(boolean filterStartNode, List<Node> allowlistNodes) {
+        return new AllowlistNodeEvaluator(filterStartNode, allowlistNodes);
     }
 
-    public static Evaluator blacklistNodeEvaluator(boolean filterStartNode, List<Node> blacklistNodes) {
-        return new BlacklistNodeEvaluator(filterStartNode, blacklistNodes);
+    public static Evaluator denylistNodeEvaluator(boolean filterStartNode, List<Node> denylistNodes) {
+        return new DenylistNodeEvaluator(filterStartNode, denylistNodes);
     }
 
     // The evaluators from pruneWhereEndNodeIs and includeWhereEndNodeIs interfere with each other, this makes them play nice
@@ -84,33 +84,33 @@ public final class NodeEvaluators {
         }
     }
 
-    private static class BlacklistNodeEvaluator extends PathExpanderNodeEvaluator {
-        private Set<Node> blacklistSet;
+    private static class DenylistNodeEvaluator extends PathExpanderNodeEvaluator {
+        private Set<Node> denylistSet;
 
-        public BlacklistNodeEvaluator(boolean filterStartNode, List<Node> blacklistNodes) {
+        public DenylistNodeEvaluator(boolean filterStartNode, List<Node> denylistNodes) {
             super(filterStartNode);
-            blacklistSet = new HashSet<>(blacklistNodes);
+            denylistSet = new HashSet<>(denylistNodes);
         }
 
         @Override
         public Evaluation evaluate(Path path) {
             return path.length() == 0 && !filterStartNode ? Evaluation.INCLUDE_AND_CONTINUE :
-                    blacklistSet.contains(path.endNode()) ? Evaluation.EXCLUDE_AND_PRUNE : Evaluation.INCLUDE_AND_CONTINUE;
+                    denylistSet.contains(path.endNode()) ? Evaluation.EXCLUDE_AND_PRUNE : Evaluation.INCLUDE_AND_CONTINUE;
         }
     }
 
-    private static class WhitelistNodeEvaluator extends PathExpanderNodeEvaluator {
-        private Set<Node> whitelistSet;
+    private static class AllowlistNodeEvaluator extends PathExpanderNodeEvaluator {
+        private Set<Node> allowlistSet;
 
-        public WhitelistNodeEvaluator(boolean filterStartNode, List<Node> whitelistNodes) {
+        public AllowlistNodeEvaluator(boolean filterStartNode, List<Node> allowlistNodes) {
             super(filterStartNode);
-            whitelistSet = new HashSet<>(whitelistNodes);
+            allowlistSet = new HashSet<>(allowlistNodes);
         }
 
         @Override
         public Evaluation evaluate(Path path) {
             return (path.length() == 0 && !filterStartNode) ? Evaluation.INCLUDE_AND_CONTINUE :
-            whitelistSet.contains(path.endNode()) ? Evaluation.INCLUDE_AND_CONTINUE : Evaluation.EXCLUDE_AND_PRUNE;
+            allowlistSet.contains(path.endNode()) ? Evaluation.INCLUDE_AND_CONTINUE : Evaluation.EXCLUDE_AND_PRUNE;
         }
     }
 
