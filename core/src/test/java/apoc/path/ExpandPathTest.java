@@ -349,6 +349,136 @@ public class ExpandPathTest {
 	}
 
 	@Test
+	public void testSubgraphNodesWorksWithAllowList() {
+		TestUtil.testResult(db,
+				"""
+						MATCH (k:Person {name:'Keanu Reeves'})
+						MATCH (allowlist:Movie)
+						WHERE allowlist.title = "The Matrix"
+						WITH k, collect(allowlist) AS allowlistNodes
+						CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN', allowlistNodes: allowlistNodes})
+						YIELD node RETURN node""",
+				result -> {
+
+					List<Map<String, Object>> maps = Iterators.asList(result);
+					assertEquals(2, maps.size());
+					Node node1 = (Node) maps.get(0).get("node");
+					assertEquals("Keanu Reeves", node1.getProperty("name"));
+					Node node2 = (Node) maps.get(1).get("node");
+					assertEquals("The Matrix", node2.getProperty("title"));
+				});
+	}
+
+	@Test
+	public void testSubgraphNodesAllowListTakesPriority() {
+		TestUtil.testResult(db,
+				"""
+						MATCH (k:Person {name:'Keanu Reeves'})
+						MATCH (allowlist:Movie)
+						WHERE allowlist.title = "The Matrix"
+						MATCH (allowlistDeprecated:Movie)
+						WHERE allowlistDeprecated.title <> "The Matrix"
+						WITH k, collect(allowlist) AS allowlistNodes, collect(allowlistDeprecated) AS allowlistDeprecatedNodes
+						CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN', allowlistNodes: allowlistNodes, whitelistNodes: allowlistDeprecatedNodes})
+						YIELD node RETURN node""",
+				result -> {
+
+					List<Map<String, Object>> maps = Iterators.asList(result);
+					assertEquals(2, maps.size());
+					Node node1 = (Node) maps.get(0).get("node");
+					assertEquals("Keanu Reeves", node1.getProperty("name"));
+					Node node2 = (Node) maps.get(1).get("node");
+					assertEquals("The Matrix", node2.getProperty("title"));
+				});
+	}
+
+	@Test
+	public void testSubgraphNodesWorksWithDeprecatedAllowList() {
+		TestUtil.testResult(db,
+				"""
+						MATCH (k:Person {name:'Keanu Reeves'})
+						MATCH (allowlist:Movie)
+						WHERE allowlist.title = "The Matrix"
+						WITH k, collect(allowlist) AS allowlistNodes
+						CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN', whitelistNodes: allowlistNodes})
+						YIELD node RETURN node""",
+				result -> {
+
+					List<Map<String, Object>> maps = Iterators.asList(result);
+					assertEquals(2, maps.size());
+					Node node1 = (Node) maps.get(0).get("node");
+					assertEquals("Keanu Reeves", node1.getProperty("name"));
+					Node node2 = (Node) maps.get(1).get("node");
+					assertEquals("The Matrix", node2.getProperty("title"));
+				});
+	}
+
+	@Test
+	public void testSubgraphNodesWorksWithDenyList() {
+		TestUtil.testResult(db,
+				"""
+						MATCH (k:Person {name:'Keanu Reeves'})
+						MATCH (denylist:Movie)
+						WHERE denylist.title <> "The Matrix"
+						WITH k, collect(denylist) AS denylistNodes
+						CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN', labelFilter: 'Movie', denylistNodes: denylistNodes})
+						YIELD node RETURN node""",
+				result -> {
+
+					List<Map<String, Object>> maps = Iterators.asList(result);
+					assertEquals(2, maps.size());
+					Node node1 = (Node) maps.get(0).get("node");
+					assertEquals("Keanu Reeves", node1.getProperty("name"));
+					Node node2 = (Node) maps.get(1).get("node");
+					assertEquals("The Matrix", node2.getProperty("title"));
+				});
+	}
+
+	@Test
+	public void testSubgraphNodesDenyListTakesPriority() {
+		TestUtil.testResult(db,
+				"""
+						MATCH (k:Person {name:'Keanu Reeves'})
+						MATCH (denylist:Movie)
+						WHERE denylist.title <> "The Matrix"
+						MATCH (denylistDeprecated:Movie)
+						WHERE denylistDeprecated.title = "The Matrix"
+						WITH k, collect(denylist) AS denylistNodes, collect(denylistDeprecated) AS denylistDeprecatedNodes
+						CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN', labelFilter: 'Movie', denylistNodes: denylistNodes, blacklistNodes: denylistDeprecatedNodes})
+						YIELD node RETURN node""",
+				result -> {
+
+					List<Map<String, Object>> maps = Iterators.asList(result);
+					assertEquals(2, maps.size());
+					Node node1 = (Node) maps.get(0).get("node");
+					assertEquals("Keanu Reeves", node1.getProperty("name"));
+					Node node2 = (Node) maps.get(1).get("node");
+					assertEquals("The Matrix", node2.getProperty("title"));
+				});
+	}
+
+	@Test
+	public void testSubgraphNodesWorksWithDeprecatedDenyList() {
+		TestUtil.testResult(db,
+				"""
+						MATCH (k:Person {name:'Keanu Reeves'})
+						MATCH (denylist:Movie)
+						WHERE denylist.title <> "The Matrix"
+						WITH k, collect(denylist) AS denylistNodes
+						CALL apoc.path.subgraphNodes(k, {relationshipFilter:'ACTED_IN', labelFilter: 'Movie', blacklistNodes: denylistNodes})
+						YIELD node RETURN node""",
+				result -> {
+
+					List<Map<String, Object>> maps = Iterators.asList(result);
+					assertEquals(2, maps.size());
+					Node node1 = (Node) maps.get(0).get("node");
+					assertEquals("Keanu Reeves", node1.getProperty("name"));
+					Node node2 = (Node) maps.get(1).get("node");
+					assertEquals("The Matrix", node2.getProperty("title"));
+				});
+	}
+
+	@Test
 	public void testRelationshipFilterWorksWithoutTypeOutgoing() {
 		TestUtil.testResult(db,
 				"MATCH (k:Person {name:'Keanu Reeves'}) " +

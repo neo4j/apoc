@@ -146,8 +146,10 @@ public class PathExplorer {
 
 		List<Node> endNodes = startToNodes(config.get("endNodes"));
 		List<Node> terminatorNodes = startToNodes(config.get("terminatorNodes"));
-		List<Node> whitelistNodes = startToNodes(config.get("whitelistNodes"));
-		List<Node> blacklistNodes = startToNodes(config.get("blacklistNodes"));
+		List<Node> whitelistNodes = startToNodes(config.get("whitelistNodes")); // DEPRECATED REMOVE 6.0
+		List<Node> blacklistNodes = startToNodes(config.get("blacklistNodes")); // DEPRECATED REMOVE 6.0
+		List<Node> allowlistNodes = startToNodes(config.get("allowlistNodes"));
+		List<Node> denylistNodes = startToNodes(config.get("denylistNodes"));
 		EnumMap<NodeFilter, List<Node>> nodeFilter = new EnumMap<>(NodeFilter.class);
 
 		if (endNodes != null && !endNodes.isEmpty()) {
@@ -158,12 +160,18 @@ public class PathExplorer {
 			nodeFilter.put(TERMINATOR_NODES, terminatorNodes);
 		}
 
-		if (whitelistNodes != null && !whitelistNodes.isEmpty()) {
-			nodeFilter.put(WHITELIST_NODES, whitelistNodes);
+		// If allowlist/denylist is specified use that (and only that)
+		// Else check for the *deprecated* config items
+		if (allowlistNodes != null && !allowlistNodes.isEmpty()) {
+			nodeFilter.put(ALLOWLIST_NODES, allowlistNodes);
+		} else if (whitelistNodes != null && !whitelistNodes.isEmpty()) {
+			nodeFilter.put(ALLOWLIST_NODES, whitelistNodes);
 		}
 
-		if (blacklistNodes != null && !blacklistNodes.isEmpty()) {
-			nodeFilter.put(BLACKLIST_NODES, blacklistNodes);
+		if (denylistNodes != null && !denylistNodes.isEmpty()) {
+			nodeFilter.put(DENYLIST_NODES, denylistNodes);
+		} else if (blacklistNodes != null && !blacklistNodes.isEmpty()) {
+			nodeFilter.put(DENYLIST_NODES, blacklistNodes);
 		}
 
 		Stream<Path> results = explorePathPrivate(nodes, relationshipFilter, labelFilter, minLevel, maxLevel, bfs, getUniqueness(uniqueness), filterStartNode, limit, nodeFilter, sequence, beginSequenceAtStart);
@@ -262,19 +270,19 @@ public class PathExplorer {
 		if (nodeFilter != null && !nodeFilter.isEmpty()) {
 			List<Node> endNodes = nodeFilter.getOrDefault(END_NODES, Collections.EMPTY_LIST);
 			List<Node> terminatorNodes = nodeFilter.getOrDefault(TERMINATOR_NODES, Collections.EMPTY_LIST);
-			List<Node> blacklistNodes = nodeFilter.getOrDefault(BLACKLIST_NODES, Collections.EMPTY_LIST);
-			List<Node> whitelistNodes;
+			List<Node> denylistNodes = nodeFilter.getOrDefault(DENYLIST_NODES, Collections.EMPTY_LIST);
+			List<Node> allowlistNodes;
 
-			if (nodeFilter.containsKey(WHITELIST_NODES)) {
+			if (nodeFilter.containsKey(ALLOWLIST_NODES)) {
 				// need to add to new list since we may need to add to it later
 				// encounter "can't add to abstractList" error if we don't do this
-				whitelistNodes = new ArrayList<>(nodeFilter.get(WHITELIST_NODES));
+				allowlistNodes = new ArrayList<>(nodeFilter.get(ALLOWLIST_NODES));
 			} else {
-				whitelistNodes = Collections.EMPTY_LIST;
+				allowlistNodes = Collections.EMPTY_LIST;
 			}
 
-			if (!blacklistNodes.isEmpty()) {
-				td = td.evaluator(NodeEvaluators.denylistNodeEvaluator(filterStartNode, blacklistNodes));
+			if (!denylistNodes.isEmpty()) {
+				td = td.evaluator(NodeEvaluators.denylistNodeEvaluator(filterStartNode, denylistNodes));
 			}
 
 			Evaluator endAndTerminatorNodeEvaluator = NodeEvaluators.endAndTerminatorNodeEvaluator(filterStartNode, (int) minLevel, endNodes, terminatorNodes);
@@ -282,11 +290,11 @@ public class PathExplorer {
 				td = td.evaluator(endAndTerminatorNodeEvaluator);
 			}
 
-			if (!whitelistNodes.isEmpty()) {
+			if (!allowlistNodes.isEmpty()) {
 				// ensure endNodes and terminatorNodes are allowlisted
-				whitelistNodes.addAll(endNodes);
-				whitelistNodes.addAll(terminatorNodes);
-				td = td.evaluator(NodeEvaluators.allowlistNodeEvaluator(filterStartNode, whitelistNodes));
+				allowlistNodes.addAll(endNodes);
+				allowlistNodes.addAll(terminatorNodes);
+				td = td.evaluator(NodeEvaluators.allowlistNodeEvaluator(filterStartNode, allowlistNodes));
 			}
 		}
 
@@ -297,8 +305,8 @@ public class PathExplorer {
 
 	// keys to node filter map
 	enum NodeFilter {
-		WHITELIST_NODES,
-		BLACKLIST_NODES,
+		ALLOWLIST_NODES,
+		DENYLIST_NODES,
 		END_NODES,
 		TERMINATOR_NODES
 	}
