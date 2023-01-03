@@ -50,6 +50,13 @@ public class TestContainerUtil {
     private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
     private static File extendedDir = new File(baseDir, "extended");
 
+    public static String dockerImageForNeo4j(Neo4jVersion version) {
+        if (version == Neo4jVersion.COMMUNITY)
+            return neo4jCommunityDockerImageVersion;
+        else
+            return neo4jEnterpriseDockerImageVersion;
+    }
+
     public static TestcontainersCausalCluster createEnterpriseCluster(List<ApocPackage> apocPackages, int numOfCoreInstances, int numberOfReadReplica, Map<String, Object> neo4jConfig, Map<String, String> envSettings) {
         return TestcontainersCausalCluster.create(apocPackages, numOfCoreInstances, numberOfReadReplica, Duration.ofMinutes(4), neo4jConfig, envSettings);
     }
