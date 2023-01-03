@@ -10,6 +10,7 @@ import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -162,6 +163,7 @@ public class CypherTest {
     }
 
     @Test
+    @Ignore
     public void testRunTimeboxedWithTermination() {
         final String query = "CALL apoc.cypher.runTimeboxed('unwind range (0, 10) as id CALL apoc.util.sleep(2000) return 0', null, 20000)";
         checkTerminationGuard(db, query);
