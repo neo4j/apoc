@@ -43,6 +43,7 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         AvailabilityGuard availabilityGuard();
         DatabaseManagementService databaseManagementService();
         ApocConfig apocConfig();
+        @SuppressWarnings("unused") // used from extended
         GlobalProcedures globalProceduresRegistry();
         RegisterComponentFactory.RegisterComponentLifecycle registerComponentLifecycle();
         Pools pools();

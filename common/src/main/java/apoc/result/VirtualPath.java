@@ -139,7 +139,7 @@ public class VirtualPath implements Path {
             throw new IllegalArgumentException("Relationship is not part of current path.");
         }
     }
-    
+
     public static final class Builder {
         private final Node start;
         private final List<Relationship> relationships = new ArrayList<>();
