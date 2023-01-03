@@ -102,7 +102,7 @@ public class Trigger {
 
     @Admin
     @Procedure(name = "apoc.trigger.list", mode = Mode.READ)
-    @Description("Lists all installed triggers.")
+    @Description("Lists all currently installed triggers for the session database.")
     public Stream<TriggerInfo> list() {
         return triggerHandler.list().entrySet().stream()
                 .map( (e) -> new TriggerInfo(e.getKey(),
