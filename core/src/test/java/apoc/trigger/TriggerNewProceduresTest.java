@@ -29,6 +29,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static apoc.ApocConfig.SUN_JAVA_COMMAND;
+import static apoc.trigger.TriggerNewProcedures.DB_NOT_FOUND_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_BAD_TARGET_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
@@ -43,7 +44,7 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 
 /**
  * Test class for non-deprecated procedures, 
- * i.e. `apoc.trigger.install`, `apoc.trigger.drop`, `apoc.trigger.dropAll`, `apoc.trigger.stop`, and `apoc.trigger.start`
+ * i.e. `apoc.trigger.install`, `apoc.trigger.drop`, `apoc.trigger.dropAll`, `apoc.trigger.stop`, `apoc.trigger.start`, `apoc.trigger.show` and `apoc.trigger.list`
  */
 public class TriggerNewProceduresTest {
     private static final File directory = new File("target/conf");
@@ -538,6 +539,18 @@ public class TriggerNewProceduresTest {
                     r -> fail("Should fail because of user db execution"));
         } catch (QueryExecutionException e) {
             assertTrue(e.getMessage().contains(TRIGGER_NOT_ROUTED_ERROR));
+        }
+    }
+
+    @Test
+    public void testInstallTriggerInNotExistentDb() {
+        final String dbName = "nonexistent";
+        try {
+            testCall(sysDb, "CALL apoc.trigger.install($dbName, 'dbNotFound', 'SHOW DATABASES', {})",
+                    Map.of("dbName", dbName),
+                    r -> fail(""));
+        } catch (RuntimeException e) {
+            assertTrue(e.getMessage().contains(String.format(DB_NOT_FOUND_ERROR, dbName)));
         }
     }
 

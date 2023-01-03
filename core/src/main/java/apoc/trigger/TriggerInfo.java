@@ -1,7 +1,11 @@
 package apoc.trigger;
 
 import apoc.SystemPropertyKeys;
+import apoc.util.Util;
+import org.neo4j.graphdb.Node;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TriggerInfo {
@@ -47,7 +51,29 @@ public class TriggerInfo {
         return from(mapInfo, installed, (String) mapInfo.get(SystemPropertyKeys.name.name()));
     }
 
+    public static TriggerInfo fromNode(Node node, boolean installed) {
+        // filter and transform node props to map
+        final Map<String, Object> triggerMap = toTriggerMap(node);
+        
+        // transform map to TriggerInfo
+        return from(triggerMap, installed);
+    }
+    
+    private static Map<String, Object> toTriggerMap(Node node) {
+        return node.getAllProperties()
+                .entrySet().stream()
+                .filter(e -> !SystemPropertyKeys.database.name().equals(e.getKey()))
+                .collect(HashMap::new, // workaround for https://bugs.openjdk.java.net/browse/JDK-8148463
+                        (mapAccumulator, e) -> {
+                            Object value = List.of(SystemPropertyKeys.selector.name(), SystemPropertyKeys.params.name()).contains(e.getKey())
+                                    ? Util.fromJson((String) e.getValue(), Map.class)
+                                    : e.getValue();
 
+                            mapAccumulator.put(e.getKey(), value);
+                        }, HashMap::putAll);
+    }
+
+    // TODO: used only with deprecated procedures, it would be removed together with them
     public static TriggerInfo entryToTriggerInfo(Map.Entry<String, Object> e) {
         String name = e.getKey();
         if (e.getValue() instanceof Map) {

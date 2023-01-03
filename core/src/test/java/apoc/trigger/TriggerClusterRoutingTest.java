@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static apoc.trigger.Trigger.DB_NON_WRITER_ERROR;
+import static apoc.trigger.Trigger.SYS_DB_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertEquals;
@@ -47,18 +47,18 @@ public class TriggerClusterRoutingTest {
         }
     }
     
-    // TODO: fabric tests
+    // TODO: fabric tests once the @SystemOnlyProcedure annotation is added to Neo4j
 
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, SYS_DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysLeaderMemberCommon(query, DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, SYS_DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
     }
 
     @Test
@@ -82,10 +82,9 @@ public class TriggerClusterRoutingTest {
             if (driver == null) {
                 continue;
             }
-            System.out.println("TriggerClusterRoutingTest.triggerInSysLeaderMemberCommon");
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
-            if (dbIsWriter(session, dbName, address)) {
+            if (dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
                 final String name = UUID.randomUUID().toString();
                 testCall( session, query,
                         Map.of("name", name),
@@ -111,7 +110,6 @@ public class TriggerClusterRoutingTest {
             if (driver == null) {
                 continue;
             }
-            System.out.println("TriggerClusterRoutingTest.testTriggersAllowedOnlyWithAdmin");
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
             String noAdminUser = "nonadmin";
             String noAdminPwd = "test1234";

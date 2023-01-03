@@ -14,17 +14,20 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import static apoc.ApocConfig.apocConfig;
+
 /**
  * @author mh
  * @since 20.09.16
  */
 
 public class Trigger {
-    // public for testing purpose
-    public static final String DB_NON_WRITER_ERROR = """
-            This instance is not allowed to write to the database because it is a follower.
-            Please use these procedures against the database leader.
+    private static final String NON_WRITER_ERROR = """
+            This instance is not allowed to write to the %1$s database.
+            Please use this procedure against a %1$s database writer.
             """;
+    public static final String SESSION_DB_NON_WRITER_ERROR = String.format(NON_WRITER_ERROR, "session");
+    public static final String SYS_DB_NON_WRITER_ERROR = String.format(NON_WRITER_ERROR, "system");
     
     @Context
     public GraphDatabaseAPI db;
@@ -36,13 +39,17 @@ public class Trigger {
     private void preprocessDeprecatedProcedures() {
         final String msgDeprecation = """
                 Please note that the current procedure is deprecated,
-                it's recommended to use the `apoc.trigger.install`, `apoc.trigger.drop`, `apoc.trigger.dropAll`, `apoc.trigger.stop`, and `apoc.trigger.start` procedures,
+                it is recommended to use the `apoc.trigger.install`, `apoc.trigger.drop`, `apoc.trigger.dropAll`, `apoc.trigger.stop`, and `apoc.trigger.start` procedures,
                 instead of, respectively, `apoc.trigger.add`, `apoc.trigger.remove`, `apoc.trigger.removeAll`, `apoc.trigger.pause`, and `apoc.trigger.resume`.""";
 
         log.warn(msgDeprecation);
 
         if (!Util.isWriteableInstance(db)) {
-            throw new RuntimeException(DB_NON_WRITER_ERROR + msgDeprecation);
+            throw new RuntimeException(SESSION_DB_NON_WRITER_ERROR + msgDeprecation);
+        }
+
+        if (!Util.isWriteableInstance((GraphDatabaseAPI) apocConfig().getSystemDb())) {
+            throw new RuntimeException(SYS_DB_NON_WRITER_ERROR + msgDeprecation);
         }
     }
 
@@ -51,7 +58,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.add", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.install")
     @Description("Adds a trigger to the given Cypher statement.\n" +
             "The selector for this procedure is {phase:'before/after/rollback/afterAsync'}.")
-    public Stream<TriggerInfo> add(@Name("name") String name, @Name("kernelTransaction") String statement, @Name(value = "selector"/*, defaultValue = "{}"*/)  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
+    public Stream<TriggerInfo> add(@Name("name") String name, @Name("statement") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         preprocessDeprecatedProcedures();
         
         Util.validateQuery(db, statement);
