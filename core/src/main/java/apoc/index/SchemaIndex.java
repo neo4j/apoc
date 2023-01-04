@@ -12,7 +12,14 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
-import org.neo4j.internal.kernel.api.*;
+import org.neo4j.internal.kernel.api.CursorFactory;
+import org.neo4j.internal.kernel.api.IndexQueryConstraints;
+import org.neo4j.internal.kernel.api.IndexReadSession;
+import org.neo4j.internal.kernel.api.NodeValueIndexCursor;
+import org.neo4j.internal.kernel.api.PropertyIndexQuery;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.SchemaRead;
+import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.internal.schema.IndexDescriptor;
 import org.neo4j.internal.schema.SchemaDescriptor;
 import org.neo4j.internal.schema.SchemaDescriptors;
@@ -25,14 +32,11 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
-import org.neo4j.procedure.builtin.FulltextProcedures;
-import org.neo4j.values.storable.Value;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
@@ -75,14 +79,15 @@ public class SchemaIndex {
                 StreamSupport.stream(indexDefinitions.spliterator(), true)
                         .filter(IndexDefinition::isNodeIndex)
                         .filter(indexDefinition -> isIndexCoveringProperty(indexDefinition, keyName))
-                        .map(indexDefinition -> scanIndexDefinitionForKeys(indexDefinition, keyName, queue))
+                        .map(indexDefinition -> scanIndexDefinitionForKeys(indexDefinition, keyName, queue, labelName))
+                        .distinct()
                         .collect(new QueuePoisoningCollector(queue, POISON))
         ).start();
 
         return StreamSupport.stream(new QueueBasedSpliterator<>(queue, POISON, terminationGuard, Integer.MAX_VALUE),false);
     }
 
-    private Object scanIndexDefinitionForKeys(IndexDefinition indexDefinition, @Name(value = "key", defaultValue = "") String keyName,  BlockingQueue<PropertyValueCount> queue) {
+    private Object scanIndexDefinitionForKeys(IndexDefinition indexDefinition, @Name(value = "key", defaultValue = "") String keyName,  BlockingQueue<PropertyValueCount> queue, String labelName) {
         try (Transaction threadTx = db.beginTx()) {
             KernelTransaction ktx = ((InternalTransaction)threadTx).kernelTransaction();
             Iterable<String> keys = keyName.isEmpty() ? indexDefinition.getPropertyKeys() : Collections.singletonList(keyName);
@@ -96,10 +101,12 @@ public class SchemaIndex {
                     int[] propertyKeyIds = StreamSupport.stream(indexDefinition.getPropertyKeys().spliterator(), false)
                             .mapToInt(tokenRead::propertyKey)
                             .toArray();
-                    
+
                     SchemaDescriptor schema;
                     if (isFullText(indexDefinition)) {
-                        int[] labelIds = Iterables.stream(indexDefinition.getLabels())
+                        // since fullText idx are multi-label, we need to handle them differently
+                        int[] labelIds =
+                         Iterables.stream(indexDefinition.getLabels())
                                 .mapToInt(lbl -> tokenRead.nodeLabel(lbl.name()))
                                 .toArray();
                         schema = SchemaDescriptors.fulltext(EntityType.NODE, labelIds, propertyKeyIds);
@@ -108,11 +115,11 @@ public class SchemaIndex {
                         schema = SchemaDescriptors.forLabel(tokenRead.nodeLabel(label), propertyKeyIds);
                     }
 
-                    IndexDescriptor indexDescriptor = Iterators.singleOrNull(schemaRead.index(schema));
+                    IndexDescriptor indexDescriptor = Iterators.firstOrNull(schemaRead.index(schema));
                     if (indexDescriptor == null) {
                         return null;
                     }
-                    scanIndex(queue, indexDefinition, key, read, cursors, indexDescriptor, ktx);
+                    scanIndex(queue, indexDefinition, key, read, cursors, indexDescriptor, ktx, labelName, threadTx);
                 }
             }
             threadTx.commit();
@@ -120,12 +127,12 @@ public class SchemaIndex {
         }
     }
 
-    private void scanIndex(BlockingQueue<PropertyValueCount> queue, IndexDefinition indexDefinition, String key, Read read, CursorFactory cursors, IndexDescriptor indexDescriptor, KernelTransaction ktx) {
+    private void scanIndex(BlockingQueue<PropertyValueCount> queue, IndexDefinition indexDefinition, String key, Read read, CursorFactory cursors, IndexDescriptor indexDescriptor, KernelTransaction ktx, String lblName, Transaction threadTx) {
         try (NodeValueIndexCursor cursor = cursors.allocateNodeValueIndexCursor( ktx.cursorContext(), ktx.memoryTracker())) {
             // we need to using IndexOrder.NONE here to prevent an exception
             // however the index guarantees to be scanned in order unless
             // there are writes done in the same tx beforehand - which we don't do.
-            
+
             final IndexReadSession indexSession;
             try {
                 indexSession = read.indexReadSession( indexDescriptor );
@@ -137,48 +144,40 @@ public class SchemaIndex {
                 throw e;
             }
             if (isFullText(indexDefinition)) {
+                // similar to db.index.fulltext.queryNodes procedure
                 read.nodeIndexSeek(ktx.queryContext(), indexSession, cursor, IndexQueryConstraints.unconstrained(), PropertyIndexQuery.fulltextSearch("*"));
             } else {
                 read.nodeIndexScan(indexSession, cursor, IndexQueryConstraints.unorderedValues());
             }
-
-            Value previousValue = null;
-            long count = 0;
-            Map<Object, Integer> fullTextMap = new HashMap<>();
+            
+            Map<String, Map<Object, Integer>> valueCountMap = new HashMap<>();
+            
+            final Iterable<Label> labels = lblName.isEmpty() 
+                    ? indexDefinition.getLabels() 
+                    : Collections.singleton(Label.label(lblName));
+            
             while (cursor.next()) {
-                if (isFullText(indexDefinition)) {
-                    long nodeReference = cursor.nodeReference();
-                    FulltextProcedures.NodeOutput nodeOutput = FulltextProcedures.NodeOutput.forExistingEntityOrNull(tx, nodeReference, cursor.score());
-                    final Node node = nodeOutput.node;
-                    indexDefinition.getPropertyKeys()
-                            .forEach(propKey -> {
-                                final Object property = node.getProperty(propKey, null);
-                                if (property != null) {
-                                    fullTextMap.merge(property, 1, Integer::sum);
-                                }
-                            });
-                } else {
-                    for (int i = 0; i < cursor.numberOfProperties(); i++) {
-                        Value v = cursor.propertyValue(i);
-                        if (Objects.equals(v, previousValue)) { //  nullsafe equals
-                            count++;
-                        } else {
-                            if (previousValue != null) {
-                                putIntoQueue(queue, indexDefinition, key, previousValue.asObject(), count);
-                            }
-                            previousValue = v;
-                            count = 1;
-                        }
+                final Node node = threadTx.getNodeById( cursor.nodeReference() );
+
+                labels.forEach(label -> {
+
+                    final boolean hasLabel = node.hasLabel(label);
+                    
+                    final Object property = node.getProperty(key, null);
+                    if (hasLabel && property != null) {
+                        final Map<Object, Integer> orDefault = valueCountMap.computeIfAbsent(label.name(), i ->  new HashMap<>());
+                        
+                        // increment map count
+                        orDefault.merge(property, 1, Integer::sum);
                     }
-                }
-            }
-            if (isFullText(indexDefinition)) {
-                fullTextMap.forEach((k,v) -> {
-                    putIntoQueue(queue, indexDefinition, key, k, v);
                 });
-            } else {
-                putIntoQueue(queue, indexDefinition, key, previousValue, count);
             }
+            
+            valueCountMap.forEach((label, propMap) -> {
+                propMap.forEach((k,v) -> {
+                    putIntoQueue(queue, indexDefinition, key, k, v, label);
+                });
+            });
         } catch (KernelException e) {
             throw new RuntimeException(e);
         }
@@ -188,15 +187,13 @@ public class SchemaIndex {
         return indexDefinition.getIndexType().equals(IndexType.FULLTEXT);
     }
 
-    private void putIntoQueue(BlockingQueue<PropertyValueCount> queue, IndexDefinition indexDefinition, String key, Object value, long count) {
+    private void putIntoQueue(BlockingQueue<PropertyValueCount> queue, IndexDefinition indexDefinition, String key, Object value, long count, String labelName) {
         // if no value returned, like in testDistinctWithNoPreviousNodesShouldNotHangs
         if (value == null) {
             return;
         }
         try {
-            for (Label label: indexDefinition.getLabels()) {
-                queue.put(new PropertyValueCount(label.name(), key, value, count));
-            }
+            queue.put(new PropertyValueCount(labelName, key, value, count));
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
