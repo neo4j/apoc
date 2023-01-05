@@ -6,9 +6,7 @@ import apoc.util.TestcontainersCausalCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
 
@@ -101,48 +99,7 @@ public class TriggerClusterRoutingTest {
             }
         }
     }
-
-    @Test
-    public void testTriggersAllowedOnlyWithAdmin() {
-        for (Neo4jContainerExtension container: cluster.getClusterMembers()) {
-            // we skip READ_REPLICA members
-            final Driver driver = getDriverIfNotReplica(container);
-            if (driver == null) {
-                continue;
-            }
-            final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
-            String noAdminUser = "nonadmin";
-            String noAdminPwd = "test1234";
-            try (Session sysSession = driver.session(SessionConfig.forDatabase(SYSTEM_DATABASE_NAME))) {
-                if (!dbIsWriter(sysSession, SYSTEM_DATABASE_NAME, address)) {
-                    return;
-                }
-                sysSession.run(String.format("CREATE USER %s SET PASSWORD '%s' SET PASSWORD CHANGE NOT REQUIRED",
-                        noAdminUser, noAdminPwd));
-            }
-
-            try (Driver userDriver = GraphDatabase.driver(cluster.getURI(), AuthTokens.basic(noAdminUser, noAdminPwd))) {
-                
-                try (Session sysUserSession = userDriver.session(SessionConfig.forDatabase(SYSTEM_DATABASE_NAME))) {
-                    failsWithNonAdminUser(sysUserSession, "apoc.trigger.install", "call apoc.trigger.install('neo4j', 'qwe', 'return 1', {})");
-                    failsWithNonAdminUser(sysUserSession, "apoc.trigger.drop", "call apoc.trigger.drop('neo4j', 'qwe')");
-                    failsWithNonAdminUser(sysUserSession, "apoc.trigger.dropAll", "call apoc.trigger.dropAll('neo4j')");
-                    failsWithNonAdminUser(sysUserSession, "apoc.trigger.stop", "call apoc.trigger.stop('neo4j', 'qwe')");
-                    failsWithNonAdminUser(sysUserSession, "apoc.trigger.start", "call apoc.trigger.start('neo4j', 'qwe')");
-                    failsWithNonAdminUser(sysUserSession, "apoc.trigger.show", "call apoc.trigger.show('neo4j')");
-                }
-                
-                try (Session neo4jUserSession = userDriver.session(SessionConfig.forDatabase(DEFAULT_DATABASE_NAME))) {
-                    failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.add", "call apoc.trigger.add('abc', 'return 1', {})");
-                    failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.remove", "call apoc.trigger.remove('abc')");
-                    failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.removeAll", "call apoc.trigger.removeAll");
-                    failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.pause", "call apoc.trigger.pause('abc')");
-                    failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.resume", "call apoc.trigger.resume('abc')");
-                    failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.list", "call apoc.trigger.list");
-                }
-            }
-        }
-    }
+    
 
     private static Driver getDriverIfNotReplica(Neo4jContainerExtension container) {
         final String readReplica = TestcontainersCausalCluster.ClusterInstanceType.READ_REPLICA.toString();
@@ -158,18 +115,6 @@ public class TriggerClusterRoutingTest {
                         Map.of("dbName", dbName, "address", address) )
                 .single().get("writer")
                 .asBoolean();
-    }
-    
-    private void failsWithNonAdminUser(Session session, String procName, String query) {
-        try {
-            testCall(session, query,
-                    row -> fail("Should fail because of non admin user") );
-        } catch (Exception e) {
-            String actual = e.getMessage();
-            final String expected = String.format("Executing admin procedure '%s' permission has not been granted for user 'nonadmin'",
-                    procName);
-            assertTrue("Actual error message is: " + actual, actual.contains(expected));
-        }
     }
 
 

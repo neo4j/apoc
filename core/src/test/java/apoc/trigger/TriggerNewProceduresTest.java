@@ -42,10 +42,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestrict
 import static org.neo4j.internal.helpers.collection.MapUtil.map;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
-/**
- * Test class for non-deprecated procedures, 
- * i.e. `apoc.trigger.install`, `apoc.trigger.drop`, `apoc.trigger.dropAll`, `apoc.trigger.stop`, `apoc.trigger.start`, `apoc.trigger.show` and `apoc.trigger.list`
- */
+
 public class TriggerNewProceduresTest {
     private static final File directory = new File("target/conf");
     static { //noinspection ResultOfMethodCallIgnored
@@ -469,7 +466,6 @@ public class TriggerNewProceduresTest {
                                 result -> {
                                     final ResourceIterator<Relationship> relIterator = result.columnAs("r");
                                     return relIterator.hasNext();
-//                                            && relIterator.next().getAllProperties().equals(expectedProps);
                                 })
                 , (value) -> value, 30L, TimeUnit.SECONDS);
     }
