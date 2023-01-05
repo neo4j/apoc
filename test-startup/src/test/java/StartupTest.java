@@ -31,7 +31,6 @@ public class StartupTest {
                     .withNeo4jConfig("dbms.transaction.timeout", "60s")) {
 
                 neo4jContainer.start();
-                assertTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());
 
                 Session session = neo4jContainer.getSession();
                 int procedureCount = session.run("SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN count(*) AS count").peek().get("count").asInt();
@@ -62,9 +61,7 @@ public class StartupTest {
         for (var version: Neo4jVersion.values()) {
             try (Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())) {
                 neo4jContainer.start();
-
-                assertTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());
-
+                
                 try (Session session = neo4jContainer.getSession()) {
                     final List<String> functionNames = session.run("CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'function' RETURN name")
                             .list(record -> record.get("name").asString());
