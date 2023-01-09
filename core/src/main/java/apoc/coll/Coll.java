@@ -904,7 +904,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.different")
-    @Description("Returns true if any of the values in the given list are different.")
+    @Description("Returns true if all the values in the given list are unique.")
     public boolean different(@Name("coll") List<Object> values) {
 		if (values == null) return false;
         return new HashSet(values).size() == values.size();
