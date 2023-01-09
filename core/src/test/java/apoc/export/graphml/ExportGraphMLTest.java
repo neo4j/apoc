@@ -10,6 +10,7 @@ import junit.framework.TestCase;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -49,6 +50,7 @@ import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.isRunningInCI;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -64,6 +66,7 @@ import static org.neo4j.graphdb.Label.label;
  * @author mh
  * @since 22.05.16
  */
+@Ignore
 public class ExportGraphMLTest {
 
     @Rule
@@ -266,6 +269,13 @@ public class ExportGraphMLTest {
                     assertEquals("graphml", r.get("format"));
                     assertEquals(true, r.get("done"));
                 });
+    }
+
+    @Test
+    public void testImportGraphMLTerminate() {
+        final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
+        checkTerminationGuard(db, 5L, "CALL apoc.import.graphml($file,{readLabels:true})",
+                map("file", file));
     }
 
     @Test

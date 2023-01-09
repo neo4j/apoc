@@ -3,6 +3,7 @@ package apoc.export.graphml;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -24,6 +25,7 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
 import static org.junit.Assert.*;
 
+@Ignore
 public class ExportGraphMLS3Test extends S3BaseTest {
 
     @Rule

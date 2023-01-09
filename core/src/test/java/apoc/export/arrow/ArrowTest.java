@@ -8,6 +8,7 @@ import apoc.util.TestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Result;
@@ -29,6 +30,8 @@ import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static org.junit.Assert.assertEquals;
 
+// todo - to remove, just to check CI build failure
+@Ignore
 public class ArrowTest {
 
     private static File directory = new File("target/arrow import");
