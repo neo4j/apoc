@@ -201,7 +201,7 @@ public class CloneSubgraphTest {
     public void testCloneSubgraph_With_Standins_For_Node1_Should_Have_RootB()  {
         TestUtil.testCall(db,
                 "MATCH (rootA:Root{name:'A'})--(node1), (rootB:Root{name:'B'}) " +
-                        "CALL apoc.path.subgraphAll(node1, {blacklistNodes:[rootA]}) YIELD nodes, relationships " +
+                        "CALL apoc.path.subgraphAll(node1, {denylistNodes:[rootA]}) YIELD nodes, relationships " +
                         "WITH node1, rootB, nodes, relationships, [rel in relationships | startNode(rel).name + ' ' + type(rel) + ' ' + endNode(rel).name] as relNames " +
                         "CALL apoc.refactor.cloneSubgraph(nodes, relationships, {standinNodes:[[node1, rootB]]}) YIELD input, output, error " +
                         "WITH relNames, collect(output) as clones, collect(output.name) as cloneNames " +

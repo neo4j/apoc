@@ -58,7 +58,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithBlacklist() {
+    public void testSequenceWithDenylist() {
         String query = "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'A|-C,B', beginSequenceAtStart:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
             List<String> names = (List<String>) row.get("nodes");

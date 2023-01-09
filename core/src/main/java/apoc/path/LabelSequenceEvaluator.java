@@ -17,7 +17,7 @@ import static org.neo4j.graphdb.traversal.Evaluation.INCLUDE_AND_CONTINUE;
 public class LabelSequenceEvaluator implements Evaluator {
     private List<LabelMatcherGroup> sequenceMatchers;
 
-    private Evaluation whitelistAllowedEvaluation;
+    private Evaluation allowlistAllowedEvaluation;
     private boolean endNodesOnly;
     private boolean filterStartNode;
     private boolean beginSequenceAtStart;
@@ -59,7 +59,7 @@ public class LabelSequenceEvaluator implements Evaluator {
             }
         }
 
-        whitelistAllowedEvaluation = endNodesOnly ? EXCLUDE_AND_CONTINUE : INCLUDE_AND_CONTINUE;
+        allowlistAllowedEvaluation = endNodesOnly ? EXCLUDE_AND_CONTINUE : INCLUDE_AND_CONTINUE;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class LabelSequenceEvaluator implements Evaluator {
         // if start node shouldn't be filtered, exclude/include based on if using termination/endnode filter or not
         // minLevel evaluator will separately enforce exclusion if we're below minLevel
         if (depth == 0 && (!filterStartNode || !beginSequenceAtStart)) {
-            return whitelistAllowedEvaluation;
+            return allowlistAllowedEvaluation;
         }
 
         // the user may want the sequence to begin at the start node (default), or the sequence may only apply from the next node on

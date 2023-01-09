@@ -146,7 +146,7 @@ public class Tables4LabelsProfile {
 
         // Even if the node isn't in our match list, do rel processing.  This
         // is because our profiling is "node-first" to get to the relationships,
-        // and if we don't do it this way, it's possible to blacklist nodes and
+        // and if we don't do it this way, it's possible to denylist nodes and
         // thereby miss relationships that were of interest.
         for (RelationshipType type : n.getRelationshipTypes()) {
             String typeName = type.name();
