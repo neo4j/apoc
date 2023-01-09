@@ -54,6 +54,8 @@ dependencies {
     api group: 'com.jayway.jsonpath', name: 'json-path', version: '2.7.0'
     api group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
     api group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
+    // We need this to avoid seeing SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder" on startup
+    api group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.36'
 
     // We need to force this dependency's verion due to a vulnerability https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/3048
     api group: 'org.apache.commons', name: 'commons-lang3', {
