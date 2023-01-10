@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
@@ -80,11 +81,11 @@ public class SchemaIndex {
                         .filter(IndexDefinition::isNodeIndex)
                         .filter(indexDefinition -> isIndexCoveringProperty(indexDefinition, keyName))
                         .map(indexDefinition -> scanIndexDefinitionForKeys(indexDefinition, keyName, queue, labelName))
-                        .distinct()
                         .collect(new QueuePoisoningCollector(queue, POISON))
         ).start();
 
-        return StreamSupport.stream(new QueueBasedSpliterator<>(queue, POISON, terminationGuard, Integer.MAX_VALUE),false);
+        return StreamSupport.stream(new QueueBasedSpliterator<>(queue, POISON, terminationGuard, Integer.MAX_VALUE),false)
+                .distinct();
     }
 
     private Object scanIndexDefinitionForKeys(IndexDefinition indexDefinition, @Name(value = "key", defaultValue = "") String keyName,  BlockingQueue<PropertyValueCount> queue, String labelName) {
@@ -159,12 +160,15 @@ public class SchemaIndex {
             while (cursor.next()) {
                 final Node node = threadTx.getNodeById( cursor.nodeReference() );
 
+                // we increment count only if corresponding prop is present
+                final Object property = node.getProperty(key, null);
+                if (property == null) continue;
+                
                 labels.forEach(label -> {
-
+                    // we increment count only if corresponding label is present
                     final boolean hasLabel = node.hasLabel(label);
-                    
-                    final Object property = node.getProperty(key, null);
-                    if (hasLabel && property != null) {
+                    if (hasLabel) {
+                        
                         final Map<Object, Integer> orDefault = valueCountMap.computeIfAbsent(label.name(), i ->  new HashMap<>());
                         
                         // increment map count
@@ -233,6 +237,23 @@ public class SchemaIndex {
                     ", value='" + value + '\'' +
                     ", count=" + count +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PropertyValueCount that = (PropertyValueCount) o;
+            
+            return count == that.count 
+                    && Objects.equals(label, that.label) 
+                    && Objects.equals(key, that.key) 
+                    && Objects.equals(value, that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(label, key, value, count);
         }
     }
 }

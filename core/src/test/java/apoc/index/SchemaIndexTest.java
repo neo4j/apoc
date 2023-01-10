@@ -100,7 +100,7 @@ SchemaIndexTest {
 
 
     @Test(timeout = 5000L)
-    public void testDistinctWithoutIndexWaitingShouldNotHangs() throws Exception {
+    public void testDistinctWithoutIndexWaitingShouldNotHangs() {
         db.executeTransactionally("CREATE FULLTEXT INDEX fulltextFullTextOne FOR (n:FullTextOne) ON EACH [n.prop1]");
         // executing the apoc.schema.properties.distinct without CALL db.awaitIndexes() will throw an "Index is still populating" exception
         
@@ -125,7 +125,7 @@ SchemaIndexTest {
     }
 
     @Test(timeout = 5000L)
-    public void testDistinctWithCompositeIndexShouldNotHangs() throws Exception {
+    public void testDistinctWithCompositeIndexShouldNotHangs() {
         db.executeTransactionally("create index EmptyLabel for (n:EmptyLabel) on (n.one)");
         db.executeTransactionally("create index EmptyCompositeLabel for (n:EmptyCompositeLabel) on (n.two, n.three)");
 
@@ -144,7 +144,7 @@ SchemaIndexTest {
     }
 
     @Test(timeout = 5000L)
-    public void testDistinctWithCompositeIndexWithMixedRepeatedProps() throws Exception {
+    public void testDistinctWithCompositeIndexWithMixedRepeatedProps() {
         db.executeTransactionally("create index SchemaTest for (n:SchemaTest) on (n.prop1, n.prop2)");
         db.executeTransactionally("CALL db.awaitIndexes()");
 
@@ -181,7 +181,7 @@ SchemaIndexTest {
     }
 
     @Test(timeout = 5000L)
-    public void testDistinctWithFullTextIndexShouldNotHangs() throws Exception {
+    public void testDistinctWithFullTextIndexShouldNotHangs() {
         db.executeTransactionally("CREATE FULLTEXT INDEX FullTextOneProp1 FOR (n:FullTextOne) ON EACH [n.prop1]");
         db.executeTransactionally("CALL db.awaitIndexes");
 
@@ -201,7 +201,7 @@ SchemaIndexTest {
     }
     
     @Test(timeout = 5000L)
-    public void testWithDifferentIndexesAndSameLabelProp() throws Exception {
+    public void testWithDifferentIndexesAndSameLabelProp() {
         db.executeTransactionally("CREATE FULLTEXT INDEX FullTextOneProp1 FOR (n:FullTextOne) ON EACH [n.prop1]");
         db.executeTransactionally("CREATE RANGE INDEX RangeProp1 FOR (n:FullTextOne) ON (n.prop1)");
         db.executeTransactionally("CALL db.awaitIndexes");
@@ -211,24 +211,11 @@ SchemaIndexTest {
                 row -> assertEquals(Set.of("AA", "EE", "UU", "Ryan", "Michael"), Set.copyOf((List)row.get("value")))
         );
 
-        // in this case the procedure returns equal pairs of rows because we have 2 different indexes
+        // in this case the procedure returns distinct rows though we have 2 different analogues indexes
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED,
                 map("label", FULL_TEXT_LABEL, "key", "prop1"),
                 res -> {
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("AA"), 1L, res);
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("AA"), 1L, res);
-                    
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("EE"), 1L, res);
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("EE"), 1L, res);
-                    
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("Michael"), 1L, res);
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("Michael"), 1L, res);
-                    
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("Ryan"), 3L, res);
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("Ryan"), 3L, res);
-                    
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("UU"), 1L, res);
-                    assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("UU"), 1L, res);
+                    extractedFullTextFullTextOneProp1(res);
                     assertFalse(res.hasNext());
                 });
 
@@ -237,7 +224,7 @@ SchemaIndexTest {
     }
 
     @Test(timeout = 5000L)
-    public void testDistinctWithMultiLabelFullTextIndexShouldNotHangs() throws Exception {
+    public void testDistinctWithMultiLabelFullTextIndexShouldNotHangs() {
         db.executeTransactionally("CREATE FULLTEXT INDEX fulltextComposite FOR (n:FullTextOne|FullTextTwo) ON EACH [n.prop1,n.prop3]");
         db.executeTransactionally("CALL db.awaitIndexes");
   
@@ -274,7 +261,7 @@ SchemaIndexTest {
     }
 
     @Test(timeout = 5000L)
-    public void testDistinctWithNoPreviousNodesShouldNotHangs() throws Exception {
+    public void testDistinctWithNoPreviousNodesShouldNotHangs() {
         db.executeTransactionally("CREATE INDEX LabelNotExistent FOR (n:LabelNotExistent) ON n.prop");
         
         testCall(db, """
