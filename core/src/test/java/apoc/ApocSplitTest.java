@@ -30,6 +30,12 @@ public class ApocSplitTest {
         "apoc.trigger.list",
         "apoc.trigger.pause",
         "apoc.trigger.resume",
+        "apoc.trigger.show",
+        "apoc.trigger.drop",
+        "apoc.trigger.dropAll",
+        "apoc.trigger.install",
+        "apoc.trigger.start",
+        "apoc.trigger.stop",
         "apoc.util.sleep",
         "apoc.util.validate",
         "apoc.merge.node.eager",
@@ -457,11 +463,11 @@ public class ApocSplitTest {
         neo4jContainer.start();
 
         Session session = neo4jContainer.getSession();
-        Set<String> procedureNames = session.run("SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN name").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
-        Set<String> functionNames = session.run("SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc' RETURN name").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
+        Set<String> procedureNames = session.run("SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc'").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
+        Set<String> functionNames = session.run("SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc'").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
 
-        Assert.assertTrue(procedureNames.containsAll(CORE_PROCEDURES) && procedureNames.size() == CORE_PROCEDURES.size());
-        Assert.assertTrue(functionNames.containsAll(CORE_FUNCTIONS) && functionNames.size() == CORE_FUNCTIONS.size());
+        Assert.assertEquals(CORE_PROCEDURES, procedureNames);
+        Assert.assertEquals(CORE_FUNCTIONS, functionNames);
         neo4jContainer.close();
     }
 }
