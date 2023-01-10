@@ -27,9 +27,6 @@ public class S3Container implements AutoCloseable {
                 .withCredentials(getCredentialsProvider())
                 .build();
         s3.createBucket(S3_BUCKET_NAME);
-
-        assertTrue("Localstack container not correctly started. The provided logs are: \n" + localstack.getLogs(),
-                localstack.isRunning());
     }
 
     public void close() {

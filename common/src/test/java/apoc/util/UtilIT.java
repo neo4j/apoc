@@ -5,7 +5,6 @@ import inet.ipaddr.IPAddressString;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.neo4j.configuration.Config;
@@ -29,21 +28,17 @@ public class UtilIT {
 
     private GenericContainer setUpServer(Config neo4jConfig, String redirectURL) {
         new ApocConfig(neo4jConfig);
-        GenericContainer httpServer = new GenericContainer("alpine")
+        httpServer = new GenericContainer("alpine")
                 .withCommand("/bin/sh", "-c", String.format("while true; do { echo -e 'HTTP/1.1 301 Moved Permanently\\r\\nLocation: %s'; echo ; } | nc -l -p 8000; done",
                         redirectURL))
                 .withExposedPorts(8000);
         httpServer.start();
-        Assume.assumeNotNull(httpServer);
-        Assume.assumeTrue(httpServer.isRunning());
         return httpServer;
     }
 
     @AfterEach
     public void tearDown() {
-        if (httpServer != null) {
-            httpServer.stop();
-        }
+        httpServer.stop();
     }
 
     @Test
