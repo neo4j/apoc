@@ -63,7 +63,7 @@ public class BigGraphTest {
     }
 
     @Test
-    public void testTerminateExportImportGraphMl() {
+    public void testTerminateExportGraphMl() {
         checkTerminationGuard(db, "CALL apoc.export.graphml.all('testTerminate.graphml', {})");
     }
 
@@ -73,7 +73,7 @@ public class BigGraphTest {
     }
 
     @Test
-    public void testTerminateExportImportLoadJson() {
+    public void testTerminateExportJson() {
         checkTerminationGuard(db, "CALL apoc.export.json.all('testTerminate.json',{})");
     }
 

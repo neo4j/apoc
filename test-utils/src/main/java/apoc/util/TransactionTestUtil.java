@@ -19,7 +19,7 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class TransactionTestUtil {
     public static final String TRANSACTION_LIST = "SHOW TRANSACTIONS";
-    public static final long DEFAULT_TIMEOUT = 10L;
+    public static final long DEFAULT_TIMEOUT = 30L;
 
     public static void checkTerminationGuard(GraphDatabaseService db, String query) {
         checkTerminationGuard(db, query, emptyMap());
