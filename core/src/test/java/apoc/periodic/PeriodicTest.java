@@ -61,7 +61,7 @@ public class PeriodicTest {
 
     @Before
     public void initDb() {
-        TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class);
+        TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class, Utils.class);
         db.executeTransactionally("call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
 
