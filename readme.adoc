@@ -172,13 +172,19 @@ You can find https://github.com/neo4j/apoc/releases/[all releases here].
 [WARNING]
 ====
 // tag::warnings[]
+APOC contains over 450 functions and procedures.
+It is *not* recommended to load all of these into the dbms, but instead use the principle of least privilege.
+This principle dictates, that you should only load the functions and procedures that you strictly need to execute your queries.
+
+The procedures and functions that should be loaded can be specified using the Neo4j configuration setting `+dbms.security.procedures.allowlist+` in `$NEO4J_HOME/conf/neo4j.conf`.
+As an example, to load `apoc.math.maxInt` and all functions in the `apoc.rel` package, use `+dbms.security.procedures.allowlist=apoc.math.maxInt,apoc.rel.*+`.
+
 For security reasons, procedures that use internal APIs are disabled by default.
-They can be enabled by specifying config in `$NEO4J_HOME/conf/neo4j.conf` e.g. `+dbms.security.procedures.unrestricted=apoc.*+`
+Also in this case, it is recommended to use the principle of least privilege and only unrestrict those procedures which you are certain to make use of.
+The procedures can be unrestricted using the Neo4j configuration setting `+dbms.security.procedures.unrestricted+` in `$NEO4J_HOME/conf/neo4j.conf` e.g. `+dbms.security.procedures.unrestricted=apoc.cypher.runFirstColumn,apoc.cypher.doIt+`.
 
-If you want to do this when using the Neo4j Docker container, you need to amend `+-e NEO4J_dbms_security_procedures_unrestricted=apoc.\\\*+` to your `docker run ...` command.
+If you want to unrestrict a whole package of APOC functions and procedures when using the Neo4j Docker container, you need to amend e.g. `+-e NEO4J_dbms_security_procedures_unrestricted=apoc.cypher.\\\*+` to your `docker run ...` command.
 The three backslashes are necessary to prevent wildcard expansions.
-
-You _can_ also allow procedures and functions in general to be loaded using: `+dbms.security.procedures.allowlist=apoc.coll.*,apoc.load.*+`
 // end::warnings[]
 ====
 
