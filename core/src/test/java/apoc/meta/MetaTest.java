@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
@@ -67,7 +68,8 @@ public class MetaTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"))
             .withSetting(newBuilder( "internal.dbms.debug.track_cursor_close", BOOL, false ).build(), false)
-            .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false);
+            .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false)
+            .withSetting(GraphDatabaseInternalSettings.rel_unique_constraints, true);
 
     @Before
     public void setUp() {
