@@ -20,6 +20,7 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static apoc.util.TestContainerUtil.password;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -147,7 +148,7 @@ public class TestcontainersCausalCluster {
                                        SocatContainer sidecars) {
         this.clusterMembers = clusterMembers;
         this.sidecar = sidecars;
-        this.driver = GraphDatabase.driver(getURI(), AuthTokens.basic("neo4j", "apoc"));
+        this.driver = GraphDatabase.driver(getURI(), AuthTokens.basic("neo4j", password));
         this.session = driver.session();
     }
 
