@@ -16,7 +16,7 @@ import static org.junit.Assert.assertEquals;
 public class RegressionTest {
 
     @ClassRule
-public static DbmsRule db = new ImpermanentDbmsRule();
+    public static DbmsRule db = new ImpermanentDbmsRule();
 
     @BeforeClass
     public static void setUp() {
