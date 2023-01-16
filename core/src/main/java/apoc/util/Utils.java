@@ -18,7 +18,8 @@ public class Utils {
     public TerminationGuard terminationGuard;
 
     @UserFunction("apoc.util.sha1")
-    @Description("Returns the SHA1 of the concatenation of all string values in the given list.")
+    @Description("Returns the SHA1 of the concatenation of all string values in the given list.\n" +
+            "SHA1 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
     public String sha1(@Name("values") List<Object> values) {
         String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
         return DigestUtils.sha1Hex(value);

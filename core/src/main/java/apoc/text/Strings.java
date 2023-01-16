@@ -333,7 +333,8 @@ public class Strings {
     private static final String numeric = "0123456789";
 
     @UserFunction("apoc.text.random")
-    @Description("Generates a random string to the given length using a length parameter and an optional string of valid characters.")
+    @Description("Generates a random string to the given length using a length parameter and an optional string of valid characters.\n" +
+            "Unsuitable for cryptographic use-cases.")
     public String random(final @Name("length") long length, @Name(value = "valid", defaultValue = "A-Za-z0-9") String valid) {
         valid = valid.replaceAll("A-Z", upper).replaceAll("a-z", lower).replaceAll("0-9", numeric);
 
