@@ -32,16 +32,13 @@ import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
-import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.time.Duration;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,7 +70,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.lang.model.SourceVersion;
@@ -91,15 +87,11 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
-import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
-import org.neo4j.internal.kernel.api.security.SecurityContext;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.TerminationGuard;
 
 import static apoc.ApocConfig.apocConfig;
-import static apoc.export.cypher.formatter.CypherFormatterUtils.formatProperties;
-import static apoc.export.cypher.formatter.CypherFormatterUtils.formatToString;
 import static apoc.util.DateFormatUtil.getOrCreate;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -113,7 +105,6 @@ public class Util {
     public static final Label[] NO_LABELS = new Label[0];
     public static final String NODE_COUNT = "MATCH (n) RETURN count(*) as result";
     public static final String REL_COUNT = "MATCH ()-->() RETURN count(*) as result";
-    public static final String COMPILED = "interpreted"; // todo handle enterprise properly
     public static final String ERROR_BYTES_OR_STRING = "Only byte[] or url String allowed";
 
     public static final int REDIRECT_LIMIT = 10;
@@ -169,11 +160,6 @@ public class Util {
         if (id instanceof Relationship) return rebind(tx, (Relationship)id);
         if (id instanceof Number) return tx.getRelationshipById(((Number)id).longValue());
         throw new RuntimeException("Can't convert "+id.getClass()+" to a Relationship");
-    }
-
-    public static double doubleValue(Entity pc, String prop, Number defaultValue) {
-        return toDouble(pc.getProperty(prop, defaultValue));
-
     }
 
     public static <T> T retryInTx(Log log, GraphDatabaseService db, Function<Transaction, T> function, long retry, long maxRetries, Consumer<Long> callbackForRetry) {
@@ -582,30 +568,11 @@ public class Util {
         return errorValue;
     }
 
-    public static boolean isSumOutOfRange(long... numbers) {
-        try {
-            sumLongs(numbers).longValueExact();
-            return false;
-        } catch (ArithmeticException ae) {
-            return true;
-        }
-    }
-
-    public static BigInteger sumLongs(long... numbers) {
-        return LongStream.of(numbers)
-                .mapToObj(BigInteger::valueOf)
-                .reduce(BigInteger.ZERO, (x, y) -> x.add(y));
-    }
-
     public static void logErrors(String message, Map<String, Long> errors, Log log) {
         if (!errors.isEmpty()) {
             log.warn(message);
             errors.forEach((k, v) -> log.warn("%d times: %s",v,k));
         }
-    }
-
-    public static void checkAdmin(SecurityContext securityContext, ProcedureCallContext callContext, String procedureName) {
-        if (!securityContext.allowExecuteAdminProcedure(callContext.id()).allowsAccess()) throw new RuntimeException("This procedure "+ procedureName +" is only available to admin users");
     }
 
     public static void sleep(int millis) {
@@ -803,14 +770,6 @@ public class Util {
         return Optional.ofNullable(value);
     }
 
-    public static String dateFormat(TemporalAccessor value, String format){
-        return getFormat(format).format(value);
-    }
-
-    public static Duration durationParse(String value) {
-        return Duration.parse(value);
-    }
-
     public static DateTimeFormatter getFormat(String format) {
         return getOrCreate(format);
     }
@@ -1000,11 +959,6 @@ public class Util {
 
     public static boolean isSelfRel(Relationship rel) {
         return Objects.equals(rel.getStartNode().getElementId(), rel.getEndNode().getElementId());
-    }
-
-    public static String toCypherMap(Map<String, Object> map) {
-        final StringBuilder builder = formatProperties(map);
-        return "{" + formatToString(builder) + "}";
     }
 
     public static PointValue toPoint(Map<String, Object> pointMap, Map<String, Object> defaultPointMap) {

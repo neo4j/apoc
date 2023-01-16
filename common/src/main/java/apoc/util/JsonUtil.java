@@ -66,10 +66,6 @@ public class JsonUtil {
         }
     }
     
-    public static Stream<Object> loadJson(String url, Map<String,Object> headers, String payload) {
-        return loadJson(url,headers,payload,"", true, null, null);
-    }
-    
     public static Stream<Object> loadJson(Object urlOrBinary, Map<String,Object> headers, String payload, String path, boolean failOnError, List<String> options) {
         return loadJson(urlOrBinary, headers, payload, path, failOnError, null, options);
     }

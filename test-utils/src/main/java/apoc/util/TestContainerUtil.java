@@ -1,6 +1,7 @@
 package apoc.util;
 
 import com.github.dockerjava.api.exception.NotFoundException;
+import java.time.Duration;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -17,7 +18,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -220,10 +220,6 @@ public class TestContainerUtil {
         });
     }
 
-    public static void testCallInReadTransaction(Session session, String call, Consumer<Map<String, Object>> consumer) {
-        testCallInReadTransaction(session, call, null, consumer);
-    }
-
     public static void testCallInReadTransaction(Session session, String call, Map<String,Object> params, Consumer<Map<String, Object>> consumer) {
         testResultInReadTransaction(session, call, params, (res) -> {
             try {
@@ -246,14 +242,6 @@ public class TestContainerUtil {
             tx.commit();
             return null;
         });
-    }
-
-    public static <T> T singleResultFirstColumn(Session session, String cypher, Map<String,Object> params) {
-        return (T) session.writeTransaction(tx -> tx.run(cypher, params).single().fields().get(0).value().asObject());
-    }
-
-    public static <T> T singleResultFirstColumn(Session session, String cypher) {
-        return singleResultFirstColumn(session, cypher, Map.of());
     }
 
     public static boolean isDockerImageAvailable(Exception ex) {

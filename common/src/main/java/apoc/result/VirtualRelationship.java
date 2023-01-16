@@ -41,6 +41,7 @@ public class VirtualRelationship implements Relationship {
         this.type = type;
     }
 
+    @SuppressWarnings("unused") // used from extended
     public VirtualRelationship(long id, Node startNode, Node endNode, RelationshipType type, Map<String, Object> props) {
         validateNodes(startNode, endNode);
         this.id = id;

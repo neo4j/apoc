@@ -1,6 +1,5 @@
 package apoc.load;
 
-import apoc.load.util.LoadCsvConfig;
 import apoc.meta.Types;
 import apoc.util.Util;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +14,6 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -28,7 +26,6 @@ import static java.util.Collections.emptyList;
 import static org.neo4j.configuration.GraphDatabaseSettings.db_temporal_timezone;
 
 public class Mapping {
-    public static final Mapping EMPTY = new Mapping("", Collections.emptyMap(), LoadCsvConfig.DEFAULT_ARRAY_SEP, false);
     final String name;
     final Collection<String> nullValues;
     final Types type;

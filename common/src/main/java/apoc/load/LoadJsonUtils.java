@@ -11,9 +11,6 @@ import java.util.stream.Stream;
 import org.neo4j.procedure.Name;
 
 public class LoadJsonUtils {
-    public static Stream<MapResult> loadJsonStream(@Name("url") Object url, @Name("headers") Map<String, Object> headers, @Name("payload") String payload) {
-        return loadJsonStream(url, headers, payload, "", true, null, null);
-    }
     public static Stream<MapResult> loadJsonStream(@Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary, @Name("headers") Map<String, Object> headers, @Name("payload") String payload, String path, boolean failOnError, String compressionAlgo, List<String> pathOptions) {
         if (urlOrKeyOrBinary instanceof String) {
             headers = null != headers ? headers : new HashMap<>();

@@ -266,10 +266,6 @@ public class ApocConfig extends LifecycleAdapter {
      * delegate methods for Configuration
      */
 
-    public boolean containsKey(String key) {
-        return getConfig().containsKey(key);
-    }
-
     public String getString(String key) {
         return getConfig().getString(key);
     }
@@ -284,10 +280,6 @@ public class ApocConfig extends LifecycleAdapter {
 
     public boolean getBoolean(String key) {
         return getConfig().getBoolean(key);
-    }
-
-    public boolean getBoolean(String key, boolean defaultValue) {
-        return getConfig().getBoolean(key, defaultValue);
     }
 
     public boolean isImportFolderConfigured() {

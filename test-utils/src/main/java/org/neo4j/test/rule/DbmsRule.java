@@ -194,11 +194,6 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
         return this;
     }
 
-    public void restartDatabase()
-    {
-        restartDatabase( Map.of() );
-    }
-
     public void restartDatabase( Map<Setting<?>,Object> configChanges ) {
         managementService.shutdown();
         database = null;
