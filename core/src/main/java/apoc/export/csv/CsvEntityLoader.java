@@ -141,7 +141,7 @@ public class CsvEntityLoader {
                     btx.increment();
                     reporter.update(1, 0, props++);
                 });
-                btx.commit();
+                btx.doCommit();
             } catch (RuntimeException e) {
                 btx.rollback();
                 throw e;
@@ -192,11 +192,11 @@ public class CsvEntityLoader {
             try (final var csv = new CSVReaderBuilder(reader).withCSVParser(parser).build()) {
                 final String[] loadCsvCompatibleHeader = fields.stream().map(f -> f.getName()).toArray(String[]::new);
 
-            AtomicInteger lineNo = new AtomicInteger();
-            BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
-            try {
-                csv.forEach(line -> {
-                    lineNo.getAndIncrement();
+                AtomicInteger lineNo = new AtomicInteger();
+                BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
+                try {
+                    csv.forEach(line -> {
+                        lineNo.getAndIncrement();
 
                         final EnumSet<Results> results = EnumSet.of(Results.map);
                         final CSVResult result = new CSVResult(
@@ -226,23 +226,24 @@ public class CsvEntityLoader {
                         }
                         final Relationship rel = source.createRelationshipTo(target, RelationshipType.withName(currentType));
 
-                    // add properties
-                    int props = 0;
-                    for (CsvHeaderField field : edgePropertiesFields) {
-                        final String name = field.getName();
-                        Object value = result.map.get(name);
-                        boolean propertyAdded = CsvPropertyConverter.addPropertyToGraphEntity(rel, field, value, clc);
-                        props += propertyAdded ? 1 : 0;
-                    }
-                    btx.increment();
-                    reporter.update(0, 1, props);
-                });
-                btx.commit();
-            } catch (RuntimeException e) {
-                btx.rollback();
-                throw e;
-            } finally {
-                btx.close();
+                        // add properties
+                        int props = 0;
+                        for (CsvHeaderField field : edgePropertiesFields) {
+                            final String name = field.getName();
+                            Object value = result.map.get(name);
+                            boolean propertyAdded = CsvPropertyConverter.addPropertyToGraphEntity(rel, field, value, clc);
+                            props += propertyAdded ? 1 : 0;
+                        }
+                        btx.increment();
+                        reporter.update(0, 1, props);
+                    });
+                    btx.doCommit();
+                } catch (RuntimeException e) {
+                    btx.rollback();
+                    throw e;
+                } finally {
+                    btx.close();
+                }
             }
         }
     }

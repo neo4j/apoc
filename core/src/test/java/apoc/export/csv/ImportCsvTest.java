@@ -245,7 +245,7 @@ public class ImportCsvTest {
                     (r) -> fail());
         } catch (RuntimeException e) {
             String expected = "Failed to invoke procedure `apoc.import.csv`: " +
-                    "Caused by: IndexEntryConflictException{propertyValues=( String(\"John\") ), addedNodeId=-1, existingNodeId=0}";
+                    "Caused by: IndexEntryConflictException{propertyValues=( String(\"John\") ), addedEntityId=-1, existingEntityId=0}";
             assertEquals(expected, e.getMessage());
         }
 

@@ -291,7 +291,7 @@ public class XmlGraphMLReader {
                     }
                 }
             }
-            tx.commit();
+            tx.doCommit();
         } catch (Exception e) {
             tx.rollback();
             throw e;

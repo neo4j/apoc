@@ -32,8 +32,8 @@ public class BatchTransaction implements AutoCloseable {
     public void rollback() {
         tx.rollback();
     }
-    
-    private void doCommit() {
+
+    public void doCommit() {
         tx.commit();
         tx.close();
         if (reporter!=null) reporter.progress("commit after " + count + " row(s) ");
