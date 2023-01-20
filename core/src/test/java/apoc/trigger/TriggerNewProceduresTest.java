@@ -32,6 +32,7 @@ import static apoc.ApocConfig.SUN_JAVA_COMMAND;
 import static apoc.trigger.TriggerNewProcedures.DB_NOT_FOUND_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_BAD_TARGET_ERROR;
 import static apoc.trigger.TriggerNewProcedures.NON_SYS_DB_ERROR;
+import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
@@ -534,7 +535,7 @@ public class TriggerNewProceduresTest {
             testCall(db, "CALL apoc.trigger.install('neo4j', 'userDb', 'RETURN 1',{})",
                     r -> fail("Should fail because of user db execution"));
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains(NON_SYS_DB_ERROR));
+            assertTrue(e.getMessage().contains(TRIGGER_NOT_ROUTED_ERROR));
         }
     }
     

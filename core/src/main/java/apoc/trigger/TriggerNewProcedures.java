@@ -31,15 +31,19 @@ public class TriggerNewProcedures {
     
     @Context public Transaction tx;
 
-    private void checkInSystem(boolean checkWriteable) {
+    private void checkInSystemWriter() {
         TriggerHandlerNewProcedures.checkEnabled();
         
+        if (!db.databaseName().equals(SYSTEM_DATABASE_NAME) || !Util.isWriteableInstance(db)) {
+            throw new RuntimeException(TRIGGER_NOT_ROUTED_ERROR);
+        }
+    }
+    
+    private void checkInSystem() {
+        TriggerHandlerNewProcedures.checkEnabled();
+
         if (!db.databaseName().equals(SYSTEM_DATABASE_NAME)) {
             throw new RuntimeException(NON_SYS_DB_ERROR);
-        }
-        
-        if (checkWriteable && !Util.isWriteableInstance(db)) {
-            throw new RuntimeException(TRIGGER_NOT_ROUTED_ERROR);
         }
     }
 
@@ -63,7 +67,7 @@ public class TriggerNewProcedures {
     @Procedure(mode = Mode.WRITE)
     @Description("Eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
     public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("statement") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
-        checkInSystem(true);
+        checkInSystemWriter();
         checkTargetDatabase(databaseName);
         Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
         TriggerInfo removed = TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params);
@@ -81,7 +85,7 @@ public class TriggerNewProcedures {
     @Procedure(mode = Mode.WRITE)
     @Description("Eventually removes an existing trigger, returns the trigger's information")
     public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name")String name) {
-        checkInSystem(true);
+        checkInSystemWriter();
         final TriggerInfo removed = TriggerHandlerNewProcedures.drop(databaseName, name);
         if (removed == null) {
             return Stream.of(new TriggerInfo(name, null, null, false, false));
@@ -96,7 +100,7 @@ public class TriggerNewProcedures {
     @Procedure(mode = Mode.WRITE)
     @Description("Eventually removes all previously added trigger, returns triggers' information")
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
-        checkInSystem(true);
+        checkInSystemWriter();
         return TriggerHandlerNewProcedures.dropAll(databaseName)
                 .stream().sorted(Comparator.comparing(i -> i.name));
     }
@@ -107,7 +111,7 @@ public class TriggerNewProcedures {
     @Procedure(mode = Mode.WRITE)
     @Description("Eventually pauses the trigger")
     public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name")String name) {
-        checkInSystem(true);
+        checkInSystemWriter();
 
         return Stream.of(
                 TriggerHandlerNewProcedures.updatePaused(databaseName, name, true));
@@ -119,7 +123,7 @@ public class TriggerNewProcedures {
     @Procedure(mode = Mode.WRITE)
     @Description("Eventually unpauses the paused trigger")
     public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name")String name) {
-        checkInSystem(true);
+        checkInSystemWriter();
         final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false);
 
         return Stream.of(triggerInfo);
@@ -131,7 +135,7 @@ public class TriggerNewProcedures {
     @Procedure(mode = Mode.READ)
     @Description("Lists all eventually installed triggers for a database")
     public Stream<TriggerInfo> show(@Name("databaseName") String databaseName) {
-        checkInSystem(false);
+        checkInSystem();
 
         return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx);
     }
