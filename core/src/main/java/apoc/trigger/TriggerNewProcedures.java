@@ -77,7 +77,7 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Admin
     @Procedure(mode = Mode.WRITE)
-    @Description("Eventually removes an existing trigger, returns the trigger's information")
+    @Description("Eventually removes the given trigger.")
     public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
         final TriggerInfo removed = TriggerHandlerNewProcedures.drop(databaseName, name);
@@ -92,7 +92,7 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Admin
     @Procedure(mode = Mode.WRITE)
-    @Description("Eventually removes all previously added trigger, returns triggers' information")
+    @Description("Eventually removes all triggers from the given database.")
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
         return TriggerHandlerNewProcedures.dropAll(databaseName)
@@ -103,7 +103,7 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Admin
     @Procedure(mode = Mode.WRITE)
-    @Description("Eventually pauses the trigger")
+    @Description("Eventually stops the given trigger.")
     public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
 
@@ -115,7 +115,7 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Admin
     @Procedure(mode = Mode.WRITE)
-    @Description("Eventually unpauses the paused trigger")
+    @Description("Eventually restarts the given paused trigger.")
     public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name")String name) {
         checkInSystemWriter();
         final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false);
@@ -127,7 +127,7 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Admin
     @Procedure(mode = Mode.READ)
-    @Description("Lists all eventually installed triggers for a database")
+    @Description("Lists all eventually installed triggers for a database.")
     public Stream<TriggerInfo> show(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
 
