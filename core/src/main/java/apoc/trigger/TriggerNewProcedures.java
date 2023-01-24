@@ -23,7 +23,8 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 
 
 public class TriggerNewProcedures {
-    public static final String TRIGGER_NOT_ROUTED_ERROR = "The procedure should be routed and executed against a writer database.";
+    public static final String TRIGGER_NOT_ROUTED_ERROR = "No write operations are allowed directly on this database. " +
+            "Writes must pass through the leader. The role of this server is: FOLLOWER";
     public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
     public static final String DB_NOT_FOUND_ERROR = "The user database with name '%s' does not exist";
 
