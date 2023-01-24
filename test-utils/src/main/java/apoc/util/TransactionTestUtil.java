@@ -13,6 +13,7 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.neo4j.test.assertion.Assert.assertEventually;
@@ -100,12 +101,16 @@ public class TransactionTestUtil {
                             return false;
                         }
                         transactionId[0] = msgIterator.next();
-                        return transactionId[0] != null;
+                        assertNotNull( transactionId[0] );// != null;
+
+                        // sometimes `TERMINATE TRANSACTION $transactionId` fails with `Transaction not found`
+                        // even if has been retrieved by `SHOW TRANSACTIONS`
+                        testCall(db, "TERMINATE TRANSACTION $transactionId",
+                                map("transactionId", transactionId[0]),
+                                r1 -> assertEquals("Transaction terminated.", r1.get("message")));
+                        
+                        return true;
                     }), (value) -> value, timeout, TimeUnit.SECONDS);
-    
-            testCall(db, "TERMINATE TRANSACTION $transactionId",
-                    map("transactionId", transactionId[0]),
-                    result -> assertEquals("Transaction terminated.", result.get("message")));
         }).start();
 
     }
