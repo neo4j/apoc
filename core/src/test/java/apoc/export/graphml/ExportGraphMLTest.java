@@ -293,7 +293,7 @@ public class ExportGraphMLTest {
                     (r) -> fail());
         } catch (Exception e) {
             String expected = "Failed to invoke procedure `apoc.import.graphml`: " +
-                    "Caused by: IndexEntryConflictException{propertyValues=( String(\"foo\") ), addedNodeId=-1, existingNodeId=3}";
+                    "Caused by: IndexEntryConflictException{propertyValues=( String(\"foo\") ), addedEntityId=-1, existingEntityId=3}";
             assertEquals(expected, e.getMessage());
         }
 
