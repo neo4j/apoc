@@ -663,13 +663,27 @@ public class Util {
         return with.isEmpty() ? with : " WITH "+with+" ";
     }
 
+    public static boolean isWriteableInstance( GraphDatabaseAPI db, Transaction systemTx ) {
+        var socketAddress = db.getDependencyResolver().resolveDependency( Config.class ).get( BoltConnector.advertised_address ).toString();
+        String query = "SHOW DATABASE $databaseName WHERE address = $socketAddress";
+        final Map<String, Object> params = Map.of("databaseName", db.databaseName(), "socketAddress", socketAddress);
+        if (systemTx == null) {
+            GraphDatabaseService systemDb = db.getDependencyResolver().resolveDependency( DatabaseManagementService.class ).database( SYSTEM_DATABASE_NAME );
+            return systemDb.executeTransactionally(query, params, Util::getSingleWriter);
+        } else {
+            final Result result = systemTx.execute(query, params);
+            return getSingleWriter(result);
+        }
+    }
+    
+
     public static boolean isWriteableInstance( GraphDatabaseAPI db )
     {
-        var socketAddress = db.getDependencyResolver().resolveDependency( Config.class ).get( BoltConnector.advertised_address ).toString();
-        GraphDatabaseService systemDb = db.getDependencyResolver().resolveDependency( DatabaseManagementService.class ).database( SYSTEM_DATABASE_NAME );
-        Boolean writer = systemDb.executeTransactionally( "SHOW DATABASE $databaseName WHERE address = $socketAddress",
-                Map.of( "databaseName", db.databaseName(), "socketAddress", socketAddress ), result -> Iterators.single( result.columnAs( "writer" ) ) );
-        return writer;
+        return isWriteableInstance(db, null);
+    }
+
+    private static Boolean getSingleWriter(Result result) {
+        return Iterators.single(result.columnAs("writer"));
     }
 
     /**
