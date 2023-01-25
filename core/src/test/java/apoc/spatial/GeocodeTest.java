@@ -2,7 +2,10 @@ package apoc.spatial;
 
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
+import inet.ipaddr.IPAddressString;
 import org.junit.*;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -10,6 +13,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
@@ -19,8 +23,16 @@ import static org.junit.Assert.*;
 
 public class GeocodeTest {
 
+    private static final String BLOCKED_ADDRESS = "127.168.0.0";
+    private static final String NON_BLOCKED_ADDRESS = "123.456.7.8";
+    private static final String BLOCKED_ERROR = "access to /" + BLOCKED_ADDRESS + " is blocked via the configuration property internal.dbms.cypher_ip_blocklist";
+    private static final String SOCKED_TIMEOUT_ERROR = "java.net.SocketTimeoutException: Connect timed out";
+    private static final String URL_FORMAT = "%s://%s/geocode/v1/json?q=PLACE&key=KEY";
+    private static final String REVERSE_URL_FORMAT = "%s://%s/geocode/v1/json?q=LAT+LNG&key=KEY";
+
     @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    public static DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting( GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString(BLOCKED_ADDRESS)) );
 
     @BeforeClass
     public static void initDb() {
@@ -39,8 +51,92 @@ public class GeocodeTest {
         testGeocodeWithThrottling("osm", false, 
                 map("url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"));
     }
+
+    @Test
+    public void testGeocodeWithBlockedAddressWithApocConf() {
+        final String geocodeConfig = Geocode.PREFIX + "." + "opencage";
+        apocConfig().setProperty(geocodeConfig + ".key", "myKey");
+        
+        Stream.of("https", "http", "ftp").forEach(protocol -> {
+            final String nonBlockedUrl = String.format(URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
+            final String nonBlockedReverseUrl = String.format(REVERSE_URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
+            
+            // check that if either url or reverse address are blocked 
+            // respectively the apoc.spatial.geocode and the apoc.spatial.reverseGeocode procedure fails
+            apocConfig().setProperty(geocodeConfig + ".url", nonBlockedUrl);
+            apocConfig().setProperty(geocodeConfig + ".reverse.url", String.format(REVERSE_URL_FORMAT, protocol, BLOCKED_ADDRESS));
+
+            assertGeocodeFails(true, BLOCKED_ERROR);
+            
+            apocConfig().setProperty(geocodeConfig + ".url", String.format(URL_FORMAT, protocol, BLOCKED_ADDRESS));
+            apocConfig().setProperty(geocodeConfig + ".reverse.url", nonBlockedReverseUrl);
+            
+            assertGeocodeFails(false, BLOCKED_ERROR);
+
+            // check that if neither url nor reverse url are blocked 
+            // the procedures continue the execution (in this case by throwing a SocketTimeoutException)
+            apocConfig().setProperty(geocodeConfig + ".url", nonBlockedUrl);
+            apocConfig().setProperty(geocodeConfig + ".reverse.url", nonBlockedReverseUrl);
+            
+            assertGeocodeFails(false, SOCKED_TIMEOUT_ERROR);
+            assertGeocodeFails(true, SOCKED_TIMEOUT_ERROR);
+        });
+    }
     
-    // -- with apoc config
+    @Test
+    public void testGeocodeWithBlockedAddressWithConfigMap() {
+        Stream.of("https", "http", "ftp").forEach(protocol -> {
+
+            final String nonBlockedUrl = String.format(URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
+            final String nonBlockedReverseUrl = String.format(REVERSE_URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
+            
+            // check that if either url or reverse address are blocked 
+            // respectively the apoc.spatial.geocode and the apoc.spatial.reverseGeocode procedure fails
+            assertGeocodeFails(true, BLOCKED_ERROR, 
+                    nonBlockedUrl,
+                    String.format(REVERSE_URL_FORMAT, protocol, BLOCKED_ADDRESS)
+            );
+
+            assertGeocodeFails(false, BLOCKED_ERROR, 
+                    String.format(URL_FORMAT, protocol, BLOCKED_ADDRESS),
+                    nonBlockedReverseUrl
+            );
+
+            // check that if neither url nor reverse url are blocked 
+            // the procedures continue the execution (in this case by throwing a SocketTimeoutException)
+            assertGeocodeFails(false, SOCKED_TIMEOUT_ERROR,
+                    nonBlockedUrl,
+                    nonBlockedReverseUrl
+            );
+            
+            assertGeocodeFails(true, SOCKED_TIMEOUT_ERROR,
+                    nonBlockedUrl,
+                    nonBlockedReverseUrl
+            );
+        });
+    }
+
+    private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError, String url, String reverseUrl) {
+        assertGeocodeFails(reverseGeocode, expectedMsgError, 
+                Map.of("key", "myOwnKey", 
+                        "url", url, 
+                        "reverseUrl", reverseUrl)
+        );
+    }
+
+    private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError) {
+        assertGeocodeFails(reverseGeocode, expectedMsgError, Collections.emptyMap());
+    }
+
+    private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError, Map<String, Object> conf) {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testGeocodeWithThrottling( "opencage", reverseGeocode, conf )
+        );
+
+        final String actualMsgErr = e.getMessage();
+        assertTrue("Actual err. message is " + actualMsgErr, actualMsgErr.contains(expectedMsgError));
+    }
+
     @Test
     public void testGeocodeOSM() throws Exception {
         testGeocodeWithThrottling("osm", false);
