@@ -26,7 +26,7 @@ public class GeocodeTest {
     private static final String BLOCKED_ADDRESS = "127.168.0.0";
     private static final String NON_BLOCKED_ADDRESS = "123.456.7.8";
     private static final String BLOCKED_ERROR = "access to /" + BLOCKED_ADDRESS + " is blocked via the configuration property internal.dbms.cypher_ip_blocklist";
-    private static final String SOCKED_TIMEOUT_ERROR = "java.net.SocketTimeoutException: Connect timed out";
+    private static final String JAVA_NET_EXCEPTION = "Caused by: java.net";
     private static final String URL_FORMAT = "%s://%s/geocode/v1/json?q=PLACE&key=KEY";
     private static final String REVERSE_URL_FORMAT = "%s://%s/geocode/v1/json?q=LAT+LNG&key=KEY";
 
@@ -54,32 +54,35 @@ public class GeocodeTest {
 
     @Test
     public void testGeocodeWithBlockedAddressWithApocConf() {
-        final String geocodeConfig = Geocode.PREFIX + "." + "opencage";
-        apocConfig().setProperty(geocodeConfig + ".key", "myKey");
+        final String geocodeBaseConfig = Geocode.PREFIX + "." + "opencage";
+        apocConfig().setProperty(geocodeBaseConfig + ".key", "myKey");
         
         Stream.of("https", "http", "ftp").forEach(protocol -> {
             final String nonBlockedUrl = String.format(URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
             final String nonBlockedReverseUrl = String.format(REVERSE_URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
             
+            final String geocodeConfigUrl = geocodeBaseConfig + ".url";
+            final String geocodeConfigReverseUrl = geocodeBaseConfig + ".reverse.url";
+            
             // check that if either url or reverse address are blocked 
             // respectively the apoc.spatial.geocode and the apoc.spatial.reverseGeocode procedure fails
-            apocConfig().setProperty(geocodeConfig + ".url", nonBlockedUrl);
-            apocConfig().setProperty(geocodeConfig + ".reverse.url", String.format(REVERSE_URL_FORMAT, protocol, BLOCKED_ADDRESS));
+            apocConfig().setProperty(geocodeConfigUrl, nonBlockedUrl);
+            apocConfig().setProperty(geocodeConfigReverseUrl, String.format(REVERSE_URL_FORMAT, protocol, BLOCKED_ADDRESS));
 
             assertGeocodeFails(true, BLOCKED_ERROR);
             
-            apocConfig().setProperty(geocodeConfig + ".url", String.format(URL_FORMAT, protocol, BLOCKED_ADDRESS));
-            apocConfig().setProperty(geocodeConfig + ".reverse.url", nonBlockedReverseUrl);
+            apocConfig().setProperty(geocodeConfigUrl, String.format(URL_FORMAT, protocol, BLOCKED_ADDRESS));
+            apocConfig().setProperty(geocodeConfigReverseUrl, nonBlockedReverseUrl);
             
             assertGeocodeFails(false, BLOCKED_ERROR);
 
             // check that if neither url nor reverse url are blocked 
-            // the procedures continue the execution (in this case by throwing a SocketTimeoutException)
-            apocConfig().setProperty(geocodeConfig + ".url", nonBlockedUrl);
-            apocConfig().setProperty(geocodeConfig + ".reverse.url", nonBlockedReverseUrl);
+            // the procedures continue the execution (in this case by throwing a `java.net` tException)
+            apocConfig().setProperty(geocodeConfigUrl, nonBlockedUrl);
+            apocConfig().setProperty(geocodeConfigReverseUrl, nonBlockedReverseUrl);
             
-            assertGeocodeFails(false, SOCKED_TIMEOUT_ERROR);
-            assertGeocodeFails(true, SOCKED_TIMEOUT_ERROR);
+            assertGeocodeFails(false, JAVA_NET_EXCEPTION);
+            assertGeocodeFails(true, JAVA_NET_EXCEPTION);
         });
     }
     
@@ -103,13 +106,13 @@ public class GeocodeTest {
             );
 
             // check that if neither url nor reverse url are blocked 
-            // the procedures continue the execution (in this case by throwing a SocketTimeoutException)
-            assertGeocodeFails(false, SOCKED_TIMEOUT_ERROR,
+            // the procedures continue the execution (in this case by throwing a `java.net` Exception)
+            assertGeocodeFails(false, JAVA_NET_EXCEPTION,
                     nonBlockedUrl,
                     nonBlockedReverseUrl
             );
             
-            assertGeocodeFails(true, SOCKED_TIMEOUT_ERROR,
+            assertGeocodeFails(true, JAVA_NET_EXCEPTION,
                     nonBlockedUrl,
                     nonBlockedReverseUrl
             );
