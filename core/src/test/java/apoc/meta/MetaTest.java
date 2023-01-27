@@ -11,16 +11,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
@@ -34,13 +28,7 @@ import org.neo4j.values.storable.Values;
 import java.io.InputStreamReader;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -199,6 +187,38 @@ public class MetaTest {
         });
         
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testSampling() {
+        MetaConfig config = Mockito.mock(MetaConfig.class);
+        Mockito.when(config.getSample()).thenReturn(2l);
+
+        Label labelFromLabel = Label.label("A");
+        Label labelToLabel = Label.label("B");
+        RelationshipType relationshipType = RelationshipType.withName("R");
+        Direction direction = Direction.OUTGOING;
+
+        Transaction tx = Mockito.mock(Transaction.class);
+        ResourceIterator<Node> nodes = Mockito.mock(ResourceIterator.class);
+        ResourceIterable<Relationship> relationships = Mockito.mock(ResourceIterable.class);
+        ResourceIterator<Relationship> relationshipIterator =  Mockito.mock(ResourceIterator.class);
+        Node node = Mockito.mock(Node.class);
+        Relationship relationship = Mockito.mock(Relationship.class);
+
+        Mockito.when(tx.findNodes(labelFromLabel)).thenReturn(nodes);
+        Mockito.when(nodes.hasNext()).thenReturn(true, true, true, true, false);
+        Mockito.when(nodes.next()).thenReturn(node, node, node, node);
+
+
+        Mockito.when(node.getRelationships(direction, relationshipType)).thenReturn(relationships);
+        Mockito.when(relationships.iterator()).thenReturn(relationshipIterator);
+        Map<String, Long> countStore = Collections.singletonMap("A", 4l);
+
+        assertFalse(
+                Meta.relationshipExists(tx, countStore, labelFromLabel, labelToLabel, relationshipType, direction, config));
+        Mockito.verify(nodes, Mockito.times(4)).next();
+        Mockito.verify(node, Mockito.times(2)).getRelationships(Mockito.any(), Mockito.any());
     }
 
     @Test

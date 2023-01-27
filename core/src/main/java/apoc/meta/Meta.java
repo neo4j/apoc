@@ -83,7 +83,6 @@ public class Meta {
         public boolean existence;
         public String type;
         public boolean array;
-        public List<Object> sample;
         public long left; // 0,1,
         public long right; // 0,1,many
         public List<String> other = new ArrayList<>();
@@ -458,7 +457,7 @@ public class Meta {
             }
         }
 
-        Map<String, Long> countStore = getLabelCountStore();
+        Map<String, Long> countStore = getLabelCountStore(transaction, kernelTx);
 
         Set<String> includeLabels = config.getIncludesLabels();
         Set<String> excludes = config.getExcludes();
@@ -544,7 +543,7 @@ public class Meta {
                 .collect(Collectors.toSet());
     }
 
-    private Map<String, Long> getLabelCountStore() {
+    private static Map<String, Long> getLabelCountStore(Transaction tx, KernelTransaction kernelTx) {
         List<String> labels = Iterables.stream(tx.getAllLabelsInUse()).map( Label::name ).collect( Collectors.toList());
         TokenRead tokenRead = kernelTx.tokenRead();
         return labels
@@ -552,7 +551,7 @@ public class Meta {
                 .collect(Collectors.toMap(e -> e, e -> kernelTx.dataRead().countsForNodeWithoutTxState(tokenRead.nodeLabel(e))));
     }
 
-    public long getSampleForLabelCount(long labelCount, long sample) {
+    public static long getSampleForLabelCount(long labelCount, long sample) {
         if(sample != -1L) {
             long skipCount = labelCount / sample;
             long min = (long) Math.floor(skipCount - (skipCount * 0.1D));
@@ -914,20 +913,18 @@ public class Meta {
         double degreeFrom = (double)(long)relationship.getProperty("out")  / (long)relationship.getStartNode().getProperty("count");
         double degreeTo = (double)(long)relationship.getProperty("in")  / (long)relationship.getEndNode().getProperty("count");
 
+        Map<String, Long> countStore = getLabelCountStore(tx, kernelTx);
         if (degreeFrom < degreeTo) {
-            if (relationshipExists(p.labelFrom(), p.labelTo(), p.relationshipType(), Direction.OUTGOING, metaConfig)) return true;
+            return relationshipExists(tx, countStore, p.labelFrom(), p.labelTo(), p.relationshipType(), Direction.OUTGOING, metaConfig);
         } else {
-            if (relationshipExists(p.labelTo(), p.labelFrom(), p.relationshipType(), Direction.INCOMING, metaConfig)) return true;
+            return relationshipExists(tx, countStore, p.labelTo(), p.labelFrom(), p.relationshipType(), Direction.INCOMING, metaConfig);
         }
-        return false;
     }
 
-    private boolean relationshipExists(Label labelFromLabel, Label labelToLabel, RelationshipType relationshipType, Direction direction, MetaConfig metaConfig) {
-        Map<String, Long> countStore = getLabelCountStore();
+    static boolean relationshipExists(Transaction tx, Map<String, Long>  countStore, Label labelFromLabel, Label labelToLabel, RelationshipType relationshipType, Direction direction, MetaConfig metaConfig) {
         try (ResourceIterator<Node> nodes = tx.findNodes(labelFromLabel)) {
-            long count = 1L;
-            String labelName = labelFromLabel.name();
-            long labelCount = countStore.get(labelName);
+            long count = 0L;
+            long labelCount = countStore.get( labelFromLabel.name());
             long sample = getSampleForLabelCount(labelCount, metaConfig.getSample());
             while (nodes.hasNext()) {
                 count++;
