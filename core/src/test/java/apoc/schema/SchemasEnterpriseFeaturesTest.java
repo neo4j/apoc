@@ -125,14 +125,14 @@ public class SchemasEnterpriseFeaturesTest {
             schemaNodeKeyAssertions(r);
             assertEquals("", r.get("status"));
             assertEquals("NODE_KEY", r.get("type"));
-            final String expectedUserDescConstraint = "name='node_key_movie', type='NODE KEY', schema=(:Movie {first, second}), ownedIndex=11 )";
+            final String expectedUserDescConstraint = "name='node_key_movie', type='NODE KEY', schema=(:Movie {first, second}), ownedIndex";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
 
             r = result.next();
             schemaNodeKeyAssertions(r);
             assertEquals("ONLINE", r.get("status"));
             assertEquals("RANGE", r.get("type"));
-            final String expectedUserDescIdx = "name='node_key_movie', type='RANGE', schema=(:Movie {first, second}), indexProvider='range-1.0', owningConstraint=12";
+            final String expectedUserDescIdx = "name='node_key_movie', type='RANGE', schema=(:Movie {first, second}), indexProvider='range-1.0', owningConstraint";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescIdx);
             
             assertFalse(result.hasNext());
@@ -485,7 +485,7 @@ public class SchemasEnterpriseFeaturesTest {
             assertEquals(":Foo(bar,foo)", r.get("name"));
             assertEquals("ONLINE", r.get("status"));
             assertEquals("Foo", r.get("label"));
-            assertEquals("INDEX", r.get("type"));
+            assertEquals("RANGE", r.get("type"));
             assertTrue(((List<String>) r.get("properties")).contains("bar"));
             assertTrue(((List<String>) r.get("properties")).contains("foo"));
 
@@ -642,7 +642,7 @@ public class SchemasEnterpriseFeaturesTest {
                     r = result.next();
 
                     assertEquals(":KNOWS(day,year)", r.get("name"));
-                    assertEquals("INDEX", r.get("type"));
+                    assertEquals("RANGE", r.get("type"));
                     assertEquals("KNOWS", r.get("relationshipType"));
                     assertEquals(List.of("day", "year"), r.get("properties"));
                     assertFalse(result.hasNext());

@@ -405,7 +405,7 @@ public class SchemasTest {
 
             assertEquals("RANGE", r.get("type"));
             assertEquals("ONLINE", r.get("status"));
-            final String expectedUserDescBarIdx = "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint=4";
+            final String expectedUserDescBarIdx = "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
             r = result.next();
 
