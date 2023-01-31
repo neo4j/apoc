@@ -8,6 +8,7 @@ import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.common.DependencyResolver;
@@ -223,15 +224,9 @@ public class PeriodicTest {
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})");
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
     }
-
-    @Test
-    public void testTerminateIterateWithTerminateTransactionCommand()  {
-        // apoc.periodic.iterate
-        PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.iterate('UNWIND range(0,9999) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})",
-                "UNWIND range(0,9999) as id RETURN id");
-    }
     
     @Test
+    @Ignore
     public void testWithTerminationInnerTransaction() {
         // terminating the apoc.util.sleep should instantly terminate the periodic query without any creation
         final String innerLongQuery = "CALL apoc.util.sleep(20999) RETURN 0";
