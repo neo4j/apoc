@@ -93,12 +93,10 @@ public class TriggerClusterRoutingTest {
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
             if (dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
-                System.out.println("address = " + address);
                 final String name = UUID.randomUUID().toString();
                 testTrigger.accept(session, name);
             } else {
                 try {
-                    System.out.println("should fail...");
                     testCall(session, query,
                             Map.of("name", UUID.randomUUID().toString()),
                             row -> fail("Should fail because of non writer trigger addition"));
