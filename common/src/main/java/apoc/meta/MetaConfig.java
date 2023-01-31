@@ -13,30 +13,31 @@ public class MetaConfig {
     private final Set<String> includesRels;
     private final Set<String> excludes;
     private final Set<String> excludeRels;
-    private final long maxRels;
-    private final long sample;
     private final boolean addRelationshipsBetweenNodes;
+
+    private SampleMetaConfig sampleMetaConfig;
 
     /**
      * A map of values, with the following keys and meanings.
-     * - labels: a list of strings, which are allowlisted node labels. If this list
+     * - includeLabels: a list of strings, which are allowlisted node labels. If this list
      * is specified **only these labels** will be examined.
-     * - rels: a list of strings, which are allowlisted rel types.  If this list is
+     * - includeRels: a list of strings, which are allowlisted rel types.  If this list is
      * specified, **only these reltypes** will be examined.
-     * - excludes: a list of strings, which are node labels.  This
+     * - excludeLabels: a list of strings, which are node labels.  This
+     * works like a denylist: if listed here, the thing won't be considered.  Everything
+     * - excludeRels: a list of strings, which are relationship types.  This
      * works like a denylist: if listed here, the thing won't be considered.  Everything
      * else (subject to the allowlist) will be.
      * - sample: a long number, i.e. "1 in (SAMPLE)".  If set to 1000 this means that
      * every 1000th node will be examined.  It does **not** mean that a total of 1000 nodes
      * will be sampled.
-     * - maxRels: the maximum number of relationships of a given type to look at.
-     * @param config
+     * - maxRels: the maximum number of relationships to look at per Node Label.
      */
-
-    public MetaConfig(Map<String,Object> config) {
+    public MetaConfig(Map<String,Object> config, Boolean shouldSampleByDefault) {
         config = config != null ? config : Collections.emptyMap();
 
-        // To maintain backwards compatibility, need to still support "labels", "rels" and "excludes" for "includeLabels", "includeRels" and "excludeLabels" respectively.
+        // TODO: Remove in 6.0: To maintain backwards compatibility until then we still need to still support;
+        // "labels", "rels" and "excludes" for "includeLabels", "includeRels" and "excludeLabels" respectively.
 
         Set<String> includesLabelsLocal = new HashSet<>((Collection<String>)config.getOrDefault("labels",Collections.EMPTY_SET));
         Set<String> includesRelsLocal = new HashSet<>((Collection<String>)config.getOrDefault("rels",Collections.EMPTY_SET));
@@ -57,9 +58,12 @@ public class MetaConfig {
         this.includesRels = includesRelsLocal;
         this.excludes = excludesLocal;
         this.excludeRels = new HashSet<>((Collection<String>)config.getOrDefault("excludeRels",Collections.EMPTY_SET));
-        this.sample = (long) config.getOrDefault("sample", 1000L);
-        this.maxRels = (long) config.getOrDefault("maxRels", 100L);
+        this.sampleMetaConfig = new SampleMetaConfig(config, shouldSampleByDefault);
         this.addRelationshipsBetweenNodes = Util.toBoolean(config.getOrDefault("addRelationshipsBetweenNodes", true));
+    }
+
+    public MetaConfig(Map<String,Object> config) {
+        this(config, true);
     }
 
 
@@ -80,11 +84,15 @@ public class MetaConfig {
     }
 
     public long getSample() {
-        return sample;
+        return sampleMetaConfig.getSample();
     }
 
     public long getMaxRels() {
-        return maxRels;
+        return sampleMetaConfig.getMaxRels();
+    }
+
+    public SampleMetaConfig getSampleMetaConfig() {
+        return sampleMetaConfig;
     }
 
     /**

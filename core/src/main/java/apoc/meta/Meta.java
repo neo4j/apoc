@@ -83,6 +83,7 @@ public class Meta {
         public boolean existence;
         public String type;
         public boolean array;
+        public List<Object> sample;
         public long left; // 0,1,
         public long right; // 0,1,many
         public List<String> other = new ArrayList<>();
@@ -362,7 +363,7 @@ public class Meta {
         } else {
             throw new IllegalArgumentException("Supported inputs are String, VirtualGraph, Map");
         }
-        return collectMetaData(subGraph, metaConfig).values().stream().flatMap(x -> x.values().stream());
+        return collectMetaData(subGraph, metaConfig.getSampleMetaConfig()).values().stream().flatMap(x -> x.values().stream());
     }
 
     // todo ask index for distinct values if index size < 10 or so
@@ -370,7 +371,7 @@ public class Meta {
     @Procedure("apoc.meta.data")
     @Description("Examines the full graph and returns a table of metadata.")
     public Stream<MetaResult> data(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
-        MetaConfig metaConfig = new MetaConfig(config);
+        SampleMetaConfig metaConfig = new SampleMetaConfig(config);
         return collectMetaData(new DatabaseSubGraph(transaction), metaConfig).values().stream().flatMap(x -> x.values().stream());
     }
 
@@ -378,7 +379,7 @@ public class Meta {
     @Description("Examines the given sub-graph and returns metadata as a map.")
     public Stream<MapResult> schema(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaStats metaStats = collectStats();
-        MetaConfig metaConfig = new MetaConfig(config);
+        SampleMetaConfig metaConfig = new SampleMetaConfig(config);
         Map<Set<String>, Map<String, MetaItem>> metaData = collectMetaData(new DatabaseSubGraph(transaction), metaConfig);
 
         Map<String, Object> relationships = collectRelationshipsMetaData(metaStats, metaData);
@@ -433,7 +434,7 @@ public class Meta {
         }
     }
 
-    private Tables4LabelsProfile collectTables4LabelsProfile (MetaConfig config) {
+    private Tables4LabelsProfile collectTables4LabelsProfile(MetaConfig config) {
         Tables4LabelsProfile profile = new Tables4LabelsProfile();
 
         Schema schema = tx.schema();
@@ -460,7 +461,7 @@ public class Meta {
         Map<String, Long> countStore = getLabelCountStore(transaction, kernelTx);
 
         Set<String> includeLabels = config.getIncludesLabels();
-        Set<String> excludes = config.getExcludes();
+        Set<String> excludeLabels = config.getExcludes();
 
         Set<String> includeRels = config.getIncludesRels();
         Set<String> excludeRels = config.getExcludeRels();
@@ -468,7 +469,7 @@ public class Meta {
         for (Label label : tx.getAllLabelsInUse()) {
             String labelName = label.name();
 
-            if (!excludes.contains(labelName) && (includeLabels.isEmpty() || includeLabels.contains(labelName))) {
+            if (!excludeLabels.contains(labelName) && (includeLabels.isEmpty() || includeLabels.contains(labelName))) {
                 // Skip if explicitly excluded or at least 1 include specified and not included
 
                 long labelCount = countStore.get(labelName);
@@ -503,7 +504,7 @@ public class Meta {
 
     // End new code
 
-    private Map<Set<String>, Map<String, MetaItem>> collectMetaData(SubGraph graph, MetaConfig config) {
+    private Map<Set<String>, Map<String, MetaItem>> collectMetaData(SubGraph graph, SampleMetaConfig config) {
         Map<Set<String>, Map<String, MetaItem>> metaData = new LinkedHashMap<>(100);
 
         Set<RelationshipType> types = Iterables.asSet(graph.getAllRelationshipTypesInUse());
@@ -819,14 +820,14 @@ public class Meta {
     @Procedure("apoc.meta.graph")
     @Description("Examines the full graph and returns a meta-graph.")
     public Stream<GraphResult> graph(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
-        MetaConfig metaConfig = new MetaConfig(config);
+        SampleMetaConfig metaConfig = new SampleMetaConfig(config, false);
         return metaGraph(new DatabaseSubGraph(transaction), null, null, true, metaConfig);
     }
 
     @Procedure("apoc.meta.graph.of")
     @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> graphOf(@Name(value = "graph",defaultValue = "{}") Object graph, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
-        MetaConfig metaConfig = new MetaConfig(config);
+        MetaConfig metaConfig = new MetaConfig(config, false);
         final SubGraph subGraph;
         if (graph instanceof String) {
             Result result = tx.execute((String) graph);
@@ -844,10 +845,10 @@ public class Meta {
         } else {
             throw new IllegalArgumentException("Supported inputs are String, VirtualGraph, Map");
         }
-        return metaGraph(subGraph,null, null, true, metaConfig);
+        return metaGraph(subGraph,null, null, true, metaConfig.getSampleMetaConfig());
     }
 
-    private Stream<GraphResult> metaGraph(SubGraph subGraph, Collection<String> labelNames, Collection<String> relTypeNames, boolean removeMissing, MetaConfig metaConfig) {
+    private Stream<GraphResult> metaGraph(SubGraph subGraph, Collection<String> labelNames, Collection<String> relTypeNames, boolean removeMissing, SampleMetaConfig metaConfig) {
         TokenRead tokenRead = kernelTx.tokenRead();
 
         Map<String, Integer> typeMap = subGraph.relTypesInUse(tokenRead, relTypeNames);
@@ -894,7 +895,7 @@ public class Meta {
         return Stream.of(graphResult);
     }
 
-    private void filterNonExistingRelationships(Map<Pattern, Relationship> vRels, MetaConfig metaConfig) {
+    private void filterNonExistingRelationships(Map<Pattern, Relationship> vRels, SampleMetaConfig metaConfig) {
         Set<Pattern> rels = vRels.keySet();
         Map<Pair<String,String>,Set<Pattern>> aggregated = new HashMap<>();
         for (Pattern rel : rels) {
@@ -908,10 +909,10 @@ public class Meta {
                 .forEach(vRels::remove);
     }
 
-    private boolean relationshipExists(Pattern p, Relationship relationship, MetaConfig metaConfig) {
-        if (relationship==null) return false;
-        double degreeFrom = (double)(long)relationship.getProperty("out")  / (long)relationship.getStartNode().getProperty("count");
-        double degreeTo = (double)(long)relationship.getProperty("in")  / (long)relationship.getEndNode().getProperty("count");
+    private boolean relationshipExists(Pattern p, Relationship relationship, SampleMetaConfig metaConfig) {
+        if (relationship == null) return false;
+        double degreeFrom = (double)(long)relationship.getProperty("out")  / (long) relationship.getStartNode().getProperty("count");
+        double degreeTo = (double)(long)relationship.getProperty("in")  / (long) relationship.getEndNode().getProperty("count");
 
         Map<String, Long> countStore = getLabelCountStore(tx, kernelTx);
         if (degreeFrom < degreeTo) {
@@ -921,24 +922,46 @@ public class Meta {
         }
     }
 
-    static boolean relationshipExists(Transaction tx, Map<String, Long>  countStore, Label labelFromLabel, Label labelToLabel, RelationshipType relationshipType, Direction direction, MetaConfig metaConfig) {
+    /**
+     * relationshipExists uses sampling to check if the relationships added in previous steps exist.
+     * The sample count is the skip count; e.g. if set to 1000 this means every 1000th node will be checked.
+     * A sample count higher than nodeLabel count is equivalent to not checking them.
+     * Note; Each node is still fetched, but the relationships on that node will not be checked
+     * if skipped, which should make it faster.
+     */
+    static boolean relationshipExists(
+            Transaction tx,
+            Map<String, Long>  countStore,
+            Label labelFromLabel,
+            Label labelToLabel,
+            RelationshipType relationshipType,
+            Direction direction,
+            SampleMetaConfig metaConfig
+    ) {
         try (ResourceIterator<Node> nodes = tx.findNodes(labelFromLabel)) {
             long count = 0L;
-            long labelCount = countStore.get( labelFromLabel.name());
-            long sample = getSampleForLabelCount(labelCount, metaConfig.getSample());
+            long labelCount = countStore.get(labelFromLabel.name());
+            // A sample size below 0 means we should check every node.
+            long skipCount = metaConfig.getSample() > 0 ? metaConfig.getSample() : 1;
+            // Sample size greater than label count is too large, skip
+            // Returning true will keep the relationship, otherwise it may remove all relationships.
+            if (skipCount > labelCount) return true;
             while (nodes.hasNext()) {
                 count++;
                 Node node = nodes.next();
-                if(count % sample == 0) {
+                if (count % skipCount == 0) {
                     long maxRels = metaConfig.getMaxRels();
                     for (Relationship rel : node.getRelationships(direction, relationshipType)) {
                         Node otherNode = direction == Direction.OUTGOING ? rel.getEndNode() : rel.getStartNode();
+                        // We have found the rel, we are confident the relationship exists.
                         if (otherNode.hasLabel(labelToLabel)) return true;
                         if (maxRels != -1 && maxRels-- == 0) break;
                     }
                 }
             }
         }
+        // Our sampling (or full scan if skipCount == 1) did not find the relationship
+        // So we assume it doesn't exist and remove it from the schema, may result in false negatives!
         return false;
     }
 
@@ -951,18 +974,30 @@ public class Meta {
     @Procedure("apoc.meta.graphSample")
     @Description("Examines the full graph and returns a meta-graph.\n" +
             "Unlike `apoc.meta.graph`, this procedure does not filter away non-existing paths.")
-    public Stream<GraphResult> graphSample(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
-        MetaConfig metaConfig = new MetaConfig(config);
-        return metaGraph(new DatabaseSubGraph(transaction), null, null, false, metaConfig);
+    public Stream<GraphResult> graphSample(@Name(value = "config",defaultValue = "{}") @Deprecated Map<String,Object> config) {
+        return metaGraph(
+                new DatabaseSubGraph(transaction),
+                null,
+                null,
+                false,
+                new SampleMetaConfig(null)
+        );
     }
 
     @Procedure("apoc.meta.subGraph")
     @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> subGraph(@Name("config") Map<String,Object> config ) {
-
-        MetaConfig metaConfig = new MetaConfig(config);
-
-        return filterResultStream(metaConfig.getExcludes(), metaGraph(new DatabaseSubGraph(transaction), metaConfig.getIncludesLabels(), metaConfig.getIncludesRels(),true, metaConfig));
+        MetaConfig metaConfig = new MetaConfig(config, false);
+        return filterResultStream(
+                metaConfig.getExcludes(),
+                metaGraph(
+                        new DatabaseSubGraph(transaction),
+                        metaConfig.getIncludesLabels(),
+                        metaConfig.getIncludesRels(),
+                        true,
+                        metaConfig.getSampleMetaConfig()
+                )
+        );
     }
 
     private Stream<GraphResult> filterResultStream(Set<String> excludes, Stream<GraphResult> graphResultStream) {
