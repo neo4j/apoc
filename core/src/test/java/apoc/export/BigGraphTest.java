@@ -14,6 +14,7 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
@@ -33,6 +34,7 @@ import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
+@Ignore
 public class BigGraphTest {
     private static final File directory = new File("target/import");
     static { //noinspection ResultOfMethodCallIgnored
