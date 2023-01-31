@@ -14,10 +14,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import static apoc.trigger.Trigger.SYS_DB_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
+import static apoc.util.TestContainerUtil.testCallEmpty;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -68,10 +70,18 @@ public class TriggerClusterRoutingTest {
     @Test
     public void testTriggerDropAllowedOnlyInSysLeaderMember() {
         final String query = "CALL apoc.trigger.drop('neo4j', $name)";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME,
+                (session, name) -> testCallEmpty(session, query, Map.of("name", name)));
     }
 
     private static void triggerInSysLeaderMemberCommon(String query, String triggerNotRoutedError, String dbName) {
+        final BiConsumer<Session, String> testTrigger = (session, name) -> testCall(session, query,
+                Map.of("name", name),
+                row -> assertEquals(name, row.get("name")));
+        triggerInSysLeaderMemberCommon(query, triggerNotRoutedError, dbName, testTrigger);
+    }
+    
+    private static void triggerInSysLeaderMemberCommon(String query, String triggerNotRoutedError, String dbName, BiConsumer<Session, String> testTrigger) {
         final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
         assertEquals(4, members.size());
         for (Neo4jContainerExtension container: members) {
@@ -83,12 +93,12 @@ public class TriggerClusterRoutingTest {
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
             if (dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
+                System.out.println("address = " + address);
                 final String name = UUID.randomUUID().toString();
-                testCall( session, query,
-                        Map.of("name", name),
-                        row -> assertEquals(name, row.get("name")) );
+                testTrigger.accept(session, name);
             } else {
                 try {
+                    System.out.println("should fail...");
                     testCall(session, query,
                             Map.of("name", UUID.randomUUID().toString()),
                             row -> fail("Should fail because of non writer trigger addition"));
