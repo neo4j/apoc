@@ -12,6 +12,7 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -31,10 +32,11 @@ public class Cover {
 
     // non-parallelized utility method for use by other procedures
     public static Stream<Relationship> coverNodes(Collection<Node> nodes) {
+        Set<Node> nodeSet = new HashSet<>(nodes);
         return nodes.stream()
                 .flatMap(n ->
                         StreamSupport.stream(n.getRelationships(Direction.OUTGOING)
                                 .spliterator(),false)
-                                .filter(r -> nodes.contains(r.getEndNode())));
+                                .filter(r -> nodeSet.contains(r.getEndNode())));
     }
 }
