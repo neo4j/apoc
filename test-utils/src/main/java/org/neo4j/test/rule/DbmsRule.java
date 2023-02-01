@@ -90,19 +90,6 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
     }
 
     @Override
-    public InternalTransaction beginTransaction(
-            KernelTransaction.Type type,
-            LoginContext loginContext,
-            ClientConnectionInfo clientInfo,
-            long timeout,
-            TimeUnit unit,
-            Consumer<Status> terminationCallback,
-            TransactionExceptionMapper transactionExceptionMapper)
-    {
-        return getGraphDatabaseAPI().beginTransaction( type, loginContext, clientInfo, timeout, unit, terminationCallback, transactionExceptionMapper );
-    }
-
-    @Override
     public Transaction beginTx()
     {
         return getGraphDatabaseAPI().beginTx();

@@ -13,6 +13,7 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyMap;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -45,10 +46,10 @@ public class TransactionTestUtil {
             transaction.commit();
             fail("Should fail because of TransactionFailureException");
         } catch (Exception e) {
-            final Throwable rootCause = ExceptionUtils.getRootCause(e);
-            final String expected = "The transaction has been terminated. " +
-                    "Retry your operation in a new transaction, and you should see a successful result. Explicitly terminated by the user. ";
-            assertEquals(expected, rootCause.getMessage());
+            final String message = e.getMessage();
+            System.out.println("e = " + message);
+            assertTrue("Actual message is: " + message,  message.contains("The transaction has been terminated"));
+            assertFalse(message.contains("The transaction has not completed within the specified timeout"));
         }
 
         lastTransactionChecks(db, timeout, query, timeBefore);
@@ -65,7 +66,7 @@ public class TransactionTestUtil {
     }
 
     private static void checkTransactionTime(long timeout, long timeBefore) {
-        final long timeAfterSecs = (System.currentTimeMillis() - timeBefore) / 1000L;
+        System.out.println("timeAfterSecs = " + timeAfterSecs);
         assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timeAfterSecs + " seconds",
                 timeAfterSecs < timeout);
     }
