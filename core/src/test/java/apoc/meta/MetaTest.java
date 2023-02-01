@@ -193,7 +193,7 @@ public class MetaTest {
     public void testRelationshipExistsSampling() {
         List<Long> skipSizes = List.of(2L, 100L, 1000L, -1L, 0L, 1L);
         List<Long> fromNodeCounts = List.of(4L, 1000L, 100L, 500L, 10000L, 4L);
-        List<Integer> expectedChecks = List.of(2, 10, 0, 500, 10000, 4);
+        List<Integer> expectedChecks = List.of(2, 10, 1, 500, 10000, 4);
 
         for (int i = 0; i < skipSizes.size(); i++) {
             testSampling(skipSizes.get(i), fromNodeCounts.get(i), expectedChecks.get(i));
@@ -224,15 +224,10 @@ public class MetaTest {
 
         Mockito.when(node.getRelationships(direction, relationshipType)).thenReturn(relationships);
         Mockito.when(relationships.iterator()).thenReturn(relationshipIterator);
-        Map<String, Long> countStore = Collections.singletonMap("A", fromNodeCount);
 
-        if (expectedChecks > 0) {
-            assertFalse(Meta.relationshipExists(tx, countStore, labelFromLabel, labelToLabel, relationshipType, direction, config));
-            Mockito.verify(nodes, Mockito.times(fromNodeCount.intValue())).next();
-        } else {
-            // No checks should assume all relationships exist
-            assertTrue(Meta.relationshipExists(tx, countStore, labelFromLabel, labelToLabel, relationshipType, direction, config));
-        }
+        assertFalse(Meta.relationshipExists(tx, labelFromLabel, labelToLabel, relationshipType, direction, config));
+        Mockito.verify(nodes, Mockito.times(fromNodeCount.intValue())).next();
+
         Mockito.verify(node, Mockito.times(expectedChecks)).getRelationships(Mockito.any(), Mockito.any());
     }
 
@@ -1794,11 +1789,10 @@ public class MetaTest {
             assertEquals(2, relationships.size());
         });
 
-        // A SampleSize larger than the number of Nodes will skip filtering, returning
-        // non-existing relationships.
+        // A SampleSize larger than the number of Nodes will check one node still
         testCall(db, "CALL apoc.meta.graph({ sample: 1000 })", (row) -> {
             List<Relationship> relationships = (List<Relationship>) row.get("relationships");
-            assertEquals(4, relationships.size());
+            assertEquals(2, relationships.size());
         });
 
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
@@ -1831,11 +1825,11 @@ public class MetaTest {
                 assertEquals(3, relationships.size());
             });
 
-            // A SampleSize larger than the number of Nodes will skip filtering, returning
-            // non-existing relationships. In this case; B->B which doesn't exist will be returned.
+            // A SampleSize larger than the number of Nodes will check one node still, returning
+            // missing relationships. In this case; A->C which does exist will not be returned.
             testCall(db, "CALL " + samplingProc + " { sample: 1000 })", (row) -> {
                 List<Relationship> relationships = (List<Relationship>) row.get("relationships");
-                assertEquals(4, relationships.size());
+                assertEquals(2, relationships.size());
             });
 
             // A SampleSize which isn't fine-grained enough to find the one A->C relationship, returning

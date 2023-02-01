@@ -230,10 +230,10 @@ public class Meta {
                 ? StreamSupport.stream(subGraph.getAllLabelsInUse().spliterator(), false)
                 : nodes.stream().filter(Objects::nonNull).map(String::trim).map(Label::label);
 
-        final boolean isIncludeRels = CollectionUtils.isEmpty(conf.getIncludesRels());
+        final boolean isIncludeRels = CollectionUtils.isEmpty(conf.getIncludeRels());
         Set<String> visitedNodes = new HashSet<>();
         return labels
-                .flatMap(label -> isIncludeRels ? Stream.of(subGraph.countsForNode(label)) : conf.getIncludesRels()
+                .flatMap(label -> isIncludeRels ? Stream.of(subGraph.countsForNode(label)) : conf.getIncludeRels()
                         .stream()
                         .filter(Objects::nonNull)
                         .map(String::trim)
@@ -460,10 +460,10 @@ public class Meta {
 
         Map<String, Long> countStore = getLabelCountStore(transaction, kernelTx);
 
-        Set<String> includeLabels = config.getIncludesLabels();
-        Set<String> excludeLabels = config.getExcludes();
+        Set<String> includeLabels = config.getIncludeLabels();
+        Set<String> excludeLabels = config.getExcludeLabels();
 
-        Set<String> includeRels = config.getIncludesRels();
+        Set<String> includeRels = config.getIncludeRels();
         Set<String> excludeRels = config.getExcludeRels();
 
         for (Label label : tx.getAllLabelsInUse()) {
@@ -905,33 +905,31 @@ public class Meta {
         aggregated.values().stream()
                 .filter( c -> c.size() > 1)
                 .flatMap(Collection::stream)
-                .filter( p -> !relationshipExists(p, vRels.get(p), metaConfig))
+                .filter( p -> !relationshipExistsWithDegreeCheck(p, vRels.get(p), metaConfig))
                 .forEach(vRels::remove);
     }
 
-    private boolean relationshipExists(Pattern p, Relationship relationship, SampleMetaConfig metaConfig) {
+    private boolean relationshipExistsWithDegreeCheck(Pattern p, Relationship relationship, SampleMetaConfig metaConfig) {
         if (relationship == null) return false;
         double degreeFrom = (double)(long)relationship.getProperty("out")  / (long) relationship.getStartNode().getProperty("count");
         double degreeTo = (double)(long)relationship.getProperty("in")  / (long) relationship.getEndNode().getProperty("count");
 
-        Map<String, Long> countStore = getLabelCountStore(tx, kernelTx);
         if (degreeFrom < degreeTo) {
-            return relationshipExists(tx, countStore, p.labelFrom(), p.labelTo(), p.relationshipType(), Direction.OUTGOING, metaConfig);
+            return relationshipExists(tx, p.labelFrom(), p.labelTo(), p.relationshipType(), Direction.OUTGOING, metaConfig);
         } else {
-            return relationshipExists(tx, countStore, p.labelTo(), p.labelFrom(), p.relationshipType(), Direction.INCOMING, metaConfig);
+            return relationshipExists(tx, p.labelTo(), p.labelFrom(), p.relationshipType(), Direction.INCOMING, metaConfig);
         }
     }
 
     /**
      * relationshipExists uses sampling to check if the relationships added in previous steps exist.
      * The sample count is the skip count; e.g. if set to 1000 this means every 1000th node will be checked.
-     * A sample count higher than nodeLabel count is equivalent to not checking them.
+     * A high sample count means that only one node will be checked each time.
      * Note; Each node is still fetched, but the relationships on that node will not be checked
      * if skipped, which should make it faster.
      */
     static boolean relationshipExists(
             Transaction tx,
-            Map<String, Long>  countStore,
             Label labelFromLabel,
             Label labelToLabel,
             RelationshipType relationshipType,
@@ -940,14 +938,9 @@ public class Meta {
     ) {
         try (ResourceIterator<Node> nodes = tx.findNodes(labelFromLabel)) {
             long count = 0L;
-            long labelCount = countStore.get(labelFromLabel.name());
-            // A sample size below 0 means we should check every node.
+            // A sample size below or equal to 0 means we should check every node.
             long skipCount = metaConfig.getSample() > 0 ? metaConfig.getSample() : 1;
-            // Sample size greater than label count is too large, skip
-            // Returning true will keep the relationship, otherwise it may remove all relationships.
-            if (skipCount > labelCount) return true;
             while (nodes.hasNext()) {
-                count++;
                 Node node = nodes.next();
                 if (count % skipCount == 0) {
                     long maxRels = metaConfig.getMaxRels();
@@ -958,6 +951,7 @@ public class Meta {
                         if (maxRels != -1 && maxRels-- == 0) break;
                     }
                 }
+                count++;
             }
         }
         // Our sampling (or full scan if skipCount == 1) did not find the relationship
@@ -989,11 +983,11 @@ public class Meta {
     public Stream<GraphResult> subGraph(@Name("config") Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig(config, false);
         return filterResultStream(
-                metaConfig.getExcludes(),
+                metaConfig.getExcludeLabels(),
                 metaGraph(
                         new DatabaseSubGraph(transaction),
-                        metaConfig.getIncludesLabels(),
-                        metaConfig.getIncludesRels(),
+                        metaConfig.getIncludeLabels(),
+                        metaConfig.getIncludeRels(),
                         true,
                         metaConfig.getSampleMetaConfig()
                 )

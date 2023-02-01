@@ -9,13 +9,13 @@ import java.util.*;
 
 public class MetaConfig {
 
-    private final Set<String> includesLabels;
-    private final Set<String> includesRels;
-    private final Set<String> excludes;
+    private final Set<String> includeLabels;
+    private final Set<String> includeRels;
+    private final Set<String> excludeLabels;
     private final Set<String> excludeRels;
     private final boolean addRelationshipsBetweenNodes;
 
-    private SampleMetaConfig sampleMetaConfig;
+    private final SampleMetaConfig sampleMetaConfig;
 
     /**
      * A map of values, with the following keys and meanings.
@@ -25,6 +25,7 @@ public class MetaConfig {
      * specified, **only these reltypes** will be examined.
      * - excludeLabels: a list of strings, which are node labels.  This
      * works like a denylist: if listed here, the thing won't be considered.  Everything
+     * else (subject to the allowlist) will be.
      * - excludeRels: a list of strings, which are relationship types.  This
      * works like a denylist: if listed here, the thing won't be considered.  Everything
      * else (subject to the allowlist) will be.
@@ -36,7 +37,7 @@ public class MetaConfig {
     public MetaConfig(Map<String,Object> config, Boolean shouldSampleByDefault) {
         config = config != null ? config : Collections.emptyMap();
 
-        // TODO: Remove in 6.0: To maintain backwards compatibility until then we still need to still support;
+        // TODO: Remove in 6.0: To maintain backwards compatibility until then we still need to support;
         // "labels", "rels" and "excludes" for "includeLabels", "includeRels" and "excludeLabels" respectively.
 
         Set<String> includesLabelsLocal = new HashSet<>((Collection<String>)config.getOrDefault("labels",Collections.EMPTY_SET));
@@ -54,9 +55,9 @@ public class MetaConfig {
             excludesLocal = new HashSet<>((Collection<String>)config.getOrDefault("excludeLabels",Collections.EMPTY_SET));
         }
 
-        this.includesLabels = includesLabelsLocal;
-        this.includesRels = includesRelsLocal;
-        this.excludes = excludesLocal;
+        this.includeLabels = includesLabelsLocal;
+        this.includeRels = includesRelsLocal;
+        this.excludeLabels = excludesLocal;
         this.excludeRels = new HashSet<>((Collection<String>)config.getOrDefault("excludeRels",Collections.EMPTY_SET));
         this.sampleMetaConfig = new SampleMetaConfig(config, shouldSampleByDefault);
         this.addRelationshipsBetweenNodes = Util.toBoolean(config.getOrDefault("addRelationshipsBetweenNodes", true));
@@ -67,16 +68,16 @@ public class MetaConfig {
     }
 
 
-    public Set<String> getIncludesLabels() {
-        return includesLabels;
+    public Set<String> getIncludeLabels() {
+        return includeLabels;
     }
 
-    public Set<String> getIncludesRels() {
-        return includesRels;
+    public Set<String> getIncludeRels() {
+        return includeRels;
     }
 
-    public Set<String> getExcludes() {
-        return excludes;
+    public Set<String> getExcludeLabels() {
+        return excludeLabels;
     }
 
     public Set<String> getExcludeRels() {
@@ -100,9 +101,9 @@ public class MetaConfig {
      * @return true if the label matches the mask expressed by this object, false otherwise.
      */
     public boolean matches(Label l) {
-        if (getExcludes().contains(l.name())) { return false; }
-        if (getIncludesLabels().isEmpty()) { return true; }
-        return getIncludesLabels().contains(l.name());
+        if (getExcludeLabels().contains(l.name())) { return false; }
+        if (getIncludeLabels().isEmpty()) { return true; }
+        return getIncludeLabels().contains(l.name());
     }
 
     /**
@@ -136,8 +137,8 @@ public class MetaConfig {
         String name = rt.name();
 
         if (getExcludeRels().contains(name)) { return false; }
-        if (getIncludesRels().isEmpty()) { return true; }
-        return getIncludesRels().contains(name);
+        if (getIncludeRels().isEmpty()) { return true; }
+        return getIncludeRels().contains(name);
     }
 
     public boolean isAddRelationshipsBetweenNodes() {
