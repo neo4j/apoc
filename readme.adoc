@@ -9,7 +9,7 @@ https://community.neo4j.com[image:https://img.shields.io/discourse/users?logo=di
 https://discord.gg/neo4j[image:https://img.shields.io/discord/787399249741479977?logo=discord&logoColor=white[Discord]]
 
 = Awesome Procedures for Neo4j {branch}.x
- 1
+2
 // tag::readme[]
 
 == Introduction
