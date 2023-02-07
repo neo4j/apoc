@@ -8,6 +8,7 @@ import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -72,6 +73,11 @@ public class CypherTest {
             tx.schema().getIndexes().forEach(IndexDefinition::drop);
             tx.commit();
         }
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     @Test

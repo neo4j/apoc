@@ -2,6 +2,7 @@ package apoc.trigger;
 
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +46,11 @@ public class TriggerTest {
         start = System.currentTimeMillis();
         TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
         apocConfig().setProperty(APOC_TRIGGER_ENABLED, true);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

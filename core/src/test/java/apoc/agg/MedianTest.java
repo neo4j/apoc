@@ -1,6 +1,7 @@
 package apoc.agg;
 
 import apoc.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -18,6 +19,11 @@ public class MedianTest {
     @BeforeClass
     public static void setUp() {
         TestUtil.registerProcedure(db, Median.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test

@@ -3,6 +3,7 @@ package apoc.text;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -38,10 +39,14 @@ public class StringsTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
 
-
     @BeforeClass
     public static void setUp() {
         TestUtil.registerProcedure(db, Strings.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test

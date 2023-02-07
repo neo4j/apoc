@@ -1,8 +1,9 @@
 package apoc.trigger;
 
 import apoc.util.TestUtil;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.rule.DbmsRule;
@@ -27,13 +28,18 @@ import static org.junit.Assert.assertThrows;
  */
 public class TriggerDisabledTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @ClassRule
+    public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         apocConfig().setProperty(APOC_TRIGGER_ENABLED, false);
         TestUtil.registerProcedure(db, Trigger.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test

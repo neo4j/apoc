@@ -1,5 +1,6 @@
 package apoc.util;
 
+import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,6 +19,11 @@ public class UtilQuoteTest {
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> parameters() {

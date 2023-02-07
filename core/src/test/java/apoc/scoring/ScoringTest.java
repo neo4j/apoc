@@ -1,6 +1,7 @@
 package apoc.scoring;
 
 import apoc.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -23,11 +24,17 @@ public class ScoringTest {
         TestUtil.registerProcedure(db,Scoring.class);
     }
 
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
+    }
+
     @Test
     public void existence() {
         TestUtil.testCall(db, "RETURN apoc.scoring.existence(10,true) as score", (row) -> assertEquals(10D,row.get("score")));
         TestUtil.testCall(db, "RETURN apoc.scoring.existence(10,false) as score", (row) -> assertEquals(0D,row.get("score")));
     }
+
 
     @Test
     public void pareto() {

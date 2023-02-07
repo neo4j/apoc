@@ -1,8 +1,9 @@
 package apoc.text;
 
 import apoc.util.TestUtil;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -13,12 +14,17 @@ import static org.junit.Assert.assertThat;
 
 public class PhoneticTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @ClassRule
+    public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         TestUtil.registerProcedure(db, Phonetic.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test
