@@ -48,12 +48,14 @@ import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.testResult;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
 import static org.neo4j.graphdb.Label.label;
@@ -277,7 +279,28 @@ public class ExportGraphMLTest {
 
         TestUtil.testCall(db, "MATCH  ()-[c:RELATED]->() RETURN COUNT(c) AS c", null, (r) -> assertEquals(1L, r.get("c")));
     }
+    
+    @Test
+    public void issue2797WithImportGraphMl() {
+        db.executeTransactionally("CREATE (n:FOO {name: 'foo'})");
+        db.executeTransactionally("CREATE CONSTRAINT unique_foo FOR (n:FOO) REQUIRE n.name IS UNIQUE");
+        try {
+            TestUtil.testCall(db,
+                    "CALL apoc.import.graphml($file, {readLabels:true})",
+                    map("file", new File(directory, "importNodeEdges.graphml").getAbsolutePath()),
+                    (r) -> fail());
+        } catch (Exception e) {
+            String expected = "Failed to invoke procedure `apoc.import.graphml`: " +
+                    "Caused by: IndexEntryConflictException{propertyValues=( String(\"foo\") ), addedEntityId=-1, existingEntityId=3}";
+            assertEquals(expected, e.getMessage());
+        }
 
+        // should return only 1 node due to constraint exception
+        TestUtil.testCall(db, "MATCH (n:FOO) RETURN properties(n) AS props",
+                r -> assertEquals(Map.of("name", "foo"), r.get("props")));
+
+        db.executeTransactionally("DROP CONSTRAINT unique_foo");
+    }
 
     @Test
     public void testImportGraphMLWithoutCharactersDataKeys() throws Exception {
@@ -708,6 +731,34 @@ public class ExportGraphMLTest {
                     assertTrue("Should get time greater than 0",((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAMEL_CASE);
+    }
+
+    @Test
+    public void testImportGraphmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.import.graphml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "', {})", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+    }
+
+    @Test
+    public void testImportGraphmlPreventBillionLaughVulnerabilityThrowsQueryExecutionException() {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testResult(db, "CALL apoc.import.graphml('" + TestUtil.getUrlFileName("xml/billion_laughs.xml") + "', {})", (r) -> {
+                    r.next();
+                    r.close();
+                })
+        );
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
     }
 
     private void assertResults(File output, Map<String, Object> r, final String source) {

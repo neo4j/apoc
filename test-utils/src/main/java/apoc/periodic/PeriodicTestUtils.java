@@ -48,9 +48,9 @@ public class PeriodicTestUtils {
                 db.executeTransactionally(periodicQuery, Map.of(),
                     result -> {
                         Map<String, Object> row = Iterators.single(result);
-                        return row.get("wasTerminated");
+                        return (boolean) row.get("wasTerminated");
                     }),
-                (value) -> true, 10L, TimeUnit.SECONDS);
+                (value) -> value, 15L, TimeUnit.SECONDS);
         } catch(Exception tfe) {
             assertEquals(tfe.getMessage(),true, tfe.getMessage().contains("terminated"));
         }

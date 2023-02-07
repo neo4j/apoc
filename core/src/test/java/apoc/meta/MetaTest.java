@@ -11,16 +11,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
@@ -34,12 +28,7 @@ import org.neo4j.values.storable.Values;
 import java.io.InputStreamReader;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -56,6 +45,7 @@ import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
@@ -176,6 +166,72 @@ public class MetaTest {
     }
 
     @Test
+    public void testMetaGraphMaxRels() {
+        db.executeTransactionally("CREATE (:S2 {id:'another'}), (:S2 {id:'another2'}), (:S2 {id:'another3'}), \n" +
+                // create nodes to be linked
+                "(a:S1 {id:'aaa'}), (b:S2 {id:'bbb'}), (c:S3 {id:'ccc'}), (d:S4 {id:'ddd'}), " +
+                "(e:S5 {id:'eee'}), (f:S6 {id:'fff'}), (g:S7 {id:'ggg'})," +
+                // create rels
+                "(a)-[:HAS]->(b), (a)-[:HAS]->(c), (a)-[:HAS]->(d), (a)-[:HAS]->(e), (a)-[:HAS]->(f), (a)-[:HAS]->(g)," +
+                "(b)-[:HAS]->(c), (b)-[:HAS]->(d), (b)-[:HAS]->(e), (b)-[:HAS]->(f), (b)-[:HAS]->(g)");
+
+        testCall(db, "call apoc.meta.graph()",
+                (row) -> {
+            List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+            assertEquals(11,relationships.size());
+        });
+
+        testCall(db, "call apoc.meta.graph({maxRels: 1})",(row) -> {
+            List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+            assertEquals(8,relationships.size());
+        });
+        
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testRelationshipExistsSampling() {
+        List<Long> skipSizes = List.of(2L, 100L, 1000L, -1L, 0L, 1L);
+        List<Long> fromNodeCounts = List.of(4L, 1000L, 100L, 500L, 10000L, 4L);
+        List<Integer> expectedChecks = List.of(2, 10, 1, 500, 10000, 4);
+
+        for (int i = 0; i < skipSizes.size(); i++) {
+            testSampling(skipSizes.get(i), fromNodeCounts.get(i), expectedChecks.get(i));
+        }
+    }
+
+    public void testSampling(Long skipSize, Long fromNodeCount, int expectedChecks) {
+        SampleMetaConfig config = Mockito.mock(SampleMetaConfig.class);
+        Mockito.when(config.getSample()).thenReturn(skipSize);
+
+        Label labelFromLabel = Label.label("A");
+        Label labelToLabel = Label.label("B");
+        RelationshipType relationshipType = RelationshipType.withName("R");
+        Direction direction = Direction.OUTGOING;
+
+        Transaction tx = Mockito.mock(Transaction.class);
+        ResourceIterator<Node> nodes = Mockito.mock(ResourceIterator.class);
+        ResourceIterable<Relationship> relationships = Mockito.mock(ResourceIterable.class);
+        ResourceIterator<Relationship> relationshipIterator =  Mockito.mock(ResourceIterator.class);
+        Node node = Mockito.mock(Node.class);
+
+        Mockito.when(tx.findNodes(labelFromLabel)).thenReturn(nodes);
+        List<Boolean> nodesNext = new ArrayList<>(Arrays.asList(new Boolean[fromNodeCount.intValue()]));
+        Collections.fill(nodesNext, Boolean.TRUE);
+        nodesNext.set(fromNodeCount.intValue() - 1, false);
+        Mockito.when(nodes.hasNext()).thenReturn(true, nodesNext.toArray(Boolean[]::new));
+        Mockito.when(nodes.next()).thenReturn(node);
+
+        Mockito.when(node.getRelationships(direction, relationshipType)).thenReturn(relationships);
+        Mockito.when(relationships.iterator()).thenReturn(relationshipIterator);
+
+        assertFalse(Meta.relationshipExists(tx, labelFromLabel, labelToLabel, relationshipType, direction, config));
+        Mockito.verify(nodes, Mockito.times(fromNodeCount.intValue())).next();
+
+        Mockito.verify(node, Mockito.times(expectedChecks)).getRelationships(Mockito.any(), Mockito.any());
+    }
+
+    @Test
     public void testMetaType() {
         try (Transaction tx = db.beginTx()) {
             Node node = tx.createNode();
@@ -282,11 +338,11 @@ public class MetaTest {
                 (row) -> {
                     List<Node> nodes = (List<Node>) row.get("nodes");
                     Node n1 = nodes.get(0);
-                    assertEquals(true, n1.hasLabel(Label.label("Actor")));
+                    assertTrue(n1.hasLabel(Label.label("Actor")));
                     assertEquals(1L, n1.getProperty("count"));
                     assertEquals("Actor", n1.getProperty("name"));
                     Node n2 = nodes.get(1);
-                    assertEquals(true, n2.hasLabel(Label.label("Movie")));
+                    assertTrue(n2.hasLabel(Label.label("Movie")));
                     assertEquals("Movie", n2.getProperty("name"));
                     assertEquals(2L, n2.getProperty("count"));
                     List<Relationship> rels = (List<Relationship>) row.get("relationships");
@@ -303,11 +359,11 @@ public class MetaTest {
                 (row) -> {
                     List<Node> nodes = (List<Node>) row.get("nodes");
                     Node n1 = nodes.get(0);
-                    assertEquals(true, n1.hasLabel(Label.label("Actor")));
+                    assertTrue(n1.hasLabel(Label.label("Actor")));
                     assertEquals(1L, n1.getProperty("count"));
                     assertEquals("Actor", n1.getProperty("name"));
                     Node n2 = nodes.get(1);
-                    assertEquals(true, n2.hasLabel(Label.label("Movie")));
+                    assertTrue(n2.hasLabel(Label.label("Movie")));
                     assertEquals("Movie", n2.getProperty("name"));
                     assertEquals(1L, n1.getProperty("count"));
                     List<Relationship> rels = (List<Relationship>) row.get("relationships");
@@ -563,45 +619,99 @@ public class MetaTest {
             List<Node> nodes = (List<Node>) row.get("nodes");
             List<Relationship> rels = (List<Relationship>) row.get("relationships");
             assertEquals(3, nodes.size());
-            assertEquals(true, nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("B") || n.equals("C")));
+            assertTrue(nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("B") || n.equals("C")));
             assertEquals(2, rels.size());
-            assertEquals(true, rels.stream().map(r -> r.getType().name()).allMatch(n -> n.equals("X") || n.equals("Y")));
+            assertTrue(rels.stream().map(r -> r.getType().name()).allMatch(n -> n.equals("X") || n.equals("Y")));
         });
     }
     @Test
-    public void testSubGraphLimitLabels() {
-        db.executeTransactionally("CREATE (:A)-[:X]->(b:B),(b)-[:Y]->(:C)");
-        testCall(db,"CALL apoc.meta.subGraph({labels:['A','B']})", (row) -> {
-            List<Node> nodes = (List<Node>) row.get("nodes");
-            List<Relationship> rels = (List<Relationship>) row.get("relationships");
-            assertEquals(2, nodes.size());
-            assertEquals(true, nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("B")));
-            assertEquals(1, rels.size());
-            assertEquals(true, rels.stream().map(r -> r.getType().name()).allMatch(n -> n.equals("X")));
-        });
+    public void testSubGraphLimitLabels(){
+        final String labels = "labels";
+        testSubgraphLabelsCommon(labels);
     }
-    @Test
-    public void testSubGraphLimitRelTypes() {
+
+    private void testSubgraphLabelsCommon(String labels) {
         db.executeTransactionally("CREATE (:A)-[:X]->(b:B),(b)-[:Y]->(:C)");
-        testCall(db,"CALL apoc.meta.subGraph({rels:['X']})", (row) -> {
+        testCall(db, "CALL apoc.meta.subGraph($conf)",
+                map("conf", map(labels, List.of("A", "B"))), (row) -> {
+                    List<Node> nodes = (List<Node>) row.get("nodes");
+                    List<Relationship> rels = (List<Relationship>) row.get("relationships");
+                    assertEquals(2, nodes.size());
+                    assertTrue(nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("B")));
+                    assertEquals(1, rels.size());
+                    assertTrue(rels.stream().map(r -> r.getType().name()).allMatch(n -> n.equals("X")));
+                });
+    }
+
+    @Test
+    public void testSubGraphWithIncludeLabels(){
+        final String labels = "includeLabels";
+        testSubgraphLabelsCommon(labels);
+    }
+    
+    @Test
+    public void testSubGraphLimitWithRels(){
+        final String relsConf = "rels";
+        assertMetaSubgraphCommon(relsConf);
+    }
+    
+    @Test
+    public void testSubGraphLimitWithIncludeRels(){
+        final String relsConf = "includeRels";
+        assertMetaSubgraphCommon(relsConf);
+    }
+
+    private void assertMetaSubgraphCommon(String relsConf) {
+        final Consumer<Map<String, Object>> consumer = (row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
             List<Relationship> rels = (List<Relationship>) row.get("relationships");
             assertEquals(3, nodes.size());
-            assertEquals(true, nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("B") || n.equals("C")));
+            assertTrue(nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("B") || n.equals("C")));
             assertEquals(1, rels.size());
-            assertEquals(true, rels.stream().map(r -> r.getType().name()).allMatch(n -> n.equals("X")));
-        });
+            assertTrue(rels.stream().map(r -> r.getType().name()).allMatch(n -> n.equals("X")));
+        };
+        final Map<String, Object> conf = map(relsConf, List.of("X"));
+        testGraphCommon(conf, consumer);
     }
+
     @Test
     public void testSubGraphExcludes() {
+        final String relsConf = "excludes";
+        testExcludeLabelsCommon(relsConf);
+    }
+
+    @Test
+    public void testSubGraphExcludesLabels() {
+        final String relsConf = "excludeLabels";
+        testExcludeLabelsCommon(relsConf);
+    }
+
+    private void testGraphCommon(Map<String, Object> conf, Consumer<Map<String, Object>> consumer) {
         db.executeTransactionally("CREATE (:A)-[:X]->(b:B),(b)-[:Y]->(:C)");
-        testCall(db,"CALL apoc.meta.subGraph({excludes:['B']})", (row) -> {
+        testCall(db, "CALL apoc.meta.subGraph($conf)", map("conf", conf), consumer);
+    }
+
+    private void testExcludeLabelsCommon(String relsConf) {
+        final Consumer<Map<String, Object>> consumer = (row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
             List<Relationship> rels = (List<Relationship>) row.get("relationships");
             assertEquals(2, nodes.size());
-            assertEquals(true, nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("C")));
+            assertTrue(nodes.stream().map(n -> Iterables.first(n.getLabels()).name()).allMatch(n -> n.equals("A") || n.equals("C")));
             assertEquals(0, rels.size());
-        });
+        };
+        final Map<String, Object> conf = map(relsConf, List.of("B"));
+        testGraphCommon(conf, consumer);
+    }
+
+    @Test
+    public void testMetaSubgraphBothIncludeAndExclude() {
+        final Consumer<Map<String, Object>> consumer = (row) -> {
+            assertEquals(Collections.emptyList(), row.get("nodes"));
+            assertEquals(Collections.emptyList(), row.get("relationships"));
+        };
+        final Map<String, Object> conf = map("excludeLabels", List.of("B"),
+                "includeLabels", List.of("B"));
+        testGraphCommon(conf, consumer);
     }
 
     @Test
@@ -892,7 +1002,7 @@ public class MetaTest {
                     assertEquals(10L, person.get("count"));
                     assertEquals("STRING", personNameProperty.get("type"));
                     assertEquals(true, personNameProperty.get("unique"));
-                    assertEquals(true, personProperties.size() >= 1);
+                    assertTrue(personProperties.size() >= 1);
 
                 });
     }
@@ -1452,6 +1562,24 @@ public class MetaTest {
     }
     
     @Test
+    public void testMetaRelTypePropertiesWithManyRels() {
+        db.executeTransactionally("UNWIND range (0, 200) as idx CREATE (a:A)-[:FIRST_A]-> (b:B)");
+        db.executeTransactionally("CREATE (a:A)-[:FIRST_A {a: 1}]->(b:B)");
+        
+        // with default maxRels
+        testCall(db, "CALL apoc.meta.relTypeProperties({includeRels: ['FIRST_A']})", r -> {
+            assertNull(r.get("propertyTypes"));
+            assertNull(r.get("propertyName"));
+        });
+
+        // with maxRels incremented
+        testCall(db, "CALL apoc.meta.relTypeProperties({includeRels: ['FIRST_A'], maxRels: 1000})", r -> {
+            assertEquals(List.of("Long"), r.get("propertyTypes"));
+            assertEquals("a", r.get("propertyName"));
+        });
+    }
+    
+    @Test
     public void testMetaStatsWithTwoDots() {
         db.executeTransactionally("CREATE (n:`My:Label` {id:1})-[r:`http://www.w3.org/2000/01/rdf-schema#isDefinedBy` {alpha: 'beta'}]->(s:Another)");
         TestUtil.testCall(db, "CALL apoc.meta.stats()", row -> {
@@ -1650,4 +1778,68 @@ public class MetaTest {
                 });
     }
 
+    @Test
+    public void testMetaGraphSampling() {
+        db.executeTransactionally("CREATE (:A)-[:R1]->(:B)-[:R1]->(:C)");
+
+        // Not specifying sampling will check through all relationships and make sure they
+        // exist, clearing out non-existing ones
+        testCall(db, "CALL apoc.meta.graph()",(row) -> {
+            List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+            assertEquals(2, relationships.size());
+        });
+
+        // A SampleSize larger than the number of Nodes will check one node still
+        testCall(db, "CALL apoc.meta.graph({ sample: 1000 })", (row) -> {
+            List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+            assertEquals(2, relationships.size());
+        });
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testMetaGraphSparseSampling() {
+        // The 3 procedures using this sampling, set to look at the whole graph
+        List<String> samplingBasedProcs = List.of(
+                "apoc.meta.graph(",
+                "apoc.meta.graph.of(\"MATCH p = ()-[]->() RETURN p\", ",
+                "apoc.meta.subGraph("
+        );
+        // The "Schema" Should be: A->B->C and A->C
+        for (int i = 0; i < 100; i++) {
+            if (i == 50) {
+                // Create one existing A-->C relationship
+                db.executeTransactionally("CREATE (:A)-[:R1]->(:C)");
+            } else {
+                // Create 99 A->B->C relationships
+                db.executeTransactionally("CREATE (:A)-[:R1]->(:B)-[:R1]->(:C)");
+            }
+        }
+
+        for (String samplingProc : samplingBasedProcs) {
+            // Not specifying sampling will check through all relationships and make sure they
+            // exist, clearing out non-existing ones
+            testCall(db, "CALL " + samplingProc + " {})", (row) -> {
+                List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+                assertEquals(3, relationships.size());
+            });
+
+            // A SampleSize larger than the number of Nodes will check one node still, returning
+            // missing relationships. In this case; A->C which does exist will not be returned.
+            testCall(db, "CALL " + samplingProc + " { sample: 1000 })", (row) -> {
+                List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+                assertEquals(2, relationships.size());
+            });
+
+            // A SampleSize which isn't fine-grained enough to find the one A->C relationship, returning
+            // missing relationships. In this case; A->C which does exist will not be returned.
+            testCall(db, "CALL " + samplingProc + " { sample: 99 })", (row) -> {
+                List<Relationship> relationships = (List<Relationship>) row.get("relationships");
+                assertEquals(2, relationships.size());
+            });
+        }
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
 }
