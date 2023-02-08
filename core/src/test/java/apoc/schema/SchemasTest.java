@@ -849,7 +849,6 @@ public class SchemasTest {
                     result -> {
                         while  (result.hasNext()) {
                             Map<String, Object> r = result.next();
-                            System.out.println("r = " + r);
 
                             assertEquals(1, relConstraints.stream().filter(
                                     c -> c.name.equals(r.get("name")) &&
