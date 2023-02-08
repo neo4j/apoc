@@ -12,12 +12,8 @@ import java.util.List;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
-import static apoc.util.TestUtil.isRunningInCI;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 /**
  * @author as
@@ -30,19 +26,14 @@ public class ExportCsvIT {
 
     @BeforeClass
     public static void beforeAll() {
-        assumeFalse(isRunningInCI());
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
-        assumeNotNull(neo4jContainer);
-        assumeTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());
         session = neo4jContainer.getSession();
     }
 
     @AfterClass
     public static void afterAll() {
-        if (neo4jContainer != null && neo4jContainer.isRunning()) {
-            neo4jContainer.close();
-        }
+        neo4jContainer.close();
     }
 
     @Test

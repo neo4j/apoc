@@ -10,11 +10,7 @@ import java.util.List;
 import org.neo4j.driver.Session;
 
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
-import static apoc.util.TestUtil.isRunningInCI;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 public class CollEnterpriseTest {
 
@@ -23,22 +19,16 @@ public class CollEnterpriseTest {
 
     @BeforeAll
     public static void beforeAll() {
-        assumeFalse(isRunningInCI());
         // We build the project, the artifact will be placed into ./build/libs
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
         neo4jContainer.start();
-        assumeTrue(neo4jContainer.isRunning());
-        assumeNotNull(neo4jContainer);
-        assumeTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());
         session = neo4jContainer.getSession();
     }
 
     @AfterAll
     public static void afterAll() {
-        if (neo4jContainer != null && neo4jContainer.isRunning()) {
-            session.close();
-            neo4jContainer.close();
-        }
+        session.close();
+        neo4jContainer.close();
     }
 
     @RepeatedTest(50)

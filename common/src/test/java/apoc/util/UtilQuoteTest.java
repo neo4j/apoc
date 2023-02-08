@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public class UtilQuoteTest {
@@ -63,8 +62,12 @@ public class UtilQuoteTest {
 
     @Test
     public void shouldNotQuoteWhenAvoidQuoteIsTrue() {
-        assumeTrue(shouldAvoidQuote);
-        assertEquals(Util.quote(identifier), identifier);
+        final String expectedIdentifier = shouldAvoidQuote 
+                ? identifier 
+                : '`' + identifier + '`';
+        
+        assertEquals(expectedIdentifier,
+                Util.quote(identifier));
     }
 
 }

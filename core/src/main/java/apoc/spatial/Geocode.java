@@ -304,12 +304,12 @@ public class Geocode {
         return new AbstractMap.SimpleEntry<>(geocodeSupplier, supplier);
     }
 
-    private static GeocodeSupplier getGeocodeSupplier(TerminationGuard terminationGuard, Configuration activeConfig, String supplier) {
-        switch (supplier) {
-            case "google" : return new GoogleSupplier(activeConfig, terminationGuard);
-            case "osm" : return new OSMSupplier(activeConfig, terminationGuard);
-            default: return new SupplierWithKey(activeConfig, terminationGuard, supplier);
-        }
+    public static GeocodeSupplier getGeocodeSupplier(TerminationGuard terminationGuard, Configuration activeConfig, String supplier) {
+        return switch (supplier) {
+            case "google" -> new GoogleSupplier(activeConfig, terminationGuard);
+            case "osm" -> new OSMSupplier(activeConfig, terminationGuard);
+            default -> new SupplierWithKey(activeConfig, terminationGuard, supplier);
+        };
     }
 
     @Procedure("apoc.spatial.geocodeOnce")

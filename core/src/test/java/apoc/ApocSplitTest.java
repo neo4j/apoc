@@ -457,21 +457,17 @@ public class ApocSplitTest {
 
     @Test
     public void test() {
-        if (!TestUtil.isRunningInCI()) {
-            Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
-                    .withNeo4jConfig("dbms.transaction.timeout", "60s");
+        Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
-            neo4jContainer.start();
+        neo4jContainer.start();
 
-            Assert.assertTrue("Neo4j Instance should be up-and-running", neo4jContainer.isRunning());
+        Session session = neo4jContainer.getSession();
+        Set<String> procedureNames = session.run("SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc'").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
+        Set<String> functionNames = session.run("SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc'").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
 
-            Session session = neo4jContainer.getSession();
-            Set<String> procedureNames = session.run("SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN name").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
-            Set<String> functionNames = session.run("SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc' RETURN name").stream().map(s -> s.get("name").asString()).collect(Collectors.toSet());
-
-            Assert.assertTrue(procedureNames.containsAll(CORE_PROCEDURES) && procedureNames.size() == CORE_PROCEDURES.size());
-            Assert.assertTrue(functionNames.containsAll(CORE_FUNCTIONS) && functionNames.size() == CORE_FUNCTIONS.size());
-            neo4jContainer.close();
-        }
+        Assert.assertEquals(CORE_PROCEDURES, procedureNames);
+        Assert.assertEquals(CORE_FUNCTIONS, functionNames);
+        neo4jContainer.close();
     }
 }

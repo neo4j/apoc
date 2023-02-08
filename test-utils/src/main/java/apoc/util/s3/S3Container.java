@@ -8,7 +8,6 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
 
-import static org.junit.Assert.assertTrue;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
 public class S3Container implements AutoCloseable {
@@ -19,6 +18,7 @@ public class S3Container implements AutoCloseable {
     public S3Container() {
         localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:1.2.0"))
                 .withServices(S3);
+        localstack.addExposedPorts(4566);
         localstack.start();
 
         s3 = AmazonS3ClientBuilder
@@ -27,9 +27,6 @@ public class S3Container implements AutoCloseable {
                 .withCredentials(getCredentialsProvider())
                 .build();
         s3.createBucket(S3_BUCKET_NAME);
-
-        assertTrue("Localstack container not correctly started. The provided logs are: \n" + localstack.getLogs(),
-                localstack.isRunning());
     }
 
     public void close() {
