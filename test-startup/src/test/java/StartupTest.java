@@ -27,8 +27,9 @@ public class StartupTest {
     @Test
     public void check_basic_deployment() {
         for (var version: Neo4jVersion.values()) {
-            try (Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
-                    .withNeo4jConfig("dbms.transaction.timeout", "60s")) {
+            try  {
+                Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                    .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
                 neo4jContainer.start();
 
@@ -44,6 +45,8 @@ public class StartupTest {
                 // Check there's one and only one logger for apoc inside the container
                 assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
                 assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
+
+                neo4jContainer.close();
             } catch (Exception ex) {
                 // if Testcontainers wasn't able to retrieve the docker image we ignore the test
                 if (TestContainerUtil.isDockerImageAvailable(ex)) {
@@ -59,7 +62,8 @@ public class StartupTest {
     @Test
     public void compare_with_sources() {
         for (var version: Neo4jVersion.values()) {
-            try (Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())) {
+            try {
+                Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
                 neo4jContainer.start();
                 
                 try (Session session = neo4jContainer.getSession()) {
@@ -72,6 +76,8 @@ public class StartupTest {
                     assertEquals(sorted(ApocSignatures.PROCEDURES), procedureNames);
                     assertEquals(sorted(ApocSignatures.FUNCTIONS), functionNames);
                 }
+
+                neo4jContainer.close();
             } catch (Exception ex) {
                 if (TestContainerUtil.isDockerImageAvailable(ex)) {
                     ex.printStackTrace();

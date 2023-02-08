@@ -4,6 +4,7 @@ import apoc.util.TestUtil;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,6 +38,11 @@ public class AtomicTest {
 	public void setUp() {
 		TestUtil.registerProcedure(db, Atomic.class);
 	}
+
+    @After
+    public void teardown() {
+        db.shutdown();
+    }
 
 	@Test
 	public void testAddAndSubInteger(){

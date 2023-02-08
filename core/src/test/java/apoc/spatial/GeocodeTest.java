@@ -19,12 +19,17 @@ import static org.junit.Assert.*;
 
 public class GeocodeTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @ClassRule
+    public static DbmsRule db = new ImpermanentDbmsRule();
 
-    @Before
-    public void initDb() {
+    @BeforeClass
+    public static void initDb() {
         TestUtil.registerProcedure(db, Geocode.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     // -- with config map

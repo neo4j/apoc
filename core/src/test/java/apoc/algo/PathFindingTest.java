@@ -2,6 +2,7 @@ package apoc.algo;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,6 +55,11 @@ public class PathFindingTest {
    	public void setUp() {
    		TestUtil.registerProcedure(db, PathFinding.class);
    	}
+
+    @After
+    public void teardown() {
+        db.shutdown();
+    }
 
     @Test
     public void testAStar() {

@@ -2,8 +2,9 @@ package apoc.spatial;
 
 import apoc.result.DistancePathResult;
 import apoc.util.TestUtil;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
@@ -19,8 +20,8 @@ import static org.junit.Assert.assertTrue;
 
 public class DistanceTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @ClassRule
+    public static DbmsRule db = new ImpermanentDbmsRule();
 
     private static final String LABEL = "Point";
     private static final String LAT = "latitude";
@@ -28,9 +29,14 @@ public class DistanceTest {
     private static final String NAME = "name";
     private static final String RELATES = "RELATES";
 
-    @Before
-    public void setup() {
+    @BeforeClass
+    public static void setup() {
         TestUtil.registerProcedure(db, Distance.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test
