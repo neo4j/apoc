@@ -231,7 +231,7 @@ docker run \
     -e apoc.import.file.enabled=true \
     -e apoc.import.file.use_neo4j_config=true \
     -e NEO4J_PLUGINS=\[\"apoc\"\] \
-    neo4j:{apoc-release}
+    neo4j:{neo4j-version}
 ----
 
 We should see the following line in the output after running this command:
@@ -250,7 +250,7 @@ mkdir plugins
 pushd plugins
 wget https://github.com/neo4j/apoc/releases/download/{apoc-release}/apoc-{apoc-release}-core.jar
 popd
-docker run --rm -e NEO4J_AUTH=none -p 7474:7474 -v $PWD/plugins:/plugins -p 7687:7687 neo4j:{apoc-release}
+docker run --rm -e NEO4J_AUTH=none -p 7474:7474 -v $PWD/plugins:/plugins -p 7687:7687 neo4j:{neo4j-version}
 ----
 
 If you want to pass custom APOC config to your Docker instance, you can use environment variables, like here:
@@ -264,7 +264,7 @@ docker run \
     -e apoc.export.file.enabled=true \
     -e apoc.import.file.enabled=true \
     -e apoc.import.file.use_neo4j_config=true \
-    neo4j:{apoc-release}
+    neo4j:{neo4j-version}
 ----
 
 To then use Neo4j with Docker, it is possible to run the Cypher-shell like so:
