@@ -56,6 +56,7 @@ public class ApocConfig extends LifecycleAdapter {
     public static final String APOC_CONFIG_JOBS_QUEUE_SIZE = "apoc.jobs.queue.size";
     public static final String APOC_CONFIG_INITIALIZER = "apoc.initializer";
     public static final String LOAD_FROM_FILE_ERROR = "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
+    private static final WebURLAccessRule webAccessRule = new WebURLAccessRule();
 
     // These were earlier added via the Neo4j config using the ApocSettings.java class
     private static final Map<String,Object> configDefaultValues =
@@ -221,11 +222,13 @@ public class ApocConfig extends LifecycleAdapter {
         }
     }
 
-    private void checkAllowedUrl(String url) throws IOException {
+    public URL checkAllowedUrlAndPinToIP(String url) throws IOException {
         try {
+            URL parsedUrl = new URL(url);
             if (blockedIpRanges != null && !blockedIpRanges.isEmpty()) {
-                URL parsedUrl = new URL(url);
-                WebURLAccessRule.checkNotBlocked(parsedUrl, blockedIpRanges);
+                return webAccessRule.checkNotBlockedAndPinToIP(parsedUrl, blockedIpRanges);
+            } else {
+                return parsedUrl;
             }
         } catch (Exception e) {
             throw new IOException(e);
@@ -236,7 +239,7 @@ public class ApocConfig extends LifecycleAdapter {
         if (isFile(url)) {
             isImportFileEnabled();
         } else {
-            checkAllowedUrl(url);
+            checkAllowedUrlAndPinToIP(url);
         }
     }
 
