@@ -1,5 +1,4 @@
-package apoc.meta;
-
+package apoc.it.core;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestUtil;

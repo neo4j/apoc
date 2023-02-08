@@ -1,7 +1,7 @@
-package apoc.util;
+package apoc.it.common;
 
 import apoc.ApocConfig;
-import inet.ipaddr.IPAddressString;
+import apoc.util.Util;import inet.ipaddr.IPAddressString;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;

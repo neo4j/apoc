@@ -1,4 +1,4 @@
-package apoc.schema;
+package apoc.it.core;
 
 import apoc.result.AssertSchemaResult;
 import apoc.util.Neo4jContainerExtension;

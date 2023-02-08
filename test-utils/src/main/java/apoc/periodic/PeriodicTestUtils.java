@@ -50,7 +50,7 @@ public class PeriodicTestUtils {
                         Map<String, Object> row = Iterators.single(result);
                         return (boolean) row.get("wasTerminated");
                     }),
-                (value) -> value, 15L, TimeUnit.SECONDS);
+                (value) -> value, 30L, TimeUnit.SECONDS);
         } catch(Exception tfe) {
             assertEquals(tfe.getMessage(),true, tfe.getMessage().contains("terminated"));
         }

@@ -75,7 +75,7 @@ subprojects {
                 'neo4jCommunityDockerImage': System.getProperty("NEO4JVERSION") ? 'neo4j:' + System.getProperty("NEO4JVERSION") : 'neo4j:5.6.0',
                 'coreDir': 'core'
 
-        maxHeapSize = "8G"
+        maxHeapSize = "5G"
         forkEvery = 50
         maxParallelForks = 1
         minHeapSize = "128m"
@@ -108,7 +108,7 @@ subprojects {
         }
 
         testLogging.showStandardStreams = true
-        testLogging.exceptionFormat = 'full'
+        testLogging.exceptionFormat = 'short'
     }
 
     configurations {

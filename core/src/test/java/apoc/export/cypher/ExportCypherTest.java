@@ -985,7 +985,7 @@ public class ExportCypherTest {
         assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
     }
 
-    static class ExportCypherResults {
+    public static class ExportCypherResults {
 
         static final String EXPECTED_NODES = String.format("BEGIN%n" +
                 "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n" +
@@ -1400,7 +1400,7 @@ public class ExportCypherTest {
 
         static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL);
 
-        static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT = String.format("BEGIN%n" +
+        public static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT = String.format("BEGIN%n" +
                 "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;%n" +
                 "COMMIT%n" +
                 "SCHEMA AWAIT%n" +
@@ -1415,9 +1415,9 @@ public class ExportCypherTest {
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT);
+        public static final String EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT);
 
-        static final String EXPECTED_PLAIN_FORMAT_WITH_COMPOUND_CONSTRAINT = String.format("CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;%n" +
+        public static final String EXPECTED_PLAIN_FORMAT_WITH_COMPOUND_CONSTRAINT = String.format("CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;%n" +
                 "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n" +
                 "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n" +
                 "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n" +

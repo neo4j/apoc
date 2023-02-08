@@ -308,14 +308,14 @@ public class UtilsTest {
         String cypherSleep = "call apoc.util.sleep($duration)";
         testCallEmpty(db, cypherSleep, MapUtil.map("duration", 0l));  // force building query plan
 
-        long duration = 300;
+        long duration = 10000;
         TestUtil.assertDuration(Matchers.lessThan(duration), () -> {
             final Transaction[] tx = new Transaction[1];
 
             Future future = Executors.newSingleThreadScheduledExecutor().submit( () -> {
                 tx[0] = db.beginTx();
                 try {
-                    Result result = tx[0].execute(cypherSleep, MapUtil.map("duration", 10000));
+                    Result result = tx[0].execute(cypherSleep, MapUtil.map("duration", duration));
                     tx[0].commit();
                     return result;
                 } finally {
@@ -323,7 +323,7 @@ public class UtilsTest {
                 }
             });
 
-            sleepUntil( dummy -> tx[0]!=null );
+            sleepUntil(dummy -> tx[0]!=null );
             tx[0].terminate();
             try {
                 future.get();

@@ -1,5 +1,6 @@
 package apoc.export.csv;
 
+import apoc.csv.CsvTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
 import org.apache.commons.io.FileUtils;
