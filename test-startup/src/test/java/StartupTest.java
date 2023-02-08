@@ -28,7 +28,7 @@ public class StartupTest {
     public void check_basic_deployment() {
         for (var version: Neo4jVersion.values()) {
             try  {
-                Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), true)
                     .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
                 neo4jContainer.start();
@@ -52,7 +52,7 @@ public class StartupTest {
                 if (TestContainerUtil.isDockerImageAvailable(ex)) {
                     ex.printStackTrace();
                     fail("Should not have thrown exception when trying to start Neo4j: " + ex);
-                } else if (!TestUtil.isRunningInCI()) {
+                } else if (true) {
                     fail( "The docker image " + dockerImageForNeo4j(version) + " could not be loaded. Check whether it's available locally / in the CI. Exception:" + ex);
                 }
             }
@@ -63,7 +63,7 @@ public class StartupTest {
     public void compare_with_sources() {
         for (var version: Neo4jVersion.values()) {
             try {
-                Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
+                Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), true);
                 neo4jContainer.start();
                 
                 try (Session session = neo4jContainer.getSession()) {

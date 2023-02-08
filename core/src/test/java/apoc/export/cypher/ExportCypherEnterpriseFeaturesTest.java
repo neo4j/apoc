@@ -2,7 +2,6 @@ package apoc.export.cypher;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
-import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -32,7 +31,7 @@ public class ExportCypherEnterpriseFeaturesTest {
 
     @BeforeClass
     public static void beforeAll() {
-        neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI()).withInitScript("init_neo4j_export_csv.cypher");
+        neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true).withInitScript("init_neo4j_export_csv.cypher");
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }

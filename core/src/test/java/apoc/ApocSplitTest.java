@@ -3,7 +3,6 @@ package apoc;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestContainerUtil.ApocPackage;
-import apoc.util.TestUtil;
 import org.junit.Assert;
 import org.junit.Test;
 import java.util.List;
@@ -457,7 +456,7 @@ public class ApocSplitTest {
 
     @Test
     public void test() {
-        Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+        Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(List.of(ApocPackage.CORE), true)
                 .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
         neo4jContainer.start();

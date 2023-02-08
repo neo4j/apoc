@@ -3,7 +3,6 @@ package apoc;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestContainerUtil;
-import apoc.util.TestUtil;
 import org.junit.Test;
 import java.util.List;
 import org.neo4j.driver.Session;
@@ -21,7 +20,7 @@ public class StartupTest {
     @Test
     public void test() {
         try {
-            Neo4jContainerExtension neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+            Neo4jContainerExtension neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true)
                     .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
 
