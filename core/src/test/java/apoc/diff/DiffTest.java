@@ -3,6 +3,7 @@ package apoc.diff;
 import apoc.create.Create;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -50,6 +52,29 @@ public class DiffTest {
             node3.setProperty("prop4", "for");
             tx.commit();
         }
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
+    }
+
+    @Test
+    public void nodesWithList() {
+        final List<String> list = List.of("tomatoes", "bread", "cookies");
+        TestUtil.testCall(db, "CREATE (charlie:Person $propCharlie), (hannah:Person $propHanna)\n" +
+                        "RETURN apoc.diff.nodes(charlie, hannah) AS result",
+                Map.of("propCharlie", Map.of("name", "Charlie", "alpha", "one", "born", 1999, "grocery_list", list),
+                        "propHanna", Map.of("name", "Hannah", "beta", "two", "born", 1999, "grocery_list", list)),
+                r -> {
+                    Map<String, Map<String, Object>> res = (Map<String, Map<String, Object>>) r.get("result");
+                    Map<String, Object> inCommon = res.get("inCommon");
+                    assertArrayEquals(list.toArray(), (String[]) inCommon.get("grocery_list"));
+                    assertEquals(1999, inCommon.get("born"));
+                    assertEquals(Map.of("alpha", "one"), res.get("leftOnly"));
+                    assertEquals(Map.of("beta", "two"), res.get("rightOnly"));
+                    assertEquals(Map.of("name", Map.of("left", "Charlie", "right", "Hannah")), res.get("different"));
+                });
     }
 
     @Test

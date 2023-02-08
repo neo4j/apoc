@@ -5,6 +5,7 @@ import apoc.result.IndexConstraintRelationshipInfo;
 import apoc.util.collection.Iterables;
 import junit.framework.TestCase;
 import org.assertj.core.api.Assertions;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -100,6 +101,11 @@ public class SchemasTest {
     public void setUp() {
         registerProcedure(db, Schemas.class);
         dropSchema();
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

@@ -3,6 +3,7 @@ package apoc.date;
 import apoc.temporal.TemporalProcedures;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -51,9 +52,14 @@ public class DateTest {
 	private static final long SECONDS_PER_DAY = SECONDS_PER_HOUR * 24;
 
 	@BeforeClass
-	public static void sUp() {
+	public static void setUp() {
 		TestUtil.registerProcedure(db, Date.class, TemporalProcedures.class);
 	}
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
+    }
 
 	@Test public void testToDays() {
 		testCall(db,

@@ -128,6 +128,42 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
+    public void testDropStopAndStartNotExistentTrigger() {
+        testCallEmpty( sysDb, "CALL apoc.trigger.stop('neo4j', $name)",
+                map("name", UUID.randomUUID().toString()) );
+
+        testCallEmpty( sysDb, "CALL apoc.trigger.start('neo4j', $name)",
+                map("name", UUID.randomUUID().toString()) );
+
+
+        testCallEmpty( sysDb, "CALL apoc.trigger.drop('neo4j', $name)",
+                map( "name", UUID.randomUUID().toString()) );
+    }
+    
+    @Test
+    public void testOverwriteTrigger() {
+        final String name = UUID.randomUUID().toString();
+        
+        String queryOne = "RETURN 111";
+        testCall(sysDb, "CALL apoc.trigger.install('neo4j', $name, $query, {})",
+                map("name", name, "query", queryOne),
+                r -> {
+                    assertEquals(name, r.get("name"));
+                    assertEquals(queryOne, r.get("query"));
+                }
+        );
+
+        String queryTwo = "RETURN 999";
+        testCall(sysDb, "CALL apoc.trigger.install('neo4j', $name, $query, {})",
+                map("name", name, "query", queryTwo),
+                r -> {
+                    assertEquals(name, r.get("name"));
+                    assertEquals(queryTwo, r.get("query"));
+                }
+        );
+    }
+
+    @Test
     public void testIssue2247() {
         db.executeTransactionally("CREATE (n:ToBeDeleted)");
         final String name = "myTrig";
@@ -174,11 +210,7 @@ public class TriggerNewProceduresTest {
         });
         testCallCountEventually(db, "CALL apoc.trigger.list()", 0, TIMEOUT);
 
-        testCall(sysDb, "CALL apoc.trigger.drop('neo4j', 'to-be-removed')", (row) -> {
-            assertEquals("to-be-removed", row.get("name"));
-            assertNull(row.get("query"));
-            assertEquals(false, row.get("installed"));
-        });
+        testCallEmpty(sysDb, "CALL apoc.trigger.drop('neo4j', 'to-be-removed')", Collections.emptyMap());
     }
 
     @Test
@@ -239,6 +271,71 @@ public class TriggerNewProceduresTest {
             assertTrue((Long) ((Node) row.get("f")).getProperty("txTime") > start);
         });
         db.executeTransactionally("MATCH (n:Another) DELETE n");
+    }
+
+    @Test
+    public void testTxIdWithRelationshipsAndAfter() {
+        db.executeTransactionally("CREATE (:RelationshipCounter {count:0})");
+        String name = UUID.randomUUID().toString();
+        
+        // We need to filter $createdRelationships, i.e. `size(..) > 0`, not to cause a deadlock
+        String query = """
+                 WITH size($createdRelationships) AS sizeRels
+                 WHERE sizeRels > 0
+                 MATCH (c:RelationshipCounter)
+                 SET c.txId = $transactionId  SET c.count = c.count + sizeRels""";
+        
+        sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, $query, {phase: 'after'})",
+                Map.of("name", name, "query", query));
+        awaitTriggerDiscovered(db, name, query);
+        
+        db.executeTransactionally("CREATE (a:A)<-[r:C]-(b:B)");
+        
+        testCall(db, "MATCH (n:RelationshipCounter) RETURN n",
+                this::testTxIdWithRelsAssertionsCommon);
+    }
+
+    @Test
+    public void testTxIdWithRelationshipsAndAfterAsync(){
+        testTxIdWithRelationshipsCommon("afterAsync");
+
+        testCallEventually(db, "MATCH (n:RelationshipCounter) RETURN n", 
+                this::testTxIdWithRelsAssertionsCommon, 
+                10);
+    }
+
+    private void testTxIdWithRelsAssertionsCommon(Map<String, Object> r) {
+        final Node n = (Node) r.get("n");
+        assertEquals(1L, n.getProperty("count"));
+        final long txId = (long) n.getProperty("txId");
+        assertTrue("Current txId is: " + txId, txId > -1L);
+    }
+
+    @Test
+    public void testTxIdWithRelationshipsAndBefore(){
+        testTxIdWithRelationshipsCommon("before");
+
+        testCall(db, "MATCH (n:RelationshipCounter) RETURN n", r -> {
+            final Node n = (Node) r.get("n");
+            assertEquals(-1L, n.getProperty("txId"));
+            assertEquals(1L, n.getProperty("count"));
+        });
+    }
+
+    private static void testTxIdWithRelationshipsCommon(String phase) {
+        String query = """
+                MATCH (c:RelationshipCounter)
+                  SET c.count = c.count + size($createdRelationships)
+                  SET c.txId = $transactionId""";
+
+        db.executeTransactionally("CREATE (:RelationshipCounter {count:0})");
+        String name = UUID.randomUUID().toString();
+
+        sysDb.executeTransactionally("CALL apoc.trigger.install( 'neo4j', $name, $query, {phase: $phase})",
+                Map.of("name", name, "query", query, "phase", phase));
+        awaitTriggerDiscovered(db, name, query);
+
+        db.executeTransactionally("CREATE (a:A)<-[r:C]-(b:B)");
     }
 
     @Test

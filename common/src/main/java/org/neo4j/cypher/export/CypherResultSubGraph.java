@@ -76,7 +76,9 @@ public class CypherResultSubGraph implements SubGraph {
             else if ( Util.isRelationshipCategory( def.getConstraintType() ) &&  graph.getTypes().contains(def.getRelationshipType())) {
                 graph.addConstraint( def );
             }
-        } if (addBetween) {
+        }
+
+        if (addBetween) {
             graph.addRelationshipsBetweenNodes();
         }
         return graph;

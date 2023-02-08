@@ -2,6 +2,7 @@ package apoc.coll;
 
 import apoc.convert.Json;
 import apoc.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -28,6 +29,11 @@ public class CollTest {
 
     @BeforeClass public static void setUp() {
         TestUtil.registerProcedure(db, Coll.class, Json.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test

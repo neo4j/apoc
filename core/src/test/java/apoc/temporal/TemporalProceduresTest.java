@@ -1,6 +1,7 @@
 package apoc.temporal;
 
 import apoc.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -24,6 +25,11 @@ public class TemporalProceduresTest
     @BeforeClass
     public static void setUp() {
         TestUtil.registerProcedure(db, TemporalProcedures.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Test
