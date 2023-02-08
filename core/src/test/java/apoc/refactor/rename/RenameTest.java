@@ -4,6 +4,7 @@ import apoc.coll.Coll;
 import apoc.lock.Lock;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,6 +44,11 @@ public class RenameTest {
 	public void setUp() {
 		TestUtil.registerProcedure(db, Rename.class, Coll.class, Lock.class, Utils.class);
 	}
+
+    @After
+    public void teardown() {
+        db.shutdown();
+    }
 
 	@Test
 	public void testRenameLabelForSomeNodes() {

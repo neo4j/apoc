@@ -1,6 +1,7 @@
 package apoc.text;
 
 import apoc.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,6 +31,11 @@ public class StringCleanTest {
     @BeforeClass
     public static void setUp() {
         TestUtil.registerProcedure(db, Strings.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+       db.shutdown();
     }
 
     @Parameters(name = "{0}")

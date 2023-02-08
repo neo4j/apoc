@@ -4,6 +4,7 @@ import apoc.path.Paths;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterables;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,8 +37,14 @@ public class CreateTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
 
-    @Before public void setUp() {
+    @Before
+    public void setUp() {
         TestUtil.registerProcedure(db,Create.class, Paths.class);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test
