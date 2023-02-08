@@ -31,7 +31,7 @@ public class TriggerClusterRoutingTest {
     public static void setupCluster() {
         cluster = TestContainerUtil
                 .createEnterpriseCluster( List.of(TestContainerUtil.ApocPackage.CORE), 
-                        3, 1, 
+                        3, 0,
                         Collections.emptyMap(), 
                         Map.of( "NEO4J_dbms_routing_enabled", "true", 
                                 "apoc.trigger.enabled", "true" )
@@ -49,65 +49,82 @@ public class TriggerClusterRoutingTest {
 
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
-        final String query = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, SYS_DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
+        final String addTrigger = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
+        String triggerName = randomTriggerName();
+
+        succeedsInLeader(addTrigger, triggerName, DEFAULT_DATABASE_NAME);
+        failsInFollowers(addTrigger, triggerName, SYS_DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
-        final String query = "CALL apoc.trigger.remove($name)";
-        triggerInSysLeaderMemberCommon(query, SYS_DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
+        final String addTrigger = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
+        final String removeTrigger = "CALL apoc.trigger.remove($name)";
+        String triggerName = randomTriggerName();
+
+        succeedsInLeader(addTrigger, triggerName, DEFAULT_DATABASE_NAME);
+        succeedsInLeader(removeTrigger, triggerName, DEFAULT_DATABASE_NAME);
+        failsInFollowers(removeTrigger, triggerName, SYS_DB_NON_WRITER_ERROR, DEFAULT_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerInstallAllowedOnlyInSysLeaderMember() {
-        final String query = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        final String installTrigger = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
+        String triggerName = randomTriggerName();
+        succeedsInLeader(installTrigger, triggerName, SYSTEM_DATABASE_NAME);
+        failsInFollowers(installTrigger, triggerName, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
     @Test
     public void testTriggerDropAllowedOnlyInSysLeaderMember() {
-        final String query = "CALL apoc.trigger.drop('neo4j', $name)";
-        triggerInSysLeaderMemberCommon(query, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
+        final String installTrigger = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
+        final String dropTrigger = "CALL apoc.trigger.drop('neo4j', $name)";
+        String triggerName = randomTriggerName();
+
+        succeedsInLeader(installTrigger, triggerName, SYSTEM_DATABASE_NAME);
+        succeedsInLeader(dropTrigger, triggerName, SYSTEM_DATABASE_NAME);
+        failsInFollowers(dropTrigger, triggerName, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
-    private static void triggerInSysLeaderMemberCommon(String query, String triggerNotRoutedError, String dbName) {
+    private static void succeedsInLeader(String triggerOperation, String triggerName, String dbName) {
         final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
-        assertEquals(4, members.size());
+        assertEquals(3, members.size());
         for (Neo4jContainerExtension container: members) {
-            // we skip READ_REPLICA members
-            final Driver driver = getDriverIfNotReplica(container);
-            if (driver == null) {
-                continue;
-            }
+            final Driver driver = container.getDriver();
             Session session = driver.session(SessionConfig.forDatabase(dbName));
             final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+
             if (dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
-                final String name = UUID.randomUUID().toString();
-                testCall( session, query,
-                        Map.of("name", name),
-                        row -> assertEquals(name, row.get("name")) );
-            } else {
+                testCall( session, triggerOperation,
+                        Map.of("name", triggerName),
+                        row -> assertEquals(triggerName, row.get("name")) );
+            }
+        }
+    }
+
+    private static void failsInFollowers(String triggerOperation, String triggerName, String expectedError, String dbName) {
+        final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
+        assertEquals(3, members.size());
+        for (Neo4jContainerExtension container: members) {
+            final Driver driver = container.getDriver();
+            Session session = driver.session(SessionConfig.forDatabase(dbName));
+            final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+
+            if (!dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
                 try {
-                    testCall(session, query,
-                            Map.of("name", UUID.randomUUID().toString()),
+                    testCall(session, triggerOperation,
+                            Map.of("name", triggerName),
                             row -> fail("Should fail because of non writer trigger addition"));
                 } catch (Exception e) {
                     String errorMsg = e.getMessage();
-                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(triggerNotRoutedError));
+                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(expectedError));
                 }
             }
         }
     }
-    
 
-    private static Driver getDriverIfNotReplica(Neo4jContainerExtension container) {
-        final String readReplica = TestcontainersCausalCluster.ClusterInstanceType.READ_REPLICA.toString();
-        final Driver driver = container.getDriver();
-        if (readReplica.equals(container.getEnvMap().get("NEO4J_dbms_mode")) || driver == null) {
-            return null;
-        }
-        return driver;
+    private static String randomTriggerName() {
+        return UUID.randomUUID().toString();
     }
 
     private static boolean dbIsWriter(Session session, String dbName, String address) {
@@ -116,6 +133,4 @@ public class TriggerClusterRoutingTest {
                 .single().get("writer")
                 .asBoolean();
     }
-
-
 }
