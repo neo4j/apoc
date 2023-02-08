@@ -48,7 +48,6 @@ import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.MapUtil.map;
-import static apoc.util.TestUtil.isRunningInCI;
 import static apoc.util.TestUtil.testResult;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -57,7 +56,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
 import static org.neo4j.graphdb.Label.label;
@@ -255,7 +253,6 @@ public class ExportGraphMLTest {
 
     @Test
     public void testImportGraphMLLargeFile() {
-        assumeFalse(isRunningInCI());
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();

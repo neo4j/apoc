@@ -24,7 +24,6 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
-import static apoc.spatial.Geocode.getSupplierEntry;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testCallEmpty;
@@ -48,18 +47,18 @@ public class SpatialTest {
     private Map<String, Map<String, Object>> spaceNodes = new LinkedHashMap<>();
     private Map<String, Map<String, Object>> spaceTimeNodes = new LinkedHashMap<>();
 
-    public static class MockGeocode {
+    // we extend Geocode and override methods to make sure signatures are equivalents
+    public static class MockGeocode extends Geocode {
         public static Map<String, Map> geocodeResults = null;
         public static Map<String, Map> reverseGeocodeResults = null;
 
-        public MockGeocode() {
-        }
-
+        @Override
         @Procedure("apoc.spatial.geocodeOnce")
         public Stream<Geocode.GeoCodeResult> geocodeOnce(@Name("location") String address, @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
             return geocode(address, 1, false, config);
         }
 
+        @Override
         @Procedure("apoc.spatial.geocode")
         public Stream<Geocode.GeoCodeResult> geocode(@Name("location") String address, @Name("maxResults") long maxResults, @Name(value = "quotaException",defaultValue = "false") boolean quotaException, @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
 
@@ -76,6 +75,7 @@ public class SpatialTest {
             }
         }
 
+        @Override
         @Procedure("apoc.spatial.reverseGeocode")
         public Stream<Geocode.GeoCodeResult> reverseGeocode(@Name("latitude") double latitude, @Name("longitude") double longitude, @Name(value = "quotaException", defaultValue = "false") boolean quotaException, @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
             String key = latitude + "," + longitude;

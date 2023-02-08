@@ -244,7 +244,7 @@ public class FileUtils {
                     "httpclient-x.y.z.jar\n" +
                     "httpcore-x.y.z.jar\n" +
                     "joda-time-x.y.z.jar\n" +
-                    "\nSee the documentation: https://neo4j.github.io/apoc/#_loading_data_from_web_apis_json_xml_csv");
+                    "\nSee the documentation: https://neo4j.com/docs/apoc/current/import/web-apis/#_using_google_cloud_storage");
         }
         return S3URLConnection.openS3InputStream(new URL(urlAddress));
     }
@@ -252,7 +252,7 @@ public class FileUtils {
     public static StreamConnection openHdfsInputStream(String urlAddress) throws IOException {
         if (!SupportedProtocols.hdfs.isEnabled()) {
             throw new MissingDependencyException("Cannot find the HDFS/Hadoop jars in the plugins folder. \n" +
-                    "\nPlease, see the documentation: https://neo4j.com/labs/apoc/4.4/import/web-apis/");
+                    "\nPlease, see the documentation: https://neo4j.com/docs/apoc/current/import/web-apis/#_using_google_cloud_storage");
         }
         return HDFSUtils.readFile(new URL(urlAddress));
     }
