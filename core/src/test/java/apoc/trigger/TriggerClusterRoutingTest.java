@@ -22,6 +22,7 @@ import static apoc.trigger.Trigger.SYS_DB_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testResult;
+import static org.junit.Assert.assertThrows;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 import static org.junit.Assert.assertEquals;
@@ -152,14 +153,11 @@ public class TriggerClusterRoutingTest {
             Session session = getSessionForDb(instance, dbName);
 
             if (!dbIsWriter(SYSTEM_DATABASE_NAME, session, getBoltAddress(instance))) {
-                try {
-                    testCall(session, triggerOperation,
+                Exception e = assertThrows(Exception.class, () -> testCall(session, triggerOperation,
                             Map.of("name", triggerName),
-                            row -> fail("Should fail because of non writer trigger addition"));
-                } catch (Exception e) {
-                    String errorMsg = e.getMessage();
-                    assertTrue("The actual message is: " + errorMsg, errorMsg.contains(expectedError));
-                }
+                            row -> fail("Should fail because of non writer trigger addition")));
+                String errorMsg = e.getMessage();
+                assertTrue("The actual message is: " + errorMsg, errorMsg.contains(expectedError));
             }
         }
     }
