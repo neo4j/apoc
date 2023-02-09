@@ -11,16 +11,20 @@ import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static apoc.trigger.Trigger.SYS_DB_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
-import static org.junit.Assert.assertEquals;
+import static apoc.util.TestContainerUtil.testResult;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,6 +40,8 @@ public class TriggerClusterRoutingTest {
                         Map.of( "NEO4J_dbms_routing_enabled", "true", 
                                 "apoc.trigger.enabled", "true" )
                 );
+
+        assertEquals(3, cluster.getClusterMembers().size());
     }
 
     @AfterClass
@@ -86,29 +92,70 @@ public class TriggerClusterRoutingTest {
         failsInFollowers(dropTrigger, triggerName, TRIGGER_NOT_ROUTED_ERROR, SYSTEM_DATABASE_NAME);
     }
 
+    @Test
+    public void testTriggerShowAllowedInAllSystemInstances() {
+        final String installTrigger = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
+        final String showTrigger = "CALL apoc.trigger.show('neo4j')";
+
+        String triggerName = randomTriggerName();
+        Consumer<Iterator<Map<String, Object>>> checkTriggerIsListed = rows -> {
+            AtomicBoolean showedTrigger = new AtomicBoolean(false);
+            rows.forEachRemaining(row -> {
+                if (row.get("name").equals(triggerName))
+                    showedTrigger.set(true);
+            });
+
+            assertTrue(showedTrigger.get());
+        };
+
+        succeedsInLeader(installTrigger, triggerName, SYSTEM_DATABASE_NAME);
+        succeedsInLeader(showTrigger, triggerName, SYSTEM_DATABASE_NAME, checkTriggerIsListed);
+        succeedsInFollowers(showTrigger, triggerName, SYSTEM_DATABASE_NAME, checkTriggerIsListed);
+    }
+
     private static void succeedsInLeader(String triggerOperation, String triggerName, String dbName) {
-        final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
-        assertEquals(3, members.size());
-        for (Neo4jContainerExtension container: members) {
-            final Driver driver = container.getDriver();
+        for (Neo4jContainerExtension instance: cluster.getClusterMembers()) {
+            final Driver driver = instance.getDriver();
             Session session = driver.session(SessionConfig.forDatabase(dbName));
-            final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+            final String address = instance.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
 
             if (dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
-                testCall( session, triggerOperation,
+                testCall(session, triggerOperation,
                         Map.of("name", triggerName),
                         row -> assertEquals(triggerName, row.get("name")) );
             }
         }
     }
 
-    private static void failsInFollowers(String triggerOperation, String triggerName, String expectedError, String dbName) {
-        final List<Neo4jContainerExtension> members = cluster.getClusterMembers();
-        assertEquals(3, members.size());
-        for (Neo4jContainerExtension container: members) {
-            final Driver driver = container.getDriver();
+    private static void succeedsInLeader(String triggerOperation, String triggerName, String dbName, Consumer<Iterator<Map<String, Object>>> assertion) {
+        for (Neo4jContainerExtension instance: cluster.getClusterMembers()) {
+            final Driver driver = instance.getDriver();
             Session session = driver.session(SessionConfig.forDatabase(dbName));
-            final String address = container.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+            final String address = instance.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+
+            if (dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
+                testResult(session, triggerOperation, Map.of("name", triggerName), assertion);
+            }
+        }
+    }
+
+    private static void succeedsInFollowers(String triggerOperation, String triggerName, String dbName, Consumer<Iterator<Map<String, Object>>> assertion) {
+        for (Neo4jContainerExtension instance: cluster.getClusterMembers()) {
+            final Driver driver = instance.getDriver();
+            Session session = driver.session(SessionConfig.forDatabase(dbName));
+            final String address = instance.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+
+            if (!dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
+                testResult(session, triggerOperation, Map.of("name", triggerName), assertion);
+            }
+        }
+    }
+
+    private static void failsInFollowers(String triggerOperation, String triggerName, String expectedError, String dbName) {
+        for (Neo4jContainerExtension instance: cluster.getClusterMembers()) {
+            final Driver driver = instance.getDriver();
+            Session session = driver.session(SessionConfig.forDatabase(dbName));
+            final String address = instance.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
 
             if (!dbIsWriter(session, SYSTEM_DATABASE_NAME, address)) {
                 try {

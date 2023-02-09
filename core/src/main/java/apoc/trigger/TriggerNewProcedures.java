@@ -4,7 +4,6 @@ import apoc.util.Util;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.logging.Log;
 import org.neo4j.procedure.Admin;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -23,14 +22,13 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 
 
 public class TriggerNewProcedures {
+    public static final String NON_SYS_DB_ERROR = "The procedure should be executed against a system database.";
     public static final String TRIGGER_NOT_ROUTED_ERROR = "No write operations are allowed directly on this database. " +
             "Writes must pass through the leader. The role of this server is: FOLLOWER";
     public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
     public static final String DB_NOT_FOUND_ERROR = "The user database with name '%s' does not exist";
 
     @Context public GraphDatabaseAPI db;
-    
-    @Context public Log log;
     
     @Context public Transaction tx;
 
@@ -39,6 +37,14 @@ public class TriggerNewProcedures {
         
         if (!db.databaseName().equals(SYSTEM_DATABASE_NAME) || !Util.isWriteableInstance(db)) {
             throw new RuntimeException(TRIGGER_NOT_ROUTED_ERROR);
+        }
+    }
+    
+    private void checkInSystem() {
+        TriggerHandlerNewProcedures.checkEnabled();
+
+        if (!db.databaseName().equals(SYSTEM_DATABASE_NAME)) {
+            throw new RuntimeException(NON_SYS_DB_ERROR);
         }
     }
 
@@ -124,7 +130,7 @@ public class TriggerNewProcedures {
     @Procedure(name = "apoc.trigger.show", mode = Mode.READ)
     @Description("Lists all eventually installed triggers for a database.")
     public Stream<TriggerInfo> show(@Name("databaseName") String databaseName) {
-        checkInSystemWriter();
+        checkInSystem();
 
         return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx);
     }
