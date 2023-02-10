@@ -88,7 +88,9 @@ dependencies {
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
     testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.348'
-    testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0'
+    testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
+        exclude group: 'org.slf4j', module: 'slf4j-api'
+    }
     testImplementation group: 'com.github.adejanovski', name: 'cassandra-jdbc-wrapper', version: '3.1.0'
     testImplementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.13.2'
 

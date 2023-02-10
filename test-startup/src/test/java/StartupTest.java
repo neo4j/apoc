@@ -43,6 +43,7 @@ public class StartupTest {
                 assertTrue(functionCount > 0);
                 assertTrue(coreCount > 0);
                 // Check there's one and only one logger for apoc inside the container
+                assertFalse(startupLog.contains("SLF4J: No SLF4J providers were found"));
                 assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
                 assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
 

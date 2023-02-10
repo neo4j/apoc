@@ -80,6 +80,11 @@ public class TestcontainersCausalCluster {
         // Build the core/read_replica
         List<Neo4jContainerExtension> members = iterateMembers(numberOfCoreMembers, ClusterInstanceType.CORE)
                 .map(member -> createInstance(apocPackages, member.getValue(), ClusterInstanceType.CORE, network, initialDiscoveryMembers, neo4jConfig, envSettings)
+                        // Allocate the user database neo4j in every instance
+                        // This is because the containers wait for /db/neo4j/cluster/available to return 200
+                        // but by default from 5.x onwards not every database is allocated in every instance
+                        // so the endpoint would return 404 and we would not complete container startup
+                        .withNeo4jConfig("initial.dbms.default_primaries_count", Integer.toString(numberOfCoreMembers))
                         .withNeo4jConfig("dbms.default_advertised_address", member.getValue())
                         .withNeo4jConfig("dbms.connector.bolt.advertised_address", String.format("%s:%d", proxy.getContainerIpAddress(), proxy.getMappedPort(ClusterInstanceType.CORE.port + member.getKey()))))
                 .collect(toList());
