@@ -44,6 +44,8 @@ public class TestContainerUtil {
 
     public static final String password = "apoc12345";
 
+    private TestContainerUtil() {}
+
     private static File baseDir = Paths.get("..").toFile();
     private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
     private static File extendedDir = new File(baseDir, "extended");
