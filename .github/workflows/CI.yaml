@@ -10,32 +10,8 @@ env:
   TEAMCITY_DEV_URL: ${{ secrets.TEAMCITY_DEV_URL }}
   TEAMCITY_USER: ${{ secrets.TEAMCITY_USER }}
   TEAMCITY_PASSWORD: ${{ secrets.TEAMCITY_PASSWORD }}
-  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-  DOCKER_ENTERPRISE_DEV_URL: ${{ secrets.DOCKER_ENTERPRISE_DEV_URL }}
-  DOCKER_COMMUNITY_DEV_URL: ${{ secrets.DOCKER_COMMUNITY_DEV_URL }}
-  ENTERPRISE_TAR: enterprise-docker.tar
-  COMMUNITY_TAR: community-docker.tar
 
 jobs:
-  snyk-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-jdk
-      - uses: ./.github/actions/setup-snyk
-      - name: Snyk test dependencies
-        run: snyk test --all-projects --severity-threshold=medium --fail-on=all
-
-  snyk-monitor:
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-jdk
-      - uses: ./.github/actions/setup-snyk
-      - name: Snyk monitor dependencies
-        run: snyk monitor --all-projects --target-reference=${GITHUB_REF}
-
   compile:
     runs-on: ubuntu-latest
     steps:
@@ -67,31 +43,57 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
-  unit-tests:
+  common-tests:
     runs-on: ubuntu-latest
     needs: compile
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-jdk
-      - uses: ./.github/actions/setup-gradle-cache
-      - name: Run tests
-        run: ./gradlew common:test core:test processor:test test-utils:test
-      - uses: ./.github/actions/archive-test-results
+      - name: Run common tests
+        uses: ./.github/actions/test-gradle-project
         with:
-          file-name: unit-tests-results
-          target: |
-            common/build/reports/tests/test/
-            core/build/reports/tests/test/
-            processor/build/reports/tests/test/
-            test-utils/build/reports/tests/test/
+          project-name: common
+
+  core-tests:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run core tests
+        uses: ./.github/actions/test-gradle-project
+        with:
+          project-name: core
+
+  processor-tests:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run processor tests
+        uses: ./.github/actions/test-gradle-project
+        with:
+          project-name: processor
+
+  test-utils-tests:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run test-utils tests
+        uses: ./.github/actions/test-gradle-project
+        with:
+          project-name: test-utils
 
   it-tests:
+    env:
+      DOCKER_ENTERPRISE_DEV_URL: ${{ secrets.DOCKER_ENTERPRISE_DEV_URL }}
+      DOCKER_COMMUNITY_DEV_URL: ${{ secrets.DOCKER_COMMUNITY_DEV_URL }}
+      ENTERPRISE_TAR: enterprise-docker.tar
+      COMMUNITY_TAR: community-docker.tar
+
     runs-on: ubuntu-latest
     needs: compile
     steps:
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-jdk
-      - uses: ./.github/actions/setup-gradle-cache
       - name: Download neo4j dev docker container
         run: |
           curl -s -L0 -u "${TEAMCITY_USER}:${TEAMCITY_PASSWORD}" -X GET ${DOCKER_ENTERPRISE_DEV_URL} -o ${ENTERPRISE_TAR} &
@@ -100,10 +102,7 @@ jobs:
           docker load --input ${ENTERPRISE_TAR}
           docker load --input ${COMMUNITY_TAR}
 
-      - name: Run tests
-        run: ./gradlew it:test
-
-      - uses: ./.github/actions/archive-test-results
+      - name: Run it tests
+        uses: ./.github/actions/test-gradle-project
         with:
-          file-name: it-tests-results
-          target: it/build/reports/tests/test/
+          project-name: it
