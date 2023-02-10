@@ -21,12 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: snyk/actions/setup@master
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'adopt'
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-snyk
       - name: Snyk test dependencies
         run: snyk test --all-projects --severity-threshold=medium --fail-on=all
 
@@ -35,34 +31,17 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v3
-      - uses: snyk/actions/setup@master
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'adopt'
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-snyk
       - name: Snyk monitor dependencies
         run: snyk monitor --all-projects --target-reference=${GITHUB_REF}
 
   compile:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-gradle-cache
       - name: Compile
         run: ./gradlew compileJava compileTestJava
 
@@ -75,65 +54,32 @@ jobs:
       security-events: write
       actions: read
 
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-gradle-cache
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
           languages: java
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
       - name: Compile
         run: ./gradlew compileJava compileTestJava
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
   unit-tests:
     runs-on: ubuntu-latest
     needs: compile
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-gradle-cache
       - name: Run tests
         run: ./gradlew common:test core:test processor:test test-utils:test
-
-      - name: Archive test results
-        uses: actions/upload-artifact@v3
-        if: always()
+      - uses: ./.github/actions/archive-test-results
         with:
-          name: test-results
-          path: |
+          file-name: unit-tests-results
+          target: |
             common/build/reports/tests/test/
             core/build/reports/tests/test/
             processor/build/reports/tests/test/
@@ -142,17 +88,10 @@ jobs:
   it-tests:
     runs-on: ubuntu-latest
     needs: compile
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-gradle-cache
       - name: Download neo4j dev docker container
         run: |
           curl -s -L0 -u "${TEAMCITY_USER}:${TEAMCITY_PASSWORD}" -X GET ${DOCKER_ENTERPRISE_DEV_URL} -o ${ENTERPRISE_TAR} &
@@ -161,20 +100,10 @@ jobs:
           docker load --input ${ENTERPRISE_TAR}
           docker load --input ${COMMUNITY_TAR}
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
       - name: Run tests
         run: ./gradlew it:test
 
-      - name: Archive test results
-        uses: actions/upload-artifact@v3
-        if: always()
+      - uses: ./.github/actions/archive-test-results
         with:
-          name: it-test-results
-          path: |
-            it/build/reports/tests/test/
+          file-name: it-tests-results
+          target: it/build/reports/tests/test/

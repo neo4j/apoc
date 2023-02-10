@@ -1,0 +1,19 @@
+name: "Archives test results"
+
+inputs:
+  file-name:
+    description: "Name of file to archive tests in"
+    required: true
+  target:
+    description: "List of files to archive"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Archive test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: ${{inputs.file-name}}
+        path: ${{inputs.target}}
