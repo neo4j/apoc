@@ -47,7 +47,9 @@ import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_REL_TYPE;
  * @since 12.05.16
  */
 public class SchemasTest {
-
+    public static final String CALL_SCHEMA_NODES_ORDERED = "CALL apoc.schema.nodes() " +
+            "YIELD label, type, properties, status, userDescription, name " +
+            "RETURN * ORDER BY label, type";
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
@@ -59,7 +61,7 @@ public class SchemasTest {
         assertEquals(":Foo(bar)", r.get("name"));
         assertEquals("ONLINE", r.get("status"));
         assertEquals("Foo", r.get("label"));
-        assertEquals("INDEX", r.get("type"));
+        assertEquals("RANGE", r.get("type"));
         assertEquals("bar", ((List<String>) r.get("properties")).get(0));
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
@@ -75,7 +77,7 @@ public class SchemasTest {
         assertEquals(":Foo(bar)", r.get("name"));
         assertEquals("ONLINE", r.get("status"));
         assertEquals("Foo", r.get("label"));
-        assertEquals("INDEX", r.get("type"));
+        assertEquals("RANGE", r.get("type"));
         assertEquals("bar", ((List<String>) r.get("properties")).get(0));
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
@@ -87,7 +89,7 @@ public class SchemasTest {
         assertEquals(":Person(name)", r.get("name"));
         assertEquals("ONLINE", r.get("status"));
         assertEquals("Person", r.get("label"));
-        assertEquals("INDEX", r.get("type"));
+        assertEquals("TEXT", r.get("type"));
         assertEquals("name", ((List<String>) r.get("properties")).get(0));
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
@@ -342,7 +344,7 @@ public class SchemasTest {
             assertEquals(":Foo(bar)", r.get("name"));
             assertEquals("ONLINE", r.get("status"));
             assertEquals("Foo", r.get("label"));
-            assertEquals("INDEX", r.get("type"));
+            assertEquals("RANGE", r.get("type"));
             assertEquals("bar", ((List<String>) r.get("properties")).get(0));
             assertEquals("NO FAILURE", r.get("failure"));
             assertEquals(100d, r.get("populationProgress"));
@@ -361,7 +363,7 @@ public class SchemasTest {
             assertEquals(":KNOWS(id,since)", row.get("name"));
             assertEquals("ONLINE", row.get("status"));
             assertEquals("KNOWS", row.get("relationshipType"));
-            assertEquals("INDEX", row.get("type"));
+            assertEquals("RANGE", row.get("type"));
             assertEquals(List.of("id", "since"), row.get("properties"));
         });
     }
@@ -402,36 +404,89 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR (bar:Bar) REQUIRE bar.foo IS UNIQUE");
         awaitIndexesOnline();
 
-        testResult(db, "CALL apoc.schema.nodes()", (result) -> {
+        testResult(db, CALL_SCHEMA_NODES_ORDERED, (result) -> {
             Map<String, Object> r = result.next();
 
-            assertEquals(":Bar(foo)", r.get("name"));
-            assertEquals("Bar", r.get("label"));
+            assertionsBarFooUniqueCons(r);
+
+            assertEquals("RANGE", r.get("type"));
+            assertEquals("ONLINE", r.get("status"));
+            final String expectedUserDescBarIdx = "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
+            r = result.next();
+
+            assertionsBarFooUniqueCons(r);
+
             assertEquals("UNIQUENESS", r.get("type"));
-            assertEquals("foo", ((List<String>) r.get("properties")).get(0));
+            assertEquals("", r.get("status"));
+            final String expectedUserDescBarCons = "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
             assertFalse(result.hasNext());
         });
     }
 
+    private static void assertionsBarFooUniqueCons(Map<String, Object> r) {
+        assertEquals(":Bar(foo)", r.get("name"));
+        assertEquals("Bar", r.get("label"));
+        assertEquals(List.of("foo"), r.get("properties"));
+    }
+
     @Test
     public void testIndexAndUniquenessConstraintOnNode() {
-        db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.foo)");
-        db.executeTransactionally("CREATE CONSTRAINT FOR (bar:Bar) REQUIRE bar.bar IS UNIQUE");
+        db.executeTransactionally("CREATE INDEX foo_idx FOR (n:Foo) ON (n.foo)");
+        db.executeTransactionally("CREATE CONSTRAINT bar_unique FOR (bar:Bar) REQUIRE bar.bar IS UNIQUE");
         awaitIndexesOnline();
-
-        testResult(db, "CALL apoc.schema.nodes()", (result) -> {
+        
+        testResult(db, CALL_SCHEMA_NODES_ORDERED, (result) -> {
             Map<String, Object> r = result.next();
 
-            assertEquals("Bar", r.get("label"));
+            assertionsBarUniqueCons(r);
+            assertEquals("RANGE", r.get("type"));
+            assertEquals("ONLINE", r.get("status"));
+            final String expectedUserDescBarIdx = "name='bar_unique', type='RANGE', schema=(:Bar {bar}), indexProvider='range-1.0', owningConstraint";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
+
+            r = result.next();
+
+            assertionsBarUniqueCons(r);
             assertEquals("UNIQUENESS", r.get("type"));
-            assertEquals("bar", ((List<String>) r.get("properties")).get(0));
+            assertEquals("", r.get("status"));
+            final String expectedUserDescBarCons = "name='bar_unique', type='UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
             r = result.next();
             assertEquals("Foo", r.get("label"));
-            assertEquals("INDEX", r.get("type"));
+            assertEquals("RANGE", r.get("type"));
             assertEquals("foo", ((List<String>) r.get("properties")).get(0));
             assertEquals("ONLINE", r.get("status"));
+            assertEquals(":Foo(foo)", r.get("name"));
+            final String expectedUserDescFoo = "name='foo_idx', type='RANGE', schema=(:Foo {foo}), indexProvider='range-1.0' )";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescFoo);
+
+            assertFalse(result.hasNext());
+        });
+    }
+
+    private static void assertionsBarUniqueCons(Map<String, Object> r) {
+        assertEquals("Bar", r.get("label"));
+        assertEquals(":Bar(bar)", r.get("name"));
+        assertEquals(List.of("bar"), r.get("properties"));
+    }
+
+    @Test
+    public void testSchemaNodesPointIndex() {
+        db.executeTransactionally("CREATE POINT INDEX pointIdx FOR (n:Baz) ON (n.baz)");
+        
+        testResult(db, "CALL apoc.schema.nodes()", (result) -> {
+            Map<String, Object> r = result.next();
+
+            assertEquals("Baz", r.get("label"));
+            assertEquals("POINT", r.get("type"));
+            assertEquals("baz", ((List<String>) r.get("properties")).get(0));
+            assertEquals("ONLINE", r.get("status"));
+            final String expectedUserDesc = "name='pointIdx', type='POINT', schema=(:Baz {baz}), indexProvider='point-1.0'";
+            Assertions.assertThat( r.get( "userDescription").toString() ).contains(expectedUserDesc);
 
             assertFalse(result.hasNext());
         });
@@ -737,7 +792,7 @@ public class SchemasTest {
                         r = result.next();
 
                         assertEquals(":SINCE(year)", r.get("name"));
-                        assertEquals("INDEX", r.get("type"));
+                        assertEquals("RANGE", r.get("type"));
                         assertEquals("SINCE", r.get("relationshipType"));
                         assertEquals("year", ((List<String>) r.get("properties")).get(0));
                         assertTrue(!result.hasNext());
@@ -762,7 +817,7 @@ public class SchemasTest {
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 ":SINCE(year)",
-                "INDEX",
+                "RANGE",
                 List.of("year"),
                 "ONLINE",
                 "SINCE"
@@ -776,7 +831,7 @@ public class SchemasTest {
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 ":LIKED(when)",
-                "INDEX",
+                "RANGE",
                 List.of("when"),
                 "ONLINE",
                 "LIKED"
@@ -790,13 +845,13 @@ public class SchemasTest {
         ));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 ":KNOW(how)",
-                "INDEX",
+                "RANGE",
                 List.of("how"),
                 "ONLINE",
                 "KNOW"
         ));
 
-        testResult(db, "CALL apoc.schema.relationships({})",
+        testResult(db, "CALL apoc.schema.relationships",
                     result -> {
                         while  (result.hasNext()) {
                             Map<String, Object> r = result.next();
@@ -822,17 +877,19 @@ public class SchemasTest {
             assertEquals(":" + TOKEN_LABEL + "()", row.get("name"));
             assertEquals("ONLINE", row.get("status"));
             assertEquals(TOKEN_LABEL, row.get("label"));
-            assertEquals("INDEX", row.get("type"));
+            assertEquals("LOOKUP", row.get("type"));
             assertTrue(((List)row.get("properties")).isEmpty());
             assertEquals("NO FAILURE", row.get("failure"));
             assertEquals(100d, row.get("populationProgress"));
             assertEquals(1d, row.get("valuesSelectivity"));
-            assertTrue(row.get("userDescription").toString().contains("name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0' )"));
+            final String expectedUserDesc = "name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0'";
+            Assertions.assertThat( row.get( "userDescription").toString() ).contains(expectedUserDesc);
         });
+        
         testCall(db, "CALL apoc.schema.relationships()", (row) -> {
             assertEquals(":" + TOKEN_REL_TYPE + "()", row.get("name"));
             assertEquals("ONLINE", row.get("status"));
-            assertEquals("INDEX", row.get("type"));
+            assertEquals("LOOKUP", row.get("type"));
             assertEquals(TOKEN_REL_TYPE, row.get("relationshipType"));
             assertTrue(((List)row.get("properties")).isEmpty());
         });
@@ -859,7 +916,7 @@ public class SchemasTest {
             assertEquals(":[Blah, Moon],(weightProp,anotherProp)", r.get("name"));
             assertEquals("ONLINE", r.get("status"));
             assertEquals(List.of("Blah", "Moon"), r.get("label"));
-            assertEquals("INDEX", r.get("type"));
+            assertEquals("FULLTEXT", r.get("type"));
             assertEquals(List.of("weightProp", "anotherProp"), r.get("properties"));
             assertEquals("NO FAILURE", r.get("failure"));
             assertEquals(100d, r.get("populationProgress"));
@@ -876,7 +933,7 @@ public class SchemasTest {
             assertEquals("ONLINE", r.get("status"));
             assertEquals(List.of("TYPE_1", "TYPE_2"), r.get("relationshipType"));
             assertEquals(List.of("alpha", "beta"), r.get("properties"));
-            assertEquals("INDEX", r.get("type"));
+            assertEquals("FULLTEXT", r.get("type"));
         });
     }
 
