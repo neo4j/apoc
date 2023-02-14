@@ -24,7 +24,7 @@ import static org.junit.Assert.*;
 public class GeocodeTest {
 
     private static final String BLOCKED_ADDRESS = "127.168.0.0";
-    private static final String NON_BLOCKED_ADDRESS = "123.456.7.8";
+    private static final String NON_BLOCKED_ADDRESS = "localhost";
     private static final String BLOCKED_ERROR = "access to /" + BLOCKED_ADDRESS + " is blocked via the configuration property internal.dbms.cypher_ip_blocklist";
     private static final String JAVA_NET_EXCEPTION = "Caused by: java.net";
     private static final String URL_FORMAT = "%s://%s/geocode/v1/json?q=PLACE&key=KEY";
@@ -54,7 +54,7 @@ public class GeocodeTest {
 
     @Test
     public void testGeocodeWithBlockedAddressWithApocConf() {
-        final String geocodeBaseConfig = Geocode.PREFIX + "." + "opencage";
+        final String geocodeBaseConfig = Geocode.PREFIX + ".opencage";
         apocConfig().setProperty(geocodeBaseConfig + ".key", "myKey");
         
         Stream.of("https", "http", "ftp").forEach(protocol -> {
@@ -64,25 +64,22 @@ public class GeocodeTest {
             final String geocodeConfigUrl = geocodeBaseConfig + ".url";
             final String geocodeConfigReverseUrl = geocodeBaseConfig + ".reverse.url";
             
-            // check that if either url or reverse address are blocked 
-            // respectively the apoc.spatial.geocode and the apoc.spatial.reverseGeocode procedure fails
             apocConfig().setProperty(geocodeConfigUrl, nonBlockedUrl);
             apocConfig().setProperty(geocodeConfigReverseUrl, String.format(REVERSE_URL_FORMAT, protocol, BLOCKED_ADDRESS));
 
-            assertGeocodeFails(true, BLOCKED_ERROR);
+            assertGeocodeBlockedUrl(true);
             
             apocConfig().setProperty(geocodeConfigUrl, String.format(URL_FORMAT, protocol, BLOCKED_ADDRESS));
             apocConfig().setProperty(geocodeConfigReverseUrl, nonBlockedReverseUrl);
-            
-            assertGeocodeFails(false, BLOCKED_ERROR);
 
-            // check that if neither url nor reverse url are blocked 
-            // the procedures continue the execution (in this case by throwing a `java.net` tException)
+            assertGeocodeBlockedUrl(false);
+
+
             apocConfig().setProperty(geocodeConfigUrl, nonBlockedUrl);
             apocConfig().setProperty(geocodeConfigReverseUrl, nonBlockedReverseUrl);
             
-            assertGeocodeFails(false, JAVA_NET_EXCEPTION);
-            assertGeocodeFails(true, JAVA_NET_EXCEPTION);
+            assertGeocodeAllowedUrl(false);
+            assertGeocodeAllowedUrl(true);
         });
     }
     
@@ -92,48 +89,59 @@ public class GeocodeTest {
 
             final String nonBlockedUrl = String.format(URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
             final String nonBlockedReverseUrl = String.format(REVERSE_URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
-            
-            // check that if either url or reverse address are blocked 
-            // respectively the apoc.spatial.geocode and the apoc.spatial.reverseGeocode procedure fails
-            assertGeocodeFails(true, BLOCKED_ERROR, 
+
+            assertGeocodeBlockedUrl(true, 
                     nonBlockedUrl,
                     String.format(REVERSE_URL_FORMAT, protocol, BLOCKED_ADDRESS)
             );
 
-            assertGeocodeFails(false, BLOCKED_ERROR, 
+            assertGeocodeBlockedUrl(false, 
                     String.format(URL_FORMAT, protocol, BLOCKED_ADDRESS),
                     nonBlockedReverseUrl
             );
 
-            // check that if neither url nor reverse url are blocked 
-            // the procedures continue the execution (in this case by throwing a `java.net` Exception)
-            assertGeocodeFails(false, JAVA_NET_EXCEPTION,
-                    nonBlockedUrl,
-                    nonBlockedReverseUrl
-            );
-            
-            assertGeocodeFails(true, JAVA_NET_EXCEPTION,
-                    nonBlockedUrl,
-                    nonBlockedReverseUrl
-            );
+            assertGeocodeAllowedUrl(false,
+                    nonBlockedUrl, nonBlockedReverseUrl);
+
+            assertGeocodeAllowedUrl(true,
+                    nonBlockedUrl, nonBlockedReverseUrl);
         });
     }
 
-    private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError, String url, String reverseUrl) {
-        assertGeocodeFails(reverseGeocode, expectedMsgError, 
-                Map.of("key", "myOwnKey", 
-                        "url", url, 
-                        "reverseUrl", reverseUrl)
-        );
+    private void assertGeocodeBlockedUrl(boolean reverseGeocode) {
+        assertGeocodeBlockedUrl(reverseGeocode, null, null);
+    }
+    
+    private void assertGeocodeBlockedUrl(boolean reverseGeocode, String url, String reverseUrl) {
+        // check that if either url or reverse address are blocked 
+        // respectively the apoc.spatial.geocode and the apoc.spatial.reverseGeocode procedure fails
+        assertGeocodeFails(reverseGeocode, BLOCKED_ERROR, url, reverseUrl);
     }
 
-    private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError) {
-        assertGeocodeFails(reverseGeocode, expectedMsgError, Collections.emptyMap());
+    private void assertGeocodeAllowedUrl(boolean reverseGeocode) {
+        assertGeocodeAllowedUrl(reverseGeocode, null, null);
+    }
+
+    private void assertGeocodeAllowedUrl(boolean reverseGeocode, String url, String reverseUrl) {
+        // check that if neither url nor reverse url are blocked 
+        // the procedures continue the execution (in this case by throwing a `401` Exception)
+        assertGeocodeFails(reverseGeocode, JAVA_NET_EXCEPTION, url, reverseUrl);
+    }
+
+    private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError, String url, String reverseUrl) {
+        // url == null means that it is defined via apoc.conf
+        Map<String, Object> conf = url == null
+                ? Collections.emptyMap()
+                : Map.of("key", "myOwnKey", 
+                    "url", url, 
+                    "reverseUrl", reverseUrl);
+        
+        assertGeocodeFails(reverseGeocode, expectedMsgError, conf);
     }
 
     private void assertGeocodeFails(boolean reverseGeocode, String expectedMsgError, Map<String, Object> conf) {
         QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                () -> testGeocodeWithThrottling( "opencage", reverseGeocode, conf )
+                () -> testGeocode( "opencage", 100, reverseGeocode, conf )
         );
 
         final String actualMsgErr = e.getMessage();
