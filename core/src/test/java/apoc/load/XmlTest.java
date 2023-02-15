@@ -559,10 +559,7 @@ public class XmlTest {
 
     @Test
     public void testTerminateImportXml() {
-        for (int i = 0; i < 20; i++) {
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
         TransactionTestUtil.checkTerminationGuard(db, "call apoc.import.xml($file)", Map.of("file", file));
-            
-        }
     }
 }

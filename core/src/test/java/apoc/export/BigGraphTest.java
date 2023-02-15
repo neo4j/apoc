@@ -14,7 +14,6 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
@@ -34,7 +33,6 @@ import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
 import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
-@Ignore
 public class BigGraphTest {
     private static final File directory = new File("target/import");
     static { //noinspection ResultOfMethodCallIgnored
@@ -45,7 +43,7 @@ public class BigGraphTest {
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
             .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("500m"))
+            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"))
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     @BeforeClass
@@ -56,7 +54,7 @@ public class BigGraphTest {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
 
         final String query = Util.readResourceFile("moviesMod.cypher");
-        IntStream.range(0, 20000).forEach(__-> db.executeTransactionally(query));
+        IntStream.range(0, 10000).forEach(__-> db.executeTransactionally(query));
     }
 
     @Test

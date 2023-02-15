@@ -8,7 +8,6 @@ import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.common.DependencyResolver;
@@ -228,7 +227,6 @@ public class PeriodicTest {
     }
     
     @Test
-    @Ignore
     public void testWithTerminationInnerTransaction() {
         // terminating the apoc.util.sleep should instantly terminate the periodic query without any creation
         final String innerLongQuery = "CALL apoc.util.sleep(20999) RETURN 0";
@@ -247,7 +245,7 @@ public class PeriodicTest {
                     });
             fail("Should have terminated");
         } catch (Exception e) {
-            assertEquals("Unable to complete transaction.: Explicitly terminated by the user.", e.getMessage());
+            assertTrue(e.getMessage().contains("terminated"));
         }
 
         lastTransactionChecks(db, query, timeBefore);

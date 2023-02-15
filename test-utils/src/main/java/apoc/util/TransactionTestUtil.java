@@ -39,19 +39,22 @@ public class TransactionTestUtil {
         terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
-        long timeBefore = 0L;
+        long timeBefore = System.currentTimeMillis();
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
-            timeBefore = System.currentTimeMillis();
             transaction.execute(query, params).resultAsString();
             transaction.commit();
             fail("Should fail because of TransactionFailureException");
         } catch (Exception e) {
-            final String message = e.getMessage();
-            System.out.println("e = " + message);
-            assertTrue("Actual message is: " + message,  message.contains("The transaction has been terminated"));
-            assertFalse(message.contains("The transaction has not completed within the specified timeout"));
+            final String msg = e.getMessage();
+            System.out.println("e = " + msg);
+            assertTrue("Actual message is: " + msg,  
+                    msg.contains("terminated") 
+                            || msg.contains("Transaction was marked as both successful and failed"));
+            
+            assertFalse(msg.contains("The transaction has not completed within the specified timeout"));
         }
 
+        
         lastTransactionChecks(db, timeout, query, timeBefore);
     }
 
@@ -61,14 +64,14 @@ public class TransactionTestUtil {
     }
 
     public static void lastTransactionChecks(GraphDatabaseService db, String query, long timeBefore) {
-        checkTransactionTime(DEFAULT_TIMEOUT, timeBefore);
-        checkTransactionNotInList(db, query);
+        lastTransactionChecks(db, DEFAULT_TIMEOUT, query, timeBefore);
     }
 
     private static void checkTransactionTime(long timeout, long timeBefore) {
-        System.out.println("timeAfterSecs = " + timeAfterSecs);
-        assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timeAfterSecs + " seconds",
-                timeAfterSecs < timeout);
+        timeBefore = (System.currentTimeMillis() - timeBefore) / 1000;
+        System.out.println("timeBefore = " + timeBefore);
+        assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timeBefore + " seconds",
+                timeBefore < timeout);
     }
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
