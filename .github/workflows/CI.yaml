@@ -44,14 +44,9 @@ jobs:
         uses: github/codeql-action/analyze@v2
 
   common-tests:
-    runs-on: ubuntu-latest
-    needs: compile
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run common tests
-        uses: ./.github/actions/test-gradle-project
-        with:
-          project-name: common
+    uses: ./.github/workflows/tests.yaml
+    with:
+      projectname: common
 
   core-tests:
     runs-on: ubuntu-latest
