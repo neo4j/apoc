@@ -8,6 +8,7 @@ import apoc.uuid.UuidUtil;
 import org.neo4j.graphdb.*;
 import org.neo4j.procedure.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -196,25 +197,44 @@ public class Create {
     @Procedure("apoc.create.clonePathToVirtual")
     @Description("Takes the given path and returns a virtual representation of it.")
     public Stream<PathResult> clonePathToVirtual(@Name("path") Path path) {
-        return Stream.of(createVirtualPath(path));
+        // given that it accepts a single path as a parameter the cache is not necessary
+        return Stream.of(createVirtualPath(path, null));
     }
 
     @Procedure("apoc.create.clonePathsToVirtual")
     @Description("Takes the given paths and returns a virtual representation of them.")
     public Stream<PathResult> clonePathsToVirtual(@Name("paths") List<Path> paths) {
-        return paths.stream().map(this::createVirtualPath);
+        Map<String, Relationship> cacheRel = new HashMap<>();
+        return paths.stream().map(path -> createVirtualPath(path, cacheRel));
     }
 
-    private PathResult createVirtualPath(Path path) {
+    private PathResult createVirtualPath(Path path, Map<String, Relationship> cacheRel) {
         final Iterable<Relationship> relationships = path.relationships();
         final Node first = path.startNode();
         VirtualPath virtualPath = new VirtualPath(new VirtualNode(first, Iterables.asList(first.getPropertyKeys())));
         for (Relationship rel : relationships) {
-            VirtualNode start = VirtualNode.from(rel.getStartNode());
-            VirtualNode end = VirtualNode.from(rel.getEndNode());
-            virtualPath.addRel(VirtualRelationship.from(start, end, rel));
+            final Relationship vRel = getVirtualRelPossiblyFromCache(cacheRel, rel);
+            virtualPath.addRel(vRel);
         }
         return new PathResult(virtualPath);
+    }
+
+    private static Relationship getVirtualRelPossiblyFromCache(Map<String, Relationship> cacheRel, Relationship rel) {
+        if (cacheRel == null) {
+            return getVirtualRel(rel);
+        }
+        return cacheRel.compute(rel.getElementId(), (k, v) -> {
+            if (v == null) {
+                return getVirtualRel(rel);
+            }
+            return v;
+        });
+    }
+
+    private static Relationship getVirtualRel(Relationship rel) {
+        VirtualNode start = VirtualNode.from(rel.getStartNode());
+        VirtualNode end = VirtualNode.from(rel.getEndNode());
+        return VirtualRelationship.from(start, end, rel);
     }
 
     private <T extends Entity> T setProperties(T pc, Map<String, Object> p) {
