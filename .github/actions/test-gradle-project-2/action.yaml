@@ -1,0 +1,14 @@
+name: "Test gradle project"
+
+inputs:
+  project-name:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - name: Run ${{inputs.project-name}} tests
+      uses: ./.github/actions/test-gradle-project
+      with:
+        project-name: ${{inputs.project-name}}

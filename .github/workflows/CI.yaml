@@ -44,19 +44,26 @@ jobs:
         uses: github/codeql-action/analyze@v2
 
   common-tests:
-    uses: ./.github/workflows/tests.yaml
-    with:
-      projectname: common
-
-  core-tests:
     runs-on: ubuntu-latest
     needs: compile
     steps:
       - uses: actions/checkout@v3
-      - name: Run core tests
+      - name: Run common tests
         uses: ./.github/actions/test-gradle-project
         with:
-          project-name: core
+          project-name: common
+
+  core-tests:
+    runs-on: ubuntu-latest
+#    needs: compile
+    env:
+      MY_NAME: "core"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run ${{env.MY_NAME}} tests
+        uses: ./.github/actions/test-gradle-project
+        with:
+          project-name: $MY_NAME
 
   processor-tests:
     runs-on: ubuntu-latest
