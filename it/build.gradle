@@ -1,8 +1,11 @@
-description = 'APOC :: Test Startup Module'
+description = 'APOC :: Integration Tests Module'
 
 dependencies {
+    testImplementation project(':common')
     testImplementation project(':core')
     testImplementation project(':test-utils')
+    testImplementation project(':common').sourceSets.test.output
+    testImplementation project(':core').sourceSets.test.output
 
     configurations.all {
         exclude group: 'org.slf4j', module: 'slf4j-nop'

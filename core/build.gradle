@@ -92,7 +92,6 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
     testImplementation group: 'com.github.adejanovski', name: 'cassandra-jdbc-wrapper', version: '3.1.0'
-    testImplementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.13.2'
 
     configurations.all {
         exclude group: 'org.slf4j', module: 'slf4j-nop'

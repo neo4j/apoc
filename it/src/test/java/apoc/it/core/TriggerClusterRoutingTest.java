@@ -1,5 +1,4 @@
-package apoc.trigger;
-
+package apoc.it.core;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestcontainersCausalCluster;

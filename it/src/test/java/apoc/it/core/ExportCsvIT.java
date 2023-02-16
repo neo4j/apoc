@@ -1,7 +1,7 @@
-package apoc.export.csv;
-
+package apoc.it.core;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
+import apoc.csv.CsvTestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

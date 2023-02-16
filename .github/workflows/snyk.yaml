@@ -1,0 +1,29 @@
+name: Snyk
+
+on:
+  push:
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+
+env:
+  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+jobs:
+  snyk-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-snyk
+      - name: Snyk test dependencies
+        run: snyk test --all-projects --severity-threshold=medium --fail-on=all
+
+  snyk-monitor:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-snyk
+      - name: Snyk monitor dependencies
+        run: snyk monitor --all-projects --target-reference=${GITHUB_REF}

@@ -6,7 +6,6 @@ plugins {
 
 archivesBaseName = "apoc-processor"
 
-
 jar {
     manifest {
         attributes 'Implementation-Version': version

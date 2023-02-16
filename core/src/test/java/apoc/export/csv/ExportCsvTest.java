@@ -1,5 +1,6 @@
 package apoc.export.csv;
 
+import apoc.csv.CsvTestUtil;
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;

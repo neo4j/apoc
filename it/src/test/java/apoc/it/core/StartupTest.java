@@ -1,3 +1,4 @@
+package apoc.it.core;
 import apoc.ApocSignatures;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;

@@ -1,5 +1,4 @@
-package apoc.warmup;
-
+package apoc.it.core;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import org.junit.Test;
