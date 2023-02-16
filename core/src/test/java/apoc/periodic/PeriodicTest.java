@@ -171,7 +171,7 @@ public class PeriodicTest {
     @Ignore
     @Test
     public void testTerminateCommit() {
-        PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) RETURN n limit 1000', {})");
+        PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)', {})");
     }
 
     @Test
