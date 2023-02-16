@@ -4,7 +4,7 @@ dependencies {
     testImplementation project(':common')
     testImplementation project(':core')
     testImplementation project(':test-utils')
-    testImplementation project(":common").sourceSets.test.output
+    testImplementation project(':common').sourceSets.test.output
     testImplementation project(':core').sourceSets.test.output
 
     configurations.all {

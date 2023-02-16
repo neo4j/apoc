@@ -6,10 +6,6 @@ plugins {
 
 archivesBaseName = "apoc-processor"
 
-test {
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-}
-
 jar {
     manifest {
         attributes 'Implementation-Version': version

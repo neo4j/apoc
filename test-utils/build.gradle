@@ -11,10 +11,6 @@ javadoc {
     options.addStringOption('Xdoclint:none', '-quiet')
 }
 
-test {
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-}
-
 dependencies {
     def withoutServers = {
         exclude group: 'org.eclipse.jetty'
