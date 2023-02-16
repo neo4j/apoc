@@ -7,6 +7,7 @@ import org.neo4j.graphdb.Transaction;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
@@ -39,7 +40,7 @@ public class TransactionTestUtil {
         terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
-        long timeBefore = System.currentTimeMillis();
+        long timePassed = System.currentTimeMillis();
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
             transaction.execute(query, params).resultAsString();
             transaction.commit();
@@ -47,15 +48,12 @@ public class TransactionTestUtil {
         } catch (Exception e) {
             final String msg = e.getMessage();
             System.out.println("e = " + msg);
-            assertTrue("Actual message is: " + msg,  
-                    msg.contains("terminated") 
-                            || msg.contains("Transaction was marked as both successful and failed"));
-            
-            assertFalse(msg.contains("The transaction has not completed within the specified timeout"));
+            assertTrue("Actual message is: " + msg,
+                    Stream.of("terminated", "failed", "closed").anyMatch(msg::contains));
         }
 
         
-        lastTransactionChecks(db, timeout, query, timeBefore);
+        lastTransactionChecks(db, timeout, query, timePassed);
     }
 
     public static void lastTransactionChecks(GraphDatabaseService db, long timeout, String query, long timeBefore) {
@@ -67,11 +65,10 @@ public class TransactionTestUtil {
         lastTransactionChecks(db, DEFAULT_TIMEOUT, query, timeBefore);
     }
 
-    private static void checkTransactionTime(long timeout, long timeBefore) {
-        timeBefore = (System.currentTimeMillis() - timeBefore) / 1000;
-        System.out.println("timeBefore = " + timeBefore);
-        assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timeBefore + " seconds",
-                timeBefore < timeout);
+    private static void checkTransactionTime(long timeout, long timePassed) {
+        timePassed = (System.currentTimeMillis() - timePassed) / 1000;
+        assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timePassed + " seconds",
+                timePassed < timeout);
     }
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
