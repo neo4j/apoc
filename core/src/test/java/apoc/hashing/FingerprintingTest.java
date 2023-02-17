@@ -8,6 +8,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.fabric.stream.StatementResult;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -108,6 +109,20 @@ public class FingerprintingTest  {
     @Test
     public void testExcludes() {
         compareGraph("CREATE (:Person{name:'ABC', created:timestamp()})", singletonList("created"), true);
+    }
+
+    @Test
+    public void fingerprintByteArray() {
+        byte[] byteArray = "hello, world".getBytes();
+        
+        db.executeTransactionally("CREATE (n:NodeTest {value: $value})", 
+                Map.of( "value", byteArray ) );
+        
+        TestUtil.testCall(db, "MATCH (n:NodeTest) RETURN apoc.hashing.fingerprinting(n) as hash", 
+                r -> assertEquals("D41D8CD98F00B204E9800998ECF8427E", r.get("hash")));
+        
+        TestUtil.testCall(db, "MATCH (n:NodeTest) RETURN apoc.hashing.fingerprint(n) as hash",
+                r -> assertEquals("3F8674B1C91F6D033C7183DB8F90936F", r.get("hash")));
     }
 
     @Test
