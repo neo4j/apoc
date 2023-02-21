@@ -7,7 +7,6 @@ import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.common.DependencyResolver;
@@ -168,10 +167,9 @@ public class PeriodicTest {
 
     }
 
-    @Ignore
     @Test
     public void testTerminateCommit() {
-        PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) RETURN n limit 1000', {})");
+        PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)', {})");
     }
 
     @Test

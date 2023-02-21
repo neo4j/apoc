@@ -10,9 +10,7 @@ import org.neo4j.test.rule.DbmsRule;
 
 import java.util.Map;
 
-import static apoc.util.TestUtil.testResult;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 public class PeriodicTestUtils {
     public static void killPeriodicQueryAsync(DbmsRule db) {
@@ -52,7 +50,7 @@ public class PeriodicTestUtils {
                     }),
                 (value) -> value, 15L, TimeUnit.SECONDS);
         } catch(Exception tfe) {
-            assertEquals(tfe.getMessage(),true, tfe.getMessage().contains("terminated"));
+            assertTrue(tfe.getMessage(), tfe.getMessage().contains("terminated"));
         }
     }
 }
