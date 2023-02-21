@@ -754,7 +754,7 @@ public class SchemasTest {
         QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
                 () ->  testResult(db, "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})", (result) -> {})
         );
-        TestCase.assertTrue(e.getMessage().contains("Parameters labels and excludelabels are both valuated. Please check parameters and valuate only one."));
+        TestCase.assertTrue(e.getMessage().contains("Parameters labels and excludeLabels are both valuated. Please check parameters and valuate only one."));
     }
 
     @Test
@@ -773,7 +773,7 @@ public class SchemasTest {
         QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
                 () ->  testResult(db, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
         );
-        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excluderelationships are both valuated. Please check parameters and valuate only one."));
+        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
     }
 
     @Test
