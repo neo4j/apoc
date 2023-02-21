@@ -65,7 +65,7 @@ public class ImportCsvTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.allow_file_urls, true)
             .withSetting(GraphDatabaseSettings.db_temporal_timezone, DEFAULT_TIMEZONE)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("250m"))
+            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("500m"))
             .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, new File(BASE_URL_FILES).toPath().toAbsolutePath());

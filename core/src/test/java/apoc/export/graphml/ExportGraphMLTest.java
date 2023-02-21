@@ -48,7 +48,6 @@ import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.MapUtil.map;
-import static apoc.util.TestUtil.isRunningInCI;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static apoc.util.TestUtil.testResult;
 import static org.junit.Assert.assertEquals;

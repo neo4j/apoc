@@ -47,7 +47,7 @@ public class PeriodicTestUtils {
 
     public static void testTerminateWithCommand(DbmsRule db, String periodicQuery, String iterateQuery) {
         long timeBefore = System.currentTimeMillis();
-        TransactionTestUtil.terminateTransactionAsync(db, iterateQuery);
+        TransactionTestUtil.terminateTransactionAsync(db, 10L, iterateQuery);
         checkPeriodicTerminated(db, periodicQuery);
         TransactionTestUtil.lastTransactionChecks(db, periodicQuery, timeBefore);
     }
