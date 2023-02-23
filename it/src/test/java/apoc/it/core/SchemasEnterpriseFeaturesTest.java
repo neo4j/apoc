@@ -612,7 +612,7 @@ public class SchemasEnterpriseFeaturesTest {
         ClientException e = Assert.assertThrows(ClientException.class,
                 () ->  testResult(session, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
         );
-        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excluderelationships are both valuated. Please check parameters and valuate only one."));
+        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
 
         session.writeTransaction(tx -> {
             tx.run("DROP CONSTRAINT like_con");
