@@ -48,6 +48,7 @@ import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static apoc.util.TestUtil.testResult;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -265,6 +266,13 @@ public class ExportGraphMLTest {
                     assertEquals("graphml", r.get("format"));
                     assertEquals(true, r.get("done"));
                 });
+    }
+
+    @Test
+    public void testImportGraphMLTerminate() {
+        final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
+        checkTerminationGuard(db, 5L, "CALL apoc.import.graphml($file,{readLabels:true})",
+                map("file", file));
     }
 
     @Test

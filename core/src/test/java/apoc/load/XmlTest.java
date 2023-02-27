@@ -2,6 +2,7 @@ package apoc.load;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
+import apoc.util.TransactionTestUtil;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import apoc.xml.XmlTestUtils;
@@ -60,6 +61,12 @@ public class XmlTest {
                 (row) -> {
                     assertEquals(XmlTestUtils.XML_AS_NESTED_MAP, row.get("value"));
                 });
+    }
+
+    @Test
+    public void testTerminateLoadXml() {
+        final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
+        TransactionTestUtil.checkTerminationGuard(db, "call apoc.load.xml($file)", Map.of("file", file));
     }
 
     @Test
@@ -548,5 +555,11 @@ public class XmlTest {
         Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof RuntimeException);
         assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+    }
+
+    @Test
+    public void testTerminateImportXml() {
+        final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
+        TransactionTestUtil.checkTerminationGuard(db, "call apoc.import.xml($file)", Map.of("file", file));
     }
 }
