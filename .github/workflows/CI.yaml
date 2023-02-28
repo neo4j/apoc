@@ -10,6 +10,7 @@ env:
   TEAMCITY_DEV_URL: ${{ secrets.TEAMCITY_DEV_URL }}
   TEAMCITY_USER: ${{ secrets.TEAMCITY_USER }}
   TEAMCITY_PASSWORD: ${{ secrets.TEAMCITY_PASSWORD }}
+  SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 jobs:
   compile:
@@ -20,6 +21,27 @@ jobs:
       - uses: ./.github/actions/setup-gradle-cache
       - name: Compile
         run: ./gradlew compileJava compileTestJava
+
+  snyk-test:
+    runs-on: ubuntu-latest
+    needs: compile
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-snyk
+      - name: Snyk test dependencies
+        run: snyk test --all-projects --severity-threshold=medium --fail-on=all
+
+  snyk-monitor:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    needs: compile
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-jdk
+      - uses: ./.github/actions/setup-snyk
+      - name: Snyk monitor dependencies
+        run: snyk monitor --all-projects --target-reference=${GITHUB_REF}
 
   code-ql:
     runs-on: ubuntu-latest
