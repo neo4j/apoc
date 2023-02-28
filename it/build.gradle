@@ -1,5 +1,9 @@
 description = 'APOC :: Integration Tests Module'
 
+test {
+    maxParallelForks = 1
+}
+
 dependencies {
     testImplementation project(':common')
     testImplementation project(':core')
