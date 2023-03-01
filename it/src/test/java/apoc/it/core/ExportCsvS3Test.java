@@ -25,7 +25,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
     
     @BeforeClass
-    public static void setUp() throws Exception{
+    public static void setUp() throws Exception {
         baseBeforeClass();
 
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
