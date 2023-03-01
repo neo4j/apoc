@@ -1,5 +1,6 @@
-package apoc.export.csv;
+package apoc.it.core;
 
+import apoc.export.csv.ExportCSV;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;

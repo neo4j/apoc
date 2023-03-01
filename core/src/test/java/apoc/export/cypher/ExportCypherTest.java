@@ -987,7 +987,7 @@ public class ExportCypherTest {
 
     public static class ExportCypherResults {
 
-        static final String EXPECTED_NODES = String.format("BEGIN%n" +
+        public static final String EXPECTED_NODES = String.format("BEGIN%n" +
                 "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n" +
                 "CREATE (:Bar {age:42, name:\"bar\"});%n" +
                 "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});%n" +
@@ -999,18 +999,18 @@ public class ExportCypherTest {
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:2}) SET n.age=12, n:Bar;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_NODES_MERGE_ON_CREATE_SET =
+        public static final String EXPECTED_NODES_MERGE_ON_CREATE_SET =
                 EXPECTED_NODES_MERGE.replaceAll(" SET ", " ON CREATE SET ");
 
-        static final String EXPECTED_NODES_EMPTY = String.format("BEGIN%n" +
+        public static final String EXPECTED_NODES_EMPTY = String.format("BEGIN%n" +
                 "COMMIT%n");
 
         private static final String EXPECTED_CONSTRAINTS_AND_AWAIT = "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
                 "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
                 "COMMIT%n" +
                 "SCHEMA AWAIT%n";
-        
-        static final String EXPECTED_SCHEMA = String.format("BEGIN%n" +
+
+        public static final String EXPECTED_SCHEMA = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
                 "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
                 EXPECTED_CONSTRAINTS_AND_AWAIT);
@@ -1020,13 +1020,13 @@ public class ExportCypherTest {
                 "CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);%n" +
                 EXPECTED_CONSTRAINTS_AND_AWAIT);
 
-        static final String EXPECTED_SCHEMA_EMPTY = String.format("BEGIN%n" +
+        public static final String EXPECTED_SCHEMA_EMPTY = String.format("BEGIN%n" +
                 "COMMIT%n" +
                 "SCHEMA AWAIT%n");
 
         public static final String EXPECTED_INDEXES_AWAIT = String.format("CALL db.awaitIndexes(300);%n");
 
-        static final String EXPECTED_RELATIONSHIPS = String.format("BEGIN%n" +
+        public static final String EXPECTED_RELATIONSHIPS = String.format("BEGIN%n" +
                 "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);%n" +
                 "COMMIT%n");
 
@@ -1034,22 +1034,22 @@ public class ExportCypherTest {
                 "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) MERGE (n1)-[r:KNOWS]->(n2) SET r.since=2016;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET =
+        public static final String EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET =
                 EXPECTED_RELATIONSHIPS_MERGE.replaceAll(" SET ", " ON CREATE SET ");
 
-        static final String EXPECTED_CLEAN_UP = String.format("BEGIN%n" +
+        public static final String EXPECTED_CLEAN_UP = String.format("BEGIN%n" +
                 "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
                 "COMMIT%n" +
                 "BEGIN%n" +
                 "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_CLEAN_UP_EMPTY = String.format("BEGIN%n" +
+        public static final String EXPECTED_CLEAN_UP_EMPTY = String.format("BEGIN%n" +
                 "COMMIT%n" +
                 "BEGIN%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_ONLY_SCHEMA_NEO4J_SHELL = String.format("BEGIN%n" +
+        public static final String EXPECTED_ONLY_SCHEMA_NEO4J_SHELL = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
                 "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
                 "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
@@ -1063,7 +1063,7 @@ public class ExportCypherTest {
                 "COMMIT\n" +
                 "SCHEMA AWAIT\n";
 
-        static final String EXPECTED_CYPHER_POINT = String.format("BEGIN%n" +
+        public static final String EXPECTED_CYPHER_POINT = String.format("BEGIN%n" +
                 "CREATE (:Test:`UNIQUE IMPORT LABEL` {name:\"foo\", place2d:point({x: 2.3, y: 4.5, crs: 'cartesian'}), place3d1:point({x: 2.3, y: 4.5, z: 1.2, crs: 'cartesian-3d'}), `UNIQUE IMPORT ID`:3});%n" +
                 "CREATE (:Bar:`UNIQUE IMPORT LABEL` {place3d:point({x: 12.78, y: 56.7, z: 100.0, crs: 'wgs-84-3d'}), `UNIQUE IMPORT ID`:4});%n" +
                 "COMMIT%n" +
@@ -1075,7 +1075,7 @@ public class ExportCypherTest {
                 "COMMIT%n" +
                 EXPECTED_CLEAN_UP);
 
-        static final String EXPECTED_CYPHER_DATE = String.format("BEGIN%n" +
+        public static final String EXPECTED_CYPHER_DATE = String.format("BEGIN%n" +
                 "CREATE (:Test:`UNIQUE IMPORT LABEL` {date:date('2018-10-30'), datetime:datetime('2018-10-30T12:50:35.556+01:00'), localTime:localdatetime('2018-10-30T19:32:24'), name:\"foo\", `UNIQUE IMPORT ID`:3});%n" +
                 "CREATE (:Bar:`UNIQUE IMPORT LABEL` {datetime:datetime('2018-10-30T12:50:35.556Z'), `UNIQUE IMPORT ID`:4});%n" +
                 "COMMIT%n" +
@@ -1087,7 +1087,7 @@ public class ExportCypherTest {
                 "COMMIT%n" +
                 EXPECTED_CLEAN_UP);
 
-        static final String EXPECTED_CYPHER_TIME = String.format("BEGIN%n" +
+        public static final String EXPECTED_CYPHER_TIME = String.format("BEGIN%n" +
                 "CREATE (:Test:`UNIQUE IMPORT LABEL` {local:localtime('12:50:35.556'), name:\"foo\", t:time('12:50:35.556+01:00'), `UNIQUE IMPORT ID`:3});%n" +
                 "CREATE (:Bar:`UNIQUE IMPORT LABEL` {datetime:datetime('2018-10-30T12:50:35.556+01:00'), `UNIQUE IMPORT ID`:4});%n" +
                 "COMMIT%n" +
@@ -1099,7 +1099,7 @@ public class ExportCypherTest {
                 "COMMIT%n" +
                 EXPECTED_CLEAN_UP);
 
-        static final String EXPECTED_CYPHER_DURATION = String.format("BEGIN%n" +
+        public static final String EXPECTED_CYPHER_DURATION = String.format("BEGIN%n" +
                 "CREATE (:Test:`UNIQUE IMPORT LABEL` {duration:duration('P5M1DT12H'), name:\"foo\", `UNIQUE IMPORT ID`:3});%n" +
                 "CREATE (:Bar:`UNIQUE IMPORT LABEL` {duration:duration('P5M1DT12H'), `UNIQUE IMPORT ID`:4});%n" +
                 "COMMIT%n" +
@@ -1111,7 +1111,7 @@ public class ExportCypherTest {
                 "COMMIT%n" +
                 EXPECTED_CLEAN_UP);
 
-        static final String EXPECTED_CYPHER_LABELS_ASCENDEND = String.format("BEGIN%n" +
+        public static final String EXPECTED_CYPHER_LABELS_ASCENDEND = String.format("BEGIN%n" +
                 "CREATE (:User:User0:User1:User12:`UNIQUE IMPORT LABEL` {name:\"Alan\", `UNIQUE IMPORT ID`:3});%n" +
                 "COMMIT%n" +
                 "BEGIN%n" +
@@ -1119,19 +1119,19 @@ public class ExportCypherTest {
                 "COMMIT%n" +
                 "SCHEMA AWAIT%n" +
                 EXPECTED_CLEAN_UP);
-        
+
         static final String EXPECTED_SCHEMA_WITH_RELS_OPTIMIZED = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
                 "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
                 "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
                 EXPECTED_CONSTRAINTS_AND_AWAIT);
-        
+
         static final String EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
                 "CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);%n" +
                 "CREATE RANGE INDEX rel_index_name FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
                 EXPECTED_CONSTRAINTS_AND_AWAIT);
-        
+
         static final String EXPECTED_SCHEMA_WITH_RELS_AND_IF_NOT_EXISTS = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX IF NOT EXISTS FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
                 "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
@@ -1171,7 +1171,7 @@ public class ExportCypherTest {
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_NODES_OPTIMIZED = String.format("BEGIN%n" +
+        public static final String EXPECTED_NODES_OPTIMIZED = String.format("BEGIN%n" +
                 "UNWIND [{_id:3, properties:{age:12}}] AS row%n" +
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n" +
                 "UNWIND [{_id:2, properties:{age:12}}] AS row%n" +
@@ -1213,7 +1213,7 @@ public class ExportCypherTest {
                 "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
                 "COMMIT%n");
 
-        static final String EXPECTED_RELATIONSHIPS_OPTIMIZED = String.format("BEGIN%n" +
+        public static final String EXPECTED_RELATIONSHIPS_OPTIMIZED = String.format("BEGIN%n" +
                 "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n" +
                 "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
                 "MATCH (end:Bar{name: row.end.name})%n" +
@@ -1312,7 +1312,7 @@ public class ExportCypherTest {
                 "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
                 ":commit%n");
 
-        static final String EXPECTED_PLAIN_ADD_STRUCTURE_UNWIND = String.format("UNWIND [{_id:3, properties:{age:12}}] AS row%n" +
+        public static final String EXPECTED_PLAIN_ADD_STRUCTURE_UNWIND = String.format("UNWIND [{_id:3, properties:{age:12}}] AS row%n" +
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Bar;%n" +
                 "UNWIND [{_id:2, properties:{age:12}}] AS row%n" +
                 "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Bar:Person;%n" +
@@ -1327,12 +1327,12 @@ public class ExportCypherTest {
                 "MATCH (end:Bar{name: row.end.name})%n" +
                 "CREATE (start)-[r:KNOWS]->(end)  SET r += row.properties;%n");
 
-        static final String EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND = String.format("UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n" +
+        public static final String EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND = String.format("UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n" +
                 "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
                 "MATCH (end:Bar{name: row.end.name})%n" +
                 "MERGE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
 
-        static final String EXPECTED_UPDATE_ALL_UNWIND = String.format("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
+        public static final String EXPECTED_UPDATE_ALL_UNWIND = String.format("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
                 "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
                 "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
                 "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
@@ -1350,9 +1350,9 @@ public class ExportCypherTest {
                 "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
                 "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n");
 
-        static final String EXPECTED_NEO4J_OPTIMIZED = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_OPTIMIZED = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
 
         static final String EXPECTED_QUERY_NODES =  EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
         static final String EXPECTED_QUERY_NODES2 =  EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED2 + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
@@ -1365,11 +1365,11 @@ public class ExportCypherTest {
 
         static final String EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_PARAMS_BATCH_SIZE_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + DROP_UNIQUE_OPTIMIZED_BATCH;
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND);
+        public static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD);
+        public static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD);
 
-        static final String EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD);
+        public static final String EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD);
 
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_QUERY_NODES);
 
@@ -1379,26 +1379,26 @@ public class ExportCypherTest {
 
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4 = convertToCypherShellFormat(EXPECTED_QUERY_NODES4);
 
-        static final String EXPECTED_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED);
+        public static final String EXPECTED_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED);
 
-        static final String EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE);
+        public static final String EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE);
 
-        static final String EXPECTED_PLAIN_OPTIMIZED_BATCH_SIZE = EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE
+        public static final String EXPECTED_PLAIN_OPTIMIZED_BATCH_SIZE = EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE
                 .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin())
                 .replace(NEO4J_SHELL.commit(), PLAIN_FORMAT.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), PLAIN_FORMAT.schemaAwait());
 
-        static final String EXPECTED_NEO4J_SHELL = EXPECTED_NODES + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_SHELL = EXPECTED_NODES + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL);
+        public static final String EXPECTED_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL);
 
-        static final String EXPECTED_PLAIN = EXPECTED_NEO4J_SHELL
+        public static final String EXPECTED_PLAIN = EXPECTED_NEO4J_SHELL
                 .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin()).replace(NEO4J_SHELL.commit(), PLAIN_FORMAT.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), PLAIN_FORMAT.schemaAwait());
 
-        static final String EXPECTED_NEO4J_MERGE = EXPECTED_NODES_MERGE + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS_MERGE + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_MERGE = EXPECTED_NODES_MERGE + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS_MERGE + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL);
+        public static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL);
 
         public static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT = String.format("BEGIN%n" +
                 "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;%n" +
@@ -1424,7 +1424,7 @@ public class ExportCypherTest {
                 "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n" +
                 "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n" +
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
-        
+
         static final String EXPECTED_2886_SCHEMA = """
                 CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);
                 CREATE RANGE INDEX FOR (n:Foo) ON (n.name);
@@ -1467,7 +1467,7 @@ public class ExportCypherTest {
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);
                 """;
-        
+
         static final String EXPECTED_NODES_PARAMS_ODD = String.format(":begin%n" +
                 ":param rows => [{_id:4, properties:{age:12}}, {_id:5, properties:{age:4}}]%n" +
                 "UNWIND $rows AS row%n" +
@@ -1492,7 +1492,7 @@ public class ExportCypherTest {
                 "UNWIND $rows AS row%n" +
                 "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
                 ":commit%n");
-        
+
         static final String EXPECTED_DROP_PARAMS_ODD = String.format(":begin%n" +
                 "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
                 ":commit%n" +
@@ -1502,8 +1502,8 @@ public class ExportCypherTest {
                 ":begin%n" +
                 "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
                 ":commit%n", 3);
-        
-        static final String EXPECTED_QUERY_PARAMS_ODD = (EXPECTED_SCHEMA + EXPECTED_NODES_PARAMS_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + EXPECTED_DROP_PARAMS_ODD)
+
+        public static final String EXPECTED_QUERY_PARAMS_ODD = (EXPECTED_SCHEMA + EXPECTED_NODES_PARAMS_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + EXPECTED_DROP_PARAMS_ODD)
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
                 .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)

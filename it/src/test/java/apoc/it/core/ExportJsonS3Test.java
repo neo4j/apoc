@@ -1,5 +1,6 @@
-package apoc.export.json;
+package apoc.it.core;
 
+import apoc.export.json.ExportJson;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
