@@ -1,5 +1,6 @@
-package apoc.export.csv;
+package apoc.it.core;
 
+import apoc.export.csv.ExportCSV;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
@@ -24,7 +25,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
     
     @BeforeClass
-    public static void setUp() throws Exception{
+    public static void setUp() throws Exception {
         baseBeforeClass();
 
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);

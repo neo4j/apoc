@@ -1,5 +1,6 @@
-package apoc.export.json;
+package apoc.it.core;
 
+import apoc.export.json.ExportJson;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
@@ -20,7 +21,7 @@ import static apoc.util.s3.S3TestUtil.readS3FileToString;
 import static org.junit.Assert.*;
 
 public class ExportJsonS3Test extends S3BaseTest {
-    private static File directoryExpected = new File("src/test/resources/exportJSON");
+    private static File directoryExpected = new File(ExportJsonS3Test.class.getClassLoader().getResource("exportJSON").getFile());
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
