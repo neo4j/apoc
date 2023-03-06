@@ -4,18 +4,12 @@ import apoc.coll.Coll;
 import apoc.path.Paths;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterables;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -323,44 +317,29 @@ public class CreateTest {
     public void testClonePathShouldNotDuplicateRelsWithMultipaths() {
         //create path with single rels
         db.executeTransactionally("""
-                          CREATE (n:Node{id:0}),
-                            (n2:Node{id:1}),
-                            (n3:Node{id:2}),
-                            (n4:Node{id:3}),
-                            (n5:Node{id:4}),
-                            (n6:Node{id:5}),
-                            (n7:Node{id:6}),
-                            (n)-[:PARENT]->(n2),
-                            (n)-[:PARENT]->(n3),
-                            (n)-[:PARENT]->(n5),
-                            (n)-[:PARENT]->(n6)-[:PARENT]->(n7),
-                            (n)-[:PARENT]->(n4)-[:PARENT]->(n7)-[:PARENT]->(n2)-[:PARENT]->(n3)"""
+                CREATE (n1:Node {id: 1}),
+                              (n2:Node),
+                              (n3:Node),
+                              (n1)-[:R]->(n2)-[:R]->(n3)"""
         );
         
         // returns a list with all rels
         testCall(db, """
-                MATCH p=(n:Node{id: 0})-[:PARENT*..4]->(v:Node)
-                WITH collect(p) as p
-                CALL apoc.create.clonePathsToVirtual(p)
+                MATCH p=(:Node {id: 1})-[:R*..2]->(:Node)
+                WITH collect(p) AS paths
+                CALL apoc.create.clonePathsToVirtual(paths)
                 YIELD path
                 WITH collect( relationships(path) ) as pathRels
                 RETURN apoc.coll.flatten(pathRels) as rels""", r -> {
-            final List<Relationship> paths = (List<Relationship>) r.get("rels");
-            assertFalse(paths.isEmpty());
+            final List<Relationship> rels = (List) r.get("rels");
+            assertEquals(3, rels.size());
 
-            // group the rels by the pair of start-end node 
-            final Map<Pair<String, String>, List<Relationship>> collect = paths.stream()
-                    .collect(Collectors.groupingBy(i -> Pair.of(
-                            i.getStartNode().getElementId(),
-                            i.getEndNode().getElementId()))
-                    );
+            // group the rels by id and check that there are not duplicated
+            Map<String, List<Relationship>> relsById = rels
+                    .stream()
+                    .collect(Collectors.groupingBy(Entity::getElementId));
 
-            // assert that, for each start-end node pair, 
-            // the size of relationships' Set is equal to 1, that is, exists only 1 relId
-            Iterables.asSet(collect.values()).forEach(relList -> {
-                final int relSetSize = Set.copyOf(relList).size();
-                assertEquals(1, relSetSize);
-            });
+            assertEquals(2, relsById.size());
         });
     }
     

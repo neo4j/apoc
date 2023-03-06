@@ -197,23 +197,24 @@ public class Create {
     @Procedure("apoc.create.clonePathToVirtual")
     @Description("Takes the given path and returns a virtual representation of it.")
     public Stream<PathResult> clonePathToVirtual(@Name("path") Path path) {
-        // given that it accepts a single path as a parameter the cache is not necessary
+        // given that it accepts a single path as a input parameter
+        // the `relationshipMap` (i.e. to avoid duplicated rels) is not necessary
         return Stream.of(createVirtualPath(path, null));
     }
 
     @Procedure("apoc.create.clonePathsToVirtual")
     @Description("Takes the given paths and returns a virtual representation of them.")
     public Stream<PathResult> clonePathsToVirtual(@Name("paths") List<Path> paths) {
-        Map<String, Relationship> cacheRel = new HashMap<>();
-        return paths.stream().map(path -> createVirtualPath(path, cacheRel));
+        Map<String, Relationship> createdRelationships = new HashMap<>();
+        return paths.stream().map(path -> createVirtualPath(path, createdRelationships));
     }
 
-    private PathResult createVirtualPath(Path path, Map<String, Relationship> cacheRel) {
+    private PathResult createVirtualPath(Path path, Map<String, Relationship> createdRelationships) {
         final Iterable<Relationship> relationships = path.relationships();
         final Node first = path.startNode();
         VirtualPath virtualPath = new VirtualPath(new VirtualNode(first, Iterables.asList(first.getPropertyKeys())));
         for (Relationship rel : relationships) {
-            final Relationship vRel = getVirtualRelPossiblyFromCache(cacheRel, rel);
+            final Relationship vRel = getVirtualRelPossiblyFromCache(createdRelationships, rel);
             virtualPath.addRel(vRel);
         }
         return new PathResult(virtualPath);
