@@ -191,9 +191,11 @@ public class ImportCsvTest {
     
     @Test
     public void testImportCsvTerminate() {
-        checkTerminationGuard(db, "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
-                map("nodeFile", "file:/largeFile.csv",
-                        "config", map("batchSize", 100L)));
+        for (int i = 0; i < 10; i++) {
+            checkTerminationGuard(db, "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
+                    map("nodeFile", "file:/largeFile.csv",
+                            "config", map("batchSize", 100L)));
+        }
     }
 
     @Test

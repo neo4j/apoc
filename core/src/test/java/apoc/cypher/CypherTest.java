@@ -175,18 +175,20 @@ public class CypherTest {
 
     @Test
     public void testRunTimeboxedWithTerminationInnerTransaction() {
-        final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
+        for (int i = 0; i < 100; i++) {
+            final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
+            final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
-        terminateTransactionAsync(db, innerLongQuery);
+            terminateTransactionAsync(db, innerLongQuery);
 
-        long timeBefore = System.currentTimeMillis();
-        // assert query terminated (RETURN 0)
-        TestUtil.testCall(db, query,
-                Map.of("innerQuery", innerLongQuery),
-                row -> assertEquals(Map.of("0", 0L), row.get("value")));
-        
-        lastTransactionChecks(db, query, timeBefore);
+            long timeBefore = System.currentTimeMillis();
+            // assert query terminated (RETURN 0)
+            TestUtil.testCall(db, query,
+                    Map.of("innerQuery", innerLongQuery),
+                    row -> assertEquals(Map.of("0", 0L), row.get("value")));
+
+            lastTransactionChecks(db, query, timeBefore);
+        }
     }
 
     @Test
