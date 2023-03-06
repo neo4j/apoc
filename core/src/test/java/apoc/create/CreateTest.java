@@ -1,5 +1,6 @@
 package apoc.create;
 
+import apoc.coll.Coll;
 import apoc.path.Paths;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterables;
@@ -8,12 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.graphdb.Label;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -21,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static apoc.result.VirtualNode.ERROR_NODE_NULL;
 import static apoc.result.VirtualRelationship.ERROR_END_NODE_NULL;
@@ -39,7 +36,7 @@ public class CreateTest {
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db,Create.class, Paths.class);
+        TestUtil.registerProcedure(db,Create.class, Paths.class, Coll.class);
     }
 
     @After
@@ -314,6 +311,36 @@ public class CreateTest {
                     Node end = (Node) row.get("end");
                     assertFalse(end.hasProperty("brazorf"));
                 });
+    }
+
+    @Test
+    public void testClonePathShouldNotDuplicateRelsWithMultipaths() {
+        //create path with single rels
+        db.executeTransactionally("""
+                CREATE (n1:Node {id: 1}),
+                              (n2:Node),
+                              (n3:Node),
+                              (n1)-[:R]->(n2)-[:R]->(n3)"""
+        );
+        
+        // returns a list with all rels
+        testCall(db, """
+                MATCH p=(:Node {id: 1})-[:R*..2]->(:Node)
+                WITH collect(p) AS paths
+                CALL apoc.create.clonePathsToVirtual(paths)
+                YIELD path
+                WITH collect( relationships(path) ) as pathRels
+                RETURN apoc.coll.flatten(pathRels) as rels""", r -> {
+            final List<Relationship> rels = (List) r.get("rels");
+            assertEquals(3, rels.size());
+
+            // group the rels by id and check that there are not duplicated
+            Map<String, List<Relationship>> relsById = rels
+                    .stream()
+                    .collect(Collectors.groupingBy(Entity::getElementId));
+
+            assertEquals(2, relsById.size());
+        });
     }
     
     @Test
