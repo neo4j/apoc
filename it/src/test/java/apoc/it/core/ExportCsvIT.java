@@ -4,6 +4,7 @@ import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.csv.CsvTestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.Session;
 
@@ -19,6 +20,7 @@ import static org.junit.Assert.assertEquals;
  * @author as
  * @since 13.02.19
  */
+
 public class ExportCsvIT {
 
     private static Neo4jContainerExtension neo4jContainer;

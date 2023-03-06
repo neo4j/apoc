@@ -66,6 +66,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
             isRunning = true;
         } catch (Exception startException) {
             try {
+                System.out.println("Neo4jContainerExtension.start");
                 System.out.println(this.execInContainer("cat", "logs/debug.log").toString());
                 System.out.println(this.execInContainer("cat", "logs/http.log").toString());
                 System.out.println(this.execInContainer("cat", "logs/security.log").toString());

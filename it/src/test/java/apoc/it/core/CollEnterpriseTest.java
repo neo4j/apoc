@@ -11,6 +11,7 @@ import org.neo4j.driver.Session;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static org.junit.Assert.assertEquals;
 
+
 public class CollEnterpriseTest {
 
     private static Neo4jContainerExtension neo4jContainer;

@@ -5,6 +5,7 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.Session;
 
@@ -22,6 +23,7 @@ import static org.junit.Assert.assertEquals;
  * @author as
  * @since 13.02.19
  */
+
 public class ExportCypherEnterpriseFeaturesTest {
 
     private static File directory = new File("import"); // it's the directory bounded to the /import dir inside the Neo4jContainer

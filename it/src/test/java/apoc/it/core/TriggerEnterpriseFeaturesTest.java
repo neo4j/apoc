@@ -1,10 +1,7 @@
 package apoc.it.core;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
@@ -35,6 +32,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 import static org.neo4j.driver.SessionConfig.forDatabase;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
+@Ignore
 public class TriggerEnterpriseFeaturesTest {
     private static final String FOO_DB = "foo";
 

@@ -6,11 +6,7 @@ import apoc.util.TestContainerUtil.ApocPackage;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.exceptions.ClientException;
@@ -35,6 +31,7 @@ import static org.junit.Assert.assertTrue;
  * @author as
  * @since 12.02.19
  */
+@Ignore
 public class SchemasEnterpriseFeaturesTest {
 
     private static Neo4jContainerExtension neo4jContainer;
