@@ -6,6 +6,7 @@ import org.neo4j.graphdb.Transaction;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static apoc.util.MapUtil.map;
@@ -35,21 +36,43 @@ public class TransactionTestUtil {
     }
 
     public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query, Map<String, Object> params) {
+        // Check that without `TERMINATE TRANSACTION` the transaction fails due to timeout exception
+        //  in order to prevent possible false positive due to a query of too short a duration
+        //  which, together with terminate transaction, would retrieve a false
+        // In fact, even if the procedure is not correctly terminated when the transaction is finished,
+        //  the procedure would return a `transaction terminated` even though it would actually complete the whole procedure anyway.
+        executeTransactionWithTimeout(db, timeout, query, params,
+                (msg) -> msg.contains("The transaction has not completed within the specified timeout"));
+
+
         terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
         long timePassed = System.currentTimeMillis();
+        // Usually returns org.neo4j.kernel.api.exceptions.Transaction.Status.Terminated,
+        //  but sometimes returns a Status.TransactionMarkedAsFailed
+        //  or `The transaction has been closed.`
+        executeTransactionWithTimeout(db, timeout, query, params,
+                (msg) -> Stream.of("terminated", "failed", "closed").anyMatch(msg::contains)
+        );
+
+        lastTransactionChecks(db, timeout, query, timePassed);
+    }
+
+    private static void executeTransactionWithTimeout(GraphDatabaseService db,
+                                                      long timeout,
+                                                      String query,
+                                                      Map<String, Object> params,
+                                                      Function<String, Boolean> assertionException) {
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
             transaction.execute(query, params).resultAsString();
             transaction.commit();
-            fail("Should fail because of TransactionFailureException");
+            fail("Should fail because of transaction timeout");
         } catch (Exception e) {
             final String msg = e.getMessage();
-            assertTrue("Actual message is: " + msg,
-                    Stream.of("terminated", "failed", "closed").anyMatch(msg::contains));
+            assertTrue( "Actual message is: " + msg,
+                    assertionException.apply(msg) );
         }
-        
-        lastTransactionChecks(db, timeout, query, timePassed);
     }
 
     public static void lastTransactionChecks(GraphDatabaseService db, long timeout, String query, long timePassed) {
@@ -98,7 +121,7 @@ public class TransactionTestUtil {
                             return false;
                         }
                         transactionId[0] = msgIterator.next();
-                        assertNotNull( transactionId[0] );// != null;
+                        assertNotNull( transactionId[0] );
 
                         // sometimes `TERMINATE TRANSACTION $transactionId` fails with `Transaction not found`
                         // even if has been retrieved by `SHOW TRANSACTIONS`
