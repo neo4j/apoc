@@ -60,7 +60,7 @@ public class Utils {
         long started = System.currentTimeMillis();
         while (System.currentTimeMillis()-started < duration) {
             try {
-                Thread.sleep(5);
+//                Thread.sleep(1);
                 terminationGuard.check();
             } catch (TransactionTerminatedException e) {
                 return;

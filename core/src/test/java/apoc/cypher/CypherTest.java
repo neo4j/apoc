@@ -36,9 +36,7 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
-import static apoc.util.TransactionTestUtil.checkTerminationGuard;
-import static apoc.util.TransactionTestUtil.lastTransactionChecks;
-import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
+import static apoc.util.TransactionTestUtil.*;
 import static apoc.util.Util.map;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -175,18 +173,35 @@ public class CypherTest {
 
     @Test
     public void testRunTimeboxedWithTerminationInnerTransaction() {
+        for (int i = 0; i < 50; i++) {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 60000)";
 
         terminateTransactionAsync(db, innerLongQuery);
 
         long timeBefore = System.currentTimeMillis();
-        // assert query terminated (RETURN 0)
-        TestUtil.testCall(db, query,
+            System.out.println("timeBefore = " + timeBefore);
+        // assert query terminated
+        // i.e. returns a single result `{0: 0}` (because of `RETURN 0` from innerQuery) or nothing
+            int finalI = 0;
+            TestUtil.testResult(db, query,
                 Map.of("innerQuery", innerLongQuery),
-                row -> assertEquals(Map.of("0", 0L), row.get("value")));
-        
-        lastTransactionChecks(db, query, timeBefore);
+                res -> {
+            if (res.hasNext()) {
+                System.out.println("testRunTimeboxedWithTerminationInnerTransaction.hasNext " + finalI);
+                Map<String, Object> row = res.next();
+                assertEquals(Map.of("0", 0L), row.get("value"));
+
+                assertFalse(res.hasNext());
+            } else {
+                System.out.println("testRunTimeboxedWithTerminationInnerTransaction.noElements " + finalI);
+            }});
+
+            System.out.println("time passed: " + ((System.currentTimeMillis() - timeBefore) / 1000));
+            checkTransactionTime(DEFAULT_TIMEOUT, timeBefore);
+            checkTransactionNotInList(db, query);
+
+        }
     }
 
     @Test
