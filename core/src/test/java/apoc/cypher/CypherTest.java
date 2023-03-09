@@ -183,13 +183,9 @@ public class CypherTest {
             System.out.println(i + ": timeBefore = " + timeBefore);
         // assert query terminated
         // i.e. returns a single result `{0: 0}` (because of `RETURN 0` from innerQuery) or nothing
-            try {
                 TestUtil.testCall(db, query,
                         Map.of("innerQuery", innerLongQuery),
                         row -> assertEquals(Map.of("0", 0L), row.get("value")));
-            } catch (AssertionError e) {
-                System.out.println("AssertionError e = " + e);
-            }
 
             lastTransactionChecks(db, query, timeBefore);
 

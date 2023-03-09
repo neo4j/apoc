@@ -58,7 +58,6 @@ public class Timeboxed {
                 Result result = innerTx.execute(cypher, params == null ? Collections.EMPTY_MAP : params);
                 while (result.hasNext()) {
                     if (Util.transactionIsTerminated(terminationGuard)) {
-                        System.out.println("Timeboxed.transactionIsTerminated");
                         txAtomic.get().close();
                         offerToQueue(queue, POISON, timeout);
                         return;
@@ -82,7 +81,6 @@ public class Timeboxed {
             if (tx==null) {
                 log.debug("tx is null, either the other transaction finished gracefully or has not yet been start.");
             } else {
-                System.out.println("terminate tx");
                 tx.terminate();
                 offerToQueue(queue, POISON, timeout);
                 log.warn("terminating transaction, putting POISON onto queue");
