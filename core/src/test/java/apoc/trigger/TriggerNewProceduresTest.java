@@ -117,7 +117,7 @@ public class TriggerNewProceduresTest {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)");
         final String name = "count-removals";
-        final String query = "MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])";
+        final String query = "MATCH (c:Counter) SET c.count = c.count + size($deletedNodes)";
         sysDb.executeTransactionally("CALL apoc.trigger.install('neo4j', $name, $query, {})",
                 Map.of("name", name, "query", query));
         awaitTriggerDiscovered(db, name, query);
