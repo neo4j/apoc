@@ -35,6 +35,7 @@ import static apoc.ApocConfig.apocConfig;
 public class TriggerHandler extends LifecycleAdapter implements TransactionEventListener<Void> {
 
     private enum Phase {before, after, rollback, afterAsync}
+    private static final Map<String, Object> TRIGGER_META = Map.of("trigger", true);
 
     public static final String TRIGGER_REFRESH = "apoc.trigger.refresh";
 
@@ -203,8 +204,17 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     @Override
     public void afterCommit(TransactionData txData, Void state, GraphDatabaseService databaseService) {
+        // if `txData.metaData()` is equal to TRIGGER_META, it means that the transaction
+        // if it is equal, it means that the transaction comes from another TriggerHandler transaction,
+        // therefore the execution must be blocked to prevent a deadlock due to cascading transactions
+        Map<String, Object> metaData = txData.metaData();
+        if (metaData.equals(TRIGGER_META)) {
+            return;
+        }
+
         if (hasPhase(Phase.after)) {
             try (Transaction tx = db.beginTx()) {
+                setTriggerMetadata(tx);
                 executeTriggers(tx, txData, Phase.after);
                 tx.commit();
             }
@@ -216,10 +226,16 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         if (hasPhase(Phase.afterAsync)) {
             TriggerMetadata triggerMetadata = TriggerMetadata.from(txData, true);
             Util.inTxFuture(pools.getDefaultExecutorService(), db, (inner) -> {
+                setTriggerMetadata(inner);
                 executeTriggers(inner, triggerMetadata.rebind(inner), Phase.afterAsync);
                 return null;
             });
         }
+    }
+
+    private static void setTriggerMetadata(Transaction tx) {
+        tx.execute("CALL tx.setMetaData($data)",
+                Map.of("data", TRIGGER_META) );
     }
 
     @Override
