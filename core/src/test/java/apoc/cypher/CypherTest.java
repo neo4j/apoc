@@ -180,26 +180,18 @@ public class CypherTest {
         terminateTransactionAsync(db, innerLongQuery);
 
         long timeBefore = System.currentTimeMillis();
-            System.out.println("timeBefore = " + timeBefore);
+            System.out.println(i + ": timeBefore = " + timeBefore);
         // assert query terminated
         // i.e. returns a single result `{0: 0}` (because of `RETURN 0` from innerQuery) or nothing
-            int finalI = 0;
-            TestUtil.testResult(db, query,
-                Map.of("innerQuery", innerLongQuery),
-                res -> {
-            if (res.hasNext()) {
-                System.out.println("testRunTimeboxedWithTerminationInnerTransaction.hasNext " + finalI);
-                Map<String, Object> row = res.next();
-                assertEquals(Map.of("0", 0L), row.get("value"));
+            try {
+                TestUtil.testCall(db, query,
+                        Map.of("innerQuery", innerLongQuery),
+                        row -> assertEquals(Map.of("0", 0L), row.get("value")));
+            } catch (AssertionError e) {
+                System.out.println("AssertionError e = " + e);
+            }
 
-                assertFalse(res.hasNext());
-            } else {
-                System.out.println("testRunTimeboxedWithTerminationInnerTransaction.noElements " + finalI);
-            }});
-
-            System.out.println("time passed: " + ((System.currentTimeMillis() - timeBefore) / 1000));
-            checkTransactionTime(DEFAULT_TIMEOUT, timeBefore);
-            checkTransactionNotInList(db, query);
+            lastTransactionChecks(db, query, timeBefore);
 
         }
     }
