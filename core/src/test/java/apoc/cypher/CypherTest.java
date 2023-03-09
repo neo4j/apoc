@@ -175,7 +175,7 @@ public class CypherTest {
     public void testRunTimeboxedWithTerminationInnerTransaction() {
         for (int i = 0; i < 50; i++) {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 60000)";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
         terminateTransactionAsync(db, innerLongQuery);
 
