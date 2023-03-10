@@ -36,7 +36,9 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
-import static apoc.util.TransactionTestUtil.*;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
+import static apoc.util.TransactionTestUtil.lastTransactionChecks;
+import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
@@ -173,23 +175,26 @@ public class CypherTest {
 
     @Test
     public void testRunTimeboxedWithTerminationInnerTransaction() {
-        for (int i = 0; i < 50; i++) {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
         terminateTransactionAsync(db, innerLongQuery);
 
         long timeBefore = System.currentTimeMillis();
-            System.out.println(i + ": timeBefore = " + timeBefore);
         // assert query terminated
         // i.e. returns a single result `{0: 0}` (because of `RETURN 0` from innerQuery) or nothing
-                TestUtil.testCall(db, query,
-                        Map.of("innerQuery", innerLongQuery),
-                        row -> assertEquals(Map.of("0", 0L), row.get("value")));
+        testResult(db, query,
+                Map.of("innerQuery", innerLongQuery),
+                res -> {
+                    if (res.hasNext()) {
+                        Map<String, Object> row = res.next();
+                        assertEquals(Map.of("0", 0L), row.get("value"));
 
-            lastTransactionChecks(db, query, timeBefore);
+                        assertFalse(res.hasNext());
+                    }
+                });
 
-        }
+        lastTransactionChecks(db, query, timeBefore);
     }
 
     @Test

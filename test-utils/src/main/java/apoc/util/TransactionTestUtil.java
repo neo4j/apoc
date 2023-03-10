@@ -61,7 +61,7 @@ public class TransactionTestUtil {
         lastTransactionChecks(db, DEFAULT_TIMEOUT, query, timeBefore);
     }
 
-    public static void checkTransactionTime(long timeout, long timePassed) {
+    private static void checkTransactionTime(long timeout, long timePassed) {
         timePassed = (System.currentTimeMillis() - timePassed) / 1000;
         assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timePassed + " seconds",
                 timePassed <= timeout);
