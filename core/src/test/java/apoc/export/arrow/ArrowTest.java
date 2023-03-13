@@ -6,10 +6,13 @@ import apoc.meta.Meta;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -26,8 +29,12 @@ import java.util.stream.LongStream;
 
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.LOAD_FROM_FILE_ERROR;
 import static apoc.ApocConfig.apocConfig;
+import static apoc.export.arrow.ExportArrowService.EXPORT_TO_FILE_ARROW_ERROR;
+import static apoc.util.TestUtil.testCall;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class ArrowTest {
 
@@ -95,6 +102,10 @@ public class ArrowTest {
     public static void beforeClass() {
         db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015-05-18T19:32:24.000'), place:point({latitude: 13.1, longitude: 33.46789, height: 100.0})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42})");
         TestUtil.registerProcedure(db, ExportArrow.class, LoadArrow.class, Graphs.class, Meta.class);
+    }
+
+    @Before
+    public void before() {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
     }
@@ -247,6 +258,20 @@ public class ArrowTest {
 
     @Test
     public void testStreamRoundtripArrowAll() {
+        testStreamRoundtripAllCommon();
+    }
+
+    @Test
+    public void testStreamRoundtripArrowAllWithImportExportConfsDisabled() {
+        // disable both export and import configs
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, false);
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, false);
+
+        // should work regardless of the previous config
+        testStreamRoundtripAllCommon();
+    }
+
+    private void testStreamRoundtripAllCommon() {
         // given - when
         final byte[] byteArray = db.executeTransactionally("CALL apoc.export.arrow.stream.all() YIELD value AS byteArray ",
                 Map.of(),
@@ -260,6 +285,58 @@ public class ArrowTest {
             assertEquals(EXPECTED, actual);
             return null;
         });
+    }
+
+    @Test
+    public void testExportFileAllWithExportFileConfDisabled() {
+        String exportAllProcedure = "CALL apoc.export.arrow.all('all_test.arrow')";
+        exportWithExportFileConfDisabledCommon(exportAllProcedure);
+    }
+
+    @Test
+    public void testExportFileGraphWithExportFileConfDisabled() {
+        String exportGraphProcedure = "CALL apoc.graph.fromDB('neo4j',{}) yield graph " +
+                "CALL apoc.export.arrow.graph('graph_test.arrow', graph) " +
+                "YIELD file RETURN file";
+        exportWithExportFileConfDisabledCommon(exportGraphProcedure);
+    }
+
+    @Test
+    public void testExportFileQueryWithExportFileConfDisabled() {
+        String exportQueryProcedure = "CALL apoc.export.arrow.query('query.arrow', 'MATCH (n) RETURN n')";
+        exportWithExportFileConfDisabledCommon(exportQueryProcedure);
+    }
+
+    private static void exportWithExportFileConfDisabledCommon(String query) {
+        // disable config
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, false);
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testCall(db, query, (r) -> {})
+        );
+
+        RuntimeException err = (RuntimeException) ExceptionUtils.getRootCause(e);
+        assertEquals(err.getMessage(), EXPORT_TO_FILE_ARROW_ERROR);
+    }
+
+    @Test
+    public void testLoadFileWithImportFileConfDisabled() {
+        // disable config
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, false);
+
+        String file = db.executeTransactionally("CALL apoc.export.arrow.all('myFile.arrow') YIELD file",
+                Map.of(),
+                this::extractFileName);
+
+        final String query = "CALL apoc.load.arrow($file) YIELD value " +
+                "RETURN value";
+
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testCall(db, query, Map.of("file", file), (r) -> {})
+        );
+
+        RuntimeException err = (RuntimeException) ExceptionUtils.getRootCause(e);
+        assertEquals(err.getMessage(), LOAD_FROM_FILE_ERROR);
     }
 
     @Test
