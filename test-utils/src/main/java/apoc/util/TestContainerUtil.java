@@ -3,6 +3,7 @@ package apoc.util;
 import com.github.dockerjava.api.exception.NotFoundException;
 import java.time.Duration;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.gradle.tooling.BuildLauncher;
@@ -46,9 +47,10 @@ public class TestContainerUtil {
 
     private TestContainerUtil() {}
 
-    private static File baseDir = Paths.get("..").toFile();
+    public static File baseDir = Paths.get("..").toFile();
+    public static File pluginsFolder = new File(baseDir, "build/plugins");
     private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
-    private static File extendedDir = new File(baseDir, "extended");
+    public static File extendedDir = new File(baseDir, "extended");
 
     public static String dockerImageForNeo4j(Neo4jVersion version) {
         if (version == Neo4jVersion.COMMUNITY)
@@ -84,7 +86,7 @@ public class TestContainerUtil {
             dockerImage = neo4jCommunityDockerImageVersion;
         }
 
-        File pluginsFolder = new File(baseDir, "build/plugins");
+        pluginsFolder = new File(baseDir, "build/plugins");
         try {
             FileUtils.deleteDirectory( pluginsFolder );
         } catch (IOException e) {
@@ -113,14 +115,7 @@ public class TestContainerUtil {
 
             executeGradleTasks(projectDir, "shadowJar");
 
-            Collection<File> files = FileUtils.listFiles(new File(projectDir, "build/libs"), new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")), null);
-            for (File file: files) {
-                try {
-                    FileUtils.copyFileToDirectory(file, pluginsFolder);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
+            copyFilesToPlugin(new File(projectDir, "build/libs"), new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")), pluginsFolder);
         }
 
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
@@ -163,6 +158,17 @@ public class TestContainerUtil {
         }
 
         return neo4jContainer.withWaitForNeo4jDatabaseReady(password, version);
+    }
+
+    public static void copyFilesToPlugin(File directory, IOFileFilter instance, File pluginsFolder) {
+        Collection<File> files = FileUtils.listFiles(directory, instance, null);
+        for (File file: files) {
+            try {
+                FileUtils.copyFileToDirectory(file, pluginsFolder);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public static void executeGradleTasks(File baseDir, String... tasks) {
