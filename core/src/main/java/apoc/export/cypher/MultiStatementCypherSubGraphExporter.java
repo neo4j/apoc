@@ -276,12 +276,15 @@ public class MultiStatementCypherSubGraphExporter {
 
     private List<String> exportConstraints() {
         return StreamSupport.stream(graph.getConstraints().spliterator(), false)
-                .filter(constraint -> !constraint.isConstraintType(ConstraintType.NODE_PROPERTY_EXISTENCE))
                 .map(constraint-> {
                     String name = constraint.getName();
-                    String label = constraint.getLabel().name();
-                    Iterable<String> props = constraint.getPropertyKeys();
                     ConstraintType type = constraint.getConstraintType();
+                    String label = "";
+                    switch(type) {
+                    case UNIQUENESS, NODE_KEY, NODE_PROPERTY_EXISTENCE -> label = constraint.getLabel().name();
+                    case RELATIONSHIP_UNIQUENESS, RELATIONSHIP_KEY, RELATIONSHIP_PROPERTY_EXISTENCE -> label = constraint.getRelationshipType().name();
+                    }
+                    Iterable<String> props = constraint.getPropertyKeys();
                     return this.cypherFormat.statementForCreateConstraint(name, label, props, type, exportConfig.ifNotExists());
                 })
                 .filter(StringUtils::isNotBlank)

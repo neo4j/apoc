@@ -35,6 +35,7 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.simpleKeyValue;
 abstract class AbstractCypherFormatter implements CypherFormatter {
 
 	private static final String STATEMENT_CONSTRAINTS = "CREATE CONSTRAINT %s%s FOR (node:%s) REQUIRE (%s) %s;";
+	private static final String STATEMENT_CONSTRAINTS_REL = "CREATE CONSTRAINT %s%s FOR ()-[rel:%s]-() REQUIRE (%s) %s;";
 	private static final String STATEMENT_DROP_CONSTRAINTS = "DROP CONSTRAINT %s;";
 
 	private static final String STATEMENT_NODE_FULLTEXT_IDX = "CREATE FULLTEXT INDEX %s FOR (n:%s) ON EACH [%s];";
@@ -87,14 +88,43 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
 	@Override
 	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, ConstraintType type, boolean ifNotExists) {
-		String keysString = getPropertiesQuoted(keys, "node.");
+		String keysString = "";
 		String typeString = "";
+		String statement = "";
 		switch ( type ) {
-		case UNIQUENESS -> typeString = "IS UNIQUE";
-		case NODE_KEY -> typeString = "IS NODE KEY";
+		case UNIQUENESS -> {
+			keysString = getPropertiesQuoted(keys, "node.");
+			typeString = "IS UNIQUE";
+			statement = STATEMENT_CONSTRAINTS;
+		}
+		case NODE_KEY -> {
+			keysString = getPropertiesQuoted(keys, "node.");
+			typeString = "IS NODE KEY";
+			statement = STATEMENT_CONSTRAINTS;
+		}
+		case NODE_PROPERTY_EXISTENCE -> {
+			keysString = getPropertiesQuoted(keys, "node.");
+			typeString = "IS NOT NULL";
+			statement = STATEMENT_CONSTRAINTS;
+		}
+		case RELATIONSHIP_UNIQUENESS -> {
+			keysString = getPropertiesQuoted(keys, "rel.");
+			typeString = "IS UNIQUE";
+			statement = STATEMENT_CONSTRAINTS_REL;
+		}
+		case RELATIONSHIP_KEY -> {
+			keysString = getPropertiesQuoted(keys, "rel.");
+			typeString = "IS NODE KEY";
+			statement = STATEMENT_CONSTRAINTS_REL;
+		}
+		case RELATIONSHIP_PROPERTY_EXISTENCE -> {
+			keysString = getPropertiesQuoted(keys, "rel.");
+			typeString = "IS NOT NULL";
+			statement = STATEMENT_CONSTRAINTS_REL;
+		}
 		}
 
-		return String.format(STATEMENT_CONSTRAINTS, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), keysString, typeString);
+		return String.format(statement, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), keysString, typeString);
 	}
 
 	@Override

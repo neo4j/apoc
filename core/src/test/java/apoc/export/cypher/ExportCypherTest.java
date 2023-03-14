@@ -1447,7 +1447,11 @@ public class ExportCypherTest {
 
         public static final List<String> EXPECTED_CONSTRAINTS = List.of(
              "CREATE CONSTRAINT SingleUnique FOR (node:Label) REQUIRE (node.prop) IS UNIQUE;",
+             "CREATE CONSTRAINT SingleUniqueRel FOR ()-[rel:TYPE]-() REQUIRE (rel.prop) IS UNIQUE;",
              "CREATE CONSTRAINT CompositeUnique FOR (node:Label) REQUIRE (node.prop1, node.prop2) IS UNIQUE;",
+             "CREATE CONSTRAINT CompositeUniqueRel FOR ()-[rel:TYPE]-() REQUIRE (rel.prop1, rel.prop2) IS UNIQUE;",
+             "CREATE CONSTRAINT SingleExists FOR (node:Label2) REQUIRE (node.prop) IS NOT NULL;",
+             "CREATE CONSTRAINT SingleExistsRel FOR ()-[rel:TYPE2]-() REQUIRE (rel.prop) IS NOT NULL;",
              "CREATE CONSTRAINT SingleNodeKey FOR (node:Label3) REQUIRE (node.prop) IS NODE KEY;",
              "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;"
         );
