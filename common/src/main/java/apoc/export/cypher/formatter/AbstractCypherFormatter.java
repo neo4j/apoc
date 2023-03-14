@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.neo4j.graphdb.schema.ConstraintType;
 
 import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_LABEL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_REL;
@@ -85,10 +86,15 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 	}
 
 	@Override
-	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, boolean ifNotExists) {
+	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, ConstraintType type, boolean ifNotExists) {
 		String keysString = getPropertiesQuoted(keys, "node.");
+		String typeString = "";
+		switch ( type ) {
+		case UNIQUENESS -> typeString = "IS UNIQUE";
+		case NODE_KEY -> typeString = "IS NODE KEY";
+		}
 
-		return String.format(STATEMENT_CONSTRAINTS, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), keysString, Iterables.count(keys) > 1 ? "IS NODE KEY" : "IS UNIQUE");
+		return String.format(STATEMENT_CONSTRAINTS, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), keysString, typeString);
 	}
 
 	@Override

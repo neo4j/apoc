@@ -10,6 +10,7 @@ import apoc.util.collection.Iterables;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
 
@@ -190,7 +191,7 @@ public class MultiStatementCypherSubGraphExporter {
             out.println(index);
         }
         if (artificialUniques > 0) {
-            String cypher = this.cypherFormat.statementForCreateConstraint(UNIQUE_ID_NAME, UNIQUE_ID_LABEL, Collections.singleton(UNIQUE_ID_PROP), config.ifNotExists());
+            String cypher = this.cypherFormat.statementForCreateConstraint(UNIQUE_ID_NAME, UNIQUE_ID_LABEL, Collections.singleton(UNIQUE_ID_PROP), ConstraintType.UNIQUENESS, config.ifNotExists());
             if (cypher != null && !"".equals(cypher)) {
                 out.println(cypher);
             }
@@ -274,13 +275,14 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private List<String> exportConstraints() {
-        return StreamSupport.stream(graph.getIndexes().spliterator(), false)
-                .filter(index -> index.isConstraintIndex())
-                .map(index -> {
-                    String name = index.getName();
-                    String label = Iterables.single(index.getLabels()).name();
-                    Iterable<String> props = index.getPropertyKeys();
-                    return this.cypherFormat.statementForCreateConstraint(name, label, props, exportConfig.ifNotExists());
+        return StreamSupport.stream(graph.getConstraints().spliterator(), false)
+                .filter(constraint -> !constraint.isConstraintType(ConstraintType.NODE_PROPERTY_EXISTENCE))
+                .map(constraint-> {
+                    String name = constraint.getName();
+                    String label = constraint.getLabel().name();
+                    Iterable<String> props = constraint.getPropertyKeys();
+                    ConstraintType type = constraint.getConstraintType();
+                    return this.cypherFormat.statementForCreateConstraint(name, label, props, type, exportConfig.ifNotExists());
                 })
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());

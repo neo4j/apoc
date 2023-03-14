@@ -41,6 +41,12 @@ public class DatabaseSubGraph implements SubGraph
     }
 
     @Override
+    public Iterable<ConstraintDefinition> getConstraints()
+    {
+        return transaction.schema().getConstraints();
+    }
+
+    @Override
     public Iterable<ConstraintDefinition> getConstraints(Label label) {
         return transaction.schema().getConstraints(label);
     }

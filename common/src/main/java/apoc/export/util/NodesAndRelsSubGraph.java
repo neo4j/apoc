@@ -64,6 +64,16 @@ public class NodesAndRelsSubGraph implements SubGraph {
     }
 
     @Override
+    public Iterable<ConstraintDefinition> getConstraints() {
+        Schema schema = tx.schema();
+        ArrayList<ConstraintDefinition> constraints = new ArrayList<>(labels.size() * 2);
+        for (String label : labels) {
+            Iterables.addAll(constraints, schema.getConstraints(Label.label(label)));
+        }
+        return constraints;
+    }
+
+    @Override
     public Iterable<ConstraintDefinition> getConstraints(Label label) {
         if (!labels.contains(label.name())) {
             return Collections.emptyList();

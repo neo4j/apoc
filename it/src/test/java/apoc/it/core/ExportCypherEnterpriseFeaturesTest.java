@@ -13,10 +13,12 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CONSTRAINTS;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestContainerUtil.*;
 import static apoc.util.TestUtil.readFileToString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author as
@@ -129,6 +131,13 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     private void assertExportStatement(String expectedStatement, String fileName) {
-        assertEquals(expectedStatement, readFileToString(new File(directory, fileName)));
+        // The constraints are exported in arbitrary order, so we cannot assert on the entire file
+        String actual = readFileToString(new File(directory, fileName));
+        System.out.println(expectedStatement);
+        System.out.println(readFileToString(new File(directory, fileName)));
+        assertTrue(actual.contains(expectedStatement));
+        EXPECTED_CONSTRAINTS.forEach(
+                constraint -> assertTrue(String.format("Constraint '%s' not in result", constraint), actual.contains(constraint))
+        );
     }
 }

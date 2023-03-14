@@ -9,6 +9,7 @@ import org.neo4j.graphdb.Relationship;
 import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Set;
+import org.neo4j.graphdb.schema.ConstraintType;
 
 /**
  * @author AgileLARUS
@@ -43,7 +44,7 @@ public class AddStructureCypherFormatter extends AbstractCypherFormatter impleme
 	}
 
 	@Override
-	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, boolean ifNotExists) {
+	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, ConstraintType type, boolean ifNotExists) {
 		return "";
 	}
 
