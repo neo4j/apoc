@@ -1,7 +1,10 @@
 package apoc.trigger;
 
 import apoc.ApocConfig;
+import apoc.SystemLabels;
 import apoc.util.TestUtil;
+import apoc.util.Util;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -10,19 +13,28 @@ import org.junit.rules.TemporaryFolder;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static apoc.ApocConfig.SUN_JAVA_COMMAND;
+import static apoc.SystemLabels.ApocTrigger;
+import static apoc.SystemPropertyKeys.database;
+import static apoc.SystemPropertyKeys.name;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.waitDbsAvailable;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class TriggerRestartTest {
 
@@ -60,6 +72,49 @@ public class TriggerRestartTest {
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
         waitDbsAvailable(db, sysDb);
+    }
+
+    @Test
+    public void deleteSystemNodesAtStartupIfDatabaseDoesNotExist() {
+        String dbName = "notexistent";
+
+        // create manually 2 system node, the 1st one in "neo4j" and the other in an not-existent db
+        withSystemDb(tx -> {
+            Util.mergeNode(tx, ApocTrigger, null,
+                    Pair.of(database.name(), dbName),
+                    Pair.of(name.name(), "mytest"));
+
+            Util.mergeNode(tx, SystemLabels.ApocTrigger, null,
+                    Pair.of(database.name(), db.databaseName()),
+                    Pair.of(name.name(), "mySecondTest"));
+        });
+
+        // check that the nodes have been created successfully
+        withSystemDb(tx -> {
+            Iterator<Node> dbNotExistentNodes = tx.findNodes(ApocTrigger, database.name(), dbName);
+            assertTrue( dbNotExistentNodes.hasNext() );
+
+            Iterator<Node> neo4jNodes = tx.findNodes(ApocTrigger, database.name(), db.databaseName());
+            assertTrue( neo4jNodes.hasNext() );
+        });
+
+        // check that after a restart only "neo4j" node remains
+        restartDb();
+
+        withSystemDb(tx -> {
+            Iterator<Node> dbNotExistentNodes = tx.findNodes(ApocTrigger, database.name(), dbName);
+            assertFalse( dbNotExistentNodes.hasNext() );
+
+            Iterator<Node> neo4jNodes = tx.findNodes(ApocTrigger, database.name(), db.databaseName());
+            assertTrue( neo4jNodes.hasNext() );
+        });
+    }
+
+    private void withSystemDb(Consumer<Transaction> action) {
+        try (Transaction tx = sysDb.beginTx()) {
+            action.accept(tx);
+            tx.commit();
+        }
     }
 
     @Test

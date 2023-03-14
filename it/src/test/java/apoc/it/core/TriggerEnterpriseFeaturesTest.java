@@ -18,12 +18,14 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.trigger.TriggerHandler.TRIGGER_REFRESH;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
+import static apoc.util.TestContainerUtil.testCallEmpty;
 import static apoc.util.TestContainerUtil.testResult;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,6 +39,7 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class TriggerEnterpriseFeaturesTest {
     private static final String FOO_DB = "foo";
+    private static final String INIT_DB = "initdb";
 
     private static final String NO_ADMIN_USER = "nonadmin";
     private static final String NO_ADMIN_PWD = "test1234";
@@ -46,10 +49,15 @@ public class TriggerEnterpriseFeaturesTest {
 
     @BeforeClass
     public static void beforeAll() {
+        final String cypherInitializer = String.format("%s.%s.0",
+                APOC_CONFIG_INITIALIZER, SYSTEM_DATABASE_NAME);
+        final String createInitDb = String.format("CREATE DATABASE %s IF NOT EXISTS", INIT_DB);
+
         // We build the project, the artifact will be placed into ./build/libs
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
                 .withEnv(APOC_TRIGGER_ENABLED, "true")
-                .withEnv(TRIGGER_REFRESH, String.valueOf(TRIGGER_DEFAULT_REFRESH));
+                .withEnv(TRIGGER_REFRESH, String.valueOf(TRIGGER_DEFAULT_REFRESH))
+                .withEnv(cypherInitializer, createInitDb);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
         
