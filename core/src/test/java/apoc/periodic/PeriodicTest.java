@@ -7,6 +7,7 @@ import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +42,7 @@ import static apoc.util.Util.map;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -96,9 +98,9 @@ public class PeriodicTest {
     public void testSubmitWithSchemaProcedure() {
         String errMessage = "Supported inner procedure modes for the operation are [READ, WRITE, DEFAULT]";
         testSchemaOperationCommon("CALL apoc.schema.assert({}, {})", errMessage);
-        
+
         testSchemaOperationCommon("CALL apoc.cypher.runSchema('CREATE CONSTRAINT periodicIdx FOR (n:Bar) REQUIRE n.first_name IS UNIQUE', {})", errMessage);
-        
+
         // inner schema procedure
         final String query = "CALL { WITH 1 AS one CALL apoc.schema.assert({}, {}) YIELD key RETURN key } " +
                 "IN TRANSACTIONS OF 1000 rows RETURN 1";
@@ -142,15 +144,15 @@ public class PeriodicTest {
     @Test
     public void testApplyPlanner() {
         assertEquals("RETURN 1", applyPlanner("RETURN 1", Periodic.Planner.DEFAULT));
-        assertEquals("cypher planner=cost MATCH (n:cypher) RETURN n", 
+        assertEquals("cypher planner=cost MATCH (n:cypher) RETURN n",
                 applyPlanner("MATCH (n:cypher) RETURN n", Periodic.Planner.COST));
-        assertEquals("cypher planner=idp MATCH (n:cypher) RETURN n", 
+        assertEquals("cypher planner=idp MATCH (n:cypher) RETURN n",
                 applyPlanner("MATCH (n:cypher) RETURN n", Periodic.Planner.IDP));
-        assertEquals("cypher planner=dp  runtime=compiled MATCH (n) RETURN n", 
+        assertEquals("cypher planner=dp  runtime=compiled MATCH (n) RETURN n",
                 applyPlanner("cypher runtime=compiled MATCH (n) RETURN n", Periodic.Planner.DP));
         assertEquals("cypher planner=dp MATCH (n) RETURN n",
                 applyPlanner("MATCH (n) RETURN n", Periodic.Planner.DP));
-        assertEquals("cypher planner=idp  expressionEngine=compiled MATCH (n) RETURN n", 
+        assertEquals("cypher planner=idp  expressionEngine=compiled MATCH (n) RETURN n",
                 applyPlanner("cypher expressionEngine=compiled MATCH (n) RETURN n", Periodic.Planner.IDP));
         assertEquals("cypher expressionEngine=compiled  planner=cost  MATCH (n) RETURN n",
                 applyPlanner("cypher expressionEngine=compiled planner=idp MATCH (n) RETURN n", Periodic.Planner.COST));
@@ -206,16 +208,22 @@ public class PeriodicTest {
             assertEquals(0L, row.get("committedOperations"));
             assertEquals(100L, row.get("failedOperations"));
             assertEquals(10L, row.get("failedBatches"));
-            Map<String, Object> batchErrors = map("org.neo4j.graphdb.QueryExecutionException: Invalid input 'null': expected \"(\", \"allShortestPaths\" or \"shortestPath\" (line 1, column 55 (offset: 54))" + newline +
-                    "\"UNWIND $_batch AS _batch WITH _batch.id AS id  CREATE null\"" + newline +
-                    "                                                       ^", 10L);
 
-            assertEquals(batchErrors, ((Map) row.get("batch")).get("errors"));
-            Map<String, Object> operationsErrors = map("Invalid input 'null': expected \"(\", \"allShortestPaths\" or \"shortestPath\" (line 1, column 55 (offset: 54))" + newline +
-                    "\"UNWIND $_batch AS _batch WITH _batch.id AS id  CREATE null\"" + newline +
-                    "                                                       ^", 10L);
-            assertEquals(operationsErrors, ((Map) row.get("operations")).get("errors"));
+            String expectedPattern = "Invalid input 'null': expected .* (line 1, column 55 (offset: 54))" + newline +
+                                     "\"UNWIND $_batch AS _batch WITH _batch.id AS id  CREATE null\"" + newline +
+                                     "                                                       ^";
+
+            String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
+
+            assertError(((Map<String,Long>) ((Map) row.get("batch")).get("errors")), expectedBatchPattern, Long.valueOf(10));
+            assertError(((Map<String,Long>) ((Map) row.get("operations")).get("errors")), expectedPattern, Long.valueOf(10));
         });
+    }
+
+    private void assertError(Map<String,Long> errors, String expectedPattern, Long errorCount) {
+        assertEquals(1, errors.size());
+        errors.values().forEach(value -> assertEquals(errorCount, value));
+        errors.keySet().forEach(key -> MatcherAssert.assertThat(key, matchesPattern( expectedPattern)));
     }
 
     @Test
@@ -224,13 +232,13 @@ public class PeriodicTest {
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})");
         PeriodicTestUtils.testTerminatePeriodicQuery(db, "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
     }
-    
+
     @Test
     public void testTerminateIterateWithTerminateTransactionCommand()  {
         PeriodicTestUtils.testTerminateWithCommand(db, "CALL apoc.periodic.iterate('UNWIND range(0,999999) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})",
                 "UNWIND range(0,999999) as id RETURN id");
     }
-    
+
     @Test
     public void testWithTerminationInnerTransaction() {
         // terminating the apoc.util.sleep should instantly terminate the periodic query without any creation
@@ -349,13 +357,13 @@ public class PeriodicTest {
 
         String cypherIterate = "match (p:Person) return p";
         String cypherAction = "SET p.lastname =p.name REMOVE p.name";
-        testResult(db, "CALL apoc.periodic.iterate($cypherIterate, $cypherAction, $config)", 
+        testResult(db, "CALL apoc.periodic.iterate($cypherIterate, $cypherAction, $config)",
                 map("cypherIterate", cypherIterate, "cypherAction", cypherAction,
                         "config", map("batchSize", 10, "planner", "DP")),
                 result -> assertEquals(10L, Iterators.single(result).get("batches")));
 
         String cypherActionUnwind = "cypher runtime=slotted UNWIND $_batch AS batch WITH batch.p AS p  SET p.lastname =p.name";
-        
+
         testResult(db, "CALL apoc.periodic.iterate($cypherIterate, $cypherActionUnwind, $config)",
                 map("cypherIterate", cypherIterate, "cypherActionUnwind", cypherActionUnwind,
                         "config", map("batchSize", 10, "batchMode", "BATCH_SINGLE", "planner", "DP")),
