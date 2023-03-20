@@ -6,7 +6,7 @@ import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

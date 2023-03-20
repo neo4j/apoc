@@ -9,7 +9,7 @@ import apoc.xml.XmlTestUtils;
 import inet.ipaddr.IPAddressString;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

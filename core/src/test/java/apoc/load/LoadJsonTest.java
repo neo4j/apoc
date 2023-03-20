@@ -5,7 +5,7 @@ import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import inet.ipaddr.IPAddressString;
 import org.junit.*;
 import org.mockserver.client.MockServerClient;
