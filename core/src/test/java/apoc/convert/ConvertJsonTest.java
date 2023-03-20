@@ -4,7 +4,7 @@ import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import junit.framework.TestCase;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.util.Arrays;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;

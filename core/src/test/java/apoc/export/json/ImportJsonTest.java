@@ -8,7 +8,7 @@ import apoc.util.TransactionTestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import junit.framework.TestCase;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import apoc.util.Utils;
 import org.junit.Assert;
 import org.junit.Before;

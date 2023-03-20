@@ -23,7 +23,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 import java.util.List;
 import java.util.Map;
 
-import static org.apache.commons.lang.exception.ExceptionUtils.getRootCause;
+import static org.apache.commons.lang3.exception.ExceptionUtils.getRootCause;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
