@@ -101,7 +101,7 @@ public class LoadCoreSecurityTest {
                         Result::resultAsString);
                 fail(message);
             } catch (Exception e) {
-                assertError(e, ApocConfig.LOAD_FROM_FILE_ERROR, RuntimeException.class, apocProcedure);
+                TestUtil.assertError(e, ApocConfig.LOAD_FROM_FILE_ERROR, RuntimeException.class, apocProcedure);
             }
         }
 
@@ -118,7 +118,7 @@ public class LoadCoreSecurityTest {
                         Result::resultAsString);
                 fail(message);
             } catch (Exception e) {
-                assertError(e, String.format(FileUtils.ERROR_READ_FROM_FS_NOT_ALLOWED, fileName), RuntimeException.class, apocProcedure);
+                TestUtil.assertError(e, String.format(FileUtils.ERROR_READ_FROM_FS_NOT_ALLOWED, fileName), RuntimeException.class, apocProcedure);
             }
         }
 
@@ -144,11 +144,4 @@ public class LoadCoreSecurityTest {
             }
         }
     }
-
-    private static void assertError(Exception e, String errorMessage, Class<? extends Exception> exceptionType, String apocProcedure) {
-        final Throwable rootCause = ExceptionUtils.getRootCause(e);
-        assertTrue(apocProcedure + " should throw an instance of " + exceptionType.getSimpleName(), exceptionType.isInstance(rootCause));
-        assertEquals(apocProcedure + " should throw the following message", errorMessage, rootCause.getMessage());
-    }
-
 }

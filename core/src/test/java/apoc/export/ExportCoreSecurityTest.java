@@ -119,7 +119,7 @@ public class ExportCoreSecurityTest {
                     () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
             );
 
-            assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
+            TestUtil.assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
         }
     }
 
@@ -164,7 +164,7 @@ public class ExportCoreSecurityTest {
                         Result::resultAsString);
                 fail(message);
             } catch (Exception e) {
-                assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
+                TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
             } finally {
                 setFileExport(false);
             }
@@ -215,7 +215,7 @@ public class ExportCoreSecurityTest {
                     () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
             );
 
-            assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
+            TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
             setFileExport(false);
         }
     }
@@ -381,7 +381,7 @@ public class ExportCoreSecurityTest {
                     () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
             );
 
-            assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
+            TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
 
             setFileExport(false);
         }
@@ -452,7 +452,7 @@ public class ExportCoreSecurityTest {
             QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
                     () -> TestUtil.testCall(db, String.format("CALL " + apocProcedure, "'./hello', {}"), (r) -> {})
             );
-            assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
+            TestUtil.assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
         }
 
         @Test
@@ -461,15 +461,8 @@ public class ExportCoreSecurityTest {
             QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
                     () -> TestUtil.testCall(db, String.format("CALL " + apocProcedure, "'../hello', {}"), (r) -> {})
             );
-            assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
+            TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
             setFileExport(false);
         }
     }
-
-    private static void assertError(Exception e, String errorMessage, Class<? extends Exception> exceptionType, String apocProcedure) {
-        final Throwable rootCause = ExceptionUtils.getRootCause(e);
-        assertTrue(apocProcedure + " should throw an instance of " + exceptionType.getSimpleName(), exceptionType.isInstance(rootCause));
-        assertEquals(apocProcedure + " should throw the following message", errorMessage, rootCause.getMessage());
-    }
-
 }
