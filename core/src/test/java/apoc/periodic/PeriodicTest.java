@@ -209,7 +209,7 @@ public class PeriodicTest {
             assertEquals(100L, row.get("failedOperations"));
             assertEquals(10L, row.get("failedBatches"));
 
-            String expectedPattern = "Invalid input 'null': expected .* \\(line 1, column 55 \\(offset: 54\\)\\)\\n" +
+            String expectedPattern = "(?s)Invalid input 'null': expected.* \\(line 1, column 55 \\(offset: 54\\)\\)\\n" +
                                      "\\\"UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\"\\n" +
                                      "                                                       \\^";
 
