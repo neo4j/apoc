@@ -48,8 +48,10 @@ public class CypherInitializer implements AvailabilityListener {
                 // procedures are also available by necessity.
                 while (!db.isAvailable(100));
 
-                // If, and only if we are looking at the system database, then
-                // check for version mismatch.
+                // An initializer is attached to the lifecycle for each database. To ensure that this
+                // check is performed **once** during the DBMS startup, we validate the version if and
+                // only if we are the AvailabilityListener for the system database - since there is only
+                // ever one of those.
                 if (db.databaseId().isSystemDatabase() ) {
                     String neo4jVersion = org.neo4j.kernel.internal.Version.getNeo4jVersion();
                     final String apocVersion = Version.class.getPackage().getImplementationVersion();
