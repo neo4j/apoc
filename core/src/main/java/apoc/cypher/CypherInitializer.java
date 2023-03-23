@@ -7,15 +7,12 @@ import apoc.version.Version;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
-import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.kernel.api.procedure.GlobalProcedures;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 
 import java.util.Collection;
 
-import java.util.ConcurrentModificationException;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -23,7 +20,6 @@ public class CypherInitializer implements AvailabilityListener {
 
     private final GraphDatabaseAPI db;
     private final Log userLog;
-    private final GlobalProcedures procs;
     private final DependencyResolver dependencyResolver;
 
     /**
@@ -35,7 +31,6 @@ public class CypherInitializer implements AvailabilityListener {
         this.db = db;
         this.userLog = userLog;
         this.dependencyResolver = db.getDependencyResolver();
-        this.procs = dependencyResolver.resolveDependency(GlobalProcedures.class);
     }
 
     public boolean isFinished() {
@@ -44,35 +39,31 @@ public class CypherInitializer implements AvailabilityListener {
 
     @Override
     public void available() {
-
         // run initializers in a new thread
         // we need to wait until apoc procs are registered
         // unfortunately an AvailabilityListener is triggered before that
         Util.newDaemonThread(() -> {
             try {
-                final boolean isSystemDatabase = db.databaseName().equals(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
-                if (!isSystemDatabase) {
-                    awaitApocProceduresRegistered();
-                }
+                // Wait for database to become available, once it is available
+                // procedures are also available by necessity.
+                while (!db.isAvailable(100));
 
-                // This code is running once per database.
-                // We only want to check compatibility once, so we do it when we are on the system database.
-                if (isSystemDatabase) {
-                    try {
-                        awaitDbmsComponentsProcedureRegistered();
-                        String neo4jVersion = org.neo4j.kernel.internal.Version.getNeo4jVersion();
-                        final String apocVersion = Version.class.getPackage().getImplementationVersion();
-                        if (isVersionDifferent(neo4jVersion, apocVersion)) {
-                            userLog.warn("The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n" +
-                                            "The two first numbers of both versions needs to be the same.",
-                                    apocVersion, neo4jVersion);
-                        }
-                    } catch (Exception ignored) {
-                        userLog.info("Cannot check APOC version compatibility because of a transient error. Retrying your request at a later time may succeed");
+                // An initializer is attached to the lifecycle for each database. To ensure that this
+                // check is performed **once** during the DBMS startup, we validate the version if and
+                // only if we are the AvailabilityListener for the system database - since there is only
+                // ever one of those.
+                if (db.databaseId().isSystemDatabase() ) {
+                    String neo4jVersion = org.neo4j.kernel.internal.Version.getNeo4jVersion();
+                    final String apocVersion = Version.class.getPackage().getImplementationVersion();
+                    if (isVersionDifferent(neo4jVersion, apocVersion))
+                    {
+                        userLog.warn( "The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n" +
+                                      "The two first numbers of both versions needs to be the same.",
+                                      apocVersion, neo4jVersion );
                     }
                 }
-                Configuration config = dependencyResolver.resolveDependency(ApocConfig.class).getConfig();
 
+                Configuration config = dependencyResolver.resolveDependency(ApocConfig.class).getConfig();
                 for (String query : collectInitializers(config)) {
                     try {
                         // we need to apply a retry strategy here since in systemdb we potentially conflict with
@@ -118,28 +109,6 @@ public class CypherInitializer implements AvailabilityListener {
     private void putIfNotBlank(Map<String,String> map, String key, String value) {
         if ((value!=null) && (!value.isBlank())) {
             map.put(key, value);
-        }
-    }
-
-    private void awaitApocProceduresRegistered() {
-        while (!areProceduresRegistered("apoc")) {
-            Util.sleep(100);
-        }
-    }
-
-    private void awaitDbmsComponentsProcedureRegistered() {
-        while (!areProceduresRegistered("dbms.components")) {
-            Util.sleep(100);
-        }
-    }
-
-    private boolean areProceduresRegistered(String procStart) {
-        try {
-            return procs.getAllProcedures().stream().anyMatch(signature -> signature.name().toString().startsWith(procStart));
-        } catch (ConcurrentModificationException e) {
-            // if a CME happens (possible during procedure scanning)
-            // we return false and the caller will try again
-            return false;
         }
     }
 
