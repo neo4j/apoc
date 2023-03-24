@@ -8,7 +8,6 @@ import apoc.export.json.ExportJson;
 import apoc.util.FileUtils;
 import apoc.util.TestUtil;
 import junit.framework.TestCase;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
