@@ -5,12 +5,15 @@ import apoc.graph.Graphs;
 import apoc.schema.Schemas;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
+import apoc.util.MapUtil;
 import apoc.util.TestUtil;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.test.rule.DbmsRule;
@@ -18,6 +21,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -26,6 +30,8 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.export.util.ExportFormat.*;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
+import static apoc.util.TestUtil.assertError;
+import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static apoc.util.Util.map;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -175,6 +181,35 @@ public class ExportCypherTest {
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")), (r) -> {
                 });
         assertEquals(EXPECTED_NEO4J_SHELL, readFile(fileName));
+    }
+
+
+    @Test
+    public void testExportCypherAdminOperationErrorMessage() {
+        String filename = "test.cypher";
+        List<String> invalidQueries = List.of(
+                "SHOW CONSTRAINTS YIELD id, name, type RETURN *",
+                "SHOW INDEXES YIELD id, name, type RETURN *"
+        );
+
+        for (String query : invalidQueries) {
+            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+                    () -> TestUtil.testCall(db, """
+                        CALL apoc.export.cypher.query(
+                        $query,
+                        $file,
+                        $config
+                        )""",
+                            MapUtil.map(
+                                    "query", query,
+                                    "file", filename,
+                                    "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
+                            (r) -> assertResults(filename, r, "database")
+                    )
+            );
+
+            assertError(e, INVALID_QUERY_MODE_ERROR, RuntimeException.class, "apoc.export.cypher.query");
+        }
     }
 
     private static String readFile(String fileName) {

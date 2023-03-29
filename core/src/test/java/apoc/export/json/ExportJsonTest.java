@@ -6,12 +6,14 @@ import apoc.util.CompressionAlgo;
 import apoc.util.FileTestUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -31,6 +33,8 @@ import static apoc.util.CompressionAlgo.FRAMED_SNAPPY;
 import static apoc.util.CompressionAlgo.NONE;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.assertError;
+import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -85,6 +89,30 @@ public class ExportJsonTest {
                 (r) -> assertResults(filename, r, "database")
         );
         assertFileEquals(filename);
+    }
+
+    @Test
+    public void testExportJsonAdminOperationErrorMessage() {
+        String filename = "test.json";
+        List<String> invalidQueries = List.of(
+                "SHOW CONSTRAINTS YIELD id, name, type RETURN *",
+                "SHOW INDEXES YIELD id, name, type RETURN *"
+        );
+
+        for (String query : invalidQueries) {
+            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+                    () -> TestUtil.testCall(db, """
+                        CALL apoc.export.json.query(
+                        $query,
+                        $file
+                        )""",
+                            map("query", query, "file", filename),
+                            (r) -> {}
+                    )
+            );
+
+            assertError(e, INVALID_QUERY_MODE_ERROR, RuntimeException.class, "apoc.export.json.query");
+        }
     }
 
     @Test

@@ -16,12 +16,15 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.AuthorizationViolationException;
 
 import java.io.IOException;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 
 
 public class JsonFormat {
@@ -145,6 +148,8 @@ public class JsonFormat {
                 writeJsonContainerEnd(jsonGenerator);
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } catch (AuthorizationViolationException e) {
+                throw new RuntimeException(INVALID_QUERY_MODE_ERROR);
             }
         };
         return dump(writer.getPrintWriter("json"), reporter, consumer);
