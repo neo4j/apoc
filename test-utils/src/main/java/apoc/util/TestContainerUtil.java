@@ -86,7 +86,6 @@ public class TestContainerUtil {
             dockerImage = neo4jCommunityDockerImageVersion;
         }
 
-        pluginsFolder = new File(baseDir, "build/plugins");
         try {
             FileUtils.deleteDirectory( pluginsFolder );
         } catch (IOException e) {

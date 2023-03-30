@@ -1,5 +1,5 @@
 package apoc.it.core;
-import apoc.ApocSignaturesCore;
+import apoc.ApocSignatures;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestUtil;
@@ -75,8 +75,8 @@ public class StartupTest {
                             .list(record -> record.get("name").asString());
 
 
-                    assertEquals(sorted(ApocSignaturesCore.PROCEDURES), procedureNames);
-                    assertEquals(sorted(ApocSignaturesCore.FUNCTIONS), functionNames);
+                    assertEquals(sorted(ApocSignatures.PROCEDURES), procedureNames);
+                    assertEquals(sorted(ApocSignatures.FUNCTIONS), functionNames);
                 }
 
                 neo4jContainer.close();

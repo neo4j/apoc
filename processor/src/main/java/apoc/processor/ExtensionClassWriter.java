@@ -6,7 +6,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
@@ -29,8 +28,8 @@ public class ExtensionClassWriter {
                       List<String> userFunctionSignatures) {
 
         try {
-            String path = getProjectPath();
-            final TypeSpec typeSpec = defineClass(procedureSignatures, userFunctionSignatures, path);
+            String suffix = isExtendedProject() ? "Extended" : "";
+            final TypeSpec typeSpec = defineClass(procedureSignatures, userFunctionSignatures, suffix);
 
             JavaFile.builder("apoc", typeSpec)
                     .build()
@@ -40,26 +39,17 @@ public class ExtensionClassWriter {
         }
     }
 
-    private String getProjectPath() throws IOException {
-        // create and delete a file to retrieve the current project (`core` or `extended`)
+    private boolean isExtendedProject() throws IOException {
+        // create and delete a file to retrieve the current project path (e.g `ROOT/../core/build/generated/.../tmp`)
         FileObject resource = filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "tmp", (Element[]) null);
         String projectPath = resource.getName();
         resource.delete();
 
-        // in order to ignore test case, i.e. `ApocProcessorTest`
-        String buildPath = "/build";
-        if (!projectPath.contains(buildPath)) {
-            return "";
-        }
-
-        // transform e.g. "myPath/core/build/generated/..."   to "Core"
-        projectPath = StringUtils.substringBefore(projectPath, buildPath);
-        projectPath = StringUtils.substringAfterLast(projectPath, "/");
-        return StringUtils.capitalize(projectPath);
+        return projectPath.contains("extended/build/generated");
     }
 
-    private TypeSpec defineClass(List<String> procedureSignatures, List<String> userFunctionSignatures, String projectPath) {
-        return TypeSpec.classBuilder("ApocSignatures" + projectPath)
+    private TypeSpec defineClass(List<String> procedureSignatures, List<String> userFunctionSignatures, String suffix) {
+        return TypeSpec.classBuilder("ApocSignatures" + suffix)
                 .addModifiers(Modifier.PUBLIC)
                 .addField(signatureListField("PROCEDURES", procedureSignatures))
                 .addField(signatureListField("FUNCTIONS", userFunctionSignatures))
