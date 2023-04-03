@@ -8,7 +8,10 @@ import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.processing.Filer;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
+import javax.tools.FileObject;
+import javax.tools.StandardLocation;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +28,10 @@ public class ExtensionClassWriter {
                       List<String> userFunctionSignatures) {
 
         try {
-            JavaFile.builder("apoc", defineClass(procedureSignatures, userFunctionSignatures))
+            String suffix = isExtendedProject() ? "Extended" : "";
+            final TypeSpec typeSpec = defineClass(procedureSignatures, userFunctionSignatures, suffix);
+
+            JavaFile.builder("apoc", typeSpec)
                     .build()
                     .writeTo(filer);
         } catch (IOException e) {
@@ -33,8 +39,17 @@ public class ExtensionClassWriter {
         }
     }
 
-    private TypeSpec defineClass(List<String> procedureSignatures, List<String> userFunctionSignatures) {
-        return TypeSpec.classBuilder("ApocSignatures")
+    private boolean isExtendedProject() throws IOException {
+        // create and delete a file to retrieve the current project path (e.g `ROOT/../core/build/generated/.../tmp`)
+        FileObject resource = filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "tmp", (Element[]) null);
+        String projectPath = resource.getName();
+        resource.delete();
+
+        return projectPath.contains("extended/build/generated");
+    }
+
+    private TypeSpec defineClass(List<String> procedureSignatures, List<String> userFunctionSignatures, String suffix) {
+        return TypeSpec.classBuilder("ApocSignatures" + suffix)
                 .addModifiers(Modifier.PUBLIC)
                 .addField(signatureListField("PROCEDURES", procedureSignatures))
                 .addField(signatureListField("FUNCTIONS", userFunctionSignatures))
