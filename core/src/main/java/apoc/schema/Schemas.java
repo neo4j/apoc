@@ -16,6 +16,7 @@ import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.internal.kernel.api.InternalIndexState;
+import org.neo4j.internal.kernel.api.PopulationProgress;
 import org.neo4j.internal.kernel.api.SchemaRead;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.internal.kernel.api.exceptions.LabelNotFoundKernelException;
@@ -528,7 +529,7 @@ public class Schemas {
                     schemaRead.indexGetState(indexDescriptor).toString(),
                     getIndexType(indexDescriptor),
                     schemaRead.indexGetState(indexDescriptor).equals(InternalIndexState.FAILED) ? schemaRead.indexGetFailure(indexDescriptor) : "NO FAILURE",
-                    schemaRead.indexGetPopulationProgress(indexDescriptor).getCompleted() / schemaRead.indexGetPopulationProgress(indexDescriptor).getTotal() * 100,
+                    getPopulationProgress(indexDescriptor, schemaRead),
                     schemaRead.indexSize(indexDescriptor),
                     schemaRead.indexUniqueValuesSelectivity(indexDescriptor),
                     userDescription
@@ -602,5 +603,15 @@ public class Schemas {
     private String getSchemaInfoName(Object labelOrType, List<String> properties) {
         final String labelOrTypeAsString = labelOrType instanceof String ? (String) labelOrType : StringUtils.join(labelOrType, ",");
         return String.format(":%s(%s)", labelOrTypeAsString, StringUtils.join(properties, ","));
+    }
+
+    private long getPopulationProgress(IndexDescriptor indexDescriptor, SchemaRead schemaRead) throws IndexNotFoundKernelException {
+        PopulationProgress populationProgress = schemaRead.indexGetPopulationProgress(indexDescriptor);
+        // when the index is failed the getTotal() is equal to 0
+        long populationTotal = populationProgress.getTotal();
+        if (populationTotal == 0) {
+            return 0L;
+        }
+        return populationProgress.getCompleted() / populationTotal * 100;
     }
 }
