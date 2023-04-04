@@ -192,7 +192,7 @@ public class ImportCsvTest {
     @Test
     public void testImportCsvTerminate() {
         // multiple files
-        String files = Stream.of( "Person", "Movie", "Foo", "Bar", "Baz")
+        String files = Stream.of( "Person", "Movie", "Foo", "Bar", "Baz", "Aaa", "Bbb", "Ccc")
                 .map(i -> "{fileName: $nodeFile, labels: ['" + i + "']}")
                 .collect(Collectors.joining(","));
         checkTerminationGuard(db, "CALL apoc.import.csv([" + files +"], [], {})",

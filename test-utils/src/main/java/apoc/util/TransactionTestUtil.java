@@ -64,6 +64,7 @@ public class TransactionTestUtil {
                 (msg) -> Stream.of("terminated", "failed", "closed").anyMatch(msg::contains)
         );
 
+        // check that the transaction is not present and the time is less than `timeout`
         lastTransactionChecks(db, timeout, query, timeTransactionTerminated);
     }
 
@@ -76,7 +77,7 @@ public class TransactionTestUtil {
             String s = transaction.execute(query, params).resultAsString();
             System.out.println("s = " + s);
             transaction.commit();
-            fail("Should fail because of transaction timeout");
+            fail("Should fail because of TransactionFailureException");
         } catch (Exception e) {
             final String msg = e.getMessage();
             assertTrue( "Actual message is: " + msg,
