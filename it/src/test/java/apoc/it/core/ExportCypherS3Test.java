@@ -43,8 +43,9 @@ public class ExportCypherS3Test extends S3BaseTest {
         db.executeTransactionally("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name)");
         db.executeTransactionally("CREATE RANGE INDEX FOR (n:Foo) ON (n.name)");
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint FOR (b:Bar) REQUIRE b.name IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT uniqueConstraintComposite FOR (b:Bar) REQUIRE (b.name, b.age) IS UNIQUE");
         if (testName.getMethodName().endsWith(OPTIMIZED)) {
-            db.executeTransactionally("CREATE (f:Foo {name:'foo', born:date('2018-10-31')})-[:KNOWS {since:2016}]->(b:Bar {name:'bar',age:42}),(c:Bar:Person {age:12}),(d:Bar {age:12})," +
+            db.executeTransactionally("CREATE (f:Foo {name:'foo', born:date('2018-10-31')})-[:KNOWS {since:2016}]->(b:Bar {name:'bar',age:42}),(c:Bar:Person {age:12}),(d:Bar {age:17})," +
                     " (t:Foo {name:'foo2', born:date('2017-09-29')})-[:KNOWS {since:2015}]->(e:Bar {name:'bar2',age:44}),({age:99})");
         } else if(testName.getMethodName().endsWith(ODD)) {
             db.executeTransactionally("CREATE (f:Foo {name:'foo', born:date('2018-10-31')})," +

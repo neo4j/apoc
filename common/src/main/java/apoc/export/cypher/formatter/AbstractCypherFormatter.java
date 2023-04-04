@@ -93,38 +93,38 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 		String statement = "";
 		switch ( type ) {
 		case UNIQUENESS -> {
-			keysString = getPropertiesQuoted(keys, "node.");
+			keysString = "node.";
 			typeString = "IS UNIQUE";
 			statement = STATEMENT_CONSTRAINTS;
 		}
 		case NODE_KEY -> {
-			keysString = getPropertiesQuoted(keys, "node.");
+			keysString = "node.";
 			typeString = "IS NODE KEY";
 			statement = STATEMENT_CONSTRAINTS;
 		}
 		case NODE_PROPERTY_EXISTENCE -> {
-			keysString = getPropertiesQuoted(keys, "node.");
+			keysString = "node.";
 			typeString = "IS NOT NULL";
 			statement = STATEMENT_CONSTRAINTS;
 		}
 		case RELATIONSHIP_UNIQUENESS -> {
-			keysString = getPropertiesQuoted(keys, "rel.");
+			keysString = "rel.";
 			typeString = "IS UNIQUE";
 			statement = STATEMENT_CONSTRAINTS_REL;
 		}
 		case RELATIONSHIP_KEY -> {
-			keysString = getPropertiesQuoted(keys, "rel.");
+			keysString = "rel.";
 			typeString = "IS NODE KEY";
 			statement = STATEMENT_CONSTRAINTS_REL;
 		}
 		case RELATIONSHIP_PROPERTY_EXISTENCE -> {
-			keysString = getPropertiesQuoted(keys, "rel.");
+			keysString = "rel.";
 			typeString = "IS NOT NULL";
 			statement = STATEMENT_CONSTRAINTS_REL;
 		}
 		}
 
-		return String.format(statement, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), keysString, typeString);
+		return String.format(statement, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), getPropertiesQuoted(keys, keysString), typeString);
 	}
 
 	@Override

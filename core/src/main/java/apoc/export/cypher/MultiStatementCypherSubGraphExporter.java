@@ -279,11 +279,9 @@ public class MultiStatementCypherSubGraphExporter {
                 .map(constraint-> {
                     String name = constraint.getName();
                     ConstraintType type = constraint.getConstraintType();
-                    String label = "";
-                    switch(type) {
-                    case UNIQUENESS, NODE_KEY, NODE_PROPERTY_EXISTENCE -> label = constraint.getLabel().name();
-                    case RELATIONSHIP_UNIQUENESS, RELATIONSHIP_KEY, RELATIONSHIP_PROPERTY_EXISTENCE -> label = constraint.getRelationshipType().name();
-                    }
+                    String label = Util.isNodeCategory(type)
+                            ? constraint.getLabel().name()
+                            : constraint.getRelationshipType().name();
                     Iterable<String> props = constraint.getPropertyKeys();
                     return this.cypherFormat.statementForCreateConstraint(name, label, props, type, exportConfig.ifNotExists());
                 })
