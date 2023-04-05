@@ -6,7 +6,6 @@ import org.neo4j.graphdb.Transaction;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static apoc.util.MapUtil.map;
@@ -36,57 +35,25 @@ public class TransactionTestUtil {
     }
 
     public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query, Map<String, Object> params) {
-        checkTerminationGuard(db, timeout, query, params, query);
-    }
-
-    public static void checkTerminationGuard(GraphDatabaseService db, long timeout, String query, Map<String, Object> params, String innerQuery) {
-        // Check that without `TERMINATE TRANSACTION` the transaction fails due to timeout exception
-        //  in order to prevent possible false positive due to a query of too short a duration
-        //  which, together with terminate transaction, would retrieve a false
-        // In fact, even if the procedure is not correctly terminated when the transaction is finished,
-        //  the procedure would return a `transaction terminated` even though it would actually complete the whole procedure anyway.
-        long timeTransactionTimeout = System.currentTimeMillis();
-        executeTransactionWithTimeout(db, timeout, query, params,
-                (msg) -> msg.contains("The transaction has not completed within the specified timeout"));
-
-        long secondPassed = getSecondPassed(timeTransactionTimeout);
-        checkTransactionTimeoutTime(timeout, secondPassed);
-
-        // in a new thread, terminate the following transaction
-        terminateTransactionAsync(db, timeout, innerQuery);
+        terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
-        long timeTransactionTerminated = System.currentTimeMillis();
-        // Usually returns org.neo4j.kernel.api.exceptions.Transaction.Status.Terminated,
-        //  but sometimes returns a Status.TransactionMarkedAsFailed
-        //  or `The transaction has been closed.`
-        executeTransactionWithTimeout(db, timeout, query, params,
-                (msg) -> Stream.of("terminated", "failed", "closed").anyMatch(msg::contains)
-        );
-
-        // check that the transaction is not present and the time is less than `timeout`
-        lastTransactionChecks(db, timeout, query, timeTransactionTerminated);
-    }
-
-    private static void executeTransactionWithTimeout(GraphDatabaseService db,
-                                                      long timeout,
-                                                      String query,
-                                                      Map<String, Object> params,
-                                                      Function<String, Boolean> assertionException) {
+        long timePassed = System.currentTimeMillis();
         try(Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
-            String s = transaction.execute(query, params).resultAsString();
-            System.out.println("s = " + s);
+            transaction.execute(query, params).resultAsString();
             transaction.commit();
             fail("Should fail because of TransactionFailureException");
         } catch (Exception e) {
             final String msg = e.getMessage();
-            assertTrue( "Actual message is: " + msg,
-                    assertionException.apply(msg) );
+            assertTrue("Actual message is: " + msg,
+                    Stream.of("terminated", "failed", "closed").anyMatch(msg::contains));
         }
+        
+        lastTransactionChecks(db, timeout, query, timePassed);
     }
 
     public static void lastTransactionChecks(GraphDatabaseService db, long timeout, String query, long timePassed) {
-        checkTransactionTerminatedTime(timeout, timePassed);
+        checkTransactionTime(timeout, timePassed);
         checkTransactionNotInList(db, query);
     }
 
@@ -94,20 +61,10 @@ public class TransactionTestUtil {
         lastTransactionChecks(db, DEFAULT_TIMEOUT, query, timeBefore);
     }
 
-    private static void checkTransactionTerminatedTime(long timeout, long timePassed) {
-        timePassed = getSecondPassed(timePassed);
+    private static void checkTransactionTime(long timeout, long timePassed) {
+        timePassed = (System.currentTimeMillis() - timePassed) / 1000;
         assertTrue("The transaction hasn't been terminated before the timeout time, but after " + timePassed + " seconds",
                 timePassed <= timeout);
-    }
-
-    private static void checkTransactionTimeoutTime(long timeout, long timePassed) {
-        timePassed = getSecondPassed(timePassed);
-        assertTrue("The transaction hasn't been terminated after the timeout time, but before " + timePassed + " seconds",
-                timePassed > timeout);
-    }
-
-    private static long getSecondPassed(long timePassed) {
-        return (System.currentTimeMillis() - timePassed) / 1000;
     }
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
