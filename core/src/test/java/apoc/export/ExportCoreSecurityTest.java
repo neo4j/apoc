@@ -16,6 +16,7 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.rule.DbmsRule;
@@ -27,8 +28,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static apoc.util.TestUtil.assertError;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -59,12 +62,16 @@ public class ExportCoreSecurityTest {
         setFileExport(false);
     }
 
-    private static void setFileExport(boolean allowed) {
+    public static void setFileExport(boolean allowed) {
         ApocConfig.apocConfig().setProperty(ApocConfig.APOC_EXPORT_FILE_ENABLED, allowed);
     }
 
     private static Collection<String[]> data(Map<String, List<String>> apocProcedureArguments) {
-        return APOC_EXPORT_PROCEDURE_NAME
+        return data(apocProcedureArguments, APOC_EXPORT_PROCEDURE_NAME);
+    }
+
+    public static Collection<String[]> data(Map<String, List<String>> apocProcedureArguments, List<String> procedureNames) {
+        return procedureNames
                 .stream()
                 .flatMap(method -> apocProcedureArguments
                         .entrySet()
@@ -80,7 +87,7 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestIllegalFSAccess(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final Map<String, List<String>> APOC_PROCEDURE_ARGUMENTS = Map.of(
@@ -117,7 +124,7 @@ public class ExportCoreSecurityTest {
                     () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
             );
 
-            TestUtil.assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
+            assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
         }
     }
 
@@ -126,7 +133,7 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestIllegalExternalFSAccess(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
@@ -162,7 +169,7 @@ public class ExportCoreSecurityTest {
                         Result::resultAsString);
                 fail(message);
             } catch (Exception e) {
-                TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
+                assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
             } finally {
                 setFileExport(false);
             }
@@ -174,7 +181,7 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestPathTraversalAccess(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final String case1 = "'file:///%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2fapoc/test.txt'";
@@ -183,7 +190,7 @@ public class ExportCoreSecurityTest {
         private static final String case4 = "'tests/../../test.txt'";
         private static final String case5 = "'tests/..//..//test.txt'";
 
-        private static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5);
+        public static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5);
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
                 "query",  cases.stream().map(
@@ -207,14 +214,7 @@ public class ExportCoreSecurityTest {
 
         @Test
         public void testPathTraversal() {
-            setFileExport(true);
-
-            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
-            );
-
-            TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
-            setFileExport(false);
+            assertPathTraversalError(db, "CALL " + apocProcedure);
         }
     }
 
@@ -229,7 +229,7 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestPathTraversalIsNormalised(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final String case1 = "'file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/apoc/test.txt'";
@@ -239,7 +239,7 @@ public class ExportCoreSecurityTest {
         private static final String case5 = "'file://" + directory.getAbsolutePath() + "//..//..//..//..//apoc/test.txt'";
         private static final String case6 = "'file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/apoc/test.txt'";
 
-        private static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5, case6);
+        public static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5, case6);
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
                 "query", cases.stream().map(
@@ -263,14 +263,9 @@ public class ExportCoreSecurityTest {
 
         @Test
         public void testPathTraversal() {
-            setFileExport(true);
-
-            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
+            assertPathTraversalError(db, "CALL " + apocProcedure,
+                    e -> TestCase.assertTrue(e.getMessage().contains("apoc/test.txt (No such file or directory)"))
             );
-
-            TestCase.assertTrue(e.getMessage().contains("apoc/test.txt (No such file or directory)"));
-            setFileExport(false);
         }
     }
 
@@ -284,7 +279,7 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestPathTraversalIsNormalisedWithinDirectory(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final String case1 = "'file:///..//..//..//..//apoc//..//..//..//..//test.txt'";
@@ -296,7 +291,7 @@ public class ExportCoreSecurityTest {
         private static final String case7 = "'test.txt'";
         private static final String case8 = "'file:///..//..//..//..//test.txt'";
 
-        private static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5, case6, case7, case8);
+        public static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5, case6, case7, case8);
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
                 "query", cases.stream().map(
@@ -320,15 +315,9 @@ public class ExportCoreSecurityTest {
 
         @Test
         public void testPathTraversal() {
-            setFileExport(true);
+            assertPathTraversalWithoutErrors(db, apocProcedure, directory,
+                    (r) -> assertTrue(((String) r.get("file")).contains("test.txt")));
 
-            TestUtil.testCall(db, "CALL " + apocProcedure,
-                    (r) -> assertTrue(((String) r.get("file")).contains("test.txt"))
-            );
-
-            File f = new File(directory.getAbsolutePath() + "/test.txt");
-            TestCase.assertTrue(f.exists());
-            TestCase.assertTrue(f.delete());
         }
     }
 
@@ -343,13 +332,13 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestPathTraversalIsWithSimilarDirectoryName(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final String case1 = "'../imported/test.txt'";
         private static final String case2 = "'tests/../../imported/test.txt'";
 
-        private static final List<String> cases = Arrays.asList(case1, case2);
+        public static final List<String> cases = Arrays.asList(case1, case2);
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
                 "query", cases.stream().map(
@@ -373,15 +362,7 @@ public class ExportCoreSecurityTest {
 
         @Test
         public void testPathTraversal() {
-            setFileExport(true);
-
-            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, "CALL " + apocProcedure, (r) -> {})
-            );
-
-            TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
-
-            setFileExport(false);
+            assertPathTraversalError(db, "CALL " + apocProcedure);
         }
     }
 
@@ -397,7 +378,7 @@ public class ExportCoreSecurityTest {
         private final String apocProcedure;
 
         public TestPathTraversAllowedWithinDirectory(String exportMethod, String exportMethodType, String exportMethodArguments) {
-            this.apocProcedure = "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
         }
 
         private static final String case1 = "'file:///../import/../import//..//tests/test.txt'";
@@ -406,7 +387,7 @@ public class ExportCoreSecurityTest {
         private static final String case4 = "'file:///tests/test.txt'";
         private static final String case5 = "'tests/test.txt'";
 
-        private static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5);
+        public static final List<String> cases = Arrays.asList(case1, case2, case3, case4, case5);
 
         private static final Map<String, List<String>> METHOD_ARGUMENTS = Map.of(
                 "query", cases.stream().map(
@@ -430,15 +411,8 @@ public class ExportCoreSecurityTest {
 
         @Test
         public void testPathTraversal() {
-            setFileExport(true);
-
-            TestUtil.testCall(db, "CALL " + apocProcedure,
-                    (r) -> assertTrue(((String) r.get("file")).contains("tests/test.txt"))
-            );
-
-            File f = new File(subDirectory.getAbsolutePath() + "/test.txt");
-            TestCase.assertTrue(f.exists());
-            TestCase.assertTrue(f.delete());
+            assertPathTraversalWithoutErrors(db, apocProcedure, subDirectory,
+                    (r) -> assertTrue(((String) r.get("file")).contains("tests/test.txt")));
         }
     }
 
@@ -450,17 +424,46 @@ public class ExportCoreSecurityTest {
             QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
                     () -> TestUtil.testCall(db, String.format("CALL " + apocProcedure, "'./hello', {}"), (r) -> {})
             );
-            TestUtil.assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
+            assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
         }
 
         @Test
         public void testIllegalExternalFSAccessExportCypherSchema() {
-            setFileExport(true);
-            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, String.format("CALL " + apocProcedure, "'../hello', {}"), (r) -> {})
-            );
-            TestUtil.assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure);
-            setFileExport(false);
+            assertPathTraversalError(db, String.format("CALL " + apocProcedure, "'../hello', {}"),
+                    e -> assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure));
         }
     }
+
+    public static String getApocProcedure(String exportMethod, String exportMethodType, String exportMethodArguments) {
+        return "apoc.export." + exportMethod + "." + exportMethodType + "(" + exportMethodArguments + ")";
+    }
+
+    public static void assertPathTraversalError(GraphDatabaseService db, String query, Consumer<Exception> exceptionConsumer) {
+        setFileExport(true);
+
+        QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
+                () -> TestUtil.testCall(db, query, (r) -> {})
+        );
+
+        exceptionConsumer.accept(e);
+
+        setFileExport(false);
+    }
+
+    public static void assertPathTraversalWithoutErrors(GraphDatabaseService db, String apocProcedure, File directory, Consumer<Map<String, Object>> consumer) {
+        setFileExport(true);
+
+        TestUtil.testCall(db, "CALL " + apocProcedure, consumer);
+
+        File f = new File(directory.getAbsolutePath() + "/test.txt");
+        TestCase.assertTrue(f.exists());
+        TestCase.assertTrue(f.delete());
+    }
+
+    public static void assertPathTraversalError(GraphDatabaseService db, String apocProcedure) {
+        assertPathTraversalError(db, apocProcedure,
+                e -> assertError(e, FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, apocProcedure)
+        );
+    }
+
 }
