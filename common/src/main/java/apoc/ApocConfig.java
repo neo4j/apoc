@@ -79,8 +79,9 @@ public class ApocConfig extends LifecycleAdapter {
     ));
     private static final String DEFAULT_PATH = ".";
     private static final String CONFIG_DIR = "config-dir=";
-    public static final String EXPORT_TO_FILE_ERROR = "Export to files not enabled, please set apoc.export.file.enabled=true in your apoc.conf.\n" +
-            "Otherwise, if you are running in a cloud environment without filesystem access, use the `{stream:true}` config and null as a 'file' parameter to stream the export back to your client.";
+    public static final String EXPORT_NOT_ENABLED_ERROR = "Export to files not enabled, please set apoc.export.file.enabled=true in your apoc.conf.";
+    public static final String EXPORT_TO_FILE_ERROR = EXPORT_NOT_ENABLED_ERROR +
+            "\nOtherwise, if you are running in a cloud environment without filesystem access, use the `{stream:true}` config and null as a 'file' parameter to stream the export back to your client.";
 
     private final Config neo4jConfig;
     private final Log log;
