@@ -23,6 +23,9 @@ public class ImportCsv {
     @Context
     public Log log;
 
+    @Context
+    public TerminationGuard terminationGuard;
+
     @Procedure(name = "apoc.import.csv", mode = Mode.SCHEMA)
     @Description("Imports nodes and relationships with the given labels and types from the provided CSV file.")
     public Stream<ProgressInfo> importCsv(
@@ -41,7 +44,7 @@ public class ImportCsv {
                     }
                     final CsvLoaderConfig clc = CsvLoaderConfig.from(config);
                     final ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "csv"));
-                    final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log);
+                    final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log, terminationGuard);
 
                     final Map<String, Map<String, String>> idMapping = new HashMap<>();
                     for (Map<String, Object> node : nodes) {

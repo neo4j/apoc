@@ -41,6 +41,9 @@ public class GraphRefactoring {
     @Context
     public Pools pools;
 
+    @Context
+    public TerminationGuard terminationGuard;
+
     private Stream<NodeRefactorResult> doCloneNodes(@Name("nodes") List<Node> nodes, @Name("withRelationships") boolean withRelationships, List<String> skipProperties) {
         if (nodes == null) return Stream.empty();
         return nodes.stream().map(node -> Util.rebind(tx, node)).map(node -> {
@@ -199,6 +202,7 @@ public class GraphRefactoring {
 
         // clone nodes and populate copy map
         for (Node node : nodes) {
+            terminationGuard.check();
             if (node == null || standinMap.containsKey(node)) continue;
             // standinNodes will NOT be cloned
 
@@ -223,6 +227,8 @@ public class GraphRefactoring {
 
         // clone relationships, will be between cloned nodes and/or standins
         for (Relationship rel : rels) {
+            terminationGuard.check();
+
             if (rel == null) continue;
 
             Node oldStart = rel.getStartNode();

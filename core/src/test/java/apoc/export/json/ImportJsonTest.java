@@ -52,6 +52,7 @@ import static org.junit.Assert.fail;
 
 
 public class ImportJsonTest {
+    public static String LARGE_REMOTE_FILE = "https://devrel-data-science.s3.us-east-2.amazonaws.com/twitch_all.json";
 
     private static final long NODES_BIG_JSON = 16L;
     private static final long RELS_BIG_JSON = 4L;
@@ -192,11 +193,9 @@ public class ImportJsonTest {
 
         createConstraints(List.of("Stream", "User", "Game", "Team", "Language"));
 
-        String filename = "https://devrel-data-science.s3.us-east-2.amazonaws.com/twitch_all.json";
-
         final String query = "CALL apoc.import.json($file)";
 
-        TransactionTestUtil.checkTerminationGuard(db, query, map("file", filename));
+        TransactionTestUtil.checkTerminationGuard(db, query, map("file", LARGE_REMOTE_FILE));
     }
 
     @Test
@@ -305,12 +304,6 @@ public class ImportJsonTest {
                 (r) -> assertionsAllJsonProgressInfo(r, true));
 
         assertionsAllJsonDbResult();
-    }
-
-    @Test
-    public void shouldTerminateImportJson()  {
-        createConstraints(List.of("Movie", "Other", "Person"));
-        checkTerminationGuard(db, "CALL apoc.import.json('testTerminate.json',{})");
     }
 
     private void assertionsAllJsonProgressInfo(Map<String, Object> r, boolean isBinary) {
