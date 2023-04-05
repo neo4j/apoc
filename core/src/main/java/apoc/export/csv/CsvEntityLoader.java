@@ -12,7 +12,6 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import org.neo4j.graphdb.*;
 import org.neo4j.logging.Log;
-import org.neo4j.procedure.TerminationGuard;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,17 +25,14 @@ public class CsvEntityLoader {
     private final ProgressReporter reporter;
     private final Log log;
 
-    private final TerminationGuard terminationGuard;
-
     /**
      * @param clc configuration object
      * @param reporter
      */
-    public CsvEntityLoader(CsvLoaderConfig clc, ProgressReporter reporter, Log log, TerminationGuard terminationGuard) {
+    public CsvEntityLoader(CsvLoaderConfig clc, ProgressReporter reporter, Log log) {
         this.clc = clc;
         this.reporter = reporter;
         this.log = log;
-        this.terminationGuard = terminationGuard;
     }
 
     /**
@@ -86,7 +82,6 @@ public class CsvEntityLoader {
             BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
             try {
                 csv.forEach(line -> {
-                    terminationGuard.check();
                     lineNo.getAndIncrement();
 
                     final EnumSet<Results> results = EnumSet.of(Results.map);
@@ -201,7 +196,6 @@ public class CsvEntityLoader {
                 BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
                 try {
                     csv.forEach(line -> {
-                        terminationGuard.check();
                         lineNo.getAndIncrement();
 
                         final EnumSet<Results> results = EnumSet.of(Results.map);

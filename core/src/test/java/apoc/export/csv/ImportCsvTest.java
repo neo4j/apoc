@@ -191,13 +191,9 @@ public class ImportCsvTest {
     
     @Test
     public void testImportCsvTerminate() {
-        // multiple files
-        String files = Stream.of( "Person", "Movie", "Foo", "Bar", "Baz", "Aaa", "Bbb", "Ccc")
-                .map(i -> "{fileName: $nodeFile, labels: ['" + i + "']}")
-                .collect(Collectors.joining(","));
-        checkTerminationGuard(db, "CALL apoc.import.csv([" + files +"], [], {})",
-                    map("nodeFile", "file:/largeFile.csv",
-                            "config", map("batchSize", 100L)));
+        checkTerminationGuard(db, "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
+                map("nodeFile", "file:/largeFile.csv",
+                        "config", map("batchSize", 100L)));
     }
 
     @Test

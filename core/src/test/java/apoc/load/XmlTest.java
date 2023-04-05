@@ -14,7 +14,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
-import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.test.rule.DbmsRule;
@@ -41,17 +40,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
-import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
 public class XmlTest {
     public static final String FILE_SHORTENED = "src/test/resources/xml/humboldt_soemmering01_1791.TEI-P5-shortened.xml";
     
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"))
             .withSetting(GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString("127.0.0.0/8")));
 
     @Before
@@ -566,6 +560,6 @@ public class XmlTest {
     @Test
     public void testTerminateImportXml() {
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
-        TransactionTestUtil.checkTerminationGuard(db,  3L, "call apoc.import.xml($file)", Map.of("file", file));
+        TransactionTestUtil.checkTerminationGuard(db, "call apoc.import.xml($file)", Map.of("file", file));
     }
 }
