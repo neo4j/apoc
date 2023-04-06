@@ -2,6 +2,7 @@ package apoc.schema;
 
 import apoc.result.AssertSchemaResult;
 import apoc.result.IndexConstraintRelationshipInfo;
+import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import junit.framework.TestCase;
 import org.assertj.core.api.Assertions;
@@ -39,6 +40,8 @@ import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_LABEL;
 import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_REL_TYPE;
 
@@ -995,6 +998,56 @@ public class SchemasTest {
 
         testCall(db, "RETURN apoc.schema.relationship.constraintExists(\"Person\", [\"name\"]) AS output;", (r) -> {
             assertEquals(false, r.get("output"));
+        });
+    }
+
+    @Test
+    public void testSchemaNodesWithFailedIndex() {
+        // create property which will cause an index failure
+        String largeProp = Util.readResourceFile("movies.cypher");
+        db.executeTransactionally("CREATE (n:LabelTest {prop: $largeProp})",
+                Map.of("largeProp", largeProp));
+
+        // create the failed index and check that has state "FAILED"
+        db.executeTransactionally("CREATE INDEX failedIdx FOR (n:LabelTest) ON (n.prop)");
+        testCall(db, "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'", (r) -> {
+            assertEquals("FAILED", r.get("state"));
+        });
+
+        // then
+        testCall(db, "CALL apoc.schema.nodes", r -> {
+            String actualFailure = (String) r.get("failure");
+            String expectedFailure = "Property value is too large to index, please see index documentation for limitations.";
+            assertThat(actualFailure, containsString(expectedFailure));
+            assertEquals(":LabelTest(prop)", r.get("name"));
+            assertEquals("FAILED", r.get("status"));
+            assertEquals("LabelTest", r.get("label"));
+            assertEquals("RANGE", r.get("type"));
+            assertEquals(List.of("prop"), r.get("properties"));
+        });
+    }
+
+    @Test
+    public void testSchemaRelationshipsWithFailedIndex() {
+        // create property which will cause an index failure
+        String largeProp = Util.readResourceFile("movies.cypher");
+        db.executeTransactionally("CREATE (:Start)-[:REL_TEST {prop: $largeProp}]->(:End)",
+                Map.of("largeProp", largeProp),
+                Result::resultAsString);
+
+        // create the failed index and check that has state "FAILED"
+        db.executeTransactionally("CREATE INDEX failedIdx FOR ()-[r:REL_TEST]-() ON (r.prop)");
+        testCall(db, "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'", (r) -> {
+            assertEquals("FAILED", r.get("state"));
+        });
+
+        // then
+        testCall(db, "CALL apoc.schema.relationships", r -> {
+            assertEquals(":REL_TEST(prop)", r.get("name"));
+            assertEquals("FAILED", r.get("status"));
+            assertEquals("REL_TEST", r.get("relationshipType"));
+            assertEquals("RANGE", r.get("type"));
+            assertEquals(List.of("prop"), r.get("properties"));
         });
     }
 }
