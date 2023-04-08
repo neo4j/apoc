@@ -158,7 +158,57 @@ public class TriggerEnterpriseFeaturesTest {
             testCall(defaultDbSession, "MATCH (n:Something) RETURN n.created",
                     r -> assertNull(r.get("created")));
         }
-    }   
+    }
+
+    @Test
+    public void testDeleteTriggersAfterDatabaseDeletion() {
+        final String dbToDelete = "todelete";
+        final String defaultTriggerName = UUID.randomUUID().toString();
+
+        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+            // create database `todelete`
+            sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
+
+            // install and show a trigger in `todelete` and check existence
+            testCall(sysSession, "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
+                    Map.of("dbName", dbToDelete, "name", defaultTriggerName),
+                    r -> assertEquals(defaultTriggerName, r.get("name"))
+            );
+
+            testCall(sysSession, "CALL apoc.trigger.show($dbName)",
+                    Map.of("dbName", dbToDelete),
+                    r -> assertEquals(defaultTriggerName, r.get("name"))
+            );
+
+            // drop database
+            sysSession.writeTransaction(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)));
+
+            // check that the trigger has been removed
+            testCallEmpty(sysSession, "CALL apoc.trigger.show($dbName)",
+                    Map.of("dbName", dbToDelete)
+            );
+
+
+            // same as above with the database `initDb`, created via apoc.initializer.*
+            testCall(sysSession, "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
+                    Map.of("dbName", INIT_DB, "name", defaultTriggerName),
+                    r -> assertEquals(defaultTriggerName, r.get("name"))
+            );
+
+            testCall(sysSession, "CALL apoc.trigger.show($dbName)",
+                    Map.of("dbName", INIT_DB),
+                    r -> assertEquals(defaultTriggerName, r.get("name"))
+            );
+
+            // drop database
+            sysSession.writeTransaction(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", INIT_DB)));
+
+            // check that the trigger has been removed
+            testCallEmpty(sysSession, "CALL apoc.trigger.show($dbName)",
+                    Map.of("dbName", INIT_DB)
+            );
+        }
+    }
     
     @Test
     public void testTriggersAllowedOnlyWithAdmin() {
