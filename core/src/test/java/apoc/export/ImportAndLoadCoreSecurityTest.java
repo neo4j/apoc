@@ -4,6 +4,7 @@ import apoc.ApocConfig;
 import apoc.export.csv.ImportCsv;
 import apoc.export.graphml.ExportGraphML;
 import apoc.export.json.ImportJson;
+import apoc.load.LoadArrow;
 import apoc.load.LoadJson;
 import apoc.load.Xml;
 import apoc.util.SensitivePathGenerator;
@@ -32,10 +33,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static apoc.export.SecurityUtil.ALLOWED_EXCEPTIONS;
-import static apoc.export.SecurityUtil.IMPORT_PROCEDURES;
-import static apoc.export.SecurityUtil.LOAD_PROCEDURES;
-import static apoc.export.SecurityUtil.setFileApocConfigs;
+import static apoc.export.SecurityTestUtil.ALLOWED_EXCEPTIONS;
+import static apoc.export.SecurityTestUtil.IMPORT_PROCEDURES;
+import static apoc.export.SecurityTestUtil.LOAD_PROCEDURES;
+import static apoc.export.SecurityTestUtil.setImportFileApocConfigs;
 import static apoc.util.FileTestUtil.createTempFolder;
 import static apoc.util.FileUtils.ACCESS_OUTSIDE_DIR_ERROR;
 import static apoc.util.FileUtils.ERROR_READ_FROM_FS_NOT_ALLOWED;
@@ -64,12 +65,12 @@ public class ImportAndLoadCoreSecurityTest {
 
 
     private final String apocProcedure;
-    private final String exportMethod;
+    private final String importMethod;
     private final String fileName;
 
     public ImportAndLoadCoreSecurityTest(String method, String methodArguments, String fileName) {
         this.apocProcedure = "CALL " + method + methodArguments;
-        this.exportMethod = method;
+        this.importMethod = method;
         this.fileName = fileName;
     }
 
@@ -121,53 +122,104 @@ public class ImportAndLoadCoreSecurityTest {
     @BeforeClass
     public static void setUp() throws IOException {
         TestUtil.registerProcedure(db,
+                // import procedures (ExportGraphML contains the `apoc.import.graphml` too)
                 ImportJson.class, Xml.class, ImportCsv.class, ExportGraphML.class,
-                LoadJson.class, Xml.class);
+                // load procedures (Xml contains both `apoc.load.xml` and `apoc.import.xml` procedures)
+                LoadJson.class, LoadArrow.class);
     }
     
 
     @Test
     public void testIllegalFSAccessWithDifferentApocConfs() {
-        setFileApocConfigs(true, true, true);
+        // apoc.import.file.enabled=true
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=true
+        setImportFileApocConfigs(true, true, true);
         assertIpAddressBlocked();
 
-        setFileApocConfigs(true, false, false);
+        // apoc.import.file.enabled=true
+        // apoc.import.file.use_neo4j_config=false
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(true, false, false);
         assertIpAddressBlocked();
 
-        setFileApocConfigs(false, true, false);
+        // apoc.import.file.enabled=true
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(true, true, false);
         assertIpAddressBlocked();
 
-        setFileApocConfigs(false, true, true);
+        // apoc.import.file.enabled=true
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(true, false, true);
         assertIpAddressBlocked();
 
-        setFileApocConfigs(false, false, false);
+        // apoc.import.file.enabled=false
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(false, true, false);
+        assertIpAddressBlocked();
+
+        // apoc.import.file.enabled=false
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=true
+        setImportFileApocConfigs(false, true, true);
+        assertIpAddressBlocked();
+
+        // apoc.import.file.enabled=false
+        // apoc.import.file.use_neo4j_config=false
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(false, false, true);
+        assertIpAddressBlocked();
+
+        // apoc.import.file.enabled=false
+        // apoc.import.file.use_neo4j_config=false
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(false, false, false);
         assertIpAddressBlocked();
     }
 
     @Test
     public void testImportFileDisabled() {
-        setFileApocConfigs(false, false, false);
+        // all assertions with `apoc.import.file.enabled=false`
+
+        // apoc.import.file.use_neo4j_config=false
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(false, false, false);
         assertImportDisabled();
 
-        setFileApocConfigs(false, true, false);
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(false, true, false);
         assertImportDisabled();
 
-        setFileApocConfigs(false, false, true);
+        // apoc.import.file.use_neo4j_config=false
+        // apoc.import.file.allow_read_from_filesystem=true
+        setImportFileApocConfigs(false, false, true);
         assertImportDisabled();
 
-        setFileApocConfigs(false, true, true);
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=true
+        setImportFileApocConfigs(false, true, true);
         assertImportDisabled();
     }
 
     @Test
     public void testIllegalFSAccessWithImportAndUseNeo4jConfsEnabled() {
-        setFileApocConfigs(true, true, false);
+        // apoc.import.file.enabled=true
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(true, true, false);
         assertReadFromFsNotAllowed();
     }
 
     @Test
     public void testImportOutsideDirNotAllowedWithAllApocFileConfigsEnabled() {
-        setFileApocConfigs(true, true, true);
+        // apoc.import.file.enabled=true
+        // apoc.import.file.use_neo4j_config=true
+        // apoc.import.file.allow_read_from_filesystem=true
+        setImportFileApocConfigs(true, true, true);
 
         // only `../../../etc/passwd` throw the error, other urls just don't find the file,
         // i.e.: `file:/../../../etc/passwd`, `file://../../../etc/passwd` and `file:///../../../etc/passwd`
@@ -181,10 +233,16 @@ public class ImportAndLoadCoreSecurityTest {
 
     @Test
     public void testReadSensitiveFileWorksWithApocUseNeo4jConfigDisabled() {
-        setFileApocConfigs(true, false, true);
+        // all checks with `apoc.import.file.use_neo4j_config=false`
+
+        // apoc.import.file.enabled=true
+        // apoc.import.file.allow_read_from_filesystem=true
+        setImportFileApocConfigs(true, false, true);
         shouldRead();
 
-        setFileApocConfigs(true, false, false);
+        // apoc.import.file.enabled=false
+        // apoc.import.file.allow_read_from_filesystem=false
+        setImportFileApocConfigs(true, false, false);
         shouldRead();
     }
 
@@ -236,8 +294,8 @@ public class ImportAndLoadCoreSecurityTest {
                     Map.of("fileName", fileName),
                     Result::resultAsString);
         } catch (Exception e) {
-            if (ALLOWED_EXCEPTIONS.containsKey(exportMethod)) {
-                assertEquals(ALLOWED_EXCEPTIONS.get(exportMethod), ExceptionUtils.getRootCause(e).getClass());
+            if (ALLOWED_EXCEPTIONS.containsKey(importMethod)) {
+                assertEquals(ALLOWED_EXCEPTIONS.get(importMethod), ExceptionUtils.getRootCause(e).getClass());
             }
         }
     }
