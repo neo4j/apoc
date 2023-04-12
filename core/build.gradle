@@ -44,17 +44,6 @@ dependencies {
     apt project(':processor')
     apt group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
 
-    def withoutServers = {
-        exclude group: 'org.eclipse.jetty'
-        exclude group: 'org.eclipse.jetty.aggregate'
-        exclude group: 'org.apache.hive', module: 'hive-service'
-    }
-
-    def withoutJacksons = {
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-    }
-
     // These will be dependencies packaged with the .jar
     implementation project(":common")
     implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1'

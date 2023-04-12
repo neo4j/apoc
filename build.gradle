@@ -126,7 +126,10 @@ subprojects {
 
 }
 
+apply from: "licenses-3rdparties.gradle"
+
 ext {
+    publicDir =  "${project.rootDir}"
     neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.8.0"
     testContainersVersion = '1.17.6'
 }
