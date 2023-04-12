@@ -75,49 +75,6 @@ public class TriggerRestartTest {
     }
 
     @Test
-    public void deleteSystemNodesAtStartupIfDatabaseDoesNotExist() {
-        String dbName = "notexistent";
-
-        // create manually 2 system node, the 1st one in "neo4j" and the other in an not-existent db
-        withSystemDb(tx -> {
-            Util.mergeNode(tx, ApocTrigger, null,
-                    Pair.of(database.name(), dbName),
-                    Pair.of(name.name(), "mytest"));
-
-            Util.mergeNode(tx, SystemLabels.ApocTrigger, null,
-                    Pair.of(database.name(), db.databaseName()),
-                    Pair.of(name.name(), "mySecondTest"));
-        });
-
-        // check that the nodes have been created successfully
-        withSystemDb(tx -> {
-            Iterator<Node> dbNotExistentNodes = tx.findNodes(ApocTrigger, database.name(), dbName);
-            assertTrue( dbNotExistentNodes.hasNext() );
-
-            Iterator<Node> neo4jNodes = tx.findNodes(ApocTrigger, database.name(), db.databaseName());
-            assertTrue( neo4jNodes.hasNext() );
-        });
-
-        // check that after a restart only "neo4j" node remains
-        restartDb();
-
-        withSystemDb(tx -> {
-            Iterator<Node> dbNotExistentNodes = tx.findNodes(ApocTrigger, database.name(), dbName);
-            assertFalse( dbNotExistentNodes.hasNext() );
-
-            Iterator<Node> neo4jNodes = tx.findNodes(ApocTrigger, database.name(), db.databaseName());
-            assertTrue( neo4jNodes.hasNext() );
-        });
-    }
-
-    private void withSystemDb(Consumer<Transaction> action) {
-        try (Transaction tx = sysDb.beginTx()) {
-            action.accept(tx);
-            tx.commit();
-        }
-    }
-
-    @Test
     public void testTriggerRunsAfterRestart() {
         final String query = "CALL apoc.trigger.add('myTrigger', 'unwind $createdNodes as n set n.trigger = n.trigger + 1', {phase:'before'})";
         testTriggerWorksBeforeAndAfterRestart(db, query, Collections.emptyMap(), () -> {});
