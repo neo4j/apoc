@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.neo4j.graphdb.schema.ConstraintType;
 
 import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_LABEL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_REL;
@@ -34,6 +35,7 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.simpleKeyValue;
 abstract class AbstractCypherFormatter implements CypherFormatter {
 
 	private static final String STATEMENT_CONSTRAINTS = "CREATE CONSTRAINT %s%s FOR (node:%s) REQUIRE (%s) %s;";
+	private static final String STATEMENT_CONSTRAINTS_REL = "CREATE CONSTRAINT %s%s FOR ()-[rel:%s]-() REQUIRE (%s) %s;";
 	private static final String STATEMENT_DROP_CONSTRAINTS = "DROP CONSTRAINT %s;";
 
 	private static final String STATEMENT_NODE_FULLTEXT_IDX = "CREATE FULLTEXT INDEX %s FOR (n:%s) ON EACH [%s];";
@@ -85,10 +87,44 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 	}
 
 	@Override
-	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, boolean ifNotExists) {
-		String keysString = getPropertiesQuoted(keys, "node.");
+	public String statementForCreateConstraint(String name, String label, Iterable<String> keys, ConstraintType type, boolean ifNotExists) {
+		String keysString = "";
+		String typeString = "";
+		String statement = "";
+		switch ( type ) {
+		case UNIQUENESS -> {
+			keysString = "node.";
+			typeString = "IS UNIQUE";
+			statement = STATEMENT_CONSTRAINTS;
+		}
+		case NODE_KEY -> {
+			keysString = "node.";
+			typeString = "IS NODE KEY";
+			statement = STATEMENT_CONSTRAINTS;
+		}
+		case NODE_PROPERTY_EXISTENCE -> {
+			keysString = "node.";
+			typeString = "IS NOT NULL";
+			statement = STATEMENT_CONSTRAINTS;
+		}
+		case RELATIONSHIP_UNIQUENESS -> {
+			keysString = "rel.";
+			typeString = "IS UNIQUE";
+			statement = STATEMENT_CONSTRAINTS_REL;
+		}
+		case RELATIONSHIP_KEY -> {
+			keysString = "rel.";
+			typeString = "IS NODE KEY";
+			statement = STATEMENT_CONSTRAINTS_REL;
+		}
+		case RELATIONSHIP_PROPERTY_EXISTENCE -> {
+			keysString = "rel.";
+			typeString = "IS NOT NULL";
+			statement = STATEMENT_CONSTRAINTS_REL;
+		}
+		}
 
-		return String.format(STATEMENT_CONSTRAINTS, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), keysString, Iterables.count(keys) > 1 ? "IS NODE KEY" : "IS UNIQUE");
+		return String.format(statement, Util.quote(name), getIfNotExists(ifNotExists), Util.quote(label), getPropertiesQuoted(keys, keysString), typeString);
 	}
 
 	@Override

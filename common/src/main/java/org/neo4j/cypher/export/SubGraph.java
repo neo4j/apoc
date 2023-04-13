@@ -25,6 +25,8 @@ public interface SubGraph
 
     Iterable<IndexDefinition> getIndexes();
 
+    Iterable<ConstraintDefinition> getConstraints();
+
     Iterable<ConstraintDefinition> getConstraints(Label label);
 
     Iterable<ConstraintDefinition> getConstraints(RelationshipType type);

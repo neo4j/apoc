@@ -162,6 +162,11 @@ public class CypherResultSubGraph implements SubGraph {
     }
 
     @Override
+    public Iterable<ConstraintDefinition> getConstraints() {
+        return constraints;
+    }
+
+    @Override
     public Iterable<ConstraintDefinition> getConstraints(Label label) {
         return constraints.stream()
                 .filter(c -> Util.isNodeCategory(c.getConstraintType()))

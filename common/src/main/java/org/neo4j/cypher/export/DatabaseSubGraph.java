@@ -1,5 +1,7 @@
 package org.neo4j.cypher.export;
 
+import java.util.Comparator;
+import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -38,6 +40,13 @@ public class DatabaseSubGraph implements SubGraph
     public Iterable<IndexDefinition> getIndexes()
     {
         return transaction.schema().getIndexes();
+    }
+
+    @Override
+    public Iterable<ConstraintDefinition> getConstraints()
+    {
+        Comparator<ConstraintDefinition> comp = Comparator.comparing(ConstraintDefinition::getName);
+        return StreamSupport.stream( transaction.schema().getConstraints().spliterator(), false ).sorted(comp).toList();
     }
 
     @Override
