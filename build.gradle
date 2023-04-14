@@ -127,6 +127,7 @@ subprojects {
 }
 
 apply from: "licenses-3rdparties.gradle"
+apply from: "licenses-source-header.gradle"
 
 ext {
     publicDir =  "${project.rootDir}"
