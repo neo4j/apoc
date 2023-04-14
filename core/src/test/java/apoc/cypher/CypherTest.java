@@ -37,6 +37,7 @@ import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
+import static apoc.util.TransactionTestUtil.checkTransactionTime;
 import static apoc.util.TransactionTestUtil.lastTransactionChecks;
 import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
@@ -171,6 +172,22 @@ public class CypherTest {
     public void testRunTimeboxedWithTermination() {
         final String query = "CALL apoc.cypher.runTimeboxed('unwind range (0, 10) as id CALL apoc.util.sleep(2000) return 0', null, 20000)";
         checkTerminationGuard(db, query);
+    }
+
+    @Test
+    public void testRunTimeboxedWithTerminationInnerTransaction1() {
+        // this query throws an error because of ` AS 'a'`
+        final String innerQuery = "CALL apoc.util.sleep(1000) RETURN 1 AS 'a'";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout)";
+
+        long timeBefore = System.currentTimeMillis();
+
+        // check that the query returns nothing and terminate before `timeout`
+        long timeout = 5L;
+        db.executeTransactionally(query,
+                Map.of("innerQuery", innerQuery, "timeout", timeout),
+                Result::resultAsString);
+        checkTransactionTime(timeout, timeBefore);
     }
 
     @Test
