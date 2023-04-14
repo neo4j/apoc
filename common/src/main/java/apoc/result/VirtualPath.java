@@ -1,5 +1,6 @@
 package apoc.result;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
@@ -8,6 +9,7 @@ import org.neo4j.graphdb.traversal.Paths;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -127,17 +129,19 @@ public class VirtualPath implements Path {
     }
 
     private void requireConnected(Relationship relationship) {
-        Node previousEndNode;
-        Relationship previousRelationship = lastRelationship();
-        if (previousRelationship != null) {
-            previousEndNode = previousRelationship.getEndNode();
-        } else {
-            previousEndNode = endNode();
-        }
-        if (!relationship.getStartNode().equals(previousEndNode)
-                && !relationship.getEndNode().equals(previousEndNode)) {
+        final List<Node> previousNodes = getPreviousNodes();
+        boolean isRelConnectedToPrevious = CollectionUtils.containsAny( previousNodes, relationship.getNodes() );
+        if (!isRelConnectedToPrevious) {
             throw new IllegalArgumentException("Relationship is not part of current path.");
         }
+    }
+
+    private List<Node> getPreviousNodes() {
+        Relationship previousRelationship = lastRelationship();
+        if (previousRelationship != null) {
+            return Arrays.asList(previousRelationship.getNodes());
+        }
+        return List.of(endNode());
     }
 
     public static final class Builder {
