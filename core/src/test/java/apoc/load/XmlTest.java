@@ -45,7 +45,8 @@ public class XmlTest {
     public static final String FILE_SHORTENED = "src/test/resources/xml/humboldt_soemmering01_1791.TEI-P5-shortened.xml";
     
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    public DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting(GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString("127.0.0.0/8")));
 
     @Before
     public void setUp() {
@@ -202,6 +203,18 @@ public class XmlTest {
                     Object value = Iterables.single(r.values());
                     assertEquals(XmlTestUtils.XML_XPATH_AS_NESTED_MAP, value);
                 });
+    }
+
+    @Test
+    public void testLoadXmlWithBlockedIP () {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class,
+                () -> testCall(db,
+                        "CALL apoc.load.xml('http://127.0.0.0/fake.xml') yield value as result",
+                        map(),
+                        (r) -> {}
+                )
+        );
+        TestCase.assertTrue(e.getMessage().contains("access to /127.0.0.0 is blocked via the configuration property internal.dbms.cypher_ip_blocklist"));
     }
 
     @Test
