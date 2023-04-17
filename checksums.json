@@ -53,5 +53,10 @@
         "sha1": "c5c9a3f13a2059675a3946838ec2f4148f20b9f2",
         "sha256": "87a22927b06e83f7acac2c7f18b384528998f2aed3b6293d5f562005f92fde73",
         "md5": "e577a30229bf148897e09b9d47357ce7"
+    },
+    "5.7.0": {
+        "sha1": "2cb8bd67c9fe210597dcddeaa0fa019982e97b97",
+        "sha256": "233c8bb4e41f98aa06f96c42304da187ae1db271cc95793478e8d17cc0e0fe37",
+        "md5": "a0c78633113e38adc69db20a16cd25c1"
     }
 }
