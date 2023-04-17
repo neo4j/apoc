@@ -33,20 +33,34 @@ public class SensitivePathGenerator {
     /**
      * It will return an instance of Pair<String, String> where first is the relative path
      * and other the absolute path of "etc/passwd"
-     * @param db
      * @return
      */
-    public static Pair<String, String> etcPasswd(GraphDatabaseAPI db) {
-        return base(db, "/etc/passwd");
+    public static Pair<String, String> etcPasswd() {
+        return base("/etc/passwd");
     }
 
-    private static Pair<String, String> base(GraphDatabaseAPI db, String path) {
-        final Path dbPath = db.databaseLayout().databaseDirectory();
-        final String relativeFileName = IntStream.range(0, dbPath.getNameCount())
-                .mapToObj(i -> "..")
-                .collect(Collectors.joining("/")) + path;
-        final String absoluteFileName = Paths.get(relativeFileName)
-                .toAbsolutePath().normalize().toString();
-        return Pair.of(relativeFileName, absoluteFileName);
+    private static Pair<String, String> base(String path) {
+        try {
+            System.out.println("Paths.get(\"..\", System.getProperty(\"coreDir\")).toFile().getCanonicalPath() = " + Paths.get("..", System.getProperty("coreDir")).toFile().getCanonicalPath());
+            Path path1 = Paths.get("").toAbsolutePath();
+            System.out.println("path1 = " + path1);
+            final String relativeFileName1 = IntStream.range(0, path1.getNameCount())
+//            final String relativeFileName1 = IntStream.range(0, Paths.get("..", System.getProperty("coreDir")).toAbsolutePath().getNameCount())
+                    .mapToObj(i -> "..")
+                    .collect(Collectors.joining("/")) + path;
+            final String absoluteFileName1 = Paths.get(relativeFileName1)
+                    .toAbsolutePath().normalize().toString();
+
+
+//            final Path dbPath = db.databaseLayout().databaseDirectory();
+//            final String relativeFileName = IntStream.range(0, dbPath.getNameCount())
+//                    .mapToObj(i -> "..")
+//                    .collect(Collectors.joining("/")) + path;
+//            final String absoluteFileName = Paths.get(relativeFileName)
+//                    .toAbsolutePath().normalize().toString();
+            return Pair.of(relativeFileName1, absoluteFileName1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
