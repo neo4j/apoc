@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
@@ -353,6 +354,30 @@ public class ExportCypherTest {
         TestUtil.testCall(db, "CALL apoc.export.cypher.schema($file,$exportConfig)", map("file", fileName, "exportConfig", exportConfig), (r) -> {
         });
         assertEquals(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL, readFile(fileName));
+    }
+
+    @Test
+    public void testExportSchemaCypherWithStreamTrue() {
+        Consumer<Map<String, Object>> resultAssertion = (r) -> {
+            Object actual = r.get("cypherStatements");
+            assertEquals(EXPECTED_ONLY_SCHEMA_CYPHER_SHELL, actual);
+        };
+
+        // with {stream: true}
+        TestUtil.testCall(db, "CALL apoc.export.cypher.schema(null, {stream: true})",
+                resultAssertion);
+
+        // with {streamStatements: true}
+        TestUtil.testCall(db, "CALL apoc.export.cypher.schema(null, {streamStatements: true})",
+                resultAssertion);
+
+        // assert `schemaStatements` of `apoc.export.cypher.all`
+        // is equal to `cypher.schema` output plus the `CREATE CONSTRAINT UNIQUE_IMPORT_NAME ...` statement
+        TestUtil.testCall(db, "CALL apoc.export.cypher.all(null, { separateFiles: true, stream: true})",
+                r -> {
+                    Object actual = r.get("schemaStatements");
+                    assertEquals(convertToCypherShellFormat(EXPECTED_SCHEMA), actual);
+                });
     }
 
     @Test
@@ -1542,7 +1567,7 @@ public class ExportCypherTest {
                 .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
                 .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
 
-        private static String convertToCypherShellFormat(String input) {
+        public static String convertToCypherShellFormat(String input) {
             return input
                 .replace( NEO4J_SHELL.begin(), CYPHER_SHELL.begin() )
                 .replace( NEO4J_SHELL.commit(), CYPHER_SHELL.commit() )
