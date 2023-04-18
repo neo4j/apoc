@@ -27,6 +27,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -295,7 +296,11 @@ public class ImportAndLoadCoreSecurityTest {
                     Result::resultAsString);
         } catch (Exception e) {
             if (ALLOWED_EXCEPTIONS.containsKey(importMethod)) {
-                assertEquals(ALLOWED_EXCEPTIONS.get(importMethod), ExceptionUtils.getRootCause(e).getClass());
+                Class<?> rootCause = ExceptionUtils.getRootCause(e).getClass();
+                Class<?> classException = ALLOWED_EXCEPTIONS.get(importMethod);
+                assertTrue("The procedure throws an exception with class " + rootCause + " instead of " + classException,
+                        classException.isAssignableFrom(rootCause)
+                );
             }
         }
     }

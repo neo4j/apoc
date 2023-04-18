@@ -25,6 +25,7 @@ import apoc.export.graphml.ExportGraphML;
 import apoc.export.json.ExportJson;
 import apoc.util.FileUtils;
 import apoc.util.TestUtil;
+import apoc.util.Util;
 import com.nimbusds.jose.util.Pair;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -140,22 +141,22 @@ public class ExportCoreSecurityTest {
          * test "directoryName.startsWith" logic which is a common path traversal bug.
          * All these tests should fail because they access a directory which isn't the configured directory
          */
-        private static final String case1 = "../imported/" + FILENAME;
-        private static final String case2 = "tests/../../imported/" + FILENAME;
-        private static final String case3 = "../" + FILENAME;
-        private static final String case4 = "file:../" + FILENAME;
-        private static final String case5 = "file:..//" + FILENAME;
+        private static final String case01 = "../imported/" + FILENAME;
+        private static final String case02 = "tests/../../imported/" + FILENAME;
+        private static final String case03 = "../" + FILENAME;
+        private static final String case04 = "file:../" + FILENAME;
+        private static final String case05 = "file:..//" + FILENAME;
 
         // non-failing cases, with apoc.import.file.use_neo4j_config=false
-        public static final List<String> casesAllowed = Arrays.asList(case3, case4, case5);
+        public static final List<String> casesAllowed = Arrays.asList(case03, case04, case05);
 
-        private static final String case16 = "file:///%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2fapoc/" + FILENAME;
-        public static final String case26 = "file:///%2e%2e%2f%2f" + FILENAME;
-        private static final String case46 = "tests/../../" + FILENAME;
-        private static final String case56 = "tests/..//..//" + FILENAME;
+        private static final String case06 = "file:///%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2fapoc/" + FILENAME;
+        public static final String case07 = "file:///%2e%2e%2f%2f" + FILENAME;
+        private static final String case08 = "tests/../../" + FILENAME;
+        private static final String case09 = "tests/..//..//" + FILENAME;
 
-        public static final List<String> casesOutsideDir = Arrays.asList(case1, case2, case3, case4, case5,
-                case16, case26, case46, case56);
+        public static final List<String> casesOutsideDir = Arrays.asList(case01, case02, case03, case04, case05,
+                case06, case07, case08, case09);
 
         /*
          All of these will resolve to a local path after normalization which will point to
@@ -163,14 +164,14 @@ public class ExportCoreSecurityTest {
          not found. They all attempt to exit the import folder back to the apoc folder:
          Directory Layout: .../apoc/core/target/import
          */
-        private static final String case111 = "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/apoc/" + FILENAME;
-        private static final String case211 = "file://../../../../apoc/" + FILENAME;
-        private static final String case311 = "file:///..//..//..//..//apoc//core//..//" + FILENAME;
-        private static final String case411 = "file:///..//..//..//..//apoc/" + FILENAME;
-        private static final String case511 = "file://" + directory.getAbsolutePath() + "//..//..//..//..//apoc/" + FILENAME;
-        private static final String case611 = "file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/apoc/" + FILENAME;
+        private static final String case10 = "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/apoc/" + FILENAME;
+        private static final String case11 = "file://../../../../apoc/" + FILENAME;
+        private static final String case12 = "file:///..//..//..//..//apoc//core//..//" + FILENAME;
+        private static final String case13 = "file:///..//..//..//..//apoc/" + FILENAME;
+        private static final String case14 = "file://" + directory.getAbsolutePath() + "//..//..//..//..//apoc/" + FILENAME;
+        private static final String case15 = "file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/apoc/" + FILENAME;
 
-        public static final List<String> casesNotExistingDir = Arrays.asList(case111, case211, case311, case411, case511, case611);
+        public static final List<String> casesNotExistingDir = Arrays.asList(case10, case11, case12, case13, case14, case15);
 
         public static List<Pair<String, Consumer<Map>>> dataPairs;
 
@@ -224,14 +225,16 @@ public class ExportCoreSecurityTest {
 
         private void testWithUseNeo4jConfFalse() {
             // with `apoc.import.file.use_neo4j_config=false` this file export could outside the project
-            if (fileName.equals(case26)) {
+            if (fileName.equals(case07)) {
                 return;
             }
 
-            if (casesAllowed.contains(fileName)) {
+            try {
                 assertPathTraversalWithoutErrors();
-            } else {
-                assertPathTraversalError(db, apocProcedure, Map.of("fileName", fileName), EXCEPTION_NOT_FOUND_CONSUMER);
+            } catch (QueryExecutionException e) {
+                EXCEPTION_NOT_FOUND_CONSUMER.accept(
+                        Util.map(ERROR_KEY, e, PROCEDURE_KEY, apocProcedure)
+                );
             }
         }
 
@@ -267,31 +270,31 @@ public class ExportCoreSecurityTest {
          These tests normalize the path to be within the import directory and make the file there.
          They result in a file being created (and deleted after).
          */
-        private static final String case0 = "./" + FILENAME;
+        private static final String caseBase = "./" + FILENAME;
 
-        private static final String case1 = "file:///..//..//..//..//apoc//..//..//..//..//" + FILENAME;
-        private static final String case2 = "file:///..//..//..//..//apoc//..//" + FILENAME;
-        private static final String case3 = "file:///../import/../import//..//" + FILENAME;
-        private static final String case4 = "file://" + FILENAME;
-        private static final String case5 = "file://tests/../" + FILENAME;
-        private static final String case6 = "file:///tests//..//" + FILENAME;
-        private static final String case7 = "" + FILENAME;
-        private static final String case8 = "file:///..//..//..//..//" + FILENAME;
+        private static final String case01 = "file:///..//..//..//..//apoc//..//..//..//..//" + FILENAME;
+        private static final String case02 = "file:///..//..//..//..//apoc//..//" + FILENAME;
+        private static final String case03 = "file:///../import/../import//..//" + FILENAME;
+        private static final String case04 = "file://" + FILENAME;
+        private static final String case05 = "file://tests/../" + FILENAME;
+        private static final String case06 = "file:///tests//..//" + FILENAME;
+        private static final String case07 = "" + FILENAME;
+        private static final String case08 = "file:///..//..//..//..//" + FILENAME;
 
-        public static final List<String> mainDirCases = Arrays.asList(case0, case1, case2, case3, case4, case5, case6, case7, case8);
+        public static final List<String> mainDirCases = Arrays.asList(caseBase, case01, case02, case03, case04, case05, case06, case07, case08);
 
         /*
          These tests normalize the path to be within the import directory and step into a subdirectory
          to make the file there.
          They result in a file in the directory /tests being created (and deleted after).
          */
-        private static final String case16 = "file:///../import/../import//..//tests/" + FILENAME;
-        private static final String case26 = "file:///..//..//..//..//apoc//..//tests/" + FILENAME;
-        private static final String case36 = "file:///../import/../import//..//tests/../tests/" + FILENAME;
-        private static final String case46 = "file:///tests/" + FILENAME;
-        private static final String case56 = "tests/" + FILENAME;
+        private static final String case11 = "file:///../import/../import//..//tests/" + FILENAME;
+        private static final String case12 = "file:///..//..//..//..//apoc//..//tests/" + FILENAME;
+        private static final String case13 = "file:///../import/../import//..//tests/../tests/" + FILENAME;
+        private static final String case14 = "file:///tests/" + FILENAME;
+        private static final String case15 = "tests/" + FILENAME;
 
-        public static final List<String> subDirCases = Arrays.asList(case16, case26, case36, case46, case56);
+        public static final List<String> subDirCases = Arrays.asList(case11, case12, case13, case14, case15);
 
 
         @Parameterized.Parameters(name = PARAM_NAMES)

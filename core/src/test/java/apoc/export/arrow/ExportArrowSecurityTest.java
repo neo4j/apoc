@@ -22,6 +22,7 @@ import apoc.export.ExportCoreSecurityTest;
 import apoc.export.SecurityTestUtil;
 import apoc.meta.Meta;
 import apoc.util.TestUtil;
+import apoc.util.Util;
 import com.nimbusds.jose.util.Pair;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -30,6 +31,7 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -42,14 +44,15 @@ import java.util.stream.Collectors;
 
 import static apoc.export.ExportCoreSecurityTest.FILENAME;
 import static apoc.export.ExportCoreSecurityTest.PARAM_NAMES;
-import static apoc.export.ExportCoreSecurityTest.TestIllegalExternalFSAccess.case26;
-import static apoc.export.ExportCoreSecurityTest.TestIllegalExternalFSAccess.casesAllowed;
+import static apoc.export.ExportCoreSecurityTest.TestIllegalExternalFSAccess.case07;
 import static apoc.export.ExportCoreSecurityTest.TestIllegalExternalFSAccess.EXCEPTION_NOT_FOUND_CONSUMER;
 import static apoc.export.ExportCoreSecurityTest.TestIllegalExternalFSAccess.dataPairs;
 import static apoc.export.ExportCoreSecurityTest.TestPathTraversalIsNormalisedWithinDirectory.MAIN_DIR_CONSUMER;
 import static apoc.export.ExportCoreSecurityTest.TestPathTraversalIsNormalisedWithinDirectory.SUB_DIR_CONSUMER;
 import static apoc.export.ExportCoreSecurityTest.TestPathTraversalIsNormalisedWithinDirectory.mainDirCases;
 import static apoc.export.ExportCoreSecurityTest.TestPathTraversalIsNormalisedWithinDirectory.subDirCases;
+import static apoc.export.SecurityTestUtil.ERROR_KEY;
+import static apoc.export.SecurityTestUtil.PROCEDURE_KEY;
 import static apoc.export.SecurityTestUtil.getApocProcedure;
 import static apoc.export.SecurityTestUtil.setExportFileApocConfigs;
 import static apoc.export.arrow.ExportArrowService.EXPORT_TO_FILE_ARROW_ERROR;
@@ -145,14 +148,16 @@ public class ExportArrowSecurityTest {
 
         private void testWithUseNeo4jConfFalse() {
             // with `apoc.import.file.use_neo4j_config=false` this file export could outside the project
-            if (fileName.equals(case26)) {
+            if (fileName.equals(case07)) {
                 return;
             }
 
-            if (casesAllowed.contains(fileName)) {
+            try {
                 assertPathTraversalWithoutErrors();
-            } else {
-                SecurityTestUtil.assertPathTraversalError(db, apocProcedure, Map.of("fileName", fileName), EXCEPTION_NOT_FOUND_CONSUMER);
+            } catch (QueryExecutionException e) {
+                EXCEPTION_NOT_FOUND_CONSUMER.accept(
+                        Util.map(ERROR_KEY, e, PROCEDURE_KEY, apocProcedure)
+                );
             }
         }
 

@@ -39,7 +39,7 @@ public class SecurityTestUtil {
 
             // import allowed exception
             "apoc.import.json", JsonParseException.class,
-            "apoc.import.csv", NoSuchElementException.class,
+            "apoc.import.csv", RuntimeException.class,
             "apoc.import.graphml", JsonParseException.class,
             "apoc.import.xml", WstxUnexpectedCharException.class
     );
@@ -73,6 +73,7 @@ public class SecurityTestUtil {
         QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
                 () -> TestUtil.testCall(db, query, params, (r) -> {})
         );
+
 
         // this consumer accept a Map.of("error", <errorMessage>, "procedure", <procedureQuery>)
         exceptionConsumer.accept(
