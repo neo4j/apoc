@@ -98,7 +98,7 @@ public class ImportJsonEnterpriseFeaturesTest {
     }
 
     @Test
-    public void shouldWithSingularNodeKeyAsConstraint() {
+    public void shouldWorkWithSingularNodeKeyAsConstraint() {
         // Add unique constraint (test if single node key works)
         session.writeTransaction(tx -> {
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId) IS NODE KEY");

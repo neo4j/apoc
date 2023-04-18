@@ -165,7 +165,8 @@ public class JsonImporter implements Closeable {
 
     /**
      * The constraint for the import name should be unique to avoid duplicated imports.
-     * Node keys of size one are effectively a uniqueness constraint
+     * Node keys are a combination of a uniqueness constraint and en existence constraint, so can also be used.
+     * The constraint should not be composite.
      */
     private void checkUniquenessConstraints(List<String> labels) {
         if (labels.isEmpty()) {
