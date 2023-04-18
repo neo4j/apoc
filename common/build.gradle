@@ -3,7 +3,6 @@ import org.gradle.api.internal.artifacts.DefaultExcludeRule
 plugins {
     id 'java'
     id 'maven-publish'
-    id 'antlr'
     id "com.diffplug.spotless" version "6.7.2"
 }
 
@@ -25,19 +24,9 @@ javadoc {
     options.addStringOption('Xdoclint:none', '-quiet')
 }
 
-generateGrammarSource {
-    arguments += ["-package", "apoc.custom"]
-}
-
 dependencies {
     apt project(':processor')
     apt group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
-
-    antlr "org.antlr:antlr4:4.7.2", {
-        exclude group: 'org.glassfish'
-        exclude group: 'com.ibm.icu'
-        exclude group: 'org.abego.treelayout'
-    }
 
     def withoutServers = {
         exclude group: 'org.eclipse.jetty'

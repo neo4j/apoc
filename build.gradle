@@ -2,7 +2,6 @@ plugins {
     id 'java-library'
     id 'com.github.johnrengelman.shadow' version '7.1.0'  apply false
     id 'maven-publish'
-    id 'antlr'
     id "com.github.hierynomus.license-report" version"0.16.1"
 }
 
