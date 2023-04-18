@@ -26,26 +26,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static apoc.ApocConfig.EXPORT_TO_FILE_ERROR;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_DATA;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_FALSE;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_READ_NODE_EDGE;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TINKER;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_EMPTY;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_NO_DATA_KEY;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_PATH;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_PATH_CAMEL_CASE;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_PATH_CAPTION;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_PATH_CAPTION_TINKER;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_PATH_WRONG_CAPTION;
-import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_TYPES_WITHOUT_CHAR_DATA_KEYS;
-import static apoc.export.graphml.ExportGraphMLTestUtil.assertXMLEquals;
-import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
+import static apoc.export.graphml.ExportGraphMLTestUtil.*;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.MapUtil.map;
@@ -604,6 +591,93 @@ public class ExportGraphMLTest {
                     assertTrue("Should get time greater than 0",((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH);
+    }
+
+    @Test
+    public void testAddRelNodesWhenReturnOnlyRels() {
+        File output = new File(directory, "output.graphml");
+
+        db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
+
+        final String exportQuery = "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN rel', $file, {})";
+
+        String expectedWithoutNodes = String.format(HEADER + EDGES_KEYS_QUERY + GRAPH + EDGES_QUERY + FOOTER);
+
+        commonDataAndQueryAssertions(output, exportQuery, Collections.emptyMap(),
+                expectedWithoutNodes, 0L, 1L, 1L);
+
+        // check that apoc.export.cypher.data returns consistent results
+        final String exportData = """
+                MATCH (start:Start)-[rel:REL]->(end:End)
+                CALL apoc.export.graphml.data([], [rel], $file, {})
+                YIELD nodes, relationships, properties RETURN *""";
+
+        commonDataAndQueryAssertions(output, exportData, Collections.emptyMap(),
+                expectedWithoutNodes, 0L, 1L, 1L);
+
+        // check that `nodesOfRelationships: true` doesn't change the result
+        Map<String, Object> config = Map.of("nodesOfRelationships", true);
+
+        commonDataAndQueryAssertions(output, exportQuery, config,
+                expectedWithoutNodes, 0L, 1L, 1L);
+
+        commonDataAndQueryAssertions(output, exportData, config,
+                expectedWithoutNodes, 0L, 1L, 1L);
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testAddEndNodesOfRelationshipsWhenReturnOnlyStartNodeAndRel() {
+        File output = new File(directory, "output.graphml");
+
+        db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
+
+        String expectedWithoutEndNode = String.format(HEADER +
+                START_NODE_KEYS_QUERY + LABEL_KEY_QUERY + EDGES_KEYS_QUERY +
+                GRAPH +
+                START_NODE_QUERY + EDGES_QUERY +
+                FOOTER);
+
+        String query = "MATCH (start:Start)-[rel:REL]->(end:End) RETURN start, rel";
+        final String exportQuery = "CALL apoc.export.graphml.query($query, $file, $conf)";
+
+        commonDataAndQueryAssertions(output, exportQuery, Map.of("query", query),
+                expectedWithoutEndNode, 1L, 1L, 2L);
+
+        // check that apoc.export.graphml.data returns consistent results
+        final String exportData = """
+                MATCH (start:Start)-[rel:REL]->(end:End)
+                CALL apoc.export.graphml.data([start], [rel], $file, $conf)
+                YIELD nodes, relationships, properties RETURN *""";
+        commonDataAndQueryAssertions(output, exportData, Map.of("query", query),
+                expectedWithoutEndNode, 1L, 1L, 2L);
+
+        // check that with the `nodesOfRelationships` the end node is returned as well
+        Map<String, Object> confWithNodeRels = Map.of("query", query, "nodesOfRelationships", true);
+        commonDataAndQueryAssertions(output, exportQuery, confWithNodeRels,
+                EXPECTED, 2L, 1L, 3L);
+
+        // apoc.export.graphml.data doesn't accept `nodesOfRelationships` config,
+        // so it returns the same result as the above one
+        commonDataAndQueryAssertions(output, exportData, confWithNodeRels,
+                expectedWithoutEndNode, 1L, 1L, 2L);
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    private void commonDataAndQueryAssertions(File output, String query, Map<String, Object> config,
+                                              String expectedOutput, long nodes, long relationships, long properties) {
+        Map<String, Object> params = Util.map("file", output.getAbsolutePath());
+        params.putAll(config);
+
+        TestUtil.testCall(db, query, params,
+                r -> {
+                    assertEquals(nodes, r.get("nodes"));
+                    assertEquals(relationships, r.get("relationships"));
+                    assertEquals(properties, r.get("properties"));
+                });
+        assertXMLEquals(output, expectedOutput);
     }
 
     @Test

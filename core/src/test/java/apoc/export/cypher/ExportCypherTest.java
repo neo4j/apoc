@@ -1,8 +1,6 @@
 package apoc.export.cypher;
 
 import apoc.export.util.ExportConfig;
-import apoc.graph.Graphs;
-import apoc.schema.Schemas;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.MapUtil;
@@ -22,14 +20,12 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
-import static apoc.ApocConfig.apocConfig;
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
+import static apoc.export.graphml.ExportGraphMLTestUtil.assertXMLEquals;
 import static apoc.export.util.ExportFormat.*;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.TestUtil.assertError;
@@ -161,6 +157,94 @@ public class ExportCypherTest {
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")), (r) -> {
                 });
         assertEquals(EXPECTED_NEO4J_SHELL, readFile(fileName));
+    }
+
+    @Test
+    public void testExportQueryOnlyRelCypherForNeo4j() {
+        String fileName = "all.cypher";
+        String query = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN rel";
+        final Map<String, Object> config = withoutOptimization( map("format", "neo4j-shell") );
+
+        String exportQuery = "CALL apoc.export.cypher.query($query, $file, $config)";
+        Map<String, Object> params = Map.of("query", query, "config", config);
+
+        commonDataAndQueryAssertions(fileName, exportQuery, params,
+                EXPECTED_REL_ONLY, 0L, 1L, 1L);
+
+        final String exportData = """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([], [rel], $file, $config)
+                YIELD nodes, relationships, properties RETURN *""";
+        commonDataAndQueryAssertions(fileName, exportData, params,
+                EXPECTED_REL_ONLY, 0L, 1L, 1L);
+
+
+        // check that `nodesOfRelationships: true` doesn't change the result
+        config.put("nodesOfRelationships", true);
+
+        commonDataAndQueryAssertions(fileName, exportQuery, params,
+                EXPECTED_REL_ONLY, 0L, 1L, 1L);
+
+        commonDataAndQueryAssertions(fileName, exportData, params,
+                EXPECTED_REL_ONLY, 0L, 1L, 1L);
+    }
+
+    @Test
+    public void testExportQueryOnlyRelAndStartCypherForNeo4j() {
+        String fileName = "all.cypher";
+        String query = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN start, rel";
+        final Map<String, Object> config = withoutOptimization( map("format", "neo4j-shell") );
+        String exportQuery = "CALL apoc.export.cypher.query($query,$file,$config)";
+
+        String expectedNodes = String.format(EXPECTED_BEGIN_AND_FOO + "COMMIT%n");
+        String expectedWithoutEndNode = expectedNodes + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
+
+        commonDataAndQueryAssertions(fileName, exportQuery,
+                Map.of("query", query, "config", config),
+                expectedWithoutEndNode, 1L, 1L, 3L);
+
+        // check that apoc.export.cypher.data returns consistent results
+        final String exportData = """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([start], [rel], $file, $config)
+                YIELD nodes, relationships, properties RETURN *""";
+        commonDataAndQueryAssertions(fileName, exportData,
+                Map.of("query", query, "config", config),
+                expectedWithoutEndNode, 1L, 1L, 3L);
+
+
+        // check that with the same config as above but with {nodesOfRelationships: true}
+        // the end node is returned as well
+        config.put("nodesOfRelationships", true);
+
+        String expectedNodesWithEndNode = String.format(EXPECTED_BEGIN_AND_FOO +
+                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:42, name:\"bar\", `UNIQUE IMPORT ID`:1});%n" +
+                "COMMIT%n");
+        String expectedWithEndNode = expectedNodesWithEndNode + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
+
+        commonDataAndQueryAssertions(fileName, exportQuery,
+                Map.of("query", query, "config", config),
+                expectedWithEndNode, 2L, 1L, 5L);
+
+        // apoc.export.cypher.data doesn't accept `nodesOfRelationships` config,
+        // so it returns the same result as the above one
+        commonDataAndQueryAssertions(fileName, exportData,
+                Map.of("query", query, "config", config),
+                expectedWithoutEndNode, 1L, 1L, 3L);
+    }
+
+
+    private void commonDataAndQueryAssertions(String fileName, String query, Map<String, Object> config,
+                                              String expectedOutput, long nodes, long relationships, long properties) {
+        Map<String, Object> params = map("file", fileName);
+        params.putAll(config);
+
+        TestUtil.testCall(db, query, params, r -> {
+                    assertEquals(nodes, r.get("nodes"));
+                    assertEquals(relationships, r.get("relationships"));
+                    assertEquals(properties, r.get("properties"));
+                });
+        assertEquals(expectedOutput, readFile(fileName));
     }
 
 
@@ -698,8 +782,6 @@ public class ExportCypherTest {
                 ":begin%n" +
                 "UNWIND [{_id:3, properties:{}}] AS row%n" +
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n" +
-                "UNWIND [{_id:4, properties:{}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode2;%n" +
                 ":commit%n" +
                 ":begin%n" +
                 "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:\"the rel value\"}}] AS row%n" +
@@ -1025,11 +1107,14 @@ public class ExportCypherTest {
     }
 
     public static class ExportCypherResults {
+        static final String EXPECTED_ISOLATED_NODE = "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});\n";
+        static final String EXPECTED_BAR_END_NODE = "CREATE (:Bar {age:42, name:\"bar\"});%n";
+        static final String EXPECTED_BEGIN_AND_FOO = "BEGIN%n" +
+                "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n";
 
-        public static final String EXPECTED_NODES = String.format("BEGIN%n" +
-                "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n" +
-                "CREATE (:Bar {age:42, name:\"bar\"});%n" +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});%n" +
+        static final String EXPECTED_NODES = String.format(EXPECTED_BEGIN_AND_FOO +
+                EXPECTED_BAR_END_NODE +
+                EXPECTED_ISOLATED_NODE +
                 "COMMIT%n");
 
         private static final String EXPECTED_NODES_MERGE = String.format("BEGIN%n" +
@@ -1044,17 +1129,30 @@ public class ExportCypherTest {
         public static final String EXPECTED_NODES_EMPTY = String.format("BEGIN%n" +
                 "COMMIT%n");
 
-        private static final String EXPECTED_CONSTRAINTS_AND_AWAIT =
-                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
+        static final String EXPECTED_REL_ONLY = "BEGIN\n" +
+                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:1}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);\n" +
+                "COMMIT\n";
+
+
+        private static final String EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT = "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
                 "COMMIT%n" +
                 "SCHEMA AWAIT%n";
 
+        private static final String EXPECTED_CONSTRAINTS_AND_AWAIT =
+                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
+                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
+                EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT;
+
+        private static final String EXPECTED_IDX_FOO = "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n";
+
         public static final String EXPECTED_SCHEMA = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
+                EXPECTED_IDX_FOO +
                 EXPECTED_CONSTRAINTS_AND_AWAIT);
+
+        static final String EXPECTED_SCHEMA_ONLY_START = String.format("BEGIN%n" +
+                EXPECTED_IDX_FOO +
+                EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT);
 
         static final String EXPECTED_SCHEMA_WITH_NAMES = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
