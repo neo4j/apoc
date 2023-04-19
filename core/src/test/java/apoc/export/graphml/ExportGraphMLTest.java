@@ -27,6 +27,7 @@ import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -640,27 +641,29 @@ public class ExportGraphMLTest {
                 FOOTER);
 
         String query = "MATCH (start:Start)-[rel:REL]->(end:End) RETURN start, rel";
-        final String exportQuery = "CALL apoc.export.graphml.query($query, $file, $conf)";
+        final String exportQuery = "CALL apoc.export.graphml.query($query, $file, $config)";
 
-        commonDataAndQueryAssertions(output, exportQuery, Map.of("query", query),
+        HashMap<Object, Object> config = new HashMap<>();
+        Map<String, Object> params = Map.of("query", query, "config", config);
+        commonDataAndQueryAssertions(output, exportQuery, params,
                 expectedWithoutEndNode, 1L, 1L, 2L);
 
         // check that apoc.export.graphml.data returns consistent results
         final String exportData = """
                 MATCH (start:Start)-[rel:REL]->(end:End)
-                CALL apoc.export.graphml.data([start], [rel], $file, $conf)
+                CALL apoc.export.graphml.data([start], [rel], $file, $config)
                 YIELD nodes, relationships, properties RETURN *""";
-        commonDataAndQueryAssertions(output, exportData, Map.of("query", query),
+        commonDataAndQueryAssertions(output, exportData, params,
                 expectedWithoutEndNode, 1L, 1L, 2L);
 
         // check that with the `nodesOfRelationships` the end node is returned as well
-        Map<String, Object> confWithNodeRels = Map.of("query", query, "nodesOfRelationships", true);
-        commonDataAndQueryAssertions(output, exportQuery, confWithNodeRels,
+        config.put("nodesOfRelationships", true);
+        commonDataAndQueryAssertions(output, exportQuery, params,
                 EXPECTED, 2L, 1L, 3L);
 
         // apoc.export.graphml.data doesn't accept `nodesOfRelationships` config,
         // so it returns the same result as the above one
-        commonDataAndQueryAssertions(output, exportData, confWithNodeRels,
+        commonDataAndQueryAssertions(output, exportData, params,
                 expectedWithoutEndNode, 1L, 1L, 2L);
 
         db.executeTransactionally("MATCH (n) DETACH DELETE n");

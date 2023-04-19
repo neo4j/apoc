@@ -199,8 +199,8 @@ public class ExportCypherTest {
         String expectedNodes = String.format(EXPECTED_BEGIN_AND_FOO + "COMMIT%n");
         String expectedWithoutEndNode = expectedNodes + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
 
-        commonDataAndQueryAssertions(fileName, exportQuery,
-                Map.of("query", query, "config", config),
+        Map<String, Object> params = Map.of("query", query, "config", config);
+        commonDataAndQueryAssertions(fileName, exportQuery, params,
                 expectedWithoutEndNode, 1L, 1L, 3L);
 
         // check that apoc.export.cypher.data returns consistent results
@@ -208,8 +208,7 @@ public class ExportCypherTest {
                 MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
                 CALL apoc.export.cypher.data([start], [rel], $file, $config)
                 YIELD nodes, relationships, properties RETURN *""";
-        commonDataAndQueryAssertions(fileName, exportData,
-                Map.of("query", query, "config", config),
+        commonDataAndQueryAssertions(fileName, exportData, params,
                 expectedWithoutEndNode, 1L, 1L, 3L);
 
 
@@ -222,14 +221,12 @@ public class ExportCypherTest {
                 "COMMIT%n");
         String expectedWithEndNode = expectedNodesWithEndNode + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
 
-        commonDataAndQueryAssertions(fileName, exportQuery,
-                Map.of("query", query, "config", config),
+        commonDataAndQueryAssertions(fileName, exportQuery, params,
                 expectedWithEndNode, 2L, 1L, 5L);
 
         // apoc.export.cypher.data doesn't accept `nodesOfRelationships` config,
         // so it returns the same result as the above one
-        commonDataAndQueryAssertions(fileName, exportData,
-                Map.of("query", query, "config", config),
+        commonDataAndQueryAssertions(fileName, exportData, params,
                 expectedWithoutEndNode, 1L, 1L, 3L);
     }
 
@@ -1112,7 +1109,7 @@ public class ExportCypherTest {
         static final String EXPECTED_BEGIN_AND_FOO = "BEGIN%n" +
                 "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n";
 
-        static final String EXPECTED_NODES = String.format(EXPECTED_BEGIN_AND_FOO +
+        public static final String EXPECTED_NODES = String.format(EXPECTED_BEGIN_AND_FOO +
                 EXPECTED_BAR_END_NODE +
                 EXPECTED_ISOLATED_NODE +
                 "COMMIT%n");
