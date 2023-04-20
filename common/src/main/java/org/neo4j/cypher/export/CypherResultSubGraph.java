@@ -35,23 +35,31 @@ public class CypherResultSubGraph implements SubGraph {
         labels.addAll(Iterables.asList(data.getLabels()));
     }
 
-    public void add(Relationship rel) {
+    public void add(Relationship rel, boolean addNodes) {
         final String id = rel.getElementId();
         if (!relationships.containsKey(id)) {
             addRel(id, rel);
-            add(rel.getStartNode());
-            add(rel.getEndNode());
+            // start and end nodes will be added only with the `apoc.meta.*` procedures,
+            // not with the `apoc.export.*.query` ones
+            if (addNodes) {
+                add(rel.getStartNode());
+                add(rel.getEndNode());
+            }
         }
     }
 
     public static SubGraph from(Transaction tx, Result result, boolean addBetween) {
+        return from(tx, result, addBetween, true);
+    }
+
+    public static SubGraph from(Transaction tx, Result result, boolean addBetween, boolean addRelNodes) {
         final CypherResultSubGraph graph = new CypherResultSubGraph();
         final List<String> columns = result.columns();
         try {
             result.forEachRemaining(row -> {
                 for (String column : columns) {
                     final Object value = row.get(column);
-                    graph.addToGraph(value);
+                    graph.addToGraph(value, addRelNodes);
                 }
             });
         } catch (AuthorizationViolationException e) {
@@ -119,16 +127,16 @@ public class CypherResultSubGraph implements SubGraph {
         }
     }
 
-    private void addToGraph(Object value) {
+    private void addToGraph(Object value, boolean addRelNodes) {
         if (value instanceof Node) {
             add((Node) value);
         }
         if (value instanceof Relationship) {
-            add((Relationship) value);
+            add((Relationship) value, addRelNodes);
         }
         if (value instanceof Iterable) {
             for (Object inner : (Iterable) value) {
-                addToGraph(inner);
+                addToGraph(inner, addRelNodes);
             }
         }
     }

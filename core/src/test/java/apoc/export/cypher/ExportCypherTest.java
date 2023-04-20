@@ -1,8 +1,6 @@
 package apoc.export.cypher;
 
 import apoc.export.util.ExportConfig;
-import apoc.graph.Graphs;
-import apoc.schema.Schemas;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.MapUtil;
@@ -22,13 +20,10 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
-import static apoc.ApocConfig.apocConfig;
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.export.util.ExportFormat.*;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
@@ -48,6 +43,18 @@ import static org.neo4j.configuration.SettingValueParsers.BOOL;
  * @since 22.05.16
  */
 public class ExportCypherTest {
+    private static final String queryWithRelOnly = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN rel";
+    private static final String queryWithStartAndRel = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN start, rel";
+    private final static String exportQuery = "CALL apoc.export.cypher.query($query, $file, $config)";
+
+    private static final String exportDataWithStartAndRel = """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([start], [rel], $file, $config)
+                YIELD nodes, relationships, properties RETURN *""";
+    private static final String exportDataWithRelOnly = """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([], [rel], $file, $config)
+                YIELD nodes, relationships, properties RETURN *""";
 
     private static final Map<String, Object> exportConfig = map("useOptimizations", map("type", "none"), "separateFiles", true, "format", "neo4j-admin");
 
@@ -157,10 +164,95 @@ public class ExportCypherTest {
     public void testExportQueryCypherForNeo4j() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")), (r) -> {
                 });
         assertEquals(EXPECTED_NEO4J_SHELL, readFile(fileName));
+    }
+
+    @Test
+    public void testExportQueryOnlyRel() {
+        final Map<String, Object> config = withoutOptimization( map("format", "neo4j-shell") );
+        Map<String, Object> params = Map.of("query", queryWithRelOnly,
+                "config", config);
+        assertExportRelOnly(params, exportQuery);
+
+        // check that apoc.export.cypher.data returns consistent results
+        assertExportRelOnly(params, exportDataWithRelOnly);
+    }
+
+    @Test
+    public void testExportQueryOnlyRelWithNodeOfRelsTrue() {
+        // check that `nodesOfRelationships: true` doesn't change the result
+        final Map<String, Object> config = withoutOptimization(
+                map("format", "neo4j-shell",
+                        "nodesOfRelationships", true)
+        );
+        Map<String, Object> params = Map.of("query", queryWithRelOnly,
+                "config", config);
+        assertExportRelOnly(params, exportQuery);
+
+        // check that apoc.export.cypher.data returns consistent results
+        assertExportRelOnly(params, exportDataWithRelOnly);
+    }
+
+    @Test
+    public void testExportQueryOnlyRelAndStart() {
+        final Map<String, Object> config = withoutOptimization( map("format", "neo4j-shell") );
+        Map<String, Object> params = Map.of("query", queryWithStartAndRel,
+                "config", config);
+        assertExportWithoutEndNode(params, exportQuery);
+
+        // check that apoc.export.cypher.data returns consistent results
+        assertExportWithoutEndNode(params, exportDataWithStartAndRel);
+    }
+
+    @Test
+    public void testExportQueryOnlyRelAndStartWithNodeOfRelsTrue() {
+        // check that with {nodesOfRelationships: true} the end node is returned as well
+        final Map<String, Object> config = withoutOptimization(
+                map("format", "neo4j-shell",
+                        "nodesOfRelationships", true)
+        );
+        Map<String, Object> params = Map.of("query", queryWithStartAndRel,
+                "config", config);
+
+        String expectedNodesWithEndNode = String.format(EXPECTED_BEGIN_AND_FOO +
+                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:42, name:\"bar\", `UNIQUE IMPORT ID`:1});%n" +
+                "COMMIT%n");
+        String expectedWithEndNode = expectedNodesWithEndNode + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
+
+        commonDataAndQueryAssertions(exportQuery, params,
+                expectedWithEndNode, 2L, 1L, 5L);
+
+        // apoc.export.cypher.data doesn't accept `nodesOfRelationships` config,
+        // so it returns the same result as the above one
+        assertExportWithoutEndNode(params, exportDataWithStartAndRel);
+    }
+
+    private void assertExportWithoutEndNode(Map<String, Object> params, String exportData) {
+        commonDataAndQueryAssertions(exportData, params,
+                EXPECTED_WITHOUT_END_NODE, 1L, 1L, 3L);
+    }
+
+    private void assertExportRelOnly(Map<String, Object> params, String exportData) {
+        commonDataAndQueryAssertions(exportData, params,
+                EXPECTED_REL_ONLY, 0L, 1L, 1L);
+    }
+
+    private void commonDataAndQueryAssertions(String query, Map<String, Object> config,
+                                              String expectedOutput, long nodes, long relationships, long properties) {
+        String fileName = "testFile.cypher";
+
+        Map<String, Object> params = map("file", fileName);
+        params.putAll(config);
+
+        TestUtil.testCall(db, query, params, r -> {
+                    assertEquals(nodes, r.get("nodes"));
+                    assertEquals(relationships, r.get("relationships"));
+                    assertEquals(properties, r.get("properties"));
+                });
+        assertEquals(expectedOutput, readFile(fileName));
     }
 
 
@@ -174,12 +266,7 @@ public class ExportCypherTest {
 
         for (String query : invalidQueries) {
             QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, """
-                        CALL apoc.export.cypher.query(
-                        $query,
-                        $file,
-                        $config
-                        )""",
+                    () -> TestUtil.testCall(db, exportQuery,
                             MapUtil.map(
                                     "query", query,
                                     "file", filename,
@@ -312,7 +399,7 @@ public class ExportCypherTest {
     public void testExportQueryCypherPlainFormat() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "plain")), (r) -> {
                 });
         assertEquals(EXPECTED_PLAIN, readFile(fileName));
@@ -322,7 +409,7 @@ public class ExportCypherTest {
     public void testExportQueryCypherFormatUpdateAll() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell", "cypherFormat", "updateAll")), (r) -> {
                 });
         assertEquals(EXPECTED_NEO4J_MERGE, readFile(fileName));
@@ -332,7 +419,7 @@ public class ExportCypherTest {
     public void testExportQueryCypherFormatAddStructure() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell", "cypherFormat", "addStructure")), (r) -> {
                 });
         assertEquals(EXPECTED_NODES_MERGE_ON_CREATE_SET + EXPECTED_SCHEMA_EMPTY + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP_EMPTY, readFile(fileName));
@@ -342,7 +429,7 @@ public class ExportCypherTest {
     public void testExportQueryCypherFormatUpdateStructure() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell", "cypherFormat", "updateStructure")), (r) -> {
                 });
         assertEquals(EXPECTED_NODES_EMPTY + EXPECTED_SCHEMA_EMPTY + EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET + EXPECTED_CLEAN_UP_EMPTY, readFile(fileName));
@@ -408,7 +495,7 @@ public class ExportCypherTest {
                 "(:Bar {place3d:point({ longitude: 12.78, latitude: 56.7, height: 100 })})");
         String fileName = "temporalPoint.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_POINT, readFile(fileName));
@@ -424,7 +511,7 @@ public class ExportCypherTest {
                 "(:Bar {datetime:datetime('2018-10-30T12:50:35.556')})");
         String fileName = "temporalDate.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_DATE, readFile(fileName));
@@ -439,7 +526,7 @@ public class ExportCypherTest {
                 "(:Bar {datetime:datetime('2018-10-30T12:50:35.556+0100')})");
         String fileName = "temporalTime.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_TIME, readFile(fileName));
@@ -453,7 +540,7 @@ public class ExportCypherTest {
                 "(:Bar {duration:duration('P5M1.5D')})");
         String fileName = "temporalDuration.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_DURATION, readFile(fileName));
@@ -464,7 +551,7 @@ public class ExportCypherTest {
         db.executeTransactionally("CREATE (f:User:User1:User0:User12 {name:'Alan'})");
         String fileName = "ascendingLabels.cypher";
         String query = "MATCH (f:User) WHERE f.name='Alan' RETURN f";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query,$file,$config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_LABELS_ASCENDEND, readFile(fileName));
@@ -674,7 +761,7 @@ public class ExportCypherTest {
                 ":commit%n");
 
         // when
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+        TestUtil.testCall(db, exportQuery,
                 map("query", query, "file", file, "config", config),
                 (r) -> {
                     // then
@@ -698,8 +785,6 @@ public class ExportCypherTest {
                 ":begin%n" +
                 "UNWIND [{_id:3, properties:{}}] AS row%n" +
                 "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n" +
-                "UNWIND [{_id:4, properties:{}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode2;%n" +
                 ":commit%n" +
                 ":begin%n" +
                 "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:\"the rel value\"}}] AS row%n" +
@@ -715,7 +800,7 @@ public class ExportCypherTest {
                 ":commit%n");
 
         // when
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+        TestUtil.testCall(db, exportQuery,
                 map("query", query, "file", file, "config", config),
                 (r) -> {
                     // then
@@ -734,7 +819,7 @@ public class ExportCypherTest {
          */
         final String expected = "UNWIND [{name:\"A\", properties:{}}] AS row\n" +
                 "CREATE (n:Bar{name: row.name}) SET n += row.properties SET n:Baz";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
@@ -770,7 +855,7 @@ public class ExportCypherTest {
         String query = "MATCH (n:Baz) RETURN n";
         final String expected = "UNWIND [{name:\"A\", properties:{`$lock`:true}}] AS row\n" +
                 "CREATE (n:Bar{name: row.name}) SET n += row.properties SET n:Baz";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
@@ -799,7 +884,7 @@ public class ExportCypherTest {
                 "MATCH (start:Bar{name: row.start.name})\n" +
                 "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})\n" +
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
@@ -825,7 +910,7 @@ public class ExportCypherTest {
                 "MATCH (start:Bar{name: row.start.name})\n" +
                 "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})\n" +
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query($query, $file, $config)",
+        TestUtil.testCall(db, exportQuery,
                 map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
@@ -1025,11 +1110,14 @@ public class ExportCypherTest {
     }
 
     public static class ExportCypherResults {
+        static final String EXPECTED_ISOLATED_NODE = "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});\n";
+        static final String EXPECTED_BAR_END_NODE = "CREATE (:Bar {age:42, name:\"bar\"});%n";
+        static final String EXPECTED_BEGIN_AND_FOO = "BEGIN%n" +
+                "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n";
 
-        public static final String EXPECTED_NODES = String.format("BEGIN%n" +
-                "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n" +
-                "CREATE (:Bar {age:42, name:\"bar\"});%n" +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});%n" +
+        public static final String EXPECTED_NODES = String.format(EXPECTED_BEGIN_AND_FOO +
+                EXPECTED_BAR_END_NODE +
+                EXPECTED_ISOLATED_NODE +
                 "COMMIT%n");
 
         private static final String EXPECTED_NODES_MERGE = String.format("BEGIN%n" +
@@ -1044,17 +1132,30 @@ public class ExportCypherTest {
         public static final String EXPECTED_NODES_EMPTY = String.format("BEGIN%n" +
                 "COMMIT%n");
 
-        private static final String EXPECTED_CONSTRAINTS_AND_AWAIT =
-                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
+        static final String EXPECTED_REL_ONLY = "BEGIN\n" +
+                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:1}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);\n" +
+                "COMMIT\n";
+
+
+        private static final String EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT = "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
                 "COMMIT%n" +
                 "SCHEMA AWAIT%n";
 
+        private static final String EXPECTED_CONSTRAINTS_AND_AWAIT =
+                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
+                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
+                EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT;
+
+        private static final String EXPECTED_IDX_FOO = "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n";
+
         public static final String EXPECTED_SCHEMA = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
+                EXPECTED_IDX_FOO +
                 EXPECTED_CONSTRAINTS_AND_AWAIT);
+
+        static final String EXPECTED_SCHEMA_ONLY_START = String.format("BEGIN%n" +
+                EXPECTED_IDX_FOO +
+                EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT);
 
         static final String EXPECTED_SCHEMA_WITH_NAMES = String.format("BEGIN%n" +
                 "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
@@ -1560,6 +1661,11 @@ public class ExportCypherTest {
                 ":begin%n" +
                 "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
                 ":commit%n", 3);
+
+        static final String EXPECTED_WITHOUT_END_NODE = String.format(EXPECTED_BEGIN_AND_FOO + "COMMIT%n")
+                + EXPECTED_SCHEMA_ONLY_START
+                + EXPECTED_REL_ONLY
+                + EXPECTED_CLEAN_UP;
 
         public static final String EXPECTED_QUERY_PARAMS_ODD = (EXPECTED_SCHEMA + EXPECTED_NODES_PARAMS_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + EXPECTED_DROP_PARAMS_ODD)
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
