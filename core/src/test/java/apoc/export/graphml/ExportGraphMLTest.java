@@ -26,8 +26,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +55,19 @@ import static org.neo4j.graphdb.Label.label;
  * @since 22.05.16
  */
 public class ExportGraphMLTest {
+    private static final String exportQueryStartAndRel =
+            "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN start, rel', $file, $config)";
+    private static final String exportQueryRelOnly =
+            "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN rel', $file, $config)";
+
+    private static final String exportDataWithRelOnly = """
+                MATCH (start:Start)-[rel:REL]->(end:End)
+                CALL apoc.export.graphml.data([], [rel], $file, {})
+                YIELD nodes, relationships, properties RETURN *""";
+    private static final String exportDataWithStartAndRel = """
+                MATCH (start:Start)-[rel:REL]->(end:End)
+                CALL apoc.export.graphml.data([start], [rel], $file, $config)
+                YIELD nodes, relationships, properties RETURN *""";
 
     @Rule
     public TestName testName = new TestName();
@@ -595,82 +606,84 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testAddRelNodesWhenReturnOnlyRels() {
-        File output = new File(directory, "output.graphml");
-
+    public void testExportOnlyRel() {
         db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
 
-        final String exportQuery = "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN rel', $file, {})";
-
-        String expectedWithoutNodes = String.format(HEADER + EDGES_KEYS_QUERY + GRAPH + EDGES_QUERY + FOOTER);
-
-        commonDataAndQueryAssertions(output, exportQuery, Collections.emptyMap(),
-                expectedWithoutNodes, 0L, 1L, 1L);
+        Map<String, Object> params = Map.of("config", Map.of());
+        assertExportRelOnly(exportQueryRelOnly, params);
 
         // check that apoc.export.cypher.data returns consistent results
-        final String exportData = """
-                MATCH (start:Start)-[rel:REL]->(end:End)
-                CALL apoc.export.graphml.data([], [rel], $file, {})
-                YIELD nodes, relationships, properties RETURN *""";
-
-        commonDataAndQueryAssertions(output, exportData, Collections.emptyMap(),
-                expectedWithoutNodes, 0L, 1L, 1L);
-
-        // check that `nodesOfRelationships: true` doesn't change the result
-        Map<String, Object> config = Map.of("nodesOfRelationships", true);
-
-        commonDataAndQueryAssertions(output, exportQuery, config,
-                expectedWithoutNodes, 0L, 1L, 1L);
-
-        commonDataAndQueryAssertions(output, exportData, config,
-                expectedWithoutNodes, 0L, 1L, 1L);
+        assertExportRelOnly(exportDataWithRelOnly, params);
 
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
     @Test
-    public void testAddEndNodesOfRelationshipsWhenReturnOnlyStartNodeAndRel() {
-        File output = new File(directory, "output.graphml");
-
+    public void testExportOnlyRelWithNodesOfRelsTrue() {
         db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
 
+        Map<String, Object> params = Map.of("config", Map.of("nodesOfRelationships", true));
+
+        assertExportRelOnly(exportQueryRelOnly, params);
+
+        // check that apoc.export.cypher.data returns consistent results
+        assertExportRelOnly(exportDataWithRelOnly, params);
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testExportStartAndRel() {
+        db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
+
+        Map<String, Object> params = Map.of("config", Map.of());
+        assertExportWithoutEndNode(exportQueryStartAndRel, params);
+
+        // check that apoc.export.graphml.data returns consistent results
+        assertExportWithoutEndNode(exportDataWithStartAndRel, params);
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testExportStartAndRelWithNodesOfRelsTrue() {
+        db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
+
+        // check that with the `nodesOfRelationships` the end node is returned as well
+        Map<String, Object> params = Map.of("config", Map.of("nodesOfRelationships", true));
+
+        commonDataAndQueryAssertions(exportQueryStartAndRel, params,
+                EXPECTED, 2L, 1L, 3L);
+
+        // apoc.export.graphml.data doesn't accept `nodesOfRelationships` config,
+        // so it returns the same result as the above one
+        assertExportWithoutEndNode(exportDataWithStartAndRel, params);
+
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    private void assertExportWithoutEndNode(String exportQuery, Map<String, Object> params) {
         String expectedWithoutEndNode = String.format(HEADER +
                 START_NODE_KEYS_QUERY + LABEL_KEY_QUERY + EDGES_KEYS_QUERY +
                 GRAPH +
                 START_NODE_QUERY + EDGES_QUERY +
                 FOOTER);
 
-        String query = "MATCH (start:Start)-[rel:REL]->(end:End) RETURN start, rel";
-        final String exportQuery = "CALL apoc.export.graphml.query($query, $file, $config)";
-
-        HashMap<Object, Object> config = new HashMap<>();
-        Map<String, Object> params = Map.of("query", query, "config", config);
-        commonDataAndQueryAssertions(output, exportQuery, params,
+        commonDataAndQueryAssertions(exportQuery, params,
                 expectedWithoutEndNode, 1L, 1L, 2L);
-
-        // check that apoc.export.graphml.data returns consistent results
-        final String exportData = """
-                MATCH (start:Start)-[rel:REL]->(end:End)
-                CALL apoc.export.graphml.data([start], [rel], $file, $config)
-                YIELD nodes, relationships, properties RETURN *""";
-        commonDataAndQueryAssertions(output, exportData, params,
-                expectedWithoutEndNode, 1L, 1L, 2L);
-
-        // check that with the `nodesOfRelationships` the end node is returned as well
-        config.put("nodesOfRelationships", true);
-        commonDataAndQueryAssertions(output, exportQuery, params,
-                EXPECTED, 2L, 1L, 3L);
-
-        // apoc.export.graphml.data doesn't accept `nodesOfRelationships` config,
-        // so it returns the same result as the above one
-        commonDataAndQueryAssertions(output, exportData, params,
-                expectedWithoutEndNode, 1L, 1L, 2L);
-
-        db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
-    private void commonDataAndQueryAssertions(File output, String query, Map<String, Object> config,
+    private void assertExportRelOnly(String exportQuery, Map<String, Object> config) {
+        String expectedWithoutNodes = String.format(HEADER + EDGES_KEYS_QUERY + GRAPH + EDGES_QUERY + FOOTER);
+
+        commonDataAndQueryAssertions(exportQuery, config,
+                expectedWithoutNodes, 0L, 1L, 1L);
+    }
+
+    private void commonDataAndQueryAssertions(String query, Map<String, Object> config,
                                               String expectedOutput, long nodes, long relationships, long properties) {
+        File output = new File(directory, "testFile.graphml");
+
         Map<String, Object> params = Util.map("file", output.getAbsolutePath());
         params.putAll(config);
 
