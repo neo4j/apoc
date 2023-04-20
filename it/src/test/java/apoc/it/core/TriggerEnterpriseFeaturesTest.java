@@ -161,55 +161,48 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testDeleteTriggersAfterDatabaseDeletion() {
-        final String dbToDelete = "todelete";
-        final String defaultTriggerName = UUID.randomUUID().toString();
-
+    public void testDeleteTriggerAfterDatabaseDeletion() {
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
-            // create database `todelete`
+            final String dbToDelete = "todelete";
+
+            // create database with name `todelete`
             sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
 
-            // install and show a trigger in `todelete` and check existence
-            testCall(sysSession, "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
-                    Map.of("dbName", dbToDelete, "name", defaultTriggerName),
-                    r -> assertEquals(defaultTriggerName, r.get("name"))
-            );
-
-            testCall(sysSession, "CALL apoc.trigger.show($dbName)",
-                    Map.of("dbName", dbToDelete),
-                    r -> assertEquals(defaultTriggerName, r.get("name"))
-            );
-
-            // drop database
-            sysSession.writeTransaction(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)));
-
-            // check that the trigger has been removed
-            testCallEmpty(sysSession, "CALL apoc.trigger.show($dbName)",
-                    Map.of("dbName", dbToDelete)
-            );
-
-
-            // same as above with the database `initDb`, created via apoc.initializer.*
-            testCall(sysSession, "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
-                    Map.of("dbName", INIT_DB, "name", defaultTriggerName),
-                    r -> assertEquals(defaultTriggerName, r.get("name"))
-            );
-
-            testCall(sysSession, "CALL apoc.trigger.show($dbName)",
-                    Map.of("dbName", INIT_DB),
-                    r -> assertEquals(defaultTriggerName, r.get("name"))
-            );
-
-            // drop database
-            sysSession.writeTransaction(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", INIT_DB)));
-
-            // check that the trigger has been removed
-            testCallEmpty(sysSession, "CALL apoc.trigger.show($dbName)",
-                    Map.of("dbName", INIT_DB)
-            );
+            testDeleteTriggerAfterDropDb(dbToDelete, sysSession);
         }
     }
-    
+
+    @Test
+    public void testDeleteTriggerAfterDatabaseDeletionCreatedViaCypherInit() {
+        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+            // the database `initDb` is created via `apoc.initializer.*`
+            testDeleteTriggerAfterDropDb(INIT_DB, sysSession);
+        }
+    }
+
+    private static void testDeleteTriggerAfterDropDb(String dbToDelete, Session sysSession) {
+        final String defaultTriggerName = UUID.randomUUID().toString();
+
+        // install and show a trigger in the database and check existence
+        testCall(sysSession, "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
+                Map.of("dbName", dbToDelete, "name", defaultTriggerName),
+                r -> assertEquals(defaultTriggerName, r.get("name"))
+        );
+
+        testCall(sysSession, "CALL apoc.trigger.show($dbName)",
+                Map.of("dbName", dbToDelete),
+                r -> assertEquals(defaultTriggerName, r.get("name"))
+        );
+
+        // drop database
+        sysSession.writeTransaction(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)));
+
+        // check that the trigger has been removed
+        testCallEmpty(sysSession, "CALL apoc.trigger.show($dbName)",
+                Map.of("dbName", dbToDelete)
+        );
+    }
+
     @Test
     public void testTriggersAllowedOnlyWithAdmin() {
 

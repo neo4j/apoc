@@ -1,10 +1,7 @@
 package apoc.trigger;
 
 import apoc.ApocConfig;
-import apoc.SystemLabels;
 import apoc.util.TestUtil;
-import apoc.util.Util;
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -13,28 +10,19 @@ import org.junit.rules.TemporaryFolder;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import static apoc.ApocConfig.SUN_JAVA_COMMAND;
-import static apoc.SystemLabels.ApocTrigger;
-import static apoc.SystemPropertyKeys.database;
-import static apoc.SystemPropertyKeys.name;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.waitDbsAvailable;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class TriggerRestartTest {
 
