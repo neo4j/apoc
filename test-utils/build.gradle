@@ -87,9 +87,11 @@ publishing {
 
                 def developersNode = root.appendNode("developers")
                 def developerNode = developersNode.appendNode("developer")
-                developerNode.appendNode("id", 'michaelhunger')
-                developerNode.appendNode("name", 'Michael Hunger')
-                developerNode.appendNode("email", 'michael.hunger@neo4j.com')
+                developerNode.appendNode("id", 'neo4j')
+                developerNode.appendNode("name", 'The Neo4j Team')
+                developerNode.appendNode("url", 'https://neo4j.com/')
+                developerNode.appendNode("organization", 'Neo4j Inc.')
+                developerNode.appendNode("organizationUrl", 'https://neo4j.com/')
 
                 def dependenciesNode = root.get("dependencies")[0]
                 if (dependenciesNode == null) {
