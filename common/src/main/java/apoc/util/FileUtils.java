@@ -105,7 +105,7 @@ public class FileUtils {
                 // in case a Windows user write an url like `C:/User/...`
                 if (e.getMessage().contains("unknown protocol") && Util.isWindows()) {
                     throw new RuntimeException(e.getMessage() +
-                            "\n Please note that in case of a Windows absolute path, it have to be explicit by prepending file: or without drive, " +
+                            "\n Please note that for Windows absolute paths they have to be explicit by prepending `file:` or supplied without the drive, " +
                             "\n e.g. `file:C:/my/path/file` or `/my/path/file`, instead of `C:/my/path/file`");
                 }
                 throw new RuntimeException(e);
