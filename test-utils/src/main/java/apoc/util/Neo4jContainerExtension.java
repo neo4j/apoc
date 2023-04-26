@@ -74,7 +74,9 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
     public void start() {
         try {
             super.start();
+            System.out.println("Neo4jContainerExtension.start");
             if (withDriver) {
+                System.out.println("logger = " + logger);
                 driver = GraphDatabase.driver(getBoltUrl(), getAuth());
                 session = driver.session();
                 if (filePath != null && !filePath.isEmpty()) {
@@ -83,6 +85,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
             }
             isRunning = true;
         } catch (Exception startException) {
+            System.out.println("startException = " + startException);
             try {
                 System.out.println(this.execInContainer("cat", "logs/debug.log").toString());
                 System.out.println(this.execInContainer("cat", "logs/http.log").toString());
