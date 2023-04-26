@@ -1077,4 +1077,9 @@ public class Util {
     public static  String getNodeElementId(InternalTransaction tx, long id) {
         return tx.elementIdMapper().nodeElementId(id);
     }
+    public static boolean isWindows() {
+        return System.getProperty("os.name")
+                .toLowerCase()
+                .contains("win");
+    }
 }

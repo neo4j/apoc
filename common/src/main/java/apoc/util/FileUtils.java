@@ -38,6 +38,17 @@ import static apoc.util.Util.readHttpInputStream;
  */
 public class FileUtils {
 
+    public static String getFileUrl(String fileName) throws MalformedURLException {
+        try {
+            return new URL(fileName).getFile();
+        } catch (MalformedURLException e) {
+            if (e.getMessage().contains("no protocol")) {
+                return fileName;
+            }
+            throw e;
+        }
+    }
+
     public static StreamConnection getStreamConnection(SupportedProtocols protocol, String urlAddress, Map<String, Object> headers, String payload) throws IOException {
         switch (protocol) {
         case s3:
@@ -53,14 +64,7 @@ public class FileUtils {
             try {
                 return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
             } catch (IllegalArgumentException iae) {
-                try {
-                    return new StreamConnection.FileStreamConnection(new URL(urlAddress).getFile());
-                } catch (MalformedURLException mue) {
-                    if (mue.getMessage().contains("no protocol")) {
-                        return new StreamConnection.FileStreamConnection(urlAddress);
-                    }
-                    throw mue;
-                }
+                return new StreamConnection.FileStreamConnection(getFileUrl(urlAddress));
             }
         }
     }
@@ -97,6 +101,13 @@ public class FileUtils {
                     // otherwise we return unknown protocol: yyyyy
                     return SupportedProtocols.valueOf(new URI(source).getScheme());
                 } catch (Exception ignored) {}
+
+                // in case a Windows user write an url like `C:/User/...`
+                if (e.getMessage().contains("unknown protocol") && Util.isWindows()) {
+                    throw new RuntimeException(e.getMessage() +
+                            "\n Please note that for Windows absolute paths they have to be explicit by prepending `file:` or supplied without the drive, " +
+                            "\n e.g. `file:C:/my/path/file` or `/my/path/file`, instead of `C:/my/path/file`");
+                }
                 throw new RuntimeException(e);
             }
             return SupportedProtocols.file;
@@ -221,8 +232,10 @@ public class FileUtils {
             case s3 -> outputStream = S3UploadUtils.writeFile( fileName );
             case hdfs -> outputStream = HDFSUtils.writeFile( fileName );
             default -> {
-                final Path path = resolvePath( fileName );
-                outputStream = new FileOutputStream( path.toFile() );
+                final File file = isImportUsingNeo4jConfig()
+                        ? resolvePath(fileName).toFile()
+                        : new File(getFileUrl(fileName));
+                outputStream = new FileOutputStream(file);
             }
             }
             return new BufferedOutputStream(compressionAlgo.getOutputStream(outputStream));
