@@ -1,35 +1,52 @@
 package apoc.cypher;
 
 import apoc.ApocConfig;
+import apoc.SystemLabels;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import apoc.version.Version;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
+import org.neo4j.dbms.api.DatabaseManagementService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.event.DatabaseEventContext;
+import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.kernel.monitoring.DatabaseEventListeners;
 import org.neo4j.logging.Log;
 
 import java.util.Collection;
 
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
+
+import static apoc.SystemPropertyKeys.database;
 
 public class CypherInitializer implements AvailabilityListener {
 
     private final GraphDatabaseAPI db;
     private final Log userLog;
     private final DependencyResolver dependencyResolver;
+    private final DatabaseManagementService databaseManagementService;
+    private final DatabaseEventListeners databaseEventListeners;
 
     /**
      * indicates the status of the initializer, to be used for tests to ensure initializer operations are already done
      */
     private volatile boolean finished = false;
 
-    public CypherInitializer(GraphDatabaseAPI db, Log userLog) {
+    public CypherInitializer(GraphDatabaseAPI db, Log userLog,
+                             DatabaseManagementService databaseManagementService,
+                             DatabaseEventListeners databaseEventListeners) {
         this.db = db;
         this.userLog = userLog;
+        this.databaseManagementService = databaseManagementService;
+        this.databaseEventListeners = databaseEventListeners;
         this.dependencyResolver = db.getDependencyResolver();
     }
 
@@ -62,6 +79,9 @@ public class CypherInitializer implements AvailabilityListener {
                                       apocVersion, neo4jVersion );
                     }
                 }
+
+                // create listener for each database
+                databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
 
                 Configuration config = dependencyResolver.resolveDependency(ApocConfig.class).getConfig();
                 for (String query : collectInitializers(config)) {
@@ -115,5 +135,38 @@ public class CypherInitializer implements AvailabilityListener {
     @Override
     public void unavailable() {
         // intentionally empty
+    }
+
+    private class SystemFunctionalityListener implements DatabaseEventListener {
+
+        @Override
+        public void databaseDrop(DatabaseEventContext eventContext) {
+
+            forEachSystemLabel((tx, label) -> {
+                tx.findNodes(label, database.name(), eventContext.getDatabaseName())
+                        .forEachRemaining(Node::delete);
+            });
+        }
+
+        @Override
+        public void databaseStart(DatabaseEventContext eventContext) {}
+
+        @Override
+        public void databaseShutdown(DatabaseEventContext eventContext) {}
+
+        @Override
+        public void databasePanic(DatabaseEventContext eventContext) {}
+
+        @Override
+        public void databaseCreate(DatabaseEventContext eventContext) {}
+    }
+
+    private void forEachSystemLabel(BiConsumer<Transaction, Label> consumer) {
+        try (Transaction tx = db.beginTx()) {
+            for (Label label: SystemLabels.values()) {
+                consumer.accept(tx, label);
+            }
+            tx.commit();
+        }
     }
 }
