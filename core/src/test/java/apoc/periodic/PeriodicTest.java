@@ -40,6 +40,7 @@ import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.kernel.api.KernelTransactionHandle;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.logging.AssertableLogProvider;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -48,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
@@ -69,19 +71,62 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.neo4j.driver.internal.util.Iterables.count;
+import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class PeriodicTest {
 
     public static final long RUNDOWN_COUNT = 1000;
     public static final int BATCH_SIZE = 399;
 
+    public static AssertableLogProvider logProvider = new AssertableLogProvider();
+
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    public DbmsRule db = new ImpermanentDbmsRule(logProvider);
 
     @Before
     public void initDb() {
         TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class, Utils.class);
         db.executeTransactionally("call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
+    }
+
+    @Test
+    public void testRepeatWithVoidProcedure() {
+        String query = "CALL apoc.periodic.repeat('repeat-1', 'CALL db.prepareForReplanning()', 1)";
+        testLogIncrease(query);
+    }
+
+    @Test
+    public void testRepeatWithVoidProcedureAndReturn() {
+        String query = "CALL apoc.periodic.repeat('repeat-2', 'CALL db.prepareForReplanning() RETURN 1', 1)";
+        testLogIncrease(query);
+    }
+
+    @Test
+    public void testSubmitWithVoidProcedure() {
+        String query = "CALL apoc.periodic.submit('submit-1', 'CALL db.prepareForReplanning() RETURN 1')";
+        testLogIncrease(query);
+    }
+
+    @Test
+    public void testSubmitWithVoidProcedureAndReturn() {
+        String query = "CALL apoc.periodic.submit('submit-1', 'CALL db.prepareForReplanning()')";
+        testLogIncrease(query);
+    }
+
+    private void testLogIncrease(String query) {
+        // clear logs to prevent potential false positives
+        logProvider.clear();
+
+        // execute a periodic procedure with `CALL db.prepareForReplanning` as an inner procedure
+        db.executeTransactionally(query);
+
+        // print logs in logProvider
+        // and check that the previous `prepareForReplanning` logs a "Manual trigger for sampling all indexes"
+        assertEventually(() -> {
+            logProvider.print(System.out);
+            return logProvider.serialize().contains("Manual trigger for sampling all indexes");
+        }, (val) -> val, 5L, TimeUnit.SECONDS);
+
     }
 
     @Test
