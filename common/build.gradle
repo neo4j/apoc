@@ -34,11 +34,6 @@ dependencies {
         exclude group: 'org.apache.hive', module: 'hive-service'
     }
 
-    def withoutJacksons = {
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-    }
-
     // These will be dependencies packaged with the .jar
     api group: 'com.jayway.jsonpath', name: 'json-path', version: '2.8.0'
     api group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
@@ -60,6 +55,8 @@ dependencies {
     compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
     compileOnly group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
     compileOnly group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.425'
+    // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
+    // and remove the manual licensing check for it in licenses-3rdparties.gradle
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.3.5', withoutServers
     compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.6.2'
 
