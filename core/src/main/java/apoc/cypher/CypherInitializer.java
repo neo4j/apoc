@@ -78,10 +78,8 @@ public class CypherInitializer implements AvailabilityListener {
                                       "The two first numbers of both versions needs to be the same.",
                                       apocVersion, neo4jVersion );
                     }
+                    databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
                 }
-
-                // create listener for each database
-                databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
 
                 Configuration config = dependencyResolver.resolveDependency(ApocConfig.class).getConfig();
                 for (String query : collectInitializers(config)) {
