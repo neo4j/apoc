@@ -143,7 +143,7 @@ public class FileUtils {
     public static CountingReader readerFor(Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
         return inputStreamFor(input, headers, payload, compressionAlgo).asReader();
     }
-
+// todo - here
     public static CountingInputStream inputStreamFor(Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
         if (input == null) return null;
         if (input instanceof String) {
@@ -152,6 +152,7 @@ public class FileUtils {
             fileName = changeFileUrlIfImportDirectoryConstrained(fileName);
             return Util.openInputStream(fileName, headers, payload, compressionAlgo);
         } else if (input instanceof byte[]) {
+            // todo - size byte[]??
             return getInputStreamFromBinary((byte[]) input, compressionAlgo);
         } else {
             throw new RuntimeException(ERROR_BYTES_OR_STRING);

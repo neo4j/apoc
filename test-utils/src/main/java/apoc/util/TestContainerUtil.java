@@ -67,6 +67,7 @@ public class TestContainerUtil {
 
     public static File baseDir = Paths.get("..").toFile();
     public static File pluginsFolder = new File(baseDir, "build/plugins");
+    public static File importFolder = new File("import");;
     private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
     public static File extendedDir = new File(baseDir, "extended");
 
