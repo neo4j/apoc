@@ -113,6 +113,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.TerminationGuard;
 
 import static apoc.ApocConfig.apocConfig;
+import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 import static apoc.util.DateFormatUtil.getOrCreate;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -337,6 +338,8 @@ public class Util {
         writer.close();
     }
 
+    private static final int MAX_SIZE_DIFF = 100;
+
     private static String handleRedirect(URLConnection con, String url) throws IOException {
        if (!(con instanceof HttpURLConnection)) return url;
        if (!isRedirect(((HttpURLConnection)con))) return url;
@@ -344,6 +347,7 @@ public class Util {
     }
 
     public static CountingInputStream openInputStream(Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
+        System.out.println("Util.openInputStream");
         if (input instanceof String) {
             String urlAddress = (String) input;
             final ArchiveType archiveType = ArchiveType.from(urlAddress);
@@ -361,6 +365,7 @@ public class Util {
     }
 
     private static CountingInputStream getStreamCompressedFile(String urlAddress, Map<String, Object> headers, String payload, ArchiveType archiveType) throws IOException {
+        System.out.println("Util.getStreamCompressedFile");
         StreamConnection sc;
         InputStream stream;
         String[] tokens = urlAddress.split("!");
@@ -370,6 +375,7 @@ public class Util {
             zipFileName = tokens[1];
             sc = getStreamConnection(urlAddress, headers, payload);
             stream = getFileStreamIntoCompressedFile(sc.getInputStream(), zipFileName, archiveType);
+            stream = toLimitedIStream(stream, sc.getLength());
         }else
             throw new IllegalArgumentException("filename can't be null or empty");
 
