@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.neo4j.driver.Session;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static apoc.util.TestContainerUtil.createDB;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.neo4j.test.assertion.Assert.assertEventually;
 
 /*
  This test is just to verify if the APOC procedures and functions are correctly deployed into a Neo4j instance without any startup issue.
@@ -76,6 +78,36 @@ public class StartupTest {
                     fail( "The docker image " + dockerImageForNeo4j(version) + " could not be loaded. Check whether it's available locally / in the CI. Exception:" + ex);
                 }
             }
+        }
+    }
+
+    @Test
+    public void check_cypherInitializer_waits_for_systemDb_to_be_available() {
+        // we check that with apoc-core jar and all extra-dependencies jars every procedure/function is detected
+        var version = Neo4jVersion.ENTERPRISE;
+        try {
+            Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                                .withEnv("apoc.initializer.system.0", "CREATE USER dummy IF NOT EXISTS SET PASSWORD \"pass12345\" CHANGE NOT REQUIRED")
+                                .withEnv("apoc.initializer.system.1", "GRANT ROLE reader TO dummy");
+            neo4jContainer.start();
+
+            try (Session session = neo4jContainer.getSession()) {
+                assertEventually(() ->
+                     session.run( "SHOW USERS YIELD roles, user WHERE user = 'dummy' RETURN roles" ).stream()
+                                         .collect( Collectors.toList() ), (result) ->
+                     result.size() > 0 && result.get(0).get( "roles" ).asList().contains("reader" ),
+                                 30, TimeUnit.SECONDS
+                );
+            }
+
+            neo4jContainer.close();
+        } catch (Exception ex) {
+             if (TestContainerUtil.isDockerImageAvailable(ex)) {
+                 ex.printStackTrace();
+                 fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+             } else {
+                 fail( "The docker image " + dockerImageForNeo4j(version) + " could not be loaded. Check whether it's available locally / in the CI. Exception:" + ex);
+             }
         }
     }
 
