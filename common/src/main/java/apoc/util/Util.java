@@ -1054,6 +1054,7 @@ public class Util {
         return switch (type) {
             case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS -> ConstraintCategory.NODE;
             case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE -> ConstraintCategory.RELATIONSHIP;
+            default -> throw new IllegalStateException("Constraint with a type not supported by apoc");
         };
     }
 
