@@ -19,7 +19,6 @@
 package apoc.util;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,24 +40,14 @@ public class SensitivePathGenerator {
 
     private static Pair<String, String> base(String path) {
         try {
-            System.out.println("Paths.get(\"..\", System.getProperty(\"coreDir\")).toFile().getCanonicalPath() = " + Paths.get("..", System.getProperty("coreDir")).toFile().getCanonicalPath());
-            Path path1 = Paths.get("").toAbsolutePath();
-            System.out.println("path1 = " + path1);
-            final String relativeFileName1 = IntStream.range(0, path1.getNameCount())
-//            final String relativeFileName1 = IntStream.range(0, Paths.get("..", System.getProperty("coreDir")).toAbsolutePath().getNameCount())
+            Path absolutePath = Paths.get("").toAbsolutePath();
+            final String relativeFileName = IntStream.range(0, absolutePath.getNameCount())
                     .mapToObj(i -> "..")
                     .collect(Collectors.joining("/")) + path;
-            final String absoluteFileName1 = Paths.get(relativeFileName1)
+            final String absoluteFileName = Paths.get(relativeFileName)
                     .toAbsolutePath().normalize().toString();
 
-
-//            final Path dbPath = db.databaseLayout().databaseDirectory();
-//            final String relativeFileName = IntStream.range(0, dbPath.getNameCount())
-//                    .mapToObj(i -> "..")
-//                    .collect(Collectors.joining("/")) + path;
-//            final String absoluteFileName = Paths.get(relativeFileName)
-//                    .toAbsolutePath().normalize().toString();
-            return Pair.of(relativeFileName1, absoluteFileName1);
+            return Pair.of(relativeFileName, absoluteFileName);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

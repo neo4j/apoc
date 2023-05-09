@@ -1,4 +1,4 @@
-package apoc.export;
+package apoc.export; //
 
 import apoc.ApocConfig;
 import apoc.export.csv.ImportCsv;
@@ -43,7 +43,6 @@ import static apoc.util.FileUtils.ACCESS_OUTSIDE_DIR_ERROR;
 import static apoc.util.FileUtils.ERROR_READ_FROM_FS_NOT_ALLOWED;
 import static apoc.util.TestUtil.testCall;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
