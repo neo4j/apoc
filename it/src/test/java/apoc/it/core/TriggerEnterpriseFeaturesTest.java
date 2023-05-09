@@ -58,7 +58,7 @@ import static org.neo4j.driver.SessionConfig.forDatabase;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class TriggerEnterpriseFeaturesTest {
-    // ..
+    // ......
 
     private static final String FOO_DB = "foo";
     private static final String INIT_DB = "initdb";
