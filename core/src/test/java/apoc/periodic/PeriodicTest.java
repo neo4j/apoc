@@ -41,6 +41,10 @@ import org.neo4j.kernel.api.KernelTransactionHandle;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.AssertableLogProvider;
+import org.neo4j.logging.Log;
+import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -74,6 +78,14 @@ import static org.neo4j.driver.internal.util.Iterables.count;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class PeriodicTest {
+    public static class MockLogger {
+        @Context public Log log;
+
+        @Procedure("apoc.mockLog")
+        public void mockLog(@Name("value") String value) {
+            log.info(value);
+        }
+    }
 
     public static final long RUNDOWN_COUNT = 1000;
     public static final int BATCH_SIZE = 399;
@@ -85,46 +97,46 @@ public class PeriodicTest {
 
     @Before
     public void initDb() {
-        TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class, Utils.class);
+        TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class, Utils.class, MockLogger.class);
         db.executeTransactionally("call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
 
     @Test
     public void testRepeatWithVoidProcedure() {
-        String query = "CALL apoc.periodic.repeat('repeat-1', 'CALL db.prepareForReplanning()', 1)";
-        testLogIncrease(query);
+        String logVal = "repeatVoid";
+        String query = "CALL apoc.periodic.repeat('repeat-1', 'CALL apoc.mockLog($logVal)', 1, {params: {logVal: $logVal}})";
+        testLogIncrease(query, logVal);
     }
 
     @Test
     public void testRepeatWithVoidProcedureAndReturn() {
-        String query = "CALL apoc.periodic.repeat('repeat-2', 'CALL db.prepareForReplanning() RETURN 1', 1)";
-        testLogIncrease(query);
+        String logVal = "repeatVoidWithReturn";
+        String query = "CALL apoc.periodic.repeat('repeat-2', 'CALL apoc.mockLog($logVal) RETURN 1', 1, {params: {logVal: $logVal}})";
+        testLogIncrease(query, logVal);
     }
 
     @Test
     public void testSubmitWithVoidProcedure() {
-        String query = "CALL apoc.periodic.submit('submit-1', 'CALL db.prepareForReplanning() RETURN 1')";
-        testLogIncrease(query);
+        String logVal = "submitVoid";
+        String query = "CALL apoc.periodic.submit('submit-1', 'CALL apoc.mockLog($logVal) RETURN 1', {params: {logVal: $logVal}})";
+        testLogIncrease(query, logVal);
     }
 
     @Test
     public void testSubmitWithVoidProcedureAndReturn() {
-        String query = "CALL apoc.periodic.submit('submit-1', 'CALL db.prepareForReplanning()')";
-        testLogIncrease(query);
+        String logVal = "submitVoidWithReturn";
+        String query = "CALL apoc.periodic.submit('submit-1', 'CALL apoc.mockLog($logVal)', {params: {logVal: $logVal}})";
+        testLogIncrease(query, logVal);
     }
 
-    private void testLogIncrease(String query) {
-        // clear logs to prevent potential false positives
-        logProvider.clear();
+    private void testLogIncrease(String query, String logVal) {
+        // execute a periodic procedure with `CALL apoc.mockLog(...)` as an inner procedure
+        db.executeTransactionally(query, Map.of("logVal", logVal));
 
-        // execute a periodic procedure with `CALL db.prepareForReplanning` as an inner procedure
-        db.executeTransactionally(query);
-
-        // print logs in logProvider
-        // and check that the previous `prepareForReplanning` logs a "Manual trigger for sampling all indexes"
+        // check custom log in logProvider
         assertEventually(() -> {
-            logProvider.print(System.out);
-            return logProvider.serialize().contains("Manual trigger for sampling all indexes");
+            String serialize = logProvider.serialize();
+            return serialize.contains(logVal);
         }, (val) -> val, 5L, TimeUnit.SECONDS);
 
     }
