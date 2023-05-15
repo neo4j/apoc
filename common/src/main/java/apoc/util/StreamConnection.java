@@ -45,16 +45,12 @@ public interface StreamConnection {
         InputStream iStream = toLimitedIStream( getInputStream() , getLength() );
 
         if ("gzip".equals(getEncoding()) || getName().endsWith(".gz")) {
-            System.out.println("algo = " + algo);
             return new CountingInputStream(new GZIPInputStream(iStream), getLength());
         }
         if ("deflate".equals(getName())) {
-            System.out.println("deflate....");
             return new CountingInputStream(new DeflaterInputStream(iStream), getLength());
         }
         try {
-            System.out.println("StreamConnection.toCountingInputStream");
-
             final InputStream inputStream = CompressionAlgo.valueOf(algo == null ? CompressionAlgo.NONE.name() : algo)
                     .getInputStream(iStream);
             return new CountingInputStream(inputStream, getLength());

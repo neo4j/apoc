@@ -338,8 +338,6 @@ public class Util {
         writer.close();
     }
 
-    private static final int MAX_SIZE_DIFF = 100;
-
     private static String handleRedirect(URLConnection con, String url) throws IOException {
        if (!(con instanceof HttpURLConnection)) return url;
        if (!isRedirect(((HttpURLConnection)con))) return url;
@@ -347,7 +345,6 @@ public class Util {
     }
 
     public static CountingInputStream openInputStream(Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
-        System.out.println("Util.openInputStream");
         if (input instanceof String) {
             String urlAddress = (String) input;
             final ArchiveType archiveType = ArchiveType.from(urlAddress);
@@ -365,7 +362,6 @@ public class Util {
     }
 
     private static CountingInputStream getStreamCompressedFile(String urlAddress, Map<String, Object> headers, String payload, ArchiveType archiveType) throws IOException {
-        System.out.println("Util.getStreamCompressedFile");
         StreamConnection sc;
         InputStream stream;
         String[] tokens = urlAddress.split("!");
