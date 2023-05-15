@@ -40,7 +40,9 @@ import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -163,15 +165,22 @@ public class CsvFormat {
     public void writeAll(SubGraph graph, Reporter reporter, ExportConfig config, CSVWriter out) {
         Map<String, Class> nodePropTypes = collectPropTypesForNodes(graph, db, config);
         Map<String, Class> relPropTypes = collectPropTypesForRelationships(graph, db, config);
-        List<String> nodeHeader = generateHeader(nodePropTypes, config.useTypes(), NODE_HEADER_FIXED_COLUMNS);
-        List<String> relHeader = generateHeader(relPropTypes, config.useTypes(), REL_HEADER_FIXED_COLUMNS);
-        List<String> header = new ArrayList<>(nodeHeader);
+        List<Map.Entry<String, String>> nodeHeader = generateHeader(nodePropTypes, config.useTypes(), NODE_HEADER_FIXED_COLUMNS);
+        List<Map.Entry<String, String>> relHeader = generateHeader(relPropTypes, config.useTypes(), REL_HEADER_FIXED_COLUMNS);
+        List<Map.Entry<String, String>> header = new ArrayList<>(nodeHeader);
         header.addAll(relHeader);
-        out.writeNext(header.toArray(new String[header.size()]), applyQuotesToAll);
+        out.writeNext(header.stream().map(e -> e.getKey() + e.getValue()).toArray(String[]::new), applyQuotesToAll);
         int cols = header.size();
 
-        writeNodes(graph, out, reporter, nodeHeader.subList(NODE_HEADER_FIXED_COLUMNS.length, nodeHeader.size()), cols, config.getBatchSize());
-        writeRels(graph, out, reporter, relHeader.subList(REL_HEADER_FIXED_COLUMNS.length, relHeader.size()), cols, nodeHeader.size(), config.getBatchSize());
+        writeNodes(graph, out, reporter, getNamesHeader(nodeHeader, NODE_HEADER_FIXED_COLUMNS.length), cols, config.getBatchSize());
+        writeRels(graph, out, reporter, getNamesHeader(relHeader, REL_HEADER_FIXED_COLUMNS.length), cols, nodeHeader.size(), config.getBatchSize());
+    }
+
+    private List<String> getNamesHeader(List<Map.Entry<String, String>> nodeHeader, int length) {
+        return nodeHeader.subList(length, nodeHeader.size())
+                .stream()
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 
     private void writeAllBulkImport(SubGraph graph, Reporter reporter, ExportConfig config, ExportFileManager writer) {
@@ -281,20 +290,21 @@ public class CsvFormat {
         }
     }
 
-    private List<String> generateHeader(Map<String, Class> propTypes, boolean useTypes, String... starters) {
-        List<String> result = new ArrayList<>();
-        if (useTypes) {
-            Collections.addAll(result, starters);
-        } else {
-            result.addAll(Stream.of(starters).map(s -> s.split(":")[0]).collect(Collectors.toList()));
-        }
+    private List<Map.Entry<String, String>> generateHeader(Map<String, Class> propTypes, boolean useTypes, String... starters) {
+        List<Map.Entry<String, String>> result = Arrays.stream(starters)
+                .map(item -> {
+                    final String[] split = item.split(":");
+                    return new AbstractMap.SimpleEntry<>(split[0], useTypes ? (":" + split[1]) : "");
+                })
+                .collect(Collectors.toList());
+
         result.addAll(propTypes.entrySet().stream()
                 .map(entry -> {
                     String type = MetaInformation.typeFor(entry.getValue(), null);
-                    return (type == null || type.equals("string") || !useTypes)
-                            ? entry.getKey() : entry.getKey() + ":" + type;
+                    return new AbstractMap.SimpleEntry<>(entry.getKey(),
+                            (type == null || type.equals("string") || !useTypes) ? "" : ":" + type);
                 })
-                .sorted()
+                .sorted(Map.Entry.comparingByKey())
                 .collect(Collectors.toList()));
         return result;
     }

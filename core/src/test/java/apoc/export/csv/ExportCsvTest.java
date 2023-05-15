@@ -139,7 +139,7 @@ public class ExportCsvTest {
             ",,,,,,,,0,1,KNOWS%n" +
             ",,,,,,,,3,4,NEXT_DELIVERY%n");
 
-    private static final File directory = new File("target/import");
+    public static final File directory = new File("target/import");
     static {
         //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
@@ -158,11 +158,11 @@ public class ExportCsvTest {
         db.executeTransactionally("CREATE (f:Address1:Address {name:'Andrea', city: 'Milano', street:'Via Garibaldi, 7'})-[:NEXT_DELIVERY]->(a:Address {name: 'Bar Sport'}), (b:Address {street: 'via Benni'})");
     }
 
-    private String readFile(String fileName) {
+    public static String readFile(String fileName) {
         return readFile(fileName, UTF_8, CompressionAlgo.NONE);
     }
     
-    private String readFile(String fileName, Charset charset, CompressionAlgo compression) {
+    public static String readFile(String fileName, Charset charset, CompressionAlgo compression) {
         return BinaryTestUtil.readFileToString(new File(directory, fileName), charset, compression);
     }
 
@@ -394,11 +394,11 @@ public class ExportCsvTest {
         assertEquals(EXPECTED_QUERY_NODES, readFile(fileName));
     }
 
-    private void assertResults(String fileName, Map<String, Object> r, final String source) {
+    public static void assertResults(String fileName, Map<String, Object> r, final String source) {
         assertResults(fileName, r, source, 6L, 2L, 12L, true);
     }
 
-    private void assertResults(String fileName, Map<String, Object> r, final String source, 
+    public static void assertResults(String fileName, Map<String, Object> r, final String source,
                                Long expectedNodes, Long expectedRelationships, Long expectedProperties, boolean assertPropEquality) {
         assertEquals(expectedNodes, r.get("nodes"));
         assertEquals(expectedRelationships, r.get("relationships"));
@@ -412,7 +412,7 @@ public class ExportCsvTest {
         assertCsvCommon(fileName, r);
     }
 
-    private void assertCsvCommon(String fileName, Map<String, Object> r) {
+    private static void assertCsvCommon(String fileName, Map<String, Object> r) {
         assertEquals(fileName, r.get("file"));
         assertEquals("csv", r.get("format"));
         assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);

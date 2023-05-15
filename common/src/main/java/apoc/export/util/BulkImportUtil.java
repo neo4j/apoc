@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class BulkImportUtil {
 
-    private static Map<Class<?>, String> allowedMapping = Collections.unmodifiableMap(new HashMap(){{
+    public static Map<Class<?>, String> allowedMapping = Collections.unmodifiableMap(new HashMap(){{
         put(Double.class, "double");
         put(Float.class, "float");
         put(Integer.class, "int");
