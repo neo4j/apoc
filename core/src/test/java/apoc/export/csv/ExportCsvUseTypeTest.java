@@ -49,8 +49,6 @@ public class ExportCsvUseTypeTest {
             node.setProperty("eta", 1L);
             node.setProperty("theta", 10.1D);
             node.setProperty("iota", "bar");
-            node.setProperty("kappa", new String[] {"un", "deux", "trois"});
-            node.setProperty("lambda", new long[] { 10L, 20L, 30L });
             tx.commit();
         }
     }
@@ -59,7 +57,7 @@ public class ExportCsvUseTypeTest {
     public void testExportCsvAll() {
         String fileName = "manyTypes.csv";
         testCall(db, "CALL apoc.export.csv.all($file, {useTypes: true, quotes: 'none'})", map("file", fileName),
-                (r) -> assertResults(fileName, r, "database", 2L, 1L, 18L, true));
+                (r) -> assertResults(fileName, r, "database", 2L, 1L, 16L, true));
         final String expected = Util.readResourceFile("manyTypes.csv");
         assertEquals(expected, readFile(fileName));
 
@@ -75,7 +73,7 @@ public class ExportCsvUseTypeTest {
                         "CALL apoc.export.csv.graph(graph, $file,{useTypes: true, quotes: 'none'}) " +
                         "YIELD nodes, relationships, properties, file, source,format, time " +
                         "RETURN *", map("file", fileName),
-                (r) -> assertResults(fileName, r, "graph", 2L, 1L, 18L, true));
+                (r) -> assertResults(fileName, r, "graph", 2L, 1L, 16L, true));
         final String expected = Util.readResourceFile("manyTypes.csv");
         assertEquals(expected, readFile(fileName));
     }

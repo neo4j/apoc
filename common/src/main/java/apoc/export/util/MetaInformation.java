@@ -118,9 +118,9 @@ public class MetaInformation {
         final boolean isArray = value.isArray();
         value = isArray ? value.getComponentType() : value;
         // csv case
+        // consistent with https://neo4j.com/docs/operations-manual/current/tools/neo4j-admin/neo4j-admin-import/#import-tool-header-format-properties
         if (allowed == null) {
-            return allowedMapping.getOrDefault(primitiveToWrapper(value), "string")
-                    + (isArray ? "[]" : "");
+            return allowedMapping.getOrDefault( primitiveToWrapper(value), "string" );
         }
         // graphML case
         String name = value.getSimpleName().toLowerCase();
