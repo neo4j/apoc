@@ -35,6 +35,7 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.FileTestUtil.assertStreamEquals;
 import static apoc.util.MapUtil.map;
+import static apoc.util.s3.S3TestUtil.assertS3KeyEventually;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
 import static org.junit.Assert.*;
 
@@ -395,8 +396,10 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
     
     private void assertStreamStringEquals(File directoryExpected, String filename, String s3Url) {
-        final String actual = readS3FileToString(s3Url);
-        assertStreamEquals(directoryExpected, filename, actual);
+        assertS3KeyEventually(() -> {
+            final String actual = readS3FileToString(s3Url);
+            assertStreamEquals(directoryExpected, filename, actual);
+        });
     }
 
     private void assertResults(String filename, Map<String, Object> r, final String source) {
