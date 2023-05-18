@@ -70,7 +70,7 @@ public class ExportCypherEnterpriseFeaturesTest {
         session.writeTransaction(tx -> {
             tx.run("CREATE (a:Person:Base {name: 'Phil', surname: 'Meyer', tenantId: 'neo4j', id: 'waBfk3z'}) "
                     + "CREATE (b:Person:Base {name: 'Silvia', surname: 'Jones', tenantId: 'random', id: 'waBfk3z'}) "
-                    + "CREATE (a)-[:KNOWS]->(b)");
+                    + "CREATE (a)-[:KNOWS {foo:2}]->(b)");
             tx.commit();
             return null;
         });
@@ -98,6 +98,92 @@ public class ExportCypherEnterpriseFeaturesTest {
                 map("file", fileName, "config", Util.map("format", "cypher-shell")),
                 (r) -> assertExportStatement(
                         ExportCypherResults.EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT, fileName));
+    }
+
+    @Test
+    public void testExportDataWithCompoundConstraintCypherShell() {
+        testCall(session, """
+                MATCH (start:Person)-[rel:KNOWS]->(end)
+                CALL apoc.export.cypher.data([start, end], [rel], null, $config)
+                YIELD nodeStatements, schemaStatements, relationshipStatements RETURN *""",
+                map("config", Util.map("format", "cypher-shell", "separateFiles", true)),
+                this::assertExportNodesAndRels);
+    }
+
+    @Test
+    public void testExportGraphWithCompoundConstraintCypherShell() {
+        String fileName = "testGraphCypherShellWithCompoundConstraint.cypher";
+        testCall(session, """
+                MATCH (start:Person)-[rel:KNOWS]->(end)
+                WITH {nodes: [start, end], relationships: [rel]} AS graph
+                CALL apoc.export.cypher.graph(graph, null, $config)
+                YIELD nodeStatements, schemaStatements, relationshipStatements RETURN *""",
+                map("file", fileName, "config", Util.map("format", "cypher-shell", "separateFiles", true)),
+                this::assertExportNodesAndRels);
+    }
+
+    @Test
+    public void testExportQueryWithCompoundConstraintCypherShell() {
+        String fileName = "testQueryCypherShellWithCompoundConstraint.cypher";
+        testCall(session, "CALL apoc.export.cypher.query($query, null, {separateFiles: true})",
+                map("query", "MATCH (start:Person)-[rel:KNOWS]->(end) RETURN start, rel, end", "file", fileName),
+                this::assertExportNodesAndRels);
+    }
+
+    private void assertExportNodesAndRels(Map<String, Object> r) {
+        List<String> possibleNodeStatements = List.of("UNWIND [{surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"Snow\", name:\"John\", properties:{}}] AS row\n" +
+                        "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;",
+                "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}] AS row\n" +
+                        "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;");
+        String actual = (String) r.get("nodeStatements");
+        assertTrue(possibleNodeStatements.stream().anyMatch(actual::contains));
+        String schemaStatements = (String) r.get("schemaStatements");
+        List.of("CREATE CONSTRAINT KnowsConsNotNull FOR ()-[rel:KNOWS]-() REQUIRE (rel.foo) IS NOT NULL;",
+                "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;",
+                "CREATE CONSTRAINT KnowsConsUnique FOR ()-[rel:KNOWS]-() REQUIRE (rel.two) IS UNIQUE;")
+                        .forEach(constraint -> assertTrue(String.format("Constraint '%s' not in result", constraint), schemaStatements.contains(constraint) ));
+        assertEquals("""
+                            :begin
+                            UNWIND [{start: {name:"John", surname:"Snow"}, end: {name:"Matt", surname:"Jackson"}, properties:{foo:1}}] AS row
+                            MATCH (start:Person{surname: row.start.surname, name: row.start.name})
+                            MATCH (end:Person{surname: row.end.surname, name: row.end.name})
+                            CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
+                            :commit
+                            """,  r.get("relationshipStatements"));
+    }
+
+    @Test
+    public void testExportDataOnlyRelWithCompoundConstraintCypherShell() {
+        String fileName = "testDataCypherShellWithCompoundConstraint.cypher";
+        testCall(session, """
+                MATCH (start:Person)-[rel:KNOWS]->(end)
+                CALL apoc.export.cypher.data([], [rel], $file, $config)
+                YIELD nodes, relationships, properties RETURN *""",
+                map("file", fileName, "config", Util.map("format", "cypher-shell")), (r) -> {
+                    assertExportOnlyRels(fileName);
+                });
+    }
+
+    @Test
+    public void testExportGraphOnlyRelWithCompoundConstraintCypherShell() {
+        String fileName = "testGraphCypherShellWithCompoundConstraint.cypher";
+        testCall(session, """
+                MATCH (start:Person)-[rel:KNOWS]->(end)
+                WITH {nodes: [], relationships: [rel]} AS graph
+                CALL apoc.export.cypher.graph(graph, $file, $config)
+                YIELD nodes, relationships, properties RETURN *""",
+                map("file", fileName, "config", Util.map("format", "cypher-shell")), (r) -> {
+                    assertExportOnlyRels(fileName);
+                });
+    }
+
+    @Test
+    public void testExportQueryOnlyRelWithCompoundConstraintCypherShell() {
+        String fileName = "testQueryCypherShellWithCompoundConstraint.cypher";
+        testCall(session, "CALL apoc.export.cypher.query($query, $file)",
+                map("query", "MATCH (start:Person)-[rel:KNOWS]->(end) RETURN rel", "file", fileName), (r) -> {
+                    assertExportOnlyRels(fileName);
+                });
     }
 
     @Test
@@ -133,7 +219,7 @@ public class ExportCypherEnterpriseFeaturesTest {
         */
         final String expected =
                 """
-                UNWIND [{start: {name:"Phil", surname:"Meyer"}, end: {name:"Silvia", surname:"Jones"}, properties:{}}] AS row
+                UNWIND [{start: {name:"Phil", surname:"Meyer"}, end: {name:"Silvia", surname:"Jones"}, properties:{foo:2}}] AS row
                 MATCH (start:Person{surname: row.start.surname, name: row.start.name})
                 MATCH (end:Person{surname: row.end.surname, name: row.end.name})
                 CREATE (start)-[r:KNOWS]->(end) SET r += row.properties""";
@@ -158,6 +244,24 @@ public class ExportCypherEnterpriseFeaturesTest {
         } finally {
             afterTwoLabelsWithOneCompoundConstraintEach();
         }
+    }
+
+    private void assertExportOnlyRels(String fileName) {
+        String actual = readFileToString(new File(directory, fileName));
+        final String expected = """
+            :begin
+            CREATE CONSTRAINT KnowsConsNotNull FOR ()-[rel:KNOWS]-() REQUIRE (rel.foo) IS NOT NULL;
+            CREATE CONSTRAINT KnowsConsUnique FOR ()-[rel:KNOWS]-() REQUIRE (rel.two) IS UNIQUE;
+            :commit
+            CALL db.awaitIndexes(300);
+            :begin
+            UNWIND [{start: {_id:0}, end: {_id:1}, properties:{foo:1}}] AS row
+            MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
+            MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
+            CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
+            :commit
+            """;
+        assertEquals(expected, actual);
     }
 
     private void assertExportStatement(String expectedStatement, String fileName) {
