@@ -64,18 +64,28 @@ public class LabelMatcher {
             label = label.substring(1);
         }
 
-        String[] elements = label.split(":");
+        // split any `:` char not preceded by `\`
+        String[] elements = label.split("(?<!\\\\):");
         if (elements.length == 1) {
+            label = sanitizeLabel(label);
             labels.add(label);
         } else if (elements.length > 1) {
             if (compoundLabels == null) {
                 compoundLabels = new ArrayList<>();
             }
 
-            compoundLabels.add(Arrays.asList(elements));
+            List<String> elementsList = Arrays.stream(elements)
+                    .map(this::sanitizeLabel)
+                    .toList();
+            compoundLabels.add(elementsList);
         }
 
         return this;
+    }
+
+    private String sanitizeLabel(String label) {
+        // from `\:` to `:`
+        return label.replaceAll("\\\\:", ":");
     }
 
     public boolean matchesLabels(Set<String> nodeLabels) {

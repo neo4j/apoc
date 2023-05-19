@@ -525,4 +525,71 @@ public class ExpandPathTest {
 					assertEquals(1, maps.size());
 				});
 	}
+
+	@Test
+	public void testLabelWithSpecialChar() {
+		db.executeTransactionally(
+				"CREATE (n:`http://example.com/abc#Object` {one: 'alpha'})-[:REL]->(o:`http://www.w3.org/2002/07/owl#Class`:OwlClass {two: 'beta'})"
+		);
+
+		String pathFilter = ">|<";
+		// match using a single label (`http://www.w3.org/2002/07/owl#Class`)
+		String labelFilter = "/http\\://www.w3.org/2002/07/owl#Class|foo:bar|another";
+
+		Map<String, Object> config = Map.of("pathFilter", pathFilter,
+				"labelFilter", labelFilter);
+
+		TestUtil.testCall(db,
+				"MATCH (node:`http://example.com/abc#Object`) CALL apoc.path.expand(node, '>|<', '/http\\://www.w3.org/2002/07/owl#Class', 0, 2) " +
+						"YIELD path " +
+						"return distinct nodes(path) AS nodes",
+				config,
+				this::specialCharAssertions);
+
+		// with apoc.path.expandConfig
+		TestUtil.testCall(db,
+				"MATCH (node:`http://example.com/abc#Object`) CALL apoc.path.expandConfig(node, $config) " +
+						"YIELD path " +
+						"return distinct nodes(path) AS nodes",
+				Map.of("config", config),
+				this::specialCharAssertions);
+	}
+
+	@Test
+	public void testCompoundLabelWithSpecialChar() {
+		db.executeTransactionally(
+				"CREATE (n:`http://compound.example/abc#Object` {one: 'alpha'})-[:REL]->(o:`/http://www.w3.org/2002/07/owl#Class`:OwlClass:`Go:ku` {two: 'beta'})"
+		);
+
+		String pathFilter = ">|<";
+		// match using multiple labels (`http://www.w3.org/2002/07/owl#Class`, `OwlClass` and `Go:ku`)
+		String labelFilter = "//http\\://www.w3.org/2002/07/owl#Class:OwlClass:Go\\:ku|foo:bar|another";
+
+		Map<String, Object> config = Map.of("pathFilter", pathFilter,
+				"labelFilter", labelFilter);
+
+		TestUtil.testCall(db,
+				"MATCH (node:`http://compound.example/abc#Object`) CALL apoc.path.expand(node, $pathFilter, $labelFilter, 0, 2) " +
+						"YIELD path " +
+						"return distinct nodes(path) AS nodes",
+				config,
+				this::specialCharAssertions);
+
+		// with apoc.path.expandConfig
+		TestUtil.testCall(db,
+				"MATCH (node:`http://compound.example/abc#Object`) " +
+						"CALL apoc.path.expandConfig(node, $config) " +
+						"YIELD path " +
+						"RETURN distinct nodes(path) AS nodes",
+				Map.of("config", config),
+				this::specialCharAssertions);
+	}
+
+	private void specialCharAssertions(Map<String, Object> row) {
+		List<Node> nodes = (List<Node>) row.get("nodes");
+		Map<String, Object> allProperties = nodes.get(0).getAllProperties();
+		assertEquals(Map.of("one", "alpha"), allProperties);
+		Map<String, Object> allProperties1 = nodes.get(1).getAllProperties();
+		assertEquals(Map.of("two", "beta"), allProperties1);
+	}
 }
