@@ -147,6 +147,10 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
                     }
                 });
             });
+
+            AvailabilityGuard availabilityGuard = dependencies.availabilityGuard();
+            registeredListeners.forEach(availabilityGuard::removeListener);
+            registeredListeners.clear();
         }
 
         public Collection<AvailabilityListener> getRegisteredListeners()
