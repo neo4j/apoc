@@ -27,10 +27,11 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -121,6 +122,9 @@ public class ImportAndLoadCoreSecurityTest {
 
     @BeforeClass
     public static void setUp() throws IOException {
+        Logger logger = Logger.getLogger(ImportAndLoadCoreSecurityTest.class.getName());
+        logger.setLevel(Level.SEVERE);
+
         TestUtil.registerProcedure(db,
                 // import procedures (ExportGraphML contains the `apoc.import.graphml` too)
                 ImportJson.class, Xml.class, ImportCsv.class, ExportGraphML.class,
