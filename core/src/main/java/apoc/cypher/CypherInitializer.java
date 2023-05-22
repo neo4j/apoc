@@ -20,6 +20,8 @@ package apoc.cypher;
 
 import apoc.ApocConfig;
 import apoc.SystemLabels;
+import apoc.util.LogsUtil;
+import apoc.util.QueryUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import apoc.version.Version;
@@ -101,13 +103,18 @@ public class CypherInitializer implements AvailabilityListener {
 
                 Configuration config = dependencyResolver.resolveDependency(ApocConfig.class).getConfig();
                 for (String query : collectInitializers(config)) {
-                    try {
-                        // we need to apply a retry strategy here since in systemdb we potentially conflict with
-                        // creating constraints which could cause our query to fail with a transient error.
-                        Util.retryInTx(userLog, db, tx -> Iterators.count(tx.execute(query)), 0, 5, retries -> { });
-                        userLog.info("successfully initialized: " + query);
-                    } catch (Exception e) {
-                        userLog.error("error upon initialization, running: " + query, e);
+                    if (QueryUtil.isValidQuery(query)) {
+                        String sanitizedQuery = LogsUtil.sanitizeQuery(query);
+                        try {
+                            // we need to apply a retry strategy here since in systemdb we potentially conflict with
+                            // creating constraints which could cause our query to fail with a transient error.
+                            Util.retryInTx(userLog, db, tx -> Iterators.count(tx.execute(query)), 0, 5, retries -> { });
+                            userLog.info("successfully initialized: " + sanitizedQuery);
+                        } catch (Exception e) {
+                            userLog.error("error upon initialization, running: " + sanitizedQuery, e);
+                        }
+                    } else {
+                        userLog.error("error upon initialization, invalid query: " + query);
                     }
                 }
             } finally {

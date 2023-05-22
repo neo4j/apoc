@@ -100,6 +100,11 @@ public class StartupTest {
                 );
             }
 
+            String logs = neo4jContainer.getLogs();
+            assertTrue(logs.contains("successfully initialized: CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED"));
+            assertTrue(logs.contains("successfully initialized: GRANT ROLE reader TO dummy"));
+            // The password should have been redacted
+            assertFalse(logs.contains("pass12345"));
             neo4jContainer.close();
         } catch (Exception ex) {
              if (TestContainerUtil.isDockerImageAvailable(ex)) {
