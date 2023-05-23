@@ -36,8 +36,10 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
+import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.logging.NullLog;
 import org.neo4j.procedure.Mode;
+import org.neo4j.values.AnyValue;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
 import org.neo4j.values.storable.PointValue;
 import org.neo4j.values.storable.Values;
@@ -84,6 +86,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -1100,5 +1103,44 @@ public class Util {
         return System.getProperty("os.name")
                 .toLowerCase()
                 .contains("win");
+    }
+
+    public static <T> boolean valueEquals(T one, T other) {
+        if (one == null || other == null) {
+            return false;
+        }
+        return ValueUtils.of(one)
+                .equals(ValueUtils.of(other));
+    }
+
+    // todo - parameterized???
+    public static <T> List<T> removeAll(Collection<T> remove, List<T> second) {
+        return gettStream(remove, second)
+                .collect(Collectors.toList());
+    }
+
+    public static <T> Set<T> removeAll(Collection<T> remove, Set<T> second) {
+        return gettStream(remove, second)
+                .collect(Collectors.toSet());
+    }
+
+
+    public static boolean isaBoolean(Collection<Object> second, Object i) {
+        return second.stream().anyMatch(i2 -> Util.valueEquals(i, i2));
+    }
+
+    private static <T> Stream<T> gettStream(Collection<T> remove, Collection<T> second) {
+        return remove.stream()
+                .filter(i -> isNoneMatch(second, i));
+    }
+
+    private static <T> boolean isNoneMatch(Collection<T> second, T i) {
+        return second.stream().noneMatch(i2 -> Util.valueEquals(i, i2));
+    }
+
+    public static <T> List<AnyValue> toAnyValues(List<T> second) {
+        return second.stream()
+                .map(ValueUtils::of)
+                .collect(Collectors.toList());
     }
 }

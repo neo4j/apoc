@@ -40,6 +40,12 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class CollTest {
+    private static final String QUERY_WITH_ARRAY = "CREATE (:Test {a: 1, something: 'alpha' }), " +
+            "(:Test { a: 2, something: [] }), " +
+            "(:Test { a: 3, something: 'beta' })";
+    private static final String sss = "MATCH (n:Test) " +
+            "WITH n ORDER BY n.a " +
+            "WITH COLLECT({something: n.something}) as collection \n";
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
@@ -204,6 +210,22 @@ public class CollTest {
     }
 
     @Test
+    public void testIndexOfWithCollections() {
+        db.executeTransactionally("CREATE (:Test { someArray: [true, false, true] }), (:Test { someArray: [] })");
+        testCall(db, """
+                        MATCH (n:Test)
+                        WITH COLLECT({
+                            someArray: n.someArray
+                        }) as collection
+                        RETURN apoc.coll.indexOf(collection, { someArray: [] }) AS index""",
+                r -> {
+                    long index = (long) r.get("index");
+                    assertTrue("Actual index is " + index,
+                            index == 1L || index == 2L);
+                });
+    }
+
+    @Test
     public void testSplit() {
         testResult(db, "CALL apoc.coll.split([1,2,3,2,4,5],2)", r -> {
             assertEquals(asList(1L), r.next().get("value"));
@@ -228,6 +250,72 @@ public class CollTest {
             assertEquals(asList(1L, 2L, 3L), r.next().get("value"));
             assertFalse(r.hasNext());
         });
+    }
+
+    @Test
+    public void testSplitOfWithCollections() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+        testResult(db, """
+                        MATCH (n:Test)
+                        WITH n ORDER BY n.a
+                        WITH COLLECT({
+                            something: n.something
+                        }) as collection
+                        CALL apoc.coll.split(collection, { something: [] }) YIELD value RETURN value""",
+                r -> {
+                    Map<String, Object> row = r.next();
+                    List<Map<String, Object>> value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(List.of(Map.of("something", "alpha")), value);
+                    row = r.next();
+                    value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(List.of(Map.of("something", "beta")), value);
+
+                    assertFalse(r.hasNext());
+                });
+    }
+
+    @Test
+    public void testCollToSet() {
+        db.executeTransactionally("CREATE (:Test {a: 1, something: 'alpha' }), " +
+                "(:Test { a: 2, something: [] }), " +
+                "(:Test { a: 1, something: 'alpha' })");
+
+        testCall(db, """
+                        MATCH (n:Test)
+                        WITH n ORDER BY n.a
+                        WITH COLLECT({
+                            something: n.something
+                        }) + { something: [] } AS collection
+                        RETURN apoc.coll.toSet(collection) AS value""",
+                row -> {
+                    List<Map<String, Object>> value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(List.of(Map.of("something", "alpha")), value);
+                });
+    }
+
+    @Test
+    public void testSplitOfWithCollections1() {
+        db.executeTransactionally("CREATE (:Test {a: 1, something: [1,2,3] }), " +
+                "(:Test { a: 2, something: [1,2,2] }), " +
+                "(:Test { a: 4, something: [1,2,4] }), ");
+
+        testResult(db, """
+                        MATCH (n:Test)
+                        WITH n ORDER BY n.a
+                        WITH COLLECT({
+                            something: n.something
+                        }) as collection
+                        RETURN apoc.coll.sortMaps(collection, 'something') AS value""",
+                r -> {
+                    Map<String, Object> row = r.next();
+                    List<Map<String, Object>> value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(List.of(Map.of("something", "alpha")), value);
+                    row = r.next();
+                    value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(List.of(Map.of("something", "beta")), value);
+
+                    assertFalse(r.hasNext());
+                });
     }
 
     @Test
@@ -288,6 +376,51 @@ public class CollTest {
         testCall(db, "RETURN apoc.coll.containsAll(null,[1,2,3]) AS value", (res) -> assertEquals(false, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAll(null,null) AS value", (res) -> assertEquals(false, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAll([1,2,3],null) AS value", (res) -> assertEquals(false, res.get("value")));
+    }
+
+    // todo - test names
+
+    @Test
+    public void testContainsAllOfWithCollections() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+
+        testResult(db, """
+                        MATCH (n:Test)
+                        WITH n ORDER BY n.a
+                        WITH COLLECT({
+                            something: n.something
+                        }) as collection
+                        RETURN apoc.coll.containsAll(collection, [{ something: [] }]) AS value""",
+                r -> {
+                    Map<String, Object> row = r.next();
+                    boolean value = (boolean) row.get("value");
+                    assertEquals(true, value);
+//                    assertEquals(List.of(Map.of("something", "alpha")), value);
+//                    row = r.next();
+//                    value = (List<Map<String, Object>>) row.get("value");
+//                    assertEquals(List.of(Map.of("something", "beta")), value);
+
+                    assertFalse(r.hasNext());
+                });
+    }
+
+    @Test
+    public void testContainsAllOfWithCollections1() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+
+        testCall(db, sss + "RETURN apoc.coll.intersection(collection, [{ something: [] }]) AS value",
+                row -> {
+                    List<Map> value = ((List<Map>) row.get("value"));
+                    assertMapWithEmptyArray(value);
+                });
+    }
+
+    private static void assertMapWithEmptyArray(List<Map> value) {
+        assertEquals(1, value.size());
+        Map map = value.get(0);
+        assertEquals(1, map.size());
+
+        assertArrayEquals(new String[]{}, (String[]) map.get("something"));
     }
 
     @Test
@@ -442,6 +575,7 @@ public class CollTest {
                 });
     }
 
+    // todo - these??
     @Test
     public void testSetOperations() {
         testCall(db, "RETURN apoc.coll.union([1,2],[3,2]) AS value", r -> assertEquals(asSet(asList(1L, 2L, 3L)), asSet((Iterable) r.get("value"))));
@@ -452,6 +586,42 @@ public class CollTest {
         testCall(db, "RETURN apoc.coll.subtract([1,2],[3,2]) AS value", r -> assertEquals(asSet(asList(1L)), asSet((Iterable) r.get("value"))));
         testCall(db, "RETURN apoc.coll.unionAll([1,2],[3,2]) AS value", r -> assertEquals(asList(1L, 2L, 3L, 2L), r.get("value")));
         testCall(db, "RETURN apoc.coll.removeAll([1,2],[3,2]) AS value", r -> assertEquals(asList(1L), r.get("value")));
+    }
+
+    @Test
+    public void testSubtractWithArray() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+
+        testCall(db, """
+                        MATCH (n:Test)
+                        WITH n ORDER BY n.a
+                        WITH COLLECT({
+                            something: n.something
+                        }) as collection
+                        RETURN apoc.coll.subtract(collection, [{ something: [] }]) AS value""",
+                row -> {
+                    List<Map> value = (List<Map>) row.get("value");
+                    List<Map<String, String>> expected = List.of(Map.of("something", "alpha"), Map.of("something", "beta"));
+                    assertEquals(expected, value);
+                });
+    }
+
+    @Test
+    public void testRemoveAllWithArray() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+
+        testCall(db, """
+                        MATCH (n:Test)
+                        WITH n ORDER BY n.a
+                        WITH COLLECT({
+                            something: n.something
+                        }) as collection
+                        RETURN apoc.coll.removeAll(collection, [{ something: [] }]) AS value""",
+                row -> {
+                    List<Map> value = (List<Map>) row.get("value");
+                    List<Map<String, String>> expected = List.of(Map.of("something", "alpha"), Map.of("something", "beta"));
+                    assertEquals(expected, value);
+                });
     }
 
     @Test

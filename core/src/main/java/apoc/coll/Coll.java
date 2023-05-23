@@ -19,7 +19,9 @@
 package apoc.coll;
 
 import apoc.result.ListResult;
+import apoc.util.Util;
 import com.google.common.util.concurrent.AtomicDouble;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
@@ -29,28 +31,17 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
+import org.neo4j.values.AnyValue;
 
 import java.lang.reflect.Array;
 import java.text.Collator;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Random;
-import java.util.RandomAccess;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -58,6 +49,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static apoc.util.Util.isaBoolean;
+import static apoc.util.Util.toAnyValues;
 import static java.util.Arrays.asList;
 
 public class Coll {
@@ -389,12 +382,12 @@ public class Coll {
 	    if (list==null || list.isEmpty()) return Stream.empty();
         List<Object> l = new ArrayList<>(list);
         List<List<Object>> result = new ArrayList<>(10);
-        int idx = l.indexOf(value);
+        int idx = extracted(l, value);
         while (idx != -1) {
             List<Object> subList = l.subList(0, idx);
             if (!subList.isEmpty()) result.add(subList);
             l = l.subList(idx+1,l.size());
-            idx = l.indexOf(value);
+            idx = extracted(l, value);// l.indexOf(value);
         }
         if (!l.isEmpty()) result.add(l);
         return result.stream().map(ListResult::new);
@@ -471,14 +464,35 @@ public class Coll {
     public long indexOf(@Name("coll") List<Object> coll, @Name("value") Object value) {
         // return reduce(res=[0,-1], x in $list | CASE WHEN x=$value AND res[1]=-1 THEN [res[0], res[0]+1] ELSE [res[0]+1, res[1]] END)[1] as value
         if (coll == null || coll.isEmpty()) return -1;
-        return  new ArrayList<>(coll).indexOf(value);
+        return new ArrayList<>(toAnyValues(coll)).indexOf(ValueUtils.of(value));
+    }
+//    @UserFunction("apoc.coll.indexOf")
+//    @Description("Returns the index for the first occurrence of the specified value in the list.")
+//    public long indexOf(@Name("coll") List<Object> coll, @Name("value") Object value) {
+//        // return reduce(res=[0,-1], x in $list | CASE WHEN x=$value AND res[1]=-1 THEN [res[0], res[0]+1] ELSE [res[0]+1, res[1]] END)[1] as value
+//        return extracted(coll, value);
+//    }
+
+    private int extracted(List<Object> coll, Object value) {
+        return ListUtils.indexOf(coll,
+                (i) -> Util.valueEquals(i, value)// ValueUtils.of(i).equals(ValueUtils.of(value))
+        );
     }
 
     @UserFunction("apoc.coll.containsAll")
     @Description("Returns whether or not all of the given values exist in the given collection (using a HashSet).")
     public boolean containsAll(@Name("coll1") List<Object> coll, @Name("coll2") List<Object> values) {
         if (coll == null || coll.isEmpty() || values == null) return false;
-        return new HashSet<>(coll).containsAll(values);
+        // todo - forse anche questo??
+//        CollectionUtils.containsAll(coll, values, null)
+        Set<Object> objects = new HashSet<>(coll);
+//        values.stream().allMatch(i -> objects.removeIf(i1 -> i1.equals()))
+
+        return values.stream()
+                .allMatch( i -> isaBoolean(objects, i));
+//                .allMatch( i -> isaBoolean(objects, i) objects.stream().anyMatch(i1 -> Util.valueEquals(i, i1)/* i1.equals(i)*/) );
+//                .containsAll(values);
+//        return new HashSet<>(coll).containsAll(values);
     }
 
     @UserFunction("apoc.coll.containsSorted")
@@ -522,7 +536,8 @@ public class Coll {
     @Description("Returns a unique list from the given list.")
     public List<Object> toSet(@Name("coll") List<Object> list) {
 	    if (list == null) return null;
-        return new SetBackedList(new LinkedHashSet(list));
+        List<AnyValue> anyValues = toAnyValues(list);
+        return new SetBackedList(new LinkedHashSet(anyValues));
     }
 
     @UserFunction("apoc.coll.sumLongs")
@@ -602,11 +617,19 @@ public class Coll {
     @UserFunction("apoc.coll.removeAll")
     @Description("Returns the first list with all elements of the second list removed.")
     public List<Object> removeAll(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
-		if (first == null) return null;
-        List<Object> list = new ArrayList<>(first);
-        if (second!=null) list.removeAll(second);
+        if (first == null) return null;
+        List<Object> list = new ArrayList<>(toAnyValues(first));
+        if (second!=null) list.removeAll(toAnyValues(second));
         return list;
     }
+//    @UserFunction("apoc.coll.removeAll")
+//    @Description("Returns the first list with all elements of the second list removed.")
+//    public List<Object> removeAll(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
+//		if (first == null) return null;
+//        List<Object> list = new ArrayList<>(first);
+//        if (second!=null) list = Util.removeAll(list, second);
+//        return list;
+//    }
     @UserFunction("apoc.coll.subtract")
     @Description("Returns the first list as a set with all the elements of the second list removed.")
     public List<Object> subtract(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
@@ -620,8 +643,8 @@ public class Coll {
     @Description("Returns the distinct intersection of two lists.")
     public List<Object> intersection(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
         if (first == null || second == null) return Collections.emptyList();
-        Set<Object> set = new HashSet<>(first);
-        set.retainAll(second);
+        Set<Object> set =first.stream().filter(i -> isaBoolean(second, i))
+                .collect(Collectors.toSet());
         return new SetBackedList(set);
     }
 
