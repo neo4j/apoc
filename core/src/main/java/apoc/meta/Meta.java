@@ -148,8 +148,7 @@ public class Meta {
             right = rightCount / count;
             return this;
         }
-
-
+        
         public MetaItem other(List<String> labels) {
             for (String l : labels) {
                 if (!this.other.contains(l)) this.other.add(l);
