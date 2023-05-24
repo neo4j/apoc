@@ -26,6 +26,7 @@ import apoc.export.util.ExportConfig;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.collection.Iterators;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.io.IOUtils;
@@ -86,7 +87,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -1113,34 +1113,20 @@ public class Util {
                 .equals(ValueUtils.of(other));
     }
 
-    // todo - parameterized???
-    public static <T> List<T> removeAll(Collection<T> remove, List<T> second) {
-        return gettStream(remove, second)
-                .collect(Collectors.toList());
+    public static boolean containsValueEquals(Collection<Object> collection, Object value) {
+        return collection.stream()
+                .anyMatch(i -> Util.valueEquals(value, i));
     }
 
-    public static <T> Set<T> removeAll(Collection<T> remove, Set<T> second) {
-        return gettStream(remove, second)
-                .collect(Collectors.toSet());
-    }
-
-
-    public static boolean isaBoolean(Collection<Object> second, Object i) {
-        return second.stream().anyMatch(i2 -> Util.valueEquals(i, i2));
-    }
-
-    private static <T> Stream<T> gettStream(Collection<T> remove, Collection<T> second) {
-        return remove.stream()
-                .filter(i -> isNoneMatch(second, i));
-    }
-
-    private static <T> boolean isNoneMatch(Collection<T> second, T i) {
-        return second.stream().noneMatch(i2 -> Util.valueEquals(i, i2));
-    }
-
-    public static <T> List<AnyValue> toAnyValues(List<T> second) {
-        return second.stream()
+    public static <T> List<AnyValue> toAnyValues(List<T> list) {
+        return list.stream()
                 .map(ValueUtils::of)
                 .collect(Collectors.toList());
+    }
+
+    public static int indexOf(List<Object> list, Object value) {
+        return ListUtils.indexOf(list,
+                (i) -> Util.valueEquals(i, value)
+        );
     }
 }
