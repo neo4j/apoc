@@ -40,6 +40,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static apoc.export.ExportCoreSecurityTest.FILENAME;
@@ -85,6 +87,9 @@ public class ExportArrowSecurityTest {
 
     @BeforeClass
     public static void setUp() {
+        Logger logger = Logger.getLogger(ExportArrowSecurityTest.class.getName());
+        logger.setLevel(Level.SEVERE);
+
         TestUtil.registerProcedure(db, ExportArrow.class, Meta.class);
     }
 

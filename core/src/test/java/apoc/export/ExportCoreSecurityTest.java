@@ -46,6 +46,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static apoc.export.SecurityTestUtil.ERROR_KEY;
@@ -83,6 +85,9 @@ public class ExportCoreSecurityTest {
 
     @BeforeClass
     public static void setUp() {
+        Logger logger = Logger.getLogger(ExportCoreSecurityTest.class.getName());
+        logger.setLevel(Level.SEVERE);
+
         TestUtil.registerProcedure(db, ExportCSV.class, ExportJson.class, ExportGraphML.class, ExportCypher.class);
     }
 
