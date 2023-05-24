@@ -55,7 +55,7 @@ public class ExportCsvUseTypeTest {
 
     @Test
     public void testExportCsvAll() {
-        String fileName = "manyTypes.csv";
+        String fileName = "output.csv";
         testCall(db, "CALL apoc.export.csv.all($file, {useTypes: true, quotes: 'none'})", map("file", fileName),
                 (r) -> assertResults(fileName, r, "database", 2L, 1L, 16L, true));
         final String expected = Util.readResourceFile("manyTypes.csv");
@@ -68,12 +68,24 @@ public class ExportCsvUseTypeTest {
 
     @Test
     public void testExportCsvGraph() {
-        String fileName = "manyTypes.csv";
+        String fileName = "output.csv";
         testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
                         "CALL apoc.export.csv.graph(graph, $file,{useTypes: true, quotes: 'none'}) " +
                         "YIELD nodes, relationships, properties, file, source,format, time " +
                         "RETURN *", map("file", fileName),
                 (r) -> assertResults(fileName, r, "graph", 2L, 1L, 16L, true));
+        final String expected = Util.readResourceFile("manyTypes.csv");
+        assertEquals(expected, readFile(fileName));
+    }
+
+    @Test
+    public void testExportCsvData() {
+        String fileName = "output.csv";
+        testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
+                        "CALL apoc.export.csv.data(graph.nodes, graph.relationships, $file,{useTypes: true, quotes: 'none'}) " +
+                        "YIELD nodes, relationships, properties, file, source,format, time " +
+                        "RETURN *", map("file", fileName),
+                (r) -> assertResults(fileName, r, "data", 2L, 1L, 16L, true));
         final String expected = Util.readResourceFile("manyTypes.csv");
         assertEquals(expected, readFile(fileName));
     }

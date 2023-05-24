@@ -176,8 +176,8 @@ public class CsvFormat {
         writeRels(graph, out, reporter, getNamesHeader(relHeader, REL_HEADER_FIXED_COLUMNS.length), cols, nodeHeader.size(), config.getBatchSize());
     }
 
-    private List<String> getNamesHeader(List<Map.Entry<String, String>> nodeHeader, int length) {
-        return nodeHeader.subList(length, nodeHeader.size())
+    private List<String> getNamesHeader(List<Map.Entry<String, String>> header, int length) {
+        return header.subList(length, header.size())
                 .stream()
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
