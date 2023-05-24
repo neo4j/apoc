@@ -79,6 +79,10 @@ import static java.lang.String.format;
 import static org.neo4j.internal.kernel.api.TokenRead.ANY_LABEL;
 import static org.neo4j.internal.kernel.api.TokenRead.ANY_RELATIONSHIP_TYPE;
 
+/**
+ * The Meta class provides metadata-related operations and functions for working with Neo4j graph database.
+ * It is part of the APOC (Awesome Procedures on Cypher) library.
+ */
 public class Meta {
 
     @Context
@@ -92,6 +96,10 @@ public class Meta {
 
     @Context public Log log;
 
+
+    /**
+     * Represents the result of a metadata operation.
+     */
     public static class MetaResult {
         public String label;
         public String property;
@@ -109,6 +117,9 @@ public class Meta {
         public String elementType;
     }
 
+    /**
+     * Represents a specific metadata item, extending MetaResult.
+     */
     public static class MetaItem extends MetaResult {
         public long leftCount; // 0,1,
         public long rightCount; // 0,1,many
@@ -127,6 +138,7 @@ public class Meta {
             count ++;
             return this;
         }
+
         public MetaItem rel(long out, long in) {
             this.type = Types.RELATIONSHIP.name();
             if (out>1) array = true;
@@ -136,7 +148,7 @@ public class Meta {
             right = rightCount / count;
             return this;
         }
-
+        
         public MetaItem other(List<String> labels) {
             for (String l : labels) {
                 if (!this.other.contains(l)) this.other.add(l);
@@ -201,6 +213,10 @@ public class Meta {
         return result;
     }
 
+    /**
+     * The MetaStats class represents metadata statistics collected from the transactional database.
+     * It includes counts for labels, relationship types, property keys, nodes, relationships, and various maps for stats.
+     */
     public static class MetaStats {
         public final long labelCount;
         public final long relTypeCount;
@@ -212,6 +228,18 @@ public class Meta {
         public final Map<String,Long> relTypesCount;
         public final Map<String,Object> stats;
 
+        /**
+         * Constructs a MetaStats object with the provided metadata statistics.
+         *
+         * @param labelCount       The count of labels in the database.
+         * @param relTypeCount     The count of relationship types in the database.
+         * @param propertyKeyCount The count of property keys in the database.
+         * @param nodeCount        The count of nodes in the database.
+         * @param relCount         The count of relationships in the database.
+         * @param labels           A map of label names and their corresponding counts.
+         * @param relTypes         A map of relationship type names and their corresponding counts.
+         * @param relTypesCount    A map of relationship type names and their total count.
+         */
         public MetaStats(long labelCount, long relTypeCount, long propertyKeyCount, long nodeCount, long relCount, Map<String, Long> labels, Map<String, Long> relTypes, Map<String, Long> relTypesCount) {
             this.labelCount = labelCount;
             this.relTypeCount = relTypeCount;
@@ -227,6 +255,9 @@ public class Meta {
         }
     }
 
+    /**
+     * The StatsCallback interface defines callback methods for collecting label and relationship statistics.
+     */
     interface StatsCallback {
         void label(int labelId, String labelName, long count);
         void rel(int typeId, String typeName, long count);
@@ -285,6 +316,11 @@ public class Meta {
                 .reduce(0L, Math::addExact);
     }
 
+    /**
+     * Collects statistics about the graph database.
+     *
+     * @return The collected statistics about the graph database.
+     */
     private MetaStats collectStats() {
         Map<String, Long> relStatsCount = new LinkedHashMap<>();
         TokenRead tokenRead = kernelTx.tokenRead();
@@ -329,6 +365,14 @@ public class Meta {
                 relStatsCount);
     }
 
+    /**
+     * Collects statistics about a subgraph of the database.
+     *
+     * @param subGraph      The subgraph to collect statistics for.
+     * @param labelNames    Optional collection of label names to filter the statistics. Defaults to null if not provided.
+     * @param relTypeNames  Optional collection of relationship type names to filter the statistics. Defaults to null if not provided.
+     * @param cb            The callback to receive the collected statistics.
+     */
     private void collectStats(SubGraph subGraph, Collection<String> labelNames, Collection<String> relTypeNames, StatsCallback cb) {
         TokenRead tokenRead = kernelTx.tokenRead();
 
@@ -452,9 +496,16 @@ public class Meta {
         }
     }
 
+    /**
+     * Collects metadata for generating a "Tables 4 Labels" profile based on the provided configuration. This method
+     * examines the graph schema and counts the occurrences of labels and relationships. It also observes nodes and their
+     * relationships, applying sampling and filtering based on the configuration. The collected metadata is stored in a
+     * Tables4LabelsProfile object.
+     */
     private Tables4LabelsProfile collectTables4LabelsProfile(MetaConfig config) {
         Tables4LabelsProfile profile = new Tables4LabelsProfile();
 
+        // Collect constraints from the schema
         Schema schema = tx.schema();
 
         for (ConstraintDefinition cd : schema.getConstraints()) {
@@ -476,6 +527,7 @@ public class Meta {
             }
         }
 
+        // Get label counts from the label count store
         Map<String, Long> countStore = getLabelCountStore(transaction, kernelTx);
 
         Set<String> includeLabels = config.getIncludeLabels();
@@ -484,6 +536,7 @@ public class Meta {
         Set<String> includeRels = config.getIncludeRels();
         Set<String> excludeRels = config.getExcludeRels();
 
+        // Iterate over labels in the graph
         for (Label label : tx.getAllLabelsInUse()) {
             String labelName = label.name();
 
@@ -522,6 +575,11 @@ public class Meta {
 
     // End new code
 
+    /**
+     * Collects metadata for generating a metadata map based on the provided subgraph and configuration. This method iterates
+     * over the labels and relationships in the subgraph, collects various metadata information, and stores it in the
+     * metadata map.
+     */
     private Map<Set<String>, Map<String, MetaItem>> collectMetaData(SubGraph graph, SampleMetaConfig config) {
         Map<Set<String>, Map<String, MetaItem>> metaData = new LinkedHashMap<>(100);
 
@@ -796,6 +854,9 @@ public class Meta {
         return res;
     }
 
+    /**
+     * Represents a pattern used for matching relationships between nodes.
+     */
     static class Pattern {
         private final String from;
         private final String type;
@@ -866,6 +927,16 @@ public class Meta {
         return metaGraph(subGraph,null, null, true, metaConfig.getSampleMetaConfig());
     }
 
+    /**
+     * Generates a meta-graph based on the provided sub-graph and configuration.
+     *
+     * @param subGraph       The sub-graph to generate the meta-graph from.
+     * @param labelNames     (optional) A collection of label names to consider. If not specified, all labels in the sub-graph will be used.
+     * @param relTypeNames   (optional) A collection of relationship type names to consider. If not specified, all relationship types in the sub-graph will be used.
+     * @param removeMissing  A boolean value indicating whether non-existing relationships should be filtered out from the meta-graph.
+     * @param metaConfig     Configuration options for the meta-graph generation.
+     * @return A stream of GraphResult objects representing the generated meta-graph.
+     */
     private Stream<GraphResult> metaGraph(SubGraph subGraph, Collection<String> labelNames, Collection<String> relTypeNames, boolean removeMissing, SampleMetaConfig metaConfig) {
         TokenRead tokenRead = kernelTx.tokenRead();
 
@@ -913,6 +984,9 @@ public class Meta {
         return Stream.of(graphResult);
     }
 
+    /**
+     * Filters out non-existing relationships from the provided map of patterns to relationships in the meta-graph.
+     */
     private void filterNonExistingRelationships(Map<Pattern, Relationship> vRels, SampleMetaConfig metaConfig) {
         Set<Pattern> rels = vRels.keySet();
         Map<Pair<String,String>,Set<Pattern>> aggregated = new HashMap<>();
@@ -927,6 +1001,14 @@ public class Meta {
                 .forEach(vRels::remove);
     }
 
+    /**
+     * Checks if a relationship exists in the database with a degree check.
+     *
+     * @param p             The pattern representing the relationship.
+     * @param relationship  The relationship to check existence for.
+     * @param metaConfig    Configuration options for the meta-graph generation.
+     * @return A boolean value indicating whether the relationship exists in the database.
+     */
     private boolean relationshipExistsWithDegreeCheck(Pattern p, Relationship relationship, SampleMetaConfig metaConfig) {
         if (relationship == null) return false;
         double degreeFrom = (double)(long)relationship.getProperty("out")  / (long) relationship.getStartNode().getProperty("count");
