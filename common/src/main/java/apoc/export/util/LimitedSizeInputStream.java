@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class LimitedSizeInputStream extends InputStream {
-    public static final String SIZE_EXCEEDED_ERROR = "The file dimension exceeded maximum size in bytes. \n" +
-            "The InputStream has been blocked because the file could be a compression bomb attack.";
+    public static final String SIZE_EXCEEDED_ERROR = """
+            The file dimension exceeded maximum size in bytes, %s,
+            which is %s times the width of the original file.
+            The InputStream has been blocked because the file could be a compression bomb attack.""";
+
+    public static final int SIZE_MULTIPLIER = 100;
 
     private final InputStream stream;
     private final long maxSize;
@@ -24,11 +28,6 @@ public class LimitedSizeInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte b[]) throws IOException {
-        return read(b, 0, b.length);
-    }
-
-    @Override
     public int read(byte b[], int off, int len) throws IOException {
         int i = stream.read(b, off, len);
         if (i >= 0) incrementCounter(i);
@@ -39,13 +38,15 @@ public class LimitedSizeInputStream extends InputStream {
         total += size;
         if (total > maxSize) {
             close();
-            throw new IOException(SIZE_EXCEEDED_ERROR);
+            String msgError = String.format(SIZE_EXCEEDED_ERROR,
+                    maxSize, SIZE_MULTIPLIER);
+            throw new IOException(msgError);
         }
     }
 
     public static InputStream toLimitedIStream(InputStream stream, long total) {
         // to prevent potential bomb attack
-        return new LimitedSizeInputStream(stream, total * 100);
+        return new LimitedSizeInputStream(stream, total * SIZE_MULTIPLIER);
     }
 
 }

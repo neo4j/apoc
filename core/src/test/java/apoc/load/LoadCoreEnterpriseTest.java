@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import java.util.stream.LongStream;
 
 import static apoc.export.util.LimitedSizeInputStream.SIZE_EXCEEDED_ERROR;
+import static apoc.export.util.LimitedSizeInputStream.SIZE_MULTIPLIER;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertThrows;
@@ -46,7 +47,7 @@ public class LoadCoreEnterpriseTest {
     @BeforeClass
     public static void beforeClass() {
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
-                .withNeo4jConfig("server.memory.heap.max_size", "2GB");
+                .withNeo4jConfig("server.memory.heap.max_size", "1GB");
         neo4jContainer.start();
 
         assertTrue(neo4jContainer.isRunning());
@@ -128,8 +129,10 @@ public class LoadCoreEnterpriseTest {
     public void testLoadJsonShouldPreventCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
+            String fileName = COMPRESSED_JSON_FILE + algoName;
             testMaxSizeExceeded("CALL apoc.load.json($file, '', {compression: $compression})",
-                    Map.of("file", COMPRESSED_JSON_FILE + algoName, "compression", algoName));
+                    Map.of("file", fileName, "compression", algoName),
+                    new File(directory, fileName).length());
         });
     }
 
@@ -141,7 +144,7 @@ public class LoadCoreEnterpriseTest {
                 byte[] bytes = bytesFromFile(COMPRESSED_XML_FILE, algoName);
 
                 testMaxSizeExceeded("CALL apoc.load.xml($file, null, {compression: $compression})",
-                        Map.of("file", bytes, "compression", algoName));
+                        Map.of("file", bytes, "compression", algoName), bytes.length);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -156,7 +159,7 @@ public class LoadCoreEnterpriseTest {
                 byte[] bytes = bytesFromFile(COMPRESSED_JSON_FILE, algoName);
 
                 testMaxSizeExceeded("CALL apoc.load.json($file, '', {compression: $compression})",
-                        Map.of("file", bytes, "compression", algoName));
+                        Map.of("file", bytes, "compression", algoName), bytes.length);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -167,8 +170,10 @@ public class LoadCoreEnterpriseTest {
     public void testLoadXmlShouldPreventBinaryCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
+            String fileName = COMPRESSED_XML_FILE + algoName;
             testMaxSizeExceeded("CALL apoc.load.xml($file, null, {compression: $compression})",
-                    Map.of("file", COMPRESSED_XML_FILE + algoName, "compression", algoName));
+                    Map.of("file", fileName, "compression", algoName),
+                    new File(directory, fileName).length());
         });
     }
 
@@ -180,7 +185,7 @@ public class LoadCoreEnterpriseTest {
                 byte[] bytes = bytesFromFile(COMPRESSED_JSON_FILE, algoName);
 
                 testMaxSizeExceeded("RETURN apoc.util.decompress($file, {compression: $algo})",
-                        Map.of("file", bytes, "algo", algoName));
+                        Map.of("file", bytes, "algo", algoName), bytes.length);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -195,15 +200,16 @@ public class LoadCoreEnterpriseTest {
 
     private static byte[] bytesFromFile(String compressedXmlFile, String algoName) throws IOException {
         Path path = new File(directory, compressedXmlFile + algoName).toPath();
-        byte[] bytes = Files.readAllBytes(path);
-        return bytes;
+        return Files.readAllBytes(path);
     }
 
-    private void testMaxSizeExceeded(String query, Map<String, Object> params) {
+    private void testMaxSizeExceeded(String query, Map<String, Object> params, long fileSize) {
         RuntimeException e = assertThrows(RuntimeException.class,
                 () -> testCall( session, query, params, r -> {} )
         );
 
-        Assertions.assertThat(e.getMessage()).contains(SIZE_EXCEEDED_ERROR);
+        String sizeExceededError = String.format(SIZE_EXCEEDED_ERROR,
+                fileSize * SIZE_MULTIPLIER, SIZE_MULTIPLIER);
+        Assertions.assertThat(e.getMessage()).contains(sizeExceededError);
     }
 }
