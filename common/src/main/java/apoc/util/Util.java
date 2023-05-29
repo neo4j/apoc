@@ -1057,19 +1057,20 @@ public class Util {
         return switch (type) {
             case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS -> ConstraintCategory.NODE;
             case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE -> ConstraintCategory.RELATIONSHIP;
-            default -> throw new IllegalStateException("Constraint with a type not supported by apoc");
         };
     }
 
     public static ConstraintCategory getConstraintCategory(ConstraintDescriptor descriptor) {
         if (descriptor.isNodeUniquenessConstraint() ||
                 descriptor.isNodePropertyExistenceConstraint() ||
-                descriptor.isNodeKeyConstraint()) {
+                descriptor.isNodeKeyConstraint() ||
+                descriptor.isNodePropertyTypeConstraint()) {
             return ConstraintCategory.NODE;
         }
         if (descriptor.isRelationshipKeyConstraint() ||
                 descriptor.isRelationshipPropertyExistenceConstraint() ||
-                descriptor.isRelationshipUniquenessConstraint()) {
+                descriptor.isRelationshipUniquenessConstraint() ||
+                descriptor.isRelationshipPropertyTypeConstraint()) {
             return ConstraintCategory.RELATIONSHIP;
         }
         return ConstraintCategory.NODE;
