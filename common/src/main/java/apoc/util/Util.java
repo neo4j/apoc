@@ -1055,8 +1055,9 @@ public class Util {
 
     public static ConstraintCategory getConstraintCategory(ConstraintType type) {
         return switch (type) {
-            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS -> ConstraintCategory.NODE;
-            case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE -> ConstraintCategory.RELATIONSHIP;
+            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS, NODE_PROPERTY_TYPE -> ConstraintCategory.NODE;
+            case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE, RELATIONSHIP_PROPERTY_TYPE -> ConstraintCategory.RELATIONSHIP;
+            default -> throw new IllegalStateException("Constraint with a type not supported by apoc");
         };
     }
 
@@ -1074,6 +1075,13 @@ public class Util {
             return ConstraintCategory.RELATIONSHIP;
         }
         return ConstraintCategory.NODE;
+    }
+
+    public static boolean constraintIsUnique(ConstraintType type) {
+        return type == ConstraintType.NODE_KEY ||
+                type == ConstraintType.RELATIONSHIP_KEY ||
+                type == ConstraintType.UNIQUENESS ||
+                type == ConstraintType.RELATIONSHIP_UNIQUENESS;
     }
 
     public static boolean isNodeCategory(ConstraintType type) {

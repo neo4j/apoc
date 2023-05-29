@@ -174,13 +174,12 @@ public class SchemasEnterpriseFeaturesTest {
 
         testResult(session, CALL_SCHEMA_NODES_ORDERED, (result) -> {
             Map<String, Object> r = result.next();
-            System.out.println("GEM " + r);
             assertEquals("Movie", r.get("label"));
             assertEquals(List.of("first"), r.get("properties"));
             assertEquals(":Movie(first)", r.get("name"));
             assertEquals("", r.get("status"));
             assertEquals("NODE_PROPERTY_TYPE", r.get("type"));
-            final String expectedUserDescConstraint = "name='node_prop_type_movie', type='NODE PROPERTY TYPE', schema=(:Movie first), ownedIndex";
+            final String expectedUserDescConstraint = "name='node_prop_type_movie', type='NODE PROPERTY TYPE', schema=(:Movie {first}), propertyType=INTEGER";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
 
             assertFalse(result.hasNext());
@@ -348,11 +347,11 @@ public class SchemasEnterpriseFeaturesTest {
 
         HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
         AssertSchemaResult sinceConstraint = new AssertSchemaResult("SINCE", "day");
-        sinceConstraint.unique = true;
+        sinceConstraint.unique = false;
         expectedResult.add(sinceConstraint);
 
         AssertSchemaResult likedConstraint = new AssertSchemaResult("LIKED", "day");
-        likedConstraint.unique = true;
+        likedConstraint.unique = false;
         likedConstraint.action = "DROPPED";
         expectedResult.add(likedConstraint);
 
@@ -529,7 +528,7 @@ public class SchemasEnterpriseFeaturesTest {
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Movie", r.get("label"));
             assertEquals(expectedKeys("title"), r.get("keys"));
-            assertTrue("should be unique", (boolean) r.get("unique"));
+            assertFalse((boolean) r.get("unique"));
             assertEquals("DROPPED", r.get("action"));
         });
 
@@ -574,7 +573,7 @@ public class SchemasEnterpriseFeaturesTest {
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Acted", r.get("label"));
             assertEquals(expectedKeys("since"), r.get("keys"));
-            assertTrue("should be unique", (boolean) r.get("unique"));
+            assertFalse((boolean) r.get("unique"));
             assertEquals("DROPPED", r.get("action"));
         });
 
@@ -589,7 +588,6 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testDropConstraintTypePropertyRelationship() {
         session.writeTransaction(tx -> {
-            tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS NOT NULL");
             tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS :: DATE");
             tx.commit();
             return null;
@@ -827,12 +825,6 @@ public class SchemasEnterpriseFeaturesTest {
                     assertEquals("KNOWS", r.get("relationshipType"));
                     assertEquals(List.of("day"), r.get("properties"));
 
-                    r = result.next();
-
-                    assertEquals(":KNOWS(day)", r.get("name"));
-                    assertEquals("RANGE", r.get("type"));
-                    assertEquals("KNOWS", r.get("relationshipType"));
-                    assertEquals(List.of("day"), r.get("properties"));
                     assertFalse(result.hasNext());
                 }
         );
@@ -853,7 +845,7 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testCall(session, "RETURN apoc.schema.node.constraintExists(\"Bar\", [\"foobar\"]) AS output;",
-                (r) -> assertEquals(true, r.get("output"))
+                (r) -> assertTrue((boolean) r.get("output"))
         );
     }
 
@@ -866,7 +858,7 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testCall(session, "RETURN apoc.schema.node.constraintExists(\"Bar\", [\"foobar\"]) AS output;",
-                (r) -> assertEquals(true, r.get("output"))
+                (r) -> assertTrue((boolean) r.get("output"))
         );
     }
     @Test

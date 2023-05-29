@@ -30,6 +30,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
+import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.schema.Schema;
@@ -134,8 +135,12 @@ public class Schemas {
         Schema schema = tx.schema();
 
         for (ConstraintDefinition definition : schema.getConstraints()) {
-            String label = Util.isRelationshipCategory(definition.getConstraintType()) ? definition.getRelationshipType().name() : definition.getLabel().name();
-            AssertSchemaResult info = new AssertSchemaResult(label, Iterables.asList(definition.getPropertyKeys())).unique();
+            ConstraintType constraintType = definition.getConstraintType();
+            String label = Util.isRelationshipCategory(constraintType) ? definition.getRelationshipType().name() : definition.getLabel().name();
+            AssertSchemaResult info = new AssertSchemaResult(label, Iterables.asList(definition.getPropertyKeys()));
+            if (Util.constraintIsUnique(constraintType)) {
+                info = info.unique();
+            }
             if (!checkIfConstraintExists(label, constraints, info)) {
                 if (dropExisting) {
                     definition.drop();
