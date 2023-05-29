@@ -43,9 +43,12 @@ import static org.junit.Assert.*;
 public class CollTest {
     // query that procedures a list,
     // with both entity types, via collect(..), and hardcoded one
-    private static final String QUERY_WITH_MIXED_TYPES = "MATCH (n:Test) " +
-            "WITH n ORDER BY n.a " +
-            "WITH COLLECT({something: n.something}) + { something: [] } + {something: 'alpha'} + {something: [1,2,3]} AS collection \n";
+    private static final String QUERY_WITH_MIXED_TYPES = """
+            WITH COLLECT {
+            MATCH (n:Test)
+            RETURN {something: n.something}
+            ORDER BY n.a} + { something: [] } + {something: 'alpha'} + {something: [1,2,3]} AS collection
+            """;
 
     private static final String QUERY_WITH_ARRAY = "CREATE (:Test {a: 1, something: 'alpha' }), " +
             "(:Test { a: 2, something: [] }), " +
@@ -226,11 +229,8 @@ public class CollTest {
     public void testIndexOfWithCollections() {
         db.executeTransactionally(QUERY_WITH_ARRAY);
         testCall(db, QUERY_WITH_MIXED_TYPES + "RETURN apoc.coll.indexOf(collection, { something: [] }) AS index",
-                r -> {
-                    long index = (long) r.get("index");
-                    assertTrue("Actual index is " + index,
-                            index == 1L || index == 2L);
-                });
+                r -> assertEquals(1L, r.get("index"))
+        );
     }
 
     @Test
