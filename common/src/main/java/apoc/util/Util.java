@@ -26,6 +26,7 @@ import apoc.export.util.ExportConfig;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.collection.Iterators;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.io.IOUtils;
@@ -36,8 +37,10 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
+import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.logging.NullLog;
 import org.neo4j.procedure.Mode;
+import org.neo4j.values.AnyValue;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
 import org.neo4j.values.storable.PointValue;
 import org.neo4j.values.storable.Values;
@@ -1100,5 +1103,30 @@ public class Util {
         return System.getProperty("os.name")
                 .toLowerCase()
                 .contains("win");
+    }
+
+    public static <T> boolean valueEquals(T one, T other) {
+        if (one == null || other == null) {
+            return false;
+        }
+        return ValueUtils.of(one)
+                .equals(ValueUtils.of(other));
+    }
+
+    public static boolean containsValueEquals(Collection<Object> collection, Object value) {
+        return collection.stream()
+                .anyMatch(i -> Util.valueEquals(value, i));
+    }
+
+    public static <T> List<AnyValue> toAnyValues(List<T> list) {
+        return list.stream()
+                .map(ValueUtils::of)
+                .collect(Collectors.toList());
+    }
+
+    public static int indexOf(List<Object> list, Object value) {
+        return ListUtils.indexOf(list,
+                (i) -> Util.valueEquals(i, value)
+        );
     }
 }

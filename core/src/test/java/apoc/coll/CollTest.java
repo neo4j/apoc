@@ -20,6 +20,7 @@ package apoc.coll;
 
 import apoc.convert.Json;
 import apoc.util.TestUtil;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -40,6 +41,22 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 public class CollTest {
+    // query that procedures a list,
+    // with both entity types, via collect(..), and hardcoded one
+    private static final String QUERY_WITH_MIXED_TYPES = """
+            WITH COLLECT {
+            MATCH (n:Test)
+            RETURN {something: n.something}
+            ORDER BY n.a} + { something: [] } + {something: 'alpha'} + {something: [1,2,3]} AS collection
+            """;
+
+    private static final String QUERY_WITH_ARRAY = "CREATE (:Test {a: 1, something: 'alpha' }), " +
+            "(:Test { a: 2, something: [] }), " +
+            "(:Test { a: 3, something: 'beta' })," +
+            "(:Test { a: 4, something: [1,2,3] })";
+
+    public static final Map<String, String> MAP_WITH_ALPHA = Map.of("something", "alpha");
+    public static final Map<String, String> MAP_WITH_BETA = Map.of("something", "beta");
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule();
@@ -52,6 +69,11 @@ public class CollTest {
     @AfterClass
     public static void teardown() {
        db.shutdown();
+    }
+
+    @After
+    public void after() {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
     @Test
@@ -204,6 +226,14 @@ public class CollTest {
     }
 
     @Test
+    public void testIndexOfWithCollections() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+        testCall(db, QUERY_WITH_MIXED_TYPES + "RETURN apoc.coll.indexOf(collection, { something: [] }) AS index",
+                r -> assertEquals(1L, r.get("index"))
+        );
+    }
+
+    @Test
     public void testSplit() {
         testResult(db, "CALL apoc.coll.split([1,2,3,2,4,5],2)", r -> {
             assertEquals(asList(1L), r.next().get("value"));
@@ -228,6 +258,63 @@ public class CollTest {
             assertEquals(asList(1L, 2L, 3L), r.next().get("value"));
             assertFalse(r.hasNext());
         });
+    }
+
+    @Test
+    public void testSplitOfWithBothHardcodedAndEntityTypes() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+        testResult(db, QUERY_WITH_MIXED_TYPES + "CALL apoc.coll.split(collection, { something: [] }) YIELD value RETURN value",
+                r -> {
+                    Map<String, Object> row = r.next();
+                    List<Map<String, Object>> value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(List.of(MAP_WITH_ALPHA), value);
+                    row = r.next();
+                    value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(2, value.size());
+                    assertEquals(MAP_WITH_BETA, value.get(0));
+                    // in this case the `[1,2,3]` in `{ something: [1,2,3] }` is an array
+                    assertMapWithNumericArray(value.get(1));
+
+                    row = r.next();
+                    value = (List<Map<String, Object>>) row.get("value");
+
+                    assertEquals(2, value.size());
+                    assertEquals(MAP_WITH_ALPHA, value.get(0));
+                    // in this case the `[1,2,3]` in `{ something: [1,2,3] }` is an ArrayList
+                    assertEquals(Map.of("something", List.of(1L,2L,3L)), value.get(1));
+
+                    assertFalse(r.hasNext());
+                });
+    }
+
+    @Test
+    public void testRemoveWithBothHardcodedAndEntityTypes() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+        testCall(db, QUERY_WITH_MIXED_TYPES + "RETURN apoc.coll.removeAll(collection, [{ something: [] }, { something: 'alpha' }]) AS value",
+                row -> {
+                    List<Map<String, Object>> value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(3, value.size());
+                    assertEquals(MAP_WITH_BETA, value.get(0));
+                    // in this case the `[1,2,3]` in `{ something: [1,2,3] }` is an array
+                    assertMapWithNumericArray(value.get(1));
+                    // in this case the `[1,2,3]` in `{ something: [1,2,3] }` is an ArrayList
+                    assertEquals(Map.of("something", List.of(1L,2L,3L)), value.get(2));
+                });
+    }
+
+    @Test
+    public void testCollToSetWithBothHardcodedAndEntityTypes() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+
+        testCall(db, QUERY_WITH_MIXED_TYPES + "RETURN apoc.coll.toSet(collection) AS value",
+                row -> {
+                    List<Map<String, Object>> value = (List<Map<String, Object>>) row.get("value");
+                    assertEquals(4, value.size());
+                    assertEquals(MAP_WITH_ALPHA, value.get(0));
+                    assertMapWithEmptyArray(value.get(1));
+                    assertEquals(MAP_WITH_BETA, value.get(2));
+                    assertMapWithNumericArray(value.get(3));
+                });
     }
 
     @Test
@@ -288,6 +375,25 @@ public class CollTest {
         testCall(db, "RETURN apoc.coll.containsAll(null,[1,2,3]) AS value", (res) -> assertEquals(false, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAll(null,null) AS value", (res) -> assertEquals(false, res.get("value")));
         testCall(db, "RETURN apoc.coll.containsAll([1,2,3],null) AS value", (res) -> assertEquals(false, res.get("value")));
+    }
+
+    @Test
+    public void testContainsAllOfWithCollections() {
+        db.executeTransactionally(QUERY_WITH_ARRAY);
+
+        testCall(db, QUERY_WITH_MIXED_TYPES + "RETURN apoc.coll.containsAll(collection, [{ something: [] }]) AS value",
+                row -> assertTrue( (boolean) row.get("value") )
+        );
+    }
+
+    private static void assertMapWithEmptyArray(Map map) {
+        assertEquals(1, map.size());
+        assertArrayEquals(new String[]{}, (String[]) map.get("something"));
+    }
+
+    private static void assertMapWithNumericArray(Map map) {
+        assertEquals(1, map.size());
+        assertArrayEquals(new long[] {1,2,3}, (long[]) map.get("something"));
     }
 
     @Test

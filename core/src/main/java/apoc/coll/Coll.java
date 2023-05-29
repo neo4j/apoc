@@ -19,6 +19,7 @@
 package apoc.coll;
 
 import apoc.result.ListResult;
+import apoc.util.Util;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
@@ -34,6 +35,7 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
+import org.neo4j.values.AnyValue;
 
 import java.lang.reflect.Array;
 import java.text.Collator;
@@ -58,6 +60,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static apoc.util.Util.containsValueEquals;
+import static apoc.util.Util.toAnyValues;
 import static java.util.Arrays.asList;
 
 public class Coll {
@@ -389,12 +393,12 @@ public class Coll {
 	    if (list==null || list.isEmpty()) return Stream.empty();
         List<Object> l = new ArrayList<>(list);
         List<List<Object>> result = new ArrayList<>(10);
-        int idx = l.indexOf(value);
+        int idx = Util.indexOf(l, value);
         while (idx != -1) {
             List<Object> subList = l.subList(0, idx);
             if (!subList.isEmpty()) result.add(subList);
             l = l.subList(idx+1,l.size());
-            idx = l.indexOf(value);
+            idx = Util.indexOf(l, value);
         }
         if (!l.isEmpty()) result.add(l);
         return result.stream().map(ListResult::new);
@@ -471,14 +475,17 @@ public class Coll {
     public long indexOf(@Name("coll") List<Object> coll, @Name("value") Object value) {
         // return reduce(res=[0,-1], x in $list | CASE WHEN x=$value AND res[1]=-1 THEN [res[0], res[0]+1] ELSE [res[0]+1, res[1]] END)[1] as value
         if (coll == null || coll.isEmpty()) return -1;
-        return  new ArrayList<>(coll).indexOf(value);
+        return Util.indexOf(coll, value);
     }
 
     @UserFunction("apoc.coll.containsAll")
     @Description("Returns whether or not all of the given values exist in the given collection (using a HashSet).")
     public boolean containsAll(@Name("coll1") List<Object> coll, @Name("coll2") List<Object> values) {
         if (coll == null || coll.isEmpty() || values == null) return false;
-        return new HashSet<>(coll).containsAll(values);
+        Set<Object> objects = new HashSet<>(coll);
+
+        return values.stream()
+                .allMatch( i -> containsValueEquals(objects, i));
     }
 
     @UserFunction("apoc.coll.containsSorted")
@@ -522,7 +529,8 @@ public class Coll {
     @Description("Returns a unique list from the given list.")
     public List<Object> toSet(@Name("coll") List<Object> list) {
 	    if (list == null) return null;
-        return new SetBackedList(new LinkedHashSet(list));
+        List<AnyValue> anyValues = toAnyValues(list);
+        return new SetBackedList(new LinkedHashSet(anyValues));
     }
 
     @UserFunction("apoc.coll.sumLongs")
@@ -602,9 +610,9 @@ public class Coll {
     @UserFunction("apoc.coll.removeAll")
     @Description("Returns the first list with all elements of the second list removed.")
     public List<Object> removeAll(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
-		if (first == null) return null;
-        List<Object> list = new ArrayList<>(first);
-        if (second!=null) list.removeAll(second);
+        if (first == null) return null;
+        List<Object> list = new ArrayList<>(toAnyValues(first));
+        if (second!=null) list.removeAll(toAnyValues(second));
         return list;
     }
     @UserFunction("apoc.coll.subtract")
