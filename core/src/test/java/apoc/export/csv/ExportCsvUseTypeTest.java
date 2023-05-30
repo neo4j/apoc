@@ -13,8 +13,12 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+import java.util.Map;
+
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
+import static apoc.export.csv.ExportCsvTest.CALL_DATA;
+import static apoc.export.csv.ExportCsvTest.CALL_GRAPH;
 import static apoc.export.csv.ExportCsvTest.assertResults;
 import static apoc.export.csv.ExportCsvTest.readFile;
 import static apoc.util.MapUtil.map;
@@ -34,9 +38,9 @@ public class ExportCsvUseTypeTest {
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
 
-        db.executeTransactionally("CREATE (n:SuperNode { one: datetime('2018-05-10T10:30[Europe/Berlin]'), two: time('18:02:33'), three: localtime('17:58:30'), \n" +
-                "four: localdatetime('2021-06-08'), five: date('2020'), six: duration({months: 5, days: 1.5}), seven : '2020'}) \n" +
-                "WITH n CREATE (n)-[:REL_TYPE {rel: point({x: 56.7, y: 12.78, crs: 'cartesian'})}]->(m:AnotherNode)");
+        db.executeTransactionally("""
+                CREATE (n:SuperNode { one: datetime('2018-05-10T10:30[Europe/Berlin]'), two: time('18:02:33'), three: localtime('17:58:30'), four: localdatetime('2021-06-08'), five: date('2020'), six: duration({months: 5, days: 1.5}), seven : '2020'})
+                WITH n CREATE (n)-[:REL_TYPE {rel: point({x: 56.7, y: 12.78, crs: 'cartesian'})}]->(m:AnotherNode)""");
         
         try(Transaction tx = db.beginTx()) {
             final Node node = tx.findNodes(Label.label("AnotherNode")).next();
@@ -69,10 +73,8 @@ public class ExportCsvUseTypeTest {
     @Test
     public void testExportCsvGraph() {
         String fileName = "output.csv";
-        testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                        "CALL apoc.export.csv.graph(graph, $file,{useTypes: true, quotes: 'none'}) " +
-                        "YIELD nodes, relationships, properties, file, source,format, time " +
-                        "RETURN *", map("file", fileName),
+        Map<String, Object> config = Map.of("useTypes", true, "quotes", "none");
+        testCall(db, CALL_GRAPH, map("file", fileName, "config", config),
                 (r) -> assertResults(fileName, r, "graph", 2L, 1L, 16L, true));
         final String expected = Util.readResourceFile("manyTypes.csv");
         assertEquals(expected, readFile(fileName));
@@ -81,10 +83,8 @@ public class ExportCsvUseTypeTest {
     @Test
     public void testExportCsvData() {
         String fileName = "output.csv";
-        testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                        "CALL apoc.export.csv.data(graph.nodes, graph.relationships, $file,{useTypes: true, quotes: 'none'}) " +
-                        "YIELD nodes, relationships, properties, file, source,format, time " +
-                        "RETURN *", map("file", fileName),
+        Map<String, Object> config = Map.of("useTypes", true, "quotes", "none");
+        testCall(db, CALL_DATA, map("file", fileName, "config", config),
                 (r) -> assertResults(fileName, r, "data", 2L, 1L, 16L, true));
         final String expected = Util.readResourceFile("manyTypes.csv");
         assertEquals(expected, readFile(fileName));

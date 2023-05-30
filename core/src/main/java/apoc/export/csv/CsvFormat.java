@@ -291,9 +291,13 @@ public class CsvFormat {
     }
 
     private List<Map.Entry<String, String>> generateHeader(Map<String, Class> propTypes, boolean useTypes, String... starters) {
+        // we create a List of Entry<PropertyName, PropertyDataType>,
+        // so that the headers will look like nameProp:typeProp,nameProp2:typeProp2,...
+        // or, with config `useTypes: false`, like nameProp,nameProp2,...
         List<Map.Entry<String, String>> result = Arrays.stream(starters)
                 .map(item -> {
                     final String[] split = item.split(":");
+                    // with the config `useTypes: true`, we add `:<typeProp>` to each colum
                     return new AbstractMap.SimpleEntry<>(split[0], useTypes ? (":" + split[1]) : "");
                 })
                 .collect(Collectors.toList());
@@ -301,6 +305,7 @@ public class CsvFormat {
         result.addAll(propTypes.entrySet().stream()
                 .map(entry -> {
                     String type = MetaInformation.typeFor(entry.getValue(), null);
+                    // with the config `useTypes: true`, if the type is not null , we add `:<typeProp>` to each colum
                     return new AbstractMap.SimpleEntry<>(entry.getKey(),
                             (type == null || type.equals("string") || !useTypes) ? "" : ":" + type);
                 })
