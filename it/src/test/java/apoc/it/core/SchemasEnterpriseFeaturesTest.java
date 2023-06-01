@@ -226,12 +226,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertEquals(expectedResult.size(), actualResult.size());
         });
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT node_prop_type_movie_first");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -243,12 +237,6 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testResult(session, "CALL apoc.schema.nodes({excludeLabels:['Movie']})", (result) -> assertFalse(result.hasNext()));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT node_prop_type_movie_first");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -291,12 +279,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertEquals(expectedResult.size(), actualResult.size());
         });
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_since");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -308,12 +290,6 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testResult(session, "CALL apoc.schema.relationships({excludeRelationships:['LIKED']})", (result) -> assertFalse(result.hasNext()));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_liked");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -327,14 +303,6 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testResult(session, "CALL apoc.schema.nodes({})", (result) -> assertFalse(result.hasNext()));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_liked");
-            tx.run("DROP CONSTRAINT rel_con");
-            tx.run("DROP CONSTRAINT rel_con_type");
-            tx.commit();
-            return null;
-        });
     }
     @Test
     public void testRelExistenceConstraintIsKeptAndDropped() {
@@ -374,12 +342,6 @@ public class SchemasEnterpriseFeaturesTest {
             }
 
             assertEquals(expectedResult.size(), actualResult.size());
-        });
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_since");
-            tx.commit();
-            return null;
         });
     }
 
@@ -643,11 +605,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertTrue(!result.hasNext());
         });
-        session.writeTransaction(tx -> {
-            tx.run("DROP INDEX " + indexName);
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -669,11 +626,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertTrue(!result.hasNext());
         });
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT foobarConstraint");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -686,11 +638,6 @@ public class SchemasEnterpriseFeaturesTest {
         testResult(session, "RETURN apoc.schema.relationship.constraintExists('LIKED', ['day'])", (result) -> {
             Map<String, Object> r = result.next();
             assertEquals(true, r.entrySet().iterator().next().getValue());
-        });
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT likedConstraint");
-            tx.commit();
-            return null;
         });
     }
 
@@ -709,11 +656,6 @@ public class SchemasEnterpriseFeaturesTest {
             assertEquals(asList("day"), r.get("properties"));
             assertEquals(StringUtils.EMPTY, r.get("status"));
             assertFalse(result.hasNext());
-        });
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT likedConstraint");
-            tx.commit();
-            return null;
         });
     }
     
@@ -743,13 +685,6 @@ public class SchemasEnterpriseFeaturesTest {
             assertEquals(asList("foobar"), r.get("properties"));
             assertFalse(result.hasNext());
         });
-        
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_cons");
-            tx.run("DROP CONSTRAINT node_cons");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -765,13 +700,6 @@ public class SchemasEnterpriseFeaturesTest {
                 () ->  testResult(session, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
         );
         TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT like_con");
-            tx.run("DROP CONSTRAINT since_con");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -800,12 +728,6 @@ public class SchemasEnterpriseFeaturesTest {
                     assertFalse(result.hasNext());
                 }
         );
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -828,12 +750,6 @@ public class SchemasEnterpriseFeaturesTest {
                     assertFalse(result.hasNext());
                 }
         );
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
