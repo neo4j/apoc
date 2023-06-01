@@ -165,6 +165,81 @@ public class SchemasEnterpriseFeaturesTest {
 
 
     @Test
+    public void testSchemaNodesWithNodeTypeConstraint() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT node_prop_type_movie FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER");
+            tx.commit();
+            return null;
+        });
+
+        testResult(session, CALL_SCHEMA_NODES_ORDERED, (result) -> {
+            Map<String, Object> r = result.next();
+            assertEquals("Movie", r.get("label"));
+            assertEquals(List.of("first"), r.get("properties"));
+            assertEquals(":Movie(first)", r.get("name"));
+            assertEquals("", r.get("status"));
+            assertEquals("NODE_PROPERTY_TYPE", r.get("type"));
+            final String expectedUserDescConstraint = "name='node_prop_type_movie', type='NODE PROPERTY TYPE', schema=(:Movie {first}), propertyType=INTEGER";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
+
+            assertFalse(result.hasNext());
+        });
+    }
+
+    @Test
+    public void testNodeTypeConstraintIsKeptAndDropped() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT node_prop_type_movie_first FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER");
+            tx.run("CREATE CONSTRAINT node_prop_type_movie_second FOR (m:Movie) REQUIRE (m.second) IS :: INTEGER");
+            tx.commit();
+            return null;
+        });
+
+        HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
+        AssertSchemaResult firstConstraint = new AssertSchemaResult("Movie", List.of("first"));
+        firstConstraint.unique = false;
+        expectedResult.add(firstConstraint);
+
+        AssertSchemaResult secondConstraint = new AssertSchemaResult("Movie", List.of("second"));
+        secondConstraint.unique = false;
+        secondConstraint.action = "DROPPED";
+        expectedResult.add(secondConstraint);
+
+        HashSet<AssertSchemaResult> actualResult = new HashSet<>();
+
+
+        testResult(session, "CALL apoc.schema.assert({},{Movie:[[\"first\"]]})", (result) -> {
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                AssertSchemaResult con = new AssertSchemaResult(r.get("label"), (List<String>) r.get("keys"));
+                con.unique = (boolean) r.get("unique");
+                con.action = (String) r.get("action");
+                actualResult.add(con);
+
+                assertEquals(1, expectedResult.stream().filter(
+                        c -> c.keys.containsAll(con.keys) &&
+                                c.action.equals(con.action) &&
+                                c.label.equals(con.label) &&
+                                c.unique == con.unique
+                ).toList().size());
+            }
+
+            assertEquals(expectedResult.size(), actualResult.size());
+        });
+    }
+
+    @Test
+    public void testSchemaNodeTypeConstraintExclude() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT node_prop_type_movie_first FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER");
+            tx.commit();
+            return null;
+        });
+
+        testResult(session, "CALL apoc.schema.nodes({excludeLabels:['Movie']})", (result) -> assertFalse(result.hasNext()));
+    }
+
+    @Test
     public void testRelKeyConstraintIsKeptAndDropped() {
         session.writeTransaction(tx -> {
             tx.run("CREATE CONSTRAINT rel_con_since FOR ()-[since:SINCE]-() REQUIRE (since.day, since.year) IS RELATIONSHIP KEY");
@@ -204,12 +279,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertEquals(expectedResult.size(), actualResult.size());
         });
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_since");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -221,12 +290,6 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testResult(session, "CALL apoc.schema.relationships({excludeRelationships:['LIKED']})", (result) -> assertFalse(result.hasNext()));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_liked");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -234,18 +297,12 @@ public class SchemasEnterpriseFeaturesTest {
         session.writeTransaction(tx -> {
             tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
             tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");
+            tx.run("CREATE CONSTRAINT rel_con_type FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER");
             tx.commit();
             return null;
         });
 
         testResult(session, "CALL apoc.schema.nodes({})", (result) -> assertFalse(result.hasNext()));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_liked");
-            tx.run("DROP CONSTRAINT rel_con");
-            tx.commit();
-            return null;
-        });
     }
     @Test
     public void testRelExistenceConstraintIsKeptAndDropped() {
@@ -258,11 +315,11 @@ public class SchemasEnterpriseFeaturesTest {
 
         HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
         AssertSchemaResult sinceConstraint = new AssertSchemaResult("SINCE", "day");
-        sinceConstraint.unique = true;
+        sinceConstraint.unique = false;
         expectedResult.add(sinceConstraint);
 
         AssertSchemaResult likedConstraint = new AssertSchemaResult("LIKED", "day");
-        likedConstraint.unique = true;
+        likedConstraint.unique = false;
         likedConstraint.action = "DROPPED";
         expectedResult.add(likedConstraint);
 
@@ -285,12 +342,6 @@ public class SchemasEnterpriseFeaturesTest {
             }
 
             assertEquals(expectedResult.size(), actualResult.size());
-        });
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con_since");
-            tx.commit();
-            return null;
         });
     }
 
@@ -439,7 +490,29 @@ public class SchemasEnterpriseFeaturesTest {
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Movie", r.get("label"));
             assertEquals(expectedKeys("title"), r.get("keys"));
-            assertTrue("should be unique", (boolean) r.get("unique"));
+            assertFalse((boolean) r.get("unique"));
+            assertEquals("DROPPED", r.get("action"));
+        });
+
+        session.readTransaction(tx -> {
+            List<Record> result = tx.run("SHOW CONSTRAINTS").list();
+            assertEquals(0, result.size());
+            tx.commit();
+            return null;
+        });
+    }
+
+    @Test
+    public void testDropConstraintTypePropertyNode() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT FOR (m:Movie) REQUIRE (m.title) IS :: STRING");
+            tx.commit();
+            return null;
+        });
+        testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
+            assertEquals("Movie", r.get("label"));
+            assertEquals(expectedKeys("title"), r.get("keys"));
+            assertFalse( (boolean) r.get("unique"));
             assertEquals("DROPPED", r.get("action"));
         });
 
@@ -462,7 +535,30 @@ public class SchemasEnterpriseFeaturesTest {
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Acted", r.get("label"));
             assertEquals(expectedKeys("since"), r.get("keys"));
-            assertTrue("should be unique", (boolean) r.get("unique"));
+            assertFalse((boolean) r.get("unique"));
+            assertEquals("DROPPED", r.get("action"));
+        });
+
+        session.readTransaction(tx -> {
+            List<Record> result = tx.run("SHOW CONSTRAINTS").list();
+            assertEquals(0, result.size());
+            tx.commit();
+            return null;
+        });
+    }
+
+    @Test
+    public void testDropConstraintTypePropertyRelationship() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS :: DATE");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
+            assertEquals("Acted", r.get("label"));
+            assertEquals(expectedKeys("since"), r.get("keys"));
+            assertFalse((boolean) r.get("unique"));
             assertEquals("DROPPED", r.get("action"));
         });
 
@@ -509,11 +605,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertTrue(!result.hasNext());
         });
-        session.writeTransaction(tx -> {
-            tx.run("DROP INDEX " + indexName);
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -535,11 +626,6 @@ public class SchemasEnterpriseFeaturesTest {
 
             assertTrue(!result.hasNext());
         });
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT foobarConstraint");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -552,11 +638,6 @@ public class SchemasEnterpriseFeaturesTest {
         testResult(session, "RETURN apoc.schema.relationship.constraintExists('LIKED', ['day'])", (result) -> {
             Map<String, Object> r = result.next();
             assertEquals(true, r.entrySet().iterator().next().getValue());
-        });
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT likedConstraint");
-            tx.commit();
-            return null;
         });
     }
 
@@ -575,11 +656,6 @@ public class SchemasEnterpriseFeaturesTest {
             assertEquals(asList("day"), r.get("properties"));
             assertEquals(StringUtils.EMPTY, r.get("status"));
             assertFalse(result.hasNext());
-        });
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT likedConstraint");
-            tx.commit();
-            return null;
         });
     }
     
@@ -609,13 +685,6 @@ public class SchemasEnterpriseFeaturesTest {
             assertEquals(asList("foobar"), r.get("properties"));
             assertFalse(result.hasNext());
         });
-        
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_cons");
-            tx.run("DROP CONSTRAINT node_cons");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -631,13 +700,6 @@ public class SchemasEnterpriseFeaturesTest {
                 () ->  testResult(session, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
         );
         TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
-
-        session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT like_con");
-            tx.run("DROP CONSTRAINT since_con");
-            tx.commit();
-            return null;
-        });
     }
 
     @Test
@@ -666,12 +728,28 @@ public class SchemasEnterpriseFeaturesTest {
                     assertFalse(result.hasNext());
                 }
         );
+    }
 
+    @Test
+    public void testRelationshipTypePropConstraint() {
         session.writeTransaction(tx -> {
-            tx.run("DROP CONSTRAINT rel_con");
+            tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER");
             tx.commit();
             return null;
         });
+
+        testResult(session, "CALL apoc.schema.relationships({})",
+                result -> {
+                    Map<String, Object> r = result.next();
+
+                    assertEquals("CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER", r.get("name"));
+                    assertEquals("RELATIONSHIP_PROPERTY_TYPE", r.get("type"));
+                    assertEquals("KNOWS", r.get("relationshipType"));
+                    assertEquals(List.of("day"), r.get("properties"));
+
+                    assertFalse(result.hasNext());
+                }
+        );
     }
 
     @Test
@@ -683,7 +761,20 @@ public class SchemasEnterpriseFeaturesTest {
         });
 
         testCall(session, "RETURN apoc.schema.node.constraintExists(\"Bar\", [\"foobar\"]) AS output;",
-                (r) -> assertEquals(true, r.get("output"))
+                (r) -> assertTrue((boolean) r.get("output"))
+        );
+    }
+
+    @Test
+    public void testNodeTypePropConstraintExists() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS :: INTEGER");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "RETURN apoc.schema.node.constraintExists(\"Bar\", [\"foobar\"]) AS output;",
+                (r) -> assertTrue((boolean) r.get("output"))
         );
     }
     @Test
@@ -704,6 +795,19 @@ public class SchemasEnterpriseFeaturesTest {
     public void testRelationshipConstraintExists() {
         session.writeTransaction(tx -> {
             tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
+            tx.commit();
+            return null;
+        });
+
+        testCall(session, "RETURN apoc.schema.relationship.constraintExists(\"LIKED\", [\"day\"]) AS output;",
+                (r) -> assertEquals(true, r.get("output"))
+        );
+    }
+
+    @Test
+    public void testRelationshipTypeConstraintExists() {
+        session.writeTransaction(tx -> {
+            tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS :: INTEGER");
             tx.commit();
             return null;
         });

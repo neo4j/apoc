@@ -1055,8 +1055,8 @@ public class Util {
 
     public static ConstraintCategory getConstraintCategory(ConstraintType type) {
         return switch (type) {
-            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS -> ConstraintCategory.NODE;
-            case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE -> ConstraintCategory.RELATIONSHIP;
+            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS, NODE_PROPERTY_TYPE -> ConstraintCategory.NODE;
+            case RELATIONSHIP_KEY, RELATIONSHIP_UNIQUENESS, RELATIONSHIP_PROPERTY_EXISTENCE, RELATIONSHIP_PROPERTY_TYPE -> ConstraintCategory.RELATIONSHIP;
             default -> throw new IllegalStateException("Constraint with a type not supported by apoc");
         };
     }
@@ -1064,15 +1064,24 @@ public class Util {
     public static ConstraintCategory getConstraintCategory(ConstraintDescriptor descriptor) {
         if (descriptor.isNodeUniquenessConstraint() ||
                 descriptor.isNodePropertyExistenceConstraint() ||
-                descriptor.isNodeKeyConstraint()) {
+                descriptor.isNodeKeyConstraint() ||
+                descriptor.isNodePropertyTypeConstraint()) {
             return ConstraintCategory.NODE;
         }
         if (descriptor.isRelationshipKeyConstraint() ||
                 descriptor.isRelationshipPropertyExistenceConstraint() ||
-                descriptor.isRelationshipUniquenessConstraint()) {
+                descriptor.isRelationshipUniquenessConstraint() ||
+                descriptor.isRelationshipPropertyTypeConstraint()) {
             return ConstraintCategory.RELATIONSHIP;
         }
         return ConstraintCategory.NODE;
+    }
+
+    public static boolean constraintIsUnique(ConstraintType type) {
+        return type == ConstraintType.NODE_KEY ||
+                type == ConstraintType.RELATIONSHIP_KEY ||
+                type == ConstraintType.UNIQUENESS ||
+                type == ConstraintType.RELATIONSHIP_UNIQUENESS;
     }
 
     public static boolean isNodeCategory(ConstraintType type) {
