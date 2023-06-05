@@ -20,6 +20,8 @@ package apoc.util.s3;
 
 import apoc.util.Util;
 import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -54,22 +56,25 @@ public class S3Container implements AutoCloseable {
     }
 
     public AwsClientBuilder.EndpointConfiguration getEndpointConfiguration() {
-        return localstack.getEndpointConfiguration(S3);
+        return new AwsClientBuilder.EndpointConfiguration(
+            localstack.getEndpoint().toString(),
+            localstack.getRegion()
+        );
     }
 
     public AWSCredentialsProvider getCredentialsProvider() {
-        return localstack.getDefaultCredentialsProvider();
+        return new AWSStaticCredentialsProvider(new BasicAWSCredentials(localstack.getAccessKey(), localstack.getSecretKey()));
     }
 
     public String getUrl(String key) {
         return String.format("s3://%s.%s/%s/%s?accessKey=%s&secretKey=%s",
-                localstack.getEndpointConfiguration(S3).getSigningRegion(),
-                localstack.getEndpointConfiguration(S3).getServiceEndpoint()
+                getEndpointConfiguration().getSigningRegion(),
+                getEndpointConfiguration().getServiceEndpoint()
                         .replace("http://", ""),
                 S3_BUCKET_NAME,
                 key,
-                localstack.getDefaultCredentialsProvider().getCredentials().getAWSAccessKeyId(),
-                localstack.getDefaultCredentialsProvider().getCredentials().getAWSSecretKey());
+                getCredentialsProvider().getCredentials().getAWSAccessKeyId(),
+                getCredentialsProvider().getCredentials().getAWSSecretKey());
     }
 
     @SuppressWarnings("unused") // used from extended
