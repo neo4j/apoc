@@ -53,7 +53,7 @@ dependencies {
     implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '7.3'
     implementation group: 'org.jetbrains', name: 'annotations', version: "17.0.0"
     implementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.425'
-    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.13.2'
+    implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.13.5'
 }
 
 
