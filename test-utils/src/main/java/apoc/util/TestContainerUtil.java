@@ -67,6 +67,7 @@ public class TestContainerUtil {
 
     public static File baseDir = Paths.get("..").toFile();
     public static File pluginsFolder = new File(baseDir, "build/plugins");
+    public static File importFolder = new File(baseDir, "build/import");
     private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
     public static File extendedDir = new File(baseDir, "extended");
 
@@ -111,7 +112,6 @@ public class TestContainerUtil {
         }
         File projectDir;
         // We define the container with external volumes
-        File importFolder = new File("import");
         importFolder.mkdirs();
         // use a separate folder for mounting plugins jar - build/libs might contain other jars as well.
         pluginsFolder.mkdirs();
