@@ -1,7 +1,6 @@
-package apoc.cypher;
+package apoc.it.core;
 
 import apoc.util.Neo4jContainerExtension;
-import apoc.util.TestContainerUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -14,7 +13,7 @@ import static apoc.cypher.CypherTestUtil.SET_AND_RETURN_QUERIES;
 import static apoc.cypher.CypherTestUtil.SIMPLE_RETURN_QUERIES;
 import static apoc.cypher.CypherTestUtil.testRunProcedureWithSetAndReturnResults;
 import static apoc.cypher.CypherTestUtil.testRunProcedureWithSimpleReturnResults;
-import static apoc.util.TestContainerUtil.createEnterpriseDB;
+import static apoc.util.TestContainerUtil.*;
 
 public class CypherEnterpriseTest {
     private static Neo4jContainerExtension neo4jContainer;
@@ -22,8 +21,7 @@ public class CypherEnterpriseTest {
 
     @BeforeClass
     public static void beforeAll() {
-        // We build the project, the artifact will be placed into ./build/libs
-        neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true);
+        neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }

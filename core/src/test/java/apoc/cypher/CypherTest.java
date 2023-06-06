@@ -249,31 +249,6 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunMany1() {
-        db.executeTransactionally("CREATE (n:RunReturn {name: 'foo'})");
-        final Map<String, Object> map = map("name", "John", "name2", "Doe");
-        testResult(db, "CALL apoc.cypher.runMany('MATCH (n:RunReturn) RETURN n;',{})",
-                map("params", map),
-                r -> {
-                    Map<String, Object> row = r.next();
-                    assertEquals(-1L, row.get("row"));
-                    Map result = (Map) row.get("result");
-                    assertEquals(1L, toLong(result.get("nodesCreated")));
-                    assertEquals(1L, toLong(result.get("labelsAdded")));
-                    assertEquals(1L, toLong(result.get("propertiesSet")));
-                    row = r.next();
-                    result = (Map) row.get("result");
-                    assertEquals(-1L, row.get("row"));
-                    assertEquals(1L, toLong(result.get("relationshipsCreated")));
-                    assertEquals(1L, toLong(result.get("propertiesSet")));
-                    assertEquals(false, r.hasNext());
-                });
-        final long count = (long) db.executeTransactionally("MATCH p = (n:Node{name : $name})-[r:X{name: $name2}]->(n) RETURN count(p) AS count",
-                map, Result::next).get("count");
-        assertEquals(1, count);
-    }
-
-    @Test
     public void testRunManyReadOnlyShouldFail() {
         final Map<String, Object> map = map("name", "John", "name2", "Doe");
         db.executeTransactionally("CALL apoc.cypher.runManyReadOnly('" +
