@@ -1,6 +1,5 @@
 package apoc.cypher;
 
-import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import org.neo4j.driver.Session;
@@ -15,17 +14,29 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class CypherTestUtil {
+    public static final String CREATE_RETURNQUERY_NODES = "UNWIND range(0,3) as id \n" +
+                                                           "CREATE (n:ReturnQuery {id:id})-[:REL {idRel: id}]->(:Other {idOther: id})";
+    
+    public static final String CREATE_RESULT_NODES = "UNWIND range(0,3) as id \n" +
+                                                      "CREATE (n:Result {id:id})-[:REL {idRel: id}]->(:Other {idOther: id})";
+    
     // placed in test-utils because is used by extended as well
+    public static String SET_NODE = """
+            MATCH (n:Result)-[:REL]->(:Other)
+            SET n.updated = true
+            RETURN n;
+            """;
+
     public static String SET_AND_RETURN_QUERIES = """
-            MATCH (n:NodeResult)-[:REL]->(:Other)
+            MATCH (n:Result)-[:REL]->(:Other)
             SET n.updated = true
             RETURN n;
                         
-            MATCH (n:NodeResult)-[rel:REL]->(o:Other)
+            MATCH (n:Result)-[rel:REL]->(o:Other)
             SET rel.updated = 1
             RETURN n, o, collect(rel) AS rels;
                         
-            MATCH (n:NodeResult)-[rel:REL]->(o:Other)
+            MATCH (n:Result)-[rel:REL]->(o:Other)
             SET o.updated = 'true'
             RETURN collect(n) as nodes, collect(rel) as rels, collect(o) as others;
             """;
@@ -33,9 +44,7 @@ public class CypherTestUtil {
     public static String SIMPLE_RETURN_QUERIES = "MATCH (n:ReturnQuery) RETURN n";
 
     public static void testRunProcedureWithSimpleReturnResults(Session session, String query, Map<String, Object> params) {
-        session.writeTransaction(tx -> tx.run("UNWIND range(0,3) as id \n" +
-                                              "CREATE (n:ReturnQuery {id:id})-[:REL {idRel: id}]->(:Other {idOther: id})")
-        );
+        session.writeTransaction(tx -> tx.run(CREATE_RETURNQUERY_NODES));
         testResult(session, query, params,
                 r -> {
                     // check that all results from the 1st statement are correctly returned
@@ -50,13 +59,17 @@ public class CypherTestUtil {
 
                     // check `queryStatistics` row
                     row = r.next();
-                    Map result = (Map) row.get("result");
-                    assertEquals(-1L, row.get("row"));
-                    assertEquals(0L, (long) Util.toLong(result.get("nodesCreated")));
-                    assertEquals(0L, (long) Util.toLong(result.get("propertiesSet")));
+                    assertReadOnlyResult(row);
 
                     assertFalse(r.hasNext());
                 });
+    }
+
+    public static void assertReadOnlyResult(Map<String, Object> row) {
+        Map result = (Map) row.get("result");
+        assertEquals(-1L, row.get("row"));
+        assertEquals(0L, (long) result.get("nodesCreated"));
+        assertEquals(0L, (long) result.get("propertiesSet"));
     }
 
     private static void assertReturnQueryNode(Map<String, Object> row, long id) {
@@ -64,6 +77,10 @@ public class CypherTestUtil {
 
         Map<String, Node> result = (Map<String, Node>) row.get("result");
         assertEquals(1, result.size());
+        assertReturnQueryNode(id, result);
+    }
+
+    public static void assertReturnQueryNode(long id, Map<String, Node> result) {
         Node n = result.get("n");
         assertEquals(List.of("ReturnQuery"), Iterables.asList(n.labels()));
         assertEquals(Map.of("id", id), n.asMap());
@@ -71,9 +88,7 @@ public class CypherTestUtil {
 
     // placed in test-utils because is used by extended as well
     public static void testRunProcedureWithSetAndReturnResults(Session session, String query, Map<String, Object> params) {
-        session.writeTransaction(tx -> tx.run("UNWIND range(0,3) as id \n" +
-                                              "CREATE (n:NodeResult {id:id})-[:REL {idRel: id}]->(:Other {idOther: id})")
-        );
+        session.writeTransaction(tx -> tx.run(CREATE_RESULT_NODES));
 
         testResult(session, query, params,
                 r -> {
@@ -125,7 +140,7 @@ public class CypherTestUtil {
 
         // check that the procedure's SET operations work properly
         testResult(session,
-                "MATCH p=(:NodeResult {updated:true})-[:REL {updated: 1}]->(:Other {updated: 'true'}) RETURN *",
+                "MATCH p=(:Result {updated:true})-[:REL {updated: 1}]->(:Other {updated: 'true'}) RETURN *",
                 r -> assertEquals(4L, Iterators.count(r))
         );
     }
@@ -133,8 +148,8 @@ public class CypherTestUtil {
     private static void assertRunProcStatistics(Map<String, Object> row) {
         Map result = (Map) row.get("result");
         assertEquals(-1L, row.get("row"));
-        assertEquals(0L, (long) Util.toLong(result.get("nodesCreated")));
-        assertEquals(4L, (long) Util.toLong(result.get("propertiesSet")));
+        assertEquals(0L, (long) result.get("nodesCreated"));
+        assertEquals(4L, (long) result.get("propertiesSet"));
     }
 
     private static void assertRunProcNode(Map<String, Object> row, long id) {
@@ -142,8 +157,12 @@ public class CypherTestUtil {
 
         Map<String, Node> result = (Map<String, Node>) row.get("result");
         assertEquals(1, result.size());
+        assertResultNode(id, result);
+    }
+
+    public static void assertResultNode(long id, Map<String, Node> result) {
         Node n = result.get("n");
-        assertEquals(List.of("NodeResult"), Iterables.asList(n.labels()));
+        assertEquals(List.of("Result"), Iterables.asList(n.labels()));
         assertEquals(Map.of("id", id, "updated", true), n.asMap());
     }
 
