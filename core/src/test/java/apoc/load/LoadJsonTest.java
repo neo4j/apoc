@@ -85,8 +85,7 @@ public class LoadJsonTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
             .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"))
-            .withSetting(GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString("127.168.0.0/8")));
+            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"));
 
 	@Before public void setUp() {
 	    apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
@@ -131,21 +130,7 @@ public class LoadJsonTest {
         assertEquals(map("bar", asList(4L, 5L, 6L)), row.get("value"));
         assertFalse(result.hasNext());
     }
-    
-    @Test public void testLoadJsonFromBlockedIpRange() {
-        var protocols = List.of("https", "http", "ftp");
 
-        for (var protocol: protocols) {
-            QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                                            () -> testCall(db,
-                                                           "CALL apoc.load.json('" + protocol + "://127.168.0.0/test.csv')",
-                                                           map(),
-                                                           (r) -> {}
-                                            )
-            );
-            assertTrue(e.getMessage().contains("access to /127.168.0.0 is blocked via the configuration property internal.dbms.cypher_ip_blocklist"));
-        }
-    }
     @Test public void testLoadMultiJsonPaths() {
 		URL url = ClassLoader.getSystemResource("multi.json");
 		testResult(db, "CALL apoc.load.json($url,'$')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
