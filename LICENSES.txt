@@ -21,8 +21,8 @@ Apache-2.0
   aws-java-sdk-core-1.12.425.jar
   aws-java-sdk-kms-1.12.425.jar
   aws-java-sdk-s3-1.12.425.jar
-  byte-buddy-1.14.1.jar
-  byte-buddy-agent-1.14.1.jar
+  byte-buddy-1.14.4.jar
+  byte-buddy-agent-1.14.4.jar
   caffeine-3.1.6.jar
   cassandra-driver-core-3.10.0.jar
   commons-beanutils-1.9.4.jar
@@ -35,7 +35,7 @@ Apache-2.0
   commons-configuration2-2.9.0.jar
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
-  commons-io-2.11.0.jar
+  commons-io-2.12.0.jar
   commons-lang3-3.12.0.jar
   commons-logging-1.2.jar
   commons-math3-3.6.1.jar
@@ -98,18 +98,18 @@ Apache-2.0
   j2objc-annotations-1.3.jar
   jPowerShell-3.0.jar
   jProcesses-1.6.5.jar
-  jackson-annotations-2.14.2.jar
-  jackson-core-2.14.2.jar
+  jackson-annotations-2.15.2.jar
+  jackson-core-2.15.2.jar
   jackson-core-asl-1.9.13.jar
-  jackson-databind-2.14.2.jar
-  jackson-dataformat-cbor-2.14.2.jar
-  jackson-dataformat-csv-2.14.2.jar
+  jackson-databind-2.15.2.jar
+  jackson-dataformat-cbor-2.15.2.jar
+  jackson-dataformat-csv-2.15.2.jar
   jackson-datatype-jsr310-2.13.4.jar
-  jackson-datatype-jsr310-2.14.2.jar
-  jackson-jaxrs-base-2.14.2.jar
-  jackson-jaxrs-json-provider-2.14.2.jar
+  jackson-datatype-jsr310-2.15.2.jar
+  jackson-jaxrs-base-2.15.2.jar
+  jackson-jaxrs-json-provider-2.15.2.jar
   jackson-mapper-asl-1.9.13.jar
-  jackson-module-jaxb-annotations-2.14.2.jar
+  jackson-module-jaxb-annotations-2.15.2.jar
   jakarta.validation-api-2.0.2.jar
   java-util-1.9.0.jar
   javapoet-1.13.0.jar
@@ -120,15 +120,15 @@ Apache-2.0
   jcip-annotations-1.0-1.jar
   jctools-core-4.0.1.jar
   jettison-1.5.4.jar
-  jetty-http-9.4.50.v20221201.jar
-  jetty-io-9.4.50.v20221201.jar
-  jetty-security-9.4.50.v20221201.jar
-  jetty-server-9.4.50.v20221201.jar
-  jetty-servlet-9.4.50.v20221201.jar
-  jetty-util-9.4.50.v20221201.jar
-  jetty-util-ajax-9.4.50.v20221201.jar
-  jetty-webapp-9.4.50.v20221201.jar
-  jetty-xml-9.4.50.v20221201.jar
+  jetty-http-9.4.51.v20230217.jar
+  jetty-io-9.4.51.v20230217.jar
+  jetty-security-9.4.51.v20230217.jar
+  jetty-server-9.4.51.v20230217.jar
+  jetty-servlet-9.4.51.v20230217.jar
+  jetty-util-9.4.51.v20230217.jar
+  jetty-util-ajax-9.4.51.v20230217.jar
+  jetty-webapp-9.4.51.v20230217.jar
+  jetty-xml-9.4.51.v20230217.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.425.jar
@@ -161,21 +161,21 @@ Apache-2.0
   log4j-api-2.20.0.jar
   log4j-core-2.20.0.jar
   log4j-layout-template-json-2.20.0.jar
-  lucene-analysis-common-9.5.0.jar
-  lucene-backward-codecs-9.5.0.jar
-  lucene-core-9.5.0.jar
-  lucene-queryparser-9.5.0.jar
+  lucene-analysis-common-9.6.0.jar
+  lucene-backward-codecs-9.6.0.jar
+  lucene-core-9.6.0.jar
+  lucene-queryparser-9.6.0.jar
   lz4-java-1.8.0.jar
   magnolia_2.13-0.17.0.jar
   mercator_2.13-0.2.1.jar
   metrics-core-3.2.4.jar
   netty-3.10.6.Final.jar
   netty-all-4.1.77.Final.jar
-  netty-buffer-4.1.91.Final.jar
-  netty-codec-4.1.91.Final.jar
+  netty-buffer-4.1.93.Final.jar
+  netty-codec-4.1.93.Final.jar
   netty-codec-dns-4.1.77.Final.jar
   netty-codec-haproxy-4.1.77.Final.jar
-  netty-codec-http-4.1.91.Final.jar
+  netty-codec-http-4.1.93.Final.jar
   netty-codec-http2-4.1.77.Final.jar
   netty-codec-memcache-4.1.77.Final.jar
   netty-codec-mqtt-4.1.77.Final.jar
@@ -184,23 +184,23 @@ Apache-2.0
   netty-codec-socks-4.1.77.Final.jar
   netty-codec-stomp-4.1.77.Final.jar
   netty-codec-xml-4.1.77.Final.jar
-  netty-common-4.1.91.Final.jar
-  netty-handler-4.1.91.Final.jar
+  netty-common-4.1.93.Final.jar
+  netty-handler-4.1.93.Final.jar
   netty-handler-proxy-4.1.77.Final.jar
-  netty-resolver-4.1.91.Final.jar
+  netty-resolver-4.1.93.Final.jar
   netty-resolver-dns-4.1.77.Final.jar
   netty-resolver-dns-classes-macos-4.1.77.Final.jar
   netty-resolver-dns-native-macos-4.1.77.Final-osx-aarch_64.jar
   netty-resolver-dns-native-macos-4.1.77.Final-osx-x86_64.jar
-  netty-transport-4.1.91.Final.jar
-  netty-transport-classes-epoll-4.1.91.Final.jar
-  netty-transport-classes-kqueue-4.1.91.Final.jar
-  netty-transport-native-epoll-4.1.91.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.1.91.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.1.91.Final.jar
-  netty-transport-native-kqueue-4.1.91.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.1.91.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.1.91.Final.jar
+  netty-transport-4.1.93.Final.jar
+  netty-transport-classes-epoll-4.1.93.Final.jar
+  netty-transport-classes-kqueue-4.1.93.Final.jar
+  netty-transport-native-epoll-4.1.93.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.1.93.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.1.93.Final.jar
+  netty-transport-native-kqueue-4.1.93.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.1.93.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.1.93.Final.jar
   netty-transport-rxtx-4.1.77.Final.jar
   netty-transport-sctp-4.1.77.Final.jar
   netty-transport-udt-4.1.77.Final.jar
@@ -210,9 +210,10 @@ Apache-2.0
   okio-jvm-2.8.0.jar
   opencsv-5.7.1.jar
   opentest4j-1.2.0.jar
-  picocli-4.7.1.jar
-  reactor-core-3.5.4.jar
+  picocli-4.7.3.jar
+  reactor-core-3.5.6.jar
   reload4j-1.2.22.jar
+  scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.10.jar
   scala-reflect-2.13.10.jar
   shiro-cache-1.11.0.jar
@@ -438,14 +439,13 @@ Apache-2.0
    See the License for the specific language governing permissions and
    limitations under the License.
 
-
 ------------------------------------------------------------------------------
 BSD-2-Clause
   dnsjava-2.1.7.jar
   jline-3.9.0.jar
   jsch-0.1.55.jar
   stax2-api-4.2.1.jar
-  zstd-jni-1.5.5-1.jar
+  zstd-jni-1.5.5-3.jar
 ------------------------------------------------------------------------------
 
 Copyright <year> <copyright holder>
@@ -471,10 +471,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 ------------------------------------------------------------------------------
 BSD-3-Clause
-  antlr-2.7.7.jar
   asm-9.3.jar
   asm-9.5.jar
   asm-analysis-9.5.jar
@@ -513,7 +511,6 @@ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
 ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 
 ------------------------------------------------------------------------------
 Common Development and Distribution License Version 1.1
@@ -876,7 +873,6 @@ litigation relating to this License shall be subject to the jurisdiction
 of the Federal Courts of the Northern District of California and the 
 state courts of the State of California, with venue lying in Santa Clara 
 County, California.
-
 
 ------------------------------------------------------------------------------
 Common Development and Distribution License Version 1.1 and GNU General Public License, version 2 with the Classpath Exception
@@ -1598,7 +1594,6 @@ to your version of the library, but you are not obligated to do so. If
 you do not wish to do so, delete this exception statement from your 
 version.
 
-
 ------------------------------------------------------------------------------
 Eclipse Distribution License - v 1.0
   FastInfoset-1.2.16.jar
@@ -1871,14 +1866,14 @@ Eclipse Public License - v 2.0
   jersey-container-servlet-core-2.34.jar
   jersey-hk2-2.34.jar
   jersey-server-2.34.jar
-  junit-jupiter-5.9.2.jar
-  junit-jupiter-api-5.9.2.jar
-  junit-jupiter-engine-5.9.2.jar
-  junit-jupiter-params-5.9.2.jar
-  junit-platform-commons-1.9.2.jar
-  junit-platform-engine-1.9.2.jar
-  junit-platform-launcher-1.9.2.jar
-  junit-platform-testkit-1.9.2.jar
+  junit-jupiter-5.9.3.jar
+  junit-jupiter-api-5.9.3.jar
+  junit-jupiter-engine-5.9.3.jar
+  junit-jupiter-params-5.9.3.jar
+  junit-platform-commons-1.9.3.jar
+  junit-platform-engine-1.9.3.jar
+  junit-platform-launcher-1.9.3.jar
+  junit-platform-testkit-1.9.3.jar
   osgi-resource-locator-1.0.3.jar
 ------------------------------------------------------------------------------
 
@@ -2556,7 +2551,6 @@ skilled in open source matters before removing the Classpath Exception or
 making modifications to this package which may subsequently be redistributed
 and/or involve the use of third party software.
 
-
 ------------------------------------------------------------------------------
 MIT
   animal-sniffer-annotations-1.17.jar
@@ -2577,7 +2571,7 @@ MIT
   jersey-hk2-2.34.jar
   jnr-x86asm-1.0.2.jar
   localstack-1.17.6.jar
-  mockito-core-5.2.0.jar
+  mockito-core-5.3.1.jar
   mssql-jdbc-6.2.1.jre7.jar
   mysql-1.17.6.jar
   neo4j-1.17.6.jar
@@ -2611,7 +2605,6 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-
 
 ------------------------------------------------------------------------------
 MPL-2.0
@@ -2991,7 +2984,6 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
   This Source Code Form is "Incompatible With Secondary Licenses", as
   defined by the Mozilla Public License, v. 2.0.
-
 
 ------------------------------------------------------------------------------
 Public Domain, per Creative Commons CC0
