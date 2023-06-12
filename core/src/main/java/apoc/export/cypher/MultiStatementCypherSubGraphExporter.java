@@ -378,7 +378,7 @@ public class MultiStatementCypherSubGraphExporter {
         return artificialUniques;
     }
 
-    private long countArtificialUniques(Iterable<Node> n) {
+    public long countArtificialUniques(Iterable<Node> n) {
         long artificialUniques = 0;
         for (Node node : n) {
             artificialUniques = getArtificialUniques(node, artificialUniques);

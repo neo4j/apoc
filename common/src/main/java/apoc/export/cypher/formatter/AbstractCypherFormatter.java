@@ -233,6 +233,10 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 									true)
 					.collect(Collectors.groupingByConcurrent(keyMapper));
 
+			// Each loop will collect at most the batch size in nodes to process
+			// This is done using a limit on the stream. If the limit returns less than
+			// the batch size, this means we have no more nodes to process after this round and
+			// can stop.
 			if (nodesInBatch.get() < exportConfig.getBatchSize()) shouldContinue = false;
 
 			AtomicInteger propertiesCount = new AtomicInteger(0);
@@ -332,7 +336,8 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 											   Iterable<Relationship> relationship,
 											   Map<String, Set<String>> uniqueConstraints,
 											   ExportConfig exportConfig,
-											   PrintWriter out, Reporter reporter,
+											   PrintWriter out,
+											   Reporter reporter,
 											   GraphDatabaseService db) {
 		boolean shouldContinue = true;
 		AtomicInteger totalRelCount = new AtomicInteger(0);
@@ -371,6 +376,10 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 							true)
 					.collect(Collectors.groupingByConcurrent(keyMapper));
 
+			// Each loop will collect at most the batch size in rels to process
+			// This is done using a limit on the stream. If the limit returns less than
+			// the batch size, this means we have no more rels to process after this round and
+			// can stop.
 			if (relsInBatch.get() < exportConfig.getBatchSize()) shouldContinue = false;
 
 			AtomicInteger propertiesCount = new AtomicInteger(0);
@@ -384,8 +393,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 				final int relSize = relationshipList.size();
 				relCount.addAndGet(relSize);
 				final Relationship last = relationshipList.get(relSize - 1);
-				for (int index = 0; index < relationshipList.size(); index++) {
-					Relationship rel = relationshipList.get(index);
+				for (Relationship rel : relationshipList) {
 					writeBatchBegin(exportConfig, out, batchCount);
 					writeUnwindStart(exportConfig, out, unwindCount);
 					batchCount.incrementAndGet();

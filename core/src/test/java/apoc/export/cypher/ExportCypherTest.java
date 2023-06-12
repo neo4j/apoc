@@ -31,9 +31,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -112,6 +114,23 @@ public class ExportCypherTest {
 
         assertEquals(cypherStatements, readFile("all.cypher").strip());
     }
+
+   @Test
+   public void testUniqueNodeLabels() {
+        // Check the unique node test doesn't fail if the node has extra non-unique constrained labels
+        String createExtraNodes = "MATCH (n) SET n:EXTRA_LABEL";
+        db.executeTransactionally(createExtraNodes);
+
+       try(Transaction tx = db.beginTx()) {
+           MultiStatementCypherSubGraphExporter exporter = new MultiStatementCypherSubGraphExporter(
+                   new DatabaseSubGraph(tx),
+                   new ExportConfig(null),
+                   db
+           );
+
+           assertEquals(exporter.countArtificialUniques(tx.getAllNodes()), 2);
+       }
+   }
 
     @Test
     public void testExportAllCypherResults() {
@@ -289,7 +308,7 @@ public class ExportCypherTest {
 
         TestUtil.testCall(db, query, params, r -> {
                     assertEquals(nodes, r.get("nodes"));
-                    assertEquals((long) 1, r.get("relationships"));
+                    assertEquals(1L, r.get("relationships"));
                     assertEquals(properties, r.get("properties"));
                 });
         assertEquals(expectedOutput, readFile(fileName));
@@ -1111,10 +1130,10 @@ public class ExportCypherTest {
             final ResourceIterator<Relationship> rels = r.columnAs("rel");
             Relationship rel = rels.next();
             assertEquals("First", rel.getStartNode().getProperty("name"));
-            assertEquals((long) 1, rel.getProperty("id"));
+            assertEquals(1L, rel.getProperty("id"));
             rel = rels.next();
             assertEquals("Second", rel.getStartNode().getProperty("name"));
-            assertEquals((long) 2, rel.getProperty("id"));
+            assertEquals(2L, rel.getProperty("id"));
             assertFalse(rels.hasNext());
         });
     }
