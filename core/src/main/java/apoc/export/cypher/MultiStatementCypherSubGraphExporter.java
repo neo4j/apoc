@@ -104,6 +104,7 @@ public class MultiStatementCypherSubGraphExporter {
             default:
                 artificialUniques += countArtificialUniques(graph.getNodes());
                 exportSchema(schemaWriter, config);
+                reporter.update(0, 0, 0);
                 exportNodesUnwindBatch(nodesWriter, reporter);
                 exportRelationshipsUnwindBatch(relationshipsWriter, reporter);
                 break;
@@ -377,7 +378,7 @@ public class MultiStatementCypherSubGraphExporter {
         return artificialUniques;
     }
 
-    private long countArtificialUniques(Iterable<Node> n) {
+    public long countArtificialUniques(Iterable<Node> n) {
         long artificialUniques = 0;
         for (Node node : n) {
             artificialUniques = getArtificialUniques(node, artificialUniques);
@@ -388,11 +389,10 @@ public class MultiStatementCypherSubGraphExporter {
     private long getArtificialUniques(Node node, long artificialUniques) {
         Iterator<Label> labels = node.getLabels().iterator();
         boolean uniqueFound = false;
-        while (labels.hasNext()) {
+        while (labels.hasNext() && !uniqueFound) {
             Label next = labels.next();
             String labelName = next.name();
             uniqueFound = CypherFormatterUtils.isUniqueLabelFound(node, uniqueConstraints, labelName);
-
         }
         if (!uniqueFound) {
             artificialUniques++;

@@ -18,9 +18,7 @@
  */
 package apoc.it.core;
 
-import apoc.export.cypher.ExportCypher;
 import apoc.export.cypher.ExportCypherTestUtils;
-import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
 import apoc.util.s3.S3TestUtil;
@@ -31,11 +29,8 @@ import org.junit.rules.TestName;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
-import java.io.IOException;
 import java.util.Map;
 
-import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
-import static apoc.ApocConfig.apocConfig;
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.util.Util.map;
 import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
@@ -58,7 +53,7 @@ public class ExportCypherS3Test extends S3BaseTest {
 
     // -- Whole file test -- //
     @Test
-    public void testExportAllCypherDefault() throws Exception {
+    public void testExportAllCypherDefault() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{useOptimizations: { type: 'none'}, format: 'neo4j-shell'})",
@@ -68,7 +63,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherForCypherShell() throws Exception {
+    public void testExportAllCypherForCypherShell() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,$config)",
@@ -78,7 +73,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherForNeo4j() throws Exception {
+    public void testExportQueryCypherForNeo4j() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
@@ -89,7 +84,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCypher() throws Exception {
+    public void testExportGraphCypher() {
         String fileName = "graph.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -103,7 +98,7 @@ public class ExportCypherS3Test extends S3BaseTest {
 
     // -- Separate files tests -- //
     @Test
-    public void testExportAllCypherNodes() throws Exception {
+    public void testExportAllCypherNodes() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,$exportConfig)",
@@ -113,7 +108,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherRelationships() throws Exception {
+    public void testExportAllCypherRelationships() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,$exportConfig)",
@@ -123,7 +118,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherSchema() throws Exception {
+    public void testExportAllCypherSchema() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,$exportConfig)",
@@ -133,7 +128,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherCleanUp() throws Exception {
+    public void testExportAllCypherCleanUp() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,$exportConfig)",
@@ -143,7 +138,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCypherNodes() throws Exception {
+    public void testExportGraphCypherNodes() {
         String fileName = "graph.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -156,7 +151,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCypherRelationships() throws Exception {
+    public void testExportGraphCypherRelationships() {
         String fileName = "graph.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -169,7 +164,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCypherSchema() throws Exception {
+    public void testExportGraphCypherSchema() {
         String fileName = "graph.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -182,7 +177,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCypherCleanUp() throws Exception {
+    public void testExportGraphCypherCleanUp() {
         String fileName = "graph.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -205,7 +200,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherPlainFormat() throws Exception {
+    public void testExportQueryCypherPlainFormat() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
@@ -216,7 +211,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherFormatUpdateAll() throws Exception {
+    public void testExportQueryCypherFormatUpdateAll() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
@@ -227,7 +222,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherFormatAddStructure() throws Exception {
+    public void testExportQueryCypherFormatAddStructure() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
@@ -238,7 +233,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherFormatUpdateStructure() throws Exception {
+    public void testExportQueryCypherFormatUpdateStructure() {
         String fileName = "all.cypher";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
@@ -249,7 +244,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportSchemaCypher() throws Exception {
+    public void testExportSchemaCypher() {
         String fileName = "onlySchema.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.schema($s3,$exportConfig)", map("s3", s3Url, "exportConfig", exportConfig), (r) -> {
@@ -258,7 +253,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportSchemaCypherShell() throws Exception {
+    public void testExportSchemaCypherShell() {
         String fileName = "onlySchema.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.schema($s3,$exportConfig)",
@@ -268,7 +263,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportCypherNodePoint() throws IOException {
+    public void testExportCypherNodePoint() {
         db.executeTransactionally("CREATE (f:Test {name:'foo'," +
                 "place2d:point({ x: 2.3, y: 4.5 })," +
                 "place3d1:point({ x: 2.3, y: 4.5 , z: 1.2})})" +
@@ -284,7 +279,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportCypherNodeDate() throws IOException {
+    public void testExportCypherNodeDate() {
         db.executeTransactionally("CREATE (f:Test {name:'foo', " +
                 "date:date('2018-10-30'), " +
                 "datetime:datetime('2018-10-30T12:50:35.556+0100'), " +
@@ -301,7 +296,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportCypherNodeTime() throws IOException {
+    public void testExportCypherNodeTime() {
         db.executeTransactionally("CREATE (f:Test {name:'foo', " +
                 "local:localtime('12:50:35.556')," +
                 "t:time('125035.556+0100')})" +
@@ -317,7 +312,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportCypherNodeDuration() throws IOException {
+    public void testExportCypherNodeDuration() {
         db.executeTransactionally("CREATE (f:Test {name:'foo', " +
                 "duration:duration('P5M1.5D')})" +
                 "-[:FRIEND_OF {duration:duration('P5M1.5D')}]->" +
@@ -332,7 +327,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportWithAscendingLabels() throws IOException {
+    public void testExportWithAscendingLabels() {
         db.executeTransactionally("CREATE (f:User:User1:User0:User12 {name:'Alan'})");
         String fileName = "ascendingLabels.cypher";
         String s3Url = s3Container.getUrl(fileName);
@@ -344,7 +339,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherDefaultWithUnwindBatchSizeOptimized() throws Exception {
+    public void testExportAllCypherDefaultWithUnwindBatchSizeOptimized() {
         String fileName = "allDefaultOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, format: 'neo4j-shell'})", map("s3", s3Url),
@@ -353,7 +348,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherDefaultOptimized() throws Exception {
+    public void testExportAllCypherDefaultOptimized() {
         String fileName = "allDefaultOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3, $exportConfig)", map("s3", s3Url, "exportConfig", map("format", "neo4j-shell")),
@@ -362,7 +357,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherDefaultSeparatedFilesOptimized() throws Exception {
+    public void testExportAllCypherDefaultSeparatedFilesOptimized() {
         String fileName = "allDefaultOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3, $exportConfig)",
@@ -375,7 +370,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherCypherShellWithUnwindBatchSizeOptimized() throws Exception {
+    public void testExportAllCypherCypherShellWithUnwindBatchSizeOptimized() {
         String fileName = "allCypherShellOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'cypher-shell', useOptimizations: {type: 'unwind_batch'}})",
@@ -385,7 +380,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherCypherShellOptimized() throws Exception {
+    public void testExportAllCypherCypherShellOptimized() {
         String fileName = "allCypherShellOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'cypher-shell'})",
@@ -395,7 +390,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherPlainWithUnwindBatchSizeOptimized() throws Exception {
+    public void testExportAllCypherPlainWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'plain', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
@@ -405,7 +400,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherPlainAddStructureWithUnwindBatchSizeOptimized() throws Exception {
+    public void testExportAllCypherPlainAddStructureWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainAddStructureOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'plain', cypherFormat: 'addStructure', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
@@ -414,7 +409,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherPlainUpdateStructureWithUnwindBatchSizeOptimized() throws Exception {
+    public void testExportAllCypherPlainUpdateStructureWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainUpdateStructureOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'plain', cypherFormat: 'updateStructure', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
@@ -430,7 +425,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCypherPlainUpdateAllWithUnwindBatchSizeOptimized() throws Exception {
+    public void testExportAllCypherPlainUpdateAllWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainUpdateAllOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'plain', cypherFormat: 'updateAll', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
@@ -439,7 +434,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOptimized() throws Exception {
+    public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOptimized() {
         String fileName = "allPlainOptimized.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
@@ -449,7 +444,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOddDataset() throws Exception {
+    public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOddDataset() {
         String fileName = "allPlainOdd.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
@@ -458,7 +453,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherShellUnwindBatchParamsWithOddDataset() throws Exception {
+    public void testExportQueryCypherShellUnwindBatchParamsWithOddDataset() {
         String fileName = "allPlainOdd.cypher";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.cypher.all($s3,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:2})",
@@ -468,7 +463,7 @@ public class ExportCypherS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCypherShellUnwindBatchParamsWithOddBatchSizeOddDataset() throws Exception {
+    public void testExportQueryCypherShellUnwindBatchParamsWithOddBatchSizeOddDataset() {
         db.executeTransactionally("CREATE (:Bar {name:'bar3',age:35}), (:Bar {name:'bar4',age:36})");
         String fileName = "allPlainOddNew.cypher";
         String s3Url = s3Container.getUrl(fileName);
