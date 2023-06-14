@@ -24,13 +24,11 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import inet.ipaddr.IPAddressString;
 import org.junit.*;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
