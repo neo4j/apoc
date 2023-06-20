@@ -39,7 +39,7 @@ public class WarmupEnterpriseTest {
     public void testWarmupIsntAllowedWithOtherStorageEngines() {
         Neo4jContainerExtension neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
                 .withNeo4jConfig(GraphDatabaseInternalSettings.include_versions_under_development.name(), "true")
-                .withNeo4jConfig(GraphDatabaseSettings.db_format.name(), "freki");
+                .withNeo4jConfig(GraphDatabaseSettings.db_format.name(), "multiversion");
         neo4jContainer.start();
         Session session = neo4jContainer.getSession();
 
