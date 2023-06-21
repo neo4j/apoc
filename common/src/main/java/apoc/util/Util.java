@@ -113,6 +113,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.TerminationGuard;
 
 import static apoc.ApocConfig.apocConfig;
+import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 import static apoc.util.DateFormatUtil.getOrCreate;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -370,6 +371,7 @@ public class Util {
             zipFileName = tokens[1];
             sc = getStreamConnection(urlAddress, headers, payload);
             stream = getFileStreamIntoCompressedFile(sc.getInputStream(), zipFileName, archiveType);
+            stream = toLimitedIStream(stream, sc.getLength());
         }else
             throw new IllegalArgumentException("filename can't be null or empty");
 

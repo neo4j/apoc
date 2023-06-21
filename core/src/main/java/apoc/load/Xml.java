@@ -26,6 +26,7 @@ import apoc.result.NodeResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
 import apoc.util.FileUtils;
+import apoc.util.StreamConnection;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Label;
@@ -78,6 +79,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.FileUtils.getInputStreamFromBinary;
 import static apoc.util.Util.ERROR_BYTES_OR_STRING;
@@ -185,9 +187,13 @@ public class Xml {
             String url = (String) urlOrBinary;
             apocConfig.checkReadAllowed(url);
             url = FileUtils.changeFileUrlIfImportDirectoryConstrained(url);
-            inputStream = getStreamConnection(url, null, null).getInputStream();
+            StreamConnection streamConnection = getStreamConnection(url, null, null);
+            inputStream = toLimitedIStream(streamConnection.getInputStream(), streamConnection.getLength());
         } else if (urlOrBinary instanceof byte[]) {
-            inputStream = getInputStreamFromBinary((byte[]) urlOrBinary, config.getCompressionAlgo());
+            inputStream = toLimitedIStream(
+                    getInputStreamFromBinary((byte[]) urlOrBinary, config.getCompressionAlgo()),
+                    ((byte[]) urlOrBinary).length
+            );
         } else {
             throw new RuntimeException(ERROR_BYTES_OR_STRING);
         }
