@@ -44,9 +44,9 @@ Apache-2.0
   curator-client-4.2.0.jar
   curator-framework-4.2.0.jar
   curator-recipes-4.2.0.jar
-  docker-java-api-3.2.13.jar
-  docker-java-transport-3.2.13.jar
-  docker-java-transport-zerodep-3.2.13.jar
+  docker-java-api-3.3.0.jar
+  docker-java-transport-3.3.0.jar
+  docker-java-transport-zerodep-3.3.0.jar
   ehcache-3.3.1.jar
   error_prone_annotations-2.2.0.jar
   error_prone_annotations-2.7.1.jar
@@ -2557,31 +2557,31 @@ MIT
   bcpkix-jdk15on-1.70.jar
   bcprov-jdk15on-1.70.jar
   bcutil-jdk15on-1.70.jar
-  cassandra-1.17.6.jar
+  cassandra-1.18.3.jar
   checker-qual-2.5.2.jar
   checker-qual-3.12.0.jar
-  couchbase-1.17.6.jar
-  database-commons-1.17.6.jar
+  couchbase-1.18.3.jar
+  database-commons-1.18.3.jar
   duct-tape-1.0.8.jar
-  elasticsearch-1.17.6.jar
-  jdbc-1.17.6.jar
+  elasticsearch-1.18.3.jar
+  jdbc-1.18.3.jar
   jersey-client-2.34.jar
   jersey-container-servlet-2.34.jar
   jersey-container-servlet-core-2.34.jar
   jersey-hk2-2.34.jar
   jnr-x86asm-1.0.2.jar
-  localstack-1.17.6.jar
+  localstack-1.18.3.jar
   mockito-core-5.3.1.jar
   mssql-jdbc-6.2.1.jre7.jar
-  mysql-1.17.6.jar
-  neo4j-1.17.6.jar
-  postgresql-1.17.6.jar
+  mysql-1.18.3.jar
+  neo4j-1.18.3.jar
+  postgresql-1.18.3.jar
   reactive-streams-1.0.4.jar
   slf4j-api-1.7.36.jar
   slf4j-api-2.0.7.jar
   slf4j-nop-2.0.7.jar
   slf4j-simple-1.7.36.jar
-  testcontainers-1.17.6.jar
+  testcontainers-1.18.3.jar
 ------------------------------------------------------------------------------
 
 The MIT License
