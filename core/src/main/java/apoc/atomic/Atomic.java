@@ -235,13 +235,13 @@ public class Atomic {
         return values;
     }
 
-    private void retry(ExecutionContext executionContext, Function<ExecutionContext, Object> work, Long times){
+    private void retry(ExecutionContext executionContext, Function<ExecutionContext, Object> work, Long retryAttempts){
         try {
             tx.acquireWriteLock(executionContext.entity);
             work.apply(executionContext);
         } catch (Neo4jException|NotFoundException|AssertionError e) {
-            if (times > 0) {
-                retry(executionContext, work, times-1);
+            if (retryAttempts > 0) {
+                retry(executionContext, work, retryAttempts-1);
             } else {
                 throw e;
             }
