@@ -48,7 +48,7 @@ dependencies {
     implementation project(":common")
     implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1'
     implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
-    implementation group: 'com.google.guava', name: 'guava', version: '31.0.1-jre'
+    implementation group: 'com.google.guava', name: 'guava', version: '32.0.1-jre'
     implementation group: 'org.apache.arrow', name: 'arrow-vector', version: '10.0.1', {
         exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
         exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
