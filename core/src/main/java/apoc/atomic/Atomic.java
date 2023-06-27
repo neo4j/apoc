@@ -52,7 +52,7 @@ public class Atomic {
     @Procedure(name= "apoc.atomic.add", mode = Mode.WRITE)
     @Description("Sets the given property to the sum of itself and the number value.\n" +
             "The procedure then sets the property to the returned sum.")
-    public Stream<AtomicResults> add(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "times", defaultValue = "5") Long times) {
+    public Stream<AtomicResults> add(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         final Number[] newValue = new Number[1];
         final Number[] oldValue = new Number[1];
@@ -64,7 +64,7 @@ public class Atomic {
             newValue[0] = AtomicUtils.sum((Number) entity.getProperty(property), number);
             entity.setProperty(property, newValue[0]);
             return context.entity.getProperty(property);
-        }, times);
+        }, retryAttempts);
 
         return Stream.of(new AtomicResults(entity,property, oldValue[0], newValue[0]));
     }
@@ -75,7 +75,7 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.subtract", mode = Mode.WRITE)
     @Description("Sets the property of a value to itself minus the given number value.\n" +
             "The procedure then sets the property to the returned sum.")
-    public Stream<AtomicResults> subtract(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "times", defaultValue = "5") Long times) {
+    public Stream<AtomicResults> subtract(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Number[] newValue = new Number[1];
@@ -87,7 +87,7 @@ public class Atomic {
             newValue[0] = AtomicUtils.sub((Number) entity.getProperty(property), number);
             entity.setProperty(property, newValue[0]);
             return context.entity.getProperty(property);
-        }, times);
+        }, retryAttempts);
 
         return Stream.of(new AtomicResults(entity, property, oldValue[0], newValue[0]));
     }
@@ -98,7 +98,7 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.concat", mode = Mode.WRITE)
     @Description("Sets the given property to the concatenation of itself and the string value.\n" +
             "The procedure then sets the property to the returned string.")
-    public Stream<AtomicResults> concat(@Name("container") Object container, @Name("propertyName") String property, @Name("string") String string, @Name(value = "times", defaultValue = "5") Long times) {
+    public Stream<AtomicResults> concat(@Name("container") Object container, @Name("propertyName") String property, @Name("string") String string, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final String[] newValue = new String[1];
@@ -111,7 +111,7 @@ public class Atomic {
             entity.setProperty(property, newValue[0]);
 
             return context.entity.getProperty(property);
-        }, times);
+        }, retryAttempts);
 
         return Stream.of(new AtomicResults(entity, property, oldValue[0], newValue[0]));
     }
@@ -122,7 +122,7 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.insert", mode = Mode.WRITE)
     @Description("Inserts a value at position into the array value of a property.\n" +
             "The procedure then sets the result back on the property.")
-    public Stream<AtomicResults> insert(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name("value") Object value, @Name(value = "times", defaultValue = "5") Long times) {
+    public Stream<AtomicResults> insert(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name("value") Object value, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
@@ -147,7 +147,7 @@ public class Atomic {
             }
             entity.setProperty(property, newValue[0]);
             return context.entity.getProperty(property);
-        }, times);
+        }, retryAttempts);
 
         return Stream.of(new AtomicResults(entity, property, oldValue[0], newValue[0]));
     }
@@ -158,7 +158,7 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.remove", mode = Mode.WRITE)
     @Description("Removes the element at position from the array value of a property.\n" +
             "The procedure then sets the property to the resulting array value.")
-    public Stream<AtomicResults> remove(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name(value = "times", defaultValue = "5") Long times) {
+    public Stream<AtomicResults> remove(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
@@ -185,7 +185,7 @@ public class Atomic {
             entity.setProperty(property, newValue[0]);
 
             return context.entity.getProperty(property);
-        }, times);
+        }, retryAttempts);
 
         return Stream.of(new AtomicResults(entity, property, oldValue[0], newValue[0]));
     }
@@ -195,7 +195,7 @@ public class Atomic {
      */
     @Procedure(name = "apoc.atomic.update", mode = Mode.WRITE)
     @Description("Updates the value of a property with a Cypher operation.")
-    public Stream<AtomicResults> update(@Name("container") Object nodeOrRelationship, @Name("propertyName") String property, @Name("operation") String operation, @Name(value = "times", defaultValue = "5") Long times)  {
+    public Stream<AtomicResults> update(@Name("container") Object nodeOrRelationship, @Name("propertyName") String property, @Name("operation") String operation, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts)  {
         checkIsEntity(nodeOrRelationship);
         Entity entity = Util.rebind(tx, (Entity) nodeOrRelationship);
         final Object[] oldValue = new Object[1];
@@ -206,7 +206,7 @@ public class Atomic {
             String statement = "WITH $container as n with n set n." + Util.sanitize(property, true) + "=" + operation + ";";
             Map<String, Object> properties = MapUtil.map("container", entity);
             return context.tx.execute(statement, properties);
-        }, times);
+        }, retryAttempts);
 
         return Stream.of(new AtomicResults(entity,property,oldValue[0],entity.getProperty(property)));
     }
@@ -235,13 +235,13 @@ public class Atomic {
         return values;
     }
 
-    private void retry(ExecutionContext executionContext, Function<ExecutionContext, Object> work, Long times){
+    private void retry(ExecutionContext executionContext, Function<ExecutionContext, Object> work, Long retryAttempts){
         try {
             tx.acquireWriteLock(executionContext.entity);
             work.apply(executionContext);
         } catch (Neo4jException|NotFoundException|AssertionError e) {
-            if (times > 0) {
-                retry(executionContext, work, times-1);
+            if (retryAttempts > 0) {
+                retry(executionContext, work, retryAttempts-1);
             } else {
                 throw e;
             }
