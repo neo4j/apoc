@@ -78,8 +78,8 @@ Apache-2.0
   docker-java-transport-3.3.0.jar
   docker-java-transport-zerodep-3.3.0.jar
   ehcache-3.3.1.jar
+  error_prone_annotations-2.18.0.jar
   error_prone_annotations-2.2.0.jar
-  error_prone_annotations-2.7.1.jar
   failureaccess-1.0.1.jar
   failureaccess-1.0.jar
   flatbuffers-java-1.12.0.jar
@@ -88,7 +88,7 @@ Apache-2.0
   gradle-tooling-api-7.3.jar
   gson-2.9.0.jar
   guava-27.0-jre.jar
-  guava-31.0.1-jre.jar
+  guava-32.0.1-jre.jar
   guice-4.0.jar
   guice-servlet-4.0.jar
   hadoop-annotations-3.3.6.jar
@@ -125,7 +125,7 @@ Apache-2.0
   ipaddress-5.3.3.jar
   ipaddress-5.4.0.jar
   j2objc-annotations-1.1.jar
-  j2objc-annotations-1.3.jar
+  j2objc-annotations-2.8.jar
   jPowerShell-3.0.jar
   jProcesses-1.6.5.jar
   jackson-annotations-2.15.2.jar
@@ -419,7 +419,7 @@ MIT
   bcutil-jdk15on-1.70.jar
   cassandra-1.18.3.jar
   checker-qual-2.5.2.jar
-  checker-qual-3.12.0.jar
+  checker-qual-3.33.0.jar
   couchbase-1.18.3.jar
   database-commons-1.18.3.jar
   duct-tape-1.0.8.jar
