@@ -50,7 +50,7 @@ public class VirtualNodeTest {
         Map<String, Object> props = Util.map("key", "value");
         Label[] labels = {Label.label("Test")};
         VirtualNode vn = new VirtualNode(labels, props);
-        assertTrue("the id should be < 0", vn.getId() < 0);
+        assertTrue("the id should be < 0", Integer.parseInt(vn.getElementId()) < 0);
         assertEquals(props, vn.getAllProperties());
         Iterator<Label> it = vn.getLabels().iterator();
         assertEquals(labels[0], it.next());
@@ -62,7 +62,7 @@ public class VirtualNodeTest {
         Map<String, Object> startProps = Util.map("key", "value");
         Label[] startLabels = {Label.label("Test")};
         VirtualNode start = new VirtualNode(startLabels, startProps);
-        assertTrue("the node id should be < 0", start.getId() < 0);
+        assertTrue("the node id should be < 0", Integer.parseInt(start.getElementId()) < 0);
         assertEquals(startProps, start.getAllProperties());
         Iterator<Label> startLabelIt = start.getLabels().iterator();
         assertEquals(startLabels[0], startLabelIt.next());
@@ -71,7 +71,7 @@ public class VirtualNodeTest {
         Map<String, Object> endProps = Util.map("key", "value");
         Label[] endLabels = {Label.label("Test")};
         VirtualNode end = new VirtualNode(endLabels, endProps);
-        assertTrue("the node id should be < 0", end.getId() < 0);
+        assertTrue("the node id should be < 0", Integer.parseInt(end.getElementId()) < 0);
         assertEquals(endProps, end.getAllProperties());
         Iterator<Label> endLabelIt = end.getLabels().iterator();
         assertEquals(endLabels[0], endLabelIt.next());
@@ -100,7 +100,7 @@ public class VirtualNodeTest {
         Map<String, Object> startProps = Util.map("key", "value");
         Label[] startLabels = {Label.label("Test")};
         VirtualNode start = new VirtualNode(startLabels, startProps);
-        assertTrue("the node id should be < 0", start.getId() < 0);
+        assertTrue("the node id should be < 0", Integer.parseInt(start.getElementId()) < 0);
         assertEquals(startProps, start.getAllProperties());
         Iterator<Label> startLabelIt = start.getLabels().iterator();
         assertEquals(startLabels[0], startLabelIt.next());
@@ -109,7 +109,7 @@ public class VirtualNodeTest {
         Map<String, Object> endProps = Util.map("key", "value");
         Label[] endLabels = {Label.label("Test")};
         VirtualNode end = new VirtualNode(endLabels, endProps);
-        assertTrue("the node id should be < 0", end.getId() < 0);
+        assertTrue("the node id should be < 0", Integer.parseInt(end.getElementId()) < 0);
         assertEquals(endProps, end.getAllProperties());
         Iterator<Label> endLabelIt = end.getLabels().iterator();
         assertEquals(endLabels[0], endLabelIt.next());

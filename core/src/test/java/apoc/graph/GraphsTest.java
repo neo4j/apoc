@@ -22,9 +22,9 @@ import apoc.graph.util.GraphsConfig;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
-import apoc.util.collection.Iterables;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +38,7 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,9 +64,10 @@ import static org.neo4j.graphdb.Label.label;
  * @author mh
  * @since 27.05.16
  */
+@SuppressWarnings("unchecked")
 public class GraphsTest {
 
-    private static Map<String,Object> graph = map("name","test","properties",map("answer",42L));
+    private static final Map<String,Object> graph = map("name","test","properties",map("answer",42L));
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
@@ -78,7 +79,7 @@ public class GraphsTest {
         TestUtil.registerProcedure(db,Graphs.class);
         db.executeTransactionally("CREATE (a:Actor {name:'Tom Hanks'})-[r:ACTED_IN {roles:'Forrest'}]->(m:Movie {title:'Forrest Gump'}) RETURN [a,m] as nodes, [r] as relationships", Collections.emptyMap(),
                 result -> {
-                    result.stream().forEach(m -> graph.putAll(m));
+                    result.stream().forEach(graph::putAll);
                     return null;
                 });
     }
@@ -103,7 +104,7 @@ public class GraphsTest {
         db.executeTransactionally("MATCH p = (a:Actor {name:'Tom Hanks'})-[r:ACTED_IN]->(m:Movie) RETURN reduce(output = [], n in collect(nodes(p)) | output + n) AS nodes, reduce(output = [], r in collect(relationships(p)) | output + r) AS relationships", Collections.emptyMap(),
                 result -> {
                     result.stream().flatMap(m -> m.entrySet().stream())
-                            .forEach(e -> myGraph.put(e.getKey(), new ArrayList<>(new HashSet<>((Collection) e.getValue()))));
+                            .forEach(e -> myGraph.put(e.getKey(), new ArrayList<>(new HashSet<>((Collection<Object>) e.getValue()))));
                     return null;
                 });
         // when
@@ -114,16 +115,9 @@ public class GraphsTest {
         db.executeTransactionally("MATCH (m:Movie {title:'Cloud Atlas'}) DETACH DELETE m");
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testFromDB() {
-        TestUtil.testCall(db," CALL apoc.graph.fromDB('test',{answer:42})",
-                r -> {
-                    Map graph1 = new HashMap((Map)r.get("graph"));
-                    graph1.put("nodes", Iterables.asList((Iterable) graph1.get("nodes")));
-                    graph1.put("relationships", Iterables.asList((Iterable) graph1.get("relationships")));
-                    assertEquals(graph, graph1);
-                });
+        TestUtil.testCall(db," CALL apoc.graph.fromDB('test',{answer:42})", r -> assertEquals(graph, r.get("graph")));
     }
 
     @Test
@@ -136,34 +130,37 @@ public class GraphsTest {
     public void testFromDocument() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> artistGenesisMapExt = new HashMap() {{
+        Map<String, Object> artistGenesisMapExt = new HashMap<>() {{
             putAll(artistGenesisMap);
-            put("albums", Arrays.asList(albumGenesisMap));
+            put("albums", List.of(albumGenesisMap));
         }};
 
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json, $config) yield graph",
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(artistGenesisMapExt), "config", Util.map("write", true)),
                 stringObjectMap -> {
                     Map<String, Object> map = stringObjectMap.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(2, nodes.size());
                     assertEquals(1, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node albumGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumGenesis.getLabels());
-                    assertTrue(albumGenesis.getId() > 0);
+                    assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(albumGenesis.getElementId()) || Integer.parseInt(albumGenesis.getElementId()) > 0);
                     assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
                     Node artistGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(artistGenesis.getId() > 0);
+                    assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(artistGenesis.getElementId()) || Integer.parseInt(artistGenesis.getElementId()) > 0);
                     assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
                     Relationship rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
-                    assertTrue(rel.getId() > 0);
+                    // Check this is not a virtual rel
+                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
                 });
         db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
     }
@@ -204,34 +201,34 @@ public class GraphsTest {
     public void testFromDocumentVirtual() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> artistGenesisMapExt = new HashMap() {{
+        Map<String, Object> artistGenesisMapExt = new HashMap<>() {{
             putAll(artistGenesisMap);
-            put("albums", Arrays.asList(albumGenesisMap));
+            put("albums", List.of(albumGenesisMap));
         }};
 
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph", Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(artistGenesisMapExt)), result -> {
             Map<String, Object> map = result.next();
-            assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-            Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-            Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+            assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+            Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+            Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
             assertEquals(2, nodes.size());
             assertEquals(1, relationships.size());
             Iterator<Node> nodeIterator = nodes.iterator();
             Iterator<Relationship> relationshipIterator = relationships.iterator();
 
             Node artistGenesis = nodeIterator.next();
-            assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-            assertTrue(artistGenesis.getId() < 0);
+            assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+            assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
             assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
 
             Node albumGenesis = nodeIterator.next();
-            assertEquals(asList(label("Album")), albumGenesis.getLabels());
-            assertTrue(albumGenesis.getId() < 0);
+            assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+            assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
             assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
 
             Relationship rel = relationshipIterator.next();
             assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-            assertTrue(rel.getId() < 0);
+            assertTrue(Integer.parseInt(rel.getElementId()) < 0);
 
 
         });
@@ -241,9 +238,9 @@ public class GraphsTest {
     public void testFromArrayOfDocumentsVirtual() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> artistGenesisMapExt = new HashMap() {{
+        Map<String, Object> artistGenesisMapExt = new HashMap<>() {{
             putAll(artistGenesisMap);
-            put("albums", Arrays.asList(albumGenesisMap));
+            put("albums", List.of(albumGenesisMap));
         }};
         Map<String, Object> artistDaftPunkMap = Util.map("id", 2L,
                 "name", "Daft Punk",
@@ -252,49 +249,49 @@ public class GraphsTest {
                 "producer", "Daft Punk",
                 "type", "album",
                 "title", "Random Access Memory");
-        Map<String, Object> artistDaftPunkMapExt = new HashMap() {{
+        Map<String, Object> artistDaftPunkMapExt = new HashMap<>() {{
             putAll(artistDaftPunkMap);
-            put("albums", Arrays.asList(albumDaftPunkMap));
+            put("albums", List.of(albumDaftPunkMap));
         }};
 
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph", Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(Arrays.asList(artistGenesisMapExt, artistDaftPunkMapExt))),
                 result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(4, nodes.size());
                     assertEquals(2, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node artistGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(artistGenesis.getId() < 0);
+                    assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+                    assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
                     assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
 
                     Node artistDaftPunk = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistDaftPunk.getLabels());
-                    assertTrue(artistDaftPunk.getId() < 0);
+                    assertEquals(List.of(label("Artist")), artistDaftPunk.getLabels());
+                    assertTrue(Integer.parseInt(artistDaftPunk.getElementId()) < 0);
                     assertEquals(artistDaftPunkMap, artistDaftPunk.getAllProperties());
 
                     Node albumGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumGenesis.getLabels());
-                    assertTrue(albumGenesis.getId() < 0);
+                    assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+                    assertTrue(Integer.parseInt(albumGenesis.getElementId()) < 0);
                     assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
 
                     Node albumDaftPunk = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumDaftPunk.getLabels());
-                    assertTrue(albumDaftPunk.getId() < 0);
+                    assertEquals(List.of(label("Album")), albumDaftPunk.getLabels());
+                    assertTrue(Integer.parseInt(albumDaftPunk.getElementId()) < 0);
                     assertEquals(albumDaftPunkMap, albumDaftPunk.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
 
                     rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                 });
     }
 
@@ -302,9 +299,9 @@ public class GraphsTest {
     public void testFromArrayOfDocuments() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> artistGenesisMapExt = new HashMap() {{
+        Map<String, Object> artistGenesisMapExt = new HashMap<>() {{
             putAll(artistGenesisMap);
-            put("albums", Arrays.asList(albumGenesisMap));
+            put("albums", List.of(albumGenesisMap));
         }};
         Map<String, Object> artistDaftPunkMap = Util.map("id", 2L,
                 "name", "Daft Punk",
@@ -313,49 +310,55 @@ public class GraphsTest {
                 "producer", "Daft Punk",
                 "type", "album",
                 "title", "Random Access Memory");
-        Map<String, Object> artistDaftPunkMapExt = new HashMap() {{
+        Map<String, Object> artistDaftPunkMapExt = new HashMap<>() {{
             putAll(artistDaftPunkMap);
-            put("albums", Arrays.asList(albumDaftPunkMap));
+            put("albums", List.of(albumDaftPunkMap));
         }};
 
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json, $config) yield graph",
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(Arrays.asList(artistGenesisMapExt, artistDaftPunkMapExt)), "config", Util.map("write", true)),
                 result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(4, nodes.size());
                     assertEquals(2, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node albumGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumGenesis.getLabels());
-                    assertTrue(albumGenesis.getId() > 0);
+                    assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(albumGenesis.getElementId()) || Integer.parseInt(albumGenesis.getElementId()) > 0);
                     assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
 
                     Node albumDaftPunk = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumDaftPunk.getLabels());
-                    assertTrue(albumDaftPunk.getId() > 0);
+                    assertEquals(List.of(label("Album")), albumDaftPunk.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(albumDaftPunk.getElementId()) || Integer.parseInt(albumDaftPunk.getElementId()) > 0);
                     assertEquals(albumDaftPunkMap, albumDaftPunk.getAllProperties());
 
                     Node artistGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(artistGenesis.getId() > 0);
+                    assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(artistGenesis.getElementId()) || Integer.parseInt(artistGenesis.getElementId()) > 0);
                     assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
 
                     Node artistDaftPunk = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistDaftPunk.getLabels());
-                    assertTrue(artistDaftPunk.getId() > 0);
+                    assertEquals(List.of(label("Artist")), artistDaftPunk.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(artistDaftPunk.getElementId()) || Integer.parseInt(artistDaftPunk.getElementId()) > 0);
                     assertEquals(artistDaftPunkMap, artistDaftPunk.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
-                    assertTrue(rel.getId() > 0);
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
                     rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
-                    assertTrue(rel.getId() > 0);
+                    // Check this is not a virtual rel
+                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
                 });
         db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
         Long count = TestUtil.singleResultFirstColumn(db, "MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) RETURN count(p) AS count");
@@ -366,36 +369,36 @@ public class GraphsTest {
     public void testFromDocumentVirtualWithCustomIdAndLabel() throws Exception {
         Map<String, Object> genesisMap = Util.map("myCustomType", "artist", "name", "Genesis", "myCustomId", 1L);
         Map<String, Object> albumMap = Util.map("myCustomType", "album", "producer", "Jonathan King", "myCustomId", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> genesisExt = new HashMap() {{
+        Map<String, Object> genesisExt = new HashMap<>() {{
             putAll(genesisMap);
-            put("albums", Arrays.asList(albumMap));
+            put("albums", List.of(albumMap));
         }};
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json, $config) yield graph",
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisExt), "config",
                         Util.map("labelField", "myCustomType", "idField", "myCustomId")),
                 stringObjectMap -> {
                     Map<String, Object> map = stringObjectMap.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(2, nodes.size());
                     assertEquals(1, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node artistGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(artistGenesis.getId() < 0);
+                    assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+                    assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
                     assertEquals(genesisMap, artistGenesis.getAllProperties());
 
                     Node albumGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumGenesis.getLabels());
-                    assertTrue(albumGenesis.getId() < 0);
+                    assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+                    assertTrue(Integer.parseInt(albumGenesis.getElementId()) < 0);
                     assertEquals(albumMap, albumGenesis.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                 });
     }
 
@@ -403,7 +406,7 @@ public class GraphsTest {
     public void testFromDocumentVirtualWithDuplicates() throws Exception {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumMap = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> genesisExt = new HashMap() {{
+        Map<String, Object> genesisExt = new HashMap<>() {{
             putAll(genesisMap);
             put("albums", Arrays.asList(albumMap, albumMap));
         }};
@@ -411,27 +414,27 @@ public class GraphsTest {
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisExt)),
                 stringObjectMap -> {
                     Map<String, Object> map = stringObjectMap.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(2, nodes.size());
                     assertEquals(1, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node artistGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(artistGenesis.getId() < 0);
+                    assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+                    assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
                     assertEquals(genesisMap, artistGenesis.getAllProperties());
 
                     Node albumGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumGenesis.getLabels());
-                    assertTrue(albumGenesis.getId() < 0);
+                    assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+                    assertTrue(Integer.parseInt(albumGenesis.getElementId()) < 0);
                     assertEquals(albumMap, albumGenesis.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                 });
     }
 
@@ -439,7 +442,7 @@ public class GraphsTest {
     public void testFromDocumentWithDuplicates() throws Exception {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumMap = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
-        Map<String, Object> genesisExt = new HashMap() {{
+        Map<String, Object> genesisExt = new HashMap<>() {{
             putAll(genesisMap);
             put("albums", Arrays.asList(albumMap, albumMap));
         }};
@@ -447,25 +450,28 @@ public class GraphsTest {
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisExt), "config", Util.map("write", true)),
                 stringObjectMap -> {
                     Map<String, Object> map = stringObjectMap.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(2, nodes.size());
                     assertEquals(1, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node albumGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Album")), albumGenesis.getLabels());
-                    assertTrue(albumGenesis.getId() > 0);
+                    assertEquals(List.of(label("Album")), albumGenesis.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(albumGenesis.getElementId()) || Integer.parseInt(albumGenesis.getElementId()) > 0);
                     assertEquals(albumMap, albumGenesis.getAllProperties());
                     Node artistGenesis = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(artistGenesis.getId() > 0);
+                    assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
+                    // Check this is not a virtual node
+                    assertTrue(!NumberUtils.isCreatable(artistGenesis.getElementId()) || Integer.parseInt(artistGenesis.getElementId()) > 0);
                     assertEquals(genesisMap, artistGenesis.getAllProperties());
                     Relationship rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
-                    assertTrue(rel.getId() > 0);
+                    // Check this is not a virtual rel
+                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
                 });
         db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
         Long count = TestUtil.singleResultFirstColumn( db, "MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) RETURN count(p) AS count");
@@ -538,60 +544,60 @@ public class GraphsTest {
         Map<String, Object> productMap = Util.map("id", 1L, "type", "Console", "name", "Nintendo Switch");
         Map<String, Object> johnMap = Util.map("id", 1L, "type", "User", "name", "John");
         Map<String, Object> janeMap = Util.map("id", 2L, "type", "User", "name", "Jane");
-        Map<String, Object> johnExt = new HashMap() {{
+        Map<String, Object> johnExt = new HashMap<>() {{
             putAll(johnMap);
-            put("bought", Arrays.asList(productMap));
+            put("bought", List.of(productMap));
         }};
-        Map<String, Object> janeExt = new HashMap() {{
+        Map<String, Object> janeExt = new HashMap<>() {{
             putAll(janeMap);
-            put("bought", Arrays.asList(productMap));
+            put("bought", List.of(productMap));
         }};
         List<Map<String, Object>> list = Arrays.asList(johnExt, janeExt);
 
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph",
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(list)), result -> {
                     Map<String, Object> map = result.next();
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(3, nodes.size());
                     assertEquals(2, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node john = nodeIterator.next();
-                    assertEquals(asList(label("User")), john.getLabels());
-                    assertTrue(john.getId() < 0);
+                    assertEquals(List.of(label("User")), john.getLabels());
+                    assertTrue(Integer.parseInt(john.getElementId()) < 0);
                     assertEquals(johnMap, john.getAllProperties());
 
                     Node jane = nodeIterator.next();
-                    assertEquals(asList(label("User")), jane.getLabels());
-                    assertTrue(jane.getId() < 0);
+                    assertEquals(List.of(label("User")), jane.getLabels());
+                    assertTrue(Integer.parseInt(jane.getElementId()) < 0);
                     assertEquals(janeMap, jane.getAllProperties());
 
                     Node product = nodeIterator.next();
-                    assertEquals(asList(label("Console")), product.getLabels());
-                    assertTrue(product.getId() < 0);
+                    assertEquals(List.of(label("Console")), product.getLabels());
+                    assertTrue(Integer.parseInt(product.getElementId()) < 0);
                     assertEquals(productMap, product.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     Node startJohn = rel.getStartNode();
-                    assertEquals(asList(label("User")), startJohn.getLabels());
-                    assertTrue(startJohn.getId() < 0);
+                    assertEquals(List.of(label("User")), startJohn.getLabels());
+                    assertTrue(Integer.parseInt(startJohn.getElementId()) < 0);
                     assertEquals(johnMap, startJohn.getAllProperties());
                     Node endConsole = rel.getEndNode();
-                    assertEquals(asList(label("Console")), endConsole.getLabels());
-                    assertTrue(endConsole.getId() < 0);
+                    assertEquals(List.of(label("Console")), endConsole.getLabels());
+                    assertTrue(Integer.parseInt(endConsole.getElementId()) < 0);
                     assertEquals(productMap, endConsole.getAllProperties());
 
                     rel = relationshipIterator.next();
                     assertEquals("BOUGHT", rel.getType().name());
                     Node startJane = rel.getStartNode();
-                    assertEquals(asList(label("User")), startJane.getLabels());
-                    assertTrue(startJane.getId() < 0);
+                    assertEquals(List.of(label("User")), startJane.getLabels());
+                    assertTrue(Integer.parseInt(startJane.getElementId()) < 0);
                     assertEquals(janeMap, startJane.getAllProperties());
                     endConsole = rel.getEndNode();
-                    assertEquals(asList(label("Console")), endConsole.getLabels());
-                    assertTrue(endConsole.getId() < 0);
+                    assertEquals(List.of(label("Console")), endConsole.getLabels());
+                    assertTrue(Integer.parseInt(endConsole.getElementId()) < 0);
                     assertEquals(productMap, endConsole.getAllProperties());
                 });
     }
@@ -601,38 +607,38 @@ public class GraphsTest {
         Map<String, Object> jamesMap = Util.map("id", 1L, "type", "Father", "name", "James");
         Map<String, Object> johnMap = Util.map("id", 2L, "type", "Father", "name", "John");
         Map<String, Object> robertMap = Util.map("id", 1L, "type", "Person", "name", "Robert");
-        Map<String, Object> johnExt = new HashMap() {{
+        Map<String, Object> johnExt = new HashMap<>() {{
             putAll(johnMap);
-            put("son", Arrays.asList(robertMap));
+            put("son", List.of(robertMap));
         }};
-        Map<String, Object> jamesExt = new HashMap() {{
+        Map<String, Object> jamesExt = new HashMap<>() {{
             putAll(jamesMap);
-            put("son", Arrays.asList(johnExt));
+            put("son", List.of(johnExt));
         }};
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph",
                 Util.map("json", jamesExt),
                 result -> {
                     Map<String, Object> map = result.next();
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(3, nodes.size());
                     assertEquals(2, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
 
                     Node john = nodeIterator.next();
-                    assertEquals(asList(label("Father")), john.getLabels());
-                    assertTrue(john.getId() < 0);
+                    assertEquals(List.of(label("Father")), john.getLabels());
+                    assertTrue(Integer.parseInt(john.getElementId()) < 0);
                     assertEquals(johnMap, john.getAllProperties());
 
                     Node james = nodeIterator.next();
-                    assertEquals(asList(label("Father")), james.getLabels());
-                    assertTrue(james.getId() < 0);
+                    assertEquals(List.of(label("Father")), james.getLabels());
+                    assertTrue(Integer.parseInt(james.getElementId()) < 0);
                     assertEquals(jamesMap, james.getAllProperties());
 
                     Node robert = nodeIterator.next();
-                    assertEquals(asList(label("Person")), robert.getLabels());
-                    assertTrue(robert.getId() < 0);
+                    assertEquals(List.of(label("Person")), robert.getLabels());
+                    assertTrue(Integer.parseInt(robert.getElementId()) < 0);
                     assertEquals(robertMap, robert.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
@@ -652,13 +658,13 @@ public class GraphsTest {
         Map<String, Object> productMap = Util.map("id", 1L, "type", "Console", "name", "Nintendo Switch");
         Map<String, Object> johnMap = Util.map("id", 1L, "type", "User", "name", "John");
         Map<String, Object> janeMap = Util.map("id", 2L, "type", "User", "name", "Jane");
-        Map<String, Object> johnExt = new HashMap() {{
+        Map<String, Object> johnExt = new HashMap<>() {{
             putAll(johnMap);
-            put("bought", Arrays.asList(productMap));
+            put("bought", List.of(productMap));
         }};
-        Map<String, Object> janeExt = new HashMap() {{
+        Map<String, Object> janeExt = new HashMap<>() {{
             putAll(janeMap);
-            put("bought", Arrays.asList(productMap));
+            put("bought", List.of(productMap));
         }};
         List<Map<String, Object>> list = Arrays.asList(johnExt, janeExt);
 
@@ -693,12 +699,12 @@ public class GraphsTest {
         Map<String, Object> genesisMap = Util.map("id", 1L, "type", "artist", "name", "Genesis");
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph", Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisMap)), result -> {
             Map<String, Object> map = result.next();
-            assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-            Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+            assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+            Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
             assertEquals(1, nodes.size());
             Node node = nodes.iterator().next();
-            assertEquals(asList(label("Artist")), node.getLabels());
-            assertTrue(node.getId() < 0);
+            assertEquals(List.of(label("Artist")), node.getLabels());
+            assertTrue(Integer.parseInt(node.getElementId()) < 0);
             assertEquals(genesisMap, node.getAllProperties());
             assertFalse("should not have next", result.hasNext());
         });
@@ -709,12 +715,12 @@ public class GraphsTest {
         Map<String, Object> genesisMap = Util.map("id", 1L, "type", "artist", "name", "Genesis");
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph", Util.map("json", genesisMap), result -> {
             Map<String, Object> map = result.next();
-            assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-            Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+            assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+            Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
             assertEquals(1, nodes.size());
             Node node = nodes.iterator().next();
-            assertEquals(asList(label("Artist")), node.getLabels());
-            assertTrue(node.getId() < 0);
+            assertEquals(List.of(label("Artist")), node.getLabels());
+            assertTrue(Integer.parseInt(node.getElementId()) < 0);
             assertEquals(genesisMap, node.getAllProperties());
             assertFalse("should not have next", result.hasNext());
         });
@@ -726,17 +732,17 @@ public class GraphsTest {
         Map<String, Object> daftPunkMap = Util.map("id", 2L, "type", "artist", "name", "Daft Punk");
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json) yield graph", Util.map("json", Arrays.asList(genesisMap, daftPunkMap)), result -> {
             Map<String, Object> map = result.next();
-            assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-            Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+            assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+            Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
             assertEquals(2, nodes.size());
             Iterator<Node> nodeIterator = nodes.iterator();
             Node node = nodeIterator.next();
-            assertEquals(asList(label("Artist")), node.getLabels());
-            assertTrue(node.getId() < 0);
+            assertEquals(List.of(label("Artist")), node.getLabels());
+            assertTrue(Integer.parseInt(node.getElementId()) < 0);
             assertEquals(genesisMap, node.getAllProperties());
             node = nodeIterator.next();
-            assertEquals(asList(label("Artist")), node.getLabels());
-            assertTrue(node.getId() < 0);
+            assertEquals(List.of(label("Artist")), node.getLabels());
+            assertTrue(Integer.parseInt(node.getElementId()) < 0);
             assertEquals(daftPunkMap, node.getAllProperties());
             assertFalse("should not have next", result.hasNext());
         });
@@ -747,7 +753,7 @@ public class GraphsTest {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> album1Map = Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
         Map<String, Object> album2Map = Util.map("producer", "Jonathan King", "id", 2L, "title", "John Anthony", "type", "album");
-        Map<String, Object> genesisExt = new HashMap() {{
+        Map<String, Object> genesisExt = new HashMap<>() {{
             putAll(genesisMap);
             put("albums", Arrays.asList(album1Map, album2Map));
         }};
@@ -756,31 +762,31 @@ public class GraphsTest {
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisExt)),
                 result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> relationships = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(3, nodes.size());
                     assertEquals(2, relationships.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
                     Node artist = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artist.getLabels());
-                    assertTrue(artist.getId() < 0);
+                    assertEquals(List.of(label("Artist")), artist.getLabels());
+                    assertTrue(Integer.parseInt(artist.getElementId()) < 0);
                     assertEquals(genesisMap, artist.getAllProperties());
                     Node album = nodeIterator.next();
-                    assertEquals(asList(label("Album")), album.getLabels());
-                    assertTrue(album.getId() < 0);
+                    assertEquals(List.of(label("Album")), album.getLabels());
+                    assertTrue(Integer.parseInt(album.getElementId()) < 0);
                     assertEquals(album1Map, album.getAllProperties());
                     Node album2 = nodeIterator.next();
-                    assertEquals(asList(label("Album")), album2.getLabels());
-                    assertTrue(album2.getId() < 0);
+                    assertEquals(List.of(label("Album")), album2.getLabels());
+                    assertTrue(Integer.parseInt(album2.getElementId()) < 0);
                     assertEquals(album2Map, album2.getAllProperties());
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                     rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                 });
     }
 
@@ -794,12 +800,12 @@ public class GraphsTest {
                 Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(genesisMap)),
                 result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Node artist = nodeIterator.next();
-                    assertEquals(asList(label("Artist")), artist.getLabels());
-                    assertTrue(artist.getId() < 0);
+                    assertEquals(List.of(label("Artist")), artist.getLabels());
+                    assertTrue(Integer.parseInt(artist.getElementId()) < 0);
                     assertEquals(genesisMap.get("type"), artist.getProperty("type"));
                     assertEquals(genesisMap.get("name"), artist.getProperty("name"));
                     assertEquals(genesisMap.get("id"), artist.getProperty("id"));
@@ -871,17 +877,17 @@ public class GraphsTest {
     @Test
     public void shouldCreateTheGraphMappingObjectAccordingToThePattern() {
         GraphsConfig.GraphMapping mapping = GraphsConfig.GraphMapping.from("Person{*,@sizes}");
-        assertEquals(Arrays.asList("sizes"), mapping.getValueObjects());
+        assertEquals(List.of("sizes"), mapping.getValueObjects());
         assertEquals(Collections.emptyList(), mapping.getProperties());
         assertEquals(Collections.emptyList(), mapping.getIds());
         assertTrue(mapping.isAllProps());
-        assertEquals(Arrays.asList("Person"), mapping.getLabels());
+        assertEquals(List.of("Person"), mapping.getLabels());
 
         mapping = GraphsConfig.GraphMapping.from("Book{!title, released}");
         assertEquals(Collections.emptyList(), mapping.getValueObjects());
         assertEquals(Arrays.asList("released", "title"), mapping.getProperties());
-        assertEquals(Arrays.asList("title"), mapping.getIds());
-        assertEquals(Arrays.asList("Book"), mapping.getLabels());
+        assertEquals(List.of("title"), mapping.getIds());
+        assertEquals(List.of("Book"), mapping.getLabels());
         assertFalse(mapping.isAllProps());
     }
 
@@ -901,9 +907,9 @@ public class GraphsTest {
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json, $config) yield graph",
                 Util.map("json", inputMap, "config", map("mappings", map("$", "Person:Reader{*,@sizes}", "$.books", "Book{!title, released}"))), result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
-                    Collection<Relationship> rels = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
+                    Collection<Relationship> rels = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     assertEquals(3, nodes.size());
                     assertEquals(2, rels.size());
                     Iterator<Node> nodeIterator = nodes.iterator();
@@ -911,33 +917,33 @@ public class GraphsTest {
 
                     Node person = nodeIterator.next();
                     assertEquals(asList(label("Person"), label("Reader")), person.getLabels());
-                    assertTrue(person.getId() < 0);
+                    assertTrue(Integer.parseInt(person.getElementId()) < 0);
                     Map<String, Object> allProperties = new HashMap<>(person.getAllProperties());
                     allProperties.remove("sizes.array"); // we test only non-array properties
                     assertEquals(expectedMap, allProperties);
                     assertArrayEquals(strings, (String[]) person.getProperty("sizes.array"));
 
                     Node book1Node = nodeIterator.next();
-                    assertEquals(asList(label("Book")), book1Node.getLabels());
-                    assertTrue(book1Node.getId() < 0);
+                    assertEquals(List.of(label("Book")), book1Node.getLabels());
+                    assertTrue(Integer.parseInt(book1Node.getElementId()) < 0);
                     allProperties = book1Node.getAllProperties();
                     assertEquals(book1, allProperties);
 
                     Node book2Node = nodeIterator.next();
-                    assertEquals(asList(label("Book")), book2Node.getLabels());
-                    assertTrue(book2Node.getId() < 0);
+                    assertEquals(List.of(label("Book")), book2Node.getLabels());
+                    assertTrue(Integer.parseInt(book2Node.getElementId()) < 0);
                     allProperties = book2Node.getAllProperties();
                     assertEquals(book2, allProperties);
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("BOOKS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                     assertEquals(person, rel.getStartNode());
                     assertEquals(book1Node, rel.getEndNode());
 
                     rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("BOOKS"), rel.getType());
-                    assertTrue(rel.getId() < 0);
+                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
                     assertEquals(person, rel.getStartNode());
                     assertEquals(book2Node, rel.getEndNode());
 
@@ -947,12 +953,12 @@ public class GraphsTest {
 
     @Test
     public void testDeeplyNestedStructures() throws IOException {
-        String json = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("deeplyNestedObject.json"), Charset.forName("UTF-8"));
+        String json = IOUtils.toString(this.getClass().getClassLoader().getResourceAsStream("deeplyNestedObject.json"), StandardCharsets.UTF_8);
         TestUtil.testResult(db, "CALL apoc.graph.fromDocument($json, $config) yield graph",
                 map("json", json, "config", map("idField", "name")), result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
                     Map<String, List<Node>> nodeMap = nodes.stream()
                             .collect(Collectors.groupingBy(e -> e.getLabels().iterator().next().name()));
 
@@ -962,7 +968,7 @@ public class GraphsTest {
                     assertEquals(19, nodeMap.get("Task").size());
 
 
-                    Collection<Relationship> rels = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    Collection<Relationship> rels = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     Map<String, List<Relationship>> relMap = rels.stream()
                             .collect(Collectors.groupingBy(e -> String.format("(%s)-[%s]-(%s)",
                                     e.getStartNode().getLabels().iterator().next().name(),
@@ -986,8 +992,8 @@ public class GraphsTest {
                 map("json", json, "config",
                         map("skipValidation", false, "mappings", map("$", "Tweet{!id, text}", "$.user", "User{!id, screenName}"))), result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
                     Map<String, List<Node>> nodeMap = nodes.stream()
                             .collect(Collectors.groupingBy(e -> e.getLabels().iterator().next().name()));
 
@@ -998,7 +1004,7 @@ public class GraphsTest {
                     assertEquals(1, users.size());
                     assertEquals(new HashSet<>(Arrays.asList("id","screenName")), users.get(0).getAllProperties().keySet());
 
-                    Collection<Relationship> rels = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    Collection<Relationship> rels = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     Map<String, List<Relationship>> relMap = rels.stream()
                             .collect(Collectors.groupingBy(e -> String.format("(%s)-[%s]-(%s)",
                                     e.getStartNode().getLabels().iterator().next().name(),
@@ -1019,8 +1025,8 @@ public class GraphsTest {
                 map("json", json, "config",
                         map("skipValidation", false, "idField", "foo", "mappings", map("$", "Tweet{!id, text}", "$.user", "User{!screenName}"))), result -> {
                     Map<String, Object> map = result.next();
-                    assertEquals("Graph", ((Map) map.get("graph")).get("name"));
-                    Collection<Node> nodes = (Collection<Node>) ((Map) map.get("graph")).get("nodes");
+                    assertEquals("Graph", ((Map<String, Object>) map.get("graph")).get("name"));
+                    Collection<Node> nodes = (Collection<Node>) ((Map<String, Object>) map.get("graph")).get("nodes");
                     Map<String, List<Node>> nodeMap = nodes.stream()
                             .collect(Collectors.groupingBy(e -> e.getLabels().iterator().next().name()));
 
@@ -1029,9 +1035,9 @@ public class GraphsTest {
                     assertEquals(new HashSet<>(Arrays.asList("id", "text")), tweets.get(0).getAllProperties().keySet());
                     final List<Node> users = nodeMap.getOrDefault("User", Collections.emptyList());
                     assertEquals(1, users.size());
-                    assertEquals(new HashSet<>(Arrays.asList("screenName")), users.get(0).getAllProperties().keySet());
+                    assertEquals(new HashSet<>(List.of("screenName")), users.get(0).getAllProperties().keySet());
 
-                    Collection<Relationship> rels = (Collection<Relationship>) ((Map) map.get("graph")).get("relationships");
+                    Collection<Relationship> rels = (Collection<Relationship>) ((Map<String, Object>) map.get("graph")).get("relationships");
                     Map<String, List<Relationship>> relMap = rels.stream()
                             .collect(Collectors.groupingBy(e -> String.format("(%s)-[%s]-(%s)",
                                     e.getStartNode().getLabels().iterator().next().name(),

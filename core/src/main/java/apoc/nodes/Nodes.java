@@ -603,15 +603,15 @@ public class Nodes {
         if (object == null) return true;
         final String query;
         if (object instanceof Node) {
-            query = "MATCH (n) WHERE ID(n) = $id RETURN COUNT(n) = 1 AS exists";
+            query = "MATCH (n) WHERE elementId(n) = $id RETURN COUNT(n) = 1 AS exists";
         }
         else if (object instanceof Relationship){
-            query = "MATCH ()-[r]->() WHERE ID(r) = $id RETURN COUNT(r) = 1 AS exists";
+            query = "MATCH ()-[r]->() WHERE elementId(r) = $id RETURN COUNT(r) = 1 AS exists";
         }
         else {
             throw new IllegalArgumentException("expected Node or Relationship but was " + object.getClass().getSimpleName());
         }
-        return !(boolean) tx.execute(query, Map.of("id",((Entity)object).getId())).next().get("exists");
+        return !(boolean) tx.execute(query, Map.of("id",((Entity)object).getElementId())).next().get("exists");
     }
 
     // works in cases when relType is null
