@@ -51,6 +51,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
 
@@ -264,12 +265,14 @@ public class Meta {
         void rel(int typeId, String typeName, int labelId, String labelName, long out, long in);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.meta.stats")
     @Description("Returns the metadata stored in the transactional database statistics.")
     public Stream<MetaStats> stats() {
         return Stream.of(collectStats());
     }
 
+    @NotThreadSafe
     @UserFunction(name = "apoc.meta.nodes.count")
     @Description("Returns the sum of the nodes with the given labels in the list.")
     public long count(@Name(value = "nodes", defaultValue = "[]") List<String> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -404,6 +407,7 @@ public class Meta {
         });
     }
 
+    @NotThreadSafe
     @Procedure("apoc.meta.data.of")
     @Description("Examines the given sub-graph and returns a table of metadata.")
     public Stream<MetaResult> dataOf(@Name(value = "graph") Object graph, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
@@ -430,6 +434,7 @@ public class Meta {
 
     // todo ask index for distinct values if index size < 10 or so
     // todo put index sizes for indexed properties
+    @NotThreadSafe
     @Procedure("apoc.meta.data")
     @Description("Examines the full graph and returns a table of metadata.")
     public Stream<MetaResult> data(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
@@ -437,6 +442,7 @@ public class Meta {
         return collectMetaData(new DatabaseSubGraph(transaction), metaConfig).values().stream().flatMap(x -> x.values().stream());
     }
 
+    @NotThreadSafe
     @Procedure("apoc.meta.schema")
     @Description("Examines the given sub-graph and returns metadata as a map.")
     public Stream<MapResult> schema(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
@@ -465,6 +471,7 @@ public class Meta {
      * supports flexible sampling options, and does not scan the entire database.  The result is producing a table of
      * metadata that is useful for generating "Tables 4 Labels" schema designs for RDBMSs, but in a more performant way.
      */
+    @NotThreadSafe
     @Procedure("apoc.meta.nodeTypeProperties")
     @Description("Examines the full graph and returns a table of metadata with information about the nodes therein.")
     public Stream<Tables4LabelsProfile.NodeTypePropertiesEntry> nodeTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
@@ -483,8 +490,9 @@ public class Meta {
      * does not scan the entire database.  The result is producing a table of metadata that is useful for generating "Tables 4 Labels" schema designs for
      * RDBMSs, but in a more performant way.
      */
-    @Procedure("apoc.meta.relTypeProperties")
-    @Description("Examines the full graph and returns a table of metadata with information about the relationships therein.")
+    @NotThreadSafe
+    @Procedure( "apoc.meta.relTypeProperties" )
+    @Description( "Examines the full graph and returns a table of metadata with information about the relationships therein." )
     public Stream<Tables4LabelsProfile.RelTypePropertiesEntry> relTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {
@@ -896,6 +904,8 @@ public class Meta {
             return RelationshipType.withName(type);
         }
     }
+
+    @NotThreadSafe
     @Procedure("apoc.meta.graph")
     @Description("Examines the full graph and returns a meta-graph.")
     public Stream<GraphResult> graph(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
@@ -903,13 +913,14 @@ public class Meta {
         return metaGraph(new DatabaseSubGraph(transaction), null, null, true, metaConfig);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.meta.graph.of")
     @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> graphOf(@Name(value = "graph",defaultValue = "{}") Object graph, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaConfig metaConfig = new MetaConfig(config, false);
         final SubGraph subGraph;
         if (graph instanceof String) {
-            Result result = tx.execute((String) graph);
+            Result result = tx.execute("CYPHER runtime=pipelined " + (String) graph);
             subGraph = CypherResultSubGraph.from(tx, result, metaConfig.isAddRelationshipsBetweenNodes());
         } else if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;
@@ -1064,7 +1075,7 @@ public class Meta {
         aggregated.get(p).add(rel);
     }
 
-
+    @NotThreadSafe
     @Procedure("apoc.meta.graphSample")
     @Description("Examines the full graph and returns a meta-graph.\n" +
             "Unlike `apoc.meta.graph`, this procedure does not filter away non-existing paths.")
@@ -1078,6 +1089,7 @@ public class Meta {
         );
     }
 
+    @NotThreadSafe
     @Procedure("apoc.meta.subGraph")
     @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> subGraph(@Name("config") Map<String,Object> config ) {

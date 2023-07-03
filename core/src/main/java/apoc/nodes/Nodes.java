@@ -56,6 +56,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
 import org.neo4j.storageengine.api.RelationshipSelection;
@@ -597,6 +598,7 @@ public class Nodes {
         }
     }
 
+    @NotThreadSafe
     @UserFunction("apoc.any.isDeleted")
     @Description("Returns true if the given node or relationship no longer exists.")
     public boolean isDeleted(@Name("object") Object object) {

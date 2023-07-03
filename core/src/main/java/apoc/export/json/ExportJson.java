@@ -38,6 +38,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -63,6 +64,7 @@ public class ExportJson {
     @Context
     public TerminationGuard terminationGuard;
 
+    @NotThreadSafe
     @Procedure("apoc.export.json.all")
     @Description("Exports the full database to the provided JSON file.")
     public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -71,6 +73,7 @@ public class ExportJson {
         return exportJson(fileName, source, new DatabaseSubGraph(tx), config);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.json.data")
     @Description("Exports the given nodes and relationships to the provided JSON file.")
     public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -81,6 +84,8 @@ public class ExportJson {
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
         return exportJson(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), config);
     }
+
+    @NotThreadSafe
     @Procedure("apoc.export.json.graph")
     @Description("Exports the given graph to the provided JSON file.")
     public Stream<ProgressInfo> graph(@Name("graph") Map<String,Object> graph, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
@@ -91,6 +96,7 @@ public class ExportJson {
         return exportJson(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), config);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.json.query")
     @Description("Exports the results from the Cypher statement to the provided JSON file.")
     public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {

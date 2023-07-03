@@ -31,6 +31,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -74,6 +75,7 @@ public class Cypher {
     @Context
     public Pools pools;
 
+    @NotThreadSafe
     @Procedure("apoc.cypher.run")
     @Description("Runs a dynamically constructed read-only string with the given parameters.")
     public Stream<MapResult> run(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
@@ -162,6 +164,7 @@ public class Cypher {
         return runManyStatements(stringReader ,params, false, addStatistics, queueCapacity);
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.cypher.runManyReadOnly", mode = READ)
     @Description("Runs each semicolon separated read-only statement and returns a summary of the statement outcomes.")
     public Stream<RowResult> runManyReadOnly(@Name("statement") String cypher, @Name("params") Map<String,Object> params, @Name(value = "config",defaultValue = "{}") Map<String,Object> config) {

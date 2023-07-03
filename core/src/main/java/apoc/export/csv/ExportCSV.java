@@ -39,6 +39,7 @@ import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -71,6 +72,7 @@ public class ExportCSV {
     public ExportCSV() {
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.csv.all")
     @Description("Exports the full database to the provided CSV file.")
     public Stream<ProgressInfo> all(@Name("file") String fileName, @Name("config") Map<String, Object> config) {
@@ -78,6 +80,7 @@ public class ExportCSV {
         return exportCsv(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config));
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.csv.data")
     @Description("Exports the given nodes and relationships to the provided CSV file.")
     public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name("config") Map<String, Object> config) {
@@ -86,6 +89,8 @@ public class ExportCSV {
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
         return exportCsv(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), exportConfig);
     }
+
+    @NotThreadSafe
     @Procedure("apoc.export.csv.graph")
     @Description("Exports the given graph to the provided CSV file.")
     public Stream<ProgressInfo> graph(@Name("graph") Map<String,Object> graph, @Name("file") String fileName, @Name("config") Map<String, Object> config) {
@@ -95,6 +100,7 @@ public class ExportCSV {
         return exportCsv(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config));
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.csv.query")
     @Description("Exports the results from running the given Cypher query to the provided CSV file.")
     public Stream<ProgressInfo> query(@Name("query") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config) {

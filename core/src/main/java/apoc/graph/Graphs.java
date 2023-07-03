@@ -84,6 +84,7 @@ public class Graphs {
         return Stream.of(new VirtualGraph(name,tx.getAllNodes(),tx.getAllRelationships(),properties));
     }
 
+    @NotThreadSafe
     @Procedure("apoc.graph.fromCypher")
     @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given Cypher statement.")
     public Stream<VirtualGraph> fromCypher(@Name("statement") String statement,  @Name("params") Map<String,Object> params,@Name("name") String name,  @Name("props") Map<String,Object> properties) {

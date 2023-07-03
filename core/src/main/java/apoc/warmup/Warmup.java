@@ -78,6 +78,7 @@ public class Warmup {
         return sb.toString();
     }
 
+    @NotThreadSafe
     @Deprecated
     @Procedure(name = "apoc.warmup.run", deprecatedBy = "Firstly, the procedure duplicates functionality of page cache warm up which is a part of the DBMS. " +
             "Secondly, the API of this procedure is very specific to Record storage engine." )

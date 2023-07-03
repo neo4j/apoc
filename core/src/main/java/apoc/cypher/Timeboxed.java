@@ -29,6 +29,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -61,6 +62,8 @@ public class Timeboxed {
 
     private final static Map<String,Object> POISON = Collections.singletonMap("__magic", "POISON");
 
+
+    @NotThreadSafe
     @Procedure("apoc.cypher.runTimeboxed")
     @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
     public Stream<MapResult> runTimeboxed(@Name("statement") String cypher, @Name("params") Map<String, Object> params, @Name("timeout") long timeout) {
