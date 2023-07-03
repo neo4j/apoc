@@ -30,6 +30,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.configuration.SettingImpl;
 import org.neo4j.configuration.SettingValueParsers;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
@@ -68,6 +69,14 @@ import static org.neo4j.graphdb.Label.label;
 public class GraphsTest {
 
     private static final Map<String,Object> graph = map("name","test","properties",map("answer",42L));
+
+    boolean nonVirtual(Entity entity) {
+        return !NumberUtils.isCreatable(entity.getElementId()) || Integer.parseInt(entity.getElementId()) > 0;
+    }
+
+    boolean virtual(Entity entity) {
+        return Integer.parseInt(entity.getElementId()) < 0;
+    }
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
@@ -150,17 +159,17 @@ public class GraphsTest {
                     Node albumGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumGenesis.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(albumGenesis.getElementId()) || Integer.parseInt(albumGenesis.getElementId()) > 0);
+                    assertTrue(nonVirtual(albumGenesis));
                     assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
                     Node artistGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(artistGenesis.getElementId()) || Integer.parseInt(artistGenesis.getElementId()) > 0);
+                    assertTrue(nonVirtual(artistGenesis));
                     assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
                     Relationship rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
                     // Check this is not a virtual rel
-                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
+                    assertTrue(nonVirtual(rel));
                 });
         db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
     }
@@ -218,17 +227,17 @@ public class GraphsTest {
 
             Node artistGenesis = nodeIterator.next();
             assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
-            assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
+            assertTrue(virtual(artistGenesis));
             assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
 
             Node albumGenesis = nodeIterator.next();
             assertEquals(List.of(label("Album")), albumGenesis.getLabels());
-            assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
+            assertTrue(virtual(artistGenesis));
             assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
 
             Relationship rel = relationshipIterator.next();
             assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-            assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+            assertTrue(virtual(rel));
 
 
         });
@@ -267,31 +276,31 @@ public class GraphsTest {
 
                     Node artistGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
+                    assertTrue(virtual(artistGenesis));
                     assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
 
                     Node artistDaftPunk = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistDaftPunk.getLabels());
-                    assertTrue(Integer.parseInt(artistDaftPunk.getElementId()) < 0);
+                    assertTrue(virtual(artistDaftPunk));
                     assertEquals(artistDaftPunkMap, artistDaftPunk.getAllProperties());
 
                     Node albumGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumGenesis.getLabels());
-                    assertTrue(Integer.parseInt(albumGenesis.getElementId()) < 0);
+                    assertTrue(virtual(albumGenesis));
                     assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
 
                     Node albumDaftPunk = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumDaftPunk.getLabels());
-                    assertTrue(Integer.parseInt(albumDaftPunk.getElementId()) < 0);
+                    assertTrue(virtual(albumDaftPunk));
                     assertEquals(albumDaftPunkMap, albumDaftPunk.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
 
                     rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                 });
     }
 
@@ -330,35 +339,35 @@ public class GraphsTest {
                     Node albumGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumGenesis.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(albumGenesis.getElementId()) || Integer.parseInt(albumGenesis.getElementId()) > 0);
+                    assertTrue(nonVirtual(albumGenesis));
                     assertEquals(albumGenesisMap, albumGenesis.getAllProperties());
 
                     Node albumDaftPunk = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumDaftPunk.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(albumDaftPunk.getElementId()) || Integer.parseInt(albumDaftPunk.getElementId()) > 0);
+                    assertTrue(nonVirtual(albumDaftPunk));
                     assertEquals(albumDaftPunkMap, albumDaftPunk.getAllProperties());
 
                     Node artistGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(artistGenesis.getElementId()) || Integer.parseInt(artistGenesis.getElementId()) > 0);
+                    assertTrue(nonVirtual(artistGenesis));
                     assertEquals(artistGenesisMap, artistGenesis.getAllProperties());
 
                     Node artistDaftPunk = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistDaftPunk.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(artistDaftPunk.getElementId()) || Integer.parseInt(artistDaftPunk.getElementId()) > 0);
+                    assertTrue(nonVirtual(artistDaftPunk));
                     assertEquals(artistDaftPunkMap, artistDaftPunk.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
+                    assertTrue(nonVirtual(rel));
                     rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
                     // Check this is not a virtual rel
-                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
+                    assertTrue(nonVirtual(rel));
                 });
         db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
         Long count = TestUtil.singleResultFirstColumn(db, "MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) RETURN count(p) AS count");
@@ -388,17 +397,17 @@ public class GraphsTest {
 
                     Node artistGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
+                    assertTrue(virtual(artistGenesis));
                     assertEquals(genesisMap, artistGenesis.getAllProperties());
 
                     Node albumGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumGenesis.getLabels());
-                    assertTrue(Integer.parseInt(albumGenesis.getElementId()) < 0);
+                    assertTrue(virtual(albumGenesis));
                     assertEquals(albumMap, albumGenesis.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                 });
     }
 
@@ -424,17 +433,17 @@ public class GraphsTest {
 
                     Node artistGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
-                    assertTrue(Integer.parseInt(artistGenesis.getElementId()) < 0);
+                    assertTrue(virtual(artistGenesis));
                     assertEquals(genesisMap, artistGenesis.getAllProperties());
 
                     Node albumGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumGenesis.getLabels());
-                    assertTrue(Integer.parseInt(albumGenesis.getElementId()) < 0);
+                    assertTrue(virtual(albumGenesis));
                     assertEquals(albumMap, albumGenesis.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                 });
     }
 
@@ -461,17 +470,17 @@ public class GraphsTest {
                     Node albumGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Album")), albumGenesis.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(albumGenesis.getElementId()) || Integer.parseInt(albumGenesis.getElementId()) > 0);
+                    assertTrue(nonVirtual(albumGenesis));
                     assertEquals(albumMap, albumGenesis.getAllProperties());
                     Node artistGenesis = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artistGenesis.getLabels());
                     // Check this is not a virtual node
-                    assertTrue(!NumberUtils.isCreatable(artistGenesis.getElementId()) || Integer.parseInt(artistGenesis.getElementId()) > 0);
+                    assertTrue(nonVirtual(artistGenesis));
                     assertEquals(genesisMap, artistGenesis.getAllProperties());
                     Relationship rel = relationshipIterator.next();
                     assertEquals("ALBUMS", rel.getType().name());
                     // Check this is not a virtual rel
-                    assertTrue(!NumberUtils.isCreatable(rel.getElementId()) || Integer.parseInt(rel.getElementId()) > 0);
+                    assertTrue(nonVirtual(rel));
                 });
         db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
         Long count = TestUtil.singleResultFirstColumn( db, "MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) RETURN count(p) AS count");
@@ -566,38 +575,38 @@ public class GraphsTest {
 
                     Node john = nodeIterator.next();
                     assertEquals(List.of(label("User")), john.getLabels());
-                    assertTrue(Integer.parseInt(john.getElementId()) < 0);
+                    assertTrue(virtual(john));
                     assertEquals(johnMap, john.getAllProperties());
 
                     Node jane = nodeIterator.next();
                     assertEquals(List.of(label("User")), jane.getLabels());
-                    assertTrue(Integer.parseInt(jane.getElementId()) < 0);
+                    assertTrue(virtual(jane));
                     assertEquals(janeMap, jane.getAllProperties());
 
                     Node product = nodeIterator.next();
                     assertEquals(List.of(label("Console")), product.getLabels());
-                    assertTrue(Integer.parseInt(product.getElementId()) < 0);
+                    assertTrue(virtual(product));
                     assertEquals(productMap, product.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
                     Node startJohn = rel.getStartNode();
                     assertEquals(List.of(label("User")), startJohn.getLabels());
-                    assertTrue(Integer.parseInt(startJohn.getElementId()) < 0);
+                    assertTrue(virtual(startJohn));
                     assertEquals(johnMap, startJohn.getAllProperties());
                     Node endConsole = rel.getEndNode();
                     assertEquals(List.of(label("Console")), endConsole.getLabels());
-                    assertTrue(Integer.parseInt(endConsole.getElementId()) < 0);
+                    assertTrue(virtual(endConsole));
                     assertEquals(productMap, endConsole.getAllProperties());
 
                     rel = relationshipIterator.next();
                     assertEquals("BOUGHT", rel.getType().name());
                     Node startJane = rel.getStartNode();
                     assertEquals(List.of(label("User")), startJane.getLabels());
-                    assertTrue(Integer.parseInt(startJane.getElementId()) < 0);
+                    assertTrue(virtual(startJane));
                     assertEquals(janeMap, startJane.getAllProperties());
                     endConsole = rel.getEndNode();
                     assertEquals(List.of(label("Console")), endConsole.getLabels());
-                    assertTrue(Integer.parseInt(endConsole.getElementId()) < 0);
+                    assertTrue(virtual(endConsole));
                     assertEquals(productMap, endConsole.getAllProperties());
                 });
     }
@@ -628,17 +637,17 @@ public class GraphsTest {
 
                     Node john = nodeIterator.next();
                     assertEquals(List.of(label("Father")), john.getLabels());
-                    assertTrue(Integer.parseInt(john.getElementId()) < 0);
+                    assertTrue(virtual(john));
                     assertEquals(johnMap, john.getAllProperties());
 
                     Node james = nodeIterator.next();
                     assertEquals(List.of(label("Father")), james.getLabels());
-                    assertTrue(Integer.parseInt(james.getElementId()) < 0);
+                    assertTrue(virtual(james));
                     assertEquals(jamesMap, james.getAllProperties());
 
                     Node robert = nodeIterator.next();
                     assertEquals(List.of(label("Person")), robert.getLabels());
-                    assertTrue(Integer.parseInt(robert.getElementId()) < 0);
+                    assertTrue(virtual(robert));
                     assertEquals(robertMap, robert.getAllProperties());
 
                     Relationship rel = relationshipIterator.next();
@@ -704,7 +713,7 @@ public class GraphsTest {
             assertEquals(1, nodes.size());
             Node node = nodes.iterator().next();
             assertEquals(List.of(label("Artist")), node.getLabels());
-            assertTrue(Integer.parseInt(node.getElementId()) < 0);
+            assertTrue(virtual(node));
             assertEquals(genesisMap, node.getAllProperties());
             assertFalse("should not have next", result.hasNext());
         });
@@ -720,7 +729,7 @@ public class GraphsTest {
             assertEquals(1, nodes.size());
             Node node = nodes.iterator().next();
             assertEquals(List.of(label("Artist")), node.getLabels());
-            assertTrue(Integer.parseInt(node.getElementId()) < 0);
+            assertTrue(virtual(node));
             assertEquals(genesisMap, node.getAllProperties());
             assertFalse("should not have next", result.hasNext());
         });
@@ -738,11 +747,11 @@ public class GraphsTest {
             Iterator<Node> nodeIterator = nodes.iterator();
             Node node = nodeIterator.next();
             assertEquals(List.of(label("Artist")), node.getLabels());
-            assertTrue(Integer.parseInt(node.getElementId()) < 0);
+            assertTrue(virtual(node));
             assertEquals(genesisMap, node.getAllProperties());
             node = nodeIterator.next();
             assertEquals(List.of(label("Artist")), node.getLabels());
-            assertTrue(Integer.parseInt(node.getElementId()) < 0);
+            assertTrue(virtual(node));
             assertEquals(daftPunkMap, node.getAllProperties());
             assertFalse("should not have next", result.hasNext());
         });
@@ -771,22 +780,22 @@ public class GraphsTest {
                     Iterator<Relationship> relationshipIterator = relationships.iterator();
                     Node artist = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artist.getLabels());
-                    assertTrue(Integer.parseInt(artist.getElementId()) < 0);
+                    assertTrue(virtual(artist));
                     assertEquals(genesisMap, artist.getAllProperties());
                     Node album = nodeIterator.next();
                     assertEquals(List.of(label("Album")), album.getLabels());
-                    assertTrue(Integer.parseInt(album.getElementId()) < 0);
+                    assertTrue(virtual(album));
                     assertEquals(album1Map, album.getAllProperties());
                     Node album2 = nodeIterator.next();
                     assertEquals(List.of(label("Album")), album2.getLabels());
-                    assertTrue(Integer.parseInt(album2.getElementId()) < 0);
+                    assertTrue(virtual(album2));
                     assertEquals(album2Map, album2.getAllProperties());
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                     rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("ALBUMS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                 });
     }
 
@@ -805,7 +814,7 @@ public class GraphsTest {
                     Iterator<Node> nodeIterator = nodes.iterator();
                     Node artist = nodeIterator.next();
                     assertEquals(List.of(label("Artist")), artist.getLabels());
-                    assertTrue(Integer.parseInt(artist.getElementId()) < 0);
+                    assertTrue(virtual(artist));
                     assertEquals(genesisMap.get("type"), artist.getProperty("type"));
                     assertEquals(genesisMap.get("name"), artist.getProperty("name"));
                     assertEquals(genesisMap.get("id"), artist.getProperty("id"));
@@ -917,7 +926,7 @@ public class GraphsTest {
 
                     Node person = nodeIterator.next();
                     assertEquals(asList(label("Person"), label("Reader")), person.getLabels());
-                    assertTrue(Integer.parseInt(person.getElementId()) < 0);
+                    assertTrue(virtual(person));
                     Map<String, Object> allProperties = new HashMap<>(person.getAllProperties());
                     allProperties.remove("sizes.array"); // we test only non-array properties
                     assertEquals(expectedMap, allProperties);
@@ -925,25 +934,25 @@ public class GraphsTest {
 
                     Node book1Node = nodeIterator.next();
                     assertEquals(List.of(label("Book")), book1Node.getLabels());
-                    assertTrue(Integer.parseInt(book1Node.getElementId()) < 0);
+                    assertTrue(virtual(book1Node));
                     allProperties = book1Node.getAllProperties();
                     assertEquals(book1, allProperties);
 
                     Node book2Node = nodeIterator.next();
                     assertEquals(List.of(label("Book")), book2Node.getLabels());
-                    assertTrue(Integer.parseInt(book2Node.getElementId()) < 0);
+                    assertTrue(virtual(book2Node));
                     allProperties = book2Node.getAllProperties();
                     assertEquals(book2, allProperties);
 
                     Relationship rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("BOOKS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                     assertEquals(person, rel.getStartNode());
                     assertEquals(book1Node, rel.getEndNode());
 
                     rel = relationshipIterator.next();
                     assertEquals(RelationshipType.withName("BOOKS"), rel.getType());
-                    assertTrue(Integer.parseInt(rel.getElementId()) < 0);
+                    assertTrue(virtual(rel));
                     assertEquals(person, rel.getStartNode());
                     assertEquals(book2Node, rel.getEndNode());
 
