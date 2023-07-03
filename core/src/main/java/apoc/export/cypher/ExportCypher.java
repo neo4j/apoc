@@ -39,6 +39,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -71,6 +72,7 @@ public class ExportCypher {
     @Context
     public Pools pools;
 
+    @NotThreadSafe
     @Procedure("apoc.export.cypher.all")
     @Description("Exports the full database (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> all(@Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
@@ -79,6 +81,7 @@ public class ExportCypher {
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), false);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.cypher.data")
     @Description("Exports the given nodes and relationships (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
@@ -87,6 +90,7 @@ public class ExportCypher {
         return exportCypher(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config), false);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.cypher.graph")
     @Description("Exports the given graph (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> graph(@Name("graph") Map<String, Object> graph, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
@@ -98,6 +102,7 @@ public class ExportCypher {
         return exportCypher(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config), false);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.cypher.query")
     @Description("Exports the nodes and relationships from the given Cypher query (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> query(@Name("statement") String query, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
@@ -111,6 +116,7 @@ public class ExportCypher {
         return exportCypher(fileName, source, graph, c, false);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.cypher.schema")
     @Description("Exports all schema indexes and constraints to Cypher statements.")
     public Stream<DataProgressInfo> schema(@Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {

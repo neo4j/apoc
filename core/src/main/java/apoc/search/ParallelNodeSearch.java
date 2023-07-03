@@ -27,6 +27,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
 import java.util.*;
@@ -54,6 +55,7 @@ public class ParallelNodeSearch {
     @Context
     public Transaction tx;
 
+    @NotThreadSafe
     @Procedure("apoc.search.nodeAllReduced")
     @Description("Returns a reduced representation of the nodes found after a parallel search over multiple indexes.\n" +
             "The reduced node representation includes: node id, node labels and the searched properties.")
@@ -70,6 +72,7 @@ public class ParallelNodeSearch {
         return a;
     }
 
+    @NotThreadSafe
     @Procedure("apoc.search.nodeReduced")
     @Description("Returns a reduced representation of the distinct nodes found after a parallel search over multiple indexes.\n" +
             "The reduced node representation includes: node id, node labels and the searched properties.")
@@ -80,6 +83,7 @@ public class ParallelNodeSearch {
                     .values().stream().filter(Optional::isPresent).map(Optional::get);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.search.multiSearchReduced")
     @Description("Returns a reduced representation of the nodes found after a parallel search over multiple indexes.\n" +
             "The reduced node representation includes: node id, node labels and the searched properties.")
@@ -91,6 +95,7 @@ public class ParallelNodeSearch {
                     .filter(Optional::isPresent).map(Optional::get);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.search.nodeAll")
     @Description("Returns all the nodes found after a parallel search over multiple indexes.")
     public Stream<NodeResult> multiSearchNodeAll(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final String value) throws Exception {
@@ -98,6 +103,7 @@ public class ParallelNodeSearch {
     }
 
 
+    @NotThreadSafe
     @Procedure("apoc.search.node")
     @Description("Returns all the distinct nodes found after a parallel search over multiple indexes.")
     public Stream<NodeResult> multiSearchNode(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final String value) throws Exception {

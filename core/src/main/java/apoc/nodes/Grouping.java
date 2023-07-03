@@ -28,6 +28,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
 import java.util.*;
@@ -84,6 +85,7 @@ public class Grouping {
         }
     }
 
+    @NotThreadSafe
     @Procedure("apoc.nodes.group")
     @Description("Allows for the aggregation of nodes based on the given properties.\n" +
             "This procedure returns virtual nodes.")

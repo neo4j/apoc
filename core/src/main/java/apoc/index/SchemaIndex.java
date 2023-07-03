@@ -48,6 +48,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -79,7 +80,7 @@ public class SchemaIndex {
     @Context
     public TerminationGuard terminationGuard;
 
-
+    @NotThreadSafe
     @Procedure("apoc.schema.properties.distinct")
     @Description("Returns all distinct node property values for the given key.")
     public Stream<ListResult> distinct(@Name("label") String label, @Name("key")  String key) {
@@ -87,6 +88,7 @@ public class SchemaIndex {
         return Stream.of(new ListResult(values));
     }
 
+    @NotThreadSafe
     @Procedure("apoc.schema.properties.distinctCount")
     @Description("Returns all distinct property values and counts for the given key.")
     public Stream<PropertyValueCount> distinctCount(@Name(value = "label", defaultValue = "") String labelName, @Name(value = "key", defaultValue = "") String keyName) {

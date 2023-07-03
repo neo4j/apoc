@@ -31,6 +31,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
 import static apoc.util.Util.map;
@@ -57,6 +58,7 @@ public class Help {
         }
     }
 
+    @NotThreadSafe
     @Procedure("apoc.help")
     @Description("Returns descriptions of the available APOC procedures and functions.")
     public Stream<HelpResult> info(@Name("proc") String name) {

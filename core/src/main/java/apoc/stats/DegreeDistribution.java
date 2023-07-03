@@ -33,6 +33,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.token.api.NamedToken;
 
@@ -111,6 +112,7 @@ public class DegreeDistribution {
     @Context
     public Pools pools;
 
+    @NotThreadSafe
     @Procedure("apoc.stats.degrees")
     @Description("Returns the percentile groupings of the degrees on the nodes connected by the given relationship types.")
     public Stream<DegreeStats.Result> degrees(@Name(value = "relTypes", defaultValue = "") String types) {

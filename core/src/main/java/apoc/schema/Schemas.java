@@ -47,6 +47,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
 import org.neo4j.token.api.TokenConstants;
@@ -82,6 +83,7 @@ public class Schemas {
     @Context
     public KernelTransaction ktx;
 
+    @NotThreadSafe
     @Procedure(name = "apoc.schema.assert", mode = Mode.SCHEMA)
     @Description("Drops all other existing indexes and constraints when `dropExisting` is `true` (default is `true`).\n" +
             "Asserts at the end of the operation that the given indexes and unique constraints are there.")
@@ -91,6 +93,7 @@ public class Schemas {
                 assertConstraints(constraints, dropExisting).stream());
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
     @Description("Returns all indexes and constraints information for all node labels in the database.\n" +
             "It is possible to define a set of labels to include or exclude in the config parameters.")
@@ -98,6 +101,7 @@ public class Schemas {
         return indexesAndConstraintsForNode(config);
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.schema.relationships", mode = Mode.SCHEMA)
     @Description("Returns the indexes and constraints information for all the relationship types in the database.\n" +
             "It is possible to define a set of relationship types to include or exclude in the config parameters.")
@@ -105,24 +109,28 @@ public class Schemas {
         return indexesAndConstraintsForRelationships(config);
     }
 
+    @NotThreadSafe
     @UserFunction(name = "apoc.schema.node.indexExists")
     @Description("Returns a boolean depending on whether or not an index exists for the given node label with the given property names.")
     public Boolean indexExistsOnNode(@Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
         return indexExists(labelName, propertyNames);
     }
 
+    @NotThreadSafe
     @UserFunction(value = "apoc.schema.relationship.indexExists")
     @Description("Returns a boolean depending on whether or not an index exists for the given relationship type with the given property names.")
     public Boolean indexExistsOnRelationship(@Name("type") String relName, @Name("propertyName") List<String> propertyNames) {
         return indexExistsForRelationship(relName, propertyNames);
     }
 
+    @NotThreadSafe
     @UserFunction(name = "apoc.schema.node.constraintExists")
     @Description("Returns a boolean depending on whether or not a constraint exists for the given node label with the given property names.")
     public Boolean constraintExistsOnNode(@Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
         return constraintsExists(labelName, propertyNames);
     }
 
+    @NotThreadSafe
     @UserFunction(name = "apoc.schema.relationship.constraintExists")
     @Description("Returns a boolean depending on whether or not a constraint exists for the given relationship type with the given property names.")
     public Boolean constraintExistsOnRelationship(@Name("type") String type, @Name("propertyName") List<String> propertyNames) {
