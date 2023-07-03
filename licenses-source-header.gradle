@@ -11,7 +11,7 @@ allprojects { proj ->
                 java = 'SLASHSTAR_STYLE'
             }
             // exclude 'test/resources/**'
-            // exclude 'main/resources/**'
+            exclude '**/PooledByteBufAllocatorL.java'
             include '**/*.java'
         }
         tasks.check.dependsOn tasks.license
