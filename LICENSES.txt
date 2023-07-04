@@ -10,10 +10,10 @@ Apache-2.0
   WMI4Java-1.6.3.jar
   accessors-smart-2.4.9.jar
   annotations-17.0.0.jar
-  arrow-format-10.0.1.jar
-  arrow-memory-core-10.0.1.jar
-  arrow-memory-netty-10.0.1.jar
-  arrow-vector-10.0.1.jar
+  arrow-format-12.0.1.jar
+  arrow-memory-core-12.0.1.jar
+  arrow-memory-netty-12.0.1.jar
+  arrow-vector-12.0.1.jar
   assertj-core-3.24.2.jar
   audience-annotations-0.5.0.jar
   avro-1.7.7.jar
@@ -104,7 +104,7 @@ Apache-2.0
   jackson-databind-2.15.2.jar
   jackson-dataformat-cbor-2.15.2.jar
   jackson-dataformat-csv-2.15.2.jar
-  jackson-datatype-jsr310-2.13.4.jar
+  jackson-datatype-jsr310-2.15.1.jar
   jackson-datatype-jsr310-2.15.2.jar
   jackson-jaxrs-base-2.15.2.jar
   jackson-jaxrs-json-provider-2.15.2.jar
@@ -172,6 +172,7 @@ Apache-2.0
   netty-3.10.6.Final.jar
   netty-all-4.1.89.Final.jar
   netty-buffer-4.1.93.Final.jar
+  netty-buffer-4.1.94.Final.jar
   netty-codec-4.1.93.Final.jar
   netty-codec-dns-4.1.89.Final.jar
   netty-codec-haproxy-4.1.89.Final.jar
@@ -185,6 +186,7 @@ Apache-2.0
   netty-codec-stomp-4.1.89.Final.jar
   netty-codec-xml-4.1.89.Final.jar
   netty-common-4.1.93.Final.jar
+  netty-common-4.1.94.Final.jar
   netty-handler-4.1.93.Final.jar
   netty-handler-proxy-4.1.89.Final.jar
   netty-handler-ssl-ocsp-4.1.89.Final.jar
