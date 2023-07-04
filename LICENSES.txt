@@ -10,13 +10,9 @@ Apache-2.0
   WMI4Java-1.6.3.jar
   accessors-smart-2.4.9.jar
   annotations-17.0.0.jar
-  arrow-format-10.0.1.jar
   arrow-format-12.0.1.jar
-  arrow-memory-core-10.0.1.jar
   arrow-memory-core-12.0.1.jar
-  arrow-memory-netty-10.0.1.jar
   arrow-memory-netty-12.0.1.jar
-  arrow-vector-10.0.1.jar
   arrow-vector-12.0.1.jar
   assertj-core-3.24.2.jar
   audience-annotations-0.5.0.jar
