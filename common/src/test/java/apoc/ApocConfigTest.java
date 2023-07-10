@@ -123,19 +123,22 @@ public class ApocConfigTest {
     }
 
     @Test
-    public void testApocConfWithExpandCommands() {
+    public void testApocConfWithExpandCommands() throws Exception {
+        String validExpandLine = "command.expansion=$(echo \"expanded value\")";
+        addLineToApocConfig(validExpandLine);
         setApocConfigSystemProperty();
+
         apocConfig.init();
 
         assertEquals("expanded value", apocConfig.getConfig().getString("command.expansion"));
+        removeLineFromApocConfig(validExpandLine);
     }
 
     @Test
     public void testApocConfWithInvalidExpandCommands() throws Exception {
-        setApocConfigSystemProperty();
-
         String invalidExpandLine = "command.expansion.3=$(fakeCommand 3 + 3)";
         addLineToApocConfig(invalidExpandLine);
+        setApocConfigSystemProperty();
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage = "java.io.IOException: Cannot run program \"fakeCommand\": error=2, No such file or directory";
@@ -159,7 +162,7 @@ public class ApocConfigTest {
     }
 
     @Test
-    public void testApocConfWithoutExpandCommands() {
+    public void testApocConfWithoutExpandCommands() throws Exception {
         InternalLogProvider logProvider = new AssertableLogProvider();
 
         Config neo4jConfig = mock(Config.class);
@@ -171,11 +174,15 @@ public class ApocConfigTest {
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
         ApocConfig apocConfig = new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
 
+        String validExpandLine = "command.expansion=$(echo \"expanded value\")";
+        addLineToApocConfig(validExpandLine);
         setApocConfigSystemProperty();
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage = "$(echo \"expanded value\") is a command, but config is not explicitly told to expand it. (Missing --expand-commands argument?)";
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
+
+        removeLineFromApocConfig(validExpandLine);
     }
 
     private void removeLineFromApocConfig(String lineContent) throws IOException {
