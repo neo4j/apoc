@@ -1026,6 +1026,8 @@ public class SchemasTest {
 
         // create the failed index and check that has state "FAILED"
         db.executeTransactionally("CREATE INDEX failedIdx FOR (n:LabelTest) ON (n.prop)");
+        Assert.assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
+
         testCall(db, "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'", (r) -> {
             assertEquals("FAILED", r.get("state"));
         });
@@ -1053,6 +1055,8 @@ public class SchemasTest {
 
         // create the failed index and check that has state "FAILED"
         db.executeTransactionally("CREATE INDEX failedIdx FOR ()-[r:REL_TEST]-() ON (r.prop)");
+        Assert.assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
+
         testCall(db, "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'", (r) -> {
             assertEquals("FAILED", r.get("state"));
         });
