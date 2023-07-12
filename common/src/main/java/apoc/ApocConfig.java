@@ -20,6 +20,8 @@ package apoc;
 
 import apoc.export.util.ExportConfig;
 import inet.ipaddr.IPAddressString;
+
+import java.io.File;
 import java.util.Map;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
@@ -40,6 +42,7 @@ import org.neo4j.kernel.lifecycle.LifecycleAdapter;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
 import org.neo4j.logging.internal.LogService;
+import org.neo4j.util.Preconditions;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -52,6 +55,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static apoc.util.FileUtils.isFile;
+import static java.lang.String.format;
 import static org.neo4j.configuration.BootloaderSettings.lib_directory;
 import static org.neo4j.configuration.BootloaderSettings.run_directory;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -61,6 +65,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.logs_directory;
 import static org.neo4j.configuration.GraphDatabaseSettings.neo4j_home;
 import static org.neo4j.configuration.GraphDatabaseSettings.plugin_dir;
 import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_root_path;
+import static org.neo4j.internal.helpers.ProcessUtils.executeCommandWithOutput;
 
 public class ApocConfig extends LifecycleAdapter {
     public static final String SUN_JAVA_COMMAND = "sun.java.command";
@@ -112,9 +117,18 @@ public class ApocConfig extends LifecycleAdapter {
 
     private List<IPAddressString> blockedIpRanges = List.of();
 
+    private boolean expandCommands;
+
+    private Duration commandEvaluationTimeout;
+
     public ApocConfig(Config neo4jConfig, LogService log, GlobalProcedures globalProceduresRegistry, DatabaseManagementService databaseManagementService) {
         this.neo4jConfig = neo4jConfig;
         this.blockedIpRanges = neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist);
+        this.commandEvaluationTimeout = neo4jConfig.get(GraphDatabaseInternalSettings.config_command_evaluation_timeout);
+        if (this.commandEvaluationTimeout == null) {
+            this.commandEvaluationTimeout = GraphDatabaseInternalSettings.config_command_evaluation_timeout.defaultValue();
+        }
+        this.expandCommands = neo4jConfig.expandCommands();
         this.log = log.getInternalLog(ApocConfig.class);
         this.databaseManagementService = databaseManagementService;
         theInstance = this;
@@ -140,6 +154,21 @@ public class ApocConfig extends LifecycleAdapter {
         return config;
     }
 
+    private String evaluateIfCommand(String settingName, String entry) {
+        if (Config.isCommand(entry)) {
+            Preconditions.checkArgument(
+                    expandCommands,
+                    format(
+                            "%s is a command, but config is not explicitly told to expand it. (Missing --expand-commands argument?)",
+                            entry));
+            String str = entry.trim();
+            String command = str.substring(2, str.length() - 1);
+            log.info("Executing external script to retrieve value of setting " + settingName);
+            return executeCommandWithOutput(command, commandEvaluationTimeout);
+        }
+        return entry;
+    }
+
     @Override
     public void init() {
         log.debug("called init");
@@ -147,6 +176,12 @@ public class ApocConfig extends LifecycleAdapter {
         String neo4jConfFolder = System.getenv().getOrDefault("NEO4J_CONF", determineNeo4jConfFolder());
         System.setProperty("NEO4J_CONF", neo4jConfFolder);
         log.info("system property NEO4J_CONF set to %s", neo4jConfFolder);
+        File apocConfFile = new File(neo4jConfFolder + "/apoc.conf");
+        // Command Expansion required check from Neo4j
+        if (apocConfFile.exists() && this.expandCommands) {
+            Config.Builder.validateFilePermissionForCommandExpansion(List.of(apocConfFile.toPath()));
+        }
+
         loadConfiguration();
     }
 
@@ -177,17 +212,21 @@ public class ApocConfig extends LifecycleAdapter {
      */
     protected void loadConfiguration() {
         try {
-
             URL resource = getClass().getClassLoader().getResource("apoc-config.xml");
             log.info("loading apoc meta config from %s", resource.toString());
             CombinedConfigurationBuilder builder = new CombinedConfigurationBuilder()
                     .configure(new Parameters().fileBased().setURL(resource));
             config = builder.getConfiguration();
 
+            // Command Expansion if needed
+            config.getKeys().forEachRemaining(configKey -> config.setProperty(
+                    configKey,
+                    evaluateIfCommand(configKey, config.getProperty(configKey).toString())
+            ));
+
             // set config settings not explicitly set in apoc.conf to their default value
             configDefaultValues.forEach((k,v) -> {
-                if (!config.containsKey(k))
-                {
+                if (!config.containsKey(k)) {
                    config.setProperty(k, v);
                    log.info("setting APOC config to default value: " + k + "=" + v);
                 }
