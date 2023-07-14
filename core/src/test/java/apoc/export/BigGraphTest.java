@@ -66,7 +66,7 @@ public class BigGraphTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        TestUtil.registerProcedure(db, Rename.class, ExportCSV.class, ExportJson.class, ExportCypher.class, ExportGraphML.class, Graphs.class, Meta.class, ImportCsv.class, GraphRefactoring.class,
+        TestUtil.registerProcedure(db, Rename.class, ExportCSV.class, ExportJson.class, ExportCypher.class, ExportGraphML.class, Graphs.class, Meta.class, GraphRefactoring.class,
                 ImportCsv.class, ImportJson.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);

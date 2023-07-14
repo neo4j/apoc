@@ -172,9 +172,9 @@ public class TestUtil {
         GlobalProcedures globalProcedures = ((GraphDatabaseAPI) db).getDependencyResolver().resolveDependency(GlobalProcedures.class);
         for (Class<?> procedure : procedures) {
             try {
-                globalProcedures.registerProcedure(procedure, true);
-                globalProcedures.registerFunction(procedure, true);
-                globalProcedures.registerAggregationFunction(procedure, true);
+                globalProcedures.registerProcedure(procedure);
+                globalProcedures.registerFunction(procedure);
+                globalProcedures.registerAggregationFunction(procedure);
             } catch (KernelException e) {
                 throw new RuntimeException("while registering " + procedure, e);
             }
