@@ -86,9 +86,9 @@ public class TriggerNewProceduresTest {
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
         waitDbsAvailable(db, sysDb);
-        TestUtil.registerProcedure(sysDb, TriggerNewProcedures.class, Nodes.class);
-        TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
-        
+        // Procedures are global for the DBMS, so it is sufficient to register them via one DB.
+        TestUtil.registerProcedure(db, TriggerNewProcedures.class, Nodes.class, Trigger.class);
+
     }
 
     @AfterClass
