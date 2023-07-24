@@ -20,6 +20,7 @@ package apoc.cypher;
 
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
+import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
@@ -59,10 +60,23 @@ public class CypherTestUtil {
             RETURN collect(n) as nodes, collect(rel) as rels, collect(o) as others;
             """;
 
-    public static String SIMPLE_RETURN_QUERIES = "MATCH (n:ReturnQuery) RETURN n";
+    public static String SIMPLE_RETURN_QUERIES = "MATCH (n:ReturnQuery) RETURN n ORDER BY n.id";
 
     public static void testRunProcedureWithSimpleReturnResults(Session session, String query, Map<String, Object> params) {
         session.writeTransaction(tx -> tx.run(CREATE_RETURNQUERY_NODES));
+        // Due to flaky tests, this is a debug section to see if we can
+        // figure out a reason why the results aren't always returning the
+        // entire result set.
+        session.readTransaction(tx -> {
+            List<Record> result = tx.run("MATCH (n:ReturnQuery) RETURN n.id").list();
+            System.out.println("DEBUG: testRunProcedureWithSimpleReturnResults");
+            System.out.println("DEBUG: " + result.size());
+            for (Record r : result) {
+                System.out.println("DEBUG: " + r);
+            }
+            tx.commit();
+            return null;
+        });
         testResult(session, query, params,
                 r -> {
                     // check that all results from the 1st statement are correctly returned
@@ -91,6 +105,7 @@ public class CypherTestUtil {
     }
 
     private static void assertReturnQueryNode(Map<String, Object> row, long id) {
+        System.out.println("DEBUG: " + row);
         assertEquals(id, row.get("row") );
 
         Map<String, Node> result = (Map<String, Node>) row.get("result");
