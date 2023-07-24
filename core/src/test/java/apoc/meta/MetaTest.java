@@ -98,7 +98,7 @@ public class MetaTest {
     }
 
     public static boolean hasRecordMatching(List<Map<String,Object>> records, Predicate<Map<String,Object>> predicate) {
-        return records.stream().filter(predicate).count() > 0;
+        return records.stream().anyMatch(predicate);
     }
 
     public static List<Map<String,Object>> gatherRecords(Result r) {
@@ -112,8 +112,8 @@ public class MetaTest {
     // Can be valuable for debugging purposes
     @SuppressWarnings( "unused" )
     private static String toCSV(List<Map<String, Object>> list) {
-        List<String> headers = list.stream().flatMap(map -> map.keySet().stream()).distinct().collect(Collectors.toList());
-        final StringBuffer sb = new StringBuffer();
+        List<String> headers = list.stream().flatMap(map -> map.keySet().stream()).distinct().toList();
+        final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < headers.size(); i++) {
             sb.append(headers.get(i));
             sb.append(i == headers.size()-1 ? "\n" : ",");
@@ -131,13 +131,9 @@ public class MetaTest {
         AtomicReference<List<Map<String,Object>>> compareTo = new AtomicReference<>();
         AtomicReference<List<Map<String,Object>>> testSet = new AtomicReference<>();
 
-        TestUtil.testResult(db, equivalentToCall, r -> {
-            compareTo.set(gatherRecords(r));
-        });
+        TestUtil.testResult(db, equivalentToCall, r -> compareTo.set(gatherRecords(r)));
 
-        TestUtil.testResult(db, testCall, r -> {
-            testSet.set(gatherRecords(r));
-        });
+        TestUtil.testResult(db, testCall, r -> testSet.set(gatherRecords(r)));
 
         // Uncomment this for debugging purposes
         /*
@@ -167,11 +163,12 @@ public class MetaTest {
 
     @Test
     public void testMetaGraphExtraRels() {
-        db.executeTransactionally("CREATE (a:S1 {SomeName1:'aaa'})\n" +
-                "CREATE (b:S2 {SomeName2:'bbb'})\n" +
-                "CREATE (c:S3 {SomeName3:'ccc'})\n" +
-                "CREATE (a)-[:HAS]->(b)\n" +
-                "CREATE (b)-[:HAS]->(c)");
+        db.executeTransactionally("""
+                CREATE (a:S1 {SomeName1:'aaa'})
+                CREATE (b:S2 {SomeName2:'bbb'})
+                CREATE (c:S3 {SomeName3:'ccc'})
+                CREATE (a)-[:HAS]->(b)
+                CREATE (b)-[:HAS]->(c)""");
 
         testCall(db, "call apoc.meta.graph()",(row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
@@ -278,7 +275,7 @@ public class MetaTest {
         testTypeName(new Float[] {1f, 2f}, "LIST OF FLOAT");
         testTypeName(new Double[] {1d, 2d}, "LIST OF FLOAT");
         testTypeName(new String[] {"a", "b"}, "LIST OF STRING");
-        testTypeName(new Long[] {1l, 2l}, "LIST OF INTEGER");
+        testTypeName(new Long[] {1L, 2L}, "LIST OF INTEGER");
         testTypeName(new LocalDate[] {LocalDate.of(2018, 1, 1), LocalDate.of(2018, 1, 1)}, "LIST OF DATE");
         testTypeName(new Object[] {1d, ""}, "LIST OF ANY");
     }
@@ -393,14 +390,16 @@ public class MetaTest {
     public void testMetaData() {
         db.executeTransactionally("create index for (n:Movie) on (n.title)");
         db.executeTransactionally("create constraint for (a:Actor) require a.name is unique");
-        db.executeTransactionally("CREATE (actor1:Actor {name:'Tom Hanks'})-[:ACTED_IN {roles:'Forrest'}]->(movie1:Movie {title:'Forrest Gump'}), \n" +
-                "(actor2:Actor {name: 'Bruce Lee'})-[:ACTED_IN {roles:'FooBaz'}]->(movie1),\n" +
-                "(actor1)-[:ACTED_IN {roles:'Movie2Role'}]->(movie2:Movie {title:'Movie2'}), (actor1)-[:ACTED_IN {roles:'Movie3Role'}]->(movie3:Movie {title:'Movie3'}),\n" +
-                "(actor1)-[:DIRECTED {foo: 'first'}]->(movie2), (actor1)-[:DIRECTED {foo: 'second'}]->(:Movie {title:'Movie4'}),\n" +
-                "(:Studio {name: 'Pixar'})-[:ANIMATED {bar: 'alpha'}]->(movie2)");
-        TestUtil.testResult(db, "CALL apoc.meta.data() \n" +
-                        "YIELD label, property, count, unique, index, existence, type, array, left, right, other, otherLabels, elementType\n" +
-                        "RETURN * ORDER BY elementType, property", (r) -> {
+        db.executeTransactionally("""
+                CREATE (actor1:Actor {name:'Tom Hanks'})-[:ACTED_IN {roles:'Forrest'}]->(movie1:Movie {title:'Forrest Gump'}),
+                (actor2:Actor {name: 'Bruce Lee'})-[:ACTED_IN {roles:'FooBaz'}]->(movie1),
+                (actor1)-[:ACTED_IN {roles:'Movie2Role'}]->(movie2:Movie {title:'Movie2'}), (actor1)-[:ACTED_IN {roles:'Movie3Role'}]->(movie3:Movie {title:'Movie3'}),
+                (actor1)-[:DIRECTED {foo: 'first'}]->(movie2), (actor1)-[:DIRECTED {foo: 'second'}]->(:Movie {title:'Movie4'}),
+                (:Studio {name: 'Pixar'})-[:ANIMATED {bar: 'alpha'}]->(movie2)""");
+        TestUtil.testResult(db, """
+                CALL apoc.meta.data()
+                YIELD label, property, count, unique, index, existence, type, array, left, right, other, otherLabels, elementType
+                RETURN * ORDER BY elementType, property""", (r) -> {
             Map<String, Object> row = r.next();
             assertEquals("node", row.get("elementType"));
             assertEquals("ACTED_IN", row.get("property"));
@@ -485,7 +484,7 @@ public class MetaTest {
         db.executeTransactionally("CREATE (:Person:Actor:Director {name:'Tom', born:'05-06-1956', dead:false})-[:ACTED_IN {roles:'Forrest'}]->(:Movie {title:'Forrest Gump'})");
         testCall(db, "CALL apoc.meta.schema()",
                 (row) -> {
-                    List<String> emprtyList = new ArrayList<String>();
+                    List<String> emprtyList = new ArrayList<>();
                     List<String> fullList = Arrays.asList("Actor","Director");
 
                     Map<String, Object> o = (Map<String, Object>) row.get("value");
@@ -607,9 +606,10 @@ public class MetaTest {
 
     @Test
     public void testIssue1861LabelAndTypeWithSameName() {
-        db.executeTransactionally("CREATE (s0 :person{id:1} ) SET s0.name = 'rose'\n" +
-                "CREATE (t0 :person{id:2}) SET t0.name = 'jack'\n" +
-                "MERGE (s0) -[r0:person {alfa: 'beta'}] -> (t0)");
+        db.executeTransactionally("""
+                CREATE (s0 :person{id:1} ) SET s0.name = 'rose'
+                CREATE (t0 :person{id:2}) SET t0.name = 'jack'
+                MERGE (s0) -[r0:person {alfa: 'beta'}] -> (t0)""");
         testCall(db,"CALL apoc.meta.schema()", (row) -> {
             Map<String, Object> value = (Map<String, Object>) row.get("value");
             assertEquals(2, value.size());
@@ -896,9 +896,7 @@ public class MetaTest {
         db.executeTransactionally("CREATE (:Person {name:'Jane'})");
         db.executeTransactionally("CREATE (:Person {name:'Jeff', surname:'Logan'})");
         TestUtil.testResult(db, "CALL apoc.meta.data({sample:2})",
-                (r) -> {
-                    Assertions.assertThat( r.stream().map( m -> m.get( "property" ) ) ).containsExactlyInAnyOrder( "name", "surname" );
-                });
+                (r) -> Assertions.assertThat( r.stream().map(m -> m.get( "property" ) ) ).containsExactlyInAnyOrder( "name", "surname" ));
     }
 
 
@@ -1052,28 +1050,25 @@ public class MetaTest {
         TestUtil.testResult( db, "CALL apoc.meta.relTypeProperties()", r -> {
             List<Map<String,Object>> records = gatherRecords( r );
 
-//            System.out.println("REL TYPE PROPERTIES");
-//            System.out.println(toCSV(records));
+            assertTrue(hasRecordMatching(records, m ->
+                    m.get("propertyName").equals("a") &&
+                            ((List) m.get("propertyTypes")).get(0).equals("Long") &&
+                            m.get("mandatory").equals(false)));
 
-            assertEquals( true, hasRecordMatching( records, m ->
-                    m.get( "propertyName" ).equals( "a" ) &&
-                    ((List) m.get( "propertyTypes" )).get( 0 ).equals( "Long" ) &&
-                    m.get( "mandatory" ).equals( false ) ) );
+            assertTrue(hasRecordMatching(records, m ->
+                    m.get("propertyName").equals("b") &&
+                            ((List) m.get("propertyTypes")).get(0).equals("Long") &&
+                            m.get("mandatory").equals(false)));
 
-            assertEquals( true, hasRecordMatching( records, m ->
-                    m.get( "propertyName" ).equals( "b" ) &&
-                    ((List) m.get( "propertyTypes" )).get( 0 ).equals( "Long" ) &&
-                    m.get( "mandatory" ).equals( false ) ) );
+            assertTrue(hasRecordMatching(records, m ->
+                    m.get("propertyName").equals("c") &&
+                            ((List) m.get("propertyTypes")).get(0).equals("Long") &&
+                            m.get("mandatory").equals(false)));
 
-            assertEquals( true, hasRecordMatching( records, m ->
-                    m.get( "propertyName" ).equals( "c" ) &&
-                    ((List) m.get( "propertyTypes" )).get( 0 ).equals( "Long" ) &&
-                    m.get( "mandatory" ).equals( false ) ) );
-
-            assertEquals( true, hasRecordMatching( records, m ->
-                    m.get( "propertyName" ).equals( "d" ) &&
-                    ((List) m.get( "propertyTypes" )).get( 0 ).equals( "Long" ) &&
-                    m.get( "mandatory" ).equals( false ) ) );
+            assertTrue(hasRecordMatching(records, m ->
+                    m.get("propertyName").equals("d") &&
+                            ((List) m.get("propertyTypes")).get(0).equals("Long") &&
+                            m.get("mandatory").equals(false)));
         } );
     }
 
@@ -1085,7 +1080,7 @@ public class MetaTest {
         TestUtil.testResult( db, "CALL apoc.meta.relTypeProperties({ includeRels: ['CATCHME'] })", r -> {
             List<Map<String,Object>> records = gatherRecords( r );
             assertEquals( 1, records.size() );
-            assertEquals( records.get( 0 ).get( "propertyName" ).equals( "c" ), true );
+            assertTrue(records.get(0).get("propertyName").equals("c"));
         } );
     }
 
@@ -1297,9 +1292,11 @@ public class MetaTest {
         db.executeTransactionally( "CREATE (:B)-[:RELB { x: 1 }]->(:D)" );
 
         // both together contract the data model and it should result in 0 results
-        TestUtil.testResult( db, "CALL apoc.meta.nodeTypeProperties({ includeLabels: ['A'], includeRels: ['RELB'] })", r -> {
-            assertEquals( 0, gatherRecords( r ).size() );
-        } );
+        TestUtil.testResult(
+                db,
+                "CALL apoc.meta.nodeTypeProperties({ includeLabels: ['A'], includeRels: ['RELB'] })",
+                r -> assertEquals( 0, gatherRecords( r ).size() )
+        );
     }
 
     @Test
@@ -1423,7 +1420,7 @@ public class MetaTest {
         db.executeTransactionally( "CREATE (:Foo { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] });" );
         // Missing all properties to make everything non-mandatory.
         db.executeTransactionally( "CREATE (:Foo { z: 1 });" );
-        assertEquals( true, testDBCallEquivalence( db, "CALL apoc.meta.nodeTypeProperties()", "CALL db.schema.nodeTypeProperties()" ) );
+        assertTrue(testDBCallEquivalence(db, "CALL apoc.meta.nodeTypeProperties()", "CALL db.schema.nodeTypeProperties()"));
     }
 
     @Test
@@ -1431,7 +1428,7 @@ public class MetaTest {
         db.executeTransactionally( "CREATE (:Foo)-[:REL { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] }]->();" );
         // Missing all properties to make everything non-mandatory.
         db.executeTransactionally( "CREATE (:Foo)-[:REL { z: 1 }]->();" );
-        assertEquals( true, testDBCallEquivalence( db, "CALL apoc.meta.relTypeProperties()", "CALL db.schema.relTypeProperties()" ) );
+        assertTrue(testDBCallEquivalence(db, "CALL apoc.meta.relTypeProperties()", "CALL db.schema.relTypeProperties()"));
     }
 
     @Test
@@ -1454,7 +1451,7 @@ public class MetaTest {
                 "CREATE (:Test { randomProp: 'this property is here to make everything mandatory = false'});";
 
         db.executeTransactionally( q );
-        assertEquals( true, testDBCallEquivalence( db, "CALL apoc.meta.nodeTypeProperties()", "CALL db.schema.nodeTypeProperties()" ) );
+        assertTrue(testDBCallEquivalence(db, "CALL apoc.meta.nodeTypeProperties()", "CALL db.schema.nodeTypeProperties()"));
     }
 
     @Test
@@ -1477,7 +1474,7 @@ public class MetaTest {
                 "CREATE (b:Test)-[:REL{ randomProp: 'this property is here to make everything mandatory = false'}]->(b);";
 
         db.executeTransactionally( q );
-        assertEquals( true, testDBCallEquivalence( db, "CALL apoc.meta.relTypeProperties()", "CALL db.schema.relTypeProperties()" ) );
+        assertTrue(testDBCallEquivalence(db, "CALL apoc.meta.relTypeProperties()", "CALL db.schema.relTypeProperties()"));
     }
 
     @Test

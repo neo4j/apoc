@@ -22,7 +22,6 @@ import apoc.csv.CsvTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
 import org.apache.commons.io.FileUtils;
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -68,7 +67,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
@@ -90,100 +88,158 @@ public class ImportCsvTest {
 
     final Map<String, String> testCsvs = Collections
             .unmodifiableMap(Stream.of(
-                    new AbstractMap.SimpleEntry<>("array", ":ID|name:STRING[]\n" +
-                            "1|John;Bob;Alice\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-basic-affiliated-with", ":START_ID,:END_ID\n" +
-                            "1,3\n" +
-                            "2,4\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-basic-companies", "companyId:ID,name:STRING\n" +
-                            "4,Neo4j\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-basic-persons", "personId:ID,name:STRING\n" +
-                            "1,John\n" +
-                            "2,Jane\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-basic-unis", "uniId:ID,name:STRING\n" +
-                            "3,TU Munich\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-affiliated-with", ":START_ID(Person),:END_ID(Organisation)\n" +
-                            "1,1\n" +
-                            "2,2\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-companies", "companyId:ID(Organisation),name:STRING\n" +
-                            "2,Neo4j\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-persons", "personId:ID(Person),name:STRING\n" +
-                            "1,John\n" +
-                            "2,Jane\n"),
-                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-unis", "uniId:ID(Organisation),name:STRING\n" +
-                            "1,TU Munich\n"),
-                    new AbstractMap.SimpleEntry<>("id-idspaces", ":ID(Person)|name:STRING\n" +
-                            "1|John\n" +
-                            "2|Jane\n"),
-                    new AbstractMap.SimpleEntry<>("id-idspaces-with-dash", ":ID(Person-Id)|name:STRING\n" +
-                            "1|John\n" +
-                            "2|Jane\n"),
-                    new AbstractMap.SimpleEntry<>("id", "id:ID|name:STRING\n" +
-                            "1|John\n" +
-                            "2|Jane\n"),
-                    new AbstractMap.SimpleEntry<>("csvPoint", 
-                            ":ID,location:point{crs:WGS-84}\n" +
-                            "1,\"{latitude:55.6121514, longitude:12.9950357}\"\n" +
-                            "2,\"{y:51.507222, x:-0.1275}\"\n" +
-                            "3,\"{latitude:37.554167, longitude:-122.313056, height: 100, crs:'WGS-84-3D'}\"\n"),
+                    new AbstractMap.SimpleEntry<>("array", """
+                            :ID|name:STRING[]
+                            1|John;Bob;Alice
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-affiliated-with", """
+                            :START_ID,:END_ID
+                            1,3
+                            2,4
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-companies", """
+                            companyId:ID,name:STRING
+                            4,Neo4j
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-persons", """
+                            personId:ID,name:STRING
+                            1,John
+                            2,Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-unis", """
+                            uniId:ID,name:STRING
+                            3,TU Munich
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-affiliated-with", """
+                            :START_ID(Person),:END_ID(Organisation)
+                            1,1
+                            2,2
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-companies", """
+                            companyId:ID(Organisation),name:STRING
+                            2,Neo4j
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-persons", """
+                            personId:ID(Person),name:STRING
+                            1,John
+                            2,Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-unis", """
+                            uniId:ID(Organisation),name:STRING
+                            1,TU Munich
+                            """),
+                    new AbstractMap.SimpleEntry<>("id-idspaces", """
+                            :ID(Person)|name:STRING
+                            1|John
+                            2|Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("id-idspaces-with-dash", """
+                            :ID(Person-Id)|name:STRING
+                            1|John
+                            2|Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("id", """
+                            id:ID|name:STRING
+                            1|John
+                            2|Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("csvPoint",
+                            """
+                                    :ID,location:point{crs:WGS-84}
+                                    1,"{latitude:55.6121514, longitude:12.9950357}"
+                                    2,"{y:51.507222, x:-0.1275}"
+                                    3,"{latitude:37.554167, longitude:-122.313056, height: 100, crs:'WGS-84-3D'}"
+                                    """),
                     new AbstractMap.SimpleEntry<>("nodesMultiTypes",
-                            ":ID(MultiType-ID)|date1:datetime{timezone:Europe/Stockholm}|date2:datetime|foo:string|joined:date|active:boolean|points:int\n" +
-                            "1|2018-05-10T10:30|2018-05-10T12:30|Joe Soap|2017-05-05|true|10\n" +
-                            "2|2018-05-10T10:30[Europe/Berlin]|2018-05-10T12:30[Europe/Berlin]|Jane Doe|2017-08-21|true|15\n"),
+                            """
+                                    :ID(MultiType-ID)|date1:datetime{timezone:Europe/Stockholm}|date2:datetime|foo:string|joined:date|active:boolean|points:int
+                                    1|2018-05-10T10:30|2018-05-10T12:30|Joe Soap|2017-05-05|true|10
+                                    2|2018-05-10T10:30[Europe/Berlin]|2018-05-10T12:30[Europe/Berlin]|Jane Doe|2017-08-21|true|15
+                                    """),
                     new AbstractMap.SimpleEntry<>("emptyDate",
-                            "id:ID,:LABEL,str:STRING,int:INT,date:DATE\n" +
-                                    "1,Lab,hello,1,2020-01-01\n" +
-                                    "2,Lab,world,2,2020-01-01\n" +
-                                    "3,Lab,,,\n"),
+                            """
+                                    id:ID,:LABEL,str:STRING,int:INT,date:DATE
+                                    1,Lab,hello,1,2020-01-01
+                                    2,Lab,world,2,2020-01-01
+                                    3,Lab,,,
+                                    """),
                     new AbstractMap.SimpleEntry<>("relMultiTypes",
-                            ":START_ID(MultiType-ID)|:END_ID(MultiType-ID)|prop1:IGNORE|prop2:time{timezone:+02:00}[]|foo:int|time:duration[]|baz:localdatetime[]|bar:localtime[]\n" +
-                            "1|2|a|15:30|1|P14DT16H12M|2020-01-01T00:00:00|11:00:00\n" +
-                            "2|1|b|15:30+01:00|2|P5M1.5D|2021|12:00:00\n"),
-                    new AbstractMap.SimpleEntry<>("id-with-duplicates", "id:ID|name:STRING\n" +
-                            "1|John\n" +
-                            "1|Jane\n"),
-                    new AbstractMap.SimpleEntry<>("ignore-nodes", ":ID|firstname:STRING|lastname:IGNORE|age:INT\n" +
-                            "1|John|Doe|25\n" +
-                            "2|Jane|Doe|26\n"),
-                    new AbstractMap.SimpleEntry<>("ignore-relationships", ":START_ID|:END_ID|prop1:IGNORE|prop2:INT\n" +
-                            "1|2|a|3\n" +
-                            "2|1|b|6\n"),
-                    new AbstractMap.SimpleEntry<>("label", ":ID|:LABEL|name:STRING\n" +
-                            "1|Student;Employee|John\n"),
-                    new AbstractMap.SimpleEntry<>("knows", ":START_ID,:END_ID,since:INT\n" +
-                            "1,2,2016\n" +
-                            "10,11,2014\n" +
-                            "11,12,2013"),
-                    new AbstractMap.SimpleEntry<>("persons", ":ID,name:STRING,speaks:STRING[]\n" +
-                            "1,John,\"en,fr\"\n" +
-                            "2,Jane,\"en,de\""),
-                    new AbstractMap.SimpleEntry<>("quoted", "id:ID|:LABEL|name:STRING\n" +
-                            "'1'|'Student:Employee'|'John'\n"),
-                    new AbstractMap.SimpleEntry<>("rel-on-ids-idspaces", ":START_ID(Person)|:END_ID(Person)|since:INT\n" +
-                            "1|2|2016\n"),
-                    new AbstractMap.SimpleEntry<>("rel-on-ids", "x:START_ID|:END_ID|since:INT\n" +
-                            "1|2|2016\n"),
-                    new AbstractMap.SimpleEntry<>("rel-type", ":START_ID|:END_ID|:TYPE|since:INT\n" +
-                            "1|2|FRIENDS_WITH|2016\n" +
-                            "2|1||2016\n"),
-                    new AbstractMap.SimpleEntry<>("typeless", ":ID|name\n" +
-                            "1|John\n" +
-                            "2|Jane\n"),
-                    new AbstractMap.SimpleEntry<>("personsWithoutIdField", "name:STRING\n" +
-                            "John\n" +
-                            "Jane\n"),
-                    new AbstractMap.SimpleEntry<>("emptyInteger", 
-                            ":ID(node_space_1),:LABEL,str_attribute:STRING,int_attribute:INT,int_attribute_array:INT[],double_attribute_array:FLOAT[]\n" +
-                            "n1,Thing,once upon a time,1,\"2;3\",\"2.3;3.5\"\n" +
-                            "n2,Thing,,2,\"4;5\",\"2.6;3.6\"\n" +
-                            "n3,Thing,,,,\n"),
-                    new AbstractMap.SimpleEntry<>("emptyArray", 
-                            "id:ID,:LABEL,arr:STRING[],description:STRING\n" +
-                            "1,Arrays,a;b;c;d;e,normal,\n" +
-                            "2,Arrays,,withNull\n" +
-                            "3,Arrays,a;;c;;e,withEmptyItem\n" +
-                            "4,Arrays,a; ;c; ;e,withBlankItem\n" +
-                            "5,Arrays, ,withWhiteSpace\n"
+                            """
+                                    :START_ID(MultiType-ID)|:END_ID(MultiType-ID)|prop1:IGNORE|prop2:time{timezone:+02:00}[]|foo:int|time:duration[]|baz:localdatetime[]|bar:localtime[]
+                                    1|2|a|15:30|1|P14DT16H12M|2020-01-01T00:00:00|11:00:00
+                                    2|1|b|15:30+01:00|2|P5M1.5D|2021|12:00:00
+                                    """),
+                    new AbstractMap.SimpleEntry<>("id-with-duplicates", """
+                            id:ID|name:STRING
+                            1|John
+                            1|Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("ignore-nodes", """
+                            :ID|firstname:STRING|lastname:IGNORE|age:INT
+                            1|John|Doe|25
+                            2|Jane|Doe|26
+                            """),
+                    new AbstractMap.SimpleEntry<>("ignore-relationships", """
+                            :START_ID|:END_ID|prop1:IGNORE|prop2:INT
+                            1|2|a|3
+                            2|1|b|6
+                            """),
+                    new AbstractMap.SimpleEntry<>("label", """
+                            :ID|:LABEL|name:STRING
+                            1|Student;Employee|John
+                            """),
+                    new AbstractMap.SimpleEntry<>("knows", """
+                            :START_ID,:END_ID,since:INT
+                            1,2,2016
+                            10,11,2014
+                            11,12,2013"""),
+                    new AbstractMap.SimpleEntry<>("persons", """
+                            :ID,name:STRING,speaks:STRING[]
+                            1,John,"en,fr"
+                            2,Jane,"en,de\""""),
+                    new AbstractMap.SimpleEntry<>("quoted", """
+                            id:ID|:LABEL|name:STRING
+                            '1'|'Student:Employee'|'John'
+                            """),
+                    new AbstractMap.SimpleEntry<>("rel-on-ids-idspaces", """
+                            :START_ID(Person)|:END_ID(Person)|since:INT
+                            1|2|2016
+                            """),
+                    new AbstractMap.SimpleEntry<>("rel-on-ids", """
+                            x:START_ID|:END_ID|since:INT
+                            1|2|2016
+                            """),
+                    new AbstractMap.SimpleEntry<>("rel-type", """
+                            :START_ID|:END_ID|:TYPE|since:INT
+                            1|2|FRIENDS_WITH|2016
+                            2|1||2016
+                            """),
+                    new AbstractMap.SimpleEntry<>("typeless", """
+                            :ID|name
+                            1|John
+                            2|Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("personsWithoutIdField", """
+                            name:STRING
+                            John
+                            Jane
+                            """),
+                    new AbstractMap.SimpleEntry<>("emptyInteger",
+                            """
+                                    :ID(node_space_1),:LABEL,str_attribute:STRING,int_attribute:INT,int_attribute_array:INT[],double_attribute_array:FLOAT[]
+                                    n1,Thing,once upon a time,1,"2;3","2.3;3.5"
+                                    n2,Thing,,2,"4;5","2.6;3.6"
+                                    n3,Thing,,,,
+                                    """),
+                    new AbstractMap.SimpleEntry<>("emptyArray",
+                            """
+                                    id:ID,:LABEL,arr:STRING[],description:STRING
+                                    1,Arrays,a;b;c;d;e,normal,
+                                    2,Arrays,,withNull
+                                    3,Arrays,a;;c;;e,withEmptyItem
+                                    4,Arrays,a; ;c; ;e,withBlankItem
+                                    5,Arrays, ,withWhiteSpace
+                                    """
                     )
             ).collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
 
@@ -230,10 +286,10 @@ public class ImportCsvTest {
         );
 
         List<String> names = TestUtil.firstColumn(db, "MATCH (n:Person) RETURN n.name AS name ORDER BY name");
-        assertThat(names, Matchers.containsInAnyOrder("Jane", "John"));
+        assertTrue(names.containsAll(List.of("Jane", "John")));
 
         List<Long> ids = TestUtil.firstColumn(db, "MATCH (n:Person) RETURN n.id AS id ORDER BY id");
-        assertThat(ids, Matchers.contains(1L, 2L));
+        assertTrue(ids.containsAll(List.of(1L, 2L)));
     }
     
     @Test
@@ -311,21 +367,21 @@ public class ImportCsvTest {
             assertEquals(expectedEnd, ((NodeEntity) r.get("end")).getAllProperties());
 
             final RelationshipEntity rel = (RelationshipEntity) r.get("rel");
-            assertEquals(asList(DurationValue.parse("P14DT16H12M")), asList((DurationValue[]) rel.getProperty("time")));
-            final List<Object> expectedTime = asList(OffsetTime.of(15, 30, 0, 0, ZoneOffset.of("+02:00")));
+            assertEquals(Collections.singletonList(DurationValue.parse("P14DT16H12M")), asList((DurationValue[]) rel.getProperty("time")));
+            final List<Object> expectedTime = List.of(OffsetTime.of(15, 30, 0, 0, ZoneOffset.of("+02:00")));
             assertEquals(expectedTime, asList((OffsetTime[]) rel.getProperty("prop2")));
-            final List<LocalDateTime> expectedBaz = asList(LocalDateTime.of(2020, 1, 1, 0, 0));
+            final List<LocalDateTime> expectedBaz = List.of(LocalDateTime.of(2020, 1, 1, 0, 0));
             assertEquals(expectedBaz, asList((LocalDateTime[]) rel.getProperty("baz")));
-            final List<LocalTime> expectedBar = asList(LocalTime.of(11, 0, 0));
+            final List<LocalTime> expectedBar = Collections.singletonList(LocalTime.of(11, 0, 0));
             assertEquals(expectedBar, asList((LocalTime[]) rel.getProperty("bar")));
             assertEquals(1L, rel.getProperty("foo"));
             final RelationshipEntity relSecond = (RelationshipEntity) r.get("relSecond");
-            assertEquals(asList(DurationValue.parse("P5M1.5D")), asList((DurationValue[]) relSecond.getProperty("time")));
-            final List<Object> expectedTimeRelSecond = asList(OffsetTime.of(15, 30, 0, 0, ZoneOffset.of("+01:00")));
+            assertEquals(Collections.singletonList(DurationValue.parse("P5M1.5D")), asList((DurationValue[]) relSecond.getProperty("time")));
+            final List<Object> expectedTimeRelSecond = List.of(OffsetTime.of(15, 30, 0, 0, ZoneOffset.of("+01:00")));
             assertEquals(expectedTimeRelSecond, asList((OffsetTime[]) relSecond.getProperty("prop2")));
-            final List<LocalDateTime> expectedBazRelSecond = asList(LocalDateTime.of(2021, 1, 1, 0, 0));
+            final List<LocalDateTime> expectedBazRelSecond = List.of(LocalDateTime.of(2021, 1, 1, 0, 0));
             assertEquals(expectedBazRelSecond, asList((LocalDateTime[]) relSecond.getProperty("baz")));
-            final List<LocalTime> expectedBarRelSecond = asList(LocalTime.of(12, 0, 0));
+            final List<LocalTime> expectedBarRelSecond = Collections.singletonList(LocalTime.of(12, 0, 0));
             assertEquals(expectedBarRelSecond, asList((LocalTime[]) relSecond.getProperty("bar")));
             assertEquals(2L, relSecond.getProperty("foo"));
         });
@@ -389,7 +445,7 @@ public class ImportCsvTest {
         );
 
         List<String> names = TestUtil.firstColumn(db, "MATCH (n:Person) RETURN n.name AS name ORDER BY name");
-        assertThat(names, Matchers.containsInAnyOrder("Jane", "John"));
+        assertTrue(names.containsAll(List.of("Jane", "John")));
     }
 
     @Test
@@ -408,7 +464,7 @@ public class ImportCsvTest {
         );
 
         List<String> names = TestUtil.firstColumn(db, "MATCH (n:Person) RETURN n.name AS name ORDER BY name");
-        assertThat(names, Matchers.containsInAnyOrder("Jane", "John"));
+        assertTrue(names.containsAll(List.of("Jane", "John")));
     }
 
     @Test
@@ -438,7 +494,7 @@ public class ImportCsvTest {
         );
 
         List<String> names = TestUtil.firstColumn(db, "MATCH (n:Person) RETURN n.name AS name ORDER BY name");
-        assertThat(names, Matchers.containsInAnyOrder("Jane", "John"));
+        assertTrue(names.containsAll(List.of("Jane", "John")));
     }
 
     @Test
@@ -456,7 +512,7 @@ public class ImportCsvTest {
                 }
         );
         List<String> names = TestUtil.firstColumn(db, "MATCH (n) UNWIND labels(n) AS label RETURN label ORDER BY label");
-        assertThat(names, Matchers.contains("Employee", "Person", "Student"));
+        assertTrue(names.containsAll(List.of("Employee", "Person", "Student")));
     }
 
     @Test
@@ -475,7 +531,7 @@ public class ImportCsvTest {
         );
 
         List<String> names = TestUtil.firstColumn(db, "MATCH (n:Person) UNWIND n.name AS name RETURN name ORDER BY name");
-        assertThat(names, Matchers.contains("Alice", "Bob", "John"));
+        assertTrue(names.containsAll(List.of("Alice", "Bob", "John")));
     }
 
     @Test
@@ -494,7 +550,7 @@ public class ImportCsvTest {
         );
 
         List<String> names = TestUtil.firstColumn(db, "MATCH (n:Person) RETURN n.name AS name ORDER BY name");
-        assertThat(names, Matchers.containsInAnyOrder("Jane", "John"));
+        assertTrue(names.containsAll(List.of("Jane", "John")));
     }
 
     @Test
@@ -678,7 +734,7 @@ public class ImportCsvTest {
         );
 
         List<String> pairs = TestUtil.firstColumn(db, "MATCH (p:Person)-[:AFFILIATED_WITH]->(org) RETURN p.name + ' ' + org.name AS pair ORDER BY pair");
-        assertThat(pairs, Matchers.contains("Jane Neo4j", "John TU Munich"));
+        assertTrue(pairs.containsAll(List.of("Jane Neo4j", "John TU Munich")));
     }
 
     @Test
@@ -709,7 +765,7 @@ public class ImportCsvTest {
         );
 
         List<String> pairs = TestUtil.firstColumn(db, "MATCH (p:Person)-[:AFFILIATED_WITH]->(org) RETURN p.name + ' ' + org.name AS pair ORDER BY pair");
-        assertThat(pairs, Matchers.contains("Jane Neo4j", "John TU Munich"));
+        assertTrue(pairs.containsAll(List.of("Jane Neo4j", "John TU Munich")));
     }
 
     @Test
@@ -760,15 +816,16 @@ public class ImportCsvTest {
         );
 
         List<Long> ages = TestUtil.firstColumn(db, "MATCH (p:Person) RETURN p.age AS age ORDER BY age");
-        assertThat(ages, Matchers.contains(25L, 26L));
+        assertTrue(ages.containsAll(List.of(25L, 26L)));
 
-        List<String> pairs = TestUtil.firstColumn(db, "MATCH (p1:Person)-[k:KNOWS]->(p2:Person)\n" +
-                "WHERE p1.lastname IS NULL\n" +
-                "  AND p2.lastname IS NULL\n" +
-                "  AND k.prop1 IS NULL\n" +
-                "RETURN p1.firstname + ' ' + p1.age + ' <' + k.prop2 + '> ' + p2.firstname + ' ' + p2.age AS pair ORDER BY pair"
+        List<String> pairs = TestUtil.firstColumn(db, """
+                MATCH (p1:Person)-[k:KNOWS]->(p2:Person)
+                WHERE p1.lastname IS NULL
+                  AND p2.lastname IS NULL
+                  AND k.prop1 IS NULL
+                RETURN p1.firstname + ' ' + p1.age + ' <' + k.prop2 + '> ' + p2.firstname + ' ' + p2.age AS pair ORDER BY pair"""
         );
-        assertThat(pairs, Matchers.contains("Jane 26 <6> John 25", "John 25 <3> Jane 26"));
+        assertTrue(pairs.containsAll(List.of("Jane 26 <6> John 25", "John 25 <3> Jane 26")));
     }
 
     @Test

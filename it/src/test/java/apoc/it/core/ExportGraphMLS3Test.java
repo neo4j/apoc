@@ -27,7 +27,6 @@ import org.junit.rules.TestName;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
-import java.io.FileNotFoundException;
 import java.util.Map;
 
 import static apoc.export.graphml.ExportGraphMLTestUtil.EXPECTED_FALSE;
@@ -51,12 +50,12 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         setUpGraphMl(db, testName);
     }
 
     @Test
-    public void testExportAllGraphML() throws Exception {
+    public void testExportAllGraphML() {
         String fileName = "all.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.graphml.all($s3, null)",
@@ -66,7 +65,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphML() throws Exception {
+    public void testExportGraphGraphML() {
         String fileName = "graph.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -79,7 +78,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphMLTypes() throws Exception {
+    public void testExportGraphGraphMLTypes() {
         String fileName = "graph.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -92,7 +91,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephi() throws Exception {
+    public void testExportGraphGraphMLQueryGephi() {
         String fileName = "query.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$s3,{useTypes:true, format: 'gephi'}) ",
@@ -113,7 +112,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaption() throws Exception {
+    public void testExportGraphGraphMLQueryGephiWithArrayCaption() {
         String fileName = "query.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$s3,{useTypes:true, format: 'gephi', caption: ['bar','name','foo']}) ",
@@ -134,7 +133,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() throws Exception {
+    public void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() {
         String fileName = "query.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "call apoc.export.graphml.query('MATCH p=()-[r]->() RETURN p limit 1000',$s3,{useTypes:true, format: 'gephi', caption: ['c','d','e']}) ",
@@ -155,7 +154,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphmlQueryWithStringCaptionCamelCase() throws FileNotFoundException, Exception {
+    public void testExportGraphmlQueryWithStringCaptionCamelCase() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE (f:Foo:Foo2:Foo0 {firstName:'foo'})-[:KNOWS]->(b:Bar {name:'bar',ageNow:42}),(c:Bar {age:12,values:[1,2,3]})");
         String fileName = "query.graphml";

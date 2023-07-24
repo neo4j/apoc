@@ -43,7 +43,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     public static DbmsRule db = new ImpermanentDbmsRule();
     
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         baseBeforeClass();
 
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
@@ -94,7 +94,7 @@ public class ExportCsvS3Test extends S3BaseTest {
             ",,,,,,,,3,4,NEXT_DELIVERY%n");
 
     @Test
-    public void testExportAllCsvS3() throws Exception {
+    public void testExportAllCsvS3() {
         String fileName = "all.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.csv.all($s3,null)",
@@ -104,7 +104,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCsvS3WithQuotes() throws Exception {
+    public void testExportAllCsvS3WithQuotes() {
         String fileName = "all.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.csv.all($s3,{quotes: true})",
@@ -114,7 +114,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCsvS3WithoutQuotes() throws Exception {
+    public void testExportAllCsvS3WithoutQuotes() {
         String fileName = "all1.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.csv.all($s3,{quotes: 'none'})",
@@ -124,7 +124,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCsvS3NeededQuotes() throws Exception {
+    public void testExportAllCsvS3NeededQuotes() {
         String fileName = "all2.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.export.csv.all($s3,{quotes: 'ifNeeded'})",
@@ -134,7 +134,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCsv() throws Exception {
+    public void testExportGraphCsv() {
         String fileName = "graph.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -146,7 +146,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCsvWithoutQuotes() throws Exception {
+    public void testExportGraphCsvWithoutQuotes() {
         String fileName = "graph1.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
@@ -158,7 +158,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCsv() throws Exception {
+    public void testExportQueryCsv() {
         String fileName = "query.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
@@ -174,7 +174,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCsvWithoutQuotes() throws Exception {
+    public void testExportQueryCsvWithoutQuotes() {
         String fileName = "query1.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
@@ -190,7 +190,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesCsv() throws Exception {
+    public void testExportQueryNodesCsv() {
         String fileName = "query_nodes.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u";
@@ -206,7 +206,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesCsvParams() throws Exception {
+    public void testExportQueryNodesCsvParams() {
         String fileName = "query_nodes1.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) WHERE u.age > $age return u";

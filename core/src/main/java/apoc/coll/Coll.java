@@ -231,16 +231,16 @@ public class Coll {
 
         public void setObject(Object o, int idx) {
             switch (idx) {
-                case 0: _1 = o; break;
-                case 1: _2 = o; break;
-                case 2: _3 = o; break;
-                case 3: _4 = o; break;
-                case 4: _5 = o; break;
-                case 5: _6 = o; break;
-                case 6: _7 = o; break;
-                case 7: _8 = o; break;
-                case 8: _9 = o; break;
-                case 9: _10= o; break;
+                case 0 -> _1 = o;
+                case 1 -> _2 = o;
+                case 2 -> _3 = o;
+                case 3 -> _4 = o;
+                case 4 -> _5 = o;
+                case 5 -> _6 = o;
+                case 6 -> _7 = o;
+                case 7 -> _8 = o;
+                case 8 -> _9 = o;
+                case 9 -> _10 = o;
             }
         }
         public void setString(String o, int idx) {
@@ -259,44 +259,44 @@ public class Coll {
         }
         public void setLong(Long o, int idx) {
             switch (idx) {
-                case 0: _1i = o; break;
-                case 1: _2i = o; break;
-                case 2: _3i = o; break;
-                case 3: _4i = o; break;
-                case 4: _5i = o; break;
-                case 5: _6i = o; break;
-                case 6: _7i = o; break;
-                case 7: _8i = o; break;
-                case 8: _9i = o; break;
-                case 9: _10i= o; break;
+                case 0 -> _1i = o;
+                case 1 -> _2i = o;
+                case 2 -> _3i = o;
+                case 3 -> _4i = o;
+                case 4 -> _5i = o;
+                case 5 -> _6i = o;
+                case 6 -> _7i = o;
+                case 7 -> _8i = o;
+                case 8 -> _9i = o;
+                case 9 -> _10i = o;
             }
         }
         public void setBoolean(Boolean o, int idx) {
             switch (idx) {
-                case 0: _1b = o; break;
-                case 1: _2b = o; break;
-                case 2: _3b = o; break;
-                case 3: _4b = o; break;
-                case 4: _5b = o; break;
-                case 5: _6b = o; break;
-                case 6: _7b = o; break;
-                case 7: _8b = o; break;
-                case 8: _9b = o; break;
-                case 9: _10b= o; break;
+                case 0 -> _1b = o;
+                case 1 -> _2b = o;
+                case 2 -> _3b = o;
+                case 3 -> _4b = o;
+                case 4 -> _5b = o;
+                case 5 -> _6b = o;
+                case 6 -> _7b = o;
+                case 7 -> _8b = o;
+                case 8 -> _9b = o;
+                case 9 -> _10b = o;
             }
         }
         public void setDouble(Double o, int idx) {
             switch (idx) {
-                case 0: _1f = o; break;
-                case 1: _2f = o; break;
-                case 2: _3f = o; break;
-                case 3: _4f = o; break;
-                case 4: _5f = o; break;
-                case 5: _6f = o; break;
-                case 6: _7f = o; break;
-                case 7: _8f = o; break;
-                case 8: _9f = o; break;
-                case 9: _10f= o; break;
+                case 0 -> _1f = o;
+                case 1 -> _2f = o;
+                case 2 -> _3f = o;
+                case 3 -> _4f = o;
+                case 4 -> _5f = o;
+                case 5 -> _6f = o;
+                case 6 -> _7f = o;
+                case 7 -> _8f = o;
+                case 8 -> _9f = o;
+                case 9 -> _10f = o;
             }
         }
         public void setNode(Node o, int idx) {
@@ -329,44 +329,44 @@ public class Coll {
         }
         public void setPath(Path o, int idx) {
             switch (idx) {
-                case 0: _1p = o; break;
-                case 1: _2p = o; break;
-                case 2: _3p = o; break;
-                case 3: _4p = o; break;
-                case 4: _5p = o; break;
-                case 5: _6p = o; break;
-                case 6: _7p = o; break;
-                case 7: _8p = o; break;
-                case 8: _9p = o; break;
-                case 9: _10p= o; break;
+                case 0 -> _1p = o;
+                case 1 -> _2p = o;
+                case 2 -> _3p = o;
+                case 3 -> _4p = o;
+                case 4 -> _5p = o;
+                case 5 -> _6p = o;
+                case 6 -> _7p = o;
+                case 7 -> _8p = o;
+                case 8 -> _9p = o;
+                case 9 -> _10p = o;
             }
         }
         public void setMap(Map o, int idx) {
             switch (idx) {
-                case 0: _1m = o; break;
-                case 1: _2m = o; break;
-                case 2: _3m = o; break;
-                case 3: _4m = o; break;
-                case 4: _5m = o; break;
-                case 5: _6m = o; break;
-                case 6: _7m = o; break;
-                case 7: _8m = o; break;
-                case 8: _9m = o; break;
-                case 9: _10m= o; break;
+                case 0 -> _1m = o;
+                case 1 -> _2m = o;
+                case 2 -> _3m = o;
+                case 3 -> _4m = o;
+                case 4 -> _5m = o;
+                case 5 -> _6m = o;
+                case 6 -> _7m = o;
+                case 7 -> _8m = o;
+                case 8 -> _9m = o;
+                case 9 -> _10m = o;
             }
         }
         public void setList(List o, int idx) {
             switch (idx) {
-                case 0: _1l = o; break;
-                case 1: _2l = o; break;
-                case 2: _3l = o; break;
-                case 3: _4l = o; break;
-                case 4: _5l = o; break;
-                case 5: _6l = o; break;
-                case 6: _7l = o; break;
-                case 7: _8l = o; break;
-                case 8: _9l = o; break;
-                case 9: _10l= o; break;
+                case 0 -> _1l = o;
+                case 1 -> _2l = o;
+                case 2 -> _3l = o;
+                case 3 -> _4l = o;
+                case 4 -> _5l = o;
+                case 5 -> _6l = o;
+                case 6 -> _7l = o;
+                case 7 -> _8l = o;
+                case 8 -> _9l = o;
+                case 9 -> _10l = o;
             }
         }
     }
@@ -419,8 +419,6 @@ public class Coll {
     public boolean contains(@Name("coll") List<Object> coll, @Name("value") Object value) {
         if (coll == null || coll.isEmpty()) return false;
         return  new HashSet<>(coll).contains(value);
-//        int batchSize = 250;
-//        boolean result = (coll.size() < batchSize) ? coll.contains(value) : partitionList(coll, batchSize).parallel().anyMatch(list -> list.contains(value));
     }
 
     @UserFunction("apoc.coll.set")
@@ -495,8 +493,6 @@ public class Coll {
         int batchSize = 5000-1; // Collections.binarySearchThreshold
         List list = (coll instanceof RandomAccess || coll.size() < batchSize) ? coll : new ArrayList(coll);
         return Collections.binarySearch(list, value) >= 0;
-//        Predicate<List> contains = l -> Collections.binarySearch(l, value) >= 0;
-//        boolean result = (list.size() < batchSize) ? contains.test(list) : partitionList(list, batchSize).parallel().anyMatch(contains);
     }
 
     @UserFunction("apoc.coll.containsAllSorted")

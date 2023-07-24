@@ -24,14 +24,11 @@ import apoc.util.Util;
 import apoc.util.Utils;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -64,7 +61,7 @@ import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -77,9 +74,6 @@ public class CypherTest {
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.allow_file_urls, true)
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, new File("src/test/resources").toPath().toAbsolutePath());
-
-    @Rule
-    public ExpectedException thrown= ExpectedException.none();
 
     @BeforeClass
     public static void setUp() {
@@ -125,23 +119,23 @@ public class CypherTest {
 
     @Test
     public void testRun() {
-        testCall(db, "CALL apoc.cypher.run('RETURN $a + 7 as b',{a:3})",
+        testCall(db, "CALL apoc.cypher.run('RETURN $a + 7 AS b',{a:3})",
                 r -> assertEquals(10L, ((Map) r.get("value")).get("b")));
     }
     @Test
     public void testRunNullParams() {
-        testCall(db, "CALL apoc.cypher.run('RETURN 42 as b',null)",
+        testCall(db, "CALL apoc.cypher.run('RETURN 42 AS b',null)",
                 r -> assertEquals(42L, ((Map) r.get("value")).get("b")));
     }
     @Test
     public void testRunNoParams() {
-        testCall(db, "CALL apoc.cypher.run('RETURN 42 as b',{})",
+        testCall(db, "CALL apoc.cypher.run('RETURN 42 AS b',{})",
                 r -> assertEquals(42L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testRunVariable() {
-        testCall(db, "CALL apoc.cypher.run('RETURN a + 7 as b',{a:3})",
+        testCall(db, "CALL apoc.cypher.run('RETURN a + 7 AS b',{a:3})",
                 r -> assertEquals(10L, ((Map) r.get("value")).get("b")));
     }
 
@@ -153,7 +147,7 @@ public class CypherTest {
 
     @Test
     public void testRunFirstColumnMany() {
-        testCall(db, "RETURN apoc.cypher.runFirstColumnMany('UNWIND range(1,a) as id RETURN id', {a: 3}) AS s",
+        testCall(db, "RETURN apoc.cypher.runFirstColumnMany('UNWIND range(1,a) AS id RETURN id', {a: 3}) AS s",
                 r -> assertEquals(Arrays.asList(1L,2L,3L), (r.get("s"))));
     }
 
@@ -170,7 +164,7 @@ public class CypherTest {
     @Test
     public void testSingular() {
         int size = 10_000;
-        testResult(db, "CALL apoc.cypher.run('UNWIND a as row UNWIND range(0,9) as b RETURN b',{a:range(1,$size)})", map("size", size),
+        testResult(db, "CALL apoc.cypher.run('UNWIND a AS row UNWIND range(0,9) AS b RETURN b',{ a:range(1, $size) })", map("size", size),
                 r -> assertEquals( size * 10,Iterators.count(r) ));
     }
 
@@ -178,17 +172,17 @@ public class CypherTest {
     	return Util.toLong(value);
     }
 
-    @Test(timeout=9000)
+    @Test(timeout = 9000)
     public void testWithTimeout() {
         assertFalse(db.executeTransactionally(
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10000)', null, $timeout)",
                 singletonMap("timeout", 100),
-                result -> result.hasNext()));
+                Result::hasNext));
     }
 
     @Test
     public void testRunTimeboxedWithTermination() {
-        final String query = "CALL apoc.cypher.runTimeboxed('unwind range (0, 10) as id CALL apoc.util.sleep(2000) return 0', null, 20000)";
+        final String query = "CALL apoc.cypher.runTimeboxed('UNWIND range(0, 10) AS id CALL apoc.util.sleep(2000) RETURN 0', null, 20000)";
         checkTerminationGuard(db, query);
     }
 
@@ -241,7 +235,7 @@ public class CypherTest {
                     assertEquals(-1L, row.get("row"));
                     assertEquals(1L, toLong(result.get("relationshipsCreated")));
                     assertEquals(1L, toLong(result.get("propertiesSet")));
-                    assertEquals(false, r.hasNext());
+                    assertFalse(r.hasNext());
                 });
         final long count = (long) db.executeTransactionally("MATCH p = (n:Node{name : $name})-[r:X{name: $name2}]->(n) RETURN count(p) AS count",
                 map, Result::next).get("count");
@@ -259,113 +253,120 @@ public class CypherTest {
                     "', $params)",
                 map("params", map),
                 Result::resultAsString);
-        final long count = (long) db.executeTransactionally("MATCH p = (n:Node{name : $name})-[r:X{name: $name2}]->(n) RETURN count(p) AS count",
-                map, Result::next).get("count");
+                final long count = (long) db.executeTransactionally(
+                    "MATCH p = (n:Node {name : $name})-[r:X {name: $name2}]->(n) RETURN count(p) AS count",
+                        map,
+                        Result::next
+                ).get("count");
         assertEquals(0, count);
     }
 
     @Test
     public void shouldTimeboxedReturnAllResultsSoFar() {
         db.executeTransactionally(Util.readResourceFile("movies.cypher"));
-//        System.out.println("movies imported");
 
         long start = System.currentTimeMillis();
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute("CALL apoc.cypher.runTimeboxed('match(n) -[*]-(m) return id(n),id(m)', {}, 1000) YIELD value RETURN value");
-            assertTrue(Iterators.count(result)>0);
+            Result result = tx.execute("CALL apoc.cypher.runTimeboxed('MATCH (n)-[]-(m) RETURN elementId(n), elementId(m)', {}, 1000) YIELD value RETURN value");
+            assertTrue(Iterators.count(result) > 0);
             tx.commit();
         }
-        long duration= System.currentTimeMillis() - start;
-        assertThat("test runs in less than 1500 millis", duration, Matchers.lessThan(1500l));
+        long duration = System.currentTimeMillis() - start;
+        // Assert that the test runs in less than 1500 milliseconds
+        assertTrue(duration < 1500L);
     }
 
     @Test(timeout=9000)
     public void shouldTooLongTimeboxBeNotHarmful() {
-        assertFalse(db.executeTransactionally("CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10)', null, $timeout)", singletonMap("timeout", 10000), result -> result.hasNext()));
+        assertFalse(
+                db.executeTransactionally(
+                        "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10)', null, $timeout)",
+                        singletonMap("timeout", 10000), Result::hasNext)
+        );
     }
 
     @Test
     public void testSimpleWhenIfCondition() {
-        testCall(db, "CALL apoc.when(true, 'RETURN 7 as b')",
+        testCall(db, "CALL apoc.when(true, 'RETURN 7 AS b')",
                 r -> assertEquals(7L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testSimpleWhenElseCondition() {
-        testCall(db, "CALL apoc.when(false, 'RETURN 7 as b') YIELD value RETURN value",
-                r -> assertEquals(null, ((Map) r.get("value")).get("b")));
+        testCall(db, "CALL apoc.when(false, 'RETURN 7 AS b') YIELD value RETURN value",
+                r -> assertNull(((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testWhenIfCondition() {
-        testCall(db, "CALL apoc.when(true, 'RETURN $a + 7 as b', 'RETURN $a as b',{a:3})",
+        testCall(db, "CALL apoc.when(true, 'RETURN $a + 7 AS b', 'RETURN $a AS b',{a:3})",
                 r -> assertEquals(10L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testWhenElseCondition() {
-        testCall(db, "CALL apoc.when(false, 'RETURN $a + 7 as b', 'RETURN $a as b',{a:3})",
+        testCall(db, "CALL apoc.when(false, 'RETURN $a + 7 AS b', 'RETURN $a AS b',{a:3})",
                 r -> assertEquals(3L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testDoWhenIfCondition() {
-        testCall(db, "CALL apoc.do.when(true, 'CREATE (a:Node{name:\"A\"}) RETURN a.name as aName', 'CREATE (b:Node{name:\"B\"}) RETURN b.name as bName',{})",
+        testCall(db, "CALL apoc.do.when(true, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName',{})",
                 r -> {
                     assertEquals("A", ((Map) r.get("value")).get("aName"));
-                    assertEquals(null, ((Map) r.get("value")).get("bName"));
+                    assertNull(((Map) r.get("value")).get("bName"));
                 });
     }
 
     @Test
     public void testDoWhenElseCondition() {
-        testCall(db, "CALL apoc.do.when(false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name as aName', 'CREATE (b:Node{name:\"B\"}) RETURN b.name as bName',{})",
+        testCall(db, "CALL apoc.do.when(false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName',{})",
                 r -> {
                     assertEquals("B", ((Map) r.get("value")).get("bName"));
-                    assertEquals(null, ((Map) r.get("value")).get("aName"));
+                    assertNull(((Map) r.get("value")).get("aName"));
                 });
     }
 
     @Test
     public void testCase() {
-        testCall(db, "CALL apoc.case([false, 'RETURN $a + 7 as b', false, 'RETURN $a as b', true, 'RETURN $a + 4 as b', false, 'RETURN $a + 1 as b'], 'RETURN $a + 10 as b', {a:3})",
+        testCall(db, "CALL apoc.case([false, 'RETURN $a + 7 AS b', false, 'RETURN $a AS b', true, 'RETURN $a + 4 AS b', false, 'RETURN $a + 1 AS b'], 'RETURN $a + 10 AS b', {a:3})",
                 r -> assertEquals(7L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testCaseElseCondition() {
-        testCall(db, "CALL apoc.case([false, 'RETURN $a + 7 as b', false, 'RETURN $a as b', false, 'RETURN $a + 4 as b'], 'RETURN $a + 10 as b', {a:3})",
+        testCall(db, "CALL apoc.case([false, 'RETURN $a + 7 AS b', false, 'RETURN $a AS b', false, 'RETURN $a + 4 AS b'], 'RETURN $a + 10 AS b', {a:3})",
                 r -> assertEquals(13L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testSimpleCase() {
-        testCall(db, "CALL apoc.case([false, 'RETURN 3 + 7 as b', false, 'RETURN 3 as b', true, 'RETURN 3 + 4 as b'])",
+        testCall(db, "CALL apoc.case([false, 'RETURN 3 + 7 AS b', false, 'RETURN 3 AS b', true, 'RETURN 3 + 4 AS b'])",
                 r -> assertEquals(7L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testSimpleCaseElseCondition() {
-        testCall(db, "CALL apoc.case([false, 'RETURN 3 + 7 as b', false, 'RETURN 3 as b', false, 'RETURN 3 + 4 as b'], 'RETURN 3 + 10 as b')",
+        testCall(db, "CALL apoc.case([false, 'RETURN 3 + 7 AS b', false, 'RETURN 3 AS b', false, 'RETURN 3 + 4 AS b'], 'RETURN 3 + 10 AS b')",
                 r -> assertEquals(13L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
     public void testCaseDo() {
-        testCall(db, "CALL apoc.do.case([false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name as aName', true, 'CREATE (b:Node{name:\"B\"}) RETURN b.name as bName'], 'CREATE (c:Node{name:\"C\"}) RETURN c.name as cName',{})",
+        testCall(db, "CALL apoc.do.case([false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', true, 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName'], 'CREATE (c:Node{name:\"C\"}) RETURN c.name AS cName',{})",
                 r -> {
-                    assertEquals(null, ((Map) r.get("value")).get("aName"));
+                    assertNull(((Map) r.get("value")).get("aName"));
                     assertEquals("B", ((Map) r.get("value")).get("bName"));
-                    assertEquals(null, ((Map) r.get("value")).get("cName"));
+                    assertNull(((Map) r.get("value")).get("cName"));
                 });
     }
 
     @Test
     public void testCaseDoElseCondition() {
-        testCall(db, "CALL apoc.do.case([false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name as aName', false, 'CREATE (b:Node{name:\"B\"}) RETURN b.name as bName'], 'CREATE (c:Node{name:\"C\"}) RETURN c.name as cName',{})",
+        testCall(db, "CALL apoc.do.case([false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', false, 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName'], 'CREATE (c:Node{name:\"C\"}) RETURN c.name AS cName',{})",
                 r -> {
-                    assertEquals(null, ((Map) r.get("value")).get("aName"));
-                    assertEquals(null, ((Map) r.get("value")).get("bName"));
+                    assertNull(((Map) r.get("value")).get("aName"));
+                    assertNull(((Map) r.get("value")).get("bName"));
                     assertEquals("C", ((Map) r.get("value")).get("cName"));
                 });
     }
@@ -373,10 +374,17 @@ public class CypherTest {
     private void runWriteAndDoItCommons(String functionName) {
         testCallEmpty(db, String.format("CALL apoc.cypher.%s('CREATE (n:TestOne {a: $b})',{b: 32})", functionName), emptyMap());
 
-        testCall(db, String.format("CALL apoc.cypher.%s('Match (n:TestOne) return n',{})", functionName),
-                r -> assertEquals("TestOne", Iterables.single(((Node)((Map) r.get("value")).get("n")).getLabels()).name()));
+        testCall(
+                db,
+                String.format("CALL apoc.cypher.%s('Match (n:TestOne) return n',{})", functionName),
+                r -> assertEquals("TestOne", Iterables.single(((Node)((Map) r.get("value")).get("n")).getLabels()).name())
+        );
 
-        testFail(db, String.format("CALL apoc.cypher.%s('CREATE INDEX test FOR (w:TestOne) ON (w.foo)',{})", functionName), QueryExecutionException.class);
+        testFail(
+                db,
+                String.format("CALL apoc.cypher.%s('CREATE INDEX test FOR (w:TestOne) ON (w.foo)',{})", functionName),
+                QueryExecutionException.class
+        );
     }
 
 }

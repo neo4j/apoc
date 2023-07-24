@@ -30,6 +30,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Objects;
 
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
@@ -40,34 +41,34 @@ import static apoc.util.s3.S3TestUtil.readS3FileToString;
 import static org.junit.Assert.*;
 
 public class ExportJsonS3Test extends S3BaseTest {
-    private static File directoryExpected = new File(ExportJsonS3Test.class.getClassLoader().getResource("exportJSON").getFile());
+    private static final File directoryExpected = new File(
+            Objects.requireNonNull(ExportJsonS3Test.class.getClassLoader().getResource("exportJSON")).getFile()
+    );
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportJson.class, Graphs.class);
         db.executeTransactionally("CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");
     }
 
     @Test
-    public void testExportAllJson() throws Exception {
+    public void testExportAllJson() {
         String filename = "all.json";
         String s3Url = s3Container.getUrl(filename);
 
         TestUtil.testCall(db, "CALL apoc.export.json.all($s3,null)",
                 map("s3", s3Url),
-                (r) -> {
-                    assertResults(s3Url, r, "database");
-                }
+                (r) -> assertResults(s3Url, r, "database")
         );
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportPointMapDatetimeJson() throws Exception {
+    public void testExportPointMapDatetimeJson() {
         String filename = "mapPointDatetime.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "return {data: 1, value: {age: 12, name:'Mike', data: {number: [1,3,5], born: date('2018-10-29'), place: point({latitude: 13.1, longitude: 33.46789})}}} as map, " +
@@ -85,11 +86,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportListNode() throws Exception {
+    public void testExportListNode() {
         String filename = "listNode.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) RETURN COLLECT(u) as list";
@@ -101,11 +102,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportListRel() throws Exception {
+    public void testExportListRel() {
         String filename = "listRel.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) as list";
@@ -117,11 +118,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportListPath() throws Exception {
+    public void testExportListPath() {
         String filename = "listPath.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) as list";
@@ -133,11 +134,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportMap() throws Exception {
+    public void testExportMap() {
         String filename = "MapNode.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User)-[r:KNOWS]->(d:User) RETURN u {.*}, d {.*}, r {.*}";
@@ -149,11 +150,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportMapPath() throws Exception {
+    public void testExportMapPath() {
         db.executeTransactionally("CREATE (f:User {name:'Mike',age:78,male:true})-[:KNOWS {since: 1850}]->(b:User {name:'John',age:18}),(c:User {age:39})");
         String filename = "MapPath.json";
         String s3Url = s3Container.getUrl(filename);
@@ -166,11 +167,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportMapRel() throws Exception {
+    public void testExportMapRel() {
         String filename = "MapRel.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel {.*}";
@@ -182,11 +183,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportMapComplex() throws Exception {
+    public void testExportMapComplex() {
         String filename = "MapComplex.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "RETURN {value:1, data:[10,'car',null, point({ longitude: 56.7, latitude: 12.78 }), point({ longitude: 56.7, latitude: 12.78, height: 8 }), point({ x: 2.3, y: 4.5 }), point({ x: 2.3, y: 4.5, z: 2 }),date('2018-10-10'), datetime('2018-10-18T14:21:40.004Z'), localdatetime({ year:1984, week:10, dayOfWeek:3, hour:12, minute:31, second:14, millisecond: 645 }), {x:1, y:[1,2,3,{age:10}]}]} as key";
@@ -198,11 +199,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportGraphJson() throws Exception {
+    public void testExportGraphJson() {
         String filename = "graph.json";
         String s3Url = s3Container.getUrl(filename);
 
@@ -212,11 +213,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                         "RETURN *",
                 map("s3", s3Url),
                 (r) -> assertResults(s3Url, r, "graph"));
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportQueryJson() throws Exception {
+    public void testExportQueryJson() {
         String filename = "query.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
@@ -228,11 +229,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportQueryNodesJson() throws Exception {
+    public void testExportQueryNodesJson() {
         String filename = "query_nodes.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) return u";
@@ -244,11 +245,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportQueryTwoNodesJson() throws Exception {
+    public void testExportQueryTwoNodesJson() {
         String filename = "query_two_nodes.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) return u, l";
@@ -260,11 +261,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportQueryNodesJsonParams() throws Exception {
+    public void testExportQueryNodesJsonParams() {
         String filename = "query_nodes_param.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) WHERE u.age > $age return u";
@@ -276,11 +277,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportQueryNodesJsonCount() throws Exception {
+    public void testExportQueryNodesJsonCount() {
         String filename = "query_nodes_count.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (n) return count(n)";
@@ -292,11 +293,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportData() throws Exception {
+    public void testExportData() {
         String filename = "data.json";
         String s3Url = s3Container.getUrl(filename);
 
@@ -311,11 +312,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportDataPath() throws Exception {
+    public void testExportDataPath() {
         String filename = "query_nodes_path.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel]->(u2:User) return u, rel, u2, p, u.name";
@@ -326,11 +327,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportAllWithWriteNodePropertiesJson() throws Exception {
+    public void testExportAllWithWriteNodePropertiesJson() {
         String filename = "with_node_properties.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
@@ -342,11 +343,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportAllWithDefaultWriteNodePropertiesJson() throws Exception {
+    public void testExportAllWithDefaultWriteNodePropertiesJson() {
         String filename = "with_node_properties.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
@@ -359,11 +360,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportAllWithoutWriteNodePropertiesJson() throws Exception {
+    public void testExportAllWithoutWriteNodePropertiesJson() {
         String filename = "without_node_properties.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
@@ -375,11 +376,11 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
 
     @Test
-    public void testExportQueryOrderJson() throws Exception {
+    public void testExportQueryOrderJson() {
         db.executeTransactionally("CREATE (f:User12:User1:User0:User {name:'Alan'})");
         String filename = "query_node_labels.json";
         String s3Url = s3Container.getUrl(filename);
@@ -392,13 +393,13 @@ public class ExportJsonS3Test extends S3BaseTest {
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
-        assertStreamStringEquals(directoryExpected, filename, s3Url);
+        assertStreamStringEquals(filename, s3Url);
     }
     
-    private void assertStreamStringEquals(File directoryExpected, String filename, String s3Url) {
+    private void assertStreamStringEquals(String filename, String s3Url) {
         assertS3KeyEventually(() -> {
             final String actual = readS3FileToString(s3Url);
-            assertStreamEquals(directoryExpected, filename, actual);
+            assertStreamEquals(ExportJsonS3Test.directoryExpected, filename, actual);
         });
     }
 

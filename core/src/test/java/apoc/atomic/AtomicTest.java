@@ -21,7 +21,6 @@ package apoc.atomic;
 import apoc.util.TestUtil;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -33,6 +32,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,6 +63,11 @@ public class AtomicTest {
     public void teardown() {
         db.shutdown();
     }
+
+	private void assertContains(long[] longArray, List<Long> containsAll) {
+		List<Long> longList = Arrays.asList(ArrayUtils.toObject(longArray));
+		assertTrue(longList.containsAll(containsAll));
+	}
 
 	@Test
 	public void testAddAndSubInteger(){
@@ -164,7 +169,7 @@ public class AtomicTest {
 		testCall(db, "MATCH (n:Person {name:'Tom'})CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",map("property","age","position",1,"times",5), (r) -> {});
 
 		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-        assertThat(ArrayUtils.toObject(ages), Matchers.arrayContaining(40l, 60l));
+		assertContains(ages, List.of(40L, 60L));
 	}
 
     @Test
@@ -172,7 +177,7 @@ public class AtomicTest {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
         testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",map("property","age","position",0,"times",5), (r) -> {});
 		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-		assertThat(ArrayUtils.toObject(ages), Matchers.arrayContaining(50L, 60L));
+		assertContains(ages, List.of(50L, 60L));
     }
 
     @Test
@@ -180,7 +185,7 @@ public class AtomicTest {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
         testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",map("property","age","position",2,"times",5), (r) -> {});
 		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-		assertThat(ArrayUtils.toObject(ages), Matchers.arrayContaining(40L, 50L));
+		assertContains(ages, List.of(40L, 50L));
     }
 
     @Test
@@ -188,7 +193,7 @@ public class AtomicTest {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40]})");
         testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.remove(n,$property,$position,$times) YIELD container RETURN count(*)",map("property","age","position",0,"times",5), (r) -> {});
 		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-		assertTrue(ages.length == 0);
+		assertEquals(0, ages.length);
     }
 
     @Test
@@ -223,7 +228,7 @@ public class AtomicTest {
 		db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40})");
 		testCall(db, "MATCH (n:Person {name:'Tom'}) CALL apoc.atomic.insert(n,$property,$position,$value,$times) YIELD container RETURN count(*)",map("property","age","position",2,"value",55L,"times",5), (r) -> {});
 		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-		assertThat(ArrayUtils.toObject(ages), Matchers.arrayContaining(40L, 55L));
+		assertContains(ages, List.of(40L, 55L));
 	}
 
 	@Test
@@ -232,7 +237,7 @@ public class AtomicTest {
 		testCall(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) CALL apoc.atomic.insert(r,$property,$position,$value,$times) YIELD container RETURN count(*)", map("property", "since", "position", 2, "value", 55L, "times", 5), (r) -> {
 		});
 		long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) RETURN r.since as since;");
-		assertThat(ArrayUtils.toObject(ages), Matchers.arrayContaining(40L, 50L, 55L, 60L));
+		assertContains(ages, List.of(40L, 50L, 55L, 60L));
 	}
 
 	@Test

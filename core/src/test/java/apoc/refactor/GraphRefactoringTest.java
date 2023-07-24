@@ -556,9 +556,7 @@ public class GraphRefactoringTest {
 
         Relationship rel = db.executeTransactionally("CREATE (n:Start)-[r:REL_TO_MERGE]->(:End) RETURN r", emptyMap(), 
                 r -> Iterators.single(r.columnAs("r")));
-        testCall(db, "MATCH (n:Start)-[r:REL_TO_MERGE]->(:End) CALL apoc.refactor.mergeRelationships([r,r]) yield rel return rel", r -> {
-            assertEquals(rel, r.get("rel"));
-        });
+        testCall(db, "MATCH (n:Start)-[r:REL_TO_MERGE]->(:End) CALL apoc.refactor.mergeRelationships([r,r]) yield rel return rel", r -> assertEquals(rel, r.get("rel")));
         testCallCount(db, "MATCH (n:Start)-[r:REL_TO_MERGE]->(:End) RETURN r", 1);
     }
     
@@ -573,8 +571,8 @@ public class GraphRefactoringTest {
                     assertEquals(1L, rel.getProperty("a"));
                     assertEquals(2L, rel.getProperty("b"));
                     assertEquals(3L, rel.getProperty("c"));
-                    assertNotNull(rel.getEndNode().hasLabel(Label.label("Foo")));
-                    assertNotNull(rel.getStartNode().hasLabel(Label.label("Foo")));
+                    assertTrue(rel.getEndNode().hasLabel(Label.label("Foo")));
+                    assertTrue(rel.getStartNode().hasLabel(Label.label("Foo")));
                 });
     }
 
@@ -647,14 +645,16 @@ public class GraphRefactoringTest {
 
     @Test
     public void testIssue3000() {
-        db.executeTransactionally("CREATE (a:Person {name: 'Mark', city: 'London'})\n" +
-                "CREATE (b:Person {name: 'Dan', city: 'Hull'})\n" +
-                "CREATE (a)-[r:FRIENDS_WITH]->(b)");
+        db.executeTransactionally("""
+                CREATE (a:Person {name: 'Mark', city: 'London'})
+                CREATE (b:Person {name: 'Dan', city: 'Hull'})
+                CREATE (a)-[r:FRIENDS_WITH]->(b)""");
         
-        testResult(db, "MATCH (p:Person) WITH collect(p) as people \n" +
-                        "CALL apoc.refactor.cloneNodes(people, true) \n" +
-                        "YIELD output \n" +
-                        "RETURN output ORDER BY output.name",
+        testResult(db, """
+                        MATCH (p:Person) WITH collect(p) as people
+                        CALL apoc.refactor.cloneNodes(people, true)
+                        YIELD output
+                        RETURN output ORDER BY output.name""",
                 (row) -> {
                     final ResourceIterator<Node> nodes = row.columnAs("output");
                     final Node first = nodes.next();
@@ -864,8 +864,8 @@ public class GraphRefactoringTest {
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
                     assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
-                    assertEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
-                    assertEquals(Arrays.asList(1995L, 2010L).toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
+                    assertArrayEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
+                    assertArrayEquals(Arrays.asList(1995L, 2010L).toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
                 });
     }
 
@@ -896,8 +896,8 @@ public class GraphRefactoringTest {
                     assertEquals("USA", node.getProperty("name"));
                     assertEquals(Long.valueOf(1),totRel);
                     assertTrue(rel.isType(RelationshipType.withName("TRAVELS_TO")));
-                    assertEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
-                    assertEquals(Arrays.asList("1995", "2010", "2015").toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
+                    assertArrayEquals(Arrays.asList("work", "fun").toArray(), new ArrayBackedList(rel.getProperty("reason")).toArray());
+                    assertArrayEquals(Arrays.asList("1995", "2010", "2015").toArray(), new ArrayBackedList(rel.getProperty("year")).toArray());
                 });
     }
 
@@ -911,7 +911,7 @@ public class GraphRefactoringTest {
         testCall(db, "MATCH (a1:ALabel {name:'a1'}), (a2:ALabel {name:'a2'}), (a3:ALabel {name:'a3'}), (a4:ALabel {name:'a4'}) " +
                         "     WITH head(collect([a1,a2,a3,a4])) as nodes CALL apoc.refactor.mergeNodes(nodes,{properties:'combine',mergeRels:true}) yield node return node",
                 row -> {
-                    assertTrue(row.get("node") != null);
+                    assertNotNull(row.get("node"));
                     assertTrue(row.get("node") instanceof Node);
                     Node resultingNode = (Node) row.get("node");
                     assertEquals(1, resultingNode.getDegree(Direction.INCOMING));
@@ -938,7 +938,7 @@ public class GraphRefactoringTest {
         testCall(db, "MATCH (a1:ALabel{name:'a1'}), (a2:ALabel {name:'a2'})" +
                         "     WITH [a1,a2] as nodes CALL apoc.refactor.mergeNodes(nodes,{properties:'overwrite',mergeRels:true}) yield node MATCH (n)-[r:HAS_REL]->(c:BLabel{p1:'a3'}) MATCH (n1)-[r1:HAS_REL]->(c1:BLabel{p1:'a4'}) return node, n, r ,c,n1,r1,c1 ",
                 row -> {
-                    assertTrue(row.get("node") != null);
+                    assertNotNull(row.get("node"));
                     assertTrue(row.get("node") instanceof Node);
                     Node resultingNode = (Node) row.get("node");
                     Node c = (Node) row.get("c");
@@ -948,9 +948,9 @@ public class GraphRefactoringTest {
                     assertEquals(0, resultingNode.getDegree(Direction.INCOMING));
                     assertEquals(4,resultingNode.getDegree(Direction.OUTGOING));
                     assertEquals(1,c.getDegree(Direction.INCOMING));
-                    assertEquals(true, r.isType(RelationshipType.withName("HAS_REL")));
+                    assertTrue(r.isType(RelationshipType.withName("HAS_REL")));
                     assertEquals("r1", r.getProperty("p"));
-                    assertEquals(true, r1.isType(RelationshipType.withName("HAS_REL")));
+                    assertTrue(r1.isType(RelationshipType.withName("HAS_REL")));
                     assertEquals("r1", r1.getProperty("p"));
                 }
         );
@@ -974,7 +974,7 @@ public class GraphRefactoringTest {
         testCall(db, "MATCH (a1:ALabel{name:'a1'}), (a2:ALabel {name:'a2'})" +
                         "     WITH [a1,a2] as nodes CALL apoc.refactor.mergeNodes(nodes,{mergeRels:true}) yield node MATCH (n)-[r:HAS_REL]->(c:BLabel{p1:'a3'}) MATCH (n1)-[r1:HAS_REL]->(c1:BLabel{p1:'a4'}) return node, n, r ,c,n1,r1,c1 ",
                 row -> {
-                    assertTrue(row.get("node") != null);
+                    assertNotNull(row.get("node"));
                     assertTrue(row.get("node") instanceof Node);
                     Node resultingNode = (Node) row.get("node");
                     Node c = (Node) row.get("c");
@@ -983,16 +983,16 @@ public class GraphRefactoringTest {
                     assertEquals(0, resultingNode.getDegree(Direction.INCOMING));
                     assertEquals(4,resultingNode.getDegree(Direction.OUTGOING));
                     assertEquals(1,c.getDegree(Direction.INCOMING));
-                    assertEquals(true, r.isType(RelationshipType.withName("HAS_REL")));
+                    assertTrue(r.isType(RelationshipType.withName("HAS_REL")));
                     assertEquals(Arrays.asList( "r2" , "r1"), Arrays.asList((String[])r.getProperty("p")));
-                    assertEquals(true, r1.isType(RelationshipType.withName("HAS_REL")));
+                    assertTrue(r1.isType(RelationshipType.withName("HAS_REL")));
                     assertEquals(Arrays.asList( "r2" , "r1"), Arrays.asList((String[])r1.getProperty("p")));
                 }
         );
     }
 
     @Test
-    public void testMergeRelsOverridePropertiesEagerAggregation() throws Exception {
+    public void testMergeRelsOverridePropertiesEagerAggregation() {
         String id = db.executeTransactionally("""
                         Create (d:Person {name:'Daniele'})
                         Create (p:Country {name:'USA'})
@@ -1171,15 +1171,16 @@ public class GraphRefactoringTest {
     @Test
     public void shouldAlwaysOverrideNodePropsIfNotSetAndCombineRelPropsIfPropertyIsNull() {
         // test case from https://trello.com/c/7yO7mniS/924-s2cast-softwareapocrefactormergenodes-is-not-producing-desired-output
-        final String query = "CREATE (n1:Test:Obj {Name:1})\n" +
-                "CREATE (n2:Test:Obj {Name:2})\n" +
-                "CREATE (t:Test:Tran {Name:'t'})\n" +
-                "MERGE (t)-[:Contains {isReduced:true}]->(n1)\n" +
-                "MERGE (t)-[:Contains {isReduced:false, onlyForn2:true}]->(n2)\n" +
-                "WITH collect(n1) + collect(n2) AS nodes\n" +
-                "CALL apoc.refactor.mergeNodes(nodes, $config)\n" +
-                "YIELD node WITH node\n" +
-                "MATCH (node)-[r]-(t:Test:Tran) RETURN node, collect(r) AS rels";
+        final String query = """
+                CREATE (n1:Test:Obj {Name:1})
+                CREATE (n2:Test:Obj {Name:2})
+                CREATE (t:Test:Tran {Name:'t'})
+                MERGE (t)-[:Contains {isReduced:true}]->(n1)
+                MERGE (t)-[:Contains {isReduced:false, onlyForn2:true}]->(n2)
+                WITH collect(n1) + collect(n2) AS nodes
+                CALL apoc.refactor.mergeNodes(nodes, $config)
+                YIELD node WITH node
+                MATCH (node)-[r]-(t:Test:Tran) RETURN node, collect(r) AS rels""";
         
         testCall(db, query, map("config", map()), r -> {
             assertOverrideNode(r);

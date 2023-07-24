@@ -139,7 +139,7 @@ public class ImportAndLoadCoreSecurityTest {
 
 
     @BeforeClass
-    public static void setUp() throws IOException {
+    public static void setUp() {
         Logger logger = Logger.getLogger(ImportAndLoadCoreSecurityTest.class.getName());
         logger.setLevel(Level.SEVERE);
 
