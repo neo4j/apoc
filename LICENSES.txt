@@ -2555,9 +2555,11 @@ and/or involve the use of third party software.
 ------------------------------------------------------------------------------
 MIT
   animal-sniffer-annotations-1.17.jar
-  bcpkix-jdk15on-1.70.jar
-  bcprov-jdk15on-1.70.jar
-  bcutil-jdk15on-1.70.jar
+  bcpkix-jdk15on-1.68.jar
+  bcpkix-jdk18on-1.75.jar
+  bcprov-jdk15on-1.68.jar
+  bcprov-jdk18on-1.75.jar
+  bcutil-jdk18on-1.75.jar
   cassandra-1.18.3.jar
   checker-qual-2.5.2.jar
   checker-qual-3.33.0.jar
