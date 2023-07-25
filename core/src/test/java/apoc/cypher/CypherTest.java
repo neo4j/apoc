@@ -267,7 +267,7 @@ public class CypherTest {
 
         long start = System.currentTimeMillis();
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute("CALL apoc.cypher.runTimeboxed('MATCH (n)-[]-(m) RETURN elementId(n), elementId(m)', {}, 1000) YIELD value RETURN value");
+            Result result = tx.execute("CALL apoc.cypher.runTimeboxed('MATCH (n)-[*]-(m) RETURN elementId(n), elementId(m)', {}, 1000) YIELD value RETURN value");
             assertTrue(Iterators.count(result) > 0);
             tx.commit();
         }
@@ -376,7 +376,7 @@ public class CypherTest {
 
         testCall(
                 db,
-                String.format("CALL apoc.cypher.%s('Match (n:TestOne) return n',{})", functionName),
+                String.format("CALL apoc.cypher.%s('MATCH (n:TestOne) RETURN n',{})", functionName),
                 r -> assertEquals("TestOne", Iterables.single(((Node)((Map) r.get("value")).get("n")).getLabels()).name())
         );
 

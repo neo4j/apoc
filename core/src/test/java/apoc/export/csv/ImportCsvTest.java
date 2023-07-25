@@ -367,22 +367,20 @@ public class ImportCsvTest {
             assertEquals(expectedEnd, ((NodeEntity) r.get("end")).getAllProperties());
 
             final RelationshipEntity rel = (RelationshipEntity) r.get("rel");
-            assertEquals(Collections.singletonList(DurationValue.parse("P14DT16H12M")), asList((DurationValue[]) rel.getProperty("time")));
+            assertEquals(DurationValue.parse("P14DT16H12M"), ((DurationValue[]) rel.getProperty("time"))[0]);
             final List<Object> expectedTime = List.of(OffsetTime.of(15, 30, 0, 0, ZoneOffset.of("+02:00")));
             assertEquals(expectedTime, asList((OffsetTime[]) rel.getProperty("prop2")));
             final List<LocalDateTime> expectedBaz = List.of(LocalDateTime.of(2020, 1, 1, 0, 0));
             assertEquals(expectedBaz, asList((LocalDateTime[]) rel.getProperty("baz")));
-            final List<LocalTime> expectedBar = Collections.singletonList(LocalTime.of(11, 0, 0));
-            assertEquals(expectedBar, asList((LocalTime[]) rel.getProperty("bar")));
+            assertEquals(LocalTime.of(11, 0, 0), ((LocalTime[]) rel.getProperty("bar"))[0]);
             assertEquals(1L, rel.getProperty("foo"));
             final RelationshipEntity relSecond = (RelationshipEntity) r.get("relSecond");
-            assertEquals(Collections.singletonList(DurationValue.parse("P5M1.5D")), asList((DurationValue[]) relSecond.getProperty("time")));
+            assertEquals(DurationValue.parse("P5M1.5D"), ((DurationValue[]) relSecond.getProperty("time"))[0]);
             final List<Object> expectedTimeRelSecond = List.of(OffsetTime.of(15, 30, 0, 0, ZoneOffset.of("+01:00")));
             assertEquals(expectedTimeRelSecond, asList((OffsetTime[]) relSecond.getProperty("prop2")));
             final List<LocalDateTime> expectedBazRelSecond = List.of(LocalDateTime.of(2021, 1, 1, 0, 0));
             assertEquals(expectedBazRelSecond, asList((LocalDateTime[]) relSecond.getProperty("baz")));
-            final List<LocalTime> expectedBarRelSecond = Collections.singletonList(LocalTime.of(12, 0, 0));
-            assertEquals(expectedBarRelSecond, asList((LocalTime[]) relSecond.getProperty("bar")));
+            assertEquals(LocalTime.of(12, 0, 0), ((LocalTime[]) relSecond.getProperty("bar"))[0]);
             assertEquals(2L, relSecond.getProperty("foo"));
         });
     }

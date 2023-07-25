@@ -556,7 +556,7 @@ public class GraphRefactoringTest {
 
         Relationship rel = db.executeTransactionally("CREATE (n:Start)-[r:REL_TO_MERGE]->(:End) RETURN r", emptyMap(), 
                 r -> Iterators.single(r.columnAs("r")));
-        testCall(db, "MATCH (n:Start)-[r:REL_TO_MERGE]->(:End) CALL apoc.refactor.mergeRelationships([r,r]) yield rel return rel", r -> assertEquals(rel, r.get("rel")));
+        testCall(db, "MATCH (n:Start)-[r:REL_TO_MERGE]->(:End) CALL apoc.refactor.mergeRelationships([r,r]) YIELD rel RETURN rel", r -> assertEquals(rel, r.get("rel")));
         testCallCount(db, "MATCH (n:Start)-[r:REL_TO_MERGE]->(:End) RETURN r", 1);
     }
     
