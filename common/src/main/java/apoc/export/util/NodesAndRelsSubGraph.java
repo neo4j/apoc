@@ -75,22 +75,32 @@ public class NodesAndRelsSubGraph implements SubGraph {
 
     @Override
     public Iterable<IndexDefinition> getIndexes() {
-        return getDefinitions(Schema::getIndexes);
+        return getDefinitions(Schema::getIndexes, Schema::getIndexes);
     }
 
     @Override
     public Iterable<ConstraintDefinition> getConstraints() {
         Comparator<ConstraintDefinition> comp = Comparator.comparing(ConstraintDefinition::getName);
-        ArrayList<ConstraintDefinition> definitions = getDefinitions(Schema::getConstraints);
+        ArrayList<ConstraintDefinition> definitions = getDefinitions(Schema::getConstraints, Schema::getConstraints);
         definitions.sort(comp);
         return definitions;
     }
 
-    private <T> ArrayList<T> getDefinitions( BiFunction<Schema, Label, Iterable<T>> biFunction) {
+    private <T> ArrayList<T> getDefinitions(
+            BiFunction<Schema, Label, Iterable<T>> nodeFunction,
+            BiFunction<Schema, RelationshipType, Iterable<T>> relFunction
+    ) {
         Schema schema = tx.schema();
         ArrayList<T> definitions = new ArrayList<>(labels.size() * 2);
         for (String label : labels) {
-            Iterables.addAll(definitions, biFunction.apply(schema, Label.label(label)));
+            Iterables.addAll(definitions,
+                    nodeFunction.apply(schema, Label.label(label))
+            );
+        }
+        for (String type : types) {
+            Iterables.addAll(definitions,
+                    relFunction.apply(schema, RelationshipType.withName(type))
+            );
         }
         return definitions;
     }
