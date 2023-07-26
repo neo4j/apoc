@@ -96,7 +96,7 @@ public class ExportCsvNeo4jAdminTest {
     
     private static final String GZIP_EXT = ".foo";
 
-    private static File directory = new File("target/import");
+    private static final File directory = new File("target/import");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
@@ -107,7 +107,7 @@ public class ExportCsvNeo4jAdminTest {
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     @Before
-    public void before() throws Exception {
+    public void before() {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
         db.executeTransactionally("CREATE (f:User1:User {name:'foo',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
@@ -216,7 +216,7 @@ public class ExportCsvNeo4jAdminTest {
                         "CALL apoc.export.csv.graph(graph, $fileName,{bulkImport: true, delim: $separator}) " +
                         "YIELD nodes, relationships, properties, file, source,format, time " +
                         "RETURN *", map("fileName", fileName, "separator", separator),
-                (r) -> assertResults(fileName, r, "graph"));
+                (r) -> assertResults(fileName, r));
 
         String file = output.getParent() + File.separator;
         assertFileEquals(file,EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_ADDRESS + EXPECTED_NEO4J_ADMIN_IMPORT_NODE_ADDRESS, fileBaseName + ".nodes.Address" + fileExpectedExt, separator);
@@ -276,11 +276,11 @@ public class ExportCsvNeo4jAdminTest {
         assertEquals("You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph", except.getMessage());
     }
 
-    private void assertResults(String fileName, Map<String, Object> r, final String source) {
+    private void assertResults(String fileName, Map<String, Object> r) {
         assertEquals(7L, r.get("nodes"));
         assertEquals(2L, r.get("relationships"));
         assertEquals(20L, r.get("properties"));
-        assertEquals(source + ": nodes(7), rels(2)", r.get("source"));
+        assertEquals("graph: nodes(7), rels(2)", r.get("source"));
         assertEquals(fileName, r.get("file"));
         assertEquals("csv", r.get("format"));
         assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
@@ -291,7 +291,7 @@ public class ExportCsvNeo4jAdminTest {
         // given
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         final Map<String, Object> map = db.executeTransactionally("CREATE (source:User:Larus{id: 1, name: 'Andrea'})-[:KNOWS{id: 10}]->(target:User:Neo4j{id: 2, name: 'Michael'})\n" +
-                "RETURN id(source) as sourceId, id(target) as targetId", Collections.emptyMap(), result ->  Iterators.single(result) );
+                "RETURN id(source) as sourceId, id(target) as targetId", Collections.emptyMap(), Iterators::single);
         final String fileName = "export_id_field";
         String fileNameWithExtension = fileName + ".csv";
         File dir = new File(directory, fileNameWithExtension);

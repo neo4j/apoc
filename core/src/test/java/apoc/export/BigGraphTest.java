@@ -65,7 +65,7 @@ public class BigGraphTest {
             .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         TestUtil.registerProcedure(db, Rename.class, ExportCSV.class, ExportJson.class, ExportCypher.class, ExportGraphML.class, Graphs.class, Meta.class, GraphRefactoring.class,
                 ImportCsv.class, ImportJson.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);

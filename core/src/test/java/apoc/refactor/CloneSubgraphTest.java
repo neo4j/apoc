@@ -37,14 +37,12 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import static apoc.util.MapUtil.map;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 public class CloneSubgraphTest {
-    private static final String STANDIN_SYNTAX_EXCEPTION_MSG = "\'standinNodes\' must be a list of node pairs";
+    private static final String STANDIN_SYNTAX_EXCEPTION_MSG = "'standinNodes' must be a list of node pairs";
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
@@ -93,9 +91,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -105,10 +103,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(24L)); // original was 14, 10 nodes cloned
-                    assertThat(row.get("relCount"), is(20L)); // original was 11, 9 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 22L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 18L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 24L); // original was 14, 10 nodes cloned
+                    assertEquals(row.get("relCount"), 20L); // original was 11, 9 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 22L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 18L, "DIFFERENT_LINK", 2L));
                 }
         );
     }
@@ -126,9 +124,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -138,10 +136,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(24L)); // original was 14, 10 nodes cloned
-                    assertThat(row.get("relCount"), is(20L)); // original was 11, 9 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 22L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 18L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 24L); // original was 14, 10 nodes cloned
+                    assertEquals(row.get("relCount"), 20L); // original was 11, 9 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 22L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 18L, "DIFFERENT_LINK", 2L));
                 }
         );
     }
@@ -159,9 +157,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -171,10 +169,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(24L)); // original was 14, 10 nodes cloned
-                    assertThat(row.get("relCount"), is(20L)); // original was 11, 9 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 22L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 18L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 24L); // original was 14, 10 nodes cloned
+                    assertEquals(row.get("relCount"), 20L); // original was 11, 9 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 22L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 18L, "DIFFERENT_LINK", 2L));
                 }
         );
     }
@@ -192,9 +190,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -202,8 +200,8 @@ public class CloneSubgraphTest {
                 "MATCH (:Root{name:'B'})-[:LINK]->(node:Node) " +
                         "RETURN collect(node.name) as bLinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("bLinkedNodeNames"), containsInAnyOrder("node1", "node11"));
-                    assertThat(((List<String>) row.get("bLinkedNodeNames")).size(), is(2));
+                    assertTrue(((List<String>) row.get("bLinkedNodeNames")).containsAll(List.of("node1", "node11")));
+                    assertEquals(((List<String>) row.get("bLinkedNodeNames")).size(), 2);
                 }
         );
 
@@ -213,10 +211,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(24L)); // original was 14, 10 nodes cloned
-                    assertThat(row.get("relCount"), is(21L)); // original was 11, 10 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 22L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 19L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 24L); // original was 14, 10 nodes cloned
+                    assertEquals(row.get("relCount"), 21L); // original was 11, 10 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 22L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 19L, "DIFFERENT_LINK", 2L));
                 }
         );
     }
@@ -234,9 +232,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -244,8 +242,8 @@ public class CloneSubgraphTest {
                 "MATCH (:Root{name:'B'})-[:LINK]->(node:Node) " +
                         "RETURN collect(node.name) as bLinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("bLinkedNodeNames"), containsInAnyOrder("node5", "node2", "node11"));
-                    assertThat(((List<String>) row.get("bLinkedNodeNames")).size(), is(3));
+                    assertTrue(((List<String>) row.get("bLinkedNodeNames")).containsAll(List.of("node5", "node2", "node11")));
+                    assertEquals(((List<String>) row.get("bLinkedNodeNames")).size(), 3);
                 }
         );
 
@@ -255,10 +253,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(23L)); // original was 14, 9 nodes cloned
-                    assertThat(row.get("relCount"), is(20L)); // original was 11, 9 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 21L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 18L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 23L); // original was 14, 9 nodes cloned
+                    assertEquals(row.get("relCount"), 20L); // original was 11, 9 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 21L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 18L, "DIFFERENT_LINK", 2L));
                 }
         );
     }
@@ -276,9 +274,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node7 LINK node6", "node5 LINK node8", "node5 LINK node9", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -286,8 +284,8 @@ public class CloneSubgraphTest {
                 "MATCH (:Root{name:'B'})-[:LINK]->(node:Node) " +
                         "RETURN collect(node.name) as bLinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("bLinkedNodeNames"), containsInAnyOrder("node1", "node11"));
-                    assertThat(((List<String>) row.get("bLinkedNodeNames")).size(), is(2));
+                    assertTrue(((List<String>) row.get("bLinkedNodeNames")).containsAll(List.of("node1", "node11")));
+                    assertEquals(((List<String>) row.get("bLinkedNodeNames")).size(), 2);
                 }
         );
 
@@ -297,10 +295,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(24L)); // original was 14, 10 nodes cloned
-                    assertThat(row.get("relCount"), is(21L)); // original was 11, 10 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 22L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 19L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 24L); // original was 14, 10 nodes cloned
+                    assertEquals(row.get("relCount"), 21L); // original was 11, 10 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 22L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 19L, "DIFFERENT_LINK", 2L));
                 }
         );
 
@@ -309,7 +307,7 @@ public class CloneSubgraphTest {
                         "WHERE 0 < node.id < 15 " +
                         "RETURN count(node) as nodesWithId",
                 (row) -> {
-                    assertThat(row.get("nodesWithId"), is(12L)); // 12 original nodes + 10 clones
+                    assertEquals(row.get("nodesWithId"), 12L); // 12 original nodes + 10 clones
                 }
         );
 
@@ -318,7 +316,7 @@ public class CloneSubgraphTest {
                         "WHERE r.id IS NULL " +
                         "RETURN count(r) as relsWithNoId",
                 (row) -> {
-                    assertThat(row.get("relsWithNoId"), is(10L)); // 10 cloned rels with skipped id property
+                    assertEquals(row.get("relsWithNoId"), 10L); // 10 cloned rels with skipped id property
                 }
         );
     }
@@ -336,9 +334,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node8", "node9", "node10", "node6", "node7"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node7 LINK node6", "node9 DIFFERENT_LINK node10"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node8", "node9", "node10", "node6", "node7")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node7 LINK node6", "node9 DIFFERENT_LINK node10")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -346,19 +344,17 @@ public class CloneSubgraphTest {
                 "MATCH (:Root{name:'B'})-[:LINK]->(node:Node) " +
                         "RETURN collect(node.name) as bLinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("bLinkedNodeNames"), containsInAnyOrder("node1", "node11"));
-                    assertThat(((List<String>) row.get("bLinkedNodeNames")).size(), is(2));
+                    assertTrue(((List<String>) row.get("bLinkedNodeNames")).containsAll(List.of("node1", "node11")));
+                    assertEquals(((List<String>) row.get("bLinkedNodeNames")).size(), 2);
                 }
         );
-
-
 
         TestUtil.testCall(db,
                 "MATCH (node12:Node{name:'node12'})-[:LINK]-(node:Node) " +
                         "RETURN collect(node.name) as node12LinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("node12LinkedNodeNames"), containsInAnyOrder("node1", "node9", "node8", "node6"));
-                    assertThat(((List<String>) row.get("node12LinkedNodeNames")).size(), is(4));
+                    assertTrue(((List<String>) row.get("node12LinkedNodeNames")).containsAll(List.of("node1", "node9", "node8", "node6")));
+                    assertEquals(((List<String>) row.get("node12LinkedNodeNames")).size(), 4);
                 }
         );
 
@@ -368,10 +364,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(23L)); // original was 14, 9 nodes cloned
-                    assertThat(row.get("relCount"), is(21L)); // original was 11, 10 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 1L, "Node", 21L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 19L, "DIFFERENT_LINK", 2L)));
+                    assertEquals(row.get("nodeCount"), 23L); // original was 14, 9 nodes cloned
+                    assertEquals(row.get("relCount"), 21L); // original was 11, 10 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 1L, "Node", 21L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 19L, "DIFFERENT_LINK", 2L));
                 }
         );
     }
@@ -384,17 +380,15 @@ public class CloneSubgraphTest {
                         "WITH rootA, rootB, nodes, [(:Node{name:'node7'})-[r]->() | r] + [(:Node{name:'node9'})-[r:DIFFERENT_LINK]->() | r] as relationships " + // just an opposite-direction :LINK and the :DIFFERENT_LINK rels
                         "CALL apoc.refactor.cloneSubgraph(nodes, relationships, {standinNodes:[[rootA, rootB]]}) YIELD input, output, error " +
                         "RETURN collect(output.name) as cloneNames",
-                (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node6"));
-                }
+                (row) -> assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node6")))
         );
 
         TestUtil.testCall(db,
                 "MATCH (:Root{name:'B'})-[:LINK]->(node:Node) " +
                         "RETURN collect(node.name) as bLinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("bLinkedNodeNames"), containsInAnyOrder("node11"));
-                    assertThat(((List<String>) row.get("bLinkedNodeNames")).size(), is(1));
+                    assertTrue(((List<String>) row.get("bLinkedNodeNames")).contains("node11"));
+                    assertEquals(((List<String>) row.get("bLinkedNodeNames")).size(), 1);
                 }
         );
 
@@ -404,10 +398,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(22L)); // original was 14, 8 nodes cloned
-                    assertThat(row.get("relCount"), is(11L)); // original was 11, 0 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 20L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 10L, "DIFFERENT_LINK", 1L)));
+                    assertEquals(row.get("nodeCount"), 22L); // original was 14, 8 nodes cloned
+                    assertEquals(row.get("relCount"), 11L); // original was 11, 0 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 20L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 10L, "DIFFERENT_LINK", 1L));
                 }
         );
     }
@@ -498,9 +492,9 @@ public class CloneSubgraphTest {
                         "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified " +
                         "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
                 (row) -> {
-                    assertThat((List<String>) row.get("cloneNames"), containsInAnyOrder("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node6"));
-                    assertThat((List<String>) row.get("cloneRelNames"), containsInAnyOrder("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node5 LINK node8", "node5 LINK node9"));
-                    assertThat(row.get("clonedRelsVerified"), is(true));
+                    assertTrue(((List<String>) row.get("cloneNames")).containsAll(List.of("node1", "node2", "node3", "node4", "node5", "node8", "node9", "node6")));
+                    assertTrue(((List<String>) row.get("cloneRelNames")).containsAll(List.of("node1 LINK node5", "node1 LINK node2", "node2 LINK node3", "node3 LINK node4", "node5 LINK node6", "node5 LINK node8", "node5 LINK node9")));
+                    assertTrue((Boolean) row.get("clonedRelsVerified"));
                 }
         );
 
@@ -508,8 +502,8 @@ public class CloneSubgraphTest {
                 "MATCH (:Root{name:'B'})-[:LINK]->(node:Node) " +
                         "RETURN collect(node.name) as bLinkedNodeNames",
                 (row) -> {
-                    assertThat((List<String>) row.get("bLinkedNodeNames"), containsInAnyOrder("node1", "node11"));
-                    assertThat(((List<String>) row.get("bLinkedNodeNames")).size(), is(2));
+                    assertTrue(((List<String>) row.get("bLinkedNodeNames")).containsAll(List.of("node1", "node11")));
+                    assertEquals(((List<String>) row.get("bLinkedNodeNames")).size(), 2);
                 }
         );
 
@@ -519,10 +513,10 @@ public class CloneSubgraphTest {
                         "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl " +
                         "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
                 (row) -> {
-                    assertThat(row.get("nodeCount"), is(22L)); // original was 14, 10 nodes cloned
-                    assertThat(row.get("relCount"), is(19L)); // original was 11, 8 relationships cloned
-                    assertThat(row.get("labels"), equalTo(map("Root", 2L, "Oddball", 2L, "Node", 20L)));
-                    assertThat(row.get("relTypesCount"), equalTo(map("LINK", 18L, "DIFFERENT_LINK", 1L)));
+                    assertEquals(row.get("nodeCount"),22L); // original was 14, 10 nodes cloned
+                    assertEquals(row.get("relCount"), 19L); // original was 11, 8 relationships cloned
+                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 20L));
+                    assertEquals(row.get("relTypesCount"), map("LINK", 18L, "DIFFERENT_LINK", 1L));
                 }
         );
     }

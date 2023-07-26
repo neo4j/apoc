@@ -18,7 +18,6 @@
  */
 package apoc.it.core;
 import apoc.util.Neo4jContainerExtension;
-import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.hamcrest.MatcherAssert;
@@ -92,10 +91,15 @@ public class ExportCypherEnterpriseFeaturesTest {
     @Test
     public void testExportWithCompoundConstraintCypherShell() {
         String fileName = "testCypherShellWithCompoundConstraint.cypher";
-        testCall(session, "CALL apoc.export.cypher.all($file, $config)",
-                map("file", fileName, "config", Util.map("format", "cypher-shell")), (r) -> {
-                    assertExportStatement(ExportCypherResults.EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT, fileName);
-                });
+        testCall(session,
+                "CALL apoc.export.cypher.all($file, $config)",
+                map(
+                        "file",
+                        fileName, "config",
+                        Util.map("format", "cypher-shell")
+                ),
+                (r) -> assertExportStatement(ExportCypherResults.EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT, fileName)
+        );
     }
 
     @Test
@@ -123,11 +127,11 @@ public class ExportCypherEnterpriseFeaturesTest {
             MATCH (end:Person{surname: row.end.surname, name: row.end.name})
             CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
          */
-        final String expected = "UNWIND [{start: {name:\"Phil\", surname:\"Meyer\"}, " +
-                "end: {name:\"Silvia\", surname:\"Jones\"}, properties:{}}] AS row\n" +
-                "MATCH (start:Person{surname: row.start.surname, name: row.start.name})\n" +
-                "MATCH (end:Person{surname: row.end.surname, name: row.end.name})\n" +
-                "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties";
+        final String expected = """
+                UNWIND [{start: {name:"Phil", surname:"Meyer"}, end: {name:"Silvia", surname:"Jones"}, properties:{}}] AS row
+                MATCH (start:Person{surname: row.start.surname, name: row.start.name})
+                MATCH (end:Person{surname: row.end.surname, name: row.end.name})
+                CREATE (start)-[r:KNOWS]->(end) SET r += row.properties""";
 
         try {
             beforeTwoLabelsWithOneCompoundConstraintEach();
