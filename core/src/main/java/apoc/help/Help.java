@@ -72,16 +72,17 @@ public class Help {
                 " AND ($name IS NULL  OR toLower(name) CONTAINS toLower($name) " +
                 " OR ($desc IS NOT NULL AND toLower(description) CONTAINS toLower($desc))) ";
 
-        String proceduresQuery = "SHOW PROCEDURES yield name, description, signature " + filter +
-                                 "RETURN 'procedure' as type, name, description, signature ";
+        String proceduresQuery = "SHOW PROCEDURES yield name, description, signature, isDeprecated " + filter +
+                                 "RETURN 'procedure' as type, name, description, signature, isDeprecated ";
 
-        String functionsQuery = "SHOW FUNCTIONS yield name, description, signature " + filter +
-                                "RETURN 'function' as type, name, description, signature ";
-        Map<String,Object> params = map( "name", name, "desc", searchText ? name : null );
-        Stream<Map<String,Object>> proceduresResults = tx.execute( proceduresQuery, params ).stream();
-        Stream<Map<String,Object>> functionsResults = tx.execute( functionsQuery, params ).stream();
+        String functionsQuery = "SHOW FUNCTIONS yield name, description, signature, isDeprecated " + filter +
+                                "RETURN 'function' as type, name, description, signature, isDeprecated ";
+        Map<String,Object> params = map("name", name, "desc", searchText ? name : null);
+        Stream<Map<String,Object>> proceduresResults = tx.execute(proceduresQuery, params).stream();
+        Stream<Map<String,Object>> functionsResults = tx.execute(functionsQuery, params).stream();
 
-        return Stream.of( proceduresResults, functionsResults ).flatMap( results -> results.map(
-                row -> new HelpResult( row, !extended.contains( (String) row.get( "name" ) ) ) ) );
+        return Stream.of(proceduresResults, functionsResults).flatMap(results -> results.map(
+                row -> new HelpResult( row, !extended.contains((String) row.get("name"))))
+        );
     }
 }
