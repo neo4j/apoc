@@ -33,8 +33,17 @@ public class HelpResult {
     public List<String> roles;
     public Boolean writes;
     public Boolean core;
+    public Boolean isDeprecated;
 
-    public HelpResult(String type, String name, String text, String signature, List<String> roles, Boolean writes, Boolean core) {
+    public HelpResult(
+            String type,
+            String name,
+            String text,
+            String signature,
+            List<String> roles,
+            Boolean writes,
+            Boolean core,
+            Boolean isDeprecated) {
         this.type = type;
         this.name = name;
         this.text = text;
@@ -42,9 +51,19 @@ public class HelpResult {
         this.roles = roles;
         this.writes = writes;
         this.core = core;
+        this.isDeprecated = isDeprecated;
     }
 
     public HelpResult(Map<String, Object> row, Boolean core) {
-        this((String)row.get("type"),(String)row.get("name"),(String)row.get("description"),(String)row.get("signature"),null,(Boolean)row.get("writes"), core);
+        this(
+                (String) row.get("type"),
+                (String) row.get("name"),
+                (String) row.get("description"),
+                (String) row.get("signature"),
+                null,
+                (Boolean) row.get("writes"),
+                core,
+                (Boolean) row.get("isDeprecated")
+        );
     }
 }
