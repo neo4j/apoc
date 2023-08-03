@@ -121,15 +121,15 @@ Apache-2.0
   jcip-annotations-1.0-1.jar
   jctools-core-4.0.1.jar
   jettison-1.5.4.jar
-  jetty-http-9.4.51.v20230217.jar
-  jetty-io-9.4.51.v20230217.jar
-  jetty-security-9.4.51.v20230217.jar
-  jetty-server-9.4.51.v20230217.jar
-  jetty-servlet-9.4.51.v20230217.jar
-  jetty-util-9.4.51.v20230217.jar
-  jetty-util-ajax-9.4.51.v20230217.jar
-  jetty-webapp-9.4.51.v20230217.jar
-  jetty-xml-9.4.51.v20230217.jar
+  jetty-http-10.0.15.jar
+  jetty-io-10.0.15.jar
+  jetty-security-10.0.15.jar
+  jetty-server-10.0.15.jar
+  jetty-servlet-10.0.15.jar
+  jetty-servlet-api-4.0.6.jar
+  jetty-util-10.0.15.jar
+  jetty-webapp-10.0.15.jar
+  jetty-xml-10.0.15.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.425.jar
@@ -212,20 +212,20 @@ Apache-2.0
   opencsv-5.7.1.jar
   opentest4j-1.2.0.jar
   picocli-4.7.4.jar
-  reactor-core-3.5.7.jar
+  reactor-core-3.5.8.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.11.jar
   scala-reflect-2.13.11.jar
-  shiro-cache-1.11.0.jar
-  shiro-config-core-1.11.0.jar
-  shiro-config-ogdl-1.11.0.jar
-  shiro-core-1.11.0.jar
-  shiro-crypto-cipher-1.11.0.jar
-  shiro-crypto-core-1.11.0.jar
-  shiro-crypto-hash-1.11.0.jar
-  shiro-event-1.11.0.jar
-  shiro-lang-1.11.0.jar
+  shiro-cache-1.12.0.jar
+  shiro-config-core-1.12.0.jar
+  shiro-config-ogdl-1.12.0.jar
+  shiro-core-1.12.0.jar
+  shiro-crypto-cipher-1.12.0.jar
+  shiro-crypto-core-1.12.0.jar
+  shiro-crypto-hash-1.12.0.jar
+  shiro-event-1.12.0.jar
+  shiro-lang-1.12.0.jar
   snappy-java-1.1.8.2.jar
   token-provider-1.0.1.jar
   websocket-api-9.4.51.v20230217.jar
@@ -2582,7 +2582,6 @@ MIT
   reactive-streams-1.0.4.jar
   slf4j-api-1.7.36.jar
   slf4j-api-2.0.7.jar
-  slf4j-nop-2.0.7.jar
   slf4j-simple-1.7.36.jar
   testcontainers-1.18.3.jar
 ------------------------------------------------------------------------------
