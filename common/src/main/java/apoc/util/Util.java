@@ -37,6 +37,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.util.ValueUtils;
@@ -1151,7 +1152,7 @@ public class Util {
     public static Iterable<IndexDefinition> getIndexes(Transaction transaction)
     {
         return StreamSupport.stream(transaction.schema().getIndexes().spliterator(), false)
-                .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR").toList();
+                .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR).toList();
     }
 
     /*
@@ -1162,7 +1163,7 @@ public class Util {
     public static Iterable<IndexDefinition> getIndexes(Transaction transaction, Label label)
     {
         return StreamSupport.stream(transaction.schema().getIndexes(label).spliterator(), false)
-                .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR").toList();
+                .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR).toList();
     }
 
     /*
@@ -1173,6 +1174,6 @@ public class Util {
     public static Iterable<IndexDefinition> getIndexes(Transaction transaction, RelationshipType relType)
     {
         return StreamSupport.stream(transaction.schema().getIndexes(relType).spliterator(), false)
-                .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR").toList();
+                .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR).toList();
     }
 }
