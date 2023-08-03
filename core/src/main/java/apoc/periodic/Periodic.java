@@ -74,7 +74,7 @@ public class Periodic {
         if (Util.toBoolean(config.get("dropSchema"))) {
             Schema schema = tx.schema();
             schema.getConstraints().forEach(ConstraintDefinition::drop);
-            schema.getIndexes().forEach(IndexDefinition::drop);
+            Util.getIndexes(tx).forEach(IndexDefinition::drop);
         }
     }
 

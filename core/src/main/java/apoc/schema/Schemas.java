@@ -196,7 +196,7 @@ public class Schemas {
         Map<String, List<Object>> indexes = copyMapOfObjects(indexes0);
         List<AssertSchemaResult> result = new ArrayList<>(indexes.size());
 
-        for (IndexDefinition definition : schema.getIndexes()) {
+        for (IndexDefinition definition : Util.getIndexes(tx)) {
             if (definition.getIndexType() == IndexType.LOOKUP)
                 continue;
             if (definition.isConstraintIndex())
@@ -289,12 +289,12 @@ public class Schemas {
      * @return true if the index exists otherwise it returns false
      */
     private Boolean indexExists(String labelName, List<String> propertyNames) {
-        Iterable<IndexDefinition> nodeIndexes = tx.schema().getIndexes(label(labelName));
+        Iterable<IndexDefinition> nodeIndexes = Util.getIndexes(tx, label(labelName));
         return isIndexExistent(propertyNames, nodeIndexes);
     }
     
     private Boolean indexExistsForRelationship(String relName, List<String> propertyNames) {
-        Iterable<IndexDefinition> relIndexes = tx.schema().getIndexes(RelationshipType.withName(relName));
+        Iterable<IndexDefinition> relIndexes = Util.getIndexes(tx, RelationshipType.withName(relName));
         return isIndexExistent(propertyNames, relIndexes);
     }
 

@@ -40,6 +40,7 @@ import static org.neo4j.graphdb.schema.IndexType.LOOKUP;
 import static org.neo4j.graphdb.schema.IndexType.POINT;
 import static org.neo4j.graphdb.schema.IndexType.RANGE;
 import static org.neo4j.graphdb.schema.IndexType.TEXT;
+import static org.neo4j.graphdb.schema.IndexType.VECTOR;
 
 public class UtilTest {
 
@@ -69,7 +70,8 @@ public class UtilTest {
                 LOOKUP,
                 TEXT,
                 RANGE,
-                POINT
+                POINT,
+                VECTOR
         ));
     }
 }

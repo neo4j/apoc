@@ -83,7 +83,7 @@ public class CypherResultSubGraph implements SubGraph {
         } catch (AuthorizationViolationException e) {
             throw new RuntimeException(INVALID_QUERY_MODE_ERROR);
         }
-        for (IndexDefinition def : tx.schema().getIndexes()) {
+        for (IndexDefinition def : Util.getIndexes(tx)) {
             if (def.getIndexType() != IndexType.LOOKUP) {
                 if (def.isNodeIndex()) {
                     for (Label label : def.getLabels()) {

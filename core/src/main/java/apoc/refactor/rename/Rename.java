@@ -196,7 +196,7 @@ public class Rename {
 			constraintsForLabel.forEach((c) -> {
 				constraints.add(c.toString());
 			});
-			Iterable<IndexDefinition> idxs = transaction.schema().getIndexes(Label.label(label));
+			Iterable<IndexDefinition> idxs = Util.getIndexes(transaction, Label.label(label));
 			idxs.forEach((i) -> {
 				indexes.add(i.toString());
 			});
@@ -216,7 +216,7 @@ public class Rename {
 					}
 				});
 			});
-            Iterable<IndexDefinition> idxs = transaction.schema().getIndexes();
+            Iterable<IndexDefinition> idxs = Util.getIndexes(transaction);
             idxs.forEach((i) -> {
                 i.getPropertyKeys().forEach((p) -> {
                     if(p.equals(prop)){
