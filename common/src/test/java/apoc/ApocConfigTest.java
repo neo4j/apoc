@@ -60,6 +60,7 @@ public class ApocConfigTest {
 
     private ApocConfig apocConfig;
     private File apocConfigFile;
+    private File apocConfigCommandExpansionFile;
     private static final Set<PosixFilePermission> permittedFilePermissionsForCommandExpansion =
             Set.of(OWNER_READ, OWNER_WRITE, GROUP_READ);
     private static final Set<PosixFilePermission> forbiddenFilePermissionsForCommandExpansion =
@@ -76,7 +77,8 @@ public class ApocConfigTest {
         when(neo4jConfig.expandCommands()).thenReturn(true);
 
         apocConfigFile = new File(getClass().getClassLoader().getResource("apoc.conf").toURI());
-        Files.setPosixFilePermissions(apocConfigFile.toPath(), permittedFilePermissionsForCommandExpansion);
+        apocConfigCommandExpansionFile = new File(getClass().getClassLoader().getResource("apoc-config-command-expansion/apoc.conf").toURI());
+        Files.setPosixFilePermissions(apocConfigCommandExpansionFile.toPath(), permittedFilePermissionsForCommandExpansion);
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
@@ -90,8 +92,18 @@ public class ApocConfigTest {
         );
     }
 
-    private void setApocConfigSystemProperty() {
-        System.setProperty(SUN_JAVA_COMMAND, "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir=" +  apocConfigFile.getParent());
+    private void setApocConfigSystemProperty(Boolean withCommandExpansion) {
+        if (withCommandExpansion) {
+            System.setProperty(
+                    SUN_JAVA_COMMAND,
+                    "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir=" +  apocConfigCommandExpansionFile.getParent()
+            );
+        } else {
+            System.setProperty(
+                    SUN_JAVA_COMMAND,
+                    "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir=" +  apocConfigFile.getParent()
+            );
+        }
     }
 
     @Test
@@ -109,7 +121,7 @@ public class ApocConfigTest {
 
     @Test
     public void testApocConfFileBeingLoaded() {
-        setApocConfigSystemProperty();
+        setApocConfigSystemProperty(false);
         apocConfig.init();
 
         assertEquals("bar", apocConfig.getConfig().getString("foo"));
@@ -123,22 +135,18 @@ public class ApocConfigTest {
     }
 
     @Test
-    public void testApocConfWithExpandCommands() throws Exception {
-        String validExpandLine = "command.expansion=$(echo \"expanded value\")";
-        addLineToApocConfig(validExpandLine);
-        setApocConfigSystemProperty();
-
+    public void testApocConfWithExpandCommands() {
+        setApocConfigSystemProperty(true);
         apocConfig.init();
 
         assertEquals("expanded value", apocConfig.getConfig().getString("command.expansion"));
-        removeLineFromApocConfig(validExpandLine);
     }
 
     @Test
     public void testApocConfWithInvalidExpandCommands() throws Exception {
         String invalidExpandLine = "command.expansion.3=$(fakeCommand 3 + 3)";
         addLineToApocConfig(invalidExpandLine);
-        setApocConfigSystemProperty();
+        setApocConfigSystemProperty(true);
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage = "java.io.IOException: Cannot run program \"fakeCommand\": error=2, No such file or directory";
@@ -151,7 +159,7 @@ public class ApocConfigTest {
     public void testApocConfWithWrongFilePermissions() throws Exception {
         for (PosixFilePermission filePermission : forbiddenFilePermissionsForCommandExpansion) {
             setApocConfigFilePermissions(Set.of(filePermission));
-            setApocConfigSystemProperty();
+            setApocConfigSystemProperty(false);
 
             RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
             String expectedMessage = "does not have the correct file permissions to evaluate commands.";
@@ -174,30 +182,26 @@ public class ApocConfigTest {
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
         ApocConfig apocConfig = new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
 
-        String validExpandLine = "command.expansion=$(echo \"expanded value\")";
-        addLineToApocConfig(validExpandLine);
-        setApocConfigSystemProperty();
+        setApocConfigSystemProperty(true);
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage = "$(echo \"expanded value\") is a command, but config is not explicitly told to expand it. (Missing --expand-commands argument?)";
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
-
-        removeLineFromApocConfig(validExpandLine);
     }
 
     private void removeLineFromApocConfig(String lineContent) throws IOException {
         File temp = new File("_temp_");
         PrintWriter out = new PrintWriter(new FileWriter(temp));
-        Files.lines(apocConfigFile.toPath())
+        Files.lines(apocConfigCommandExpansionFile.toPath())
                 .filter(line -> !line.contains(lineContent))
                 .forEach(out::println);
         out.flush();
         out.close();
-        temp.renameTo(apocConfigFile);
+        temp.renameTo(apocConfigCommandExpansionFile);
     }
 
     private void addLineToApocConfig(String line) throws IOException {
-        FileWriter fw = new FileWriter(apocConfigFile,true);
+        FileWriter fw = new FileWriter(apocConfigCommandExpansionFile,true);
         fw.write(line);
         fw.close();
     }
