@@ -33,8 +33,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.ExecutionPlanDescription;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.schema.ConstraintType;
+import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.util.ValueUtils;
@@ -1139,5 +1141,38 @@ public class Util {
         return ListUtils.indexOf(list,
                 (i) -> Util.valueEquals(i, value)
         );
+    }
+
+    /*
+     * Get all indexes from Neo4j
+     * Currently filters out vector indexes
+     * When vector indexes are supported, this can be changed to transaction.schema().getIndexes()
+     */
+    public static Iterable<IndexDefinition> getIndexes(Transaction transaction)
+    {
+        return StreamSupport.stream(transaction.schema().getIndexes().spliterator(), false)
+                .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR").toList();
+    }
+
+    /*
+     * Get all indexes from Neo4j for a given label
+     * Currently filters out vector indexes
+     * When vector indexes are supported, this can be changed to transaction.schema().getIndexes(label)
+     */
+    public static Iterable<IndexDefinition> getIndexes(Transaction transaction, Label label)
+    {
+        return StreamSupport.stream(transaction.schema().getIndexes(label).spliterator(), false)
+                .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR").toList();
+    }
+
+    /*
+     * Get all indexes from Neo4j for a given relationship type
+     * Currently filters out vector indexes
+     * When vector indexes are supported, this can be changed to transaction.schema().getIndexes(relType)
+     */
+    public static Iterable<IndexDefinition> getIndexes(Transaction transaction, RelationshipType relType)
+    {
+        return StreamSupport.stream(transaction.schema().getIndexes(relType).spliterator(), false)
+                .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR").toList();
     }
 }

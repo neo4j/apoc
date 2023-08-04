@@ -18,6 +18,7 @@
  */
 package apoc.export.util;
 
+import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.Comparator;
 import java.util.function.BiFunction;
@@ -38,6 +39,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * @author mh
@@ -75,7 +77,12 @@ public class NodesAndRelsSubGraph implements SubGraph {
 
     @Override
     public Iterable<IndexDefinition> getIndexes() {
-        return getDefinitions(Schema::getIndexes);
+        return getDefinitions((schema, label) ->
+                StreamSupport
+                        .stream(schema.getIndexes(label).spliterator(), false)
+                        .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR")
+                        .toList()
+        );
     }
 
     @Override
@@ -116,7 +123,7 @@ public class NodesAndRelsSubGraph implements SubGraph {
         if (!labels.contains(label.name())) {
             return Collections.emptyList();
         }
-        return tx.schema().getIndexes(label);
+        return Util.getIndexes(tx, label);
     }
 
     @Override
@@ -124,7 +131,7 @@ public class NodesAndRelsSubGraph implements SubGraph {
         if (!types.contains(type.name())) {
             return Collections.emptyList();
         }
-        return tx.schema().getIndexes(type);
+        return Util.getIndexes(tx, type);
     }
 
     @Override

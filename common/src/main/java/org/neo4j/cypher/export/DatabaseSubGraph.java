@@ -20,6 +20,8 @@ package org.neo4j.cypher.export;
 
 import java.util.Comparator;
 import java.util.stream.StreamSupport;
+
+import apoc.util.Util;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -57,7 +59,7 @@ public class DatabaseSubGraph implements SubGraph
     @Override
     public Iterable<IndexDefinition> getIndexes()
     {
-        return transaction.schema().getIndexes();
+        return Util.getIndexes(transaction);
     }
 
     @Override
@@ -79,12 +81,12 @@ public class DatabaseSubGraph implements SubGraph
 
     @Override
     public Iterable<IndexDefinition> getIndexes(Label label) {
-        return transaction.schema().getIndexes(label);
+        return Util.getIndexes(transaction, label);
     }
 
     @Override
     public Iterable<IndexDefinition> getIndexes(RelationshipType type) {
-        return transaction.schema().getIndexes(type);
+        return Util.getIndexes(transaction, type);
     }
 
     @Override
