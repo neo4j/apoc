@@ -30,7 +30,6 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
-import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.schema.Schema;
 
 import java.util.ArrayList;
@@ -81,7 +80,7 @@ public class NodesAndRelsSubGraph implements SubGraph {
         return getDefinitions((schema, label) ->
                 StreamSupport
                         .stream(schema.getIndexes(label).spliterator(), false)
-                        .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR)
+                        .filter(indexDefinition -> indexDefinition.getIndexType().name() != "VECTOR")
                         .toList()
         );
     }
