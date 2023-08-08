@@ -44,7 +44,7 @@ dependencies {
     // We need to force this dependency's verion due to a vulnerability https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/3048
     api group: 'org.apache.commons', name: 'commons-lang3', {
         version {
-            strictly '3.12.0'
+            strictly '3.13.0'
         }
     }
     api group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
