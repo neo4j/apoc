@@ -1,6 +1,6 @@
 {
   "_comment_1A": "'events' and 'geocode' are used in SpatialTest testing procedures in more complex Cypher queries",
-  "_comment_1B": "The 'events' defined input data, and 'geocode' are mocked output results.",
+  "_comment_1B": "The 'events' define input data, and 'geocode' are mocked output results.",
   "_comment_1C": "No real geocoding service is used, as a service is internally mocked to provide these results.",
 
   "events": [
