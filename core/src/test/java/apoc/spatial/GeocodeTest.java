@@ -231,8 +231,6 @@ public class GeocodeTest {
                         });
                     });
         }
-
-
     }
 
     private void setupSupplier(String providerName, long throttle) {
@@ -270,7 +268,6 @@ public class GeocodeTest {
                 map("url", "FRANCE"),
                 time,
                 (res) -> {
-
                     long actual = Iterators.count(res);
                     assertEquals(1, actual);
                 });
@@ -291,16 +288,6 @@ public class GeocodeTest {
                 provider.equals("opencage") ? 8.01427 : 8.54875,
                 time,
                 config);
-    }
-
-    private double getCoord(Map<String, Map<String, Double>> map, String provider, String coord) {
-        final Map<String, Double> providerKey = map.getOrDefault(provider.toLowerCase(), map.get("osm"));
-        checkJsonFields(providerKey, coord);
-        return providerKey.get(coord);
-    }
-
-    private void checkJsonFields(Map map, String field) {
-        assertTrue("Expected " + field + " field", map.containsKey(field));
     }
 
     private void testGeocodeAddress(String address, double lat, double lon, AtomicLong time, Map<String, Object> config) {
