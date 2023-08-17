@@ -23,6 +23,8 @@ import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.*;
 import org.mockserver.client.MockServerClient;
@@ -37,6 +39,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -68,6 +71,7 @@ import static org.neo4j.configuration.SettingValueParsers.BYTES;
 public class LoadJsonTest {
 
     private static ClientAndServer mockServer;
+    private HttpServer server;
 
     @BeforeClass
     public static void startServer() {
@@ -85,20 +89,28 @@ public class LoadJsonTest {
             .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
             .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"));
 
-	@Before public void setUp() {
+	@Before public void setUp() throws IOException {
 	    apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
 	    apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
-	    apocConfig().setProperty("apoc.json.zip.url", "https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true!person.json");
-         apocConfig().setProperty("apoc.json.simpleJson.url", ClassLoader.getSystemResource("map.json").toString());
+	    apocConfig().setProperty("apoc.json.zip.url", "http://localhost:8000/testload.zip?raw=true!person.json");
+        apocConfig().setProperty("apoc.json.simpleJson.url", ClassLoader.getSystemResource("map.json").toString());
         TestUtil.registerProcedure(db, LoadJson.class);
+
+        server = HttpServer.create(new InetSocketAddress(8000), 0);
+        HttpContext staticContext = server.createContext("/");
+        staticContext.setHandler(new SimpleHttpHandler());
+        server.start();
+    }
+
+    @After
+    public void cleanup() {
+        server.stop(0);
     }
 
     @Test public void testLoadJson() {
 		URL url = ClassLoader.getSystemResource("map.json");
-		testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertEquals(map("foo",asList(1L,2L,3L)), row.get("value"));
-                });
+		testCall(db, "CALL apoc.load.json($url)", map("url",url.toString()),
+                (row) -> assertEquals(map("foo",asList(1L,2L,3L)), row.get("value")));
     }
 
     @Test
@@ -137,16 +149,12 @@ public class LoadJsonTest {
     @Test public void testLoadJsonPath() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.json($url,'$.foo')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertEquals(map("result",asList(1L,2L,3L)), row.get("value"));
-                });
+                (row) -> assertEquals(map("result",asList(1L,2L,3L)), row.get("value")));
     }
     @Test public void testLoadJsonPathRoot() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.json($url,'$')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertEquals(map("foo",asList(1L,2L,3L)), row.get("value"));
-                });
+                (row) -> assertEquals(map("foo",asList(1L,2L,3L)), row.get("value")));
     }
     
     @Test
@@ -181,16 +189,12 @@ public class LoadJsonTest {
     @Test public void testLoadJsonArrayPath() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.jsonArray($url,'$.foo')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertEquals(asList(1L,2L,3L), row.get("value"));
-                });
+                (row) -> assertEquals(asList(1L,2L,3L), row.get("value")));
     }
     @Test public void testLoadJsonArrayPathRoot() {
 		URL url = ClassLoader.getSystemResource("map.json");
 		testCall(db, "CALL apoc.load.jsonArray($url,'$')",map("url",url.toString()), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertEquals(map("foo",asList(1L,2L,3L)), row.get("value"));
-                });
+                (row) -> assertEquals(map("foo",asList(1L,2L,3L)), row.get("value")));
     }
 
     @Test public void testLoadJsonStackOverflow() {
@@ -208,9 +212,7 @@ public class LoadJsonTest {
     @Test public void testLoadJsonNoFailOnError() {
         String url = "file.json";
         testResult(db, "CALL apoc.load.json($url,null, {failOnError:false})",map("url", url), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertFalse(row.hasNext());
-                });
+                (row) -> assertFalse(row.hasNext()));
     }
 
     @Test public void testLoadJsonZip() {
@@ -258,8 +260,8 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonZipByUrl() throws Exception {
-        URL url = new URL("https://github.com/neo4j-contrib/neo4j-apoc-procedures/blob/3.4/src/test/resources/testload.zip?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
+        URL url = new URL("http://localhost:8000/testload.zip?raw=true");
+        testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
                     assertEquals("Michael", r.get("name"));
@@ -269,8 +271,8 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonTarByUrl() throws Exception {
-        URL url = new URL("https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
+        URL url = new URL("http://localhost:8000/testload.tar?raw=true");
+        testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
                     assertEquals("Michael", r.get("name"));
@@ -280,8 +282,8 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonTarGzByUrl() throws Exception {
-        URL url = new URL("https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tar.gz?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
+        URL url = new URL("http://localhost:8000/testload.tar.gz?raw=true");
+        testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
                     assertEquals("Michael", r.get("name"));
@@ -291,8 +293,8 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonTgzByUrl() throws Exception {
-        URL url = new URL("https://github.com/neo4j/apoc/blob/dev/core/src/test/resources/testload.tgz?raw=true");
-        testCall(db, "CALL apoc.load.json($url)",map("url",url.toString()+"!person.json"),
+        URL url = new URL("http://localhost:8000/testload.tgz?raw=true");
+        testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
                     assertEquals("Michael", r.get("name"));
@@ -314,15 +316,13 @@ public class LoadJsonTest {
     @Test public void testLoadJsonByUrlInConfigFile() {
 
         testCall(db, "CALL apoc.load.json($key)",map("key","simpleJson"), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    assertEquals(map("foo",asList(1L,2L,3L)), row.get("value"));
-                });
+                (row) -> assertEquals(map("foo",asList(1L,2L,3L)), row.get("value")));
     }
 
     @Test
     public void testLoadJsonByUrlInConfigFileWrongKey() {
         QueryExecutionException e = assertThrows(QueryExecutionException.class,
-                () -> testResult(db, "CALL apoc.load.json($key)",map("key","foo"), (r) -> r.hasNext())
+                () -> testResult(db, "CALL apoc.load.json($key)",map("key","foo"), Result::hasNext)
         );
         Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof IOException);
