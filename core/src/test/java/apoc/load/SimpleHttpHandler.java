@@ -49,7 +49,6 @@ public class SimpleHttpHandler implements HttpHandler {
     }
     public void handle(HttpExchange t) throws IOException {
         URI uri = t.getRequestURI();
-        System.out.println("looking for: "+ uri.getPath());
         String path = uri.getPath().substring(1);
 
         File file;
