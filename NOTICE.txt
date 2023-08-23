@@ -443,9 +443,7 @@ MIT
   neo4j-1.18.3.jar
   postgresql-1.18.3.jar
   reactive-streams-1.0.4.jar
-  slf4j-api-1.7.36.jar
   slf4j-api-2.0.7.jar
-  slf4j-simple-1.7.36.jar
   testcontainers-1.18.3.jar
 
 MPL 1.1
