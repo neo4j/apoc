@@ -25,6 +25,9 @@ import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import org.junit.Assert;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,7 +45,10 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
@@ -1011,78 +1017,70 @@ public class ExportCypherTest {
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatCreate() {
-        String expected = "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"First\", `UNIQUE IMPORT ID`:3});\n" +
-                "CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:4});\n" +
-                "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"Second\", `UNIQUE IMPORT ID`:5});\n" +
-                "CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:6});\n" +
-                EXPECTED_2886_SCHEMA +
-                EXPECTED_2886_RELS_WITHOUT_OPTIMIZATION +
-                EXPECTED_2886_CLEANUP;
-
         final Map<String, Object> config = map("cypherFormat", "create");
-        issue2886Common(expected, withoutOptimization(config), true);
+        issue2886Common(actual -> check2886FullStructureNonOptimized(actual, "create"), withoutOptimization(config), true);
     }
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatAddStructure() {
-        String expected = "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}) ON CREATE SET n.name=\"First\", n:Person;\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) ON CREATE SET n:Project;\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}) ON CREATE SET n.name=\"Second\", n:Person;\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) ON CREATE SET n:Project;\n" +
-                EXPECTED_2886_RELS_WITHOUT_OPTIMIZATION;
         final Map<String, Object> config = map("cypherFormat", "addStructure");
-        issue2886Common(expected, withoutOptimization(config), true);
+        issue2886Common(actual -> {
+            String[] lines = actual.split("[\r\n]+");
+            assertEquals(6, lines.length);
+            check2886UpdateNodeStructureNoOptimization(lines[0], lines[1], lines[2], lines[3], "addStructure");
+            check2886UpdateRelStructureNoOptimization(lines[4], lines[5], "addStructure");
+            check2886IdsNoOptimization(actual);
+        }, withoutOptimization(config), true);
     }
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatUpdateStructure() {
-        String expected = """
-                MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;
-                MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;
-                """;
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
-        issue2886Common(expected, withoutOptimization(config), false);
+        issue2886Common(actual -> {
+            String[] lines = actual.split("[\r\n]+");
+            assertEquals(2, lines.length);
+            check2886UpdateRelStructureNoOptimization(lines[0], lines[1], "updateStructure");
+        }, withoutOptimization(config), false);
     }
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatUpdateAll() {
-        String expected = "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}) SET n.name=\"First\", n:Person;\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) SET n:Project;\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}) SET n.name=\"Second\", n:Person;\n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) SET n:Project;\n" +
-                EXPECTED_2886_SCHEMA +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=1;\n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=2;\n" +
-                EXPECTED_2886_CLEANUP;
         final Map<String, Object> config = map("cypherFormat", "updateAll");
-        issue2886Common(expected, withoutOptimization(config), true);
+        issue2886Common(actual -> check2886FullStructureNonOptimized(actual, "updateAll"), withoutOptimization(config), true);
     }
 
     @Test
     public void testIssue2886CypherFormatCreate() {
         final Map<String, Object> config = map("cypherFormat", "create");
-        String expected = String.format(EXPECTED_2886_UNWIND, "CREATE");
-        issue2886Common(expected, config, true);
+        issue2886Common(actual -> check2886FullStructure(actual, "create"), config, true);
     }
 
     @Test
     public void testIssue2886CypherFormatAddStructure() {
         final Map<String, Object> config = map("cypherFormat", "addStructure");
-        issue2886Common(EXPECTED_2886_ADD_STRUCTURE, config, true);
+        issue2886Common(actual -> {
+            String[] lines = actual.split("[\r\n]+");
+            assertEquals(8, lines.length);
+            check2886UpdateNodeStructure(lines[0], lines[1], lines[2], lines[3], "MERGE", "ON CREATE SET");
+            check2886UpdateRelStructure(lines[4], lines[5], lines[6], lines[7], "CREATE");
+            check2886Ids(actual);
+        }, config, true);
     }
 
     @Test
     public void testIssue2886CypherFormatUpdateStructure() {
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
-        final String expected = String.format(EXPECTED_2886_UPDATE_STRUCTURE, "MERGE");
-        issue2886Common(expected, config, false);
+        issue2886Common(actual -> {
+            String[] lines = actual.split("[\r\n]+");
+            assertEquals(4, lines.length);
+            check2886UpdateRelStructure(lines[0], lines[1], lines[2], lines[3], "MERGE");
+        }, config, false);
     }
 
     @Test
     public void testIssue2886CypherFormatUpdateAll() {
         final Map<String, Object> config = map("cypherFormat", "updateAll");
-        String expected = String.format(EXPECTED_2886_UNWIND, "MERGE");
-        issue2886Common(expected, config, true);
+        issue2886Common(actual -> check2886FullStructure(actual, "updateAll"), config, true);
     }
 
     private Map<String, Object> withoutOptimization(Map<String, Object> map) {
@@ -1090,16 +1088,16 @@ public class ExportCypherTest {
         return map;
     }
 
-    private void issue2886Common(String expected, Map<String, Object> config, boolean isRountrip) {
-        db.executeTransactionally("match (n) detach delete n");
+    private void issue2886Common(Consumer<String> checkMethod, Map<String, Object> config, boolean isRountrip) {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         final String startOne = "First";
         final long relOne = 1L;
         final String startTwo = "Second";
         final long relTwo = 2L;
-        db.executeTransactionally("create (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
+        db.executeTransactionally("CREATE (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
                 map("name", startOne, "id", relOne));
-        db.executeTransactionally("create (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
+        db.executeTransactionally("CREATE (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
                 map("name", startTwo, "id", relTwo));
 
         final Map<String, Object> conf = map("format", "plain");
@@ -1110,13 +1108,13 @@ public class ExportCypherTest {
 
         beforeAfterIssue2886();
 
-        assertEquals(expected, cypherStatements);
+        checkMethod.accept(cypherStatements);
 
         if (!isRountrip) {
             return;
         }
-        db.executeTransactionally("match (n) detach delete n");
-        db.executeTransactionally("call apoc.schema.assert({}, {})");
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+        db.executeTransactionally("CALL apoc.schema.assert({}, {})");
         
         for (String i: cypherStatements.split(";\n")) {
             db.executeTransactionally(i);
@@ -1137,6 +1135,162 @@ public class ExportCypherTest {
             assertFalse(rels.hasNext());
         });
     }
+
+    private void check2886Cleanup(String line1, String line2) {
+            assertEquals("MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;", line1);
+            assertEquals("DROP CONSTRAINT UNIQUE_IMPORT_NAME;", line2);
+    }
+
+        private void check2886Schema(List<String> lines) {
+            assertEquals(5, lines.size());
+            assertTrue(lines.contains("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);"));
+            assertTrue(lines.contains("CREATE RANGE INDEX FOR (n:Foo) ON (n.name);"));
+            assertTrue(lines.contains("CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;"));
+            assertTrue(lines.contains("CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;"));
+            assertTrue(lines.contains("CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;"));
+        }
+
+        private List<String> extractIds(String s, String idName) {
+            List<String> ids = new ArrayList<>();
+            Pattern idPattern = Pattern.compile(String.format("%s:\\d+", idName));
+            Matcher idMatcher = idPattern.matcher(s);
+            while(idMatcher.find()) {
+                ids.add(String.valueOf(idMatcher.group()));
+            }
+            return ids;
+        }
+
+        private void check2886Ids(String actual) {
+            // Check that the non-deterministic ids are sensible
+            List<String> ids = extractIds(actual, "_id");
+            assertEquals(8, ids.size());
+            List<String> endIds = ids.subList(0, 2);
+            List<String> startIds = ids.subList(2, 4);
+            assertTrue(startIds.contains(ids.get(4)) && startIds.contains(ids.get(6)) && !Objects.equals(ids.get(4), ids.get(6)));
+            assertTrue(endIds.contains(ids.get(5)) && endIds.contains(ids.get(7)) && !Objects.equals(ids.get(5), ids.get(7)));
+        }
+
+        private void check2886IdsNoOptimization(String actual) {
+            // Check that the non-deterministic ids are sensible
+            List<String> ids = extractIds(actual, "`UNIQUE IMPORT ID`");
+            assertEquals(8, ids.size());
+            List<String> startIds = new ArrayList<>();
+            startIds.add(ids.get(0));
+            startIds.add(ids.get(2));
+            List<String> endIds = new ArrayList<>();
+            endIds.add(ids.get(1));
+            endIds.add(ids.get(3));
+            assertTrue(startIds.contains(ids.get(4)) && startIds.contains(ids.get(6)) && !Objects.equals(ids.get(4), ids.get(6)));
+            assertTrue(endIds.contains(ids.get(5)) && endIds.contains(ids.get(7)) && !Objects.equals(ids.get(5), ids.get(7)));
+        }
+
+        private void check2886UpdateNodeStructure(String line1, String line2, String line3, String line4, String createOrMerge, String setCommand) {
+            assertTrue(regexMatch("UNWIND [{_id:\\d, properties:{}}, {_id:\\d, properties:{}}] AS row", line1));
+            assertEquals(String.format("%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Project;", createOrMerge, setCommand), line2);
+
+            assertTrue(
+                    regexMatch("UNWIND [{_id:\\d, properties:{name:\"First\"}}, {_id:\\d, properties:{name:\"Second\"}}] AS row", line3)
+                            || regexMatch("UNWIND [{_id:\\d, properties:{name:\"Second\"}}, {_id:\\d, properties:{name:\"First\"}}] AS row", line3)
+            );
+            assertEquals(String.format("%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Person;", createOrMerge, setCommand), line4);
+        }
+
+        private void check2886UpdateNodeStructureNoOptimization(String line1, String line2, String line3, String line4, String cypherFormat) {
+            switch (cypherFormat) {
+                case "create" -> {
+                    assertTrue(regexMatch("CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"First\", `UNIQUE IMPORT ID`:\\d});", line1));
+                    assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line2));
+                    assertTrue(regexMatch("CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"Second\", `UNIQUE IMPORT ID`:\\d});", line3));
+                    assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line4));
+                }
+                case "updateAll" -> {
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"First\", n:Person;", line1));
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line2));
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"Second\", n:Person;", line3));
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line4));
+                }
+                case "addStructure" -> {
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"First\", n:Person;", line1));
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line2));
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"Second\", n:Person;", line3));
+                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line4));
+                }
+                default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            }
+        }
+
+        private void check2886UpdateRelStructure(String line1, String line2, String line3, String line4, String createOrMerge) {
+            assertTrue(
+                    regexMatch("UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}] AS row", line1)
+                            || regexMatch("UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}] AS row", line1)
+            );
+
+            assertEquals("MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})", line2);
+            assertEquals("MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})", line3);
+            assertTrue(
+                    regexMatch(String.format("%s (start)-[r:WORKS_FOR]->(end) SET r += row.properties;", createOrMerge), line4)
+                            || regexMatch(String.format("%s (start)-[r:WORKS_FOR]->(end)  SET r += row.properties;", createOrMerge), line4)
+            );
+        }
+
+        private void check2886UpdateRelStructureNoOptimization(String line1, String line2, String cypherFormat) {
+            switch (cypherFormat) {
+                case "create", "addStructure" -> {
+                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);", line1));
+                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);", line2));
+                }
+                case "updateAll" -> {
+                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=1;", line1));
+                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=2;", line2));
+                }
+                case "updateStructure" -> {
+                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;", line1));
+                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;", line2));
+                }
+                default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            }
+        }
+
+    private void check2886FullStructure(String actual, String cypherFormat) {
+            String createOrMerge = "";
+            switch (cypherFormat) {
+                case "updateAll" -> {
+                    createOrMerge = "MERGE";
+                }
+                case "create" -> {
+                    createOrMerge = "CREATE";
+                }
+                default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            }
+
+            String[] lines = actual.split("[\r\n]+");
+            assertEquals(15, lines.length);
+            check2886Schema(Arrays.stream(lines).toList().subList(0, 5));
+            check2886UpdateNodeStructure(lines[5], lines[6], lines[7], lines[8], createOrMerge, "SET");
+            check2886UpdateRelStructure(lines[9], lines[10], lines[11], lines[12], createOrMerge);
+            check2886Cleanup(lines[13], lines[14]);
+            check2886Ids(actual);
+        }
+
+        private void check2886FullStructureNonOptimized(String actual, String cypherFormat) {
+
+            String[] lines = actual.split("[\r\n]+");
+            assertEquals(13, lines.length);
+
+            check2886UpdateNodeStructureNoOptimization(lines[0], lines[1], lines[2], lines[3], cypherFormat);
+            check2886Schema(Arrays.stream(lines).toList().subList(4, 9));
+            check2886UpdateRelStructureNoOptimization(lines[9], lines[10], cypherFormat);
+            check2886Cleanup(lines[11], lines[12]);
+            check2886IdsNoOptimization(actual);
+        }
+
+        private boolean regexMatch(String regex, String actual) {
+            Pattern SPECIAL_REGEX_CHARS = Pattern.compile("[^A-Za-z0-9\\\\d\\n\\r\\s]");
+            String escapedRegex = SPECIAL_REGEX_CHARS.matcher(regex).replaceAll("\\\\$0");
+            Pattern pattern = Pattern.compile(escapedRegex);
+            Matcher matcher = pattern.matcher(actual);
+            return matcher.matches();
+        }
 
     private void relIndexTestCommon(String fileName, String expectedSchema, Map<String, Object> config) {
         Map<String, Object> exportConfig = map("separateFiles", true, "format", "neo4j-shell");
@@ -1656,50 +1810,6 @@ public class ExportCypherTest {
                 "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n" +
                 "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n" +
                 "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
-
-        static final String EXPECTED_2886_SCHEMA = """
-                CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);
-                CREATE RANGE INDEX FOR (n:Foo) ON (n.name);
-                CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;
-                CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;
-                CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;
-                """;
-
-        static final String EXPECTED_2886_CLEANUP = """
-                MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;
-                DROP CONSTRAINT UNIQUE_IMPORT_NAME;
-                """;
-
-        static final String EXPECTED_2886_UPDATE_STRUCTURE = """
-                UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row
-                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
-                MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
-                %1$s (start)-[r:WORKS_FOR]->(end) SET r += row.properties;
-                """;
-
-        static final String EXPECTED_2886_UNWIND = EXPECTED_2886_SCHEMA +
-                "UNWIND [{_id:4, properties:{}}, {_id:6, properties:{}}] AS row\n" +
-                "%1$s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Project;\n" +
-                "UNWIND [{_id:3, properties:{name:\"First\"}}, {_id:5, properties:{name:\"Second\"}}] AS row\n" +
-                "%1$s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Person;\n" +
-                EXPECTED_2886_UPDATE_STRUCTURE +
-                EXPECTED_2886_CLEANUP;
-
-        static final String EXPECTED_2886_ADD_STRUCTURE = """
-                UNWIND [{_id:4, properties:{}}, {_id:6, properties:{}}] AS row
-                MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Project;
-                UNWIND [{_id:3, properties:{name:"First"}}, {_id:5, properties:{name:"Second"}}] AS row
-                MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Person;
-                UNWIND [{start: {_id:3}, end: {_id:4}, properties:{id:1}}, {start: {_id:5}, end: {_id:6}, properties:{id:2}}] AS row
-                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
-                MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
-                CREATE (start)-[r:WORKS_FOR]->(end)  SET r += row.properties;
-                """;
-
-        static final String EXPECTED_2886_RELS_WITHOUT_OPTIMIZATION = """
-                MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);
-                MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:5}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:6}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);
-                """;
 
         static final String EXPECTED_NODES_PARAMS_ODD = """
                 :begin
