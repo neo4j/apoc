@@ -58,7 +58,7 @@ dependencies {
     // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.3.6', withoutServers
-    compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.6.2'
+    compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.26.1'
 
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(':test-utils')
