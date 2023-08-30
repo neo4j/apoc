@@ -75,7 +75,7 @@ public class XmlTest {
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
         TestUtil.registerProcedure(db, Xml.class);
 
-        server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server = HttpServer.create(new InetSocketAddress(6363), 0);
         HttpContext staticContext = server.createContext("/");
         staticContext.setHandler(new SimpleHttpHandler());
         server.start();
@@ -460,7 +460,7 @@ public class XmlTest {
     @Test
     public void testLoadXmlFromZipByUrl() {
         testResult(db, """
-                CALL apoc.load.xml('http://localhost:8000/testload.zip?raw=true!xml/books.xml')
+                CALL apoc.load.xml('http://localhost:6363/testload.zip?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
@@ -473,7 +473,7 @@ public class XmlTest {
     @Test
     public void testLoadXmlFromTarByUrl() {
         testResult(db, """
-                CALL apoc.load.xml('http://localhost:8000/testload.tar.gz?raw=true!xml/books.xml')
+                CALL apoc.load.xml('http://localhost:6363/testload.tar.gz?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
@@ -486,7 +486,7 @@ public class XmlTest {
     @Test
     public void testLoadXmlFromTarGzByUrl() {
         testResult(db, """
-                CALL apoc.load.xml('http://localhost:8000/testload.tar.gz?raw=true!xml/books.xml')
+                CALL apoc.load.xml('http://localhost:6363/testload.tar.gz?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
@@ -499,7 +499,7 @@ public class XmlTest {
     @Test
     public void testLoadXmlFromTgzByUrl() {
         testResult(db, """
-                CALL apoc.load.xml('http://localhost:8000/testload.tgz?raw=true!xml/books.xml')
+                CALL apoc.load.xml('http://localhost:6363/testload.tgz?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id

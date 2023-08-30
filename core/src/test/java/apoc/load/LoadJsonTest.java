@@ -92,11 +92,11 @@ public class LoadJsonTest {
 	@Before public void setUp() throws IOException {
 	    apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
 	    apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
-	    apocConfig().setProperty("apoc.json.zip.url", "http://localhost:8000/testload.zip?raw=true!person.json");
+	    apocConfig().setProperty("apoc.json.zip.url", "http://localhost:5353/testload.zip?raw=true!person.json");
         apocConfig().setProperty("apoc.json.simpleJson.url", ClassLoader.getSystemResource("map.json").toString());
         TestUtil.registerProcedure(db, LoadJson.class);
 
-        server = HttpServer.create(new InetSocketAddress(8000), 0);
+        server = HttpServer.create(new InetSocketAddress(5353), 0);
         HttpContext staticContext = server.createContext("/");
         staticContext.setHandler(new SimpleHttpHandler());
         server.start();
@@ -260,7 +260,7 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonZipByUrl() throws Exception {
-        URL url = new URL("http://localhost:8000/testload.zip?raw=true");
+        URL url = new URL("http://localhost:5353/testload.zip?raw=true");
         testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
@@ -271,7 +271,7 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonTarByUrl() throws Exception {
-        URL url = new URL("http://localhost:8000/testload.tar?raw=true");
+        URL url = new URL("http://localhost:5353/testload.tar?raw=true");
         testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
@@ -282,7 +282,7 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonTarGzByUrl() throws Exception {
-        URL url = new URL("http://localhost:8000/testload.tar.gz?raw=true");
+        URL url = new URL("http://localhost:5353/testload.tar.gz?raw=true");
         testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
@@ -293,7 +293,7 @@ public class LoadJsonTest {
     }
 
     @Test public void testLoadJsonTgzByUrl() throws Exception {
-        URL url = new URL("http://localhost:8000/testload.tgz?raw=true");
+        URL url = new URL("http://localhost:5353/testload.tgz?raw=true");
         testCall(db, "CALL apoc.load.json($url)",map("url", url +"!person.json"),
                 (row) -> {
                     Map<String,Object> r = (Map<String, Object>) row.get("value");
