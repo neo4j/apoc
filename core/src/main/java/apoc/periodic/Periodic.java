@@ -202,10 +202,10 @@ public class Periodic {
 
     @Procedure(name = "apoc.periodic.countdown", mode = Mode.WRITE)
     @Description("Runs a repeatedly called background statement until it returns 0.")
-    public Stream<JobInfo> countdown(@Name("name") String name, @Name("statement") String statement, @Name("rate") long rate) {
+    public Stream<JobInfo> countdown(@Name("name") String name, @Name("statement") String statement, @Name("delay") long delay) {
         validateQuery(statement);
-        JobInfo info = submitJob(name, new Countdown(name, statement, rate, log), log, pools);
-        info.rate = rate;
+        JobInfo info = submitJob(name, new Countdown(name, statement, delay, log), log, pools);
+        info.delay = delay;
         return Stream.of(info);
     }
 
@@ -304,20 +304,20 @@ public class Periodic {
     private class Countdown implements Runnable {
         private final String name;
         private final String statement;
-        private final long rate;
+        private final long delay;
         private transient final Log log;
 
-        public Countdown(String name, String statement, long rate, Log log) {
+        public Countdown(String name, String statement, long delay, Log log) {
             this.name = name;
             this.statement = statement;
-            this.rate = rate;
+            this.delay = delay;
             this.log = log;
         }
 
         @Override
         public void run() {
             if (Periodic.this.executeNumericResultStatement(statement, Collections.emptyMap()) > 0) {
-                pools.getScheduledExecutorService().schedule(() -> submitJob(name, this, log, pools), rate, TimeUnit.SECONDS);
+                pools.getScheduledExecutorService().schedule(() -> submitJob(name, this, log, pools), delay, TimeUnit.SECONDS);
             }
         }
     }
