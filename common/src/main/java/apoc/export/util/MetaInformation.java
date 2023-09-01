@@ -37,12 +37,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static apoc.export.util.BulkImportUtil.allowedMapping;
 import static apoc.gephi.GephiFormatUtils.getCaption;
 import static apoc.meta.tablesforlabels.PropertyTracker.typeMappings;
 import static apoc.util.collection.Iterables.stream;
 import static java.util.Arrays.asList;
-import static org.apache.commons.lang3.ClassUtils.primitiveToWrapper;
 
 /**
  * @author mh
@@ -115,17 +113,9 @@ public class MetaInformation {
     
     public static String typeFor(Class value, Set<String> allowed) {
         if (value == void.class) return null; // Is this necessary?
-        final boolean isArray = value.isArray();
-        value = isArray ? value.getComponentType() : value;
-        // csv case
-        // consistent with https://neo4j.com/docs/operations-manual/current/tools/neo4j-admin/neo4j-admin-import/#import-tool-header-format-properties
-        if (allowed == null) {
-            return allowedMapping.getOrDefault( primitiveToWrapper(value), "string" );
-        }
-        // graphML case
-        String name = value.getSimpleName().toLowerCase();
-        boolean isAllowed = allowed.contains(name);
         Types type = Types.of(value);
+        String name = (value.isArray() ? value.getComponentType() : value).getSimpleName().toLowerCase();
+        boolean isAllowed = allowed != null && allowed.contains(name);
         switch (type) {
             case NULL:
                 return null;
