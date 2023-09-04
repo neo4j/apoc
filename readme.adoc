@@ -1,8 +1,8 @@
 :readme:
-:branch: 5.10
+:branch: 5.13
 :docs: https://neo4j.com/docs/apoc/current
-:apoc-release: 5.12.0
-:neo4j-version: 5.12.0
+:apoc-release: 5.13.0
+:neo4j-version: 5.13.0
 :img: https://raw.githubusercontent.com/neo4j/apoc/dev/images
 
 https://community.neo4j.com[image:https://img.shields.io/discourse/users?logo=discourse&server=https%3A%2F%2Fcommunity.neo4j.com[Discourse users]]
@@ -159,7 +159,7 @@ h| Output Return Columns |
 Since APOC relies on Neo4j's internal APIs you need to use the *matching APOC version* for your Neo4j installation.
 Make sure that the *first two version numbers match between Neo4j and APOC*.
 
-Go to https://github.com/neo4j/apoc/releases/{apoc-release}[the latest release] for *Neo4j version {branch}* and download the binary jar to place into your `$NEO4J_HOME/plugins` folder.
+Go to https://github.com/neo4j/apoc/releases/latest[the latest release] for the matching *Neo4j version* and download the binary jar to place into your `$NEO4J_HOME/plugins` folder.
 
 You can find https://github.com/neo4j/apoc/releases/[all releases here].
 
