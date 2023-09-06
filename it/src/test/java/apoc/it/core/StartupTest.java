@@ -47,6 +47,7 @@ public class StartupTest {
 
     @Test
     public void check_basic_deployment() {
+        //random comment
         for (var version: Neo4jVersion.values()) {
             try  {
                 Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
