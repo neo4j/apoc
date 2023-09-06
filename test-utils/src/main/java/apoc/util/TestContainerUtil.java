@@ -153,9 +153,9 @@ public class TestContainerUtil {
                 .withFileSystemBind(canonicalPath, "/var/lib/neo4j/import") // map the "target/import" dir as the Neo4j's import dir
                 .withCreateContainerCmdModifier(cmd -> cmd.withMemory(2024 * 1024 * 1024L)) // 2gb
                 .withExposedPorts(7687, 7473, 7474)
-//                .withDebugger()  // attach debugger
+                .withDebugger()  // attach debugger
 
-                .withStartupAttempts(3)
+                .withStartupAttempts(1)
                 // set uid if possible - export tests do write to "/import"
                 .withCreateContainerCmdModifier(cmd -> {
                     try {
