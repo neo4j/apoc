@@ -155,7 +155,7 @@ public class TestContainerUtil {
                 .withExposedPorts(7687, 7473, 7474)
 //                .withDebugger()  // attach debugger
 
-                .withStartupAttempts(3)
+                .withStartupAttempts(1)
                 // set uid if possible - export tests do write to "/import"
                 .withCreateContainerCmdModifier(cmd -> {
                     try {
