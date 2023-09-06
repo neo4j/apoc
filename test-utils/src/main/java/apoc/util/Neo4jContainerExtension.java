@@ -91,6 +91,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
                 // we addSuppressed the exception produced by execInContainer, but we finally throw the original `startException`
                 startException.addSuppressed(new RuntimeException("Exception during fallback execInContainer", ex));
             }
+            System.out.println(startException);
             throw startException;
         }
     }
