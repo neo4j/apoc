@@ -33,6 +33,7 @@ import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
 import java.util.*;
@@ -49,6 +50,7 @@ public class PathExplorer {
 	@Context
     public Transaction tx;
 
+	@NotThreadSafe
 	@Procedure("apoc.path.expand")
 	@Description("Returns paths expanded from the start node following the given relationship types from min-depth to max-depth.")
 	public Stream<PathResult> explorePath(@Name("startNode") Object start
@@ -61,12 +63,14 @@ public class PathExplorer {
 	}
 
 	//
+	@NotThreadSafe
 	@Procedure("apoc.path.expandConfig")
 	@Description("Returns paths expanded from the start node the given relationship types from min-depth to max-depth.")
 	public Stream<PathResult> expandConfig(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		return expandConfigPrivate(start, config).map( PathResult::new );
 	}
 
+	@NotThreadSafe
 	@Procedure("apoc.path.subgraphNodes")
 	@Description("Returns the nodes in the sub-graph reachable from the start node following the given relationship types to max-depth.")
 	public Stream<NodeResult> subgraphNodes(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
@@ -80,6 +84,7 @@ public class PathExplorer {
 		return expandConfigPrivate(start, configMap).map( path -> path == null ? new NodeResult(null) : new NodeResult(path.endNode()) );
 	}
 
+	@NotThreadSafe
 	@Procedure("apoc.path.subgraphAll")
 	@Description("Returns the sub-graph reachable from the start node following the given relationship types to max-depth.")
 	public Stream<GraphResult> subgraphAll(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
@@ -97,6 +102,7 @@ public class PathExplorer {
 		return Stream.of(new GraphResult(subgraphNodes, subgraphRels));
 	}
 
+	@NotThreadSafe
 	@Procedure("apoc.path.spanningTree")
 	@Description("Returns spanning tree paths expanded from the start node following the given relationship types to max-depth.")
 	public Stream<PathResult> spanningTree(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {

@@ -26,6 +26,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
 import java.util.stream.Stream;
@@ -39,6 +40,7 @@ public class Examples {
     @Context
     public Transaction tx;
 
+    @NotThreadSafe
     @Procedure(name = "apoc.example.movies", mode = Mode.WRITE)
     @Description("Seeds the database with the Neo4j movie dataset.")
     public Stream<ProgressInfo> movies() {

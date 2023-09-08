@@ -59,7 +59,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-
+import org.neo4j.procedure.NotThreadSafe;
 import static apoc.util.Util.containsValueEquals;
 import static apoc.util.Util.toAnyValues;
 import static java.util.Arrays.asList;
@@ -149,6 +149,7 @@ public class Coll {
         }
         return (avg/(double)list.size());
     }
+    @NotThreadSafe
     @UserFunction("apoc.coll.min")
     @Description("Returns the minimum of all values in the given list.")
     public Object min(@Name("values") List<Object> list) {
@@ -160,8 +161,9 @@ public class Coll {
         }
     }
 
-    @UserFunction("apoc.coll.max")
-    @Description("Returns the maximum of all values in the given list.")
+    @NotThreadSafe
+    @UserFunction( "apoc.coll.max" )
+    @Description( "Returns the maximum of all values in the given list." )
     public Object max(@Name("values") List<Object> list) {
         if (list == null || list.isEmpty()) return null;
         if (list.size() == 1) return list.get(0);

@@ -30,6 +30,7 @@ public class Lock {
     @Context
     public Transaction tx;
 
+    @NotThreadSafe
     @Procedure(name = "apoc.lock.all", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given nodes and relationships.")
     public void all(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels) {
@@ -41,6 +42,7 @@ public class Lock {
         }
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.lock.nodes", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given nodes.")
     public void nodes(@Name("nodes") List<Node> nodes) {
@@ -49,6 +51,7 @@ public class Lock {
         }
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.lock.read.nodes", mode = Mode.READ)
     @Description("Acquires a read lock on the given nodes.")
     public void readLockOnNodes(@Name("nodes") List<Node> nodes) {
@@ -57,6 +60,7 @@ public class Lock {
         }
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.lock.rels", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given relationships.")
     public void rels(@Name("rels") List<Relationship> rels) {
@@ -65,6 +69,7 @@ public class Lock {
         }
     }
 
+    @NotThreadSafe
     @Procedure(name = "apoc.lock.read.rels", mode = Mode.READ)
     @Description("Acquires a read lock on the given relationships.")
     public void readLocksOnRels(@Name("rels") List<Relationship> rels) {

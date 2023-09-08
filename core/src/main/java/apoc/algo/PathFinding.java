@@ -26,6 +26,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
 import java.util.Collections;
@@ -109,6 +110,7 @@ public class PathFinding {
         return WeightedPathResult.streamWeightedPathResult(startNode, endNode, algo);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.algo.allSimplePaths")
     @Description("Runs a search algorithm to find all of the simple paths between the given relationships, " +
             "up to a max depth described by maxNodes.")

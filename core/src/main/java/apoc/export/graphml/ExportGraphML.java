@@ -42,6 +42,7 @@ import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -98,6 +99,8 @@ public class ExportGraphML {
         });
         return Stream.of(result);
     }
+
+    @NotThreadSafe
     @Procedure("apoc.export.graphml.all")
     @Description("Exports the full database to the provided GraphML file.")
     public Stream<ProgressInfo> all(@Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
@@ -123,6 +126,7 @@ public class ExportGraphML {
         return exportGraphML(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config));
     }
 
+    @NotThreadSafe
     @Procedure("apoc.export.graphml.query")
     @Description("Exports the given nodes and relationships from the Cypher statement to the provided GraphML file.")
     public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {

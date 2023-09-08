@@ -24,6 +24,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.UserFunction;
 
 import java.util.Collections;
@@ -54,11 +55,14 @@ public class CypherFunctions {
       }
     }
 
+    @NotThreadSafe
     @UserFunction("apoc.cypher.runFirstColumnMany")
     @Description("Runs the given statement with the given parameters and returns the first column collected into a list.")
     public List<Object> runFirstColumnMany(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return (List)runFirstColumn(statement, params, true);
     }
+
+    @NotThreadSafe
     @UserFunction("apoc.cypher.runFirstColumnSingle")
     @Description("Runs the given statement with the given parameters and returns the first element of the first column.")
     public Object runFirstColumnSingle(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
