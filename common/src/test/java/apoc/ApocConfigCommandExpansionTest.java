@@ -41,6 +41,7 @@ import org.neo4j.logging.InternalLogProvider;
 import org.neo4j.logging.internal.SimpleLogService;
 import org.neo4j.procedure.impl.GlobalProceduresRegistry;
 
+import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_RATIO;
 import static apoc.ApocConfig.SUN_JAVA_COMMAND;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
@@ -155,6 +156,27 @@ public class ApocConfigCommandExpansionTest {
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage = "$(echo \"expanded value\") is a command, but config is not explicitly told to expand it. (Missing --expand-commands argument?)";
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
+    }
+
+    @Test
+    public void testMaxDecompressionRatioValidation() {
+
+        InternalLogProvider logProvider = new AssertableLogProvider();
+
+        Config neo4jConfig = mock(Config.class);
+        when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
+        when(neo4jConfig.get(any())).thenReturn(null);
+        when(neo4jConfig.expandCommands()).thenReturn(false);
+
+        GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
+        DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
+        System.setProperty(APOC_MAX_DECOMPRESSION_RATIO, "0");
+        ApocConfig apocConfig = new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
+
+        RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
+        String expectedMessage = String.format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO);
+        Assertions.assertThat(e.getMessage()).contains(expectedMessage);
+        System.clearProperty(APOC_MAX_DECOMPRESSION_RATIO);
     }
 
     private void removeLineFromApocConfig(String lineContent) throws IOException {
