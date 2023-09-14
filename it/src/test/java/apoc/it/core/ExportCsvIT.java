@@ -51,6 +51,7 @@ public class ExportCsvIT {
 
     @AfterClass
     public static void afterAll() {
+        session.close();
         neo4jContainer.close();
     }
 

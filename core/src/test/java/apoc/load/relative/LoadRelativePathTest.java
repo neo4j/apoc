@@ -21,6 +21,7 @@ package apoc.load.relative;
 import apoc.load.LoadJson;
 import apoc.load.Xml;
 import apoc.util.TestUtil;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,6 +57,11 @@ public class LoadRelativePathTest {
     public void setUp() {
         TestUtil.registerProcedure(db, LoadJson.class, Xml.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     //JSON

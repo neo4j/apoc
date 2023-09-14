@@ -105,6 +105,7 @@ public class LoadJsonTest {
     @After
     public void cleanup() {
         server.stop(0);
+        db.shutdown();
     }
 
     @Test public void testLoadJson() {

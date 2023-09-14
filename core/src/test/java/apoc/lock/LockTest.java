@@ -20,6 +20,7 @@ package apoc.lock;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -46,6 +47,11 @@ public class LockTest {
     @BeforeClass
     public static void setUp() {
         TestUtil.registerProcedure(db, Lock.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     @Test

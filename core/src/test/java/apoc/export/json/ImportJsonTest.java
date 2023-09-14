@@ -28,6 +28,7 @@ import apoc.util.collection.Iterables;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import apoc.util.Utils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -88,7 +89,12 @@ public class ImportJsonTest {
         TestUtil.registerProcedure(db, ImportJson.class, Schemas.class, Utils.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }
-    
+
+    @After
+    public void teardown() {
+        db.shutdown();
+    }
+
     @Test
     public void shouldImportAllJsonWithoutImportId() {
         shouldImportAllCommon(map("cleanup", true), 8, 0L);

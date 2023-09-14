@@ -25,6 +25,7 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,6 +78,11 @@ public class NodesTest {
     @Before
     public void setUp() {
         TestUtil.registerProcedure(db, Nodes.class, Create.class);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

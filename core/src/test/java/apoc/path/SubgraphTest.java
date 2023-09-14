@@ -26,6 +26,7 @@ import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -72,6 +73,11 @@ public class SubgraphTest {
 			Map<String, Object> row = result.next();
 			fullGraphCount = (Long) row.get("graphCount");
 		}
+	}
+
+	@AfterClass
+	public static void teardown() {
+		db.shutdown();
 	}
 
 	@Rule

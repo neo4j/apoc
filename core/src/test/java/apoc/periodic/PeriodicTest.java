@@ -26,6 +26,7 @@ import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.MatcherAssert;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -99,6 +100,11 @@ public class PeriodicTest {
     public void initDb() {
         TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class, Utils.class, MockLogger.class);
         db.executeTransactionally("call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

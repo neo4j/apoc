@@ -23,6 +23,7 @@ import apoc.coll.Coll;
 import apoc.create.Create;
 import apoc.diff.Diff;
 import apoc.util.TestUtil;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -46,6 +47,11 @@ public class HelpTest {
     @Before
     public void setUp() {
         TestUtil.registerProcedure(db, Help.class, BitwiseOperations.class, Coll.class, Diff.class, Create.class);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

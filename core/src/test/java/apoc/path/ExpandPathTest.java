@@ -25,6 +25,7 @@ import apoc.util.collection.Iterators;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -63,7 +64,12 @@ public class ExpandPathTest {
 		 }
     }
 
-    @After
+	@AfterClass
+	public static void teardown() {
+		db.shutdown();
+	}
+
+	@After
     public void removeOtherLabels() {
 		db.executeTransactionally("OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
 	}

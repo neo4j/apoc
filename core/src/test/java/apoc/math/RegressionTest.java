@@ -20,6 +20,7 @@ package apoc.math;
 
 import apoc.util.TestUtil;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -39,6 +40,11 @@ public class RegressionTest {
     @BeforeClass
     public static void setUp() {
         TestUtil.registerProcedure(db, Regression.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     @Test

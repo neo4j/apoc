@@ -21,6 +21,7 @@ package apoc.merge;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,6 +46,11 @@ public class MergeTest {
         TestUtil.registerProcedure(db, Merge.class);
     }
 
+    @After
+    public void teardown() {
+        db.shutdown();
+    }
+    
     @Test
     public void testMergeNode() {
         testMergeNodeCommon(false);

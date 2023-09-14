@@ -70,6 +70,7 @@ public class StartupTest {
                 assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
                 assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
 
+                session.close();
                 neo4jContainer.close();
             } catch (Exception ex) {
                 // if Testcontainers wasn't able to retrieve the docker image we ignore the test
