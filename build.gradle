@@ -40,11 +40,13 @@ static def apocReleases() {
 // Any major.minor version of Neo4j should use the latest corresponding major.minor version of APOC
 // E.g Neo4j 5.2.0 should find the APOC 5.2.x release with the largest patch (x value)
 static def findApocVersion(apocReleases, neo4jRelease) {
-    def majorNeoVersion = neo4jRelease.substring(0, 1)
-    def minorNeoVersion = neo4jRelease.substring(2, 3)
+    def neoVersions = neo4jRelease.tokenize(".")
+    def majorNeoVersion = neoVersions[0]
+    def minorNeoVersion = neoVersions[1]
     def candidates = apocReleases
-            .findAll { it.substring(0, 1) == majorNeoVersion &&
-                        it.substring(2,3) == minorNeoVersion
+            .findAll {
+                it.tokenize(".")[0] == majorNeoVersion &&
+                        it.tokenize(".")[1] == minorNeoVersion
             }
             .sort { o1, o2 -> normalizeVersion(o1) <=> normalizeVersion(o2) }
     return candidates.size() > 0 ? candidates[-1] : null
