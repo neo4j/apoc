@@ -84,6 +84,7 @@ public class XmlTest {
     @After
     public void cleanup() {
         server.stop(0);
+        db.shutdown();
     }
 
     @Test

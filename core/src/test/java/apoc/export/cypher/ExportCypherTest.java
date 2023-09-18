@@ -24,6 +24,7 @@ import apoc.util.CompressionAlgo;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import org.junit.After;
 import org.junit.Assert;
 
 import java.util.ArrayList;
@@ -103,6 +104,11 @@ public class ExportCypherTest {
     @Before
     public void setUp() {
         ExportCypherTestUtils.setUp(db, testName);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

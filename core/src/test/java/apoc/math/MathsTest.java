@@ -19,6 +19,7 @@
 package apoc.math;
 
 import apoc.util.TestUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -37,6 +38,11 @@ public class MathsTest {
 
     @BeforeClass public static void setUp() {
         TestUtil.registerProcedure(db,Maths.class);
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     @Test public void testMaxLong(){

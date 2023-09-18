@@ -27,6 +27,7 @@ import apoc.util.CompressionConfig;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -156,6 +157,11 @@ public class ExportCsvTest {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally("CREATE (f:User1:User {name:'foo',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
         db.executeTransactionally("CREATE (f:Address1:Address {name:'Andrea', city: 'Milano', street:'Via Garibaldi, 7'})-[:NEXT_DELIVERY]->(a:Address {name: 'Bar Sport'}), (b:Address {street: 'via Benni'})");
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     private String readFile(String fileName) {

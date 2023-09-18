@@ -25,6 +25,7 @@ import apoc.util.Util;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -91,6 +92,11 @@ public class GraphsTest {
                     result.stream().forEach(graph::putAll);
                     return null;
                 });
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

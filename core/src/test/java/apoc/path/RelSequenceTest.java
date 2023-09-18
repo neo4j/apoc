@@ -21,6 +21,7 @@ package apoc.path;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -52,6 +53,11 @@ public class RelSequenceTest {
             tx.execute(additionalLink);
             tx.commit();
         }
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     @Test

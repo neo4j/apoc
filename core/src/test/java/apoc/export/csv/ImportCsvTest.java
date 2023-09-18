@@ -22,6 +22,7 @@ import apoc.csv.CsvTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
 import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -253,6 +254,11 @@ public class ImportCsvTest {
 
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
     
     @Test

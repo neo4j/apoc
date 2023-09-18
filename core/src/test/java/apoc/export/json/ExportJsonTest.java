@@ -24,6 +24,7 @@ import apoc.util.CompressionAlgo;
 import apoc.util.FileTestUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -97,6 +98,11 @@ public class ExportJsonTest {
                         ]->(b:User {name:'Jim',age:42}),
                         (c:User {age:12})
                         """);
+    }
+
+    @After
+    public void teardown() {
+        db.shutdown();
     }
 
     @Test

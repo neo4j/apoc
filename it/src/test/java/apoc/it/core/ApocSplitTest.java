@@ -486,6 +486,7 @@ public class ApocSplitTest {
 
         Assert.assertEquals(CORE_PROCEDURES, procedureNames);
         Assert.assertEquals(CORE_FUNCTIONS, functionNames);
+        session.close();
         neo4jContainer.close();
     }
 }

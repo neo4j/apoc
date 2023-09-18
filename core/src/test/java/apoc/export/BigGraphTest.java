@@ -30,6 +30,7 @@ import apoc.refactor.GraphRefactoring;
 import apoc.refactor.rename.Rename;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -73,6 +74,11 @@ public class BigGraphTest {
 
         final String query = Util.readResourceFile("moviesMod.cypher");
         IntStream.range(0, 10000).forEach(__-> db.executeTransactionally(query));
+    }
+
+    @AfterClass
+    public static void teardown() {
+        db.shutdown();
     }
 
     @Test
