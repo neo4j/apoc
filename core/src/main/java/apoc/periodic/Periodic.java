@@ -79,7 +79,7 @@ public class Periodic {
     }
 
     @Procedure("apoc.periodic.list")
-    @Description("Returns a list of all background jobs.")
+    @Description("Returns a `LIST<ANY>` of all background jobs.")
     public Stream<JobInfo> list() {
         return pools.getJobList().entrySet().stream().map( (e) -> e.getKey().update(e.getValue()));
     }

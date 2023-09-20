@@ -53,7 +53,7 @@ public class Fingerprinting {
     public Log log;
 
     @UserFunction("apoc.hashing.fingerprint")
-    @Description("Calculates a MD5 checksum over a node or a relationship (identical entities share the same checksum).\n" +
+    @Description("Calculates a MD5 checksum over a `NODE` or `RELATIONSHIP` (identical entities share the same checksum).\n" +
             "Unsuitable for cryptographic use-cases.")
     public String fingerprint(@Name("object") Object thing, @Name(value = "excludedPropertyKeys", defaultValue = "[]") List<String> excludedPropertyKeys) {
         FingerprintingConfig config = new FingerprintingConfig(Util.map("allNodesDisallowList", excludedPropertyKeys,
@@ -63,9 +63,10 @@ public class Fingerprinting {
     }
 
     @UserFunction("apoc.hashing.fingerprinting")
-    @Description("Calculates a MD5 checksum over a node or a relationship (identical entities share the same checksum).\n" +
-            "Unlike `apoc.hashing.fingerprint()`, this function supports a number of config parameters.\n" +
-            "Unsuitable for cryptographic use-cases.")
+    @Description("""
+            Calculates a MD5 checksum over a `NODE` or `RELATIONSHIP` (identical entities share the same checksum).
+            Unlike `apoc.hashing.fingerprint()`, this function supports a number of config parameters.
+            Unsuitable for cryptographic use-cases.""")
     public String fingerprinting(@Name("object") Object thing, @Name(value = "config", defaultValue = "{}") Map<String, Object> conf) {
         FingerprintingConfig config = new FingerprintingConfig(conf);
         return fingerprint(thing, config);
@@ -119,9 +120,10 @@ public class Fingerprinting {
     }
 
     @UserFunction("apoc.hashing.fingerprintGraph")
-    @Description("Calculates a MD5 checksum over the full graph.\n" +
-            "This function uses in-memory data structures.\n" +
-            "Unsuitable for cryptographic use-cases.")
+    @Description("""
+            Calculates a MD5 checksum over the full graph.
+            This function uses in-memory data structures.
+            Unsuitable for cryptographic use-cases.""")
     public String fingerprintGraph(@Name(value = "propertyExcludes", defaultValue = "[]") List<String> excludedPropertyKeys) {
         FingerprintingConfig config = new FingerprintingConfig(Util.map("allNodesDisallowList", excludedPropertyKeys,
                 "allRelsDisallowList", excludedPropertyKeys, "mapDisallowList", excludedPropertyKeys,

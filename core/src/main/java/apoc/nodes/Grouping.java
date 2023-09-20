@@ -87,8 +87,8 @@ public class Grouping {
 
     @NotThreadSafe
     @Procedure("apoc.nodes.group")
-    @Description("Allows for the aggregation of nodes based on the given properties.\n" +
-            "This procedure returns virtual nodes.")
+    @Description("Allows for the aggregation of `NODE` values based on the given properties.\n" +
+            "This procedure returns virtual `NODE` values.")
     public Stream<GroupResult> group(@Name("labels") List<String> labelNames, @Name("groupByProperties") List<String> groupByProperties,
                                      @Name(value = "aggregations", defaultValue = "[{`*`:\"count\"},{`*`:\"count\"}]") List<Map<String, Object>> aggregations,
                                      @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {

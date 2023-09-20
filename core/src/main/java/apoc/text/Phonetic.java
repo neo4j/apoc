@@ -35,14 +35,14 @@ public class Phonetic {
     private static final DoubleMetaphone DOUBLE_METAPHONE = new DoubleMetaphone();
 
     @UserFunction("apoc.text.phonetic")
-    @Description("Returns the US_ENGLISH phonetic soundex encoding of all words of the string.")
+    @Description("Returns the US_ENGLISH phonetic soundex encoding of all words of the `STRING`.")
     public String phonetic(final @Name("text") String value) {
         if (value == null) return null;
         return Stream.of(value.split("\\W+")).map(US_ENGLISH::soundex).collect(Collectors.joining(""));
     }
 
     @Procedure("apoc.text.phoneticDelta")
-    @Description("Returns the US_ENGLISH soundex character difference between the two given strings.")
+    @Description("Returns the US_ENGLISH soundex character difference between the two given `STRING` values.")
     public Stream<PhoneticResult> phoneticDelta(final @Name("text1") String text1, final @Name("text2") String text2) {
         try {
             return Stream.of(new PhoneticResult(US_ENGLISH.soundex(text1),US_ENGLISH.soundex(text2),US_ENGLISH.difference(text1,text2)));
@@ -52,7 +52,7 @@ public class Phonetic {
     }
 
     @UserFunction("apoc.text.doubleMetaphone")
-    @Description("Returns the double metaphone phonetic encoding of all words in the given string value.")
+    @Description("Returns the double metaphone phonetic encoding of all words in the given `STRING` value.")
     public String doubleMetaphone(final @Name("value") String value)
     {
         if (value == null || value.trim().isEmpty()) return value;

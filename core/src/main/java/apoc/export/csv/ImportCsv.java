@@ -42,7 +42,7 @@ public class ImportCsv {
     public Log log;
 
     @Procedure(name = "apoc.import.csv", mode = Mode.SCHEMA)
-    @Description("Imports nodes and relationships with the given labels and types from the provided CSV file.")
+    @Description("Imports `NODE` and `RELATIONSHIP` values with the given labels and types from the provided CSV file.")
     public Stream<ProgressInfo> importCsv(
             @Name("nodes") List<Map<String, Object>> nodes,
             @Name("rels") List<Map<String, Object>> relationships,

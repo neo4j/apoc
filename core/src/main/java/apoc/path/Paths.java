@@ -37,7 +37,7 @@ import java.util.List;
 public class Paths {
 
     @UserFunction("apoc.path.create")
-    @Description("Returns a path from the given start node and a list of relationships.")
+    @Description("Returns a `PATH` from the given start `NODE` and `LIST<RELATIONSHIP> values`.")
     public Path create(@Name("startNode") Node startNode, @Name(value = "rels", defaultValue = "[]") List<Relationship> rels) {
         if (startNode == null) return null;
         PathImpl.Builder builder = new PathImpl.Builder(startNode);
@@ -52,7 +52,7 @@ public class Paths {
     }
 
     @UserFunction("apoc.path.slice")
-    @Description("Returns a sub-path of the given length and offset from the given path.")
+    @Description("Returns a sub-`PATH` of the given length and offset from the given `PATH`.")
     public Path slice(@Name("path") Path path, @Name(value = "offset", defaultValue = "0") long offset,@Name(value = "length", defaultValue = "-1") long length) {
         if (path == null) return null;
         if (offset < 0) offset = 0;
@@ -75,7 +75,7 @@ public class Paths {
     }
 
     @UserFunction("apoc.path.combine")
-    @Description("Combines the two given paths into one path.")
+    @Description("Combines the two given `PATH` values into one `PATH`.")
     public Path combine(@Name("path1") Path first, @Name("path2") Path second) {
         if (first == null) return second;
         if (second == null) return first;
@@ -90,7 +90,7 @@ public class Paths {
     }
 
     @UserFunction("apoc.path.elements")
-    @Description("Converts the given path into a list of nodes and relationships.")
+    @Description("Converts the given `PATH` into a `LIST<NODE | RELATIONSHIP>`.")
     public List<Object> elements(@Name("path") Path path) {
         if (path == null) return null;
         return Iterables.asList((Iterable)path);

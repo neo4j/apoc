@@ -37,7 +37,7 @@ import java.util.Locale;
 public class Numbers {
 
   @UserFunction("apoc.number.format")
-  @Description("Formats the given long or double using the given pattern and language to produce a string.")
+  @Description("Formats the given `INTEGER` or `FLOAT` using the given pattern and language to produce a `STRING`.")
   public String format(final @Name("number") Object value,@Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "language", defaultValue = "") String lang) {
     Number number = validateNumberParam(value);
     if (number == null) return null;
@@ -47,7 +47,7 @@ public class Numbers {
   }
 
   @UserFunction("apoc.number.parseInt")
-  @Description("Parses the given string using the given pattern and language to produce a long.")
+  @Description("Parses the given `STRING` using the given pattern and language to produce a `INTEGER`.")
   public Long parseInt(final @Name("text") String text, @Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "language",defaultValue = "") String lang) {
     Number res = parseNumber(text, pattern, lang);
     return res == null ? null : res.longValue();
@@ -65,7 +65,7 @@ public class Numbers {
   }
 
   @UserFunction("apoc.number.parseFloat")
-  @Description("Parses the given string using the given pattern and language to produce a double.")
+  @Description("Parses the given `STRING` using the given pattern and language to produce a `FLOAT`.")
   public Double parseFloat(final @Name("text") String text, @Name(value = "pattern",defaultValue = "") String pattern, @Name(value = "language",defaultValue = "") String lang) {
     Number res = parseNumber(text, pattern, lang);
     return res == null ? null : res.doubleValue();

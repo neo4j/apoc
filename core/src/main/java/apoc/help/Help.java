@@ -60,7 +60,7 @@ public class Help {
 
     @NotThreadSafe
     @Procedure("apoc.help")
-    @Description("Returns descriptions of the available APOC procedures and functions.")
+    @Description("Returns descriptions of the available APOC procedures and functions. If a keyword is provided, it will return only those procedures and functions that have the keyword in their name.")
     public Stream<HelpResult> info(@Name("proc") String name) {
         boolean searchText = false;
         if (name != null) {

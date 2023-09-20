@@ -82,7 +82,7 @@ public class SchemaIndex {
 
     @NotThreadSafe
     @Procedure("apoc.schema.properties.distinct")
-    @Description("Returns all distinct node property values for the given key.")
+    @Description("Returns all distinct `NODE` property values for the given key.")
     public Stream<ListResult> distinct(@Name("label") String label, @Name("key")  String key) {
         List<Object> values = distinctCount(label, key).map(propertyValueCount -> propertyValueCount.value).collect(Collectors.toList());
         return Stream.of(new ListResult(values));

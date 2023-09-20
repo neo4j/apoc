@@ -196,7 +196,7 @@ public class Meta {
     }
 
     @UserFunction("apoc.meta.cypher.types")
-    @Description("Returns a map containing the type names of the given values.")
+    @Description("Returns a `MAP` containing the type names of the given values.")
     public Map<String,Object> typesCypher(@Name("props") Object target) {
         Map<String,Object> properties = Collections.emptyMap();
         if (target instanceof Node) properties = ((Node)target).getAllProperties();
@@ -274,7 +274,7 @@ public class Meta {
 
     @NotThreadSafe
     @UserFunction(name = "apoc.meta.nodes.count")
-    @Description("Returns the sum of the nodes with the given labels in the list.")
+    @Description("Returns the sum of the `NODE` values with the given labels in the `LIST<STRING>`.")
     public long count(@Name(value = "nodes", defaultValue = "[]") List<String> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         MetaConfig conf = new MetaConfig(config);
         final DatabaseSubGraph subGraph = new DatabaseSubGraph(transaction);
@@ -444,7 +444,7 @@ public class Meta {
 
     @NotThreadSafe
     @Procedure("apoc.meta.schema")
-    @Description("Examines the given sub-graph and returns metadata as a map.")
+    @Description("Examines the given sub-graph and returns metadata as a `MAP`.")
     public Stream<MapResult> schema(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         MetaStats metaStats = collectStats();
         SampleMetaConfig metaConfig = new SampleMetaConfig(config);
@@ -473,7 +473,7 @@ public class Meta {
      */
     @NotThreadSafe
     @Procedure("apoc.meta.nodeTypeProperties")
-    @Description("Examines the full graph and returns a table of metadata with information about the nodes therein.")
+    @Description("Examines the full graph and returns a table of metadata with information about the `NODE` values therein.")
     public Stream<Tables4LabelsProfile.NodeTypePropertiesEntry> nodeTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {
@@ -491,8 +491,8 @@ public class Meta {
      * RDBMSs, but in a more performant way.
      */
     @NotThreadSafe
-    @Procedure( "apoc.meta.relTypeProperties" )
-    @Description( "Examines the full graph and returns a table of metadata with information about the relationships therein." )
+    @Procedure("apoc.meta.relTypeProperties")
+    @Description("Examines the full graph and returns a table of metadata with information about the `RELATIONSHIP` values therein.")
     public Stream<Tables4LabelsProfile.RelTypePropertiesEntry> relTypeProperties( @Name( value = "config", defaultValue = "{}" ) Map<String,Object> config ) {
         MetaConfig metaConfig = new MetaConfig( config );
         try {

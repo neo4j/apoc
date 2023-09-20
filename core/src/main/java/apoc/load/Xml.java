@@ -107,13 +107,13 @@ public class Xml {
     public TerminationGuard terminationGuard;
 
     @Procedure("apoc.load.xml")
-    @Description("Loads a single nested map from an XML URL (e.g. web-API).")
+    @Description("Loads a single nested `MAP` from an XML URL (e.g. web-API).")
     public Stream<MapResult> xml(@Name("urlOrBinary") Object urlOrBinary, @Name(value = "path", defaultValue = "/") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config, @Name(value = "simple", defaultValue = "false") boolean simpleMode) throws Exception {
         return xmlXpathToMapResult(urlOrBinary, simpleMode, path ,config);
     }
 
     @UserFunction("apoc.xml.parse")
-    @Description("Parses the given XML string as a map.")
+    @Description("Parses the given XML `STRING` as a `MAP`.")
     public Map<String, Object> parse(@Name("data") String data, @Name(value = "path", defaultValue = "/") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config, @Name(value = "simple", defaultValue = "false") boolean simpleMode) throws Exception {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);

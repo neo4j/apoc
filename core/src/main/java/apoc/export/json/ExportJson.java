@@ -75,7 +75,7 @@ public class ExportJson {
 
     @NotThreadSafe
     @Procedure("apoc.export.json.data")
-    @Description("Exports the given nodes and relationships to the provided JSON file.")
+    @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided JSON file.")
     public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         // initialize empty lists if nodes or rels are null
         nodes = nodes == null ? Collections.emptyList() : nodes;

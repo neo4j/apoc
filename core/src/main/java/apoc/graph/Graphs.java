@@ -46,13 +46,13 @@ public class Graphs {
     public Transaction tx;
 
     @Procedure("apoc.graph.fromData")
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the given data.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the given data.")
     public Stream<VirtualGraph> fromData(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> relationships, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         return Stream.of(new VirtualGraph(name,nodes,relationships,properties));
     }
 
     @Procedure("apoc.graph.from")
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the given data.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the given data.")
     public Stream<VirtualGraph> from(@Name("data") Object data, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(10000);
@@ -61,13 +61,13 @@ public class Graphs {
     }
 
     @Procedure("apoc.graph.fromPath")
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given path.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given `PATH`.")
     public Stream<VirtualGraph> fromPath(@Name("path") Path paths, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         return Stream.of(new VirtualGraph(name, paths.nodes(), paths.relationships(),properties));
     }
 
     @Procedure("apoc.graph.fromPaths")
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given paths.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given `PATH` values.")
     public Stream<VirtualGraph> fromPaths(@Name("paths") List<Path> paths, @Name("name") String name, @Name("props") Map<String,Object> properties) {
         List<Node> nodes = new ArrayList<>(1000);
         List<Relationship> rels = new ArrayList<>(1000);
@@ -79,14 +79,14 @@ public class Graphs {
     }
 
     @Procedure("apoc.graph.fromDB")
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given database.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given database.")
     public Stream<VirtualGraph> fromDB(@Name("name") String name, @Name("props") Map<String,Object> properties) {
         return Stream.of(new VirtualGraph(name,tx.getAllNodes(),tx.getAllRelationships(),properties));
     }
 
     @NotThreadSafe
     @Procedure("apoc.graph.fromCypher")
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given Cypher statement.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given Cypher statement.")
     public Stream<VirtualGraph> fromCypher(@Name("statement") String statement,  @Name("params") Map<String,Object> params,@Name("name") String name,  @Name("props") Map<String,Object> properties) {
         params = params == null ? Collections.emptyMap() : params;
         Set<Node> nodes = new HashSet<>(1000);
@@ -104,7 +104,7 @@ public class Graphs {
     }
 
     @Procedure(name = "apoc.graph.fromDocument", mode = Mode.WRITE)
-    @Description("Generates a virtual sub-graph by extracting all of the nodes and relationships from the data returned by the given JSON file.")
+    @Description("Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given JSON file.")
     public Stream<VirtualGraph> fromDocument(@Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
         DocumentToGraph documentToGraph = new DocumentToGraph(tx, new GraphsConfig(config));
         return Stream.of(documentToGraph.create(document));

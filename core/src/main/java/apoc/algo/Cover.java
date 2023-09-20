@@ -42,7 +42,7 @@ public class Cover {
     public Transaction tx;
 
     @Procedure("apoc.algo.cover")
-    @Description("Returns all relationships between a given set of nodes.")
+    @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")
     public Stream<RelationshipResult> cover(@Name("nodes") Object nodes) {
         Set<Node> nodeSet = Util.nodeStream(tx, nodes).collect(Collectors.toSet());
         return coverNodes(nodeSet).map(RelationshipResult::new);

@@ -32,7 +32,7 @@ public class Lock {
 
     @NotThreadSafe
     @Procedure(name = "apoc.lock.all", mode = Mode.WRITE)
-    @Description("Acquires a write lock on the given nodes and relationships.")
+    @Description("Acquires a write lock on the given `NODE` and `RELATIONSHIP` values.")
     public void all(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels) {
         for (Node node : nodes) {
             tx.acquireWriteLock(node);
@@ -44,7 +44,7 @@ public class Lock {
 
     @NotThreadSafe
     @Procedure(name = "apoc.lock.nodes", mode = Mode.WRITE)
-    @Description("Acquires a write lock on the given nodes.")
+    @Description("Acquires a write lock on the given `NODE` values.")
     public void nodes(@Name("nodes") List<Node> nodes) {
         for (Node node : nodes) {
             tx.acquireWriteLock(node);
@@ -53,7 +53,7 @@ public class Lock {
 
     @NotThreadSafe
     @Procedure(name = "apoc.lock.read.nodes", mode = Mode.READ)
-    @Description("Acquires a read lock on the given nodes.")
+    @Description("Acquires a read lock on the given `NODE` values.")
     public void readLockOnNodes(@Name("nodes") List<Node> nodes) {
         for (Node node : nodes) {
             tx.acquireReadLock(node);
@@ -62,7 +62,7 @@ public class Lock {
 
     @NotThreadSafe
     @Procedure(name = "apoc.lock.rels", mode = Mode.WRITE)
-    @Description("Acquires a write lock on the given relationships.")
+    @Description("Acquires a write lock on the given `RELATIONSHIP` values.")
     public void rels(@Name("rels") List<Relationship> rels) {
         for (Relationship rel : rels) {
             tx.acquireWriteLock(rel);
@@ -71,7 +71,7 @@ public class Lock {
 
     @NotThreadSafe
     @Procedure(name = "apoc.lock.read.rels", mode = Mode.READ)
-    @Description("Acquires a read lock on the given relationships.")
+    @Description("Acquires a read lock on the given `RELATIONSHIP` values.")
     public void readLocksOnRels(@Name("rels") List<Relationship> rels) {
         for (Relationship rel : rels) {
             tx.acquireReadLock(rel);

@@ -71,7 +71,7 @@ public class Coll {
     @Context public Transaction tx;
 
     @UserFunction("apoc.coll.stdev")
-    @Description("Returns sample or population standard deviation with isBiasCorrected true or false respectively.")
+    @Description("Returns sample or population standard deviation with `isBiasCorrected` true or false respectively.")
     public Number stdev(@Name("list") List<Number> list, @Name(value = "isBiasCorrected", defaultValue = "true") boolean isBiasCorrected) {
         if (list == null || list.isEmpty()) return null;
         final double stdev = new StandardDeviation(isBiasCorrected)
@@ -81,7 +81,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.runningTotal")
-    @Description("Returns an accumulative array.")
+    @Description("Returns an accumulative `LIST<INTEGER | FLOAT>`.")
     public List<Number> runningTotal(@Name("list") List<Number> list) {
         if (list == null || list.isEmpty()) return null;
         AtomicDouble sum = new AtomicDouble();
@@ -93,7 +93,7 @@ public class Coll {
     }
 
     @Procedure("apoc.coll.zipToRows")
-    @Description("Returns the two lists zipped together, with one row per zipped pair.")
+    @Description("Returns the two `LIST<ANY>` values zipped together, with one row per zipped pair.")
     public Stream<ListResult> zipToRows(@Name("list1") List<Object> list1, @Name("list2") List<Object> list2) {
         if (list1.isEmpty()) return Stream.empty();
         ListIterator<Object> it = list2.listIterator();
@@ -101,7 +101,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.zip")
-    @Description("Returns the two given lists zipped together as a list of lists.")
+    @Description("Returns the two given `LIST<ANY>` values zipped together as a `LIST<LIST<ANY>>`.")
     public List<List<Object>> zip(@Name("list1") List<Object> list1, @Name("list2") List<Object> list2) {
 		if (list1 == null || list2 == null) return null;
 		if (list1.isEmpty() || list2.isEmpty()) return Collections.emptyList();
@@ -114,14 +114,14 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.pairs")
-    @Description("Returns a list of adjacent elements in the list ([1,2],[2,3],[3,null]).")
+    @Description("Returns a `LIST<ANY>` of adjacent elements in the `LIST<ANY>` ([1,2],[2,3],[3,null]).")
     public List<List<Object>> pairs(@Name("list") List<Object> list) {
 		if (list == null) return null;
 		if (list.isEmpty()) return Collections.emptyList();
         return zip(list,list.subList(1,list.size()));
     }
     @UserFunction("apoc.coll.pairsMin")
-    @Description("Returns lists of adjacent elements in the list ([1,2],[2,3]), skipping the final element.")
+    @Description("Returns `LIST<ANY>` values of adjacent elements in the `LIST<ANY>` ([1,2],[2,3]), skipping the final element.")
     public List<List<Object>> pairsMin(@Name("list") List<Object> list) {
 		if (list == null) return null;
 		if (list.isEmpty()) return Collections.emptyList();
@@ -129,7 +129,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sum")
-    @Description("Returns the sum of all the numbers in the list.")
+    @Description("Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.")
     public Double sum(@Name("coll") List<Number> list) {
 		if (list == null || list.isEmpty()) return null;
         double sum = 0;
@@ -140,7 +140,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.avg")
-    @Description("Returns the average of the numbers in the list.")
+    @Description("Returns the average of the numbers in the `LIST<INTEGER | FLOAT>`.")
     public Double avg(@Name("coll") List<Number> list) {
 		if (list == null || list.isEmpty()) return null;
         double avg = 0;
@@ -151,7 +151,7 @@ public class Coll {
     }
     @NotThreadSafe
     @UserFunction("apoc.coll.min")
-    @Description("Returns the minimum of all values in the given list.")
+    @Description("Returns the minimum of all values in the given `LIST<ANY>`.")
     public Object min(@Name("values") List<Object> list) {
 		if (list == null || list.isEmpty()) return null;
         if (list.size() == 1) return list.get(0);
@@ -162,8 +162,8 @@ public class Coll {
     }
 
     @NotThreadSafe
-    @UserFunction( "apoc.coll.max" )
-    @Description( "Returns the maximum of all values in the given list." )
+    @UserFunction("apoc.coll.max")
+    @Description("Returns the maximum of all values in the given `LIST<ANY>`.")
     public Object max(@Name("values") List<Object> list) {
         if (list == null || list.isEmpty()) return null;
         if (list.size() == 1) return list.get(0);
@@ -173,7 +173,7 @@ public class Coll {
     }
 
     @Procedure("apoc.coll.elements")
-    @Description("Deconstructs a list of mixed types into identifiers indicating their specific type.")
+    @Description("Deconstructs a `LIST<ANY>` into identifiers indicating their specific type.")
     public Stream<ElementsResult> elements(@Name("coll") List<Object> list, @Name(value = "limit",defaultValue = "-1") long limit,@Name(value = "offset",defaultValue = "0") long offset) {
         int elements =  (limit < 0 ? list.size() : Math.min((int)(offset+limit),list.size())) - (int)offset;
         if (elements > ElementsResult.MAX_ELEMENTS) elements = ElementsResult.MAX_ELEMENTS;
@@ -374,23 +374,24 @@ public class Coll {
     }
 
     @Procedure("apoc.coll.partition")
-    @Description("Partitions the original list into sub-lists of the given batch size.\n" +
-            "The final list may be smaller than the given batch size.")
+    @Description("Partitions the original `LIST<ANY>` into sub-`LIST<ANY>` values of the given batch size.\n" +
+            "The final `LIST<ANY>` may be smaller than the given batch size.")
     public Stream<ListResult> partition(@Name("coll") List<Object> list, @Name("batchSize") long batchSize) {
 	    if (list==null || list.isEmpty()) return Stream.empty();
         return partitionList(list, (int) batchSize).map(ListResult::new);
     }
 
     @UserFunction("apoc.coll.partition")
-    @Description("Partitions the original list into sub-lists of the given batch size.\n" +
-            "The final list may be smaller than the given batch size.")
+    @Description("Partitions the original `LIST<ANY>` into sub-`LIST<ANY>` values of the given batch size.\n" +
+            "The final `LIST<ANY>` may be smaller than the given batch size.")
     public List<Object> partitionFn(@Name("coll") List<Object> list, @Name("batchSize") long batchSize) {
         if (list==null || list.isEmpty()) return new ArrayList<>();
         return partitionList(list, (int) batchSize).collect(Collectors.toList());
     }
 
     @Procedure("apoc.coll.split")
-    @Description("Splits a collection by the given value. The value itself will not be part of the resulting lists.")
+    @Description("Splits a collection by the given value.\n" +
+            "The value itself will not be part of the resulting `LIST<ANY>` values.")
     public Stream<ListResult> split(@Name("coll") List<Object> list, @Name("value") Object value) {
 	    if (list==null || list.isEmpty()) return Stream.empty();
         List<Object> l = new ArrayList<>(list);
@@ -435,7 +436,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.insert")
-    @Description("Inserts a value into the specified index in the list.")
+    @Description("Inserts a value into the specified index in the `LIST<ANY>`.")
     public List<Object> insert(@Name("coll") List<Object> coll, @Name("index") long index, @Name("value") Object value) {
         if (coll == null) return null;
         if (index < 0 || value == null || index > coll.size()) return coll;
@@ -446,7 +447,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.insertAll")
-    @Description("Inserts all of the values into the list, starting at the specified index.")
+    @Description("Inserts all of the values into the `LIST<ANY>`, starting at the specified index.")
     public List<Object> insertAll(@Name("coll") List<Object> coll, @Name("index") long index, @Name("values") List<Object> values) {
         if (coll == null) return null;
         if (index < 0 || values == null || values.isEmpty() || index > coll.size()) return coll;
@@ -457,7 +458,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.remove")
-    @Description("Removes a range of values from the list, beginning at position index for the given length of values.")
+    @Description("Removes a range of values from the `LIST<ANY>`, beginning at position index for the given length of values.")
     public List<Object> remove(@Name("coll") List<Object> coll, @Name("index") long index, @Name(value = "length",defaultValue = "1") long length) {
         if (coll == null) return null;
         if (index < 0 || index >= coll.size() || length <= 0) return coll;
@@ -471,7 +472,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.indexOf")
-    @Description("Returns the index for the first occurrence of the specified value in the list.")
+    @Description("Returns the index for the first occurrence of the specified value in the `LIST<ANY>`.")
     public long indexOf(@Name("coll") List<Object> coll, @Name("value") Object value) {
         // return reduce(res=[0,-1], x in $list | CASE WHEN x=$value AND res[1]=-1 THEN [res[0], res[0]+1] ELSE [res[0]+1, res[1]] END)[1] as value
         if (coll == null || coll.isEmpty()) return -1;
@@ -498,7 +499,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.containsAllSorted")
-    @Description("Returns whether or not all of the given values in the second list exist in an already sorted collection (using a binary search).")
+    @Description("Returns whether or not all of the given values in the second `LIST<ANY>` exist in an already sorted collection (using a binary search).")
     public boolean containsAllSorted(@Name("coll1") List<Object> coll, @Name("coll2") List<Object> values) {
         if (coll == null || values == null) return false;
         int batchSize = 5000-1; // Collections.binarySearchThreshold
@@ -524,7 +525,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.toSet")
-    @Description("Returns a unique list from the given list.")
+    @Description("Returns a unique `LIST<ANY>` from the given `LIST<ANY>`.")
     public List<Object> toSet(@Name("coll") List<Object> list) {
 	    if (list == null) return null;
         List<AnyValue> anyValues = toAnyValues(list);
@@ -532,7 +533,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sumLongs")
-    @Description("Returns the sum of all the numbers in the list.")
+    @Description("Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.")
     public Long sumLongs(@Name("coll") List<Number> list) {
         if (list == null) return null;
         long sum = 0;
@@ -543,7 +544,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sort")
-    @Description("Sorts the given list into ascending order.")
+    @Description("Sorts the given `LIST<ANY>` into ascending order.")
     public List<Object> sort(@Name("coll") List<Object> coll) {
 	    if (coll == null || coll.isEmpty()) return Collections.emptyList();
         List sorted = new ArrayList<>(coll);
@@ -552,7 +553,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sortNodes")
-    @Description("Sorts the given list of nodes by their property into ascending order.")
+    @Description("Sorts the given `LIST<NODE>` by the property of the nodes into descending order.")
     public List<Node> sortNodes(@Name("coll") List<Node> coll, @Name("prop") String prop) {
 	    if (coll == null || coll.isEmpty()) return Collections.emptyList();
         List<Node> sorted = new ArrayList<>(coll);
@@ -563,7 +564,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sortMaps")
-    @Description("Sorts the given list into ascending order, based on the map property indicated by `prop`.")
+    @Description("Sorts the given `LIST<MAP<STRING, ANY>>` into descending order, based on the `MAP` property indicated by `prop`.")
     public List<Map<String,Object>> sortMaps(@Name("list") List<Map<String,Object>> coll, @Name("prop") String prop) {
 	    if (coll == null || coll.isEmpty()) return Collections.emptyList();
         List<Map<String,Object>> sorted = new ArrayList<>(coll);
@@ -597,7 +598,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.union")
-    @Description("Returns the distinct union of the two given lists.")
+    @Description("Returns the distinct union of the two given `LIST<ANY>` values.")
     public List<Object> union(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
 		if (first == null) return second;
 		if (second == null) return first;
@@ -606,7 +607,7 @@ public class Coll {
         return new SetBackedList(set);
     }
     @UserFunction("apoc.coll.removeAll")
-    @Description("Returns the first list with all elements of the second list removed.")
+    @Description("Returns the first `LIST<ANY>` with all elements also present in the second `LIST<ANY>` removed.")
     public List<Object> removeAll(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
         if (first == null) return null;
         List<Object> list = new ArrayList<>(toAnyValues(first));
@@ -614,7 +615,7 @@ public class Coll {
         return list;
     }
     @UserFunction("apoc.coll.subtract")
-    @Description("Returns the first list as a set with all the elements of the second list removed.")
+    @Description("Returns the first `LIST<ANY>` as a set with all the elements of the second `LIST<ANY>` removed.")
     public List<Object> subtract(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
         if (first == null) return null;
         Set<Object> set = new HashSet<>(first);
@@ -623,7 +624,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.intersection")
-    @Description("Returns the distinct intersection of two lists.")
+    @Description("Returns the distinct intersection of two `LIST<ANY>` values.")
     public List<Object> intersection(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
         if (first == null || second == null) return Collections.emptyList();
         Set<Object> set = new HashSet<>(first);
@@ -632,7 +633,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.disjunction")
-    @Description("Returns the disjunct set of two lists.")
+    @Description("Returns the disjunct set from two `LIST<ANY>` values.")
     public List<Object> disjunction(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
         if (first == null) return second;
         if (second == null) return first;
@@ -644,7 +645,7 @@ public class Coll {
         return new SetBackedList(set);
     }
     @UserFunction("apoc.coll.unionAll")
-    @Description("Returns the full union of the two given lists (duplicates included).")
+    @Description("Returns the full union of the two given `LIST<ANY>` values (duplicates included).")
     public List<Object> unionAll(@Name("list1") List<Object> first, @Name("list2") List<Object> second) {
         if (first == null) return second;
         if (second == null) return first;
@@ -654,7 +655,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.shuffle")
-    @Description("Returns the list shuffled.")
+    @Description("Returns the `LIST<ANY>` shuffled.")
     public List<Object> shuffle(@Name("coll") List<Object> coll) {
         if (coll == null || coll.isEmpty()) {
             return Collections.emptyList();
@@ -668,7 +669,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.randomItem")
-    @Description("Returns a random item from the list, or null on an empty or null list.")
+    @Description("Returns a random item from the `LIST<ANY>`, or null on `LIST<NOTHING>` or `LIST<NULL>`.")
     public Object randomItem(@Name("coll") List<Object> coll) {
         if (coll == null || coll.isEmpty()) {
             return null;
@@ -680,7 +681,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.randomItems")
-    @Description("Returns a list of itemCount random items from the original list (optionally allowing elements in the original list to be selected more than once).")
+    @Description("Returns a `LIST<ANY>` of `itemCount` random items from the original `LIST<ANY>` (optionally allowing elements in the original `LIST<ANY>` to be selected more than once).")
     public List<Object> randomItems(@Name("coll") List<Object> coll, @Name("itemCount") long itemCount, @Name(value = "allowRepick", defaultValue = "false") boolean allowRepick) {
         if (coll == null || coll.isEmpty() || itemCount <= 0) {
             return Collections.emptyList();
@@ -715,7 +716,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.duplicates")
-    @Description("Returns a list of duplicate items in the collection.")
+    @Description("Returns a `LIST<ANY>` of duplicate items in the collection.")
     public List<Object> duplicates(@Name("coll") List<Object> coll) {
         if (coll == null || coll.size() <= 1) {
             return Collections.emptyList();
@@ -734,7 +735,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.duplicatesWithCount")
-    @Description("Returns a list of duplicate items in the collection and their count, keyed by `item` and `count`.")
+    @Description("Returns a `LIST<ANY>` of duplicate items in the collection and their count, keyed by `item` and `count`.")
     public List<Map<String, Object>> duplicatesWithCount(@Name("coll") List<Object> coll) {
         if (coll == null || coll.size() <= 1) {
             return Collections.emptyList();
@@ -767,7 +768,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.frequencies")
-    @Description("Returns a list of frequencies of the items in the collection, keyed by `item` and `count`.")
+    @Description("Returns a `LIST<ANY>` of frequencies of the items in the collection, keyed by `item` and `count`.")
     public List<Map<String, Object>> frequencies(@Name("coll") List<Object> coll) {
         if (coll == null || coll.size() == 0) {
             return Collections.emptyList();
@@ -798,7 +799,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.frequenciesAsMap")
-    @Description("Returns a map of frequencies of the items in the collection, keyed by `item` and `count`.")
+    @Description("Returns a `MAP` of frequencies of the items in the collection, keyed by `item` and `count`.")
     public Map<String, Object> frequenciesAsMap(@Name("coll") List<Object> coll) {
 	    if (coll == null) return Collections.emptyMap();
         return frequencies(coll).stream().collect(Collectors.toMap(t -> t.get("item").toString(), v-> v.get("count")));
@@ -824,7 +825,7 @@ public class Coll {
 
 
     @UserFunction("apoc.coll.flatten")
-    @Description("Flattens the given list (to flatten nested lists, set recursive to true).")
+    @Description("Flattens the given `LIST<ANY>` (to flatten nested `LIST<ANY>` values, set recursive to true).")
     public List<Object> flatten(@Name("coll") List<Object> coll,  @Name(value="recursive", defaultValue = "false") boolean recursive) {
         if (coll == null) return Collections.emptyList();
         if (recursive) return flattenRecursive(coll, 0); // flatten everything
@@ -857,9 +858,9 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sortMulti")
-    @Description("Sorts the given list of maps by the given fields.\n" +
+    @Description("Sorts the given `LIST<MAP<STRING, ANY>>` by the given fields.\n" +
             "To indicate that a field should be sorted according to ascending values, prefix it with a caret (^).\n" +
-            "It is also possible to add limits to the list and to skip values.")
+            "It is also possible to add limits to the `LIST<MAP<STRING, ANY>>` and to skip values.")
     public List<Map<String,Object>> sortMulti(@Name("coll") List<Map<String,Object>> coll,
                                               @Name(value="orderFields", defaultValue = "[]") List<String> orderFields,
                                               @Name(value="limit", defaultValue = "-1") long limit,
@@ -897,7 +898,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.combinations")
-    @Description("Returns a collection of all combinations of list elements between the selection size minSelect and maxSelect (default: minSelect).")
+    @Description("Returns a collection of all combinations of `LIST<ANY>` elements between the selection size `minSelect` and `maxSelect` (default: `minSelect`).")
     public List<List<Object>> combinations(@Name("coll") List<Object> coll, @Name(value="minSelect") long minSelectIn, @Name(value="maxSelect",defaultValue = "-1") long maxSelectIn) {
         int minSelect = (int) minSelectIn;
         int maxSelect = (int) maxSelectIn;
@@ -928,14 +929,14 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.different")
-    @Description("Returns true if all the values in the given list are unique.")
+    @Description("Returns true if all the values in the given `LIST<ANY>` are unique.")
     public boolean different(@Name("coll") List<Object> values) {
 		if (values == null) return false;
         return new HashSet(values).size() == values.size();
     }
 
     @UserFunction("apoc.coll.dropDuplicateNeighbors")
-    @Description("Removes duplicate consecutive objects in the list.")
+    @Description("Removes duplicate consecutive objects in the `LIST<ANY>`.")
     public List<Object> dropDuplicateNeighbors(@Name("list") List<Object> list){
         if (list == null) return null;
 	List<Object> newList = new ArrayList<>(list.size());
@@ -952,13 +953,13 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.fill")
-    @Description("Returns a list with the given count of items.")
+    @Description("Returns a `LIST<ANY>` with the given count of items.")
     public List<Object> fill(@Name("items") String item, @Name("count") long count) {
         return Collections.nCopies((int) count, item);
     }
 
     @UserFunction("apoc.coll.sortText")
-    @Description("Sorts the given list of strings into ascending order.")
+    @Description("Sorts the given `LIST<STRING>` into ascending order.")
     public List<String> sortText(@Name("coll") List<String> coll, @Name(value = "conf", defaultValue = "{}") Map<String, Object> conf) {
         if (conf == null) conf = Collections.emptyMap();
         if (coll == null || coll.isEmpty()) return Collections.emptyList();
@@ -971,7 +972,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.pairWithOffset")
-    @Description("Returns a list of pairs defined by the offset.")
+    @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
     public List<List<Object>> pairWithOffsetFn(@Name("coll") List<Object> values, @Name("offset") long offset) {
         if (values == null) return null;
         BiFunction<List<Object>, Long, Object> extract = (list, index) -> index < list.size() && index >= 0 ? list.get(index.intValue()) : null;
@@ -985,7 +986,7 @@ public class Coll {
     }
 
     @Procedure("apoc.coll.pairWithOffset")
-    @Description("Returns a list of pairs defined by the offset.")
+    @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
     public Stream<ListResult> pairWithOffset(@Name("coll") List<Object> values, @Name("offset") long offset) {
         return pairWithOffsetFn(values, offset).stream()
                 .map(ListResult::new);

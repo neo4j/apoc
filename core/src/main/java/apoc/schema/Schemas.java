@@ -95,7 +95,7 @@ public class Schemas {
 
     @NotThreadSafe
     @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
-    @Description("Returns all indexes and constraints information for all node labels in the database.\n" +
+    @Description("eturns all indexes and constraints information for all `NODE` labels in the database.\n" +
             "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> nodes(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         return indexesAndConstraintsForNode(config);
@@ -111,28 +111,28 @@ public class Schemas {
 
     @NotThreadSafe
     @UserFunction(name = "apoc.schema.node.indexExists")
-    @Description("Returns a boolean depending on whether or not an index exists for the given node label with the given property names.")
+    @Description("Returns a `BOOLEAN` depending on whether or not an index exists for the given `NODE` label with the given property names.")
     public Boolean indexExistsOnNode(@Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
         return indexExists(labelName, propertyNames);
     }
 
     @NotThreadSafe
     @UserFunction(value = "apoc.schema.relationship.indexExists")
-    @Description("Returns a boolean depending on whether or not an index exists for the given relationship type with the given property names.")
+    @Description("Returns a `BOOLEAN` depending on whether or not an index exists for the given `RELATIONSHIP` type with the given property names.")
     public Boolean indexExistsOnRelationship(@Name("type") String relName, @Name("propertyName") List<String> propertyNames) {
         return indexExistsForRelationship(relName, propertyNames);
     }
 
     @NotThreadSafe
     @UserFunction(name = "apoc.schema.node.constraintExists")
-    @Description("Returns a boolean depending on whether or not a constraint exists for the given node label with the given property names.")
+    @Description("Returns a `BOOLEAN` depending on whether or not a constraint exists for the given `NODE` label with the given property names.")
     public Boolean constraintExistsOnNode(@Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
         return constraintsExists(labelName, propertyNames);
     }
 
     @NotThreadSafe
     @UserFunction(name = "apoc.schema.relationship.constraintExists")
-    @Description("Returns a boolean depending on whether or not a constraint exists for the given relationship type with the given property names.")
+    @Description("Returns a `BOOLEAN` depending on whether or not a constraint exists for the given `RELATIONSHIP` type with the given property names.")
     public Boolean constraintExistsOnRelationship(@Name("type") String type, @Name("propertyName") List<String> propertyNames) {
         return constraintsExistsForRelationship(type, propertyNames);
     }

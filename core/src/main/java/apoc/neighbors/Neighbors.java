@@ -57,8 +57,8 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.tohop")
-    @Description("Returns all nodes connected by the given relationship types within the specified distance.\n" +
-            "Nodes are returned individually for each row.")
+    @Description("Returns all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance.\n" +
+            "`NODE` values are returned individually for each row.")
     public Stream<NodeResult> neighbors(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
@@ -131,7 +131,7 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.tohop.count")
-    @Description("Returns the count of all nodes connected by the given relationships in the pattern within the specified distance.")
+    @Description("Returns the count of all `NODE` values connected by the given `RELATIONSHIP` values in the pattern within the specified distance.")
     public Stream<LongResult> neighborsCount(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
@@ -202,7 +202,7 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.byhop")
-    @Description("Returns all nodes connected by the given relationship types within the specified distance.")
+    @Description("Returns all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance.")
     public Stream<NodeListResult> neighborsByHop(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
@@ -249,7 +249,7 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.byhop.count")
-    @Description("Returns the count of all nodes connected by the given relationship types within the specified distance.")
+    @Description("Returns the count of all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance.")
     public Stream<ListResult> neighborsByHopCount(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
@@ -299,7 +299,7 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.athop")
-    @Description("Returns all nodes connected by the given relationship types at the specified distance.")
+    @Description("Returns all `NODE` values connected by the given `RELATIONSHIP` types at the specified distance.")
     public Stream<NodeResult> neighborsAtHop(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();
@@ -345,7 +345,7 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.athop.count")
-    @Description("Returns the count of all nodes connected by the given relationship types at the specified distance.")
+    @Description("Returns the count of all `NODE` values connected by the given `RELATIONSHIP` types at the specified distance.")
     public Stream<LongResult> neighborsAtHopCount(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();

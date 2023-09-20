@@ -114,7 +114,7 @@ public class DegreeDistribution {
 
     @NotThreadSafe
     @Procedure("apoc.stats.degrees")
-    @Description("Returns the percentile groupings of the degrees on the nodes connected by the given relationship types.")
+    @Description("Returns the percentile groupings of the degrees on the `NODE` values connected by the given `RELATIONSHIP` types.")
     public Stream<DegreeStats.Result> degrees(@Name(value = "relTypes", defaultValue = "") String types) {
         List<DegreeStats> stats = prepareStats(types);
 

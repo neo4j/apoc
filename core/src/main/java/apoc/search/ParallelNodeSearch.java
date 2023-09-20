@@ -57,8 +57,8 @@ public class ParallelNodeSearch {
 
     @NotThreadSafe
     @Procedure("apoc.search.nodeAllReduced")
-    @Description("Returns a reduced representation of the nodes found after a parallel search over multiple indexes.\n" +
-            "The reduced node representation includes: node id, node labels and the searched properties.")
+    @Description("Returns a reduced representation of the `NODE` values found after a parallel search over multiple indexes.\n" +
+            "The reduced `NODE` values representation includes: node id, node labels, and the searched properties.")
     public Stream<NodeReducedResult> multiSearchAll(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final Object value) throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value).flatMap(QueryWorker::queryForData);
     }
@@ -74,8 +74,8 @@ public class ParallelNodeSearch {
 
     @NotThreadSafe
     @Procedure("apoc.search.nodeReduced")
-    @Description("Returns a reduced representation of the distinct nodes found after a parallel search over multiple indexes.\n" +
-            "The reduced node representation includes: node id, node labels and the searched properties.")
+    @Description("Returns a reduced representation of the distinct `NODE` values found after a parallel search over multiple indexes.\n" +
+            "The reduced `NODE` values representation includes: node id, node labels, and the searched properties.")
     public Stream<NodeReducedResult> multiSearch(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final String value) throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value)
                     .flatMap(QueryWorker::queryForData)
@@ -85,8 +85,8 @@ public class ParallelNodeSearch {
 
     @NotThreadSafe
     @Procedure("apoc.search.multiSearchReduced")
-    @Description("Returns a reduced representation of the nodes found after a parallel search over multiple indexes.\n" +
-            "The reduced node representation includes: node id, node labels and the searched properties.")
+    @Description("Returns a reduced representation of the `NODE` values found after a parallel search over multiple indexes.\n" +
+            "The reduced `NODE` values representation includes: node id, node labels, and the searched properties.")
     public Stream<NodeReducedResult> multiSearchOld(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final String value) throws Exception {
             return createWorkersFromValidInput(labelProperties, operator, value)
                     .flatMap(QueryWorker::queryForData)
@@ -97,7 +97,7 @@ public class ParallelNodeSearch {
 
     @NotThreadSafe
     @Procedure("apoc.search.nodeAll")
-    @Description("Returns all the nodes found after a parallel search over multiple indexes.")
+    @Description("Returns all the `NODE` values found after a parallel search over multiple indexes.")
     public Stream<NodeResult> multiSearchNodeAll(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final String value) throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value).flatMap(QueryWorker::queryForNodeId).map(nodeId -> new NodeResult(tx.getNodeById(nodeId)));
     }
@@ -105,7 +105,7 @@ public class ParallelNodeSearch {
 
     @NotThreadSafe
     @Procedure("apoc.search.node")
-    @Description("Returns all the distinct nodes found after a parallel search over multiple indexes.")
+    @Description("Returns all the distinct `NODE` values found after a parallel search over multiple indexes.")
     public Stream<NodeResult> multiSearchNode(@Name("labelPropertyMap") final Object labelProperties, @Name("operator") final String operator, @Name("value") final String value) throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value)
                 .flatMap(QueryWorker::queryForNodeId)

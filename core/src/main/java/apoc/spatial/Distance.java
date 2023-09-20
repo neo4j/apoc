@@ -34,7 +34,7 @@ public class Distance {
     private static final String LONGITUDE = "longitude";
 
     @Procedure("apoc.spatial.sortByDistance")
-    @Description("Sorts the given collection of paths by the sum of their distance based on the latitude/longitude values on the nodes.")
+    @Description("Sorts the given collection of `PATH` values by the sum of their distance based on the latitude/longitude values in the `NODE` values.")
     public Stream<DistancePathResult> sortByDistance(@Name("paths")List<Path> paths) {
         return paths.size() > 0 ? sortPaths(paths).stream() : Stream.empty();
     }

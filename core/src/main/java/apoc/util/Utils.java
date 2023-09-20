@@ -36,7 +36,7 @@ public class Utils {
     public TerminationGuard terminationGuard;
 
     @UserFunction("apoc.util.sha1")
-    @Description("Returns the SHA1 of the concatenation of all string values in the given list.\n" +
+    @Description("Returns the SHA1 of the concatenation of all `STRING` values in the given `LIST<ANY>`.\n" +
             "SHA1 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
     public String sha1(@Name("values") List<Object> values) {
         String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
@@ -44,28 +44,28 @@ public class Utils {
     }
 
     @UserFunction("apoc.util.sha256")
-    @Description("Returns the SHA256 of the concatenation of all string values in the given list.")
+    @Description("Returns the SHA256 of the concatenation of all `STRING` values in the given `LIST<ANY>`.")
     public String sha256(@Name("values") List<Object> values) {
         String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
         return DigestUtils.sha256Hex(value);
     }
 
     @UserFunction("apoc.util.sha384")
-    @Description("Returns the SHA384 of the concatenation of all string values in the given list.")
+    @Description("Returns the SHA384 of the concatenation of all `STRING` values in the given `LIST<ANY>`.")
     public String sha384(@Name("values") List<Object> values) {
         String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
         return DigestUtils.sha384Hex(value);
     }
 
     @UserFunction("apoc.util.sha512")
-    @Description("Returns the SHA512 of the concatenation of all string values in the list.")
+    @Description("Returns the SHA512 of the concatenation of all `STRING` values in the `LIST<ANY>`.")
     public String sha512(@Name("values") List<Object> values) {
         String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
         return DigestUtils.sha512Hex(value);
     }
 
     @UserFunction("apoc.util.md5")
-    @Description("Returns the MD5 checksum of the concatenation of all string values in the given list.\n" +
+    @Description("Returns the MD5 checksum of the concatenation of all `STRING` values in the given `LIST<ANY>`.\n" +
             "MD5 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
     public String md5(@Name("values") List<Object> values) {
         String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
@@ -115,7 +115,7 @@ public class Utils {
     }
 
     @UserFunction("apoc.util.compress")
-    @Description("Zips the given string.")
+    @Description("Zips the given `STRING`.")
     public byte[] compress(@Name("data") String data, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws Exception {
 
         CompressionConfig conf = new CompressionConfig(config, CompressionAlgo.GZIP.name());

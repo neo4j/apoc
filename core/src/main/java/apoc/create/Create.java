@@ -43,14 +43,14 @@ public class Create {
     public Transaction tx;
 
     @Procedure(name = "apoc.create.node", mode = Mode.WRITE)
-    @Description("Creates a node with the given dynamic labels.")
+    @Description("Creates a `NODE` with the given dynamic labels.")
     public Stream<NodeResult> node(@Name("labels") List<String> labelNames, @Name("props") Map<String, Object> props) {
         return Stream.of(new NodeResult(setProperties(tx.createNode(Util.labels(labelNames)),props)));
     }
 
 
     @Procedure(name = "apoc.create.addLabels", mode = Mode.WRITE)
-    @Description("Adds the given labels to the given nodes.")
+    @Description("Adds the given labels to the given `NODE` values.")
     public Stream<NodeResult> addLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
@@ -63,7 +63,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setProperty", mode = Mode.WRITE)
-    @Description("Sets the given property to the given node(s).")
+    @Description("Sets the given property to the given `NODE` values.")
     public Stream<NodeResult> setProperty(@Name("nodes") Object nodes, @Name("key") String key, @Name("value") Object value) {
         return new Get(tx).nodes(nodes).map((r) -> {
             setProperty(r.node, key,toPropertyValue(value));
@@ -72,7 +72,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setRelProperty", mode = Mode.WRITE)
-    @Description("Sets the given property on the relationship(s).")
+    @Description("Sets the given property on the `RELATIONSHIP` values.")
     public Stream<RelationshipResult> setRelProperty(@Name("rels") Object rels, @Name("key") String key, @Name("value") Object value) {
         return new Get(tx).rels(rels).map((r) -> {
             setProperty(r.rel,key,toPropertyValue(value));
@@ -81,7 +81,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setProperties", mode = Mode.WRITE)
-    @Description("Sets the given properties to the given node(s).")
+    @Description("Sets the given properties to the given `NODE` values.")
     public Stream<NodeResult> setProperties(@Name("nodes") Object nodes, @Name("keys") List<String> keys, @Name("values") List<Object> values) {
         return new Get(tx).nodes(nodes).map((r) -> {
             setProperties(r.node, Util.mapFromLists(keys,values));
@@ -90,7 +90,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.removeProperties", mode = Mode.WRITE)
-    @Description("Removes the given properties from the given node(s).")
+    @Description("Removes the given properties from the given `NODE` values.")
     public Stream<NodeResult> removeProperties(@Name("nodes") Object nodes, @Name("keys") List<String> keys) {
         return new Get(tx).nodes(nodes).map((r) -> {
             keys.forEach( r.node::removeProperty );
@@ -99,7 +99,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setRelProperties", mode = Mode.WRITE)
-    @Description("Sets the given properties on the relationship(s).")
+    @Description("Sets the given properties on the `RELATIONSHIP` values.")
     public Stream<RelationshipResult> setRelProperties(@Name("rels") Object rels, @Name("keys") List<String> keys, @Name("values") List<Object> values) {
         return new Get(tx).rels(rels).map((r) -> {
             setProperties(r.rel, Util.mapFromLists(keys,values));
@@ -108,7 +108,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.removeRelProperties", mode = Mode.WRITE)
-    @Description("Removes the given properties from the given relationship(s).")
+    @Description("Removes the given properties from the given `RELATIONSHIP` values.")
     public Stream<RelationshipResult> removeRelProperties(@Name("rels") Object rels, @Name("keys") List<String> keys) {
         return new Get(tx).rels(rels).map((r) -> {
             keys.forEach( r.rel::removeProperty);
@@ -117,7 +117,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setLabels", mode = Mode.WRITE)
-    @Description("Sets the given labels to the given node(s). Non-matching labels are removed from the nodes.")
+    @Description("Sets the given labels to the given `NODE` values. Non-matching labels are removed from the nodes.")
     public Stream<NodeResult> setLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
@@ -135,7 +135,7 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.removeLabels", mode = Mode.WRITE)
-    @Description("Removes the given labels from the given node(s).")
+    @Description("Removes the given labels from the given `NODE` values.")
     public Stream<NodeResult> removeLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
         return new Get(tx).nodes(nodes).map((r) -> {
@@ -148,14 +148,14 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.nodes", mode = Mode.WRITE)
-    @Description("Creates nodes with the given dynamic labels.")
+    @Description("Creates `NODE` values with the given dynamic labels.")
     public Stream<NodeResult> nodes(@Name("labels") List<String> labelNames, @Name("props") List<Map<String, Object>> props) {
         Label[] labels = Util.labels(labelNames);
         return props.stream().map(p -> new NodeResult(setProperties(tx.createNode(labels), p)));
     }
 
     @Procedure(name = "apoc.create.relationship", mode = Mode.WRITE)
-    @Description("Creates a relationship with the given dynamic relationship type.")
+    @Description("Creates a `RELATIONSHIP` with the given dynamic relationship type.")
     public Stream<RelationshipResult> relationship(@Name("from") Node from,
                                                    @Name("relType") String relType, @Name("props") Map<String, Object> props,
                                                    @Name("to") Node to) {
@@ -164,44 +164,44 @@ public class Create {
     }
 
     @Procedure("apoc.create.vNode")
-    @Description("Returns a virtual node.")
+    @Description("Returns a virtual `NODE`.")
     public Stream<NodeResult> vNode(@Name("labels") List<String> labelNames, @Name("props") Map<String, Object> props) {
         return Stream.of(new NodeResult(vNodeFunction(labelNames, props)));
     }
 
     @UserFunction("apoc.create.vNode")
-    @Description("Returns a virtual node.")
+    @Description("Returns a virtual `NODE`.")
     public Node vNodeFunction(@Name("labels") List<String> labelNames, @Name(value = "props",defaultValue = "{}") Map<String, Object> props) {
         return new VirtualNode(Util.labels(labelNames), props);
     }
 
     @UserFunction("apoc.create.virtual.fromNode")
-    @Description("Returns a virtual node from the given existing node.")
+    @Description("Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.")
     public Node virtualFromNodeFunction(@Name("node") Node node, @Name("propertyNames") List<String> propertyNames) {
         return new VirtualNode(node, propertyNames);
     }
 
     @Procedure("apoc.create.vNodes")
-    @Description("Returns virtual nodes.")
+    @Description("Returns virtual `NODE` values.")
     public Stream<NodeResult> vNodes(@Name("labels") List<String> labelNames, @Name("props") List<Map<String, Object>> props) {
         Label[] labels = Util.labels(labelNames);
         return props.stream().map(p -> new NodeResult(new VirtualNode(labels, p)));
     }
 
     @Procedure("apoc.create.vRelationship")
-    @Description("Returns a virtual relationship.")
+    @Description("Returns a virtual `RELATIONSHIP`.")
     public Stream<RelationshipResult> vRelationship(@Name("from") Node from, @Name("relType") String relType, @Name("props") Map<String, Object> props, @Name("to") Node to) {
         return Stream.of(new RelationshipResult(vRelationshipFunction(from, relType, props, to)));
     }
 
     @UserFunction("apoc.create.vRelationship")
-    @Description("Returns a virtual relationship.")
+    @Description("Returns a virtual `RELATIONSHIP`.")
     public Relationship vRelationshipFunction(@Name("from") Node from, @Name("relType") String relType, @Name("props") Map<String, Object> props, @Name("to") Node to) {
         return new VirtualRelationship(from, to, withName(relType)).withProperties(props);
     }
 
     @Procedure("apoc.create.virtualPath")
-    @Description("Returns a virtual path.")
+    @Description("Returns a virtual `PATH`.")
     public Stream<VirtualPathResult> virtualPath(@Name("labelsN") List<String> labelsN, @Name("n") Map<String, Object> n,
                                                   @Name("relType") String relType, @Name("props") Map<String, Object> props,
                                                   @Name("labelsM") List<String> labelsM, @Name("m") Map<String, Object> m) {
@@ -213,7 +213,7 @@ public class Create {
     }
 
     @Procedure("apoc.create.clonePathToVirtual")
-    @Description("Takes the given path and returns a virtual representation of it.")
+    @Description("Takes the given `PATH` and returns a virtual representation of it.")
     public Stream<PathResult> clonePathToVirtual(@Name("path") Path path) {
         // given that it accepts a single path as a input parameter
         // the `relationshipMap` (i.e. to avoid duplicated rels) is not necessary
@@ -221,7 +221,7 @@ public class Create {
     }
 
     @Procedure("apoc.create.clonePathsToVirtual")
-    @Description("Takes the given paths and returns a virtual representation of them.")
+    @Description("Takes the given `LIST<PATH>` and returns a virtual representation of them.")
     public Stream<PathResult> clonePathsToVirtual(@Name("paths") List<Path> paths) {
         Map<String, Relationship> createdRelationships = new HashMap<>();
         return paths.stream().map(path -> createVirtualPath(path, createdRelationships));
@@ -283,13 +283,13 @@ public class Create {
     }
 
     @UserFunction("apoc.create.uuidBase64ToHex")
-    @Description("Takes the given base64 encoded UUID and returns it as a hexadecimal string.")
+    @Description("Takes the given base64 encoded UUID and returns it as a hexadecimal `STRING`.")
     public String uuidBase64ToHex(@Name("base64Uuid") String base64Uuid) {
         return UuidUtil.fromBase64ToHex(base64Uuid);
     }
 
     @UserFunction("apoc.create.uuidHexToBase64")
-    @Description("Takes the given UUID represented as a hexadecimal string and returns it encoded with base64.")
+    @Description("Takes the given UUID represented as a hexadecimal `STRING` and returns it encoded with base64.")
     public String uuidHexToBase64(@Name("uuid") String uuidHex) {
         return UuidUtil.fromHexToBase64(uuidHex);
     }

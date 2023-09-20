@@ -95,8 +95,8 @@ public class Nodes {
     public Pools pools;
     
     @Procedure("apoc.nodes.cycles")
-    @Description("Detects all path cycles in the given node list.\n" +
-            "This procedure can be limited on relationships as well.")
+    @Description("Detects all `PATH` cycles in the given `LIST<NODE>`.\n" +
+            "This procedure can be limited on `RELATIONSHIP` values as well.")
     public Stream<PathResult> cycles(@Name("nodes") List<Node> nodes, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         NodesConfig conf = new NodesConfig(config);
         final List<String> types = conf.getRelTypes();
@@ -148,7 +148,7 @@ public class Nodes {
     }
 
     @Procedure(name = "apoc.nodes.link", mode = Mode.WRITE)
-    @Description("Creates a linked list of the given nodes connected by the given relationship type.")
+    @Description("Creates a linked list of the given `NODE` values connected by the given `RELATIONSHIP` type.")
     public void link(@Name("nodes") List<Node> nodes, @Name("type") String type, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         RefactorConfig conf = new RefactorConfig(config);
         Iterator<Node> it = nodes.iterator();
@@ -167,13 +167,13 @@ public class Nodes {
     }
 
     @Procedure("apoc.nodes.get")
-    @Description("Returns all nodes with the given ids.")
+    @Description("Returns all `NODE` values with the given ids.")
     public Stream<NodeResult> get(@Name("nodes") Object ids) {
         return Util.nodeStream(tx, ids).map(NodeResult::new);
     }
 
     @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE)
-    @Description("Deletes all nodes with the given ids.")
+    @Description("Deletes all `NODE` values with the given ids.")
     public Stream<LongResult> delete(@Name("nodes") Object ids, @Name("batchSize") long batchSize) {
         Iterator<Node> it = Util.nodeStream(tx, ids).iterator();
         long count = 0;
@@ -185,13 +185,13 @@ public class Nodes {
     }
 
     @Procedure("apoc.nodes.rels")
-    @Description("Returns all relationships with the given ids.")
+    @Description("Returns all `RELATIONSHIP` values with the given ids.")
     public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
         return Util.relsStream(tx, ids).map(RelationshipResult::new);
     }
 
     @UserFunction("apoc.node.relationship.exists")
-    @Description("Returns a boolean based on whether the given node has a relationship (or whether the given node has a relationship of the given type and direction).")
+    @Description("Returns a `BOOLEAN` based on whether the given `NODE` has a connecting `RELATIONSHIP` (or whether the given `NODE` has a connecting `RELATIONSHIP` of the given type and direction).")
     public boolean hasRelationship(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
         if (types == null || types.isEmpty()) return node.hasRelationship();
         long id = node.getId();
@@ -228,7 +228,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.connected")
-    @Description("Returns true when a given node is directly connected to another given node.\n" +
+    @Description("Returns true when a given `NODE` is directly connected to another given `NODE`.\n" +
             "This function is optimized for dense nodes.")
     public boolean connected(@Name("startNode") Node start, @Name("endNode") Node end, @Name(value = "types", defaultValue = "") String types)  {
         if (start == null || end == null) return false;
@@ -267,8 +267,8 @@ public class Nodes {
     }
 
     @Procedure("apoc.nodes.collapse")
-    @Description("Merges nodes together in the given list.\n" +
-            "The nodes are then combined to become one node, with all labels of the previous nodes attached to it, and all relationships pointing to it.")
+    @Description("Merges `NODE` values together in the given `LIST<NODE>`.\n" +
+            "The `NODE` values are then combined to become one `NODE`, with all labels of the previous `NODE` values attached to it, and all `RELATIONSHIP` values pointing to it.")
     public Stream<VirtualPathResult> collapse(@Name("nodes") List<Node> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
         if (nodes.size() == 1) return Stream.of(new VirtualPathResult(nodes.get(0), null, null));
@@ -410,7 +410,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.labels")
-    @Description("Returns the labels for the given virtual node.")
+    @Description("Returns the labels for the given virtual `NODE`.")
     public List<String> labels(@Name("node") Node node) {
         if (node == null) return null;
         Iterator<Label> labels = node.getLabels().iterator();
@@ -424,38 +424,38 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.id")
-    @Description("Returns the id for the given virtual node.")
+    @Description("Returns the id for the given virtual `NODE`.")
     public Long id(@Name("node") Node node) {
         return (node == null) ? null : node.getId();
     }
 
     @UserFunction("apoc.rel.id")
-    @Description("Returns the id for the given virtual relationship.")
+    @Description("Returns the id for the given virtual `RELATIONSHIP`.")
     public Long relId(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getId();
     }
 
     @UserFunction("apoc.rel.startNode")
-    @Description("Returns the start node for the given virtual relationship.")
+    @Description("Returns the start `NODE` for the given virtual `RELATIONSHIP`.")
     public Node startNode(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getStartNode();
     }
 
     @UserFunction("apoc.rel.endNode")
-    @Description("Returns the end node for the given virtual relationship.")
+    @Description("Returns the end `NODE` for the given virtual `RELATIONSHIP`.")
     public Node endNode(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getEndNode();
     }
 
     @UserFunction("apoc.rel.type")
-    @Description("Returns the type for the given virtual relationship.")
+    @Description("Returns the type for the given virtual `RELATIONSHIP`.")
     public String type(@Name("rel") Relationship rel) {
         return (rel == null) ? null : rel.getType().name();
     }
 
     @UserFunction("apoc.any.properties")
     @Description("Returns all properties of the given object.\n" +
-            "The object can be a virtual node, a real node, a virtual relationship, a real relationship, or a map.")
+            "The object can be a virtual `NODE`, a real `NODE`, a virtual `RELATIONSHIP`, a real `RELATIONSHIP`, or a `MAP`.")
     public Map<String,Object> properties(@Name("object") Object thing, @Name(value = "keys", defaultValue = "null") List<String> keys) {
         if (thing == null) return null;
         if (thing instanceof Map) {
@@ -472,7 +472,7 @@ public class Nodes {
 
     @UserFunction("apoc.any.property")
     @Description("Returns the property for the given key from an object.\n" +
-            "The object can be a virtual node, a real node, a virtual relationship, a real relationship, or a map.")
+            "The object can be a virtual `NODE`, a real `NODE`, a virtual `RELATIONSHIP`, a real `RELATIONSHIP`, or a `MAP`.")
     public Object property(@Name("object") Object thing, @Name(value = "key") String key) {
         if (thing == null || key == null) return null;
         if (thing instanceof Map) {
@@ -485,7 +485,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree")
-    @Description("Returns the total degrees for the given node.")
+    @Description("Returns the total degrees of the given `NODE`.")
     public long degree(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String types) {
         if (types==null || types.isEmpty()) return node.getDegree();
         long degree = 0;
@@ -496,7 +496,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree.in")
-    @Description("Returns the total number of incoming relationships to the given node.")
+    @Description("Returns the total number of incoming `RELATIONSHIP` values connected to the given `NODE`.")
     public long degreeIn(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String type) {
 
         if (type==null || type.isEmpty()) {
@@ -508,7 +508,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree.out")
-    @Description("Returns the total number of outgoing relationships from the given node.")
+    @Description("Returns the total number of outgoing `RELATIONSHIP` values from the given `NODE`.")
     public long degreeOut(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String type) {
 
         if (type==null || type.isEmpty()) {
@@ -521,7 +521,7 @@ public class Nodes {
 
 
     @UserFunction("apoc.node.relationship.types")
-    @Description("Returns a list of distinct relationship types for the given node.")
+    @Description("Returns a `LIST<STRING>` of distinct `RELATIONSHIP` types for the given `NODE`.")
     public List<String> relationshipTypes(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String types) {
         if (node==null) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).collect(Collectors.toList());
@@ -537,7 +537,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.relationship.types")
-    @Description("Returns a list of distinct relationship types from the given list of nodes.")
+    @Description("Returns a `LIST<STRING>` of distinct `RELATIONSHIP` types from the given `LIST<NODE>` values.")
     public List<Map<String, Object>> nodesRelationshipTypes(@Name("nodes") Object ids, @Name(value = "types",defaultValue = "") String types) {
         if (ids == null) return null;
         return Util.nodeStream(tx, ids)
@@ -554,7 +554,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.relationships.exist")
-    @Description("Returns a boolean based on whether the given node has relationships (or whether the given nodes has relationships of the given type and direction).")
+    @Description("Returns a `BOOLEAN` based on whether the given `NODE` has connecting `RELATIONSHIP` values (or whether the given `NODE` has connecting `RELATIONSHIP` values of the given type and direction).")
     public Map<String,Boolean> relationshipExists(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
         if (node == null || types == null || types.isEmpty()) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).toList();
@@ -568,7 +568,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.relationships.exist")
-    @Description("Returns a boolean based on whether or not the given nodes have the given relationships.")
+    @Description("Returns a `BOOLEAN` based on whether or not the given `NODE` values have the given `RELATIONSHIP` values.")
     public List<Map<String, Object>> nodesRelationshipExists(@Name("nodes") Object ids, @Name(value = "types", defaultValue = "") String types) {
         if (ids == null) return null;
         return Util.nodeStream(tx, ids)
@@ -585,7 +585,7 @@ public class Nodes {
     }
 
     @UserFunction("apoc.nodes.isDense")
-    @Description("Returns true if the given node is a dense node.")
+    @Description("Returns true if the given `NODE` is a dense node.")
     public boolean isDense(@Name("node") Node node) {
         try (NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
             final long id = node.getId();
@@ -600,7 +600,7 @@ public class Nodes {
 
     @NotThreadSafe
     @UserFunction("apoc.any.isDeleted")
-    @Description("Returns true if the given node or relationship no longer exists.")
+    @Description("Returns true if the given `NODE` or `RELATIONSHIP` no longer exists.")
     public boolean isDeleted(@Name("object") Object object) {
         if (object == null) return true;
         final String query;

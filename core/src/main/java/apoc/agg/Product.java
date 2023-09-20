@@ -26,7 +26,7 @@ import org.neo4j.procedure.*;
  */
 public class Product {
     @UserAggregationFunction("apoc.agg.product")
-    @Description("Returns the product of all non-null numerical values in the collection.")
+    @Description("Returns the product of all non-null `INTEGER` and `FLOAT` values in the collection.")
     public ProductFunction product() {
         return new ProductFunction();
     }

@@ -36,7 +36,7 @@ import static apoc.util.Util.map;
  */
 public class ExtractURL {
     @UserFunction("apoc.data.url")
-    @Description("Turns a URL into a map.")
+    @Description("Turns a URL into a `MAP`.")
     public Map<String, Object> parse(final @Name("url") String value) {
         if (value == null) return null;
         try {
