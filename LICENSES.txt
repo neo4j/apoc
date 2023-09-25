@@ -121,15 +121,15 @@ Apache-2.0
   jcip-annotations-1.0-1.jar
   jctools-core-4.0.1.jar
   jettison-1.5.4.jar
-  jetty-http-10.0.15.jar
-  jetty-io-10.0.15.jar
-  jetty-security-10.0.15.jar
-  jetty-server-10.0.15.jar
-  jetty-servlet-10.0.15.jar
+  jetty-http-10.0.16.jar
+  jetty-io-10.0.16.jar
+  jetty-security-10.0.16.jar
+  jetty-server-10.0.16.jar
+  jetty-servlet-10.0.16.jar
   jetty-servlet-api-4.0.6.jar
-  jetty-util-10.0.15.jar
-  jetty-webapp-10.0.15.jar
-  jetty-xml-10.0.15.jar
+  jetty-util-10.0.16.jar
+  jetty-webapp-10.0.16.jar
+  jetty-xml-10.0.16.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.425.jar
