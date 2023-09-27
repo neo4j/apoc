@@ -369,7 +369,7 @@ public class GraphRefactoring {
     }
 
     @Procedure(name = "apoc.refactor.invert", mode = Mode.WRITE,eager = true)
-    @Description("Inverts the direction of the given relationship.")
+    @Description("Inverts the direction of the given `RELATIONSHIP`.")
     public Stream<RelationshipRefactorResult> invert(@Name("rel") Relationship rel) {
         if (rel == null) return Stream.empty();
         RelationshipRefactorResult result = new RelationshipRefactorResult(rel.getId());

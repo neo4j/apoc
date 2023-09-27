@@ -95,7 +95,7 @@ public class Schemas {
 
     @NotThreadSafe
     @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
-    @Description("eturns all indexes and constraints information for all `NODE` labels in the database.\n" +
+    @Description("Returns all indexes and constraints information for all `NODE` labels in the database.\n" +
             "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> nodes(@Name(value = "config",defaultValue = "{}") Map<String,Object> config) {
         return indexesAndConstraintsForNode(config);

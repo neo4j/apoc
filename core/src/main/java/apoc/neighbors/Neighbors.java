@@ -202,7 +202,7 @@ public class Neighbors {
     }
 
     @Procedure("apoc.neighbors.byhop")
-    @Description("Returns all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance.")
+    @Description("Returns all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance. Returns `LIST<NODE>` values, where each `PATH` of `NODE` values represents one row of the `LIST<NODE>` values.")
     public Stream<NodeListResult> neighborsByHop(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types, @Name(value="distance", defaultValue = "1") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types==null || types.isEmpty()) return Stream.empty();

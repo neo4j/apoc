@@ -136,13 +136,13 @@ public class Json {
     }
 
     @UserFunction("apoc.convert.fromJsonMap")
-    @Description("Converts the given JSON `MAP` into a Cypher `MAP`.")
+    @Description("Converts the given JSON map into a Cypher `MAP`.")
     public Map<String,Object> fromJsonMap(@Name("map") String value,@Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         return JsonUtil.parse(value, path, Map.class, pathOptions);
     }
 
     @UserFunction("apoc.convert.fromJsonList")
-    @Description("Converts the given JSON `LIST<STRING>` into a Cypher `LIST<STRING>`.")
+    @Description("Converts the given JSON list into a Cypher `LIST<STRING>`.")
     public List<Object> fromJsonList(@Name("list") String value, @Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         return JsonUtil.parse(value, path, List.class, pathOptions);
     }

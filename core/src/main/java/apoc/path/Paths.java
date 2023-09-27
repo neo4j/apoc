@@ -37,7 +37,7 @@ import java.util.List;
 public class Paths {
 
     @UserFunction("apoc.path.create")
-    @Description("Returns a `PATH` from the given start `NODE` and `LIST<RELATIONSHIP> values`.")
+    @Description("Returns a `PATH` from the given start `NODE` and `LIST<RELATIONSHIP>`.")
     public Path create(@Name("startNode") Node startNode, @Name(value = "rels", defaultValue = "[]") List<Relationship> rels) {
         if (startNode == null) return null;
         PathImpl.Builder builder = new PathImpl.Builder(startNode);
@@ -52,7 +52,7 @@ public class Paths {
     }
 
     @UserFunction("apoc.path.slice")
-    @Description("Returns a sub-`PATH` of the given length and offset from the given `PATH`.")
+    @Description("Returns a new `PATH` of the given length, taken from the given `PATH` at the given offset.")
     public Path slice(@Name("path") Path path, @Name(value = "offset", defaultValue = "0") long offset,@Name(value = "length", defaultValue = "-1") long length) {
         if (path == null) return null;
         if (offset < 0) offset = 0;

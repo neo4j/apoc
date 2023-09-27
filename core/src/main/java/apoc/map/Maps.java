@@ -125,7 +125,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.mergeList")
-    @Description("Merges all `MAP` values in the given `LIST<MAP<STRING, Value>>` into one `MAP`.")
+    @Description("Merges all `MAP` values in the given `LIST<MAP<STRING, ANY>>` into one `MAP`.")
     public Map<String,Object> mergeList(@Name("maps") List<Map<String,Object>> maps) {
         Map<String,Object> result = new LinkedHashMap<>(maps.size());
         for (Map<String, Object> map : maps) {

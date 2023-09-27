@@ -374,7 +374,7 @@ public class Coll {
     }
 
     @Procedure("apoc.coll.partition")
-    @Description("Partitions the original `LIST<ANY>` into sub-`LIST<ANY>` values of the given batch size.\n" +
+    @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n" +
             "The final `LIST<ANY>` may be smaller than the given batch size.")
     public Stream<ListResult> partition(@Name("coll") List<Object> list, @Name("batchSize") long batchSize) {
 	    if (list==null || list.isEmpty()) return Stream.empty();
@@ -382,7 +382,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.partition")
-    @Description("Partitions the original `LIST<ANY>` into sub-`LIST<ANY>` values of the given batch size.\n" +
+    @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n" +
             "The final `LIST<ANY>` may be smaller than the given batch size.")
     public List<Object> partitionFn(@Name("coll") List<Object> list, @Name("batchSize") long batchSize) {
         if (list==null || list.isEmpty()) return new ArrayList<>();
