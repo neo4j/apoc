@@ -268,14 +268,14 @@ public class GraphRefactoring {
             if (pairing == null) continue;
 
             if (pairing.size() != 2) {
-                throw new IllegalArgumentException("\'standinNodes\' must be a list of node pairs");
+                throw new IllegalArgumentException("'standinNodes' must be a list of node pairs");
             }
 
             Node from = pairing.get(0);
             Node to = pairing.get(1);
 
             if (from == null || to == null) {
-                throw new IllegalArgumentException("\'standinNodes\' must be a list of node pairs");
+                throw new IllegalArgumentException("'standinNodes' must be a list of node pairs");
             }
 
             standinMap.put(from, to);
@@ -296,7 +296,7 @@ public class GraphRefactoring {
         RefactorConfig conf = new RefactorConfig(config);
         Set<Node> nodesSet = new LinkedHashSet<>(nodes);
         // grab write locks upfront consistently ordered
-        nodesSet.stream().sorted(Comparator.comparingLong(Node::getId)).forEach(tx::acquireWriteLock);
+        nodesSet.stream().sorted(Comparator.comparing(Node::getElementId)).forEach(tx::acquireWriteLock);
 
         final Node first = nodes.get(0);
         final List<String> existingSelfRelIds = conf.isPreservingExistingSelfRels()
@@ -411,8 +411,7 @@ public class GraphRefactoring {
             @Name("propertyKey") String propertyKey,
             @Name("trueValues") List<Object> trueValues,
             @Name("falseValues") List<Object> falseValues) {
-        if (entity instanceof Entity) {
-            Entity pc = (Entity) entity;
+        if (entity instanceof Entity pc) {
             Object value = pc.getProperty(propertyKey, null);
             if (value != null) {
                 boolean isTrue = trueValues.contains(value);
@@ -519,19 +518,18 @@ public class GraphRefactoring {
 
                 final RefactorConfig.RelationshipSelectionStrategy strategy = refactorConfig.getRelationshipSelectionStrategy();
                 switch (strategy) {
-                    case INCOMING:
+                    case INCOMING -> {
                         newRelType = relationshipIn.getType();
                         newRelProps.putAll(relationshipIn.getAllProperties());
-                        break;
-
-                    case OUTGOING:
+                    }
+                    case OUTGOING -> {
                         newRelType = relationshipOut.getType();
                         newRelProps.putAll(relationshipOut.getAllProperties());
-                        break;
-
-                    default:
+                    }
+                    default -> {
                         newRelType = RelationshipType.withName(relationshipIn.getType() + "_" + relationshipOut.getType());
                         newRelProps.putAll(relationshipIn.getAllProperties());
+                    }
                 }
 
                 Relationship relCreated = nodeIncoming.createRelationshipTo(nodeOutgoing, newRelType);
@@ -642,15 +640,15 @@ public class GraphRefactoring {
         Node startNode = rel.getStartNode();
         Node endNode = rel.getEndNode();
 
-        if (startNode.getId() == endNode.getId() && !createNewSelfRelf) {
+        if (startNode.getElementId().equals(endNode.getElementId()) && !createNewSelfRelf) {
             return;
         }
 
-        if (startNode.getId() == source.getId()) {
+        if (startNode.getElementId().equals(source.getElementId())) {
             startNode = target;
         }
 
-        if (endNode.getId() == source.getId()) {
+        if (endNode.getElementId().equals(source.getElementId())) {
             endNode = target;
         }
 

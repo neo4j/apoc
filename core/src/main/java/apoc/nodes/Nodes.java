@@ -52,6 +52,7 @@ import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -69,6 +70,7 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -122,15 +124,15 @@ public class Nodes {
                     new BasicEvaluationContext(tx, db),
                     pathExpander,
                     conf.getMaxDepth());
-            Map<Long, List<Long>> dups = new HashMap<>();
+            Map<String, List<String>> dups = new HashMap<>();
             return Iterables.stream(relationships)
                     // to prevent duplicated (start and end nodes with double-rels)
                     .filter(relationship -> {
-                        final List<Long> nodeDups = dups.computeIfAbsent(relationship.getStartNodeId(), (key) -> new ArrayList<>());
-                        if (nodeDups.contains(relationship.getEndNodeId())) {
+                        final List<String> nodeDups = dups.computeIfAbsent(relationship.getStartNode().getElementId(), (key) -> new ArrayList<>());
+                        if (nodeDups.contains(relationship.getEndNode().getElementId())) {
                             return false;
                         }
-                        nodeDups.add(relationship.getEndNodeId());
+                        nodeDups.add(relationship.getEndNode().getElementId());
                         return true;
                     })
                     .flatMap(relationship -> {
@@ -194,7 +196,7 @@ public class Nodes {
     @Description("Returns a `BOOLEAN` based on whether the given `NODE` has a connecting `RELATIONSHIP` (or whether the given `NODE` has a connecting `RELATIONSHIP` of the given type and direction).")
     public boolean hasRelationship(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
         if (types == null || types.isEmpty()) return node.hasRelationship();
-        long id = node.getId();
+        long id = ((InternalTransaction) tx).elementIdMapper().nodeId(node.getElementId());
         try ( NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
 
             ktx.dataRead().singleNode(id, nodeCursor);
@@ -205,20 +207,11 @@ public class Nodes {
                 int typeId = tokenRead.relationshipType(pair.getLeft().name());
                 Direction direction = pair.getRight();
 
-                int count;
-                switch (direction) {
-                    case INCOMING:
-                        count = org.neo4j.internal.kernel.api.helpers.Nodes.countIncoming(nodeCursor, typeId);
-                        break;
-                    case OUTGOING:
-                        count = org.neo4j.internal.kernel.api.helpers.Nodes.countOutgoing(nodeCursor, typeId);
-                        break;
-                    case BOTH:
-                        count = org.neo4j.internal.kernel.api.helpers.Nodes.countAll(nodeCursor, typeId);
-                        break;
-                    default:
-                        throw new UnsupportedOperationException("invalid direction " + direction);
-                }
+                int count = switch (direction) {
+                    case INCOMING -> org.neo4j.internal.kernel.api.helpers.Nodes.countIncoming(nodeCursor, typeId);
+                    case OUTGOING -> org.neo4j.internal.kernel.api.helpers.Nodes.countOutgoing(nodeCursor, typeId);
+                    case BOTH -> org.neo4j.internal.kernel.api.helpers.Nodes.countAll(nodeCursor, typeId);
+                };
                 if (count > 0) {
                     return true;
                 }
@@ -234,8 +227,8 @@ public class Nodes {
         if (start == null || end == null) return false;
         if (start.equals(end)) return true;
 
-        long startId = start.getId();
-        long endId = end.getId();
+        long startId = ((InternalTransaction) tx).elementIdMapper().nodeId(start.getElementId());
+        long endId = ((InternalTransaction) tx).elementIdMapper().nodeId(end.getElementId());
         List<Pair<RelationshipType, Direction>> pairs = (types == null || types.isEmpty()) ? null : parse(types);
 
         Read dataRead = ktx.dataRead();
@@ -250,19 +243,12 @@ public class Nodes {
                 throw new IllegalArgumentException("node with id " + startId + " does not exist.");
             }
 
-//            boolean startDense = startNodeCursor.supportsFastDegreeLookup();
             dataRead.singleNode(endId, endNodeCursor);
             if (!endNodeCursor.next()) {
                 throw new IllegalArgumentException("node with id " + endId + " does not exist.");
             }
-//            boolean endDense = endNodeCursor.supportsFastDegreeLookup();
 
-            return connected(startNodeCursor, endId, typedDirections(tokenRead, pairs, true));
-
-
-//            if (!startDense) return connected(startNodeCursor, endId, typedDirections(tokenRead, pairs, true));
-//            if (!endDense) return connected(endNodeCursor, startId, typedDirections(tokenRead, pairs, false));
-//            return connectedDense(startNodeCursor, endNodeCursor, typedDirections(tokenRead, pairs, true));
+            return connected(startNodeCursor, endId, typedDirections(tokenRead, pairs));
         }
     }
 
@@ -313,7 +299,7 @@ public class Nodes {
                     createOrMergeVirtualRelationship(virtualNode, refactorConfig, relationship, virtualNode,  Direction.OUTGOING);
                 }
             } else {
-                if (startNode.getId() == node.getId()) {
+                if (Objects.equals(startNode.getElementId(), node.getElementId())) {
                     createOrMergeVirtualRelationship(virtualNode, refactorConfig, relationship, endNode,  Direction.OUTGOING);
                 } else {
                     createOrMergeVirtualRelationship(virtualNode, refactorConfig, relationship, startNode,  Direction.INCOMING);
@@ -353,8 +339,8 @@ public class Nodes {
         try (RelationshipTraversalCursor relationship = ktx.cursors().allocateRelationshipTraversalCursor(ktx.cursorContext())) {
             start.relationships(relationship, RelationshipSelection.selection(Direction.BOTH));
             while (relationship.next()) {
-                if (relationship.otherNodeReference() ==end) {
-                    if (typedDirections==null) {
+                if (relationship.otherNodeReference() == end) {
+                    if (typedDirections == null) {
                         return true;
                     } else {
                         int direction = relationship.targetNodeReference() == end ? 0 : 1 ;
@@ -368,8 +354,8 @@ public class Nodes {
     }
 
     private boolean arrayContains(int[] array, int element) {
-        for (int i=0; i<array.length; i++) {
-            if (array[i]==element) {
+        for (int j : array) {
+            if (j == element) {
                 return true;
             }
         }
@@ -377,15 +363,14 @@ public class Nodes {
     }
 
     /**
-     *
      * @param ops
      * @param pairs
-     * @param outgoing
      * @return a int[][] where the first index is 0 for outgoing, 1 for incoming. second array contains rel type ids
      */
-    private int[][] typedDirections(TokenRead ops, List<Pair<RelationshipType, Direction>> pairs, boolean outgoing) {
-        if (pairs==null) return null;
-        int from=0;int to=0;
+    private int[][] typedDirections(TokenRead ops, List<Pair<RelationshipType, Direction>> pairs) {
+        if (pairs == null) return null;
+        int from = 0;
+        int to = 0;
         int[][] result = new int[2][pairs.size()];
         int outIdx = Direction.OUTGOING.ordinal();
         int inIdx = Direction.INCOMING.ordinal();
@@ -401,11 +386,6 @@ public class Nodes {
         }
         result[outIdx] = Arrays.copyOf(result[outIdx], from);
         result[inIdx] = Arrays.copyOf(result[inIdx], to);
-        if (!outgoing) {
-            int[] tmp = result[outIdx];
-            result[outIdx] = result[inIdx];
-            result[inIdx] = tmp;
-        }
         return result;
     }
 
@@ -511,7 +491,7 @@ public class Nodes {
     @Description("Returns the total number of outgoing `RELATIONSHIP` values from the given `NODE`.")
     public long degreeOut(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String type) {
 
-        if (type==null || type.isEmpty()) {
+        if (type == null || type.isEmpty()) {
             return node.getDegree(Direction.OUTGOING);
         }
 
@@ -523,7 +503,7 @@ public class Nodes {
     @UserFunction("apoc.node.relationship.types")
     @Description("Returns a `LIST<STRING>` of distinct `RELATIONSHIP` types for the given `NODE`.")
     public List<String> relationshipTypes(@Name("node") Node node, @Name(value = "relTypes",defaultValue = "") String types) {
-        if (node==null) return null;
+        if (node == null) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes()).map(RelationshipType::name).collect(Collectors.toList());
         if (types == null || types.isEmpty()) return relTypes;
         List<String> result = new ArrayList<>(relTypes.size());
@@ -549,7 +529,7 @@ public class Nodes {
                     }
                     return map("node", node, "types", relationshipTypes);
                 })
-                .filter(e -> e != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -580,7 +560,7 @@ public class Nodes {
                     }
                     return map("node", node, "exists", existsMap);
                 })
-                .filter(e -> e != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -588,7 +568,7 @@ public class Nodes {
     @Description("Returns true if the given `NODE` is a dense node.")
     public boolean isDense(@Name("node") Node node) {
         try (NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
-            final long id = node.getId();
+            final long id = ((InternalTransaction) tx).elementIdMapper().nodeId(node.getElementId());
             ktx.dataRead().singleNode(id, nodeCursor);
             if (nodeCursor.next()) {
                 return nodeCursor.supportsFastDegreeLookup();
