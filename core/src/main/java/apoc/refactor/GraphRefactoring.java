@@ -30,6 +30,7 @@ import apoc.util.collection.Iterables;
 import org.apache.commons.collections4.IterableUtils;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
@@ -89,7 +90,7 @@ public class GraphRefactoring {
     @Description("Expands the given `RELATIONSHIP` VALUES into intermediate `NODE` VALUES.\n" +
             "The intermediate `NODE` values are connected by the given `outType` and `inType`.")
     public Stream<NodeRefactorResult> extractNode(@Name("rels") Object rels, @Name("labels") List<String> labels, @Name("outType") String outType, @Name("inType") String inType) {
-        return Util.relsStream(tx, rels).map((rel) -> {
+        return Util.relsStream((InternalTransaction) tx, rels).map((rel) -> {
             NodeRefactorResult result = new NodeRefactorResult(rel.getId());
             try {
                 Node copy = withTransactionAndRebind(db, tx, transaction -> {
@@ -109,7 +110,7 @@ public class GraphRefactoring {
     @Procedure(name = "apoc.refactor.collapseNode", mode = Mode.WRITE)
     @Description("Collapses the given `NODE` and replaces it with a `RELATIONSHIP` of the given type.")
     public Stream<RelationshipRefactorResult> collapseNode(@Name("nodes") Object nodes, @Name("relType") String type) {
-        return Util.nodeStream(tx, nodes).map((node) -> {
+        return Util.nodeStream((InternalTransaction) tx, nodes).map((node) -> {
             RelationshipRefactorResult result = new RelationshipRefactorResult(node.getId());
             try {
                 Iterable<Relationship> outRels = node.getRelationships(Direction.OUTGOING);

@@ -24,6 +24,7 @@ import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import apoc.uuid.UuidUtil;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.*;
 
 import java.util.HashMap;
@@ -53,7 +54,7 @@ public class Create {
     @Description("Adds the given labels to the given `NODE` values.")
     public Stream<NodeResult> addLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
-        return new Get(tx).nodes(nodes).map((r) -> {
+        return new Get((InternalTransaction) tx).nodes(nodes).map((r) -> {
             Node node = r.node;
             for (Label label : labels) {
                 node.addLabel(label);
@@ -65,7 +66,7 @@ public class Create {
     @Procedure(name = "apoc.create.setProperty", mode = Mode.WRITE)
     @Description("Sets the given property to the given `NODE` values.")
     public Stream<NodeResult> setProperty(@Name("nodes") Object nodes, @Name("key") String key, @Name("value") Object value) {
-        return new Get(tx).nodes(nodes).map((r) -> {
+        return new Get((InternalTransaction) tx).nodes(nodes).map((r) -> {
             setProperty(r.node, key,toPropertyValue(value));
             return r;
         });
@@ -74,7 +75,7 @@ public class Create {
     @Procedure(name = "apoc.create.setRelProperty", mode = Mode.WRITE)
     @Description("Sets the given property on the `RELATIONSHIP` values.")
     public Stream<RelationshipResult> setRelProperty(@Name("rels") Object rels, @Name("key") String key, @Name("value") Object value) {
-        return new Get(tx).rels(rels).map((r) -> {
+        return new Get((InternalTransaction) tx).rels(rels).map((r) -> {
             setProperty(r.rel,key,toPropertyValue(value));
             return r;
         });
@@ -83,7 +84,7 @@ public class Create {
     @Procedure(name = "apoc.create.setProperties", mode = Mode.WRITE)
     @Description("Sets the given properties to the given `NODE` values.")
     public Stream<NodeResult> setProperties(@Name("nodes") Object nodes, @Name("keys") List<String> keys, @Name("values") List<Object> values) {
-        return new Get(tx).nodes(nodes).map((r) -> {
+        return new Get((InternalTransaction) tx).nodes(nodes).map((r) -> {
             setProperties(r.node, Util.mapFromLists(keys,values));
             return r;
         });
@@ -92,7 +93,7 @@ public class Create {
     @Procedure(name = "apoc.create.removeProperties", mode = Mode.WRITE)
     @Description("Removes the given properties from the given `NODE` values.")
     public Stream<NodeResult> removeProperties(@Name("nodes") Object nodes, @Name("keys") List<String> keys) {
-        return new Get(tx).nodes(nodes).map((r) -> {
+        return new Get((InternalTransaction) tx).nodes(nodes).map((r) -> {
             keys.forEach( r.node::removeProperty );
             return r;
         });
@@ -101,7 +102,7 @@ public class Create {
     @Procedure(name = "apoc.create.setRelProperties", mode = Mode.WRITE)
     @Description("Sets the given properties on the `RELATIONSHIP` values.")
     public Stream<RelationshipResult> setRelProperties(@Name("rels") Object rels, @Name("keys") List<String> keys, @Name("values") List<Object> values) {
-        return new Get(tx).rels(rels).map((r) -> {
+        return new Get((InternalTransaction) tx).rels(rels).map((r) -> {
             setProperties(r.rel, Util.mapFromLists(keys,values));
             return r;
         });
@@ -110,7 +111,7 @@ public class Create {
     @Procedure(name = "apoc.create.removeRelProperties", mode = Mode.WRITE)
     @Description("Removes the given properties from the given `RELATIONSHIP` values.")
     public Stream<RelationshipResult> removeRelProperties(@Name("rels") Object rels, @Name("keys") List<String> keys) {
-        return new Get(tx).rels(rels).map((r) -> {
+        return new Get((InternalTransaction) tx).rels(rels).map((r) -> {
             keys.forEach( r.rel::removeProperty);
             return r;
         });
@@ -120,7 +121,7 @@ public class Create {
     @Description("Sets the given labels to the given `NODE` values. Non-matching labels are removed from the nodes.")
     public Stream<NodeResult> setLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
-        return new Get(tx).nodes(nodes).map((r) -> {
+        return new Get((InternalTransaction) tx).nodes(nodes).map((r) -> {
             Node node = r.node;
             for (Label label : node.getLabels()) {
                 if (labelNames.contains(label.name())) continue;
@@ -138,7 +139,7 @@ public class Create {
     @Description("Removes the given labels from the given `NODE` values.")
     public Stream<NodeResult> removeLabels(@Name("nodes") Object nodes, @Name("labels") List<String> labelNames) {
         Label[] labels = Util.labels(labelNames);
-        return new Get(tx).nodes(nodes).map((r) -> {
+        return new Get((InternalTransaction) tx).nodes(nodes).map((r) -> {
             Node node = r.node;
             for (Label label : labels) {
                 node.removeLabel(label);

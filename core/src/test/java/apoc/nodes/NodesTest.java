@@ -33,9 +33,12 @@ import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -56,6 +59,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.Label.label;
+import static org.neo4j.graphdb.RelationshipType.withName;
 
 /**
  * @author mh
@@ -92,6 +96,54 @@ public class NodesTest {
         TestUtil.testCall(db, "MATCH (n) WITH n, apoc.nodes.isDense(n) as dense " +
                         "WHERE n:Foo AND dense OR n:Bar AND NOT dense RETURN count(*) as c",
                 (row) -> assertEquals(2L, row.get("c")));
+    }
+
+    @Test
+    public void nodesGetTest() {
+        db.executeTransactionally("CREATE (f:Foo), (b:Bar), (c:Car)");
+        TestUtil.testResult(db,
+                """
+                MATCH (f:Foo), (b:Bar), (c:Car)
+                CALL apoc.nodes.get([elementId(f), id(b), c])
+                YIELD node
+                RETURN node
+                """,
+                (result) -> {
+                    List<Label> returnedNodeLabels = new ArrayList<>();
+                    List<Label> expectedLabels = List.of(label("Foo"), label("Bar"), label("Car"));
+                    Map<String, Object> row = result.next();
+                    ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
+                    row = result.next();
+                    ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
+                    row = result.next();
+                    ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
+                    assertFalse(result.hasNext());
+                    assertTrue(expectedLabels.containsAll(returnedNodeLabels));
+        });
+    }
+
+    @Test
+    public void relsGetTest() {
+        db.executeTransactionally("CREATE ()-[:FOO]->(), ()-[:BAR]->(), ()-[:CAR]->()");
+        TestUtil.testResult(db,
+                """
+                MATCH ()-[f:FOO]->(), ()-[b:BAR]->(), ()-[c:CAR]->()
+                CALL apoc.nodes.rels([elementId(f), id(b), c])
+                YIELD rel
+                RETURN rel
+                """,
+                (result) -> {
+                    List<RelationshipType> returnedRelTypes = new ArrayList<>();
+                    List<RelationshipType> expectedTypes = List.of(withName("FOO"), withName("BAR"), withName("CAR"));
+                    Map<String, Object> row = result.next();
+                    returnedRelTypes.add(((Relationship) row.get("rel")).getType());
+                    row = result.next();
+                    returnedRelTypes.add(((Relationship) row.get("rel")).getType());
+                    row = result.next();
+                    returnedRelTypes.add(((Relationship) row.get("rel")).getType());
+                    assertFalse(result.hasNext());
+                    assertTrue(expectedTypes.containsAll(returnedRelTypes));
+        });
     }
     
     @Test
@@ -257,6 +309,21 @@ public class NodesTest {
     }
 
     @Test
+    public void nodesDeleteTest() {
+        db.executeTransactionally("CREATE (:FOO), (:BAR), (:BAZ)");
+
+        long count = TestUtil.singleResultFirstColumn(db, """
+                MATCH (foo:FOO), (bar:BAR), (baz:BAZ)
+                CALL apoc.nodes.delete([foo, id(bar), elementId(baz)],1)
+                YIELD value AS count
+                RETURN count""");
+        assertEquals(3L, count);
+
+        count = TestUtil.singleResultFirstColumn(db, "MATCH (n) RETURN count(*) as count");
+        assertEquals(0L, count);
+    }
+
+    @Test
     public void types() {
         db.executeTransactionally("CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(f) CREATE (f)-[:X]->(f)");
         TestUtil.testCall(db, "MATCH (n:Foo) RETURN apoc.node.relationship.types(n) AS value", (r) -> assertEquals(asSet("X","Y"), asSet(((List)r.get("value")).toArray())));
@@ -273,7 +340,7 @@ public class NodesTest {
         db.executeTransactionally("CREATE (f:Bar), (f)-[:YY]->(f), (f)-[:XX]->(f)");
 
         // when
-        TestUtil.testCall(db, "MATCH (n) RETURN apoc.nodes.relationship.types(collect(n)) AS value",
+        TestUtil.testCall(db, "MATCH (f:Foo), (b:Bar) RETURN apoc.nodes.relationship.types([f, elementId(b)]) AS value",
                 (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
@@ -297,7 +364,7 @@ public class NodesTest {
         db.executeTransactionally("CREATE (b:Bar), (b)-[:Y]->(b)");
 
         // when
-        TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.nodes.relationships.exist(collect(n), 'X|Y') AS value", (result) -> {
+        TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.nodes.relationships.exist(collect(elementId(n)), 'X|Y') AS value", (result) -> {
             // then
             List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
             assertFalse("value should not be empty", list.isEmpty());
@@ -320,7 +387,7 @@ public class NodesTest {
 
 
     @Test
-    public void hasRelationhip() {
+    public void hasRelationship() {
         db.executeTransactionally("CREATE (:Foo)-[:Y]->(:Bar),(n:FooBar) WITH n UNWIND range(1,100) as _ CREATE (n)-[:X]->(n)");
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationship.exists(n,'Y') AS value",(r)-> assertEquals(true,r.get("value")));
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationship.exists(n,'Y>') AS value", (r)-> assertEquals(true,r.get("value")));
@@ -339,7 +406,7 @@ public class NodesTest {
     }
 
     @Test
-    public void hasRelationhips() {
+    public void hasRelationships() {
         db.executeTransactionally("CREATE (:Foo)-[:Y]->(:Bar),(n:FooBar) WITH n UNWIND range(1,100) as _ CREATE (n)-[:X]->(n)");
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationships.exist(n,'Y') AS value",(r)-> assertEquals(map("Y",true),r.get("value")));
         TestUtil.testCall(db,"MATCH (n:Foo) RETURN apoc.node.relationships.exist(n,'Y>') AS value", (r)-> assertEquals(map("Y>",true),r.get("value")));

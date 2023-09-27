@@ -156,10 +156,13 @@ public class SubgraphTest {
 	@Test
 	public void testSubgraphAllShouldContainExpectedNodesAndRels() {
 		String controlQuery =
-				"MATCH path = (:Person {name: 'Keanu Reeves'})-[*0..3]-(subgraphNode) " +
-				"with collect(distinct subgraphNode) as subgraph " +
-				"call apoc.algo.cover([node in subgraph | id(node)]) yield rel " +
-				"return subgraph, collect(rel) as relationships";
+				"""
+				MATCH path = (:Person {name: 'Keanu Reeves'})-[*0..3]-(subgraphNode)
+				WITH collect(DISTINCT subgraphNode) AS subgraph
+				CALL apoc.algo.cover([node in subgraph | elementId(node)])
+				YIELD rel
+				RETURN subgraph, collect(rel) AS relationships
+				""";
 		final List<NodeResult> subgraph;
 		final List<RelationshipResult> relationships;
 		try (Transaction tx = db.beginTx()) {
@@ -170,9 +173,12 @@ public class SubgraphTest {
 		}
 
 		String query =
-				"MATCH (k:Person {name: 'Keanu Reeves'}) " +
-				"CALL apoc.path.subgraphAll(k,{maxLevel:3}) yield nodes, relationships " +
-				"return nodes as subgraphNodes, relationships as subgraphRelationships";
+				"""
+				MATCH (k:Person {name: 'Keanu Reeves'})
+				CALL apoc.path.subgraphAll(k, {maxLevel:3})
+				YIELD nodes, relationships
+				RETURN nodes AS subgraphNodes, relationships AS subgraphRelationships
+				""";
 		TestUtil.testCall(db, query, (row) -> {
 			List<NodeResult> subgraphNodes = (List<NodeResult>) row.get("subgraphNodes");
 			List<RelationshipResult> subgraphRelationships = (List<RelationshipResult>) row.get("subgraphRelationships");
@@ -232,6 +238,30 @@ public class SubgraphTest {
 					Node node2 = (Node) maps.get(1).get("node");
 					assertEquals("The Matrix", node2.getProperty("title"));
 				});
+	}
+	@Test
+	public void testSubgraphNodesWithDifferentNodeInputs() {
+		List<String> nodeRepresentations = List.of("k", "id(k)", "elementId(k)", "[k]", "[id(k)]", "[elementId(k)]");
+		for (String nodeRep: nodeRepresentations) {
+			TestUtil.testResult(db,
+					String.format("""
+							MATCH (k:Person {name:'Keanu Reeves'})
+							MATCH (allowlist:Movie)
+							WHERE allowlist.title = "The Matrix"
+							WITH k, collect(allowlist) AS allowlistNodes
+							CALL apoc.path.subgraphAll(%s, {relationshipFilter:'ACTED_IN', allowlistNodes: allowlistNodes})
+							YIELD nodes UNWIND nodes as node
+							RETURN node""", nodeRep),
+					result -> {
+
+						List<Map<String, Object>> maps = Iterators.asList(result);
+						assertEquals(2, maps.size());
+						Node node1 = (Node) maps.get(0).get("node");
+						assertEquals("Keanu Reeves", node1.getProperty("name"));
+						Node node2 = (Node) maps.get(1).get("node");
+						assertEquals("The Matrix", node2.getProperty("title"));
+					});
+		}
 	}
 
 	@Test
@@ -472,6 +502,21 @@ public class SubgraphTest {
 				CALL apoc.path.spanningTree(m,{minLevel:1, maxLevel: 3, allowlistNodes: allowlistNodes})
 				YIELD path RETURN count(distinct path) as cnt""",
 				(row) -> assertEquals(2L, row.get("cnt")));
+	}
+
+	@Test
+	public void testSpanningTreeWithDifferentNodeInputs() {
+		List<String> nodeRepresentations = List.of("m", "id(m)", "elementId(m)", "[m]", "[id(m)]", "[elementId(m)]");
+		for (String nodeRep: nodeRepresentations) {
+			TestUtil.testCall(db, String.format("""
+							MATCH (m:Movie {title: 'The Matrix'})
+							MATCH (allowlist:Person)
+							WHERE allowlist.name IN ["Keanu Reeves", "Laurence Fishburne"]
+							WITH m, collect(allowlist) AS allowlistNodes
+							CALL apoc.path.spanningTree(%s,{minLevel:1, maxLevel: 3, allowlistNodes: allowlistNodes})
+							YIELD path RETURN count(distinct path) as cnt""", nodeRep),
+					(row) -> assertEquals(2L, row.get("cnt")));
+		}
 	}
 
 	@Test

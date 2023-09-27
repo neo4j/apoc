@@ -171,13 +171,13 @@ public class Nodes {
     @Procedure("apoc.nodes.get")
     @Description("Returns all `NODE` values with the given ids.")
     public Stream<NodeResult> get(@Name("nodes") Object ids) {
-        return Util.nodeStream(tx, ids).map(NodeResult::new);
+        return Util.nodeStream((InternalTransaction) tx, ids).map(NodeResult::new);
     }
 
     @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE)
     @Description("Deletes all `NODE` values with the given ids.")
     public Stream<LongResult> delete(@Name("nodes") Object ids, @Name("batchSize") long batchSize) {
-        Iterator<Node> it = Util.nodeStream(tx, ids).iterator();
+        Iterator<Node> it = Util.nodeStream((InternalTransaction) tx, ids).iterator();
         long count = 0;
         while (it.hasNext()) {
             final List<Node> batch = Util.take(it, (int)batchSize);
@@ -189,7 +189,7 @@ public class Nodes {
     @Procedure("apoc.nodes.rels")
     @Description("Returns all `RELATIONSHIP` values with the given ids.")
     public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
-        return Util.relsStream(tx, ids).map(RelationshipResult::new);
+        return Util.relsStream((InternalTransaction) tx, ids).map(RelationshipResult::new);
     }
 
     @UserFunction("apoc.node.relationship.exists")
@@ -520,7 +520,7 @@ public class Nodes {
     @Description("Returns a `LIST<STRING>` of distinct `RELATIONSHIP` types from the given `LIST<NODE>` values.")
     public List<Map<String, Object>> nodesRelationshipTypes(@Name("nodes") Object ids, @Name(value = "types",defaultValue = "") String types) {
         if (ids == null) return null;
-        return Util.nodeStream(tx, ids)
+        return Util.nodeStream((InternalTransaction) tx, ids)
                 .map(node -> {
                     final List<String> relationshipTypes = relationshipTypes(node, types);
                     if (relationshipTypes == null) {
@@ -551,7 +551,7 @@ public class Nodes {
     @Description("Returns a `BOOLEAN` based on whether or not the given `NODE` values have the given `RELATIONSHIP` values.")
     public List<Map<String, Object>> nodesRelationshipExists(@Name("nodes") Object ids, @Name(value = "types", defaultValue = "") String types) {
         if (ids == null) return null;
-        return Util.nodeStream(tx, ids)
+        return Util.nodeStream((InternalTransaction) tx, ids)
                 .map(node -> {
                     final Map<String, Boolean> existsMap = relationshipExists(node, types);
                     if (existsMap == null) {

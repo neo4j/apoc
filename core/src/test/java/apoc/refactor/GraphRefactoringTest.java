@@ -523,7 +523,11 @@ public class GraphRefactoringTest {
     @Test
     public void testExtractNode() {
         Long id = db.executeTransactionally("CREATE (f:Foo)-[rel:FOOBAR {a:1}]->(b:Bar) RETURN id(rel) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "CALL apoc.refactor.extractNode($ids,['FooBar'],'FOO','BAR')", map("ids", singletonList(id)),
+        testCall(db, """
+                        MATCH ()-[r]->()
+                        CALL apoc.refactor.extractNode([elementId(r)],['FooBar'],'FOO','BAR')
+                        YIELD input, output
+                        RETURN input, output""", emptyMap(),
                 (r) -> {
                     assertEquals(id, r.get("input"));
                     Node node = (Node) r.get("output");
