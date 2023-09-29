@@ -32,7 +32,7 @@ public class Scoring {
     }
 
     @UserFunction("apoc.scoring.pareto")
-    @Description("Applies a Pareto scoring function over the given integers.")
+    @Description("Applies a Pareto scoring function over the given `INTEGER` values.")
     public double pareto(
             final @Name("minimumThreshold") long minimumThreshold,
             final @Name("eightyPercentValue") long eightyPercentValue,

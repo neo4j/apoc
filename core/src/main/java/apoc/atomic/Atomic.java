@@ -50,7 +50,7 @@ public class Atomic {
      * increment a property's value
      */
     @Procedure(name= "apoc.atomic.add", mode = Mode.WRITE)
-    @Description("Sets the given property to the sum of itself and the number value.\n" +
+    @Description("Sets the given property to the sum of itself and the given `INTEGER` or `FLOAT` value.\n" +
             "The procedure then sets the property to the returned sum.")
     public Stream<AtomicResults> add(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
@@ -73,7 +73,7 @@ public class Atomic {
      * decrement a property's value
      */
     @Procedure(name = "apoc.atomic.subtract", mode = Mode.WRITE)
-    @Description("Sets the property of a value to itself minus the given number value.\n" +
+    @Description("Sets the property of a value to itself minus the given `INTEGER` or `FLOAT` value.\n" +
             "The procedure then sets the property to the returned sum.")
     public Stream<AtomicResults> subtract(@Name("container") Object container, @Name("propertyName") String property, @Name("number") Number number, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
@@ -96,8 +96,8 @@ public class Atomic {
      * concat a property's value
      */
     @Procedure(name = "apoc.atomic.concat", mode = Mode.WRITE)
-    @Description("Sets the given property to the concatenation of itself and the string value.\n" +
-            "The procedure then sets the property to the returned string.")
+    @Description("Sets the given property to the concatenation of itself and the `STRING` value.\n" +
+            "The procedure then sets the property to the returned `STRING`.")
     public Stream<AtomicResults> concat(@Name("container") Object container, @Name("propertyName") String property, @Name("string") String string, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
@@ -120,7 +120,7 @@ public class Atomic {
      * insert a value into an array property value
      */
     @Procedure(name = "apoc.atomic.insert", mode = Mode.WRITE)
-    @Description("Inserts a value at position into the array value of a property.\n" +
+    @Description("Inserts a value at position into the `LIST<ANY>` value of a property.\n" +
             "The procedure then sets the result back on the property.")
     public Stream<AtomicResults> insert(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name("value") Object value, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
@@ -156,8 +156,8 @@ public class Atomic {
      * remove a value into an array property value
      */
     @Procedure(name = "apoc.atomic.remove", mode = Mode.WRITE)
-    @Description("Removes the element at position from the array value of a property.\n" +
-            "The procedure then sets the property to the resulting array value.")
+    @Description("Removes the element at position from the `LIST<ANY>` value of a property.\n" +
+            "The procedure then sets the property to the resulting `LIST<ANY>` value.")
     public Stream<AtomicResults> remove(@Name("container") Object container, @Name("propertyName") String property, @Name("position") Long position, @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);

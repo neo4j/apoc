@@ -77,7 +77,7 @@ public class Cypher {
 
     @NotThreadSafe
     @Procedure("apoc.cypher.run")
-    @Description("Runs a dynamically constructed read-only string with the given parameters.")
+    @Description("Runs a dynamically constructed read-only statement with the given parameters.")
     public Stream<MapResult> run(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return runCypherQuery(tx, statement, params);
     }
@@ -245,7 +245,7 @@ public class Cypher {
     }
 
     @Procedure(name = "apoc.cypher.doIt", mode = WRITE)
-    @Description("Runs a dynamically constructed string with the given parameters.")
+    @Description("Runs a dynamically constructed statement with the given parameters. This procedure allows for both read and write statements.")
     public Stream<MapResult> doIt(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return runCypherQuery(tx, statement, params);
     }
@@ -263,7 +263,7 @@ public class Cypher {
     }
 
     @Procedure("apoc.when")
-    @Description("This procedure will run the read-only ifQuery if the conditional has evaluated to true, otherwise the elseQuery will run.")
+    @Description("This procedure will run the read-only `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
     public Stream<MapResult> when(@Name("condition") boolean condition, @Name("ifQuery") String ifQuery, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         if (params == null) params = Collections.emptyMap();
         String targetQuery = condition ? ifQuery : elseQuery;
@@ -276,13 +276,13 @@ public class Cypher {
     }
 
     @Procedure(value="apoc.do.when", mode = Mode.WRITE)
-    @Description("Runs the given read/write ifQuery if the conditional has evaluated to true, otherwise the elseQuery will run.")
+    @Description("Runs the given read/write `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
     public Stream<MapResult> doWhen(@Name("condition") boolean condition, @Name("ifQuery") String ifQuery, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         return when(condition, ifQuery, elseQuery, params);
     }
 
     @Procedure("apoc.case")
-    @Description("For each pair of conditional and read-only queries in the given list, this procedure will run the first query for which the conditional is evaluated to true.")
+    @Description("For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.")
     public Stream<MapResult> whenCase(@Name("conditionals") List<Object> conditionals, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         if (params == null) params = Collections.emptyMap();
 
@@ -309,7 +309,8 @@ public class Cypher {
     }
 
     @Procedure(name="apoc.do.case", mode = Mode.WRITE)
-    @Description("For each pair of conditional queries in the given list, this procedure will run the first query for which the conditional is evaluated to true.")
+    @Description("For each pair of conditional queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true.\n" +
+            "If none of the conditionals are true, the `ELSE` query will run instead.")
     public Stream<MapResult> doWhenCase(@Name("conditionals") List<Object> conditionals, @Name(value="elseQuery", defaultValue = "") String elseQuery, @Name(value="params", defaultValue = "{}") Map<String, Object> params) {
         return whenCase(conditionals, elseQuery, params);
     }

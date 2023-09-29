@@ -57,7 +57,7 @@ public class CypherFunctions {
 
     @NotThreadSafe
     @UserFunction("apoc.cypher.runFirstColumnMany")
-    @Description("Runs the given statement with the given parameters and returns the first column collected into a list.")
+    @Description("Runs the given statement with the given parameters and returns the first column collected into a `LIST<ANY>`.")
     public List<Object> runFirstColumnMany(@Name("statement") String statement, @Name("params") Map<String, Object> params) {
         return (List)runFirstColumn(statement, params, true);
     }

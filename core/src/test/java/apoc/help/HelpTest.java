@@ -70,13 +70,13 @@ public class HelpTest {
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","toSet"), (row) -> {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.coll.toSet",row.get("name"));
-            assertTrue(((String) row.get("text")).contains("unique list"));
+            assertTrue(((String) row.get("text")).contains("unique `LIST<ANY>`"));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","diff.nodes"), (row) -> {
             assertEquals("function",row.get("type"));
             assertEquals("apoc.diff.nodes",row.get("name"));
-            assertTrue(((String) row.get("text")).contains("Returns a list"));
+            assertTrue(((String) row.get("text")).contains("Returns a `MAP` detailing the differences between the two given `NODE` values."));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
         TestUtil.testCall(db,"CALL apoc.help($text)",map("text","apoc.create.uuids"), (row) -> {

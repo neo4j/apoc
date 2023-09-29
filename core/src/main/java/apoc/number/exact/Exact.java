@@ -66,14 +66,14 @@ public class Exact {
 	}
 
 	@UserFunction("apoc.number.exact.toInteger")
-	@Description("Returns the integer value of the given large number (using Java BigDecimal).")
+	@Description("Returns the `INTEGER` of the given large number (using Java BigDecimal).")
 	public Long toInteger(@Name("string")String string, @Name(value = "precision" , defaultValue = "0")Long precision, @Name(value = "roundingMode", defaultValue = "HALF_UP")String roundingMode){
 		if(string == null || string.isEmpty()) return null;
 			return new BigDecimal(string, createMathContextLong(precision, roundingMode)).longValue();
 	}
 
 	@UserFunction("apoc.number.exact.toFloat")
-	@Description("Returns the float value of the given large number (using Java BigDecimal).")
+	@Description("Returns the `FLOAT` of the given large number (using Java BigDecimal).")
 	public Double toFloat(@Name("string")String string, @Name(value = "precision" , defaultValue = "0")Long precision, @Name(value = "roundingMode", defaultValue = "HALF_UP")String roundingMode){
 		if(string == null || string.isEmpty()) return null;
 		return new BigDecimal(string, createMathContext(precision, roundingMode)).doubleValue();

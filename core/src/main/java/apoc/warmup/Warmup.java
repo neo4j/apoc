@@ -82,7 +82,7 @@ public class Warmup {
     @Deprecated
     @Procedure(name = "apoc.warmup.run", deprecatedBy = "Firstly, the procedure duplicates functionality of page cache warm up which is a part of the DBMS. " +
             "Secondly, the API of this procedure is very specific to Record storage engine." )
-    @Description("Loads all nodes and relationships in the database into memory.")
+    @Description("Loads all `NODE` and `RELATIONSHIP` values in the database into memory.")
     public Stream<WarmupResult> run(@Name(value = "loadProperties", defaultValue = "false") boolean loadProperties, @Name(value = "loadDynamicProperties", defaultValue = "false") boolean loadDynamicProperties, @Name(value = "loadIndexes", defaultValue = "false") boolean loadIndexes) throws IOException {
         // This procedure is likely to break with future storage engines
         ApocConfig.apocConfig().checkStorageEngine();

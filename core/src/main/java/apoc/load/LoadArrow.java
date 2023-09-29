@@ -92,7 +92,7 @@ public class LoadArrow {
     }
 
     @Procedure(name = "apoc.load.arrow.stream")
-    @Description("Imports nodes and relationships from the provided arrow byte array.")
+    @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow byte array.")
     public Stream<MapResult> stream(
             @Name("source") byte[] source,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws IOException {
@@ -110,7 +110,7 @@ public class LoadArrow {
     }
 
     @Procedure(name = "apoc.load.arrow")
-    @Description("Imports nodes and relationships from the provided arrow file.")
+    @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.")
     public Stream<MapResult> file(
             @Name("file") String fileName,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) throws IOException {

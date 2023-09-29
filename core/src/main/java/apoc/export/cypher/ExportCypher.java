@@ -83,7 +83,7 @@ public class ExportCypher {
 
     @NotThreadSafe
     @Procedure("apoc.export.cypher.data")
-    @Description("Exports the given nodes and relationships (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
+    @Description("Exports the given `NODE` and `RELATIONSHIP` values (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -104,7 +104,7 @@ public class ExportCypher {
 
     @NotThreadSafe
     @Procedure("apoc.export.cypher.query")
-    @Description("Exports the nodes and relationships from the given Cypher query (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
+    @Description("Exports the `NODE` and `RELATIONSHIP` values from the given Cypher query (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> query(@Name("statement") String query, @Name(value = "file",defaultValue = "") String fileName, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName=null;
         ExportConfig c = new ExportConfig(config);

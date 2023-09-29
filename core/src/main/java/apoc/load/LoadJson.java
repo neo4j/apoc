@@ -57,16 +57,16 @@ public class LoadJson {
     }
 
     @Procedure("apoc.load.json")
-    @Description("Imports JSON file as a stream of values if the given JSON file is an array.\n" +
-            "If the given JSON file is a map, this procedure imports a single value instead.")
+    @Description("Imports JSON file as a stream of values if the given JSON file is a `LIST<ANY>`.\n" +
+            "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
     public Stream<MapResult> json(@Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary, @Name(value = "path",defaultValue = "") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         return jsonParams(urlOrKeyOrBinary,null,null, path, config);
     }
 
     @SuppressWarnings("unchecked")
     @Procedure("apoc.load.jsonParams")
-    @Description("Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is an array.\n" +
-            "If the given JSON file is a map, this procedure imports a single value instead.")
+    @Description("Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is a `LIST<ANY>`.\n" +
+            "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
     public Stream<MapResult> jsonParams(@Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary, @Name("headers") Map<String,Object> headers, @Name("payload") String payload, @Name(value = "path",defaultValue = "") String path, @Name(value = "config",defaultValue = "{}") Map<String, Object> config) {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);

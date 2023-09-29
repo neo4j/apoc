@@ -110,7 +110,7 @@ public class ExportGraphML {
     }
 
     @Procedure("apoc.export.graphml.data")
-    @Description("Exports the given nodes and relationships to the provided GraphML file.")
+    @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided GraphML file.")
     public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
 
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -128,7 +128,7 @@ public class ExportGraphML {
 
     @NotThreadSafe
     @Procedure("apoc.export.graphml.query")
-    @Description("Exports the given nodes and relationships from the Cypher statement to the provided GraphML file.")
+    @Description("Exports the given `NODE` and `RELATIONSHIP` values from the Cypher statement to the provided GraphML file.")
     public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config) throws Exception {
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(query);

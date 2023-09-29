@@ -52,13 +52,13 @@ import java.util.List;
 public class MaxAndMinItems {
 
     @UserAggregationFunction("apoc.agg.maxItems")
-    @Description("Returns a map {items:[], value:n} where the `value` key is the maximum value present, and `items` represent all items with the same value.")
+    @Description("Returns a `MAP` `{items: LIST<ANY>, value: ANY}` where the `value` key is the maximum value present, and `items` represent all items with the same value. The size of the list of items can be limited to a given max size.")
     public MaxOrMinItemsFunction maxItems() {
         return new MaxOrMinItemsFunction(true);
     }
 
     @UserAggregationFunction("apoc.agg.minItems")
-    @Description("Returns a map {items:[], value:n} where the `value` key is the minimum value present, and `items` represent all items with the same value.")
+    @Description("Returns a `MAP` `{items: LIST<ANY>, value: ANY}` where the `value` key is the minimum value present, and `items` represent all items with the same value. The size of the list of items can be limited to a given max size.")
     public MaxOrMinItemsFunction minItems() {
         return new MaxOrMinItemsFunction(false);
     }

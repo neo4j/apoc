@@ -44,7 +44,7 @@ public class Merge {
     public Transaction tx;
 
     @Procedure(value="apoc.merge.node.eager", mode = Mode.WRITE, eager = true)
-    @Description("Merges the given node(s) with the given dynamic labels eagerly.")
+    @Description("Merges the given `NODE` values with the given dynamic labels eagerly.")
     public Stream<NodeResult> nodesEager(@Name("labels") List<String> labelNames,
                                         @Name("identProps") Map<String, Object> identProps,
                                         @Name(value = "props",defaultValue = "{}") Map<String, Object> props,
@@ -53,7 +53,7 @@ public class Merge {
     }
 
     @Procedure(value="apoc.merge.node", mode = Mode.WRITE)
-    @Description("Merges the given node(s) with the given dynamic labels.")
+    @Description("Merges the given `NODE` values with the given dynamic labels.")
     public Stream<NodeResult> nodes(@Name("labels") List<String> labelNames,
                                           @Name("identProps") Map<String, Object> identProps,
                                           @Name(value = "props",defaultValue = "{}") Map<String, Object> props,
@@ -63,7 +63,7 @@ public class Merge {
     }
 
     @Procedure(value="apoc.merge.nodeWithStats.eager", mode = Mode.WRITE, eager = true)
-    @Description("Merges the given node(s) with the given dynamic labels eagerly. Provides queryStatistics in the result.")
+    @Description("Merges the given `NODE` values with the given dynamic labels eagerly. Provides queryStatistics in the result.")
     public Stream<NodeResultWithStats> nodeWithStatsEager(@Name("labels") List<String> labelNames,
                                                           @Name("identProps") Map<String, Object> identProps,
                                                           @Name(value = "props",defaultValue = "{}") Map<String, Object> props,
@@ -72,7 +72,7 @@ public class Merge {
     }
 
     @Procedure(value="apoc.merge.nodeWithStats", mode = Mode.WRITE)
-    @Description("Merges the given node(s) with the given dynamic labels. Provides queryStatistics in the result.")
+    @Description("Merges the given `NODE` values with the given dynamic labels. Provides queryStatistics in the result.")
     public Stream<NodeResultWithStats> nodeWithStats(@Name("labels") List<String> labelNames,
                                                      @Name("identProps") Map<String, Object> identProps,
                                                      @Name(value = "props",defaultValue = "{}") Map<String, Object> props,
@@ -97,7 +97,7 @@ public class Merge {
     }
 
     @Procedure(value = "apoc.merge.relationship", mode = Mode.WRITE)
-    @Description("Merges the given relationship(s) with the given dynamic types/properties.")
+    @Description("Merges the given `RELATIONSHIP` values with the given dynamic types/properties.")
     public Stream<RelationshipResult> relationship(@Name("startNode") Node startNode, @Name("relType") String relType,
                                                         @Name("identProps") Map<String, Object> identProps,
                                                         @Name("props") Map<String, Object> onCreateProps,
@@ -108,7 +108,7 @@ public class Merge {
     }
 
     @Procedure(value = "apoc.merge.relationshipWithStats", mode = Mode.WRITE)
-    @Description("Merges the given relationship(s) with the given dynamic types/properties. Provides queryStatistics in the result.")
+    @Description("Merges the given `RELATIONSHIP` values with the given dynamic types/properties. Provides queryStatistics in the result.")
     public Stream<RelationshipResultWithStats> relationshipWithStats(@Name("startNode") Node startNode, @Name("relType") String relType,
                                                                      @Name("identProps") Map<String, Object> identProps,
                                                                      @Name("props") Map<String, Object> onCreateProps,
@@ -135,7 +135,7 @@ public class Merge {
     }
 
     @Procedure(value = "apoc.merge.relationship.eager", mode = Mode.WRITE, eager = true)
-    @Description("Merges the given relationship(s) with the given dynamic types/properties eagerly.")
+    @Description("Merges the given `RELATIONSHIP` values with the given dynamic types/properties eagerly.")
     public Stream<RelationshipResult> relationshipEager(@Name("startNode") Node startNode, @Name("relType") String relType,
                                                         @Name("identProps") Map<String, Object> identProps,
                                                         @Name("props") Map<String, Object> onCreateProps,
@@ -145,7 +145,7 @@ public class Merge {
     }
 
     @Procedure(value = "apoc.merge.relationshipWithStats.eager", mode = Mode.WRITE, eager = true)
-    @Description("Merges the given relationship(s) with the given dynamic types/properties eagerly. Provides queryStatistics in the result.")
+    @Description("Merges the given `RELATIONSHIP` values with the given dynamic types/properties eagerly. Provides queryStatistics in the result.")
     public Stream<RelationshipResultWithStats> relationshipWithStatsEager(@Name("startNode") Node startNode, @Name("relType") String relType,
                                                                           @Name("identProps") Map<String, Object> identProps,
                                                                           @Name("props") Map<String, Object> onCreateProps,

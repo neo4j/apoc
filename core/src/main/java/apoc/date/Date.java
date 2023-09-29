@@ -69,7 +69,7 @@ public class Date {
 	);
 
 	@UserFunction("apoc.date.toYears")
-	@Description("Converts the given timestamp or the given date into a floating point representing years.")
+	@Description("Converts the given timestamp or the given date into a `FLOAT` representing years.")
 	public double toYears(@Name("value") Object value, @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format) {
 		if (value instanceof Number) {
 			long time = ((Number) value).longValue();
@@ -81,7 +81,7 @@ public class Date {
 	}
 
 	@UserFunction("apoc.date.fields")
-	@Description("Splits the given date into fields returning a map containing the values of each field.")
+	@Description("Splits the given date into fields returning a `MAP` containing the values of each field.")
 	public Map<String,Object> fields(final @Name("date") String date, final @Name(value = "pattern", defaultValue = DEFAULT_FORMAT) String pattern) {
 		if (date == null) {
 			return Util.map();
@@ -141,26 +141,26 @@ public class Date {
 	}
 
 	@UserFunction("apoc.date.format")
-	@Description("Returns a string representation of the time value.\n" +
+	@Description("Returns a `STRING` representation of the time value.\n" +
 			"The time unit (default: ms), date format (default: ISO), and time zone (default: current time zone) can all be changed.")
 	public String format(final @Name("time") Long time, @Name(value = "unit", defaultValue = "ms") String unit, @Name(value = "format",defaultValue = DEFAULT_FORMAT) String format, @Name(value = "timezone",defaultValue = "") String timezone) {
 		return time == null ? null : parse(unit(unit).toMillis(time), format, timezone);
 	}
 
 	@UserFunction("apoc.date.toISO8601")
-	@Description("Returns a string representation of a specified time value in the ISO8601 format.")
+	@Description("Returns a `STRING` representation of a specified time value in the ISO8601 format.")
 	public String toISO8601(final @Name("time") Long time, @Name(value = "unit", defaultValue = "ms") String unit) {
 		return time == null ? null : parse(unit(unit).toMillis(time), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", null);
 	}
 
 	@UserFunction("apoc.date.fromISO8601")
-	@Description("Converts the given date string (ISO8601) to an integer representing the time value in milliseconds.")
+	@Description("Converts the given date `STRING` (ISO8601) to an `INTEGER` representing the time value in milliseconds.")
 	public Long fromISO8601(final @Name("time") String time) {
 		return time == null ? null : Instant.parse(time).toEpochMilli();
 	}
 
 	@UserFunction("apoc.date.parse")
-	@Description("Parses the given date string from a specified format into the specified time unit.")
+	@Description("Parses the given date `STRING` from a specified format into the specified time unit.")
 	public Long parse(@Name("time") String time, @Name(value = "unit", defaultValue = "ms") String unit, @Name(value = "format",defaultValue = DEFAULT_FORMAT) String format, final @Name(value = "timezone", defaultValue = "") String timezone) {
 		Long value = StringUtils.isBlank(time) ? null : parseOrThrow(time, getFormat(format, timezone));
 		return value == null ? null : unit(unit).convert(value, TimeUnit.MILLISECONDS);
@@ -179,7 +179,7 @@ public class Date {
 	}
 
 	@UserFunction("apoc.date.convertFormat")
-	@Description("Converts a string of one type of date format into a string of another type of date format.")
+	@Description("Converts a `STRING` of one type of date format into a `STRING` of another type of date format.")
 	public String convertFormat( @Name( "temporal" ) String input, @Name( value = "currentFormat" ) String currentFormat, @Name( value = "convertTo" , defaultValue = "yyyy-MM-dd" ) String convertTo )
 	{
 		if (input == null || input.isEmpty())

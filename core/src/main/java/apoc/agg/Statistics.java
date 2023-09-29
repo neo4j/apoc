@@ -35,7 +35,7 @@ import static java.util.Arrays.asList;
  */
 public class Statistics {
     @UserAggregationFunction("apoc.agg.statistics")
-    @Description("Returns the following statistics on the numerical values in the given collection: percentiles, min, minNonZero, max, total, mean, stdev.")
+    @Description("Returns the following statistics on the `INTEGER` and `FLOAT` values in the given collection: percentiles, min, minNonZero, max, total, mean, stdev.")
     public StatisticsFunction statistics() {
         return new StatisticsFunction();
     }

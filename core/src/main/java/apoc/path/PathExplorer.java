@@ -52,7 +52,7 @@ public class PathExplorer {
 
 	@NotThreadSafe
 	@Procedure("apoc.path.expand")
-	@Description("Returns paths expanded from the start node following the given relationship types from min-depth to max-depth.")
+	@Description("Returns `PATH` values expanded from the start `NODE` following the given `RELATIONSHIP` types from min-depth to max-depth.")
 	public Stream<PathResult> explorePath(@Name("startNode") Object start
 			                   , @Name("relFilter") String pathFilter
 			                   , @Name("labelFilter") String labelFilter
@@ -65,14 +65,14 @@ public class PathExplorer {
 	//
 	@NotThreadSafe
 	@Procedure("apoc.path.expandConfig")
-	@Description("Returns paths expanded from the start node the given relationship types from min-depth to max-depth.")
+	@Description("Returns `PATH` values expanded from the start `NODE` with the given `RELATIONSHIP` types from min-depth to max-depth.")
 	public Stream<PathResult> expandConfig(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		return expandConfigPrivate(start, config).map( PathResult::new );
 	}
 
 	@NotThreadSafe
 	@Procedure("apoc.path.subgraphNodes")
-	@Description("Returns the nodes in the sub-graph reachable from the start node following the given relationship types to max-depth.")
+	@Description("Returns the `NODE` values in the sub-graph reachable from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
 	public Stream<NodeResult> subgraphNodes(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.put("uniqueness", "NODE_GLOBAL");
@@ -86,7 +86,7 @@ public class PathExplorer {
 
 	@NotThreadSafe
 	@Procedure("apoc.path.subgraphAll")
-	@Description("Returns the sub-graph reachable from the start node following the given relationship types to max-depth.")
+	@Description("Returns the sub-graph reachable from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
 	public Stream<GraphResult> subgraphAll(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.remove("optional"); // not needed, will return empty collections anyway if no results
@@ -104,7 +104,7 @@ public class PathExplorer {
 
 	@NotThreadSafe
 	@Procedure("apoc.path.spanningTree")
-	@Description("Returns spanning tree paths expanded from the start node following the given relationship types to max-depth.")
+	@Description("Returns spanning tree `PATH` values expanded from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
 	public Stream<PathResult> spanningTree(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.put("uniqueness", "NODE_GLOBAL");

@@ -44,8 +44,7 @@ public class PathFinding {
     public Transaction tx;
 
     @Procedure("apoc.algo.aStar")
-    @Description("Runs the A* search algorithm to find the optimal path between two nodes, using the given " +
-            "relationship property name for the cost function.")
+    @Description("Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.")
     public Stream<WeightedPathResult> aStar(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
@@ -63,8 +62,7 @@ public class PathFinding {
     }
 
     @Procedure("apoc.algo.aStarConfig")
-    @Description("Runs the A* search algorithm to find the optimal path between two nodes, using the given " +
-            "relationship property name for the cost function.\n" +
+    @Description("Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.\n" +
             "This procedure looks for weight, latitude and longitude properties in the config.")
     public Stream<WeightedPathResult> aStarConfig(
             @Name("startNode") Node startNode,
@@ -93,7 +91,7 @@ public class PathFinding {
     }
 
     @Procedure("apoc.algo.dijkstra")
-    @Description("Runs Dijkstra's algorithm using the given relationship property as the cost function.")
+    @Description("Runs Dijkstra's algorithm using the given `RELATIONSHIP` property as the cost function.")
     public Stream<WeightedPathResult> dijkstra(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
@@ -112,8 +110,8 @@ public class PathFinding {
 
     @NotThreadSafe
     @Procedure("apoc.algo.allSimplePaths")
-    @Description("Runs a search algorithm to find all of the simple paths between the given relationships, " +
-            "up to a max depth described by maxNodes.")
+    @Description("Runs a search algorithm to find all of the simple paths between the given `RELATIONSHIP` values, up to a max depth described by `maxNodes`.\n" +
+            "The returned paths will not contain loops.")
     public Stream<PathResult> allSimplePaths(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,

@@ -99,7 +99,7 @@ public class TemporalProcedures
     }
 
     @UserFunction("apoc.temporal.toZonedTemporal")
-	@Description("Parses the given date string using the specified format into the given time zone.")
+	@Description("Parses the given date `STRING` using the specified format into the given time zone.")
 	public ZonedDateTime toZonedTemporal(@Name("time") String time, @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format, final @Name(value = "timezone", defaultValue = "UTC") String timezone) {
 		Long value = parseOrThrow(time, getFormat(format, timezone));
 		return value == null ? null : Instant.ofEpochMilli(value).atZone(ZoneId.of(timezone));

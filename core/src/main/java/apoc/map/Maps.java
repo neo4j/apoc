@@ -38,7 +38,7 @@ public class Maps {
     public Transaction tx;
 
     @UserFunction("apoc.map.groupBy")
-    @Description("Creates a map of the list keyed by the given property, with single values.")
+    @Description("Creates a `MAP` of the `LIST<ANY>` keyed by the given property, with single values.")
     public Map<String,Object> groupBy(@Name("values") List<Object> values, @Name("key") String key) {
         Map<String,Object> result = new LinkedHashMap<>(values.size());
         for (Object value : values) {
@@ -48,7 +48,7 @@ public class Maps {
         return result;
     }
     @UserFunction("apoc.map.groupByMulti")
-    @Description("Creates a map of the lists keyed by the given property, with the list values.")
+    @Description("Creates a `MAP` of the `LIST<ANY>` values keyed by the given property, with the `LIST<ANY>` values.")
     public Map<String,List<Object>> groupByMulti(@Name("values") List<Object> values, @Name("key") String key) {
         Map<String,List<Object>> result = new LinkedHashMap<>(values.size());
         for (Object value : values) {
@@ -74,7 +74,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromNodes")
-    @Description("Returns a map of the given prop to the node of the given label.")
+    @Description("Returns a `MAP` of the given prop to the node of the given label.")
     public Map<String, Node> fromNodes(@Name("label") String label, @Name("prop") String property) {
         Map<String, Node> result = new LinkedHashMap<>(10000);
         try (ResourceIterator<Node> nodes = tx.findNodes(Label.label(label))) {
@@ -90,19 +90,19 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromPairs")
-    @Description("Creates a map from the given list of key-value pairs.")
+    @Description("Creates a `MAP` from the given `LIST<LIST<ANY>>` of key-value pairs.")
     public Map<String,Object> fromPairs(@Name("pairs") List<List<Object>> pairs) {
         return Util.mapFromPairs(pairs);
     }
 
     @UserFunction("apoc.map.fromLists")
-    @Description("Creates a map from the keys and values in the given lists.")
+    @Description("Creates a `MAP` from the keys and values in the given `LIST<ANY>` values.")
     public Map<String,Object> fromLists(@Name("keys") List<String> keys, @Name("values") List<Object> values) {
         return Util.mapFromLists(keys, values);
     }
 
     @UserFunction("apoc.map.values")
-    @Description("Returns a list of values indicated by the given keys (returns a null value if a given key is missing).")
+    @Description("Returns a `LIST<ANY>` indicated by the given keys (returns a null value if a given key is missing).")
     public List<Object> values(@Name("map") Map<String,Object> map, @Name(value = "keys",defaultValue = "[]") List<String> keys, @Name(value = "addNullsForMissing",defaultValue = "false") boolean addNullsForMissing) {
         if (keys == null || keys.isEmpty()) return Collections.emptyList();
         List<Object> values = new ArrayList<>(keys.size());
@@ -113,19 +113,19 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromValues")
-    @Description("Creates a map from the alternating keys and values in the given list.")
+    @Description("Creates a `MAP` from the alternating keys and values in the given `LIST<ANY>`.")
     public Map<String,Object> fromValues(@Name("values") List<Object> values) {
         return Util.map(values);
     }
 
     @UserFunction("apoc.map.merge")
-    @Description("Merges the two given maps into one map.")
+    @Description("Merges the two given `MAP` values into one `MAP`.")
     public Map<String,Object> merge(@Name("map1") Map<String,Object> first, @Name("map2") Map<String,Object> second) {
         return Util.merge(first,second);
     }
 
     @UserFunction("apoc.map.mergeList")
-    @Description("Merges all maps in the given list into one map.")
+    @Description("Merges all `MAP` values in the given `LIST<MAP<STRING, ANY>>` into one `MAP`.")
     public Map<String,Object> mergeList(@Name("maps") List<Map<String,Object>> maps) {
         Map<String,Object> result = new LinkedHashMap<>(maps.size());
         for (Map<String, Object> map : maps) {
@@ -143,7 +143,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.mget")
-    @Description("Returns a list of values for the given keys.\n" +
+    @Description("Returns a `LIST<ANY>` for the given keys.\n" +
             "If one of the keys does not exist, or lacks a default value, this function will throw an exception.")
     public List<Object> mget(@Name("map") Map<String,Object> map, @Name("keys") List<String> keys, @Name(value = "values", defaultValue = "[]") List<Object> values, @Name(value = "fail",defaultValue = "true") boolean fail) {
         if (keys==null || map==null) return null;
@@ -172,37 +172,37 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.setKey")
-    @Description("Adds or updates the given entry in the map.")
+    @Description("Adds or updates the given entry in the `MAP`.")
     public Map<String,Object> setKey(@Name("map") Map<String,Object> map, @Name("key") String key, @Name("value") Object value) {
         return Util.merge(map, Util.map(key,value));
     }
 
     @UserFunction("apoc.map.setEntry")
-    @Description("Adds or updates the given entry in the map.")
+    @Description("Adds or updates the given entry in the `MAP`.")
     public Map<String,Object> setEntry(@Name("map") Map<String,Object> map, @Name("key") String key, @Name("value") Object value) {
         return Util.merge(map, Util.map(key,value));
     }
 
     @UserFunction("apoc.map.setPairs")
-    @Description("Adds or updates the given key/value pairs (e.g. [key1,value1],[key2,value2]) in a map.")
+    @Description("Adds or updates the given key/value pairs (e.g. [key1,value1],[key2,value2]) in a `MAP`.")
     public Map<String,Object> setPairs(@Name("map") Map<String,Object> map, @Name("pairs") List<List<Object>> pairs) {
         return Util.merge(map, Util.mapFromPairs(pairs));
     }
 
     @UserFunction("apoc.map.setLists")
-    @Description("Adds or updates the given keys/value pairs provided in list format (e.g. [key1, key2],[value1, value2]) in a map.")
+    @Description("Adds or updates the given keys/value pairs provided in `LIST<ANY>` format (e.g. [key1, key2],[value1, value2]) in a `MAP`.")
     public Map<String,Object> setLists(@Name("map") Map<String,Object> map, @Name("keys") List<String> keys, @Name("values") List<Object> values) {
         return Util.merge(map, Util.mapFromLists(keys, values));
     }
 
     @UserFunction("apoc.map.setValues")
-    @Description("Adds or updates the alternating key/value pairs (e.g. [key1,value1,key2,value2]) in a map.")
+    @Description("Adds or updates the alternating key/value pairs (e.g. [key1,value1,key2,value2]) in a `MAP`.")
     public Map<String,Object> setValues(@Name("map") Map<String,Object> map, @Name("pairs") List<Object> pairs) {
         return Util.merge(map, Util.map(pairs));
     }
 
     @UserFunction("apoc.map.removeKey")
-    @Description("Removes the given key from the map (recursively if recursive is true).")
+    @Description("Removes the given key from the `MAP` (recursively if recursive is true).")
     public Map<String,Object> removeKey(@Name("map") Map<String,Object> map, @Name("key") String key,  @Name(value="config", defaultValue = "{}") Map<String, Object> config) {
         if (!map.containsKey(key)) {
             return map;
@@ -212,7 +212,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.removeKeys")
-    @Description("Removes the given keys from the map (recursively if recursive is true).")
+    @Description("Removes the given keys from the `MAP` (recursively if recursive is true).")
     public Map<String, Object> removeKeys(@Name("map") Map<String, Object> map, @Name("keys") List<String> keys, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         Map<String, Object> res = new LinkedHashMap<>(map);
         res.keySet().removeAll(keys);
@@ -246,7 +246,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.clean")
-    @Description("Filters the keys and values contained in the given lists.")
+    @Description("Filters the keys and values contained in the given `LIST<ANY>` values.")
     public Map<String,Object> clean(@Name("map") Map<String,Object> map, @Name("keys") List<String> keys, @Name("values") List<Object> values) {
         HashSet<String> keySet = new HashSet<>(keys);
         HashSet<Object> valueSet = new HashSet<>(values);
@@ -261,7 +261,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.updateTree")
-    @Description("Adds the data map on each level of the nested tree, where the key-value pairs match.")
+    @Description("Adds the data `MAP` on each level of the nested tree, where the key-value pairs match.")
     public Map<String,Object> updateTree(@Name("tree") Map<String, Object> tree, @Name("key") String key, @Name("data") List<List<Object>> data) {
         Map<Object,Map<String,Object>> map = new HashMap<>(data.size());
         for (List<Object> datum : data) {
@@ -301,7 +301,7 @@ public class Maps {
 
 
     @UserFunction("apoc.map.flatten")
-    @Description("Flattens nested items in the given map.\n" +
+    @Description("Flattens nested items in the given `MAP`.\n" +
             "This function is the reverse of the `apoc.map.unflatten` function.")
     public Map<String,Object> flatten(@Name("map") Map<String, Object> map, @Name(value="delimiter", defaultValue = ".") String delimiter) {
         Map<String, Object> flattenedMap = new HashMap<>();
@@ -321,7 +321,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.unflatten")
-    @Description("Unflattens items in the given map to nested items.\n" +
+    @Description("Unflattens items in the given `MAP` to nested items.\n" +
             "This function is the reverse of the `apoc.map.flatten` function.")
     public Map<String, Object> unflatten(@Name("map") Map<String, Object> map, @Name(value = "delimiter", defaultValue = ".") String delimiter) {
         return unflattenMapRecursively(map, StringUtils.isBlank(delimiter) ? "." : delimiter);
@@ -348,7 +348,7 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.sortedProperties")
-    @Description("Returns a list of key/value pairs.\n" +
+    @Description("Returns a `LIST<ANY>` of key/value pairs.\n" +
             "The pairs are sorted by alphabetically by key, with optional case sensitivity.")
     public List<List<Object>> sortedProperties(@Name("map") Map<String, Object> map, @Name(value="ignoreCase", defaultValue = "true") boolean ignoreCase) {
         List<List<Object>> sortedProperties = new ArrayList<>();

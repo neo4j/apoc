@@ -82,7 +82,7 @@ public class ExportCSV {
 
     @NotThreadSafe
     @Procedure("apoc.export.csv.data")
-    @Description("Exports the given nodes and relationships to the provided CSV file.")
+    @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided CSV file.")
     public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name("config") Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config);
         preventBulkImport(exportConfig);

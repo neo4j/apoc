@@ -112,7 +112,7 @@ public class Json {
     }
 
     @Procedure(name = "apoc.convert.setJsonProperty", mode = Mode.WRITE)
-    @Description("Serializes the given JSON object and sets it as a property on the given node.")
+    @Description("Serializes the given JSON object and sets it as a property on the given `NODE`.")
     public void setJsonProperty(@Name("node") Node node, @Name("key") String key, @Name("value") Object value) {
         try {
             node.setProperty(key, JsonUtil.OBJECT_MAPPER.writeValueAsString(value));
@@ -122,33 +122,33 @@ public class Json {
     }
 
     @UserFunction("apoc.convert.getJsonProperty")
-    @Description("Converts a serialized JSON object from the property of the given node into the equivalent Cypher structure (e.g. map, list).")
+    @Description("Converts a serialized JSON object from the property of the given `NODE` into the equivalent Cypher structure (e.g. `MAP`, `LIST<ANY>`).")
     public Object getJsonProperty(@Name("node") Node node, @Name("key") String key,@Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         String value = (String) node.getProperty(key, null);
         return JsonUtil.parse(value, path, Object.class, pathOptions);
     }
 
     @UserFunction("apoc.convert.getJsonPropertyMap")
-    @Description("Converts a serialized JSON object from the property of the given node into a Cypher map.")
+    @Description("Converts a serialized JSON object from the property of the given `NODE` into a Cypher `MAP`.")
     public Map<String,Object> getJsonPropertyMap(@Name("node") Node node, @Name("key") String key,@Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         String value = (String) node.getProperty(key, null);
         return JsonUtil.parse(value, path, Map.class, pathOptions);
     }
 
     @UserFunction("apoc.convert.fromJsonMap")
-    @Description("Converts the given JSON map into a Cypher map.")
+    @Description("Converts the given JSON map into a Cypher `MAP`.")
     public Map<String,Object> fromJsonMap(@Name("map") String value,@Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         return JsonUtil.parse(value, path, Map.class, pathOptions);
     }
 
     @UserFunction("apoc.convert.fromJsonList")
-    @Description("Converts the given JSON list into a Cypher list.")
+    @Description("Converts the given JSON list into a Cypher `LIST<STRING>`.")
     public List<Object> fromJsonList(@Name("list") String value, @Name(value = "path",defaultValue = "") String path, @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
         return JsonUtil.parse(value, path, List.class, pathOptions);
     }
 
     @Procedure("apoc.convert.toTree")
-    @Description("Returns a stream of maps, representing the given paths as a tree with at least one root.")
+    @Description("Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
     // todo optinally provide root node
     public Stream<MapResult> toTree(@Name("paths") List<Path> paths, @Name(value = "lowerCaseRels",defaultValue = "true") boolean lowerCaseRels, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         if (paths.isEmpty()) return Stream.of(new MapResult(Collections.emptyMap()));
@@ -197,7 +197,7 @@ public class Json {
     }
 
     @UserFunction("apoc.convert.toSortedJsonMap")
-    @Description("Converts a serialized JSON object from the property of a given node into a Cypher map.")
+    @Description("Converts a serialized JSON object from the property of a given `NODE` into a Cypher `MAP`.")
     public String toSortedJsonMap(@Name("value") Object value, @Name(value="ignoreCase", defaultValue = "true") boolean ignoreCase) {
         Map<String, Object> inputMap;
         Map<String, Object> sortedMap;

@@ -36,7 +36,7 @@ import static apoc.util.Util.map;
  */
 public class Graph {
     @UserAggregationFunction("apoc.agg.graph")
-    @Description("Returns all distinct nodes and relationships collected into a map with the keys `nodes` and `relationships`.")
+    @Description("Returns all distinct `NODE` and `RELATIONSHIP` values collected into a `MAP` with the keys `nodes` and `relationships`.")
     public GraphAggregation graph() {
         return new GraphAggregation();
     }
