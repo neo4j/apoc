@@ -170,24 +170,31 @@ public class Util {
         return ConvertUtils.convertToList(values).stream();
     }
 
-    public static Stream<Node> nodeStream(Transaction tx, Object ids) {
+    public static Stream<Node> nodeStream(InternalTransaction tx, Object ids) {
         return stream(ids).map(id -> node(tx, id));
     }
 
-    public static Node node(Transaction tx, Object id) {
-        if (id instanceof Node) return rebind(tx, (Node)id);
-        if (id instanceof Number) return tx.getNodeById(((Number)id).longValue());
-        throw new RuntimeException("Can't convert "+id.getClass()+" to a Node");
+    public static List<Node> nodeList(InternalTransaction tx, Object ids) {
+        if (ids == null) return List.of();
+        return stream(ids).map(id -> node(tx, id)).toList();
     }
 
-    public static Stream<Relationship> relsStream(Transaction tx, Object ids) {
+    public static Node node(InternalTransaction tx, Object id) {
+        if (id instanceof Node node) return rebind(tx, node);
+        if (id instanceof Number nodeId) return tx.getNodeByElementId(tx.elementIdMapper().nodeElementId(nodeId.longValue()));
+        if (id instanceof String elementId) return tx.getNodeByElementId(elementId);
+        throw new RuntimeException("Can't convert " + id.getClass() + " to a Node");
+    }
+
+    public static Stream<Relationship> relsStream(InternalTransaction tx, Object ids) {
         return stream(ids).map(id -> relationship(tx, id));
     }
 
-    public static Relationship relationship(Transaction tx, Object id) {
-        if (id instanceof Relationship) return rebind(tx, (Relationship)id);
-        if (id instanceof Number) return tx.getRelationshipById(((Number)id).longValue());
-        throw new RuntimeException("Can't convert "+id.getClass()+" to a Relationship");
+    public static Relationship relationship(InternalTransaction tx, Object id) {
+        if (id instanceof Relationship rel) return rebind(tx, rel);
+        if (id instanceof Number relId) return tx.getRelationshipByElementId(tx.elementIdMapper().relationshipElementId(relId.longValue()));
+        if (id instanceof String elementId) return tx.getRelationshipByElementId(elementId);
+        throw new RuntimeException("Can't convert " + id.getClass() + " to a Relationship");
     }
 
     public static <T> T retryInTx(Log log, GraphDatabaseService db, Function<Transaction, T> function, long retry, long maxRetries, Consumer<Long> callbackForRetry) {

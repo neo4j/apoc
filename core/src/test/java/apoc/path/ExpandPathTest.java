@@ -76,18 +76,21 @@ public class ExpandPathTest {
 
 	@Test
 	public void testExplorePathAnyRelTypeTest() {
-		TestUtil.testCall(db,
-				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'>','',0,2) yield path return count(*) as c",
-				(row) -> assertEquals(1L,row.get("c")));
+		List<String> nodeRepresentations = List.of("m", "id(m)", "elementId(m)", "[m]", "[id(m)]", "[elementId(m)]");
+		for (String nodeRep: nodeRepresentations) {
+			TestUtil.testCall(db,
+					String.format("MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(%s,'>','',0,2) YIELD path RETURN count(*) AS c", nodeRep),
+					(row) -> assertEquals(1L, row.get("c")));
+		}
 
 		TestUtil.testCall(db,
-				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'<','',0,2) yield path return count(*) as c",
+				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'<','',0,2) YIELD path RETURN count(*) AS c",
 				(row) -> assertEquals(17L,row.get("c")));
 		TestUtil.testCall(db,
-				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'','',0,2) yield path return count(*) as c",
+				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'','',0,2) YIELD path RETURN count(*) AS c",
 				(row) -> assertEquals(52L,row.get("c")));
 		TestUtil.testCall(db,
-				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,null,'',0,2) yield path return count(*) as c",
+				"MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,null,'',0,2) YIELD path RETURN count(*) AS c",
 				(row) -> assertEquals(52L,row.get("c")));
 	}
 
@@ -395,6 +398,30 @@ public class ExpandPathTest {
 					Node node2 = (Node) maps.get(1).get("node");
 					assertEquals("The Matrix", node2.getProperty("title"));
 				});
+	}
+
+	@Test
+	public void testSubgraphNodesWithDifferentNodeInputs() {
+		List<String> nodeRepresentations = List.of("k", "id(k)", "elementId(k)", "[k]", "[id(k)]", "[elementId(k)]");
+		for (String nodeRep: nodeRepresentations) {
+			TestUtil.testResult(db,
+					String.format("""
+							MATCH (k:Person {name:'Keanu Reeves'})
+							MATCH (allowlist:Movie)
+							WHERE allowlist.title = "The Matrix"
+							WITH k, collect(allowlist) AS allowlistNodes
+							CALL apoc.path.subgraphNodes(%s, {relationshipFilter:'ACTED_IN', allowlistNodes: allowlistNodes})
+							YIELD node RETURN node""", nodeRep),
+					result -> {
+
+						List<Map<String, Object>> maps = Iterators.asList(result);
+						assertEquals(2, maps.size());
+						Node node1 = (Node) maps.get(0).get("node");
+						assertEquals("Keanu Reeves", node1.getProperty("name"));
+						Node node2 = (Node) maps.get(1).get("node");
+						assertEquals("The Matrix", node2.getProperty("title"));
+					});
+		}
 	}
 
 	@Test

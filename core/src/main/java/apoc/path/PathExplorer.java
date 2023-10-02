@@ -42,7 +42,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static apoc.path.PathExplorer.NodeFilter.*;
-import static apoc.util.Util.getNodeElementId;
 
 public class PathExplorer {
 	public static final Uniqueness UNIQUENESS = Uniqueness.RELATIONSHIP_PATH;
@@ -57,27 +56,26 @@ public class PathExplorer {
 			                   , @Name("relFilter") String pathFilter
 			                   , @Name("labelFilter") String labelFilter
 			                   , @Name("minDepth") long minLevel
-			                   , @Name("maxDepth") long maxLevel ) throws Exception {
-		List<Node> nodes = startToNodes(start);
+			                   , @Name("maxDepth") long maxLevel ) {
+		List<Node> nodes = Util.nodeList((InternalTransaction) tx, start);
 		return explorePathPrivate(nodes, pathFilter, labelFilter, minLevel, maxLevel, BFS, UNIQUENESS, false, -1, null, null, true).map( PathResult::new );
 	}
 
-	//
 	@NotThreadSafe
 	@Procedure("apoc.path.expandConfig")
 	@Description("Returns `PATH` values expanded from the start `NODE` with the given `RELATIONSHIP` types from min-depth to max-depth.")
-	public Stream<PathResult> expandConfig(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	public Stream<PathResult> expandConfig(@Name("startNode") Object start, @Name("config") Map<String,Object> config) {
 		return expandConfigPrivate(start, config).map( PathResult::new );
 	}
 
 	@NotThreadSafe
 	@Procedure("apoc.path.subgraphNodes")
 	@Description("Returns the `NODE` values in the sub-graph reachable from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
-	public Stream<NodeResult> subgraphNodes(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	public Stream<NodeResult> subgraphNodes(@Name("startNode") Object start, @Name("config") Map<String,Object> config) {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.put("uniqueness", "NODE_GLOBAL");
 
-		if (config.containsKey("minLevel") && !config.get("minLevel").equals(0l) && !config.get("minLevel").equals(1l)) {
+		if (config.containsKey("minLevel") && !config.get("minLevel").equals(0L) && !config.get("minLevel").equals(1L)) {
 			throw new IllegalArgumentException("minLevel can only be 0 or 1 in subgraphNodes()");
 		}
 
@@ -87,12 +85,12 @@ public class PathExplorer {
 	@NotThreadSafe
 	@Procedure("apoc.path.subgraphAll")
 	@Description("Returns the sub-graph reachable from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
-	public Stream<GraphResult> subgraphAll(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	public Stream<GraphResult> subgraphAll(@Name("startNode") Object start, @Name("config") Map<String,Object> config) {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.remove("optional"); // not needed, will return empty collections anyway if no results
 		configMap.put("uniqueness", "NODE_GLOBAL");
 
-		if (config.containsKey("minLevel") && !config.get("minLevel").equals(0l) && !config.get("minLevel").equals(1l)) {
+		if (config.containsKey("minLevel") && !config.get("minLevel").equals(0L) && !config.get("minLevel").equals(1L)) {
 			throw new IllegalArgumentException("minLevel can only be 0 or 1 in subgraphAll()");
 		}
 
@@ -105,11 +103,11 @@ public class PathExplorer {
 	@NotThreadSafe
 	@Procedure("apoc.path.spanningTree")
 	@Description("Returns spanning tree `PATH` values expanded from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
-	public Stream<PathResult> spanningTree(@Name("startNode") Object start, @Name("config") Map<String,Object> config) throws Exception {
+	public Stream<PathResult> spanningTree(@Name("startNode") Object start, @Name("config") Map<String,Object> config) {
 		Map<String, Object> configMap = new HashMap<>(config);
 		configMap.put("uniqueness", "NODE_GLOBAL");
 
-		if (config.containsKey("minLevel") && !config.get("minLevel").equals(0l) && !config.get("minLevel").equals(1l)) {
+		if (config.containsKey("minLevel") && !config.get("minLevel").equals(0L) && !config.get("minLevel").equals(1L)) {
 			throw new IllegalArgumentException("minLevel can only be 0 or 1 in spanningTree()");
 		}
 
@@ -123,38 +121,8 @@ public class PathExplorer {
 		return UNIQUENESS;
 	}
 
-	/*
-    , @Name("relationshipFilter") String pathFilter
-    , @Name("labelFilter") String labelFilter
-    , @Name("minLevel") long minLevel
-    , @Name("maxLevel") long maxLevel ) throws Exception {
-     */
-	@SuppressWarnings("unchecked")
-	private List<Node> startToNodes(Object start) throws Exception {
-		if (start == null) return Collections.emptyList();
-		if (start instanceof Node) {
-			return Collections.singletonList((Node) start);
-		}
-		if (start instanceof Number) {
-			return Collections.singletonList(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, ((Number) start).longValue())));
-		}
-		if (start instanceof List) {
-			List list = (List) start;
-			if (list.isEmpty()) return Collections.emptyList();
-
-			Object first = list.get(0);
-			if (first instanceof Node) return (List<Node>)list;
-			if (first instanceof Number) {
-                List<Node> nodes = new ArrayList<>();
-                for (Number n : ((List<Number>)list)) nodes.add(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, n.longValue())));
-                return nodes;
-            }
-		}
-		throw new Exception("Unsupported data type for start parameter a Node or an Identifier (long) of a Node must be given!");
-	}
-
-	private Stream<Path> expandConfigPrivate(@Name("start") Object start, @Name("config") Map<String,Object> config) throws Exception {
-		List<Node> nodes = startToNodes(start);
+	private Stream<Path> expandConfigPrivate(@Name("start") Object start, @Name("config") Map<String,Object> config) {
+		List<Node> nodes = Util.nodeList((InternalTransaction) tx, start);
 
 		String uniqueness = (String) config.getOrDefault("uniqueness", UNIQUENESS.name());
 		String relationshipFilter = (String) config.getOrDefault("relationshipFilter", null);
@@ -168,12 +136,12 @@ public class PathExplorer {
 		String sequence = (String) config.getOrDefault("sequence", null);
 		boolean beginSequenceAtStart = Util.toBoolean(config.getOrDefault("beginSequenceAtStart", true));
 
-		List<Node> endNodes = startToNodes(config.get("endNodes"));
-		List<Node> terminatorNodes = startToNodes(config.get("terminatorNodes"));
-		List<Node> whitelistNodes = startToNodes(config.get("whitelistNodes")); // DEPRECATED REMOVE 6.0
-		List<Node> blacklistNodes = startToNodes(config.get("blacklistNodes")); // DEPRECATED REMOVE 6.0
-		List<Node> allowlistNodes = startToNodes(config.get("allowlistNodes"));
-		List<Node> denylistNodes = startToNodes(config.get("denylistNodes"));
+		List<Node> endNodes = Util.nodeList((InternalTransaction) tx, config.get("endNodes"));
+		List<Node> terminatorNodes = Util.nodeList((InternalTransaction) tx, config.get("terminatorNodes"));
+		List<Node> whitelistNodes = Util.nodeList((InternalTransaction) tx, config.get("whitelistNodes")); // DEPRECATED REMOVE 6.0
+		List<Node> blacklistNodes = Util.nodeList((InternalTransaction) tx, config.get("blacklistNodes")); // DEPRECATED REMOVE 6.0
+		List<Node> allowlistNodes = Util.nodeList((InternalTransaction) tx, config.get("allowlistNodes"));
+		List<Node> denylistNodes = Util.nodeList((InternalTransaction) tx, config.get("denylistNodes"));
 		EnumMap<NodeFilter, List<Node>> nodeFilter = new EnumMap<>(NodeFilter.class);
 
 		if (endNodes != null && !endNodes.isEmpty()) {

@@ -591,9 +591,9 @@ public class Coll {
                 return Double.compare(((Number) o1).doubleValue(), ((Number) o2).doubleValue());
             return Long.compare(((Number) o1).longValue(), ((Number) o2).longValue());
         }
-        if (o1 instanceof Boolean && o2 instanceof Boolean) return ((Boolean) o1) ? 1 : -1;
-        if (o1 instanceof Node && o2 instanceof Node) return Long.compare(((Node)o1).getId(),((Node)o2).getId());
-        if (o1 instanceof Relationship && o2 instanceof Relationship) return Long.compare(((Relationship)o1).getId(),((Relationship)o2).getId());
+        if (o1 instanceof Boolean b1 && o2 instanceof Boolean) return b1 ? 1 : -1;
+        if (o1 instanceof Node n1 && o2 instanceof Node n2) return n1.getElementId().compareTo(n2.getElementId());
+        if (o1 instanceof Relationship rel1 && o2 instanceof Relationship rel2) return rel1.getElementId().compareTo(rel2.getElementId());
         return o1.toString().compareTo(o2.toString());
     }
 

@@ -59,13 +59,27 @@ public class SequenceTest {
 
     @Test
     public void testBasicSequence() {
-        String query = "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'>Person, ACTED_IN>, Movie, <DIRECTED'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
-        TestUtil.testCall(db, query, (row) -> {
-            List<String> expectedNames = new ArrayList<>(Arrays.asList("Robert Zemeckis", "Mike Nichols", "Ron Howard", "Frank Darabont", "Tom Tykwer", "Andy Wachowski", "Lana Wachowski", "Tom Hanks", "John Patrick Stanley", "Nora Ephron", "Penny Marshall", "Rob Reiner"));
-            List<String> names = (List<String>) row.get("names");
-            assertEquals(12l, names.size());
-            assertTrue(names.containsAll(expectedNames));
-        });
+        List<String> nodeRepresentations = List.of("t", "id(t)", "elementId(t)", "[t]", "[id(t)]", "[elementId(t)]");
+        for (String nodeRep: nodeRepresentations) {
+            String query = String.format("""
+                MATCH (t:Person {name: 'Tom Hanks'})
+                CALL apoc.path.expandConfig(%s, {sequence:'>Person, ACTED_IN>, Movie, <DIRECTED'})
+                YIELD path
+                WITH distinct last(nodes(path)) AS node
+                RETURN collect(node.name) AS names""", nodeRep);
+            TestUtil.testCall(db, query, (row) -> {
+                List<String> expectedNames = new ArrayList<>(
+                        Arrays.asList(
+                                "Robert Zemeckis", "Mike Nichols", "Ron Howard", "Frank Darabont", "Tom Tykwer",
+                                "Andy Wachowski", "Lana Wachowski", "Tom Hanks", "John Patrick Stanley", "Nora Ephron",
+                                "Penny Marshall", "Rob Reiner"
+                        )
+                );
+                List<String> names = (List<String>) row.get("names");
+                assertEquals(12L, names.size());
+                assertTrue(names.containsAll(expectedNames));
+            });
+        }
     }
 
     @Test
