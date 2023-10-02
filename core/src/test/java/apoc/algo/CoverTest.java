@@ -26,6 +26,8 @@ import org.junit.Test;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+import java.util.List;
+
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -50,8 +52,17 @@ public class CoverTest {
 
     @Test
     public void testCover() {
-        TestUtil.testCall(db,
-                "match (n) with collect(id(n)) as nodes call apoc.algo.cover(nodes) yield rel return count(*) as c",
-                (r) -> assertEquals(3L,r.get("c")));
+        List<String> nodeRepresentations = List.of("n", "id(n)", "elementId(n)");
+        for (String nodeRep: nodeRepresentations) {
+            TestUtil.testCall(db,
+                    String.format("""
+                            MATCH (n)
+                            WITH collect(%s) AS nodes
+                            CALL apoc.algo.cover(nodes)
+                            YIELD rel
+                            RETURN count(*) AS c
+                        """, nodeRep),
+                    (r) -> assertEquals(3L, r.get("c")));
+        }
     }
 }

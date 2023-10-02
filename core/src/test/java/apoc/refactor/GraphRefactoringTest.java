@@ -566,8 +566,12 @@ public class GraphRefactoringTest {
     
     @Test
     public void testCollapseNode() {
-        Long id = db.executeTransactionally("CREATE (f:Foo)-[:FOO {a:1}]->(b:Bar {c:3})-[:BAR {b:2}]->(f) RETURN id(b) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
-        testCall(db, "CALL apoc.refactor.collapseNode($ids,'FOOBAR')", map("ids", singletonList(id)),
+        String elementId = db.executeTransactionally("CREATE (f:Foo)-[:FOO {a:1}]->(b:Bar {c:3})-[:BAR {b:2}]->(f) RETURN elementId(b) as id",
+                emptyMap(),
+                result -> Iterators.single(result.columnAs("id"))
+        );
+        Long id = db.executeTransactionally("MATCH (b:Bar {c:3}) RETURN id(b) as id", emptyMap(), result -> Iterators.single(result.columnAs("id")));
+        testCall(db, "CALL apoc.refactor.collapseNode($ids,'FOOBAR')", map("ids", singletonList(elementId)),
                 (r) -> {
                     assertEquals(id, r.get("input"));
                     Relationship rel = (Relationship) r.get("output");
