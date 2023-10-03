@@ -32,7 +32,7 @@ Apache-2.0
   commons-collections-3.2.2.jar
   commons-collections4-4.2.jar
   commons-collections4-4.4.jar
-  commons-compress-1.23.0.jar
+  commons-compress-1.24.0.jar
   commons-configuration2-2.9.0.jar
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
@@ -121,15 +121,15 @@ Apache-2.0
   jcip-annotations-1.0-1.jar
   jctools-core-4.0.1.jar
   jettison-1.5.4.jar
-  jetty-http-10.0.15.jar
-  jetty-io-10.0.15.jar
-  jetty-security-10.0.15.jar
-  jetty-server-10.0.15.jar
-  jetty-servlet-10.0.15.jar
+  jetty-http-10.0.16.jar
+  jetty-io-10.0.16.jar
+  jetty-security-10.0.16.jar
+  jetty-server-10.0.16.jar
+  jetty-servlet-10.0.16.jar
   jetty-servlet-api-4.0.6.jar
-  jetty-util-10.0.15.jar
-  jetty-webapp-10.0.15.jar
-  jetty-xml-10.0.15.jar
+  jetty-util-10.0.16.jar
+  jetty-webapp-10.0.16.jar
+  jetty-xml-10.0.16.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.425.jar
@@ -162,20 +162,20 @@ Apache-2.0
   log4j-api-2.20.0.jar
   log4j-core-2.20.0.jar
   log4j-layout-template-json-2.20.0.jar
-  lucene-analysis-common-9.7.0.jar
-  lucene-backward-codecs-9.7.0.jar
-  lucene-core-9.7.0.jar
-  lucene-queryparser-9.7.0.jar
+  lucene-analysis-common-9.8.0.jar
+  lucene-backward-codecs-9.8.0.jar
+  lucene-core-9.8.0.jar
+  lucene-queryparser-9.8.0.jar
   magnolia_2.13-0.17.0.jar
   mercator_2.13-0.2.1.jar
   metrics-core-3.2.4.jar
   netty-3.10.6.Final.jar
   netty-all-4.1.89.Final.jar
-  netty-buffer-4.1.97.Final.jar
-  netty-codec-4.1.97.Final.jar
+  netty-buffer-4.1.99.Final.jar
+  netty-codec-4.1.99.Final.jar
   netty-codec-dns-4.1.89.Final.jar
   netty-codec-haproxy-4.1.89.Final.jar
-  netty-codec-http-4.1.97.Final.jar
+  netty-codec-http-4.1.99.Final.jar
   netty-codec-http2-4.1.89.Final.jar
   netty-codec-memcache-4.1.89.Final.jar
   netty-codec-mqtt-4.1.89.Final.jar
@@ -184,24 +184,24 @@ Apache-2.0
   netty-codec-socks-4.1.89.Final.jar
   netty-codec-stomp-4.1.89.Final.jar
   netty-codec-xml-4.1.89.Final.jar
-  netty-common-4.1.97.Final.jar
-  netty-handler-4.1.97.Final.jar
+  netty-common-4.1.99.Final.jar
+  netty-handler-4.1.99.Final.jar
   netty-handler-proxy-4.1.89.Final.jar
   netty-handler-ssl-ocsp-4.1.89.Final.jar
-  netty-resolver-4.1.97.Final.jar
+  netty-resolver-4.1.99.Final.jar
   netty-resolver-dns-4.1.89.Final.jar
   netty-resolver-dns-classes-macos-4.1.89.Final.jar
   netty-resolver-dns-native-macos-4.1.89.Final-osx-aarch_64.jar
   netty-resolver-dns-native-macos-4.1.89.Final-osx-x86_64.jar
-  netty-transport-4.1.97.Final.jar
-  netty-transport-classes-epoll-4.1.97.Final.jar
-  netty-transport-classes-kqueue-4.1.97.Final.jar
-  netty-transport-native-epoll-4.1.97.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.1.97.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.1.97.Final.jar
-  netty-transport-native-kqueue-4.1.97.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.1.97.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.1.97.Final.jar
+  netty-transport-4.1.99.Final.jar
+  netty-transport-classes-epoll-4.1.99.Final.jar
+  netty-transport-classes-kqueue-4.1.99.Final.jar
+  netty-transport-native-epoll-4.1.99.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.1.99.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.1.99.Final.jar
+  netty-transport-native-kqueue-4.1.99.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.1.99.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.1.99.Final.jar
   netty-transport-rxtx-4.1.89.Final.jar
   netty-transport-sctp-4.1.89.Final.jar
   netty-transport-udt-4.1.89.Final.jar
@@ -212,7 +212,7 @@ Apache-2.0
   opencsv-5.7.1.jar
   opentest4j-1.3.0.jar
   picocli-4.7.5.jar
-  reactor-core-3.5.9.jar
+  reactor-core-3.5.10.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.11.jar
@@ -2580,7 +2580,7 @@ MIT
   neo4j-1.18.3.jar
   postgresql-1.18.3.jar
   reactive-streams-1.0.4.jar
-  slf4j-api-2.0.7.jar
+  slf4j-api-2.0.9.jar
   testcontainers-1.18.3.jar
 ------------------------------------------------------------------------------
 
