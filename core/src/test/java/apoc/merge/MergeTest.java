@@ -98,6 +98,20 @@ public class MergeTest {
     }
 
     @Test
+    public void testMergeWithNoLabel() {
+        testCall(db, "CALL apoc.merge.node(null, {name:'John'}) YIELD node RETURN node",
+                (row) -> {
+                    Node node = (Node) row.get("node");
+                    assertFalse(node.getLabels().iterator().hasNext());
+                    assertEquals("John", node.getProperty("name"));
+                });
+
+        testResult(db, "match (p) return count(*) as c", result ->
+                assertEquals(1, (long)(Iterators.single(result.columnAs("c"))))
+        );
+    }
+
+    @Test
     public void testMergeRelationships() {
         db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
 
@@ -136,7 +150,51 @@ public class MergeTest {
             }
         }
     }
-    
+
+    @Test
+    public void testMergeNodeWithNullLabelsShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node([null, null], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertTrue(e.getMessage().contains("The list of label names contained a null value. If you wish to merge a node without a label, pass an empty list instead."));
+        }
+    }
+
+    @Test
+    public void testMergeNodeWithEmptyLabelListShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertTrue(e.getMessage().contains("The list of label cannot be empty. If you wish to merge a node without a label, pass an empty list instead."));
+        }
+    }
+
+    @Test
+    public void testMergeRelWithNullRelTypeShouldFail() {
+        try {
+            testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e  CALL apoc.merge.relationship(s, null, null, null, e) YIELD rel RETURN rel",
+                    row -> assertTrue(row.get("rel") instanceof Relationship));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertTrue(e.getMessage().contains("It is not possible to merge a relationship without a relationship type."));
+        }
+    }
+
+    @Test
+    public void testMergeWithEmptyRelTypeShouldFail() {
+        try {
+            testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, '', null, null, e) YIELD rel RETURN rel",
+                    row -> assertTrue(row.get("rel") instanceof Relationship));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertTrue(e.getMessage().contains("It is not possible to merge a relationship without a relationship type."));
+        }
+    }
+
     @Test
     public void testEscapeIdentityPropertiesWithSpecialCharactersShouldWork() {
         for (String key: new String[]{"normal", "i:d", "i-d", "i d"}) {

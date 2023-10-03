@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static apoc.util.Util.labelString;
 import static java.util.Collections.emptyMap;
 
 public class Merge {
@@ -83,16 +82,26 @@ public class Merge {
     }
 
     private Result getNodeResult(List<String> labelNames, Map<String, Object> identProps, Map<String, Object> props, Map<String, Object> onMatchProps) {
-        if (identProps ==null || identProps.isEmpty()) {
+        if (identProps == null || identProps.isEmpty()) {
             throw new IllegalArgumentException("you need to supply at least one identifying property for a merge");
         }
 
-        String labels = labelString(labelNames);
+        if (labelNames != null &&
+                (labelNames.contains(null) || (labelNames.size() == 1 && labelNames.get(0).isEmpty()))) {
+            throw new IllegalArgumentException("The list of label names contained a null value. If you wish to merge a node without a label, pass an empty list instead.");
+        }
+
+        // labelNames = [""]
+        if (labelNames != null && labelNames.size() == 1 && labelNames.get(0).isEmpty()) {
+            throw new IllegalArgumentException("The list of label cannot be empty. If you wish to merge a node without a label, pass an empty list instead.");
+        }
+
+        String labels = labelNames != null ? ":" + labelNames.stream().map(Util::quote).collect(Collectors.joining(":")) : "";
 
         Map<String, Object> params = Util.map("identProps", identProps, "onCreateProps", props, "onMatchProps", onMatchProps);
         String identPropsString = buildIdentPropsString(identProps);
 
-        final String cypher = "MERGE (n:" + labels + "{" + identPropsString + "}) ON CREATE SET n += $onCreateProps ON MATCH SET n += $onMatchProps RETURN n";
+        final String cypher = "MERGE (n" + labels + "{" + identPropsString + "}) ON CREATE SET n += $onCreateProps ON MATCH SET n += $onMatchProps RETURN n";
         return tx.execute(cypher, params);
     }
 
@@ -121,6 +130,10 @@ public class Merge {
 
     private Result getRelResult(Node startNode, String relType, Map<String, Object> identProps, Map<String, Object> onCreateProps, Node endNode, Map<String, Object> onMatchProps) {
         String identPropsString = buildIdentPropsString(identProps);
+
+        if (relType == null || relType.isEmpty()) {
+             throw new IllegalArgumentException("It is not possible to merge a relationship without a relationship type.");
+        }
 
         Map<String, Object> params = Util.map("identProps", identProps, "onCreateProps", onCreateProps ==null ? emptyMap() : onCreateProps,
                 "onMatchProps", onMatchProps == null ? emptyMap() : onMatchProps, "startNode", startNode, "endNode", endNode);
