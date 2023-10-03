@@ -67,8 +67,8 @@ public class MergeTest {
         testCall(db, String.format("CALL apoc.merge.%s(['Person','Bastard'],{ssid:'123'}, {name:'John'})", procName),
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("John", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
 
@@ -87,7 +87,7 @@ public class MergeTest {
         testCall(db, "CALL apoc.merge.node(['Person'],{ssid:'123'}, {name:'John'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
                     assertEquals("Jim", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
                 });
@@ -119,7 +119,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                 });
 
@@ -127,7 +127,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                 });
         testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'OTHER', null, null, e) YIELD rel RETURN rel",
@@ -204,7 +204,7 @@ public class MergeTest {
             testCall(db, "CALL apoc.merge.node(['Person'], $identProps) YIELD node RETURN node", params,
                         (row) -> {
                             Node node = (Node) row.get("node");
-                            assertTrue(node instanceof Node);
+                            assertNotNull(node);
                             assertTrue(node.hasProperty(key));
                             assertEquals("value", node.getProperty(key));
                         });
@@ -248,8 +248,8 @@ public class MergeTest {
         testCall(db, String.format("CALL apoc.merge.%s.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'})", procName),
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("John", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
                     
@@ -267,8 +267,8 @@ public class MergeTest {
         testCall(db, "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'},{occupation:'juggler'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("John", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
                     assertFalse(node.hasProperty("occupation"));
@@ -281,8 +281,8 @@ public class MergeTest {
         testCall(db, "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'}, {occupation:'juggler'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("juggler", node.getProperty("occupation"));
                     assertEquals("123", node.getProperty("ssid"));
                     assertFalse(node.hasProperty("name"));
@@ -298,8 +298,8 @@ public class MergeTest {
 
             for (long index = 1; index <= 5; index++) {
                 Node node = (Node) result.next().get("node");
-                assertEquals(true, node.hasLabel(Label.label("Person")));
-                assertEquals(true, node.hasLabel(Label.label("Bastard Man")));
+                assertTrue(node.hasLabel(Label.label("Person")));
+                assertTrue(node.hasLabel(Label.label("Bastard Man")));
                 assertEquals("123", node.getProperty("ssid"));
                 assertEquals(index, node.getProperty("index"));
                 assertEquals("juggler", node.getProperty("occupation"));
@@ -330,7 +330,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                     
                     if (isWithStats) {
@@ -345,7 +345,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                     
                     if (isWithStats) {
@@ -378,7 +378,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                     assertFalse(rel.hasProperty("until"));
                 });
@@ -387,7 +387,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Fri", rel.getProperty("since"));
                 });
     }
@@ -402,7 +402,7 @@ public class MergeTest {
             for (long index = 1; index <= 3; index++) {
                 Relationship rel = (Relationship) result.next().get("rel");
                 assertEquals("KNOWS", rel.getType().name());
-                assertEquals(123l, rel.getProperty("rid"));
+                assertEquals(123L, rel.getProperty("rid"));
                 assertEquals("Fri", rel.getProperty("since"));
             }
         } catch (Exception e) {
