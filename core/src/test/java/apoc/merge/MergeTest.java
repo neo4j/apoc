@@ -132,7 +132,8 @@ public class MergeTest {
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead."));
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
         }
     }
 
@@ -143,7 +144,8 @@ public class MergeTest {
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead."));
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
         }
     }
 
@@ -154,7 +156,8 @@ public class MergeTest {
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead."));
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
         }
     }
 
@@ -227,7 +230,8 @@ public class MergeTest {
                     row -> assertTrue(row.get("rel") instanceof Relationship));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("It is not possible to merge a relationship without a relationship type."));
+            assertEquals(e.getMessage(), ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: " +
+                    "It is not possible to merge a relationship without a relationship type."));
         }
     }
 
@@ -238,7 +242,8 @@ public class MergeTest {
                     row -> assertTrue(row.get("rel") instanceof Relationship));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("It is not possible to merge a relationship without a relationship type."));
+            assertEquals(e.getMessage(), ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: " +
+                    "It is not possible to merge a relationship without a relationship type."));
         }
     }
 
