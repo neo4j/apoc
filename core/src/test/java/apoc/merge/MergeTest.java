@@ -132,7 +132,7 @@ public class MergeTest {
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("The list of label names contained a null value. If you wish to merge a node without a label, pass an empty list instead."));
+            assertTrue(e.getMessage().contains("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead."));
         }
     }
 
@@ -143,7 +143,18 @@ public class MergeTest {
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains("The list of label cannot be empty. If you wish to merge a node without a label, pass an empty list instead."));
+            assertTrue(e.getMessage().contains("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead."));
+        }
+    }
+
+    @Test
+    public void testMergeNodeContainingEmptyLabelShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertTrue(e.getMessage().contains("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead."));
         }
     }
 

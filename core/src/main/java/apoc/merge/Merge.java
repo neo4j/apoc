@@ -86,14 +86,8 @@ public class Merge {
             throw new IllegalArgumentException("you need to supply at least one identifying property for a merge");
         }
 
-        if (labelNames != null &&
-                (labelNames.contains(null) || (labelNames.size() == 1 && labelNames.get(0).isEmpty()))) {
-            throw new IllegalArgumentException("The list of label names contained a null value. If you wish to merge a node without a label, pass an empty list instead.");
-        }
-
-        // labelNames = [""]
-        if (labelNames != null && labelNames.size() == 1 && labelNames.get(0).isEmpty()) {
-            throw new IllegalArgumentException("The list of label cannot be empty. If you wish to merge a node without a label, pass an empty list instead.");
+        if (labelNames != null && (labelNames.contains(null) || labelNames.contains(""))) {
+            throw new IllegalArgumentException("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
         }
 
         String labels = labelNames != null ? ":" + labelNames.stream().map(Util::quote).collect(Collectors.joining(":")) : "";
