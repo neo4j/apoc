@@ -87,10 +87,15 @@ public class Merge {
         }
 
         if (labelNames != null && (labelNames.contains(null) || labelNames.contains(""))) {
-            throw new IllegalArgumentException("The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
+            throw new IllegalArgumentException("The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
         }
 
-        String labels = labelNames != null ? ":" + labelNames.stream().map(Util::quote).collect(Collectors.joining(":")) : "";
+        String labels;
+        if (labelNames == null || labelNames.isEmpty()) {
+            labels = "";
+        } else {
+            labels = ":" + labelNames.stream().map(Util::quote).collect(Collectors.joining(":"));
+        }
 
         Map<String, Object> params = Util.map("identProps", identProps, "onCreateProps", props, "onMatchProps", onMatchProps);
         String identPropsString = buildIdentPropsString(identProps);
@@ -126,7 +131,7 @@ public class Merge {
         String identPropsString = buildIdentPropsString(identProps);
 
         if (relType == null || relType.isEmpty()) {
-             throw new IllegalArgumentException("It is not possible to merge a relationship without a relationship type.");
+             throw new IllegalArgumentException("It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type.");
         }
 
         Map<String, Object> params = Util.map("identProps", identProps, "onCreateProps", onCreateProps ==null ? emptyMap() : onCreateProps,

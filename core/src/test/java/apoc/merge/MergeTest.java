@@ -113,6 +113,20 @@ public class MergeTest {
     }
 
     @Test
+    public void testMergeNodeWithEmptyLabelList() {
+        testCall(db, "CALL apoc.merge.node([], {name:'John'}) YIELD node RETURN node",
+                (row) -> {
+                    Node node = (Node) row.get("node");
+                    assertFalse(node.getLabels().iterator().hasNext());
+                    assertEquals("John", node.getProperty("name"));
+                });
+
+        testResult(db, "match (p) return count(*) as c", result ->
+                assertEquals(1, (long)(Iterators.single(result.columnAs("c"))))
+        );
+    }
+
+    @Test
     public void testMergeWithEmptyIdentityPropertiesShouldFail() {
         for (String idProps: new String[]{"null", "{}"}) {
             try {
@@ -128,36 +142,48 @@ public class MergeTest {
     @Test
     public void testMergeNodeWithNullLabelsShouldFail() {
         try {
-            testCall(db, "CALL apoc.merge.node([null, null], {name:'John'}) YIELD node RETURN node",
+            testCall(db, "CALL apoc.merge.node([null], {name:'John'}) YIELD node RETURN node",
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
         }
     }
 
     @Test
-    public void testMergeNodeWithEmptyLabelListShouldFail() {
+    public void testMergeNodeWithMixedLabelsContainingNullShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node(['Person', null], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
+        }
+    }
+
+    @Test
+    public void testMergeNodeWithSingleEmptyLabelShouldFail() {
         try {
             testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node",
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
         }
     }
 
     @Test
-    public void testMergeNodeContainingEmptyLabelShouldFail() {
+    public void testMergeNodeContainingMixedLabelsContainingEmptyStringShouldFail() {
         try {
-            testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node",
+            testCall(db, "CALL apoc.merge.node(['Person', ''], {name:'John'}) YIELD node RETURN node",
                     row -> assertTrue(row.get("node") instanceof Node));
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any null or empty String values. If you wish to merge a node without a label, pass an empty list instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
         }
     }
 
@@ -231,7 +257,7 @@ public class MergeTest {
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: " +
-                    "It is not possible to merge a relationship without a relationship type."));
+                    "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."));
         }
     }
 
@@ -243,7 +269,7 @@ public class MergeTest {
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: " +
-                    "It is not possible to merge a relationship without a relationship type."));
+                    "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."));
         }
     }
 
