@@ -108,7 +108,7 @@ public class BigGraphTest {
 
     @Test
     public void testTerminateRenameType() {
-        checkTerminationGuard(db, "CALL apoc.refactor.rename.type('DIRECTED', 'DIRECTED_TWO')");
+        checkTerminationGuard(db,  50L, "CALL apoc.refactor.rename.type('DIRECTED', 'DIRECTED_TWO')");
     }
 
     @Test
