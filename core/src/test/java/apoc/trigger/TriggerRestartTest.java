@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
+import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH_MS;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.waitDbsAvailable;
 import static org.junit.Assert.assertEquals;
@@ -53,7 +53,7 @@ public class TriggerRestartTest {
     // we cannot set via apocConfig().setProperty(apoc.trigger.refresh, ...) in `@Before`, because is too late
     @ClassRule
     public static final ProvideSystemProperty systemPropertyRule =
-            new ProvideSystemProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
+            new ProvideSystemProperty("apoc.trigger.refresh", String.valueOf( TRIGGER_DEFAULT_REFRESH_MS ));
 
     @Before
     public void setUp() throws IOException {

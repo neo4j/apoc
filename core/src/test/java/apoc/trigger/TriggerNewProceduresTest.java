@@ -48,8 +48,8 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static apoc.trigger.TriggerNewProcedures.*;
-import static apoc.trigger.TriggerTestUtil.TIMEOUT;
-import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
+import static apoc.trigger.TriggerTestUtil.TIMEOUT_S;
+import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH_MS;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.*;
 import static org.junit.Assert.*;
@@ -75,7 +75,7 @@ public class TriggerNewProceduresTest {
     // we cannot set via ApocConfig.apocConfig().setProperty("apoc.trigger.refresh", "2000") in `setUp`, because is too late
     @ClassRule
     public static final ProvideSystemProperty systemPropertyRule =
-            new ProvideSystemProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH))
+            new ProvideSystemProperty("apoc.trigger.refresh", String.valueOf( TRIGGER_DEFAULT_REFRESH_MS ))
                     .and("apoc.trigger.enabled", "true");
 
     @BeforeClass
@@ -99,7 +99,7 @@ public class TriggerNewProceduresTest {
     @After
     public void after() {
         sysDb.executeTransactionally("CALL apoc.trigger.dropAll('neo4j')");
-        testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
+        testCallCountEventually( db, "CALL apoc.trigger.list", 0, TIMEOUT_S );
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
@@ -115,11 +115,11 @@ public class TriggerNewProceduresTest {
                 map("query", query, "name", name),
                 1);
 
-        testCallEventually(db, "CALL apoc.trigger.list", row -> {
+        testCallEventually( db, "CALL apoc.trigger.list", row -> {
             assertEquals("count-removals", row.get("name"));
             assertEquals(query, row.get("query"));
             assertEquals(true, row.get("installed"));
-        }, TIMEOUT);
+        }, TIMEOUT_S );
     }
 
     @Test
@@ -137,7 +137,7 @@ public class TriggerNewProceduresTest {
                 db,
                 "MATCH (c:Counter) RETURN c.count as count",
                 (row) -> assertEquals(1L, row.get("count")),
-                TIMEOUT
+                TIMEOUT_S
         );
     }
 
@@ -188,7 +188,7 @@ public class TriggerNewProceduresTest {
 
         db.executeTransactionally("MATCH (n:ToBeDeleted) DELETE n");
         sysDb.executeTransactionally("CALL apoc.trigger.drop('neo4j', 'myTrig')");
-        testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
+        testCallCountEventually( db, "CALL apoc.trigger.list", 0, TIMEOUT_S );
     }
 
     @Test
@@ -213,18 +213,18 @@ public class TriggerNewProceduresTest {
     @Test
     public void testRemoveTrigger() {
         testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed','RETURN 1',{})", 1);
-        testCallEventually(db, "CALL apoc.trigger.list()", (row) -> {
+        testCallEventually( db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
             assertEquals("RETURN 1", row.get("query"));
             assertEquals(true, row.get("installed"));
-        }, TIMEOUT);
+        }, TIMEOUT_S );
         
         testCall(sysDb, "CALL apoc.trigger.drop('neo4j', 'to-be-removed')", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
             assertEquals("RETURN 1", row.get("query"));
             assertEquals(false, row.get("installed"));
         });
-        testCallCountEventually(db, "CALL apoc.trigger.list()", 0, TIMEOUT);
+        testCallCountEventually( db, "CALL apoc.trigger.list()", 0, TIMEOUT_S );
 
         testCallEmpty(sysDb, "CALL apoc.trigger.drop('neo4j', 'to-be-removed')", Collections.emptyMap());
     }
@@ -232,12 +232,12 @@ public class TriggerNewProceduresTest {
     @Test
     public void testRemoveAllTrigger() {
         testCallCount(sysDb, "CALL apoc.trigger.dropAll('neo4j')", 0);
-        testCallCountEventually(db, "call apoc.trigger.list", 0, TIMEOUT);
+        testCallCountEventually( db, "call apoc.trigger.list", 0, TIMEOUT_S );
 
         testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed-1','RETURN 1',{})", 1);
         testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed-2','RETURN 2',{})", 1);
 
-        testCallCountEventually(db, "call apoc.trigger.list", 2, TIMEOUT);
+        testCallCountEventually( db, "call apoc.trigger.list", 2, TIMEOUT_S );
         
         TestUtil.testResult(sysDb, "CALL apoc.trigger.dropAll('neo4j')", (res) -> {
             Map<String, Object> row = res.next();
@@ -250,7 +250,7 @@ public class TriggerNewProceduresTest {
             assertEquals(false, row.get("installed"));
             assertFalse(res.hasNext());
         });
-        testCallCountEventually(db, "call apoc.trigger.list", 0, TIMEOUT);
+        testCallCountEventually( db, "call apoc.trigger.list", 0, TIMEOUT_S );
 
         testCallCount(sysDb, "CALL apoc.trigger.dropAll('neo4j')", 0);
     }
@@ -412,11 +412,11 @@ public class TriggerNewProceduresTest {
         awaitTriggerDiscovered(db, name, query);
         
         sysDb.executeTransactionally("CALL apoc.trigger.stop('neo4j', 'test')");
-        testCallEventually(db, "CALL apoc.trigger.list()", (row) -> {
+        testCallEventually( db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("test", row.get("name"));
             assertEquals(true, row.get("installed"));
             assertEquals(true, row.get("paused"));
-        }, TIMEOUT);
+        }, TIMEOUT_S );
     }
 
     @Test
@@ -429,8 +429,8 @@ public class TriggerNewProceduresTest {
         
         sysDb.executeTransactionally("CALL apoc.trigger.stop('neo4j', 'test')");
         testCallEventually(db, "CALL apoc.trigger.list", 
-                row -> assertEquals(true, row.get("paused")), 
-                TIMEOUT);
+                row -> assertEquals(true, row.get("paused")),
+                           TIMEOUT_S );
         testCall(sysDb, "CALL apoc.trigger.start('neo4j', 'test')", (row) -> {
             assertEquals("test", row.get("name"));
             assertEquals(true, row.get("installed"));
@@ -438,7 +438,7 @@ public class TriggerNewProceduresTest {
         });
         testCallEventually(db, "CALL apoc.trigger.list",
                 row -> assertEquals(false, row.get("paused")),
-                TIMEOUT);
+                           TIMEOUT_S );
     }
 
     @Test
