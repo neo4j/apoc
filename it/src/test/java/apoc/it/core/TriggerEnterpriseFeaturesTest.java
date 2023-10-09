@@ -186,9 +186,26 @@ public class TriggerEnterpriseFeaturesTest {
             final String dbToDelete = "todelete";
 
             // create database with name `todelete`
-            sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
+            try {
+                sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
+            } catch (Exception e) {
+                printFile("logs/neo4j.log");
+                printFile("logs/debug.log");
+                printFile("logs/query.log");
+                throw e;
+            }
 
             testDeleteTriggerAfterDropDb(dbToDelete, sysSession);
+        }
+    }
+
+    private void printFile(String path) {
+        try {
+            System.out.println("======================== " + path + " ========================");
+            System.out.println(neo4jContainer.execInContainer( "cat", path));
+        }
+        catch (Exception e) {
+            System.err.println("Failed to read " + path + ": " + e.getMessage());
         }
     }
 
