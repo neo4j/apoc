@@ -25,13 +25,16 @@ import apoc.test.annotations.EnvSetting;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 
 import java.util.Collections;
+import java.util.Map;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.availability.AvailabilityListener;
@@ -40,6 +43,7 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
@@ -133,6 +137,17 @@ public class CypherInitializerTest {
     })
     public void multipleInitializersWorks2() {
         expectNodeCount(1);
+    }
+
+    @Ignore // TODO This should work according to the documentation
+    @Env({
+            @EnvSetting(key= APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME + ".0", value="create database hellohi if not exists")
+    })
+    public void createDbInInitialize() {
+        GraphDatabaseService systemDb = dbmsRule.getManagementService().database(SYSTEM_DATABASE_NAME);
+        final var databases = systemDb
+                .executeTransactionally( "show databases yield name", Map.of(), res -> res.stream().map(r -> r.get("name")).toList());
+        assertThat(databases, Matchers.hasItem("hellohi"));
     }
 
     @Test

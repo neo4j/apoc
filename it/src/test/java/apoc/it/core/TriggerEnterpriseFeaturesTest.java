@@ -24,6 +24,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
@@ -37,7 +38,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.SystemPropertyKeys.database;
 import static apoc.trigger.TriggerHandler.TRIGGER_REFRESH;
@@ -57,6 +57,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 import static org.neo4j.driver.SessionConfig.forDatabase;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
+
 public class TriggerEnterpriseFeaturesTest {
     private static final String FOO_DB = "foo";
     private static final String INIT_DB = "initdb";
@@ -68,26 +69,25 @@ public class TriggerEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeClass
-    public static void beforeAll() {
-        final String cypherInitializer = String.format("%s.%s.0",
-                APOC_CONFIG_INITIALIZER, SYSTEM_DATABASE_NAME);
-        final String createInitDb = String.format("CREATE DATABASE %s IF NOT EXISTS", INIT_DB);
+    public static void beforeAll()
+    {
+        //final String cypherInitializer = String.format("%s.%s.0", APOC_CONFIG_INITIALIZER, SYSTEM_DATABASE_NAME);
+        //final String createInitDb = String.format("CREATE DATABASE %s IF NOT EXISTS", INIT_DB);
 
         // We build the project, the artifact will be placed into ./build/libs
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
                 .withEnv(APOC_TRIGGER_ENABLED, "true")
-                .withEnv(TRIGGER_REFRESH, String.valueOf(TRIGGER_DEFAULT_REFRESH))
-                .withEnv(cypherInitializer, createInitDb);
+                .withEnv(TRIGGER_REFRESH, String.valueOf(TRIGGER_DEFAULT_REFRESH));
+                //.withEnv(cypherInitializer, createInitDb); // TODO Bug in initializer prevents us from doing this
         neo4jContainer.start();
         session = neo4jContainer.getSession();
         
         assertTrue(neo4jContainer.isRunning());
 
-        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
-            sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", FOO_DB)));
-
-            sysSession.run(String.format("CREATE USER %s SET PASSWORD '%s' SET PASSWORD CHANGE NOT REQUIRED",
-                    NO_ADMIN_USER, NO_ADMIN_PWD));
+        try (final var sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+            sysSession.run("CREATE DATABASE %s WAIT".formatted(FOO_DB)).consume();
+            sysSession.run("CREATE DATABASE %s WAIT".formatted(INIT_DB)).consume();
+            sysSession.run("CREATE USER %s SET PASSWORD '%s' SET PASSWORD CHANGE NOT REQUIRED".formatted(NO_ADMIN_USER, NO_ADMIN_PWD)).consume();
         }
     }
 
