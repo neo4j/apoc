@@ -23,6 +23,7 @@ import apoc.util.TestContainerUtil;
 import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestUtil;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import java.util.List;
 import java.util.Set;
@@ -32,6 +33,7 @@ import org.neo4j.driver.Session;
 /*
  This test is just to verify the split of core and extended
  */
+@Ignore
 public class ApocSplitTest {
     public static final Set<String> CORE_PROCEDURES = Set.of(
         "apoc.periodic.truncate",

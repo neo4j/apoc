@@ -20,6 +20,7 @@ package apoc.it.core;
 import apoc.SystemLabels;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
+import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -31,10 +32,13 @@ import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 
+import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
@@ -66,6 +70,7 @@ public class TriggerEnterpriseFeaturesTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
+    private static File logsDir;
 
     @BeforeClass
     public static void beforeAll() {
@@ -73,8 +78,9 @@ public class TriggerEnterpriseFeaturesTest {
                 APOC_CONFIG_INITIALIZER, SYSTEM_DATABASE_NAME);
         final String createInitDb = String.format("CREATE DATABASE %s IF NOT EXISTS", INIT_DB);
 
+        logsDir = Files.createTempDir();
         // We build the project, the artifact will be placed into ./build/libs
-        neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
+        neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true, logsDir.getAbsolutePath())
                 .withEnv(APOC_TRIGGER_ENABLED, "true")
                 .withEnv(TRIGGER_REFRESH, String.valueOf(TRIGGER_DEFAULT_REFRESH))
                 .withEnv(cypherInitializer, createInitDb);
@@ -189,6 +195,10 @@ public class TriggerEnterpriseFeaturesTest {
             try {
                 sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
             } catch (Exception e) {
+                printLocalFile("neo4j.log");
+                printLocalFile("debug.log");
+                printLocalFile("query.log");
+
                 printFile("logs/neo4j.log");
                 printFile("logs/debug.log");
                 printFile("logs/query.log");
@@ -208,6 +218,18 @@ public class TriggerEnterpriseFeaturesTest {
             System.err.println("Failed to read " + path + ": " + e.getMessage());
         }
     }
+
+    private void printLocalFile(String path) {
+        try {
+            System.out.println("======================== " + path + " ========================");
+            System.out.println( String.join( "\n", Files.readLines( new File( logsDir, path ), StandardCharsets.UTF_8 ) ) );
+        }
+        catch (Exception e) {
+            System.err.println("Failed to read " + path + ": " + e.getMessage());
+        }
+    }
+
+
 
     @Test
     public void testDeleteTriggerAfterDatabaseDeletionCreatedViaCypherInit() {

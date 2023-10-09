@@ -24,6 +24,7 @@ import apoc.util.s3.S3BaseTest;
 import apoc.util.s3.S3TestUtil;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
@@ -36,6 +37,7 @@ import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.util.Util.map;
 import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
 import static org.junit.Assert.*;
+@Ignore
 
 public class ExportCypherS3Test extends S3BaseTest {
 

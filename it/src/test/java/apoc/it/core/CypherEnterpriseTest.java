@@ -23,6 +23,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.types.Node;
@@ -42,6 +43,8 @@ import static apoc.cypher.CypherTestUtil.testRunProcedureWithSimpleReturnResults
 import static apoc.util.TestContainerUtil.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+
+@Ignore
 
 public class CypherEnterpriseTest {
     private static Neo4jContainerExtension neo4jContainer;

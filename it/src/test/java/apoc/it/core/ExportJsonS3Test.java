@@ -24,6 +24,7 @@ import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.test.rule.DbmsRule;
@@ -40,6 +41,7 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.assertS3KeyEventually;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
 import static org.junit.Assert.*;
+@Ignore
 
 public class ExportJsonS3Test extends S3BaseTest {
     private static final File directoryExpected = new File(

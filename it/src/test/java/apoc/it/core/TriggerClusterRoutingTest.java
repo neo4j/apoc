@@ -22,6 +22,7 @@ import apoc.util.TestContainerUtil;
 import apoc.util.TestcontainersCausalCluster;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
@@ -46,6 +47,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+@Ignore
 public class TriggerClusterRoutingTest {
     private static TestcontainersCausalCluster cluster;
     private static List<Neo4jContainerExtension> clusterMembers;

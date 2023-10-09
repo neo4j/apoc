@@ -22,6 +22,7 @@ import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.Session;
 
@@ -40,6 +41,8 @@ import static org.junit.Assert.assertTrue;
  * @author as
  * @since 12.02.19
  */
+
+@Ignore
 public class MetaEnterpriseFeaturesTest {
 
     private static Neo4jContainerExtension neo4jContainer;

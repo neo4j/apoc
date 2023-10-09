@@ -20,6 +20,8 @@ package apoc.util;
 
 import com.github.dockerjava.api.exception.NotFoundException;
 import java.time.Duration;
+
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -93,8 +95,96 @@ public class TestContainerUtil {
         return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE);
     }
 
+    public static Neo4jContainerExtension createEnterpriseDB(List<ApocPackage> apocPackages, boolean withLogging, String logs) {
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, logs);
+    }
+
     public static Neo4jContainerExtension createCommunityDB(List<ApocPackage> apocPackages, boolean withLogging) {
         return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY);
+    }
+
+    private static Neo4jContainerExtension createNeo4jContainer(List<ApocPackage> apocPackages, boolean withLogging, Neo4jVersion version, String logs) {
+        String dockerImage;
+        if (version == Neo4jVersion.ENTERPRISE) {
+            dockerImage = neo4jEnterpriseDockerImageVersion;
+        } else {
+            dockerImage = neo4jCommunityDockerImageVersion;
+        }
+
+        try {
+            FileUtils.deleteDirectory( pluginsFolder );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        File projectDir;
+        // We define the container with external volumes
+        importFolder.mkdirs();
+        // use a separate folder for mounting plugins jar - build/libs might contain other jars as well.
+        pluginsFolder.mkdirs();
+        String canonicalPath = null;
+
+        try {
+            canonicalPath = importFolder.getCanonicalPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (ApocPackage apocPackage: apocPackages) {
+            if (apocPackage == ApocPackage.CORE) {
+                projectDir = coreDir;
+            } else {
+                projectDir = extendedDir;
+            }
+
+            executeGradleTasks(projectDir, "shadowJar");
+
+            copyFilesToPlugin(new File(projectDir, "build/libs"), new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")), pluginsFolder);
+        }
+
+        System.out.println("logs dir: " + logs);
+
+        System.out.println("neo4jDockerImageVersion = " + dockerImage);
+        Neo4jContainerExtension neo4jContainer = new Neo4jContainerExtension(dockerImage)
+                .withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()))
+                .withFileSystemBind(logs, "/logs")
+                .withTmpFs(Map.of("/data", "rw", pluginsFolder.toPath().toAbsolutePath().toString(), "rw"))
+                .withAdminPassword(password)
+                .withEnv("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
+                .withEnv("apoc.export.file.enabled", "true")
+                .withEnv("apoc.import.file.enabled", "true")
+                .withNeo4jConfig("dbms.memory.heap.max_size", "512M")
+                .withNeo4jConfig("dbms.memory.pagecache.size", "256M")
+                .withNeo4jConfig("dbms.security.procedures.unrestricted", "apoc.*")
+                .withNeo4jConfig("dbms.logs.http.enabled", "true")
+                .withNeo4jConfig("dbms.logs.debug.level", "DEBUG")
+                .withNeo4jConfig("dbms.routing.driver.logging.level", "DEBUG")
+                .withNeo4jConfig("internal.dbms.type_constraints", "true")
+                .withFileSystemBind(canonicalPath, "/var/lib/neo4j/import") // map the "target/import" dir as the Neo4j's import dir
+                .withCreateContainerCmdModifier(cmd -> cmd.withMemory(2024 * 1024 * 1024L)) // 2gb
+                .withExposedPorts(7687, 7473, 7474)
+//                .withDebugger()  // attach debugger
+
+                .withStartupAttempts(1)
+                // set uid if possible - export tests do write to "/import"
+                .withCreateContainerCmdModifier(cmd -> {
+                    try {
+                        Process p = Runtime.getRuntime().exec("id -u");
+                        BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                        String s = br.readLine();
+                        p.waitFor();
+                        p.destroy();
+                        cmd.withUser(s);
+                    } catch (Exception e) {
+                        System.out.println("Exception while assign cmd user to docker container:\n" + ExceptionUtils.getStackTrace(e));
+                        // ignore since it may fail depending on operating system
+                    }
+                });
+
+        if (withLogging) {
+            neo4jContainer.withLogging();
+        }
+
+        return neo4jContainer.withWaitForNeo4jDatabaseReady(password, version);
     }
 
     private static Neo4jContainerExtension createNeo4jContainer(List<ApocPackage> apocPackages, boolean withLogging, Neo4jVersion version) {
@@ -135,10 +225,14 @@ public class TestContainerUtil {
             copyFilesToPlugin(new File(projectDir, "build/libs"), new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")), pluginsFolder);
         }
 
+        final var logsDir = Files.createTempDir();
+        System.out.println("logs dir: " + logsDir);
+
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
         Neo4jContainerExtension neo4jContainer = new Neo4jContainerExtension(dockerImage)
                 .withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()))
-                .withTmpFs(Map.of("/logs", "rw", "/data", "rw", pluginsFolder.toPath().toAbsolutePath().toString(), "rw"))
+                .withFileSystemBind(logsDir.getAbsolutePath(), "/logs")
+                .withTmpFs(Map.of("/data", "rw", pluginsFolder.toPath().toAbsolutePath().toString(), "rw"))
                 .withAdminPassword(password)
                 .withEnv("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
                 .withEnv("apoc.export.file.enabled", "true")

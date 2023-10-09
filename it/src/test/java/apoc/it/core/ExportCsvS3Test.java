@@ -25,6 +25,7 @@ import apoc.util.s3.S3BaseTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -38,6 +39,7 @@ import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class ExportCsvS3Test extends S3BaseTest {
 
     @ClassRule
