@@ -87,7 +87,7 @@ public class Merge {
         }
 
         if (labelNames != null && (labelNames.contains(null) || labelNames.contains(""))) {
-            throw new IllegalArgumentException("The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
+            throw new IllegalArgumentException("The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
         }
 
         String labels;

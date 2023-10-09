@@ -147,7 +147,7 @@ public class MergeTest {
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
         }
     }
 
@@ -159,7 +159,7 @@ public class MergeTest {
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
         }
     }
 
@@ -171,7 +171,7 @@ public class MergeTest {
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
         }
     }
 
@@ -183,7 +183,7 @@ public class MergeTest {
             fail();
         } catch (QueryExecutionException e) {
             assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
-                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty `LIST` instead.");
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
         }
     }
 
