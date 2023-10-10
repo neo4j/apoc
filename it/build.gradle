@@ -2,6 +2,7 @@ description = 'APOC :: Integration Tests Module'
 
 test {
     maxParallelForks = 1
+    minHeapSize = "2g"
 }
 
 dependencies {
