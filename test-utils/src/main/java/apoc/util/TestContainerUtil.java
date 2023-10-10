@@ -143,7 +143,7 @@ public class TestContainerUtil {
                 .withEnv("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
                 .withEnv("apoc.export.file.enabled", "true")
                 .withEnv("apoc.import.file.enabled", "true")
-                .withNeo4jConfig("dbms.memory.heap.max_size", "512M")
+                .withNeo4jConfig("dbms.memory.heap.max_size", "768M")
                 .withNeo4jConfig("dbms.memory.pagecache.size", "256M")
                 .withNeo4jConfig("dbms.security.procedures.unrestricted", "apoc.*")
                 .withNeo4jConfig("dbms.logs.http.enabled", "true")

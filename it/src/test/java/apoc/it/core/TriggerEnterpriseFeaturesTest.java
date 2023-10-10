@@ -55,6 +55,7 @@ import static org.junit.Assert.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 import static org.neo4j.driver.SessionConfig.forDatabase;
+import static org.neo4j.io.ByteUnit.bytesToString;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 public class TriggerEnterpriseFeaturesTest {
@@ -88,6 +89,16 @@ public class TriggerEnterpriseFeaturesTest {
 
             sysSession.run(String.format("CREATE USER %s SET PASSWORD '%s' SET PASSWORD CHANGE NOT REQUIRED",
                     NO_ADMIN_USER, NO_ADMIN_PWD));
+        }
+
+        System.out.println("Free  memory: " + bytesToString(Runtime.getRuntime().freeMemory()));
+        System.out.println("Total memory: " + bytesToString(Runtime.getRuntime().totalMemory()));
+        System.out.println("Max   memory: " + bytesToString(Runtime.getRuntime().maxMemory()));
+        try {
+            System.out.println("------- debug.log --------");
+            System.out.println( neo4jContainer.execInContainer( "cat", "logs/debug.log" ).toString() );
+        } catch (Exception e) {
+            System.out.println("Failed to read debug.log: " + e.getMessage());
         }
     }
 
