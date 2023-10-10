@@ -77,7 +77,7 @@ subprojects {
         maxHeapSize = "5G"
         forkEvery = 50
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-        minHeapSize = "256m"
+        minHeapSize = "128m"
 
         // This would apply only to TeamCity
         // We need to ignore the failures because we may have tests muted
