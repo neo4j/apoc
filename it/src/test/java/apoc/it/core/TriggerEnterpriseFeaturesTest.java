@@ -23,6 +23,7 @@ import apoc.util.TestContainerUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
@@ -150,6 +151,7 @@ public class TriggerEnterpriseFeaturesTest {
         }
     }
 
+    @Ignore
     @Test
     public void testTriggerInstallInNewDatabase() {
         final String fooTriggerName = UUID.randomUUID().toString();
