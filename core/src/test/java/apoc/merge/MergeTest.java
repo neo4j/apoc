@@ -61,14 +61,15 @@ public class MergeTest {
         testMergeNodeCommon(true);
     }
 
+    // MERGE NODES
     private void testMergeNodeCommon(boolean isWithStats) {
         String procName = isWithStats ? "nodeWithStats" : "node";
 
         testCall(db, String.format("CALL apoc.merge.%s(['Person','Bastard'],{ssid:'123'}, {name:'John'})", procName),
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("John", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
 
@@ -87,7 +88,7 @@ public class MergeTest {
         testCall(db, "CALL apoc.merge.node(['Person'],{ssid:'123'}, {name:'John'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
                     assertEquals("Jim", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
                 });
@@ -98,30 +99,31 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeRelationships() {
-        db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
-
-        testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'KNOWS', {rid:123}, {since:'Thu'}, e) YIELD rel RETURN rel",
+    public void testMergeWithNoLabel() {
+        testCall(db, "CALL apoc.merge.node(null, {name:'John'}) YIELD node RETURN node",
                 (row) -> {
-                    Relationship rel = (Relationship) row.get("rel");
-                    assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
-                    assertEquals("Thu", rel.getProperty("since"));
+                    Node node = (Node) row.get("node");
+                    assertFalse(node.getLabels().iterator().hasNext());
+                    assertEquals("John", node.getProperty("name"));
                 });
 
-        testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'KNOWS', {rid:123}, {since:'Fri'}, e) YIELD rel RETURN rel",
+        testResult(db, "match (p) return count(*) as c", result ->
+                assertEquals(1, (long)(Iterators.single(result.columnAs("c"))))
+        );
+    }
+
+    @Test
+    public void testMergeNodeWithEmptyLabelList() {
+        testCall(db, "CALL apoc.merge.node([], {name:'John'}) YIELD node RETURN node",
                 (row) -> {
-                    Relationship rel = (Relationship) row.get("rel");
-                    assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
-                    assertEquals("Thu", rel.getProperty("since"));
+                    Node node = (Node) row.get("node");
+                    assertFalse(node.getLabels().iterator().hasNext());
+                    assertEquals("John", node.getProperty("name"));
                 });
-        testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'OTHER', null, null, e) YIELD rel RETURN rel",
-                (row) -> {
-                    Relationship rel = (Relationship) row.get("rel");
-                    assertEquals("OTHER", rel.getType().name());
-                    assertTrue(rel.getAllProperties().isEmpty());
-                });
+
+        testResult(db, "match (p) return count(*) as c", result ->
+                assertEquals(1, (long)(Iterators.single(result.columnAs("c"))))
+        );
     }
 
     @Test
@@ -136,23 +138,71 @@ public class MergeTest {
             }
         }
     }
-    
+
+    @Test
+    public void testMergeNodeWithNullLabelsShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node([null], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
+        }
+    }
+
+    @Test
+    public void testMergeNodeWithMixedLabelsContainingNullShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node(['Person', null], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
+        }
+    }
+
+    @Test
+    public void testMergeNodeWithSingleEmptyLabelShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
+        }
+    }
+
+    @Test
+    public void testMergeNodeContainingMixedLabelsContainingEmptyStringShouldFail() {
+        try {
+            testCall(db, "CALL apoc.merge.node(['Person', ''], {name:'John'}) YIELD node RETURN node",
+                    row -> assertTrue(row.get("node") instanceof Node));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: " +
+                    "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
+        }
+    }
+
     @Test
     public void testEscapeIdentityPropertiesWithSpecialCharactersShouldWork() {
         for (String key: new String[]{"normal", "i:d", "i-d", "i d"}) {
             Map<String, Object> identProps = MapUtil.map(key, "value");
             Map<String, Object> params = MapUtil.map("identProps", identProps);
-            
+
             testCall(db, "CALL apoc.merge.node(['Person'], $identProps) YIELD node RETURN node", params,
-                        (row) -> {
-                            Node node = (Node) row.get("node");
-                            assertTrue(node instanceof Node);
-                            assertTrue(node.hasProperty(key));
-                            assertEquals("value", node.getProperty(key));
-                        });
+                    (row) -> {
+                        Node node = (Node) row.get("node");
+                        assertNotNull(node);
+                        assertTrue(node.hasProperty(key));
+                        assertEquals("value", node.getProperty(key));
+                    });
         }
     }
-    
+
     @Test
     public void testLabelsWithSpecialCharactersShouldWork() {
         for (String label: new String[]{"Label with spaces", ":LabelWithColon", "label-with-dash", "LabelWithUmlautsÄÖÜ"}) {
@@ -160,6 +210,34 @@ public class MergeTest {
             testCall(db, "CALL apoc.merge.node([$label],{id:1}, {name:'John'}) YIELD node RETURN node", params,
                     row -> assertTrue(row.get("node") instanceof Node));
         }
+    }
+
+    // MERGE RELATIONSHIPS
+    @Test
+    public void testMergeRelationships() {
+        db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
+
+        testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'KNOWS', {rid:123}, {since:'Thu'}, e) YIELD rel RETURN rel",
+                (row) -> {
+                    Relationship rel = (Relationship) row.get("rel");
+                    assertEquals("KNOWS", rel.getType().name());
+                    assertEquals(123L, rel.getProperty("rid"));
+                    assertEquals("Thu", rel.getProperty("since"));
+                });
+
+        testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'KNOWS', {rid:123}, {since:'Fri'}, e) YIELD rel RETURN rel",
+                (row) -> {
+                    Relationship rel = (Relationship) row.get("rel");
+                    assertEquals("KNOWS", rel.getType().name());
+                    assertEquals(123L, rel.getProperty("rid"));
+                    assertEquals("Thu", rel.getProperty("since"));
+                });
+        testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, 'OTHER', null, null, e) YIELD rel RETURN rel",
+                (row) -> {
+                    Relationship rel = (Relationship) row.get("rel");
+                    assertEquals("OTHER", rel.getType().name());
+                    assertTrue(rel.getAllProperties().isEmpty());
+                });
     }
 
     @Test
@@ -171,10 +249,31 @@ public class MergeTest {
         }
     }
 
+    @Test
+    public void testMergeRelWithNullRelTypeShouldFail() {
+        try {
+            testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e  CALL apoc.merge.relationship(s, null, null, null, e) YIELD rel RETURN rel",
+                    row -> assertTrue(row.get("rel") instanceof Relationship));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: " +
+                    "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."));
+        }
+    }
+
+    @Test
+    public void testMergeWithEmptyRelTypeShouldFail() {
+        try {
+            testCall(db, "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, '', null, null, e) YIELD rel RETURN rel",
+                    row -> assertTrue(row.get("rel") instanceof Relationship));
+            fail();
+        } catch (QueryExecutionException e) {
+            assertEquals(e.getMessage(), ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: " +
+                    "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."));
+        }
+    }
 
     // MERGE EAGER TESTS
-
-
     @Test
     public void testMergeEagerNode() {
         testMergeEagerCommon(false);
@@ -190,8 +289,8 @@ public class MergeTest {
         testCall(db, String.format("CALL apoc.merge.%s.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'})", procName),
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("John", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
                     
@@ -209,8 +308,8 @@ public class MergeTest {
         testCall(db, "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'},{occupation:'juggler'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("John", node.getProperty("name"));
                     assertEquals("123", node.getProperty("ssid"));
                     assertFalse(node.hasProperty("occupation"));
@@ -223,8 +322,8 @@ public class MergeTest {
         testCall(db, "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'}, {occupation:'juggler'}) YIELD node RETURN node",
                 (row) -> {
                     Node node = (Node) row.get("node");
-                    assertEquals(true, node.hasLabel(Label.label("Person")));
-                    assertEquals(true, node.hasLabel(Label.label("Bastard")));
+                    assertTrue(node.hasLabel(Label.label("Person")));
+                    assertTrue(node.hasLabel(Label.label("Bastard")));
                     assertEquals("juggler", node.getProperty("occupation"));
                     assertEquals("123", node.getProperty("ssid"));
                     assertFalse(node.hasProperty("name"));
@@ -240,8 +339,8 @@ public class MergeTest {
 
             for (long index = 1; index <= 5; index++) {
                 Node node = (Node) result.next().get("node");
-                assertEquals(true, node.hasLabel(Label.label("Person")));
-                assertEquals(true, node.hasLabel(Label.label("Bastard Man")));
+                assertTrue(node.hasLabel(Label.label("Person")));
+                assertTrue(node.hasLabel(Label.label("Bastard Man")));
                 assertEquals("123", node.getProperty("ssid"));
                 assertEquals(index, node.getProperty("index"));
                 assertEquals("juggler", node.getProperty("occupation"));
@@ -272,7 +371,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                     
                     if (isWithStats) {
@@ -287,7 +386,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                     
                     if (isWithStats) {
@@ -320,7 +419,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Thu", rel.getProperty("since"));
                     assertFalse(rel.hasProperty("until"));
                 });
@@ -329,7 +428,7 @@ public class MergeTest {
                 (row) -> {
                     Relationship rel = (Relationship) row.get("rel");
                     assertEquals("KNOWS", rel.getType().name());
-                    assertEquals(123l, rel.getProperty("rid"));
+                    assertEquals(123L, rel.getProperty("rid"));
                     assertEquals("Fri", rel.getProperty("since"));
                 });
     }
@@ -344,7 +443,7 @@ public class MergeTest {
             for (long index = 1; index <= 3; index++) {
                 Relationship rel = (Relationship) result.next().get("rel");
                 assertEquals("KNOWS", rel.getType().name());
-                assertEquals(123l, rel.getProperty("rid"));
+                assertEquals(123L, rel.getProperty("rid"));
                 assertEquals("Fri", rel.getProperty("since"));
             }
         } catch (Exception e) {
