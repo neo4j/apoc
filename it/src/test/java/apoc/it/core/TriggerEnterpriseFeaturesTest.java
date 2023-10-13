@@ -178,15 +178,30 @@ public class TriggerEnterpriseFeaturesTest {
             testCall(defaultDbSession, "MATCH (n:Something) RETURN n.created",
                     r -> assertNull(r.get("created")));
         }
+
+        System.out.println("============ logs after testTriggerInstallInNewDatabase ============");
+        System.out.println(neo4jContainer.getLogs());
+        System.out.println("============ end logs after testTriggerInstallInNewDatabase ============");
     }
 
     @Test
     public void testDeleteTriggerAfterDatabaseDeletion() {
+        System.out.println("============ logs before testDeleteTriggerAfterDatabaseDeletion ============");
+        System.out.println(neo4jContainer.getLogs());
+        System.out.println("============ end logs before testDeleteTriggerAfterDatabaseDeletion ============");
+
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
             final String dbToDelete = "todelete";
 
             // create database with name `todelete`
-            sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
+            try {
+                sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
+            } catch (Exception e) {
+                System.out.println("============ logs at failure testDeleteTriggerAfterDatabaseDeletion ============");
+                System.out.println(e.getMessage());
+                System.out.println(neo4jContainer.getLogs());
+                System.out.println("============ end logs at failure testDeleteTriggerAfterDatabaseDeletion ============");
+            }
 
             testDeleteTriggerAfterDropDb(dbToDelete, sysSession);
         }
