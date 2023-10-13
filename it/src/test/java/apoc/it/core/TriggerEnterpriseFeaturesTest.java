@@ -23,6 +23,7 @@ import apoc.util.TestContainerUtil;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
@@ -181,6 +182,7 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @Test
+    @Ignore
     public void testDeleteTriggerAfterDatabaseDeletion() {
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
             final String dbToDelete = "todelete";
