@@ -95,29 +95,21 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     private void updateCache() {
-        activeTriggers.clear();
-
         lastUpdate = System.currentTimeMillis();
 
-        withSystemDb(tx -> {
-            tx.findNodes(SystemLabels.ApocTrigger,
-                    SystemPropertyKeys.database.name(), db.databaseName()).forEachRemaining(
-                    node -> {
-                        activeTriggers.put(
-                                (String) node.getProperty(SystemPropertyKeys.name.name()),
-                                MapUtil.map(
-                                        "statement", node.getProperty(SystemPropertyKeys.statement.name()),
-                                        "selector", Util.fromJson((String) node.getProperty(SystemPropertyKeys.selector.name()), Map.class),
-                                        "params", Util.fromJson((String) node.getProperty(SystemPropertyKeys.params.name()), Map.class),
-                                        "paused", node.getProperty(SystemPropertyKeys.paused.name())
-                                )
-                        );
-                    }
-            );
-            return null;
+        final var newTriggers = withSystemDb(tx -> {
+            final var triggers = tx.findNodes(SystemLabels.ApocTrigger, SystemPropertyKeys.database.name(), db.databaseName());
+            return triggers.stream().collect(Collectors.toMap(
+                                          node -> (String) node.getProperty(SystemPropertyKeys.name.name()),
+                                          node -> MapUtil.map(
+                                                  "statement", node.getProperty(SystemPropertyKeys.statement.name()),
+                                                  "selector", Util.fromJson((String) node.getProperty(SystemPropertyKeys.selector.name()), Map.class),
+                                                  "params", Util.fromJson((String) node.getProperty(SystemPropertyKeys.params.name()), Map.class),
+                                                  "paused", node.getProperty(SystemPropertyKeys.paused.name())
+                                          )
+                    ));
         });
-
-        reconcileKernelRegistration();
+        reconcileKernelRegistration(newTriggers);
     }
 
     /**
@@ -127,9 +119,13 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
      * For most deployments this isn't an issue, since you can turn the config flag off, but in large fleet deployments
      * it's nice to have uniform config, and then the memory savings on databases that don't use triggers is good.
      */
-    private synchronized void reconcileKernelRegistration() {
+    private synchronized void reconcileKernelRegistration(Map<String,Map<String,Object>> newTriggers) {
+        final var removeTriggers = activeTriggers.keySet().stream().filter(k -> !newTriggers.containsKey(k)).toList();
+        activeTriggers.keySet().removeAll(removeTriggers);
+        activeTriggers.putAll(newTriggers);
+
         // Register if there are triggers
-        if (activeTriggers.size() > 0) {
+        if (!activeTriggers.isEmpty()) {
             // This gets called every time triggers update; only register if we aren't already
             if(registeredWithKernel.compareAndSet(false, true)) {
                 databaseManagementService.registerTransactionEventListener(db.databaseName(), this);
