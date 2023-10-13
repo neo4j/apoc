@@ -131,6 +131,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
                 ? AuthTokens.basic("neo4j", getAdminPassword()): AuthTokens.none();
     }
 
+    // Modify logback.xml to set log level
     public Neo4jContainerExtension withLogging() {
         withLogConsumer(new Slf4jLogConsumer(logger));
         return this;

@@ -172,6 +172,7 @@ public class TestContainerUtil {
                 });
 
         if (withLogging) {
+            // Modify logback.xml to set log level
             neo4jContainer.withLogging();
         }
 
