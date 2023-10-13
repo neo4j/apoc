@@ -14,8 +14,5 @@ dependencies {
     testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.425'
     testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.9.1'
 
-    configurations.all {
-        exclude group: 'org.slf4j', module: 'slf4j-nop'
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+    testImplementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.11'
 }
