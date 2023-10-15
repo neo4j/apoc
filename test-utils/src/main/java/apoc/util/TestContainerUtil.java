@@ -19,6 +19,7 @@
 package apoc.util;
 
 import static apoc.util.TestUtil.printFullStackTrace;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -263,7 +264,8 @@ public class TestContainerUtil {
     }
 
     public static void testCallEmpty(Session session, String call, Map<String, Object> params) {
-        testResult(session, call, params, (res) -> assertFalse("Expected no results", res.hasNext()));
+        final var resultCount = session.run(call, params).stream().count();
+        assertEquals(0, resultCount);
     }
 
     public static void testCallInReadTransaction(
