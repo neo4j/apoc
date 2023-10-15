@@ -21,6 +21,7 @@ package apoc.it.core;
 import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.SystemPropertyKeys.database;
+import static apoc.it.core.CreateTriggers.CreateTrigger;
 import static apoc.trigger.TriggerHandler.TRIGGER_REFRESH;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
@@ -41,10 +42,17 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 import apoc.SystemLabels;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -97,7 +105,7 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @After
-    public void after() {
+    public void after() throws IOException, InterruptedException {
         // drop all triggers
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
             Stream.of(DEFAULT_DATABASE_NAME, FOO_DB)
@@ -110,7 +118,7 @@ public class TriggerEnterpriseFeaturesTest {
         final String defaultTriggerName = UUID.randomUUID().toString();
         final String fooTriggerName = UUID.randomUUID().toString();
 
-        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+        try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             // install and show in default db
             testCall(
                     sysSession,
@@ -143,7 +151,7 @@ public class TriggerEnterpriseFeaturesTest {
     public void testTriggerInstallInNewDatabase() {
         final String fooTriggerName = UUID.randomUUID().toString();
 
-        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+        try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             testCall(
                     sysSession,
                     "call apoc.trigger.install($dbName, $name, 'UNWIND $createdNodes AS n SET n.created = true', {})",
@@ -152,7 +160,7 @@ public class TriggerEnterpriseFeaturesTest {
         }
 
         final String queryTriggerList = "CALL apoc.trigger.list() YIELD name WHERE name = $name RETURN name";
-        try (Session fooDbSession = neo4jContainer.getDriver().session(forDatabase(FOO_DB))) {
+        try (Session fooDbSession = session(FOO_DB)) {
             assertEventually(
                     () -> {
                         final Result res = fooDbSession.run(queryTriggerList, Map.of("name", fooTriggerName));
@@ -174,7 +182,7 @@ public class TriggerEnterpriseFeaturesTest {
         }
 
         // check that the trigger is correctly installed in 'foo' db only
-        try (Session defaultDbSession = neo4jContainer.getDriver().session(forDatabase(DEFAULT_DATABASE_NAME))) {
+        try (Session defaultDbSession = session(DEFAULT_DATABASE_NAME)) {
             testResult(
                     defaultDbSession, queryTriggerList, Map.of("name", fooTriggerName), r -> assertFalse(r.hasNext()));
 
@@ -186,7 +194,7 @@ public class TriggerEnterpriseFeaturesTest {
 
     @Test
     public void testDeleteTriggerAfterDatabaseDeletion() {
-        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+        try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             final String dbToDelete = "todelete";
 
             // create database with name `todelete`
@@ -198,7 +206,7 @@ public class TriggerEnterpriseFeaturesTest {
 
     @Test
     public void testDeleteTriggerAfterDatabaseDeletionCreatedViaCypherInit() {
-        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+        try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             // the database `initDb` is created via `apoc.initializer.*`
             testDeleteTriggerAfterDropDb(INIT_DB, sysSession);
         }
@@ -232,12 +240,12 @@ public class TriggerEnterpriseFeaturesTest {
         final String dbToDelete = "todelete";
 
         // create a node in the Neo4j db that looks like a trigger
-        try (Session defaultSession = neo4jContainer.getDriver().session(forDatabase(DEFAULT_DATABASE_NAME))) {
+        try (Session defaultSession = session(DEFAULT_DATABASE_NAME)) {
             defaultSession.writeTransaction(tx -> tx.run(
                     String.format("CREATE (:%s {%s:'%s'})", SystemLabels.ApocTrigger, database.name(), dbToDelete)));
         }
 
-        try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
+        try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             // create database with name `todelete`
             sysSession.writeTransaction(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)));
 
@@ -254,7 +262,7 @@ public class TriggerEnterpriseFeaturesTest {
         }
 
         // check that the node in Neo4j database is still there
-        try (Session defaultSession = neo4jContainer.getDriver().session(forDatabase(DEFAULT_DATABASE_NAME))) {
+        try (Session defaultSession = session(DEFAULT_DATABASE_NAME)) {
             testCall(
                     defaultSession,
                     String.format("MATCH (n:%s) RETURN n.%s AS result", SystemLabels.ApocTrigger, database.name()),
@@ -293,6 +301,99 @@ public class TriggerEnterpriseFeaturesTest {
         }
     }
 
+    @Test
+    public void stressTest() throws InterruptedException, ExecutionException, TimeoutException {
+        final var db = DEFAULT_DATABASE_NAME;
+
+        try (final var sysSession = session(SYSTEM_DATABASE_NAME)) {
+            // We assert on the result of this trigger
+            sysSession
+                    .run(
+                            CreateTrigger,
+                            Map.of(
+                                    "db",
+                                    db,
+                                    "name",
+                                    "static-trigger-1",
+                                    "trigger",
+                                    "UNWIND $createdNodes AS n SET n.created = true"))
+                    .consume();
+
+            // Create a bunch of no op triggers to make TriggerHandler slower
+            for (int i = 0; i < 50; ++i) {
+                sysSession
+                        .run(CreateTrigger, Map.of("db", db, "name", "rand-trigger-" + i, "trigger", "RETURN 1"))
+                        .consume();
+            }
+
+            // We assert on the result of this trigger
+            sysSession
+                    .run(
+                            CreateTrigger,
+                            Map.of(
+                                    "db",
+                                    db,
+                                    "name",
+                                    "static-trigger-2",
+                                    "trigger",
+                                    "UNWIND $createdNodes AS n SET n.created2 = true"))
+                    .consume();
+        }
+
+        waitForTrigger(db, "static-trigger-1");
+        waitForTrigger(db, "static-trigger-2");
+
+        final var iterations = 200;
+        final var executor = Executors.newCachedThreadPool();
+
+        final var driver = neo4jContainer.getDriver();
+        final var createNodes = new CreateNodes(driver, db);
+        try {
+            final var nodesFuture1 = executor.submit(createNodes);
+            final var nodesFuture2 = executor.submit(createNodes);
+            final var createTriggersFuture = executor.submit(new CreateTriggers(driver, db, iterations));
+            final var removeTriggersFuture = executor.submit(new DropRandomTriggers(driver, db, iterations));
+            createTriggersFuture.get(5, TimeUnit.MINUTES);
+            removeTriggersFuture.get(30, TimeUnit.SECONDS);
+            createNodes.stop();
+            nodesFuture1.get(30, TimeUnit.SECONDS);
+            nodesFuture2.get(30, TimeUnit.SECONDS);
+        } finally {
+            createNodes.stop();
+            executor.shutdownNow();
+        }
+
+        try (final var s = session(DEFAULT_DATABASE_NAME)) {
+            final var assertTriggerRanQuery =
+                    """
+                       match (n:%s)
+                       where n.created is null or n.created2 is null
+                       return n"""
+                            .formatted(CreateNodes.Label);
+            final var size = s.run(assertTriggerRanQuery).stream().count();
+            assertEquals(0, size);
+
+            final var totCountQuery = """
+                       match (n:%s)
+                       return count(n)"""
+                    .formatted(CreateNodes.Label);
+            final var totCount = s.run(totCountQuery).stream().count();
+            assertTrue(totCount > 0);
+        }
+    }
+
+    private void waitForTrigger(final String db, final String name) {
+        try (final var s = session(db)) {
+            assertEventually(
+                    () -> s.run("call apoc.trigger.list() yield name").stream()
+                            .map(r -> r.get(0).asString())
+                            .toList(),
+                    names -> names.contains(name),
+                    TIMEOUT,
+                    TimeUnit.SECONDS);
+        }
+    }
+
     private void failsWithNonAdminUser(Session session, String procName, String query) {
         try {
             testCall(session, query, row -> fail("Should fail because of non admin user"));
@@ -301,6 +402,67 @@ public class TriggerEnterpriseFeaturesTest {
             final String expected = String.format(
                     "Executing admin procedure '%s' permission has not been granted for user 'nonadmin'", procName);
             assertTrue("Actual error message is: " + actual, actual.contains(expected));
+        }
+    }
+
+    private Session session(final String db) {
+        return neo4jContainer.getDriver().session(forDatabase(db));
+    }
+}
+
+/** Creates nodes in a loop until stopped */
+class CreateNodes implements Runnable {
+    public static final String Label = "StressTest";
+    private final Driver driver;
+    private final String db;
+    private final AtomicBoolean done = new AtomicBoolean( false);
+
+    CreateNodes(Driver driver, String db) {
+        this.driver = driver;
+        this.db = db;
+    }
+
+    @Override
+    public void run() {
+        try (final var session = driver.session(forDatabase(db))) {
+            while (!done.get()) {
+                session.run("create (:%s)".formatted(Label)).consume();
+            }
+        }
+    }
+
+    public void stop() {
+        done.set(true);
+    }
+}
+
+record CreateTriggers(Driver driver, String db, int iterations) implements Runnable {
+    public static final String CreateTrigger = "call apoc.trigger.install($db, $name, $trigger,{})";
+
+    @Override
+    public void run() {
+        try (final var session = driver.session(forDatabase(SYSTEM_DATABASE_NAME))) {
+            for (int i = 0; i < iterations; ++i) {
+                final var name = "temp-trigger-" + i;
+                session.run(CreateTrigger, Map.of("db", db, "name", name, "trigger", "RETURN 1"))
+                        .consume();
+            }
+        }
+    }
+}
+
+record DropRandomTriggers(Driver driver, String db, int iterations) implements Runnable {
+    static final String DropTrigger = "call apoc.trigger.drop($db, $name)";
+
+    @Override
+    public void run() {
+        final var rand = new Random();
+        try (final var session = driver.session(forDatabase(SYSTEM_DATABASE_NAME))) {
+            for (int i = 0; i < iterations; ++i) {
+                final var name = "temp-trigger-" + rand.nextInt(iterations);
+                session.run(DropTrigger, Map.<String, Object>of("db", db, "name", name))
+                        .consume();
+            }
         }
     }
 }

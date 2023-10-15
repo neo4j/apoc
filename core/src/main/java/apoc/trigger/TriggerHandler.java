@@ -20,6 +20,7 @@ package apoc.trigger;
 
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
+import static apoc.SystemLabels.ApocTrigger;
 
 import apoc.ApocConfig;
 import apoc.Pools;
@@ -30,9 +31,9 @@ import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
@@ -62,7 +63,9 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     public static final String TRIGGER_REFRESH = "apoc.trigger.refresh";
 
-    private final ConcurrentHashMap<String, Map<String, Object>> activeTriggers = new ConcurrentHashMap();
+    // Snapshot of installed triggers. The containing map is immutable.
+    private final AtomicReference<Map<String, Map<String, Object>>> triggersSnapshot = new AtomicReference<>(Map.of());
+
     private final Log log;
     private final GraphDatabaseService db;
     private final DatabaseManagementService databaseManagementService;
@@ -70,7 +73,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     private final Pools pools;
     private final JobScheduler jobScheduler;
 
-    private long lastUpdate;
+    private volatile long lastUpdate;
 
     private JobHandle restoreTriggerHandler;
 
@@ -104,32 +107,47 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         }
     }
 
-    private void updateCache() {
-        activeTriggers.clear();
+    public void updateCache() {
+        try {
+            doUpdateCache();
+        } catch (Exception e) {
+            log.error("Failed to update apoc triggers: " + e.getMessage(), e);
+        }
+    }
 
-        lastUpdate = System.currentTimeMillis();
+    private void doUpdateCache() {
+        var attempt = 5;
+        while (attempt > 0) {
+            final var start = System.currentTimeMillis();
+            final var oldTriggers = triggersSnapshot.get();
+            final var newTriggers = getTriggers();
+            if (triggersSnapshot.compareAndSet(oldTriggers, newTriggers)) {
+                lastUpdate = start;
+                reconcileKernelRegistration();
+                break;
+            }
+            --attempt;
+        }
+    }
 
-        withSystemDb(tx -> {
-            tx.findNodes(SystemLabels.ApocTrigger, SystemPropertyKeys.database.name(), db.databaseName())
-                    .forEachRemaining(node -> {
-                        activeTriggers.put(
-                                (String) node.getProperty(SystemPropertyKeys.name.name()),
-                                MapUtil.map(
-                                        "statement", node.getProperty(SystemPropertyKeys.statement.name()),
-                                        "selector",
-                                                Util.fromJson(
-                                                        (String) node.getProperty(SystemPropertyKeys.selector.name()),
-                                                        Map.class),
-                                        "params",
-                                                Util.fromJson(
-                                                        (String) node.getProperty(SystemPropertyKeys.params.name()),
-                                                        Map.class),
-                                        "paused", node.getProperty(SystemPropertyKeys.paused.name())));
-                    });
-            return null;
+    private Map<String, Map<String, Object>> getTriggers() {
+        return withSystemDb(tx -> {
+            final var dbName = db.databaseName();
+            return tx.findNodes(ApocTrigger, SystemPropertyKeys.database.name(), dbName).stream()
+                     .collect(Collectors.toUnmodifiableMap(
+                             node -> (String) node.getProperty(SystemPropertyKeys.name.name()),
+                             node -> MapUtil.map(
+                                     "statement", node.getProperty(SystemPropertyKeys.statement.name()),
+                                     "selector",
+                                     Util.fromJson(
+                                             (String) node.getProperty(SystemPropertyKeys.selector.name()),
+                                             Map.class),
+                                     "params",
+                                     Util.fromJson(
+                                             (String) node.getProperty(SystemPropertyKeys.params.name()),
+                                             Map.class),
+                                     "paused", node.getProperty(SystemPropertyKeys.paused.name()))));
         });
-
-        reconcileKernelRegistration();
     }
 
     /**
@@ -139,9 +157,9 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
      * For most deployments this isn't an issue, since you can turn the config flag off, but in large fleet deployments
      * it's nice to have uniform config, and then the memory savings on databases that don't use triggers is good.
      */
-    private synchronized void reconcileKernelRegistration() {
+    private void reconcileKernelRegistration() {
         // Register if there are triggers
-        if (activeTriggers.size() > 0) {
+        if (!triggersSnapshot.get().isEmpty()) {
             // This gets called every time triggers update; only register if we aren't already
             if (registeredWithKernel.compareAndSet(false, true)) {
                 databaseManagementService.registerTransactionEventListener(db.databaseName(), this);
@@ -157,12 +175,12 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     public Map<String, Object> add(
             String name, String statement, Map<String, Object> selector, Map<String, Object> params) {
         checkEnabled();
-        Map<String, Object> previous = activeTriggers.get(name);
+        final var previous = triggersSnapshot.get().get(name);
 
         withSystemDb(tx -> {
             Node node = Util.mergeNode(
                     tx,
-                    SystemLabels.ApocTrigger,
+                    ApocTrigger,
                     null,
                     Pair.of(SystemPropertyKeys.database.name(), db.databaseName()),
                     Pair.of(SystemPropertyKeys.name.name(), name));
@@ -180,11 +198,11 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     public Map<String, Object> remove(String name) {
         checkEnabled();
-        Map<String, Object> previous = activeTriggers.remove(name);
+        final var previous = triggersSnapshot.get().get(name);
 
         withSystemDb(tx -> {
             tx.findNodes(
-                            SystemLabels.ApocTrigger,
+                            ApocTrigger,
                             SystemPropertyKeys.database.name(),
                             db.databaseName(),
                             SystemPropertyKeys.name.name(),
@@ -201,7 +219,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         checkEnabled();
         withSystemDb(tx -> {
             tx.findNodes(
-                            SystemLabels.ApocTrigger,
+                            ApocTrigger,
                             SystemPropertyKeys.database.name(),
                             db.databaseName(),
                             SystemPropertyKeys.name.name(),
@@ -211,16 +229,15 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
             return null;
         });
         updateCache();
-        return activeTriggers.get(name);
+        return triggersSnapshot.get().get(name);
     }
 
-    public Map<String, Object> removeAll() {
+    public Map<String, Map<String, Object>> removeAll() {
         checkEnabled();
-        Map<String, Object> previous =
-                activeTriggers.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        final var previous = triggersSnapshot.get();
         withSystemDb(tx -> {
-            tx.findNodes(SystemLabels.ApocTrigger, SystemPropertyKeys.database.name(), db.databaseName())
-                    .forEachRemaining(node -> node.delete());
+            tx.findNodes(ApocTrigger, SystemPropertyKeys.database.name(), db.databaseName())
+                    .forEachRemaining(Node::delete);
             setLastUpdate(tx);
             return null;
         });
@@ -230,7 +247,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     public Map<String, Map<String, Object>> list() {
         checkEnabled();
-        return Map.copyOf(activeTriggers);
+        return triggersSnapshot.get();
     }
 
     @Override
@@ -291,7 +308,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     private boolean hasPhase(Phase phase) {
-        return activeTriggers.values().stream()
+        return triggersSnapshot.get().values().stream()
                 .map(data -> (Map<String, Object>) data.get("selector"))
                 .anyMatch(selector -> when(selector, phase));
     }
@@ -302,7 +319,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     private void executeTriggers(Transaction tx, TriggerMetadata triggerMetadata, Phase phase) {
         Map<String, String> exceptions = new LinkedHashMap<>();
-        activeTriggers.forEach((name, data) -> {
+        triggersSnapshot.get().forEach((name, data) -> {
             Map<String, Object> params = triggerMetadata.toMap();
             if (data.get("params") != null) {
                 params.putAll((Map<String, Object>) data.get("params"));
@@ -336,7 +353,7 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         restoreTriggerHandler = jobScheduler.scheduleRecurring(
                 Group.STORAGE_MAINTENANCE,
                 () -> {
-                    if (getLastUpdate() > lastUpdate) {
+                    if (getLastUpdate() >= lastUpdate) {
                         updateCache();
                     }
                 },

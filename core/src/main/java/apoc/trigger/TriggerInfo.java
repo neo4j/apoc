@@ -97,18 +97,4 @@ public class TriggerInfo {
                         },
                         HashMap::putAll);
     }
-
-    // TODO: used only with deprecated procedures, it would be removed together with them
-    public static TriggerInfo entryToTriggerInfo(Map.Entry<String, Object> e) {
-        String name = e.getKey();
-        if (e.getValue() instanceof Map) {
-            try {
-                Map<String, Object> value = (Map<String, Object>) e.getValue();
-                return TriggerInfo.from(value, false, name);
-            } catch (Exception ex) {
-                return new TriggerInfo(name, ex.getMessage());
-            }
-        }
-        return new TriggerInfo(name);
-    }
 }
