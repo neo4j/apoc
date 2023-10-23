@@ -55,15 +55,11 @@ dependencies {
         exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
         exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
         exclude group: 'io.netty', module: 'netty-common'
+        exclude group: 'io.netty', module: 'netty-buffer'
     }
 
     implementation group: 'org.apache.arrow', name: 'arrow-vector', version: '13.0.0', arrowExclusions
     implementation group: 'org.apache.arrow', name: 'arrow-memory-netty', version: '13.0.0', arrowExclusions
-    implementation group: 'io.netty', name: 'netty-buffer', {
-        version {
-            strictly '4.1.99.Final'
-        }
-    }
 
     // These will be dependencies not packaged with the .jar
     // They need to be provided either through the database or in an extra .jar
