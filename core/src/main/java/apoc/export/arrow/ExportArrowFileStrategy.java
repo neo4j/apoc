@@ -22,8 +22,6 @@ import apoc.convert.Json;
 import apoc.export.util.ProgressReporter;
 import apoc.result.ProgressInfo;
 import apoc.util.FileUtils;
-import apoc.util.QueueBasedSpliterator;
-import apoc.util.QueueUtil;
 import apoc.util.Util;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -42,62 +40,53 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public interface ExportArrowFileStrategy<IN> extends ExportArrowStrategy<IN, Stream<ProgressInfo>> {
 
     Iterator<Map<String, Object>> toIterator(ProgressReporter reporter, IN data);
 
     default Stream<ProgressInfo> export(IN data, ArrowConfig config) {
-        final BlockingQueue<ProgressInfo> queue = new ArrayBlockingQueue<>(10);
         final OutputStream out = FileUtils.getOutputStream(getFileName());
         ProgressInfo progressInfo = new ProgressInfo(getFileName(), getSource(data), "arrow");
         progressInfo.batchSize = config.getBatchSize();
         ProgressReporter reporter = new ProgressReporter(null, null, progressInfo);
-        Util.inTxFuture(getExecutorService(), getGraphDatabaseApi(), txInThread -> {
-            int batchCount = 0;
-            List<Map<String, Object>> rows = new ArrayList<>(config.getBatchSize());
-            VectorSchemaRoot root = null;
-            ArrowWriter writer = null;
-            try {
-                Iterator<Map<String, Object>> it = toIterator(reporter, data);
-                while (!Util.transactionIsTerminated(getTerminationGuard()) && it.hasNext()) {
-                    rows.add(it.next());
-                    if (batchCount > 0 && batchCount % config.getBatchSize() == 0) {
-                        if (root == null) {
-                            root = VectorSchemaRoot.create(schemaFor(rows), getBufferAllocator());
-                            writer = newArrowWriter(root, out);
-                        }
-                        writeBatch(root, writer, rows);
-                        rows.clear();
-                    }
-                    ++batchCount;
-                }
-                if (!rows.isEmpty()) {
+        int batchCount = 0;
+        List<Map<String, Object>> rows = new ArrayList<>(config.getBatchSize());
+        VectorSchemaRoot root = null;
+        ArrowWriter writer = null;
+        try {
+            Iterator<Map<String, Object>> it = toIterator(reporter, data);
+            while (!Util.transactionIsTerminated(getTerminationGuard()) && it.hasNext()) {
+                rows.add(it.next());
+                if (batchCount > 0 && batchCount % config.getBatchSize() == 0) {
                     if (root == null) {
                         root = VectorSchemaRoot.create(schemaFor(rows), getBufferAllocator());
                         writer = newArrowWriter(root, out);
                     }
                     writeBatch(root, writer, rows);
+                    rows.clear();
                 }
-                QueueUtil.put(queue, progressInfo, 10);
-            } catch (Exception e) {
-                getLogger().error("Exception while extracting Arrow data:", e);
-            } finally {
-                reporter.done();
-                Util.close(root);
-                Util.close(writer);
-                QueueUtil.put(queue, ProgressInfo.EMPTY, 10);
+                ++batchCount;
             }
-            return true;
-        });
-        QueueBasedSpliterator<ProgressInfo> spliterator = new QueueBasedSpliterator<>(queue, ProgressInfo.EMPTY, getTerminationGuard(), Integer.MAX_VALUE);
-        return StreamSupport.stream(spliterator, false);
+            if (!rows.isEmpty()) {
+                if (root == null) {
+                    root = VectorSchemaRoot.create(schemaFor(rows), getBufferAllocator());
+                    writer = newArrowWriter(root, out);
+                }
+                writeBatch(root, writer, rows);
+            }
+        } catch (Exception e) {
+            getLogger().error("Exception while extracting Arrow data:", e);
+        } finally {
+            reporter.done();
+            Util.close(root);
+            Util.close(writer);
+        }
+
+        return Stream.of(progressInfo);
     }
 
     String getSource(IN data);

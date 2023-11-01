@@ -101,7 +101,8 @@ public class ExportArrow {
     @Procedure("apoc.export.arrow.all")
     @Description("Exports the full database as an arrow file.")
     public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        return new ExportArrowService(db, pools, terminationGuard, logger).file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config));
+        var stream = new ExportArrowService(db, pools, terminationGuard, logger).file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config));
+        return stream;
     }
 
     @NotThreadSafe
