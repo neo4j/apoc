@@ -3,6 +3,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.0'  apply false
     id 'maven-publish'
     id "com.github.hierynomus.license-report" version"0.16.1"
+    id "com.diffplug.spotless" version "6.22.0"
 }
 
 downloadLicenses {
@@ -35,7 +36,16 @@ repositories {
 }
 
 subprojects {
+    apply plugin: "com.diffplug.spotless"
     apply plugin: 'java-library'
+
+    spotless {
+        java {
+            target 'src/*/java/**/*.java'
+            removeUnusedImports()
+            palantirJavaFormat()
+        }
+    }
 
     repositories {
 
