@@ -132,5 +132,5 @@ apply from: "licenses-source-header.gradle"
 ext {
     publicDir =  "${project.rootDir}"
     neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.14.0"
-    testContainersVersion = '1.18.3'
+    testContainersVersion = '1.19.1'
 }
