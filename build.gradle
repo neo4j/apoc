@@ -67,7 +67,7 @@ subprojects {
 
     task mySourcesJar(type: Jar) {
         from sourceSets.main.allJava
-        classifier = 'sources'
+        archiveClassifier = 'sources'
     }
 
     task myJavadocJar(type: Jar) {
