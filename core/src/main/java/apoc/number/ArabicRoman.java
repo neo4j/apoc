@@ -18,13 +18,12 @@
  */
 package apoc.number;
 
+import static apoc.number.ArabicRoman.RomanNumerals.getRoman;
+import static apoc.number.ArabicRoman.RomanNumerals.toArabic;
 
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
-
-import static apoc.number.ArabicRoman.RomanNumerals.getRoman;
-import static apoc.number.ArabicRoman.RomanNumerals.toArabic;
 
 public class ArabicRoman {
 
@@ -48,7 +47,9 @@ public class ArabicRoman {
     }
 
     static class RomanNumerals {
-        private static String roman[] = {"M","XM","CM","D","XD","CD","C","XC","L","XL","X","IX","V","IV","I"};
+        private static String roman[] = {
+            "M", "XM", "CM", "D", "XD", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"
+        };
 
         public static String getRoman(int number) {
             int arab[] = {1000, 990, 900, 500, 490, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};

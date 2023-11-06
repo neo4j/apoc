@@ -26,19 +26,15 @@ import static java.lang.String.format;
  * @since 06-04-2017
  */
 public enum ExportFormat {
+    NEO4J_SHELL("neo4j-shell", format("COMMIT%n"), format("BEGIN%n"), format("SCHEMA AWAIT%n"), ""),
 
-    NEO4J_SHELL("neo4j-shell",
-            format("COMMIT%n"), format("BEGIN%n"), format("SCHEMA AWAIT%n"), ""),
-
-    CYPHER_SHELL("cypher-shell",
-            format(":commit%n"), format(":begin%n"), "", "CALL db.awaitIndexes(%d);%n"),
+    CYPHER_SHELL("cypher-shell", format(":commit%n"), format(":begin%n"), "", "CALL db.awaitIndexes(%d);%n"),
 
     PLAIN_FORMAT("plain", "", "", "", ""),
 
     GEPHI("gephi", "", "", "", ""),
 
     TINKERPOP("tinkerpop", "", "", "", "");
-
 
     private final String format;
 
@@ -59,7 +55,7 @@ public enum ExportFormat {
     }
 
     public static final ExportFormat fromString(String format) {
-        if(format != null && !format.isEmpty()){
+        if (format != null && !format.isEmpty()) {
             for (ExportFormat exportFormat : ExportFormat.values()) {
                 if (exportFormat.format.equalsIgnoreCase(format)) {
                     return exportFormat;
@@ -69,19 +65,19 @@ public enum ExportFormat {
         return NEO4J_SHELL;
     }
 
-    public String begin(){
+    public String begin() {
         return this.begin;
     }
 
-    public String commit(){
+    public String commit() {
         return this.commit;
     }
 
-    public String schemaAwait(){
+    public String schemaAwait() {
         return this.schemaAwait;
     }
 
-    public String indexAwait(long millis){
+    public String indexAwait(long millis) {
         return format(this.indexAwait, millis);
     }
 }

@@ -27,7 +27,7 @@ import java.io.*;
 public class CountingReader extends FilterReader implements SizeCounter {
     public static final int BUFFER_SIZE = 1024 * 1024;
     private final long total;
-    private long count=0;
+    private long count = 0;
 
     public CountingReader(Reader reader, long total) {
         super(new BufferedReader(reader, BUFFER_SIZE));
@@ -37,7 +37,7 @@ public class CountingReader extends FilterReader implements SizeCounter {
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
         int read = super.read(cbuf, off, len);
-        count+=read;
+        count += read;
         return read;
     }
 
@@ -56,6 +56,6 @@ public class CountingReader extends FilterReader implements SizeCounter {
     @Override
     public long getPercent() {
         if (total <= 0) return 0;
-        return count*100 / total;
+        return count * 100 / total;
     }
 }

@@ -18,9 +18,16 @@
  */
 package apoc.stats;
 
+import static org.neo4j.internal.kernel.api.TokenRead.ANY_LABEL;
+import static org.neo4j.internal.kernel.api.TokenRead.ANY_RELATIONSHIP_TYPE;
+
 import apoc.Pools;
 import apoc.path.RelationshipTypeAndDirections;
 import apoc.util.kernel.MultiThreadedGlobalGraphOperations;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
 import org.HdrHistogram.AtomicHistogram;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
@@ -36,14 +43,6 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.token.api.NamedToken;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static org.neo4j.internal.kernel.api.TokenRead.ANY_LABEL;
-import static org.neo4j.internal.kernel.api.TokenRead.ANY_RELATIONSHIP_TYPE;
 
 /**
  * @author mh
@@ -78,11 +77,13 @@ public class DegreeDistribution {
             this.type = type;
             this.direction = direction;
             this.total = total;
-            this.histogram = new AtomicHistogram(total,3);
+            this.histogram = new AtomicHistogram(total, 3);
         }
+
         public void record(long value) {
             histogram.recordValue(value);
         }
+
         public Result done() {
             Result result = new Result();
             result.type = typeName;
@@ -114,13 +115,16 @@ public class DegreeDistribution {
 
     @NotThreadSafe
     @Procedure("apoc.stats.degrees")
-    @Description("Returns the percentile groupings of the degrees on the `NODE` values connected by the given `RELATIONSHIP` types.")
+    @Description(
+            "Returns the percentile groupings of the degrees on the `NODE` values connected by the given `RELATIONSHIP` types.")
     public Stream<DegreeStats.Result> degrees(@Name(value = "relTypes", defaultValue = "") String types) {
         List<DegreeStats> stats = prepareStats(types);
 
-        MultiThreadedGlobalGraphOperations.forAllNodes(db, pools.getDefaultExecutorService(), BATCHSIZE,
-                nodeCursor -> stats.forEach((s) -> s.computeDegree(nodeCursor))
-        );
+        MultiThreadedGlobalGraphOperations.forAllNodes(
+                db,
+                pools.getDefaultExecutorService(),
+                BATCHSIZE,
+                nodeCursor -> stats.forEach((s) -> s.computeDegree(nodeCursor)));
         return stats.stream().map(DegreeStats::done);
     }
 

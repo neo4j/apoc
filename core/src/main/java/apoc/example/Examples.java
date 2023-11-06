@@ -20,6 +20,7 @@ package apoc.example;
 
 import apoc.result.ProgressInfo;
 import apoc.util.Util;
+import java.util.stream.Stream;
 import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -28,8 +29,6 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
-
-import java.util.stream.Stream;
 
 /**
  * @author mh

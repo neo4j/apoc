@@ -18,12 +18,11 @@
  */
 package apoc.util;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class SensitivePathGenerator {
 
@@ -42,10 +41,11 @@ public class SensitivePathGenerator {
         try {
             Path absolutePath = Paths.get("").toAbsolutePath();
             final String relativeFileName = IntStream.range(0, absolutePath.getNameCount())
-                    .mapToObj(i -> "..")
-                    .collect(Collectors.joining("/")) + path;
-            final String absoluteFileName = Paths.get(relativeFileName)
-                    .toAbsolutePath().normalize().toString();
+                            .mapToObj(i -> "..")
+                            .collect(Collectors.joining("/"))
+                    + path;
+            final String absoluteFileName =
+                    Paths.get(relativeFileName).toAbsolutePath().normalize().toString();
 
             return Pair.of(relativeFileName, absoluteFileName);
         } catch (Exception e) {

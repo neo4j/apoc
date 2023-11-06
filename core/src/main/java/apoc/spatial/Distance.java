@@ -18,15 +18,14 @@
  */
 package apoc.spatial;
 
-import org.neo4j.procedure.Description;
 import apoc.result.DistancePathResult;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.Procedure;
-
 import java.util.*;
 import java.util.stream.Stream;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
 
 public class Distance {
 
@@ -34,14 +33,15 @@ public class Distance {
     private static final String LONGITUDE = "longitude";
 
     @Procedure("apoc.spatial.sortByDistance")
-    @Description("Sorts the given collection of `PATH` values by the sum of their distance based on the latitude/longitude values in the `NODE` values.")
-    public Stream<DistancePathResult> sortByDistance(@Name("paths")List<Path> paths) {
+    @Description(
+            "Sorts the given collection of `PATH` values by the sum of their distance based on the latitude/longitude values in the `NODE` values.")
+    public Stream<DistancePathResult> sortByDistance(@Name("paths") List<Path> paths) {
         return paths.size() > 0 ? sortPaths(paths).stream() : Stream.empty();
     }
 
     public SortedSet<DistancePathResult> sortPaths(List<Path> paths) {
         SortedSet<DistancePathResult> result = new TreeSet<DistancePathResult>();
-        for (int i = 0; i <= paths.size()-1; ++i) {
+        for (int i = 0; i <= paths.size() - 1; ++i) {
             double d = getPathDistance(paths.get(i));
             result.add(new DistancePathResult(paths.get(i), d));
         }
@@ -57,15 +57,14 @@ public class Distance {
             nodes.add(node);
         }
 
-        for (int i = 1; i <= nodes.size()-1; ++i) {
-            Node prev = nodes.get(i-1);
+        for (int i = 1; i <= nodes.size() - 1; ++i) {
+            Node prev = nodes.get(i - 1);
             Node curr = nodes.get(i);
             distance += getDistance(
                     (double) prev.getProperty(LATITUDE),
                     (double) prev.getProperty(LONGITUDE),
                     (double) curr.getProperty(LATITUDE),
-                    (double) curr.getProperty(LONGITUDE)
-            );
+                    (double) curr.getProperty(LONGITUDE));
         }
 
         return distance;
@@ -73,7 +72,8 @@ public class Distance {
 
     public double getDistance(double lat1, double lon1, double lat2, double lon2) {
         double theta = lon1 - lon2;
-        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2)) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
+        double dist = Math.sin(deg2rad(lat1)) * Math.sin(deg2rad(lat2))
+                + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.cos(deg2rad(theta));
         dist = Math.acos(dist);
         dist = rad2deg(dist);
         dist = dist * 60 * 1.1515;
@@ -91,8 +91,8 @@ public class Distance {
 
     private void checkNodeHasGeo(Node node) {
         if (!node.hasProperty(LATITUDE) || !node.hasProperty(LONGITUDE)) {
-            throw new IllegalArgumentException(String.format("Node with id %s has invalid geo properties", node.getElementId()));
+            throw new IllegalArgumentException(
+                    String.format("Node with id %s has invalid geo properties", node.getElementId()));
         }
     }
-
 }

@@ -18,16 +18,38 @@
  */
 package apoc.export.json;
 
+import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
+import static apoc.export.json.ImportJsonConfig.WILDCARD_PROPS;
+import static apoc.export.json.JsonImporter.MISSING_CONSTRAINT_ERROR_MSG;
+import static apoc.util.BinaryTestUtil.fileToBinary;
+import static apoc.util.CompressionConfig.COMPRESSION;
+import static apoc.util.MapUtil.map;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
+import static java.lang.String.format;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import apoc.schema.Schemas;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.TransactionTestUtil;
 import apoc.util.Util;
+import apoc.util.Utils;
 import apoc.util.collection.Iterables;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import apoc.util.Utils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,30 +68,6 @@ import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.PointValue;
 import org.neo4j.values.storable.Values;
 
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Consumer;
-
-import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
-import static apoc.ApocConfig.apocConfig;
-import static apoc.export.json.ImportJsonConfig.WILDCARD_PROPS;
-import static apoc.export.json.JsonImporter.MISSING_CONSTRAINT_ERROR_MSG;
-import static apoc.util.BinaryTestUtil.fileToBinary;
-import static apoc.util.CompressionConfig.COMPRESSION;
-import static apoc.util.MapUtil.map;
-import static apoc.util.TransactionTestUtil.checkTerminationGuard;
-import static java.lang.String.format;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-
 public class ImportJsonTest {
 
     private static final long NODES_BIG_JSON = 16L;
@@ -78,11 +76,12 @@ public class ImportJsonTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.getCanonicalFile().toPath())
+            .withSetting(
+                    GraphDatabaseSettings.load_csv_file_url_root,
+                    directory.getCanonicalFile().toPath())
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, List.of("apoc.*"));
 
-    public ImportJsonTest() throws IOException {
-    }
+    public ImportJsonTest() throws IOException {}
 
     @Before
     public void setUp() {
@@ -112,10 +111,11 @@ public class ImportJsonTest {
         String filename = "all.json";
 
         // when
-        TestUtil.testCall(db, "CALL apoc.import.json($file, $config)",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.json($file, $config)",
                 map("file", filename, "config", config),
-                (r) -> assertionsAllJsonProgressInfo(r, false)
-        );
+                (r) -> assertionsAllJsonProgressInfo(r, false));
 
         assertionsAllJsonDbResult(expectedPropSize, relCount);
     }
@@ -127,10 +127,22 @@ public class ImportJsonTest {
         String filename = "all.json";
 
         // when
-        TestUtil.testCall(db, "CALL apoc.import.json($file, $config)",
-                map("file", filename, "config",
-                        map("nodePropertyMappings", map("User", map("place", "Point", "born", "LocalDateTime")),
-                        "relPropertyMappings", map("KNOWS", map("bffSince", "Duration")), "unwindBatchSize", 1, "txBatchSize", 1)),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.json($file, $config)",
+                map(
+                        "file",
+                        filename,
+                        "config",
+                        map(
+                                "nodePropertyMappings",
+                                map("User", map("place", "Point", "born", "LocalDateTime")),
+                                "relPropertyMappings",
+                                map("KNOWS", map("bffSince", "Duration")),
+                                "unwindBatchSize",
+                                1,
+                                "txBatchSize",
+                                1)),
                 (r) -> {
                     // then
                     Assert.assertEquals("all.json", r.get("file"));
@@ -141,11 +153,9 @@ public class ImportJsonTest {
                     Assert.assertEquals(15L, r.get("properties"));
                     Assert.assertEquals(4L, r.get("rows"));
                     Assert.assertEquals(true, r.get("done"));
+                });
 
-                }
-        );
-        
-        try(Transaction tx = db.beginTx()) {
+        try (Transaction tx = db.beginTx()) {
             final long countNodes = tx.execute("MATCH (n:User) RETURN count(n) AS count")
                     .<Long>columnAs("count")
                     .next();
@@ -179,27 +189,23 @@ public class ImportJsonTest {
     public void shouldImportNodesWithoutLabels() throws Exception {
         // given
         String filename = "nodes_without_labels.json";
-        Map<String, Object> jsonMap = JsonUtil.OBJECT_MAPPER
-                                .readValue(new File(directory, filename), Map.class);
+        Map<String, Object> jsonMap = JsonUtil.OBJECT_MAPPER.readValue(new File(directory, filename), Map.class);
         Map<String, Object> properties = (Map<String, Object>) jsonMap.get("properties");
         List<Double> bbox = (List<Double>) properties.get("bbox");
         final double[] expected = bbox.stream().mapToDouble(Double::doubleValue).toArray();
 
         // when
-        TestUtil.testCall(db, "CALL apoc.import.json($file)",
-                map("file", filename),
-                (r) -> {
-                    // then
-                    Assert.assertEquals(filename, r.get("file"));
-                    Assert.assertEquals("file", r.get("source"));
-                    Assert.assertEquals("json", r.get("format"));
-                    Assert.assertEquals(1L, r.get("nodes"));
-                    Assert.assertEquals(0L, r.get("relationships"));
-                    Assert.assertEquals(2L, r.get("properties"));
-                    Assert.assertEquals(1L, r.get("rows"));
-                    Assert.assertEquals(true, r.get("done"));
-                }
-        );
+        TestUtil.testCall(db, "CALL apoc.import.json($file)", map("file", filename), (r) -> {
+            // then
+            Assert.assertEquals(filename, r.get("file"));
+            Assert.assertEquals("file", r.get("source"));
+            Assert.assertEquals("json", r.get("format"));
+            Assert.assertEquals(1L, r.get("nodes"));
+            Assert.assertEquals(0L, r.get("relationships"));
+            Assert.assertEquals(2L, r.get("properties"));
+            Assert.assertEquals(1L, r.get("rows"));
+            Assert.assertEquals(true, r.get("done"));
+        });
 
         try (Transaction tx = db.beginTx()) {
             Node node = tx.execute("MATCH (n) WHERE n.neo4jImportId = '5016999' RETURN n")
@@ -210,7 +216,7 @@ public class ImportJsonTest {
             Assert.assertArrayEquals(expected, actual, 0.05D);
         }
     }
-    
+
     @Test
     public void shouldTerminateImportWhenTransactionIsTimedOut() {
 
@@ -230,10 +236,18 @@ public class ImportJsonTest {
 
         String filename = "multiLabels.json";
 
-        TestUtil.testCall(db, "CALL apoc.import.json($file, $config)",
-                map("file", filename, 
-                        "config", map("nodePropFilter", map(WILDCARD_PROPS, List.of("name")),
-                                "relPropFilter", map(WILDCARD_PROPS, List.of("bffSince")))), 
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.json($file, $config)",
+                map(
+                        "file",
+                        filename,
+                        "config",
+                        map(
+                                "nodePropFilter",
+                                map(WILDCARD_PROPS, List.of("name")),
+                                "relPropFilter",
+                                map(WILDCARD_PROPS, List.of("bffSince")))),
                 r -> {
                     assertEquals(NODES_BIG_JSON, r.get("nodes"));
                     assertEquals(RELS_BIG_JSON, r.get("relationships"));
@@ -243,7 +257,7 @@ public class ImportJsonTest {
         final Consumer<Relationship> relConsumer = rel -> assertFalse(rel.hasProperty("bffSince"));
         assertEntities(NODES_BIG_JSON, RELS_BIG_JSON, nodeConsumer, relConsumer);
     }
-    
+
     @Test
     public void shouldImportAllNodesAndRelsWithLabelAndRelTypeFilter() {
         createConstraints(List.of("FirstLabel", "Stream", "User", "Game", "Team", "Language", "$User", "$Stream"));
@@ -251,13 +265,25 @@ public class ImportJsonTest {
 
         String filename = "multiLabels.json";
 
-        TestUtil.testCall(db, "CALL apoc.import.json($file, $config)",
-                map("file", filename, 
-                        "config", map("nodePropFilter", map("Stream", List.of("name"), 
-                                        "$User", List.of("total_view_count", "url"), 
-                                        "$Stream", List.of("name", "id")), 
-                                "relPropFilter", map("REL_GAME_TO_LANG", List.of("since")))
-                ), r -> {
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.json($file, $config)",
+                map(
+                        "file",
+                        filename,
+                        "config",
+                        map(
+                                "nodePropFilter",
+                                map(
+                                        "Stream",
+                                        List.of("name"),
+                                        "$User",
+                                        List.of("total_view_count", "url"),
+                                        "$Stream",
+                                        List.of("name", "id")),
+                                "relPropFilter",
+                                map("REL_GAME_TO_LANG", List.of("since")))),
+                r -> {
                     assertEquals(NODES_BIG_JSON, r.get("nodes"));
                     assertEquals(RELS_BIG_JSON, r.get("relationships"));
                 });
@@ -265,14 +291,23 @@ public class ImportJsonTest {
         final Consumer<Node> nodeConsumer = node -> {
             if (node.hasLabel(Label.label("Stream"))) {
                 final Set<String> actual = Iterables.asSet(node.getPropertyKeys());
-                assertEquals(Set.of("createdAt", "followers", "description", "id", "total_view_count", "url", "neo4jImportId"), actual);
+                assertEquals(
+                        Set.of(
+                                "createdAt",
+                                "followers",
+                                "description",
+                                "id",
+                                "total_view_count",
+                                "url",
+                                "neo4jImportId"),
+                        actual);
             }
             if (node.hasLabel(Label.label("$User"))) {
                 final Set<String> actual = Iterables.asSet(node.getPropertyKeys());
                 assertEquals(Set.of("createdAt", "followers", "description", "neo4jImportId"), actual);
             }
         };
-        
+
         final Consumer<Relationship> relConsumer = rel -> {
             final boolean hasTypeRelGameToLang = rel.getType().name().equals("REL_GAME_TO_LANG");
             assertEquals(!hasTypeRelGameToLang, rel.hasProperty("since"));
@@ -281,23 +316,22 @@ public class ImportJsonTest {
 
         assertEntities(NODES_BIG_JSON, RELS_BIG_JSON, nodeConsumer, relConsumer);
     }
-    
+
     @Test
     public void shouldImportAllNodesAndRels() {
         createConstraints(List.of("FirstLabel", "Stream", "User", "Game", "Team", "Language", "$User", "$Stream"));
         assertEntities(0L, 0L);
 
         String filename = "multiLabels.json";
-        
-        TestUtil.testCall(db, "CALL apoc.import.json($file)", 
-                map("file", filename), (r) -> {
-                    assertEquals(NODES_BIG_JSON, r.get("nodes"));
-                    assertEquals(RELS_BIG_JSON, r.get("relationships"));
+
+        TestUtil.testCall(db, "CALL apoc.import.json($file)", map("file", filename), (r) -> {
+            assertEquals(NODES_BIG_JSON, r.get("nodes"));
+            assertEquals(RELS_BIG_JSON, r.get("relationships"));
         });
-        
+
         assertEntities(NODES_BIG_JSON, RELS_BIG_JSON);
     }
-    
+
     @Test
     public void shouldFailBecauseOfMissingSecondConstraintException() {
         String customId = "customId";
@@ -306,10 +340,11 @@ public class ImportJsonTest {
 
         String filename = "multiLabels.json";
         try {
-            TestUtil.testCall(db, "CALL apoc.import.json($file, {importIdName: $importIdName})",
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.import.json($file, {importIdName: $importIdName})",
                     map("file", filename, "importIdName", customId),
-                    (r) -> fail("Should fail due to missing constraint")
-            );
+                    (r) -> fail("Should fail due to missing constraint"));
         } catch (Exception e) {
             String expectedMsg = format(MISSING_CONSTRAINT_ERROR_MSG, "User", customId);
             assertRootMessage(expectedMsg, e);
@@ -326,10 +361,11 @@ public class ImportJsonTest {
 
         String filename = "all.json";
         try {
-            TestUtil.testCall(db, "CALL apoc.import.json($file, {})",
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.import.json($file, {})",
                     map("file", filename),
-                    (r) -> fail("Should fail due to missing constraint")
-            );
+                    (r) -> fail("Should fail due to missing constraint"));
         } catch (Exception e) {
             String expectedMsg = format(MISSING_CONSTRAINT_ERROR_MSG, "User", "neo4jImportId");
             assertRootMessage(expectedMsg, e);
@@ -337,19 +373,24 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllJsonFromBinary()  {
+    public void shouldImportAllJsonFromBinary() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS UNIQUE");
-        
-        TestUtil.testCall(db, "CALL apoc.import.json($file, $config)",
-                map("config", map(COMPRESSION, CompressionAlgo.DEFLATE.name()),
-                        "file", fileToBinary(new File(directory, "all.json"), CompressionAlgo.DEFLATE.name())),
+
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.json($file, $config)",
+                map(
+                        "config",
+                        map(COMPRESSION, CompressionAlgo.DEFLATE.name()),
+                        "file",
+                        fileToBinary(new File(directory, "all.json"), CompressionAlgo.DEFLATE.name())),
                 (r) -> assertionsAllJsonProgressInfo(r, true));
 
         assertionsAllJsonDbResult();
     }
 
     @Test
-    public void shouldTerminateImportJson()  {
+    public void shouldTerminateImportJson() {
         createConstraints(List.of("Movie", "Other", "Person"));
         checkTerminationGuard(db, "CALL apoc.import.json('testTerminate.json',{})");
     }
@@ -369,9 +410,9 @@ public class ImportJsonTest {
     private void assertionsAllJsonDbResult() {
         assertionsAllJsonDbResult(9, 1L);
     }
-    
+
     private void assertionsAllJsonDbResult(int expectedPropSize, long relCount) {
-        try(Transaction tx = db.beginTx()) {
+        try (Transaction tx = db.beginTx()) {
             final long countNodes = tx.execute("MATCH (n:User) RETURN count(n) AS count")
                     .<Long>columnAs("count")
                     .next();
@@ -402,8 +443,8 @@ public class ImportJsonTest {
     }
 
     private void createConstraints(List<String> labels, String customId) {
-        labels.forEach(
-                label -> db.executeTransactionally(format("CREATE CONSTRAINT FOR (n:%s) REQUIRE n.%s IS UNIQUE;", Util.quote(label), customId)));
+        labels.forEach(label -> db.executeTransactionally(
+                format("CREATE CONSTRAINT FOR (n:%s) REQUIRE n.%s IS UNIQUE;", Util.quote(label), customId)));
     }
 
     private void createConstraints(List<String> labels) {
@@ -414,7 +455,8 @@ public class ImportJsonTest {
         assertEntities(expectedNodes, expectedRels, null, null);
     }
 
-    private void assertEntities(long expectedNodes, long expectedRels, Consumer<Node> nodeConsumer, Consumer<Relationship> relConsumer) {
+    private void assertEntities(
+            long expectedNodes, long expectedRels, Consumer<Node> nodeConsumer, Consumer<Relationship> relConsumer) {
         try (Transaction tx = db.beginTx()) {
             final List<Node> nodeList = Iterables.asList(tx.getAllNodes());
             final List<Relationship> relList = Iterables.asList((tx.getAllRelationships()));

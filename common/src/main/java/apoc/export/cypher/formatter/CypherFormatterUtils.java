@@ -18,22 +18,21 @@
  */
 package apoc.export.cypher.formatter;
 
+import static apoc.export.util.FormatUtils.getLabelsSorted;
+
 import apoc.export.util.FormatUtils;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import java.lang.reflect.Array;
+import java.time.temporal.Temporal;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.Value;
 import org.neo4j.values.storable.Values;
-
-import java.lang.reflect.Array;
-import java.time.temporal.Temporal;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static apoc.export.util.FormatUtils.getLabelsSorted;
 
 /**
  * @author AgileLARUS
@@ -42,18 +41,19 @@ import static apoc.export.util.FormatUtils.getLabelsSorted;
  */
 public class CypherFormatterUtils {
 
-    public final static String UNIQUE_ID_NAME = "UNIQUE_IMPORT_NAME";
-    public final static String UNIQUE_ID_LABEL = "UNIQUE IMPORT LABEL";
-    public final static String UNIQUE_ID_PROP = "UNIQUE IMPORT ID";
-    public final static String Q_UNIQUE_ID_LABEL = Util.quote(UNIQUE_ID_LABEL);
-    public final static String UNIQUE_ID_REL = "UNIQUE IMPORT ID REL";
-    public final static String Q_UNIQUE_ID_REL = Util.quote(UNIQUE_ID_REL);
+    public static final String UNIQUE_ID_NAME = "UNIQUE_IMPORT_NAME";
+    public static final String UNIQUE_ID_LABEL = "UNIQUE IMPORT LABEL";
+    public static final String UNIQUE_ID_PROP = "UNIQUE IMPORT ID";
+    public static final String Q_UNIQUE_ID_LABEL = Util.quote(UNIQUE_ID_LABEL);
+    public static final String UNIQUE_ID_REL = "UNIQUE IMPORT ID REL";
+    public static final String Q_UNIQUE_ID_REL = Util.quote(UNIQUE_ID_REL);
 
-    public final static String FUNCTION_TEMPLATE = "%s('%s')";
+    public static final String FUNCTION_TEMPLATE = "%s('%s')";
 
     // ---- node id ----
 
-    public static  String formatNodeLookup(String id, Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames) {
+    public static String formatNodeLookup(
+            String id, Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames) {
         StringBuilder result = new StringBuilder(100);
         result.append("(");
         result.append(id);
@@ -95,7 +95,8 @@ public class CypherFormatterUtils {
 
     // ---- labels ----
 
-    public static String formatAllLabels(Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames) {
+    public static String formatAllLabels(
+            Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames) {
         StringBuilder result = new StringBuilder(100);
         boolean uniqueLabelFound = false;
         List<String> list = getLabelsSorted(node);
@@ -104,10 +105,8 @@ public class CypherFormatterUtils {
             if (!uniqueLabelFound) {
                 uniqueLabelFound = isUniqueLabelFound(node, uniqueConstraints, labelName);
             }
-            if (indexNames != null && indexNames.contains(labelName))
-                result.insert(0, label(labelName));
-            else
-                result.append(label(labelName));
+            if (indexNames != null && indexNames.contains(labelName)) result.insert(0, label(labelName));
+            else result.append(label(labelName));
         }
         if (!uniqueLabelFound) {
             result.append(label(UNIQUE_ID_LABEL));
@@ -129,7 +128,8 @@ public class CypherFormatterUtils {
         return formatToString(result);
     }
 
-    private static String getNodeIdLabels(Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames) {
+    private static String getNodeIdLabels(
+            Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames) {
         StringBuilder result = new StringBuilder(100);
         List<String> list = getLabelsSorted(node).stream()
                 .filter(labelName -> isUniqueLabelFound(node, uniqueConstraints, labelName))
@@ -159,7 +159,12 @@ public class CypherFormatterUtils {
 
     // ---- properties ----
 
-    public static String formatNodeProperties(String id, Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexNames, boolean jsonStyle) {
+    public static String formatNodeProperties(
+            String id,
+            Node node,
+            Map<String, Set<String>> uniqueConstraints,
+            Set<String> indexNames,
+            boolean jsonStyle) {
         StringBuilder result = formatProperties(id, node.getAllProperties(), jsonStyle);
         if (getNodeIdLabels(node, uniqueConstraints, indexNames).endsWith(label(UNIQUE_ID_LABEL))) {
             result.append(", ");
@@ -173,7 +178,12 @@ public class CypherFormatterUtils {
         return formatToString(result);
     }
 
-    public static String formatNotUniqueProperties(String id, Node node, Map<String, Set<String>> uniqueConstraints, Set<String> indexedProperties, boolean jsonStyle) {
+    public static String formatNotUniqueProperties(
+            String id,
+            Node node,
+            Map<String, Set<String>> uniqueConstraints,
+            Set<String> indexedProperties,
+            boolean jsonStyle) {
         Map<String, Object> properties = new LinkedHashMap<>();
         List<String> keys = Iterables.asList(node.getPropertyKeys());
         Collections.sort(keys);
@@ -216,7 +226,10 @@ public class CypherFormatterUtils {
     }
 
     public static String formatPropertyName(String id, String prop, Object value, boolean jsonStyle) {
-        return (id != null && !"".equals(id) ? id + "." : "") + Util.quote(prop) + (jsonStyle ? ":" : "=" ) + toString(value);
+        return (id != null && !"".equals(id) ? id + "." : "")
+                + Util.quote(prop)
+                + (jsonStyle ? ":" : "=")
+                + toString(value);
     }
 
     // ---- to string ----
@@ -241,7 +254,7 @@ public class CypherFormatterUtils {
         if (value.getClass().isArray()) {
             return arrayToString(value);
         }
-        if (value instanceof Temporal){
+        if (value instanceof Temporal) {
             Value val = Values.of(value);
             return toStringFunction(val);
         }

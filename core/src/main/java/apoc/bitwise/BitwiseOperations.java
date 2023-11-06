@@ -30,7 +30,8 @@ public class BitwiseOperations {
 
     @UserFunction("apoc.bitwise.op")
     @Description("Returns the result of the bitwise operation")
-    public Long op(@Name("a") final Long a, @Name("operator") final String operator, @Name("b") final Long b) throws Exception {
+    public Long op(@Name("a") final Long a, @Name("operator") final String operator, @Name("b") final Long b)
+            throws Exception {
         if (a == null || operator == null || operator.isEmpty()) {
             return null;
         }

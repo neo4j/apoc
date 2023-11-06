@@ -18,6 +18,8 @@
  */
 package apoc.help;
 
+import static apoc.util.Util.map;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,15 +28,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
-
-import static apoc.util.Util.map;
 
 public class Help {
 
@@ -60,7 +59,8 @@ public class Help {
 
     @NotThreadSafe
     @Procedure("apoc.help")
-    @Description("Returns descriptions of the available APOC procedures and functions. If a keyword is provided, it will return only those procedures and functions that have the keyword in their name.")
+    @Description(
+            "Returns descriptions of the available APOC procedures and functions. If a keyword is provided, it will return only those procedures and functions that have the keyword in their name.")
     public Stream<HelpResult> info(@Name("proc") String name) {
         boolean searchText = false;
         if (name != null) {
@@ -70,21 +70,21 @@ public class Help {
                 searchText = true;
             }
         }
-        String filter = " WHERE name starts with 'apoc.' " +
-                " AND ($name IS NULL  OR toLower(name) CONTAINS toLower($name) " +
-                " OR ($desc IS NOT NULL AND toLower(description) CONTAINS toLower($desc))) ";
+        String filter =
+                " WHERE name starts with 'apoc.' " + " AND ($name IS NULL  OR toLower(name) CONTAINS toLower($name) "
+                        + " OR ($desc IS NOT NULL AND toLower(description) CONTAINS toLower($desc))) ";
 
-        String proceduresQuery = "SHOW PROCEDURES yield name, description, signature, isDeprecated " + filter +
-                                 "RETURN 'procedure' as type, name, description, signature, isDeprecated ";
+        String proceduresQuery = "SHOW PROCEDURES yield name, description, signature, isDeprecated " + filter
+                + "RETURN 'procedure' as type, name, description, signature, isDeprecated ";
 
-        String functionsQuery = "SHOW FUNCTIONS yield name, description, signature, isDeprecated " + filter +
-                                "RETURN 'function' as type, name, description, signature, isDeprecated ";
-        Map<String,Object> params = map("name", name, "desc", searchText ? name : null);
-        Stream<Map<String,Object>> proceduresResults = tx.execute(proceduresQuery, params).stream();
-        Stream<Map<String,Object>> functionsResults = tx.execute(functionsQuery, params).stream();
+        String functionsQuery = "SHOW FUNCTIONS yield name, description, signature, isDeprecated " + filter
+                + "RETURN 'function' as type, name, description, signature, isDeprecated ";
+        Map<String, Object> params = map("name", name, "desc", searchText ? name : null);
+        Stream<Map<String, Object>> proceduresResults = tx.execute(proceduresQuery, params).stream();
+        Stream<Map<String, Object>> functionsResults = tx.execute(functionsQuery, params).stream();
 
-        return Stream.of(proceduresResults, functionsResults).flatMap(results -> results.map(
-                row -> new HelpResult( row, !extended.contains((String) row.get("name"))))
-        );
+        return Stream.of(proceduresResults, functionsResults)
+                .flatMap(results ->
+                        results.map(row -> new HelpResult(row, !extended.contains((String) row.get("name")))));
     }
 }

@@ -18,6 +18,13 @@
  */
 package apoc;
 
+import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 import org.neo4j.annotations.service.ServiceProvider;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -36,14 +43,6 @@ import org.neo4j.logging.internal.LogService;
 import org.neo4j.scheduler.JobScheduler;
 import org.neo4j.service.Services;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-
-import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
-
 /**
  * @author mh
  * @since 14.05.16
@@ -57,15 +56,24 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
 
     public interface Dependencies {
         GraphDatabaseAPI graphdatabaseAPI();
+
         JobScheduler scheduler();
+
         LogService log();
+
         AvailabilityGuard availabilityGuard();
+
         DatabaseManagementService databaseManagementService();
+
         ApocConfig apocConfig();
+
         DatabaseEventListeners databaseEventListeners();
+
         @SuppressWarnings("unused") // used from extended
         GlobalProcedures globalProceduresRegistry();
+
         RegisterComponentFactory.RegisterComponentLifecycle registerComponentLifecycle();
+
         Pools pools();
     }
 
@@ -84,7 +92,6 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         private final Collection<ApocGlobalComponents> apocGlobalComponents;
         private final Collection<AvailabilityListener> registeredListeners = new ArrayList<>();
 
-
         public ApocLifecycle(LogService log, GraphDatabaseAPI db, Dependencies dependencies) {
             this.db = db;
             this.dependencies = dependencies;
@@ -101,16 +108,14 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
         @Override
         public void init() {
             withNonSystemDatabase(db, aVoid -> {
-                for (ApocGlobalComponents c: apocGlobalComponents) {
+                for (ApocGlobalComponents c : apocGlobalComponents) {
                     services.putAll(c.getServices(db, dependencies));
                 }
 
                 String databaseName = db.databaseName();
-                services.values().forEach(lifecycle -> dependencies.registerComponentLifecycle().addResolver(
-                        databaseName,
-                        lifecycle.getClass(),
-                        lifecycle));
-
+                services.values().forEach(lifecycle -> dependencies
+                        .registerComponentLifecycle()
+                        .addResolver(databaseName, lifecycle.getClass(), lifecycle));
             });
         }
 
@@ -124,13 +129,12 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
                         userLog.error("failed to start service " + key, e);
                     }
                 });
-
             });
 
             AvailabilityGuard availabilityGuard = dependencies.availabilityGuard();
-            for (ApocGlobalComponents c: apocGlobalComponents) {
-                for (AvailabilityListener listener: c.getListeners(db, dependencies)) {
-                    registeredListeners.add( listener );
+            for (ApocGlobalComponents c : apocGlobalComponents) {
+                for (AvailabilityListener listener : c.getListeners(db, dependencies)) {
+                    registeredListeners.add(listener);
                     availabilityGuard.addListener(listener);
                 }
             }
@@ -153,8 +157,7 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
             registeredListeners.clear();
         }
 
-        public Collection<AvailabilityListener> getRegisteredListeners()
-        {
+        public Collection<AvailabilityListener> getRegisteredListeners() {
             return registeredListeners;
         }
     }

@@ -28,14 +28,13 @@ import apoc.util.FileUtils;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
-import org.neo4j.graphdb.*;
-import org.neo4j.logging.Log;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.neo4j.graphdb.*;
+import org.neo4j.logging.Log;
 
 public class CsvEntityLoader {
 
@@ -64,23 +63,31 @@ public class CsvEntityLoader {
      * @param idMapping to be filled with the mapping between the CSV ids and the DB's internal node ids
      * @throws IOException
      */
-    public void loadNodes(final Object fileName, final List<String> labels, final GraphDatabaseService db,
-                          final Map<String, Map<String, String>> idMapping) throws IOException {
-        
+    public void loadNodes(
+            final Object fileName,
+            final List<String> labels,
+            final GraphDatabaseService db,
+            final Map<String, Map<String, String>> idMapping)
+            throws IOException {
+
         try (final CountingReader reader = FileUtils.readerFor(fileName, clc.getCompressionAlgo())) {
             final String header = readFirstLine(reader);
-            final List<CsvHeaderField> fields = CsvHeaderFields.processHeader(header, clc.getDelimiter(), clc.getQuotationCharacter());
+            final List<CsvHeaderField> fields =
+                    CsvHeaderFields.processHeader(header, clc.getDelimiter(), clc.getQuotationCharacter());
 
             final Optional<CsvHeaderField> idField = fields.stream()
                     .filter(f -> CsvLoaderConstants.ID_FIELD.equals(f.getType()))
                     .findFirst();
 
             if (!idField.isPresent()) {
-                log.warn("Please note that if no ID is specified, the node will be imported but it will not be able to be connected by any relationships during the import");
+                log.warn(
+                        "Please note that if no ID is specified, the node will be imported but it will not be able to be connected by any relationships during the import");
             }
 
-            final Optional<String> idAttribute = idField.isPresent() ? Optional.of(idField.get().getName()) : Optional.empty();
-            final String idSpace = idField.isPresent() ? idField.get().getIdSpace() : CsvLoaderConstants.DEFAULT_IDSPACE;
+            final Optional<String> idAttribute =
+                    idField.isPresent() ? Optional.of(idField.get().getName()) : Optional.empty();
+            final String idSpace =
+                    idField.isPresent() ? idField.get().getIdSpace() : CsvLoaderConstants.DEFAULT_IDSPACE;
 
             idMapping.putIfAbsent(idSpace, new HashMap<>());
             final Map<String, String> idspaceIdMapping = idMapping.get(idSpace);
@@ -95,7 +102,8 @@ public class CsvEntityLoader {
                     .withSkipLines(clc.getSkipLines() - 1)
                     .build();
 
-            final String[] loadCsvCompatibleHeader = fields.stream().map(f -> f.getName()).toArray(String[]::new);
+            final String[] loadCsvCompatibleHeader =
+                    fields.stream().map(f -> f.getName()).toArray(String[]::new);
             AtomicInteger lineNo = new AtomicInteger();
             BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
             try {
@@ -104,19 +112,26 @@ public class CsvEntityLoader {
 
                     final EnumSet<Results> results = EnumSet.of(Results.map);
                     final CSVResult result = new CSVResult(
-                            loadCsvCompatibleHeader, line, lineNo.get(), false, mapping, Collections.emptyList(), results
-                    );
+                            loadCsvCompatibleHeader,
+                            line,
+                            lineNo.get(),
+                            false,
+                            mapping,
+                            Collections.emptyList(),
+                            results);
 
-                    final String nodeCsvId = (String) idAttribute.map(result.map::get).orElse(null);
+                    final String nodeCsvId =
+                            (String) idAttribute.map(result.map::get).orElse(null);
 
-                    // if 'ignore duplicate nodes' is false, there is an id field and the mapping already has the current id,
+                    // if 'ignore duplicate nodes' is false, there is an id field and the mapping already has the
+                    // current id,
                     // we either fail the loading process or skip it depending on the 'ignore duplicate nodes' setting
                     if (idField.isPresent() && idspaceIdMapping.containsKey(nodeCsvId)) {
                         if (clc.getIgnoreDuplicateNodes()) {
                             return;
                         } else {
-                            throw new IllegalStateException("Duplicate node with id " + nodeCsvId + " found on line " + lineNo + "\n"
-                                    + Arrays.toString(line));
+                            throw new IllegalStateException("Duplicate node with id " + nodeCsvId + " found on line "
+                                    + lineNo + "\n" + Arrays.toString(line));
                         }
                     }
 
@@ -152,7 +167,8 @@ public class CsvEntityLoader {
                             node.setProperty(field.getName(), idValue);
                             props++;
                         } else {
-                            boolean propertyAdded = CsvPropertyConverter.addPropertyToGraphEntity(node, field, value,clc);
+                            boolean propertyAdded =
+                                    CsvPropertyConverter.addPropertyToGraphEntity(node, field, value, clc);
                             props += propertyAdded ? 1 : 0;
                         }
                     }
@@ -182,22 +198,26 @@ public class CsvEntityLoader {
      * @throws IOException
      */
     public void loadRelationships(
-            final Object data, 
+            final Object data,
             final String type,
             final GraphDatabaseService db,
-            final Map<String, Map<String, String>> idMapping) throws IOException {
-        
+            final Map<String, Map<String, String>> idMapping)
+            throws IOException {
+
         try (final CountingReader reader = FileUtils.readerFor(data, clc.getCompressionAlgo())) {
             final String header = readFirstLine(reader);
-            final List<CsvHeaderField> fields = CsvHeaderFields.processHeader(header, clc.getDelimiter(), clc.getQuotationCharacter());
+            final List<CsvHeaderField> fields =
+                    CsvHeaderFields.processHeader(header, clc.getDelimiter(), clc.getQuotationCharacter());
 
             final CsvHeaderField startIdField = fields.stream()
                     .filter(f -> CsvLoaderConstants.START_ID_FIELD.equals(f.getType()))
-                    .findFirst().get();
+                    .findFirst()
+                    .get();
 
             final CsvHeaderField endIdField = fields.stream()
                     .filter(f -> CsvLoaderConstants.END_ID_FIELD.equals(f.getType()))
-                    .findFirst().get();
+                    .findFirst()
+                    .get();
 
             final List<CsvHeaderField> edgePropertiesFields = fields.stream()
                     .filter(field -> !CsvLoaderConstants.START_ID_FIELD.equals(field.getType()))
@@ -205,10 +225,13 @@ public class CsvEntityLoader {
                     .collect(Collectors.toList());
 
             final Map<String, Mapping> mapping = getMapping(fields);
-            final var parser = new CSVParserBuilder().withSeparator(clc.getDelimiter()).build();
+            final var parser =
+                    new CSVParserBuilder().withSeparator(clc.getDelimiter()).build();
 
-            try (final var csv = new CSVReaderBuilder(reader).withCSVParser(parser).build()) {
-                final String[] loadCsvCompatibleHeader = fields.stream().map(f -> f.getName()).toArray(String[]::new);
+            try (final var csv =
+                    new CSVReaderBuilder(reader).withCSVParser(parser).build()) {
+                final String[] loadCsvCompatibleHeader =
+                        fields.stream().map(f -> f.getName()).toArray(String[]::new);
 
                 AtomicInteger lineNo = new AtomicInteger();
                 BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
@@ -218,20 +241,29 @@ public class CsvEntityLoader {
 
                         final EnumSet<Results> results = EnumSet.of(Results.map);
                         final CSVResult result = new CSVResult(
-                                loadCsvCompatibleHeader, line, lineNo.get(), false, mapping, Collections.emptyList(), results
-                        );
+                                loadCsvCompatibleHeader,
+                                line,
+                                lineNo.get(),
+                                false,
+                                mapping,
+                                Collections.emptyList(),
+                                results);
 
                         final Object startId = result.map.get(CsvLoaderConstants.START_ID_ATTR);
-                        final Object startInternalId = idMapping.get(startIdField.getIdSpace()).get(startId.toString());
+                        final Object startInternalId =
+                                idMapping.get(startIdField.getIdSpace()).get(startId.toString());
                         if (startInternalId == null) {
-                            throw new IllegalStateException("Node for id space " + endIdField.getIdSpace() + " and id " + startId + " not found");
+                            throw new IllegalStateException("Node for id space " + endIdField.getIdSpace() + " and id "
+                                    + startId + " not found");
                         }
                         final Node source = btx.getTransaction().getNodeByElementId(startInternalId.toString());
 
                         final Object endId = result.map.get(CsvLoaderConstants.END_ID_ATTR);
-                        final Object endInternalId = idMapping.get(endIdField.getIdSpace()).get(endId.toString());
+                        final Object endInternalId =
+                                idMapping.get(endIdField.getIdSpace()).get(endId.toString());
                         if (endInternalId == null) {
-                            throw new IllegalStateException("Node for id space " + endIdField.getIdSpace() + " and id " + endId + " not found");
+                            throw new IllegalStateException(
+                                    "Node for id space " + endIdField.getIdSpace() + " and id " + endId + " not found");
                         }
                         final Node target = btx.getTransaction().getNodeByElementId(endInternalId.toString());
 
@@ -242,14 +274,16 @@ public class CsvEntityLoader {
                         } else {
                             currentType = type;
                         }
-                        final Relationship rel = source.createRelationshipTo(target, RelationshipType.withName(currentType));
+                        final Relationship rel =
+                                source.createRelationshipTo(target, RelationshipType.withName(currentType));
 
                         // add properties
                         int props = 0;
                         for (CsvHeaderField field : edgePropertiesFields) {
                             final String name = field.getName();
                             Object value = result.map.get(name);
-                            boolean propertyAdded = CsvPropertyConverter.addPropertyToGraphEntity(rel, field, value, clc);
+                            boolean propertyAdded =
+                                    CsvPropertyConverter.addPropertyToGraphEntity(rel, field, value, clc);
                             props += propertyAdded ? 1 : 0;
                         }
                         btx.increment();
@@ -267,21 +301,15 @@ public class CsvEntityLoader {
     }
 
     private Map<String, Mapping> getMapping(List<CsvHeaderField> fields) {
-        return fields.stream().collect(
-                Collectors.toMap(
-                        CsvHeaderField::getName,
-                        f -> {
-                            final Map<String, Object> mappingMap = Collections
-                                    .unmodifiableMap(Stream.of(
-                                            new AbstractMap.SimpleEntry<>("type", f.getType()),
-                                            new AbstractMap.SimpleEntry<>("array", f.isArray()),
-                                            new AbstractMap.SimpleEntry<>("optionalData", f.getOptionalData())
-                                    ).collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
+        return fields.stream().collect(Collectors.toMap(CsvHeaderField::getName, f -> {
+            final Map<String, Object> mappingMap = Collections.unmodifiableMap(Stream.of(
+                            new AbstractMap.SimpleEntry<>("type", f.getType()),
+                            new AbstractMap.SimpleEntry<>("array", f.isArray()),
+                            new AbstractMap.SimpleEntry<>("optionalData", f.getOptionalData()))
+                    .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
 
-                            return new Mapping(f.getName(), mappingMap, clc.getArrayDelimiter(), false);
-                        }
-                )
-        );
+            return new Mapping(f.getName(), mappingMap, clc.getArrayDelimiter(), false);
+        }));
     }
 
     private static String readFirstLine(CountingReader reader) throws IOException {
@@ -294,5 +322,4 @@ public class CsvEntityLoader {
         }
         return line;
     }
-
 }

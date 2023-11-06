@@ -30,12 +30,21 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.TerminationGuard;
 
 public class LoadJsonUtils {
-    public static Stream<MapResult> loadJsonStream(@Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary, @Name("headers") Map<String, Object> headers, @Name("payload") String payload, String path, boolean failOnError, String compressionAlgo, List<String> pathOptions, TerminationGuard terminationGuard) {
+    public static Stream<MapResult> loadJsonStream(
+            @Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary,
+            @Name("headers") Map<String, Object> headers,
+            @Name("payload") String payload,
+            String path,
+            boolean failOnError,
+            String compressionAlgo,
+            List<String> pathOptions,
+            TerminationGuard terminationGuard) {
         if (urlOrKeyOrBinary instanceof String) {
             headers = null != headers ? headers : new HashMap<>();
             headers.putAll(Util.extractCredentialsIfNeeded((String) urlOrKeyOrBinary, failOnError));
         }
-        Stream<Object> stream = JsonUtil.loadJson(urlOrKeyOrBinary,headers,payload, path, failOnError, compressionAlgo, pathOptions);
+        Stream<Object> stream =
+                JsonUtil.loadJson(urlOrKeyOrBinary, headers, payload, path, failOnError, compressionAlgo, pathOptions);
         return stream.flatMap((value) -> {
             if (terminationGuard != null) {
                 terminationGuard.check();
@@ -44,7 +53,7 @@ public class LoadJsonUtils {
                 return Stream.of(new MapResult((Map) value));
             }
             if (value instanceof List) {
-                if (((List)value).isEmpty()) return Stream.empty();
+                if (((List) value).isEmpty()) return Stream.empty();
                 if (((List) value).get(0) instanceof Map)
                     return ((List) value).stream().map((v) -> {
                         if (terminationGuard != null) {
@@ -52,12 +61,11 @@ public class LoadJsonUtils {
                         }
                         return new MapResult((Map) v);
                     });
-                return Stream.of(new MapResult(Collections.singletonMap("result",value)));
+                return Stream.of(new MapResult(Collections.singletonMap("result", value)));
             }
-            if(!failOnError)
+            if (!failOnError)
                 throw new RuntimeException("Incompatible Type " + (value == null ? "null" : value.getClass()));
-            else
-                return Stream.of(new MapResult(Collections.emptyMap()));
+            else return Stream.of(new MapResult(Collections.emptyMap()));
         });
     }
 }

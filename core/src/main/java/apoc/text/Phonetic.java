@@ -18,17 +18,16 @@
  */
 package apoc.text;
 
-import org.apache.commons.codec.language.DoubleMetaphone;
-import org.neo4j.procedure.Description;
-import org.apache.commons.codec.EncoderException;
-import org.neo4j.procedure.Name;
-import org.neo4j.procedure.Procedure;
-import org.neo4j.procedure.UserFunction;
+import static org.apache.commons.codec.language.Soundex.US_ENGLISH;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.apache.commons.codec.language.Soundex.US_ENGLISH;
+import org.apache.commons.codec.EncoderException;
+import org.apache.commons.codec.language.DoubleMetaphone;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.UserFunction;
 
 public class Phonetic {
 
@@ -45,18 +44,20 @@ public class Phonetic {
     @Description("Returns the US_ENGLISH soundex character difference between the two given `STRING` values.")
     public Stream<PhoneticResult> phoneticDelta(final @Name("text1") String text1, final @Name("text2") String text2) {
         try {
-            return Stream.of(new PhoneticResult(US_ENGLISH.soundex(text1),US_ENGLISH.soundex(text2),US_ENGLISH.difference(text1,text2)));
+            return Stream.of(new PhoneticResult(
+                    US_ENGLISH.soundex(text1), US_ENGLISH.soundex(text2), US_ENGLISH.difference(text1, text2)));
         } catch (EncoderException e) {
-            throw new RuntimeException("Error encoding text "+text1+" or "+text2+" for delta measure",e);
+            throw new RuntimeException("Error encoding text " + text1 + " or " + text2 + " for delta measure", e);
         }
     }
 
     @UserFunction("apoc.text.doubleMetaphone")
     @Description("Returns the double metaphone phonetic encoding of all words in the given `STRING` value.")
-    public String doubleMetaphone(final @Name("value") String value)
-    {
+    public String doubleMetaphone(final @Name("value") String value) {
         if (value == null || value.trim().isEmpty()) return value;
-        return Stream.of(value.split("\\W+")).map(DOUBLE_METAPHONE::doubleMetaphone).collect(Collectors.joining(""));
+        return Stream.of(value.split("\\W+"))
+                .map(DOUBLE_METAPHONE::doubleMetaphone)
+                .collect(Collectors.joining(""));
     }
 
     public static class PhoneticResult {

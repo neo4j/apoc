@@ -18,7 +18,13 @@
  */
 package org.neo4j.cypher.export;
 
+import static java.util.stream.Collectors.toMap;
+
 import apoc.util.collection.Iterables;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.stream.Stream;
 import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -28,15 +34,7 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.internal.kernel.api.TokenRead;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toMap;
-
-public interface SubGraph
-{
+public interface SubGraph {
     Iterable<Node> getNodes();
 
     Iterable<Relationship> getRelationships();
@@ -64,9 +62,7 @@ public interface SubGraph
         if (CollectionUtils.isNotEmpty(relTypeNames)) {
             stream = stream.filter(rel -> relTypeNames.contains(rel.name()));
         }
-        return stream
-                .map(RelationshipType::name)
-                .collect(toMap(t -> t, ops::relationshipType));
+        return stream.map(RelationshipType::name).collect(toMap(t -> t, ops::relationshipType));
     }
 
     default Map<String, Integer> labelsInUse(TokenRead ops, Collection<String> labelNames) {
@@ -74,9 +70,7 @@ public interface SubGraph
         if (CollectionUtils.isNotEmpty(labelNames)) {
             stream = stream.filter(rel -> labelNames.contains(rel.name()));
         }
-        return stream
-                .map(Label::name)
-                .collect(toMap(t -> t, ops::nodeLabel));
+        return stream.map(Label::name).collect(toMap(t -> t, ops::nodeLabel));
     }
 
     /**
@@ -121,5 +115,4 @@ public interface SubGraph
     }
 
     long countsForNode(Label label);
-
 }

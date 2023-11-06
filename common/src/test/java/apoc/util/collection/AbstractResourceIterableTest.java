@@ -70,7 +70,7 @@ public class AbstractResourceIterableTest {
         final var iterator = iterable.iterator();
 
         // Then
-        assertThat( Iterators.asList(iterator)).containsExactlyElementsOf(items);
+        assertThat(Iterators.asList(iterator)).containsExactlyElementsOf(items);
         assertTrue(iteratorClosed.booleanValue());
         assertFalse(iterableClosed.booleanValue());
     }
@@ -87,7 +87,7 @@ public class AbstractResourceIterableTest {
             @Override
             protected ResourceIterator<Integer> newIterator() {
                 iteratorCount.increment();
-                return resourceIterator( asIterator(0), Resource.EMPTY);
+                return resourceIterator(asIterator(0), Resource.EMPTY);
             }
 
             @Override
@@ -121,8 +121,7 @@ public class AbstractResourceIterableTest {
             protected ResourceIterator<Integer> newIterator() {
                 var pos = created;
                 created++;
-                return resourceIterator(
-                        asIterator(0), () -> iteratorsClosed.set(pos, true));
+                return resourceIterator(asIterator(0), () -> iteratorsClosed.set(pos, true));
             }
         };
         iterable.iterator();
@@ -146,7 +145,7 @@ public class AbstractResourceIterableTest {
         final var iterable = new AbstractResourceIterable<Integer>() {
             @Override
             protected ResourceIterator<Integer> newIterator() {
-                return resourceIterator( asIterator(0), iteratorsClosed::increment);
+                return resourceIterator(asIterator(0), iteratorsClosed::increment);
             }
         };
         final var iterator1 = iterable.iterator();

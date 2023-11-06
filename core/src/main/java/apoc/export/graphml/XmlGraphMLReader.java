@@ -22,18 +22,6 @@ import apoc.export.util.BatchTransaction;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.Reporter;
 import apoc.util.JsonUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.neo4j.graphdb.*;
-import org.neo4j.procedure.TerminationGuard;
-
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.Attribute;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.util.AbstractMap;
@@ -42,6 +30,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+import org.apache.commons.lang3.StringUtils;
+import org.neo4j.graphdb.*;
+import org.neo4j.procedure.TerminationGuard;
 
 /**
  * Created by mh on 10.07.13.
@@ -108,64 +107,69 @@ public class XmlGraphMLReader {
             }
 
             Object parseList(String value) {
-                return Type.parseList(value, Boolean.class, (i) -> (Boolean)i);
+                return Type.parseList(value, Boolean.class, (i) -> (Boolean) i);
             }
-        }, INT() {
+        },
+        INT() {
             Object parse(String value) {
                 return Integer.parseInt(value);
             }
 
             Object parseList(String value) {
-                return Type.parseList(value, Integer.class, (n) -> ((Number)n).intValue());
+                return Type.parseList(value, Integer.class, (n) -> ((Number) n).intValue());
             }
-        }, LONG() {
+        },
+        LONG() {
             Object parse(String value) {
                 return Long.parseLong(value);
             }
 
             Object parseList(String value) {
-                return Type.parseList(value, Long.class, (i) -> ((Number)i).longValue());
+                return Type.parseList(value, Long.class, (i) -> ((Number) i).longValue());
             }
-        }, FLOAT() {
+        },
+        FLOAT() {
             Object parse(String value) {
                 return Float.parseFloat(value);
             }
 
             Object parseList(String value) {
-                return Type.parseList(value, Float.class, (i) -> ((Number)i).floatValue());
+                return Type.parseList(value, Float.class, (i) -> ((Number) i).floatValue());
             }
-        }, DOUBLE() {
+        },
+        DOUBLE() {
             Object parse(String value) {
                 return Double.parseDouble(value);
             }
 
             Object parseList(String value) {
-                return Type.parseList(value, Double.class, (i) -> ((Number)i).doubleValue());
+                return Type.parseList(value, Double.class, (i) -> ((Number) i).doubleValue());
             }
-        }, STRING() {
+        },
+        STRING() {
             Object parse(String value) {
                 return value;
             }
 
             Object parseList(String value) {
-                return Type.parseList(value, String.class, (i) -> (String)i);
+                return Type.parseList(value, String.class, (i) -> (String) i);
             }
         };
 
         abstract Object parse(String value);
+
         abstract Object parseList(String value);
 
         public static <T> T[] parseList(String value, Class<T> asClass, Function<Object, T> convert) {
             List parsed = JsonUtil.parse(value, null, List.class);
-            T[] converted = (T[])Array.newInstance(asClass, parsed.size());
+            T[] converted = (T[]) Array.newInstance(asClass, parsed.size());
 
-            for (int i = 0; i < parsed.size(); i++)
-                converted[i] = convert.apply(parsed.get(i));
+            for (int i = 0; i < parsed.size(); i++) converted[i] = convert.apply(parsed.get(i));
             return converted;
         }
 
         public static Type forType(String type) {
-            if (type==null) return STRING;
+            if (type == null) return STRING;
             return valueOf(type.trim().toUpperCase());
         }
     }
@@ -187,7 +191,7 @@ public class XmlGraphMLReader {
         }
 
         private static Key defaultKey(String id, boolean forNode) {
-            return new Key(id,"string", null, forNode ? "node" : "edge");
+            return new Key(id, "string", null, forNode ? "node" : "edge");
         }
 
         public void setDefault(String data) {
@@ -215,7 +219,7 @@ public class XmlGraphMLReader {
     }
 
     public long parseXML(Reader input, TerminationGuard terminationGuard) throws XMLStreamException {
-        Map<String, String> cache = new HashMap<>(1024*32);
+        Map<String, String> cache = new HashMap<>(1024 * 32);
         XMLInputFactory inputFactory = XMLInputFactory.newInstance();
         inputFactory.setProperty("javax.xml.stream.isCoalescing", true);
         inputFactory.setProperty(XMLInputFactory.IS_NAMESPACE_AWARE, true);
@@ -234,7 +238,7 @@ public class XmlGraphMLReader {
                 XMLEvent event;
                 try {
                     event = (XMLEvent) reader.next();
-                    if ( event.getEventType() == XMLStreamConstants.DTD) {
+                    if (event.getEventType() == XMLStreamConstants.DTD) {
                         generateXmlDoctypeException();
                     }
                 } catch (Exception e) {
@@ -254,10 +258,18 @@ public class XmlGraphMLReader {
                     if (name.equals("graphml") || name.equals("graph")) continue;
                     if (name.equals("key")) {
                         String id = getAttribute(element, ID);
-                        Key key = new Key(getAttribute(element, NAME), getAttribute(element, TYPE), getAttribute(element, LIST), getAttribute(element, FOR));
+                        Key key = new Key(
+                                getAttribute(element, NAME),
+                                getAttribute(element, TYPE),
+                                getAttribute(element, LIST),
+                                getAttribute(element, FOR));
 
                         XMLEvent next = peek(reader);
-                        if (next.isStartElement() && next.asStartElement().getName().getLocalPart().equals("default")) {
+                        if (next.isStartElement()
+                                && next.asStartElement()
+                                        .getName()
+                                        .getLocalPart()
+                                        .equals("default")) {
                             reader.nextEvent().asStartElement();
                             key.setDefault(reader.nextEvent().asCharacters().getData());
                         }
@@ -276,7 +288,7 @@ public class XmlGraphMLReader {
                         final Object value = eventEntry.getValue();
                         if (value != null) {
                             if (this.labels && isNode && id.equals("labels")) {
-                                addLabels((Node)last,value.toString());
+                                addLabels((Node) last, value.toString());
                             } else if (!this.labels || isNode || !id.equals("label")) {
                                 last.setProperty(key.nameOrId, value);
                                 if (reporter != null) reporter.update(0, 0, 1);
@@ -309,7 +321,8 @@ public class XmlGraphMLReader {
                         Node from = getByNodeId(cache, tx.getTransaction(), element, XmlNodeExport.NodeType.SOURCE);
                         Node to = getByNodeId(cache, tx.getTransaction(), element, XmlNodeExport.NodeType.TARGET);
 
-                        RelationshipType relationshipType = label == null ? getRelationshipType(reader) : RelationshipType.withName(label);
+                        RelationshipType relationshipType =
+                                label == null ? getRelationshipType(reader) : RelationshipType.withName(label);
                         Relationship relationship = from.createRelationshipTo(to, relationshipType);
                         setDefaults(relKeys, relationship);
                         last = relationship;
@@ -322,7 +335,7 @@ public class XmlGraphMLReader {
         } catch (Exception e) {
             tx.rollback();
             throw e;
-        } finally { 
+        } finally {
             tx.close();
         }
         return count;
@@ -330,7 +343,7 @@ public class XmlGraphMLReader {
 
     private Map.Entry<XMLEvent, Object> getDataEventEntry(XMLEventReader reader, Key key) {
         Object value = key.defaultValue;
-        
+
         final Map.Entry<XMLEvent, String> peekEntry = peekRecursively(reader, null);
         if (peekEntry.getValue() != null) {
             value = key.parseValue(peekEntry.getValue());
@@ -344,11 +357,10 @@ public class XmlGraphMLReader {
             // in case of char, we concat the result to the current value and redo the peek
             //  in order to obtain e.g. from a string "ab<invalid_char>cd<invalid_char>ef" --> "abcdef"
             if (peek.isCharacters()) {
-                data = StringUtils.join(data,
-                        reader.nextEvent().asCharacters().getData());
+                data = StringUtils.join(data, reader.nextEvent().asCharacters().getData());
                 return peekRecursively(reader, data);
             }
-            // in case the event is not a char we continue setting labels/properties 
+            // in case the event is not a char we continue setting labels/properties
             return new AbstractMap.SimpleEntry<>(peek, data);
         } catch (Exception e) {
             // in case of unicode invalid chars we continue until we get a valid event
@@ -356,25 +368,28 @@ public class XmlGraphMLReader {
         }
     }
 
-    private Node getByNodeId(Map<String, String> cache, Transaction tx, StartElement element, XmlNodeExport.NodeType nodeType) {
+    private Node getByNodeId(
+            Map<String, String> cache, Transaction tx, StartElement element, XmlNodeExport.NodeType nodeType) {
         final XmlNodeExport.ExportNode xmlNodeInterface = nodeType.get();
         final ExportConfig.NodeConfig nodeConfig = xmlNodeInterface.getNodeConfigReader(this);
-        
+
         final String sourceTargetValue = getAttribute(element, QName.valueOf(nodeType.getName()));
-        
+
         final String id = cache.get(sourceTargetValue);
         // without source/target config, we look for the internal id
         if (StringUtils.isBlank(nodeConfig.label)) {
             return tx.getNodeByElementId(id);
         }
-        // with source/target configured, we search a node with a specified label 
+        // with source/target configured, we search a node with a specified label
         // and with a type specified in sourceType, if present, or string by default
         final String attribute = getAttribute(element, QName.valueOf(nodeType.getNameType()));
-        final Object value = attribute == null 
-                ? sourceTargetValue 
-                : Type.forType(attribute).parse(sourceTargetValue);
-        
-        return tx.findNode(Label.label(nodeConfig.label), Optional.ofNullable(nodeConfig.id).orElse("id"), value);
+        final Object value =
+                attribute == null ? sourceTargetValue : Type.forType(attribute).parse(sourceTargetValue);
+
+        return tx.findNode(
+                Label.label(nodeConfig.label),
+                Optional.ofNullable(nodeConfig.id).orElse("id"),
+                value);
     }
 
     private RelationshipType getRelationshipType(XMLEventReader reader) throws XMLStreamException {
@@ -388,9 +403,7 @@ public class XmlGraphMLReader {
                 return RelationshipType.withName(typeRel.trim());
             }
 
-            boolean notStartElementOrContainsKeyLabel = isChar
-                    || !peek.isStartElement()
-                    || containsLabelKey(peek);
+            boolean notStartElementOrContainsKeyLabel = isChar || !peek.isStartElement() || containsLabelKey(peek);
 
             if (!peek.isEndDocument() && notStartElementOrContainsKeyLabel) {
                 reader.nextEvent();
@@ -407,7 +420,7 @@ public class XmlGraphMLReader {
     }
 
     private void addLabels(Node node, String labels) {
-        if (labels==null) return;
+        if (labels == null) return;
         labels = labels.trim();
         if (labels.isEmpty()) return;
         String[] parts = labels.split(LABEL_SPLIT);
@@ -429,7 +442,7 @@ public class XmlGraphMLReader {
     private void setDefaults(Map<String, Key> keys, Entity pc) {
         if (keys.isEmpty()) return;
         for (Key key : keys.values()) {
-            if (key.defaultValue!=null) pc.setProperty(key.nameOrId,key.defaultValue);
+            if (key.defaultValue != null) pc.setProperty(key.nameOrId, key.defaultValue);
         }
     }
 

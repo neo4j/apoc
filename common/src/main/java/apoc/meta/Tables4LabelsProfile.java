@@ -18,21 +18,20 @@
  */
 package apoc.meta;
 
-import apoc.meta.tablesforlabels.PropertyContainerProfile;
 import apoc.meta.tablesforlabels.OrderedLabels;
+import apoc.meta.tablesforlabels.PropertyContainerProfile;
 import apoc.meta.tablesforlabels.PropertyTracker;
-import org.neo4j.graphdb.*;
-
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import java.util.stream.Collectors;
+import org.neo4j.graphdb.*;
 
 public class Tables4LabelsProfile {
     Map<OrderedLabels, PropertyContainerProfile> labelMap;
     Map<String, PropertyContainerProfile> relMap;
-    Map<OrderedLabels,Long> obsByNode;
-    Map<String,Long> obsByRelType;
+    Map<OrderedLabels, Long> obsByNode;
+    Map<String, Long> obsByRelType;
 
     /**
      * DAO class that the stored procedure returns
@@ -46,7 +45,14 @@ public class Tables4LabelsProfile {
         public long propertyObservations;
         public long totalObservations;
 
-        public NodeTypePropertiesEntry(String nodeType, List<String> nodeLabels, String propertyName, List<String>propertyTypes, boolean mandatory, long propertyObservations, long totalObservations) {
+        public NodeTypePropertiesEntry(
+                String nodeType,
+                List<String> nodeLabels,
+                String propertyName,
+                List<String> propertyTypes,
+                boolean mandatory,
+                long propertyObservations,
+                long totalObservations) {
             this.nodeType = nodeType;
             this.nodeLabels = nodeLabels;
             this.propertyName = propertyName;
@@ -62,12 +68,20 @@ public class Tables4LabelsProfile {
         public List<String> sourceNodeLabels;
         public List<String> targetNodeLabels;
         public String propertyName;
-        public List<String>propertyTypes;
+        public List<String> propertyTypes;
         public boolean mandatory;
         public long propertyObservations;
         public long totalObservations;
 
-        public RelTypePropertiesEntry(String relType, List<String> sourceNodeLabels, List<String> targetNodeLabels, String propertyName, List<String>propertyTypes, boolean mandatory, long propertyObservations, long totalObservations) {
+        public RelTypePropertiesEntry(
+                String relType,
+                List<String> sourceNodeLabels,
+                List<String> targetNodeLabels,
+                String propertyName,
+                List<String> propertyTypes,
+                boolean mandatory,
+                long propertyObservations,
+                long totalObservations) {
             this.relType = relType;
             this.sourceNodeLabels = sourceNodeLabels;
             this.targetNodeLabels = targetNodeLabels;
@@ -129,9 +143,7 @@ public class Tables4LabelsProfile {
     }
 
     public static String labelJoin(Iterable<Label> labels) {
-        return StreamSupport.stream(labels.spliterator(), true)
-        .map(Label::name)
-        .collect(Collectors.joining("@@@"));
+        return StreamSupport.stream(labels.spliterator(), true).map(Label::name).collect(Collectors.joining("@@@"));
     }
 
     public static class decipherRelMap {
@@ -140,11 +152,13 @@ public class Tables4LabelsProfile {
             List<String> sourceNodeLabels = Arrays.asList(components[0].split("@@@"));
             return sourceNodeLabels;
         }
+
         public static List<String> getTargetLabels(String relMapIdentifier) {
             String[] components = relMapIdentifier.split("###");
             List<String> targetNodeLabels = Arrays.asList(components[1].split("@@@"));
             return targetNodeLabels;
         }
+
         public static String getRelType(String relMapIdentifier) {
             String[] components = relMapIdentifier.split("###");
             String relTypeName = components[2];
@@ -169,12 +183,14 @@ public class Tables4LabelsProfile {
         for (RelationshipType type : n.getRelationshipTypes()) {
             String typeName = type.name();
 
-            if (!config.matches(type)) { continue; }
+            if (!config.matches(type)) {
+                continue;
+            }
 
             int out = n.getDegree(type, Direction.OUTGOING);
             if (out == 0) continue;
 
-            for(Relationship r : n.getRelationships(Direction.OUTGOING, type)) {
+            for (Relationship r : n.getRelationships(Direction.OUTGOING, type)) {
                 Iterable relStartNode = r.getStartNode().getLabels();
                 Iterable relEndNode = r.getEndNode().getLabels();
 
@@ -200,7 +216,7 @@ public class Tables4LabelsProfile {
             prof.finished();
         }
 
-        for(PropertyContainerProfile prof : relMap.values()) {
+        for (PropertyContainerProfile prof : relMap.values()) {
             prof.finished();
         }
 
@@ -209,21 +225,16 @@ public class Tables4LabelsProfile {
 
     public Stream<NodeTypePropertiesEntry> asNodeStream() {
         Set<OrderedLabels> labels = labelMap.keySet();
-        List<NodeTypePropertiesEntry> results = new ArrayList<>( 100 );
+        List<NodeTypePropertiesEntry> results = new ArrayList<>(100);
 
-        for(OrderedLabels ol : labels) {
+        for (OrderedLabels ol : labels) {
             PropertyContainerProfile prof = labelMap.get(ol);
             Long totalObservations = obsByNode.get(ol);
 
             // Base case: the node never had any properties.
             if (prof.propertyNames().size() == 0) {
                 results.add(new NodeTypePropertiesEntry(
-                        ol.asNodeType(),
-                        ol.nodeLabels(),
-                        null,
-                        null,
-                        false, 0L,
-                        totalObservations));
+                        ol.asNodeType(), ol.nodeLabels(), null, null, false, 0L, totalObservations));
                 continue;
             }
 

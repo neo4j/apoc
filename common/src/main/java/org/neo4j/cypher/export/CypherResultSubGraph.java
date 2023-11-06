@@ -18,19 +18,18 @@
  */
 package org.neo4j.cypher.export;
 
+import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
+
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.security.AuthorizationViolationException;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 
 public class CypherResultSubGraph implements SubGraph {
 
@@ -103,11 +102,12 @@ public class CypherResultSubGraph implements SubGraph {
             }
         }
         for (ConstraintDefinition def : tx.schema().getConstraints()) {
-            if (Util.isNodeCategory( def.getConstraintType() ) && graph.getLabels().contains(def.getLabel())) {
+            if (Util.isNodeCategory(def.getConstraintType())
+                    && graph.getLabels().contains(def.getLabel())) {
                 graph.addConstraint(def);
-            }
-            else if ( Util.isRelationshipCategory( def.getConstraintType() ) &&  graph.getTypes().contains(def.getRelationshipType())) {
-                graph.addConstraint( def );
+            } else if (Util.isRelationshipCategory(def.getConstraintType())
+                    && graph.getTypes().contains(def.getRelationshipType())) {
+                graph.addConstraint(def);
             }
         }
 
@@ -212,7 +212,8 @@ public class CypherResultSubGraph implements SubGraph {
     public Iterable<IndexDefinition> getIndexes(Label label) {
         return indexes.stream()
                 .filter(IndexDefinition::isNodeIndex)
-                .filter(idx -> StreamSupport.stream(idx.getLabels().spliterator(), false).anyMatch(lb -> lb.equals(label)))
+                .filter(idx -> StreamSupport.stream(idx.getLabels().spliterator(), false)
+                        .anyMatch(lb -> lb.equals(label)))
                 .collect(Collectors.toSet());
     }
 
@@ -249,15 +250,11 @@ public class CypherResultSubGraph implements SubGraph {
 
     @Override
     public long countsForNode(Label label) {
-        return nodes.values().stream()
-                .filter(n -> n.hasLabel(label))
-                .count();
+        return nodes.values().stream().filter(n -> n.hasLabel(label)).count();
     }
 
     @Override
     public Iterator<Node> findNodes(Label label) {
-        return nodes.values().stream()
-                .filter(n -> n.hasLabel(label))
-                .iterator();
+        return nodes.values().stream().filter(n -> n.hasLabel(label)).iterator();
     }
 }

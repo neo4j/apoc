@@ -18,6 +18,10 @@
  */
 package apoc.export.cypher;
 
+import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_LABEL;
+import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_NAME;
+import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
+
 import apoc.export.cypher.formatter.CypherFormatter;
 import apoc.export.cypher.formatter.CypherFormatterUtils;
 import apoc.export.util.ExportConfig;
@@ -25,21 +29,16 @@ import apoc.export.util.ExportFormat;
 import apoc.export.util.Reporter;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import java.io.PrintWriter;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
-
-import java.io.PrintWriter;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_LABEL;
-import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_NAME;
-import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
 
 /*
  * Idea is to lookup nodes for relationships via a unique index
@@ -52,7 +51,7 @@ public class MultiStatementCypherSubGraphExporter {
 
     private final SubGraph graph;
     private final Map<String, Set<String>> uniqueConstraints = new HashMap<>();
-    private Set<String> indexNames        = new LinkedHashSet<>();
+    private Set<String> indexNames = new LinkedHashSet<>();
     private Set<String> indexedProperties = new LinkedHashSet<>();
     private Long artificialUniques = 0L;
 
@@ -175,7 +174,8 @@ public class MultiStatementCypherSubGraphExporter {
 
     private void exportRelationshipsUnwindBatch(PrintWriter out, Reporter reporter) {
         if (graph.getRelationships().iterator().hasNext()) {
-            this.cypherFormat.statementForRelationships(graph.getRelationships(), uniqueConstraints, exportConfig, out, reporter, db);
+            this.cypherFormat.statementForRelationships(
+                    graph.getRelationships(), uniqueConstraints, exportConfig, out, reporter, db);
             out.flush();
         }
     }
@@ -191,7 +191,8 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void appendRelationship(PrintWriter out, Relationship rel, Reporter reporter) {
-        String cypher = this.cypherFormat.statementForRelationship(rel, uniqueConstraints, indexedProperties, exportConfig);
+        String cypher =
+                this.cypherFormat.statementForRelationship(rel, uniqueConstraints, indexedProperties, exportConfig);
         if (cypher != null && !"".equals(cypher)) {
             out.println(cypher);
             reporter.update(0, 1, Iterables.count(rel.getPropertyKeys()));
@@ -210,7 +211,12 @@ public class MultiStatementCypherSubGraphExporter {
             out.println(index);
         }
         if (artificialUniques > 0) {
-            String cypher = this.cypherFormat.statementForCreateConstraint(UNIQUE_ID_NAME, UNIQUE_ID_LABEL, Collections.singleton(UNIQUE_ID_PROP), ConstraintType.UNIQUENESS, config.ifNotExists());
+            String cypher = this.cypherFormat.statementForCreateConstraint(
+                    UNIQUE_ID_NAME,
+                    UNIQUE_ID_LABEL,
+                    Collections.singleton(UNIQUE_ID_PROP),
+                    ConstraintType.UNIQUENESS,
+                    config.ifNotExists());
             if (cypher != null && !"".equals(cypher)) {
                 out.println(cypher);
             }
@@ -237,9 +243,13 @@ public class MultiStatementCypherSubGraphExporter {
                     Iterable<String> props = index.getPropertyKeys();
                     List<String> tokenNames;
                     if (isNodeIndex) {
-                        tokenNames = Iterables.stream(index.getLabels()).map(Label::name).collect(Collectors.toList());
+                        tokenNames = Iterables.stream(index.getLabels())
+                                .map(Label::name)
+                                .collect(Collectors.toList());
                     } else {
-                        tokenNames = Iterables.stream(index.getRelationshipTypes()).map(RelationshipType::name).collect(Collectors.toList());
+                        tokenNames = Iterables.stream(index.getRelationshipTypes())
+                                .map(RelationshipType::name)
+                                .collect(Collectors.toList());
                     }
 
                     boolean inGraph = tokensInGraph(tokenNames);
@@ -248,28 +258,28 @@ public class MultiStatementCypherSubGraphExporter {
                     }
 
                     if (index.isConstraintIndex()) {
-                        return null;  // delegate to the constraint creation
+                        return null; // delegate to the constraint creation
                     }
 
                     if (indexType == IndexType.FULLTEXT) {
                         if (isNodeIndex) {
                             return this.cypherFormat.statementForNodeFullTextIndex(name, index.getLabels(), props);
                         } else {
-                            return this.cypherFormat.statementForRelationshipFullTextIndex(name, index.getRelationshipTypes(), props);
+                            return this.cypherFormat.statementForRelationshipFullTextIndex(
+                                    name, index.getRelationshipTypes(), props);
                         }
                     }
                     // "normal" schema index
-                    String idxName = exportConfig.shouldSaveIndexNames()
-                            ? " " + name
-                            : StringUtils.EMPTY;
+                    String idxName = exportConfig.shouldSaveIndexNames() ? " " + name : StringUtils.EMPTY;
                     String tokenName = tokenNames.get(0);
                     final boolean ifNotExist = exportConfig.ifNotExists();
                     if (isNodeIndex) {
-                        return this.cypherFormat.statementForNodeIndex(indexType.toString(), tokenName, props, ifNotExist, idxName);
+                        return this.cypherFormat.statementForNodeIndex(
+                                indexType.toString(), tokenName, props, ifNotExist, idxName);
                     } else {
-                        return this.cypherFormat.statementForIndexRelationship(indexType.toString(), tokenName, props, ifNotExist, idxName);
+                        return this.cypherFormat.statementForIndexRelationship(
+                                indexType.toString(), tokenName, props, ifNotExist, idxName);
                     }
-
                 })
                 .filter(StringUtils::isNotBlank)
                 .sorted()
@@ -277,32 +287,34 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private boolean tokensInGraph(List<String> tokens) {
-        return StreamSupport.stream(graph.getIndexes().spliterator(), false)
-                .anyMatch(indexDefinition -> {
-                    if (indexDefinition.isRelationshipIndex()) {
-                        List<String> typeNames = StreamSupport.stream(indexDefinition.getRelationshipTypes().spliterator(), false)
-                                .map(RelationshipType::name)
-                                .collect(Collectors.toList());
-                        return typeNames.containsAll(tokens);
-                    } else {
-                        List<String> labelNames = StreamSupport.stream(indexDefinition.getLabels().spliterator(), false)
-                                .map(Label::name)
-                                .collect(Collectors.toList());
-                        return labelNames.containsAll(tokens);
-                    }
-                });
+        return StreamSupport.stream(graph.getIndexes().spliterator(), false).anyMatch(indexDefinition -> {
+            if (indexDefinition.isRelationshipIndex()) {
+                List<String> typeNames = StreamSupport.stream(
+                                indexDefinition.getRelationshipTypes().spliterator(), false)
+                        .map(RelationshipType::name)
+                        .collect(Collectors.toList());
+                return typeNames.containsAll(tokens);
+            } else {
+                List<String> labelNames = StreamSupport.stream(
+                                indexDefinition.getLabels().spliterator(), false)
+                        .map(Label::name)
+                        .collect(Collectors.toList());
+                return labelNames.containsAll(tokens);
+            }
+        });
     }
 
     private List<String> exportConstraints() {
         return StreamSupport.stream(graph.getConstraints().spliterator(), false)
-                .map(constraint-> {
+                .map(constraint -> {
                     String name = constraint.getName();
                     ConstraintType type = constraint.getConstraintType();
                     String label = Util.isNodeCategory(type)
                             ? constraint.getLabel().name()
                             : constraint.getRelationshipType().name();
                     Iterable<String> props = constraint.getPropertyKeys();
-                    return this.cypherFormat.statementForCreateConstraint(name, label, props, type, exportConfig.ifNotExists());
+                    return this.cypherFormat.statementForCreateConstraint(
+                            name, label, props, type, exportConfig.ifNotExists());
                 })
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toList());
@@ -337,7 +349,7 @@ public class MultiStatementCypherSubGraphExporter {
         out.print(exportFormat.begin());
     }
 
-    private void schemaAwait(PrintWriter out){
+    private void schemaAwait(PrintWriter out) {
         out.print(exportFormat.schemaAwait());
     }
 
@@ -346,7 +358,7 @@ public class MultiStatementCypherSubGraphExporter {
         begin(out);
     }
 
-    public void commit(PrintWriter out){
+    public void commit(PrintWriter out) {
         out.print(exportFormat.commit());
     }
 
@@ -361,13 +373,14 @@ public class MultiStatementCypherSubGraphExporter {
             Set<String> label = StreamSupport.stream(indexDefinition.getLabels().spliterator(), false)
                     .map(Label::name)
                     .collect(Collectors.toSet());
-            Set<String> props = StreamSupport
-                    .stream(indexDefinition.getPropertyKeys().spliterator(), false)
+            Set<String> props = StreamSupport.stream(
+                            indexDefinition.getPropertyKeys().spliterator(), false)
                     .collect(Collectors.toSet());
             indexNames.add(indexDefinition.getName());
             indexedProperties.addAll(props);
             if (indexDefinition.isConstraintIndex()) { // we use the constraint that have few properties
-                uniqueConstraints.compute(String.join(":", label), (k, v) ->  v == null || v.size() > props.size() ? props : v);
+                uniqueConstraints.compute(
+                        String.join(":", label), (k, v) -> v == null || v.size() > props.size() ? props : v);
             }
         }
     }

@@ -18,10 +18,13 @@
  */
 package org.neo4j.cypher.export;
 
-import java.util.Comparator;
-import java.util.stream.StreamSupport;
+import static apoc.export.cypher.formatter.CypherFormatterUtils.cypherNode;
+import static apoc.util.Util.quote;
 
 import apoc.util.Util;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -30,43 +33,34 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 
-import java.util.Iterator;
-
-import static apoc.export.cypher.formatter.CypherFormatterUtils.cypherNode;
-import static apoc.util.Util.quote;
-
-public class DatabaseSubGraph implements SubGraph
-{
+public class DatabaseSubGraph implements SubGraph {
     private final Transaction transaction;
 
-    public DatabaseSubGraph( Transaction transaction )
-    {
+    public DatabaseSubGraph(Transaction transaction) {
         this.transaction = transaction;
     }
 
     @Override
-    public Iterable<Node> getNodes()
-    {
+    public Iterable<Node> getNodes() {
         return transaction.getAllNodes();
     }
 
     @Override
-    public Iterable<Relationship> getRelationships()
-    {
+    public Iterable<Relationship> getRelationships() {
         return transaction.getAllRelationships();
     }
 
     @Override
-    public Iterable<IndexDefinition> getIndexes()
-    {
+    public Iterable<IndexDefinition> getIndexes() {
         return Util.getIndexes(transaction);
     }
 
     @Override
-    public Iterable<ConstraintDefinition> getConstraints()
-    {
+    public Iterable<ConstraintDefinition> getConstraints() {
         Comparator<ConstraintDefinition> comp = Comparator.comparing(ConstraintDefinition::getName);
-        return StreamSupport.stream( transaction.schema().getConstraints().spliterator(), false ).sorted(comp).toList();
+        return StreamSupport.stream(transaction.schema().getConstraints().spliterator(), false)
+                .sorted(comp)
+                .toList();
     }
 
     @Override
@@ -104,14 +98,16 @@ public class DatabaseSubGraph implements SubGraph
         String startNode = cypherNode(start);
         String endNode = cypherNode(end);
         String relationship = String.format("[r:%s]", quote(type.name()));
-        return transaction.execute(String.format("MATCH %s-%s->%s RETURN count(r) AS count", startNode, relationship, endNode))
+        return transaction
+                .execute(String.format("MATCH %s-%s->%s RETURN count(r) AS count", startNode, relationship, endNode))
                 .<Long>columnAs("count")
                 .next();
     }
 
     @Override
     public long countsForNode(Label label) {
-        return transaction.execute(String.format("MATCH (n:%s) RETURN count(n) AS count", quote(label.name())))
+        return transaction
+                .execute(String.format("MATCH (n:%s) RETURN count(n) AS count", quote(label.name())))
                 .<Long>columnAs("count")
                 .next();
     }

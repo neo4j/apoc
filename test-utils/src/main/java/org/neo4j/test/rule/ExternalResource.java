@@ -26,46 +26,30 @@ import org.junit.runners.model.Statement;
  * A better version of {@link org.junit.rules.ExternalResource} that properly handles exceptions in {@link
  * #after()}.
  */
-public abstract class ExternalResource implements TestRule
-{
+public abstract class ExternalResource implements TestRule {
     @Override
-    public Statement apply( final Statement base, Description description )
-    {
-        return new Statement()
-        {
+    public Statement apply(final Statement base, Description description) {
+        return new Statement() {
             @Override
-            public void evaluate() throws Throwable
-            {
+            public void evaluate() throws Throwable {
                 before();
                 Throwable failure = null;
-                try
-                {
+                try {
                     base.evaluate();
-                }
-                catch ( Throwable e )
-                {
+                } catch (Throwable e) {
                     failure = e;
-                }
-                finally
-                {
-                    try
-                    {
+                } finally {
+                    try {
                         after();
-                    }
-                    catch ( Throwable e )
-                    {
-                        if ( failure != null )
-                        {
-                            failure.addSuppressed( e );
-                        }
-                        else
-                        {
+                    } catch (Throwable e) {
+                        if (failure != null) {
+                            failure.addSuppressed(e);
+                        } else {
                             failure = e;
                         }
                     }
                 }
-                if ( failure != null )
-                {
+                if (failure != null) {
                     throw failure;
                 }
             }
@@ -75,16 +59,14 @@ public abstract class ExternalResource implements TestRule
     /**
      * Override to set up your specific external resource.
      */
-    protected void before()
-    {
+    protected void before() {
         // do nothing
     }
 
     /**
      * Override to tear down your specific external resource.
      */
-    protected void after()
-    {
+    protected void after() {
         // do nothing
     }
 }

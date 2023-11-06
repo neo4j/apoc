@@ -18,14 +18,13 @@
  */
 package apoc.graph.document.builder;
 
-import apoc.graph.util.GraphsConfig;
-import org.neo4j.graphdb.Label;
+import static org.apache.commons.text.WordUtils.capitalizeFully;
 
+import apoc.graph.util.GraphsConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static org.apache.commons.text.WordUtils.capitalizeFully;
+import org.neo4j.graphdb.Label;
 
 public class LabelBuilder {
 
@@ -43,10 +42,9 @@ public class LabelBuilder {
             rawLabels.add(obj.get(config.getLabelField()).toString());
         }
         rawLabels.addAll(config.labelsForPath(path));
-        return rawLabels.stream().map(label -> Label.label(capitalizeFully(label, '_', ' ')
-                .replaceAll("_", "")
-                .replaceAll(" ", "")))
+        return rawLabels.stream()
+                .map(label -> Label.label(
+                        capitalizeFully(label, '_', ' ').replaceAll("_", "").replaceAll(" ", "")))
                 .toArray(Label[]::new);
     }
-
 }
