@@ -66,7 +66,7 @@ public class IterablesTest {
         final var iterable = new AbstractResourceIterable<Integer>() {
             @Override
             protected ResourceIterator<Integer> newIterator() {
-                return newResourceIterator( emptyResourceIterator(), iteratorClosed::setTrue);
+                return newResourceIterator(emptyResourceIterator(), iteratorClosed::setTrue);
             }
 
             @Override

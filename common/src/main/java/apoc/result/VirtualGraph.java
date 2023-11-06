@@ -19,14 +19,13 @@
 package apoc.result;
 
 import apoc.util.MapUtil;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 
 /**
  * @author mh
@@ -34,15 +33,24 @@ import java.util.stream.StreamSupport;
  */
 public class VirtualGraph {
 
-    public final Map<String,Object> graph;
+    public final Map<String, Object> graph;
 
-    public VirtualGraph(String name, Iterable<Node> nodes, Iterable<Relationship> relationships, Map<String,Object> properties) {
-        this.graph = MapUtil.map("name", name,
-                "nodes", nodes instanceof Set ? nodes : StreamSupport.stream(nodes.spliterator(), false)
-                        .collect(Collectors.toSet()),
-                "relationships", relationships instanceof Set ? relationships : StreamSupport.stream(relationships.spliterator(), false)
-                        .collect(Collectors.toSet()),
-                "properties", properties);
+    public VirtualGraph(
+            String name, Iterable<Node> nodes, Iterable<Relationship> relationships, Map<String, Object> properties) {
+        this.graph = MapUtil.map(
+                "name",
+                name,
+                "nodes",
+                nodes instanceof Set
+                        ? nodes
+                        : StreamSupport.stream(nodes.spliterator(), false).collect(Collectors.toSet()),
+                "relationships",
+                relationships instanceof Set
+                        ? relationships
+                        : StreamSupport.stream(relationships.spliterator(), false)
+                                .collect(Collectors.toSet()),
+                "properties",
+                properties);
     }
 
     public Collection<Node> nodes() {

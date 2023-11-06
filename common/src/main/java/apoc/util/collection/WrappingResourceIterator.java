@@ -19,8 +19,8 @@
 package apoc.util.collection;
 
 import java.util.Iterator;
-class WrappingResourceIterator<T> extends PrefetchingResourceIterator
-{
+
+class WrappingResourceIterator<T> extends PrefetchingResourceIterator {
     private final Iterator<T> iterator;
 
     WrappingResourceIterator(Iterator<T> iterator) {
@@ -42,4 +42,3 @@ class WrappingResourceIterator<T> extends PrefetchingResourceIterator
         return iterator.hasNext() ? iterator.next() : null;
     }
 }
-

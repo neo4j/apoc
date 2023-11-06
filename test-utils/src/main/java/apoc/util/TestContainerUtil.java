@@ -18,8 +18,21 @@
  */
 package apoc.util;
 
+import static apoc.util.TestUtil.printFullStackTrace;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import com.github.dockerjava.api.exception.NotFoundException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -31,20 +44,6 @@ import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.testcontainers.containers.ContainerFetchException;
 import org.testcontainers.utility.MountableFile;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static apoc.util.TestUtil.printFullStackTrace;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class TestContainerUtil {
     public enum Neo4jVersion {
@@ -72,18 +71,23 @@ public class TestContainerUtil {
     public static File extendedDir = new File(baseDir, "extended");
 
     public static String dockerImageForNeo4j(Neo4jVersion version) {
-        if (version == Neo4jVersion.COMMUNITY)
-            return neo4jCommunityDockerImageVersion;
-        else
-            return neo4jEnterpriseDockerImageVersion;
+        if (version == Neo4jVersion.COMMUNITY) return neo4jCommunityDockerImageVersion;
+        else return neo4jEnterpriseDockerImageVersion;
     }
 
-    public static TestcontainersCausalCluster createEnterpriseCluster(List<ApocPackage> apocPackages, int numOfCoreInstances, int numberOfReadReplica, Map<String, Object> neo4jConfig, Map<String, String> envSettings) {
-        return TestcontainersCausalCluster.create(apocPackages, numOfCoreInstances, numberOfReadReplica, Duration.ofMinutes(4), neo4jConfig, envSettings);
+    public static TestcontainersCausalCluster createEnterpriseCluster(
+            List<ApocPackage> apocPackages,
+            int numOfCoreInstances,
+            int numberOfReadReplica,
+            Map<String, Object> neo4jConfig,
+            Map<String, String> envSettings) {
+        return TestcontainersCausalCluster.create(
+                apocPackages, numOfCoreInstances, numberOfReadReplica, Duration.ofMinutes(4), neo4jConfig, envSettings);
     }
 
-    public static Neo4jContainerExtension createDB(Neo4jVersion version, List<ApocPackage> apocPackages, boolean withLogging) {
-        return switch(version) {
+    public static Neo4jContainerExtension createDB(
+            Neo4jVersion version, List<ApocPackage> apocPackages, boolean withLogging) {
+        return switch (version) {
             case ENTERPRISE -> createEnterpriseDB(apocPackages, withLogging);
             case COMMUNITY -> createCommunityDB(apocPackages, withLogging);
         };
@@ -97,7 +101,8 @@ public class TestContainerUtil {
         return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY);
     }
 
-    private static Neo4jContainerExtension createNeo4jContainer(List<ApocPackage> apocPackages, boolean withLogging, Neo4jVersion version) {
+    private static Neo4jContainerExtension createNeo4jContainer(
+            List<ApocPackage> apocPackages, boolean withLogging, Neo4jVersion version) {
         String dockerImage;
         if (version == Neo4jVersion.ENTERPRISE) {
             dockerImage = neo4jEnterpriseDockerImageVersion;
@@ -106,7 +111,7 @@ public class TestContainerUtil {
         }
 
         try {
-            FileUtils.deleteDirectory( pluginsFolder );
+            FileUtils.deleteDirectory(pluginsFolder);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -123,7 +128,7 @@ public class TestContainerUtil {
             e.printStackTrace();
         }
 
-        for (ApocPackage apocPackage: apocPackages) {
+        for (ApocPackage apocPackage : apocPackages) {
             if (apocPackage == ApocPackage.CORE) {
                 projectDir = coreDir;
             } else {
@@ -132,7 +137,10 @@ public class TestContainerUtil {
 
             executeGradleTasks(projectDir, "shadowJar");
 
-            copyFilesToPlugin(new File(projectDir, "build/libs"), new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")), pluginsFolder);
+            copyFilesToPlugin(
+                    new File(projectDir, "build/libs"),
+                    new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")),
+                    pluginsFolder);
         }
 
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
@@ -149,10 +157,11 @@ public class TestContainerUtil {
                 .withNeo4jConfig("dbms.logs.debug.level", "DEBUG")
                 .withNeo4jConfig("dbms.routing.driver.logging.level", "DEBUG")
                 .withNeo4jConfig("internal.dbms.type_constraints", "true")
-                .withFileSystemBind(canonicalPath, "/var/lib/neo4j/import") // map the "target/import" dir as the Neo4j's import dir
+                .withFileSystemBind(
+                        canonicalPath, "/var/lib/neo4j/import") // map the "target/import" dir as the Neo4j's import dir
                 .withCreateContainerCmdModifier(cmd -> cmd.withMemory(2024 * 1024 * 1024L)) // 2gb
                 .withExposedPorts(7687, 7473, 7474)
-//                .withDebugger()  // attach debugger
+                //                .withDebugger()  // attach debugger
 
                 .withStartupAttempts(1)
                 // set uid if possible - export tests do write to "/import"
@@ -165,7 +174,8 @@ public class TestContainerUtil {
                         p.destroy();
                         cmd.withUser(s);
                     } catch (Exception e) {
-                        System.out.println("Exception while assign cmd user to docker container:\n" + ExceptionUtils.getStackTrace(e));
+                        System.out.println("Exception while assign cmd user to docker container:\n"
+                                + ExceptionUtils.getStackTrace(e));
                         // ignore since it may fail depending on operating system
                     }
                 });
@@ -179,7 +189,7 @@ public class TestContainerUtil {
 
     public static void copyFilesToPlugin(File directory, IOFileFilter instance, File pluginsFolder) {
         Collection<File> files = FileUtils.listFiles(directory, instance, null);
-        for (File file: files) {
+        for (File file : files) {
             try {
                 FileUtils.copyFileToDirectory(file, pluginsFolder);
             } catch (IOException e) {
@@ -211,7 +221,8 @@ public class TestContainerUtil {
         }
     }
 
-    public static void testCall(Session session, String call, Map<String,Object> params, Consumer<Map<String, Object>> consumer) {
+    public static void testCall(
+            Session session, String call, Map<String, Object> params, Consumer<Map<String, Object>> consumer) {
         testResult(session, call, params, (res) -> {
             try {
                 assertNotNull("result should be not null", res);
@@ -219,7 +230,7 @@ public class TestContainerUtil {
                 Map<String, Object> row = res.next();
                 consumer.accept(row);
                 assertFalse("result should not have next", res.hasNext());
-            } catch(Throwable t) {
+            } catch (Throwable t) {
                 printFullStackTrace(t);
                 throw t;
             }
@@ -230,24 +241,33 @@ public class TestContainerUtil {
         testCall(session, call, null, consumer);
     }
 
-    public static void testResult(Session session, String call, Consumer<Iterator<Map<String, Object>>> resultConsumer) {
+    public static void testResult(
+            Session session, String call, Consumer<Iterator<Map<String, Object>>> resultConsumer) {
         testResult(session, call, null, resultConsumer);
     }
 
-    public static void testResult(Session session, String call, Map<String,Object> params, Consumer<Iterator<Map<String, Object>>> resultConsumer) {
+    public static void testResult(
+            Session session,
+            String call,
+            Map<String, Object> params,
+            Consumer<Iterator<Map<String, Object>>> resultConsumer) {
         session.writeTransaction(tx -> {
             Map<String, Object> p = (params == null) ? Collections.<String, Object>emptyMap() : params;
-            resultConsumer.accept(tx.run(call, p).list().stream().map(Record::asMap).collect(Collectors.toList()).iterator());
+            resultConsumer.accept(tx.run(call, p).list().stream()
+                    .map(Record::asMap)
+                    .collect(Collectors.toList())
+                    .iterator());
             tx.commit();
             return null;
         });
     }
 
-    public static void testCallEmpty(Session session, String call, Map<String,Object> params) {
-        testResult(session, call, params, (res) -> assertFalse("Expected no results", res.hasNext()) );
+    public static void testCallEmpty(Session session, String call, Map<String, Object> params) {
+        testResult(session, call, params, (res) -> assertFalse("Expected no results", res.hasNext()));
     }
 
-    public static void testCallInReadTransaction(Session session, String call, Map<String,Object> params, Consumer<Map<String, Object>> consumer) {
+    public static void testCallInReadTransaction(
+            Session session, String call, Map<String, Object> params, Consumer<Map<String, Object>> consumer) {
         testResultInReadTransaction(session, call, params, (res) -> {
             try {
                 assertNotNull("result should be not null", res);
@@ -255,17 +275,24 @@ public class TestContainerUtil {
                 Map<String, Object> row = res.next();
                 consumer.accept(row);
                 assertFalse("result should not have next", res.hasNext());
-            } catch(Throwable t) {
+            } catch (Throwable t) {
                 printFullStackTrace(t);
                 throw t;
             }
         });
     }
 
-    public static void testResultInReadTransaction(Session session, String call, Map<String,Object> params, Consumer<Iterator<Map<String, Object>>> resultConsumer) {
+    public static void testResultInReadTransaction(
+            Session session,
+            String call,
+            Map<String, Object> params,
+            Consumer<Iterator<Map<String, Object>>> resultConsumer) {
         session.readTransaction(tx -> {
             Map<String, Object> p = (params == null) ? Collections.<String, Object>emptyMap() : params;
-            resultConsumer.accept(tx.run(call, p).list().stream().map(Record::asMap).collect(Collectors.toList()).iterator());
+            resultConsumer.accept(tx.run(call, p).list().stream()
+                    .map(Record::asMap)
+                    .collect(Collectors.toList())
+                    .iterator());
             tx.commit();
             return null;
         });
@@ -276,5 +303,4 @@ public class TestContainerUtil {
         final Throwable rootCause = ExceptionUtils.getRootCause(ex);
         return !(cause instanceof ContainerFetchException && rootCause instanceof NotFoundException);
     }
-
 }

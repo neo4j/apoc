@@ -37,8 +37,11 @@ public class ApocConfigExtensionFactory extends ExtensionFactory<ApocConfigExten
 
     public interface Dependencies {
         LogService log();
+
         Config config();
+
         GlobalProcedures globalProceduresRegistry();
+
         DatabaseManagementService databaseManagementService();
     }
 
@@ -48,7 +51,10 @@ public class ApocConfigExtensionFactory extends ExtensionFactory<ApocConfigExten
 
     @Override
     public Lifecycle newInstance(ExtensionContext context, Dependencies dependencies) {
-        return new ApocConfig(dependencies.config(), dependencies.log(), dependencies.globalProceduresRegistry(), dependencies.databaseManagementService());
+        return new ApocConfig(
+                dependencies.config(),
+                dependencies.log(),
+                dependencies.globalProceduresRegistry(),
+                dependencies.databaseManagementService());
     }
-
 }

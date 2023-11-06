@@ -24,10 +24,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 import org.neo4j.internal.kernel.api.NodeCursor;
-import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.PartitionedScan;
+import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.security.LoginContext;
 import org.neo4j.kernel.api.ExecutionContext;
 import org.neo4j.kernel.api.KernelTransaction;
@@ -36,20 +35,24 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public class MultiThreadedGlobalGraphOperations {
 
-    public static BatchJobResult forAllNodes(GraphDatabaseAPI db, ExecutorService executorService, int batchSize, Consumer<NodeCursor> consumer) {
+    public static BatchJobResult forAllNodes(
+            GraphDatabaseAPI db, ExecutorService executorService, int batchSize, Consumer<NodeCursor> consumer) {
         BatchJobResult result = new BatchJobResult();
         AtomicInteger processing = new AtomicInteger();
-        try ( InternalTransaction tx = db.beginTransaction( KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED ) ) {
+        try (InternalTransaction tx =
+                db.beginTransaction(KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
             KernelTransaction ktx = tx.kernelTransaction();
             Read dataRead = ktx.dataRead();
             PartitionedScan<NodeCursor> scan = dataRead.allNodesScan(1, ktx.cursorContext());
-            Function<KernelTransaction,NodeCursor> cursorAllocator = ktx2 -> ktx2.cursors().allocateNodeCursor( ktx2.cursorContext() );
-            executorService.submit( new BatchJob( scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing ) );
+            Function<KernelTransaction, NodeCursor> cursorAllocator =
+                    ktx2 -> ktx2.cursors().allocateNodeCursor(ktx2.cursorContext());
+            executorService.submit(
+                    new BatchJob(scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
         }
 
         try {
-            while ( processing.get() > 0 ) {
-                Thread.sleep( 10 );
+            while (processing.get() > 0) {
+                Thread.sleep(10);
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -85,12 +88,19 @@ public class MultiThreadedGlobalGraphOperations {
         private final GraphDatabaseAPI db;
         private final Consumer<NodeCursor> consumer;
         private final BatchJobResult result;
-        private final Function<KernelTransaction,NodeCursor> cursorAllocator;
+        private final Function<KernelTransaction, NodeCursor> cursorAllocator;
         private final ExecutorService executorService;
         private final AtomicInteger processing;
 
-        public BatchJob(PartitionedScan<NodeCursor> scan, int batchSize, GraphDatabaseAPI db, Consumer<NodeCursor> consumer,
-                BatchJobResult result, Function<KernelTransaction,NodeCursor> cursorAllocator, ExecutorService executorService, AtomicInteger processing ) {
+        public BatchJob(
+                PartitionedScan<NodeCursor> scan,
+                int batchSize,
+                GraphDatabaseAPI db,
+                Consumer<NodeCursor> consumer,
+                BatchJobResult result,
+                Function<KernelTransaction, NodeCursor> cursorAllocator,
+                ExecutorService executorService,
+                AtomicInteger processing) {
             this.scan = scan;
             this.batchSize = batchSize;
             this.db = db;
@@ -104,15 +114,18 @@ public class MultiThreadedGlobalGraphOperations {
 
         @Override
         public Void call() {
-            try (InternalTransaction tx = db.beginTransaction(KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
+            try (InternalTransaction tx =
+                    db.beginTransaction(KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
                 KernelTransaction ktx = tx.kernelTransaction();
                 ktx.acquireStatement();
                 ExecutionContext executionContext = ktx.createExecutionContext();
-                try ( NodeCursor cursor = cursorAllocator.apply( ktx )) {
+                try (NodeCursor cursor = cursorAllocator.apply(ktx)) {
                     while (scan.reservePartition(cursor, executionContext)) {
                         // Branch out so that all available threads will get saturated
-                        executorService.submit(new BatchJob(scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
-                        executorService.submit(new BatchJob(scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
+                        executorService.submit(new BatchJob(
+                                scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
+                        executorService.submit(new BatchJob(
+                                scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
                         while (processAndReport(cursor)) {
                             // just continue processing...
                         }

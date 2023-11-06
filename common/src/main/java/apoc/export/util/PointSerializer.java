@@ -21,9 +21,7 @@ package apoc.export.util;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-
 import java.io.IOException;
-
 import org.neo4j.graphdb.spatial.Point;
 
 public class PointSerializer extends JsonSerializer<Point> {
@@ -35,19 +33,18 @@ public class PointSerializer extends JsonSerializer<Point> {
 
         if (crsType.startsWith("cartesian")) {
             if (coordinates.length == 3) {
-                jsonGenerator.writeObject( new PointCartesian( crsType, coordinates[0], coordinates[1], coordinates[2] ) );
+                jsonGenerator.writeObject(new PointCartesian(crsType, coordinates[0], coordinates[1], coordinates[2]));
             } else {
-                jsonGenerator.writeObject( new PointCartesian( crsType, coordinates[0], coordinates[1] ) );
+                jsonGenerator.writeObject(new PointCartesian(crsType, coordinates[0], coordinates[1]));
             }
         } else {
             if (coordinates.length == 3) {
-                jsonGenerator.writeObject( new PointWgs( crsType, coordinates[0], coordinates[1], coordinates[2] ) );
+                jsonGenerator.writeObject(new PointWgs(crsType, coordinates[0], coordinates[1], coordinates[2]));
             } else {
-                jsonGenerator.writeObject( new PointWgs( crsType, coordinates[0], coordinates[1] ) );
+                jsonGenerator.writeObject(new PointWgs(crsType, coordinates[0], coordinates[1]));
             }
         }
     }
-
 
     static class PointCartesian {
         private String crs;
@@ -101,7 +98,6 @@ public class PointSerializer extends JsonSerializer<Point> {
         }
     }
 
-
     static class PointWgs {
         private String crs;
         private Double latitude;
@@ -153,5 +149,4 @@ public class PointSerializer extends JsonSerializer<Point> {
             this.height = height;
         }
     }
-
 }

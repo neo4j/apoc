@@ -18,10 +18,28 @@
  */
 package apoc.schema;
 
+import static apoc.util.TestUtil.registerProcedure;
+import static apoc.util.TestUtil.singleResultFirstColumn;
+import static apoc.util.TestUtil.testCall;
+import static apoc.util.TestUtil.testResult;
+import static java.util.Arrays.asList;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_LABEL;
+import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_REL_TYPE;
+
 import apoc.result.AssertSchemaResult;
 import apoc.result.IndexConstraintRelationshipInfo;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -29,13 +47,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -48,28 +59,14 @@ import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
-import static apoc.util.TestUtil.registerProcedure;
-import static apoc.util.TestUtil.singleResultFirstColumn;
-import static apoc.util.TestUtil.testCall;
-import static apoc.util.TestUtil.testResult;
-
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_LABEL;
-import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_REL_TYPE;
-
 /**
  * @author mh
  * @since 12.05.16
  */
 public class SchemasTest {
-    public static final String CALL_SCHEMA_NODES_ORDERED = "CALL apoc.schema.nodes() " +
-            "YIELD label, type, properties, status, userDescription, name " +
-            "RETURN * ORDER BY label, type";
+    public static final String CALL_SCHEMA_NODES_ORDERED = "CALL apoc.schema.nodes() "
+            + "YIELD label, type, properties, status, userDescription, name " + "RETURN * ORDER BY label, type";
+
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
@@ -85,7 +82,8 @@ public class SchemasTest {
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
         assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat( r.get( "userDescription").toString() ).contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
+        Assertions.assertThat(r.get("userDescription").toString())
+                .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
 
         assertTrue(!result.hasNext());
     }
@@ -101,7 +99,8 @@ public class SchemasTest {
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
         assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat( r.get( "userDescription").toString() ).contains( "name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )" );
+        Assertions.assertThat(r.get("userDescription").toString())
+                .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
 
         r = result.next();
 
@@ -113,7 +112,8 @@ public class SchemasTest {
         assertEquals("NO FAILURE", r.get("failure"));
         assertEquals(100d, r.get("populationProgress"));
         assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat( r.get( "userDescription").toString() ).contains( "name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-2.0' )" );
+        Assertions.assertThat(r.get("userDescription").toString())
+                .contains("name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-2.0' )");
 
         assertTrue(!result.hasNext());
     }
@@ -154,7 +154,8 @@ public class SchemasTest {
             assertEquals("CREATED", r.get("action"));
         });
         try (Transaction tx = db.beginTx()) {
-            List<ConstraintDefinition> constraints = Iterables.asList(tx.schema().getConstraints(Label.label("Foo")));
+            List<ConstraintDefinition> constraints =
+                    Iterables.asList(tx.schema().getConstraints(Label.label("Foo")));
             assertEquals(1, constraints.size());
             ConstraintDefinition constraint = constraints.get(0);
             assertEquals(ConstraintType.UNIQUENESS, constraint.getConstraintType());
@@ -166,7 +167,8 @@ public class SchemasTest {
     @Test
     public void testDropIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
-        db.executeTransactionally("CREATE FULLTEXT INDEX titlesAndDescriptions FOR (n:Movie|Book) ON EACH [n.title, n.description]");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX titlesAndDescriptions FOR (n:Movie|Book) ON EACH [n.title, n.description]");
         testCall(db, "CALL apoc.schema.assert(null,null)", (r) -> {
             assertEquals("Foo", r.get("label"));
             assertEquals("bar", r.get("key"));
@@ -240,7 +242,8 @@ public class SchemasTest {
             assertEquals("DROPPED", r.get("action"));
         });
         try (Transaction tx = db.beginTx()) {
-            List<ConstraintDefinition> constraints = Iterables.asList(tx.schema().getConstraints());
+            List<ConstraintDefinition> constraints =
+                    Iterables.asList(tx.schema().getConstraints());
             assertEquals(0, constraints.size());
         }
     }
@@ -262,7 +265,8 @@ public class SchemasTest {
             assertEquals("CREATED", r.get("action"));
         });
         try (Transaction tx = db.beginTx()) {
-            List<ConstraintDefinition> constraints = Iterables.asList(tx.schema().getConstraints());
+            List<ConstraintDefinition> constraints =
+                    Iterables.asList(tx.schema().getConstraints());
             assertEquals(1, constraints.size());
         }
     }
@@ -290,7 +294,8 @@ public class SchemasTest {
             assertEquals("CREATED", r.get("action"));
         });
         try (Transaction tx = db.beginTx()) {
-            List<ConstraintDefinition> constraints = Iterables.asList(tx.schema().getConstraints());
+            List<ConstraintDefinition> constraints =
+                    Iterables.asList(tx.schema().getConstraints());
             assertEquals(3, constraints.size());
         }
     }
@@ -307,7 +312,9 @@ public class SchemasTest {
 
     private void keepIndexCommon(boolean dropExisting) {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
-        testResult(db, "CALL apoc.schema.assert({Foo:['bar', 'foo']}, null, $drop)",
+        testResult(
+                db,
+                "CALL apoc.schema.assert({Foo:['bar', 'foo']}, null, $drop)",
                 Map.of("drop", dropExisting),
                 (result) -> {
                     Map<String, Object> r = result.next();
@@ -347,7 +354,8 @@ public class SchemasTest {
             assertEquals("CREATED", r.get("action"));
         });
         try (Transaction tx = db.beginTx()) {
-            List<ConstraintDefinition> constraints = Iterables.asList(tx.schema().getConstraints());
+            List<ConstraintDefinition> constraints =
+                    Iterables.asList(tx.schema().getConstraints());
             assertEquals(2, constraints.size());
         }
     }
@@ -368,7 +376,8 @@ public class SchemasTest {
             assertEquals("NO FAILURE", r.get("failure"));
             assertEquals(100d, r.get("populationProgress"));
             assertEquals(1d, r.get("valuesSelectivity"));
-            Assertions.assertThat(r.get("userDescription").toString()).contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
+            Assertions.assertThat(r.get("userDescription").toString())
+                    .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
 
             assertFalse(result.hasNext());
         });
@@ -404,18 +413,20 @@ public class SchemasTest {
             assertEquals(false, r.entrySet().iterator().next().getValue());
         });
     }
-    
+
     @Test
     public void testRelationshipExists() {
         db.executeTransactionally("CREATE INDEX rel_index_simple FOR ()-[r:KNOWS]-() ON (r.since)");
         db.executeTransactionally("CREATE INDEX rel_index_composite FOR ()-[r:PURCHASED]-() ON (r.date, r.amount)");
         awaitIndexesOnline();
-        
+
         assertTrue(singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['since'])"));
         assertFalse(singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['dunno'])"));
         // - composite index
-        assertTrue(singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('PURCHASED', ['date', 'amount'])"));
-        assertFalse(singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('PURCHASED', ['date', 'another'])"));
+        assertTrue(singleResultFirstColumn(
+                db, "RETURN apoc.schema.relationship.indexExists('PURCHASED', ['date', 'amount'])"));
+        assertFalse(singleResultFirstColumn(
+                db, "RETURN apoc.schema.relationship.indexExists('PURCHASED', ['date', 'another'])"));
     }
 
     @Test
@@ -430,7 +441,8 @@ public class SchemasTest {
 
             assertEquals("RANGE", r.get("type"));
             assertEquals("ONLINE", r.get("status"));
-            final String expectedUserDescBarIdx = "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
+            final String expectedUserDescBarIdx =
+                    "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
             r = result.next();
 
@@ -438,7 +450,8 @@ public class SchemasTest {
 
             assertEquals("UNIQUENESS", r.get("type"));
             assertEquals("", r.get("status"));
-            final String expectedUserDescBarCons = "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
+            final String expectedUserDescBarCons =
+                    "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
             assertFalse(result.hasNext());
@@ -456,14 +469,15 @@ public class SchemasTest {
         db.executeTransactionally("CREATE INDEX foo_idx FOR (n:Foo) ON (n.foo)");
         db.executeTransactionally("CREATE CONSTRAINT bar_unique FOR (bar:Bar) REQUIRE bar.bar IS UNIQUE");
         awaitIndexesOnline();
-        
+
         testResult(db, CALL_SCHEMA_NODES_ORDERED, (result) -> {
             Map<String, Object> r = result.next();
 
             assertionsBarUniqueCons(r);
             assertEquals("RANGE", r.get("type"));
             assertEquals("ONLINE", r.get("status"));
-            final String expectedUserDescBarIdx = "name='bar_unique', type='RANGE', schema=(:Bar {bar}), indexProvider='range-1.0', owningConstraint";
+            final String expectedUserDescBarIdx =
+                    "name='bar_unique', type='RANGE', schema=(:Bar {bar}), indexProvider='range-1.0', owningConstraint";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
 
             r = result.next();
@@ -471,7 +485,8 @@ public class SchemasTest {
             assertionsBarUniqueCons(r);
             assertEquals("UNIQUENESS", r.get("type"));
             assertEquals("", r.get("status"));
-            final String expectedUserDescBarCons = "name='bar_unique', type='UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
+            final String expectedUserDescBarCons =
+                    "name='bar_unique', type='UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
             r = result.next();
@@ -480,7 +495,8 @@ public class SchemasTest {
             assertEquals("foo", ((List<String>) r.get("properties")).get(0));
             assertEquals("ONLINE", r.get("status"));
             assertEquals(":Foo(foo)", r.get("name"));
-            final String expectedUserDescFoo = "name='foo_idx', type='RANGE', schema=(:Foo {foo}), indexProvider='range-1.0' )";
+            final String expectedUserDescFoo =
+                    "name='foo_idx', type='RANGE', schema=(:Foo {foo}), indexProvider='range-1.0' )";
             Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescFoo);
 
             assertFalse(result.hasNext());
@@ -496,7 +512,7 @@ public class SchemasTest {
     @Test
     public void testSchemaNodesPointIndex() {
         db.executeTransactionally("CREATE POINT INDEX pointIdx FOR (n:Baz) ON (n.baz)");
-        
+
         testResult(db, "CALL apoc.schema.nodes()", (result) -> {
             Map<String, Object> r = result.next();
 
@@ -504,8 +520,9 @@ public class SchemasTest {
             assertEquals("POINT", r.get("type"));
             assertEquals("baz", ((List<String>) r.get("properties")).get(0));
             assertEquals("ONLINE", r.get("status"));
-            final String expectedUserDesc = "name='pointIdx', type='POINT', schema=(:Baz {baz}), indexProvider='point-1.0'";
-            Assertions.assertThat( r.get( "userDescription").toString() ).contains(expectedUserDesc);
+            final String expectedUserDesc =
+                    "name='pointIdx', type='POINT', schema=(:Baz {baz}), indexProvider='point-1.0'";
+            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDesc);
 
             assertFalse(result.hasNext());
         });
@@ -529,17 +546,19 @@ public class SchemasTest {
         schemaResult.add(knows);
 
         testResult(db, "CALL apoc.schema.assert({},{SINCE:[\"year\"]})", (result) -> {
-
-            while  (result.hasNext()) {
+            while (result.hasNext()) {
                 Map<String, Object> r = result.next();
 
-                assertEquals(1, schemaResult.stream().filter(
-                        c -> c.label.equals(r.get("label")) &&
-                                c.keys.containsAll((List<String>) r.get("keys")) &&
-                                c.key.equals(r.get("key")) &&
-                                c.action.equals(r.get("action")) &&
-                                c.unique == (boolean) r.get("unique")
-                ).toList().size());
+                assertEquals(
+                        1,
+                        schemaResult.stream()
+                                .filter(c -> c.label.equals(r.get("label"))
+                                        && c.keys.containsAll((List<String>) r.get("keys"))
+                                        && c.key.equals(r.get("key"))
+                                        && c.action.equals(r.get("action"))
+                                        && c.unique == (boolean) r.get("unique"))
+                                .toList()
+                                .size());
             }
         });
     }
@@ -597,12 +616,15 @@ public class SchemasTest {
     @Test
     public void testCompoundIndexDoesntAllowCypherInjection() {
         awaitIndexesOnline();
-        testResult(db, "CALL apoc.schema.assert({Foo:[['bar`) MATCH (n) DETACH DELETE n; //','baa']]},null,false)", (result) -> {
-            Map<String, Object> r = result.next();
-            assertEquals("Foo", r.get("label"));
-            assertEquals(expectedKeys("bar`) MATCH (n) DETACH DELETE n; //", "baa"), r.get("keys"));
-            assertEquals(false, r.get("unique"));
-        });
+        testResult(
+                db,
+                "CALL apoc.schema.assert({Foo:[['bar`) MATCH (n) DETACH DELETE n; //','baa']]},null,false)",
+                (result) -> {
+                    Map<String, Object> r = result.next();
+                    assertEquals("Foo", r.get("label"));
+                    assertEquals(expectedKeys("bar`) MATCH (n) DETACH DELETE n; //", "baa"), r.get("keys"));
+                    assertEquals(false, r.get("unique"));
+                });
         try (Transaction tx = db.beginTx()) {
             List<IndexDefinition> indexes = Iterables.asList(tx.schema().getIndexes());
             assertEquals(1, indexes.size());
@@ -616,7 +638,7 @@ public class SchemasTest {
     public void testKeepCompoundIndex() {
         testKeepCompoundCommon(false);
     }
-    
+
     @Test
     public void testKeepCompoundIndexWithDropExisting() {
         testKeepCompoundCommon(true);
@@ -625,22 +647,24 @@ public class SchemasTest {
     private void testKeepCompoundCommon(boolean dropExisting) {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
-        testResult(db, "CALL apoc.schema.assert({Foo:[['bar','baa'], ['foo','faa']]},null,$drop)", 
-                Map.of("drop", dropExisting), 
+        testResult(
+                db,
+                "CALL apoc.schema.assert({Foo:[['bar','baa'], ['foo','faa']]},null,$drop)",
+                Map.of("drop", dropExisting),
                 (result) -> {
-            Map<String, Object> r = result.next();
-            assertEquals("Foo", r.get("label"));
-            assertEquals(expectedKeys("bar", "baa"), r.get("keys"));
-            assertEquals(false, r.get("unique"));
-            assertEquals("KEPT", r.get("action"));
+                    Map<String, Object> r = result.next();
+                    assertEquals("Foo", r.get("label"));
+                    assertEquals(expectedKeys("bar", "baa"), r.get("keys"));
+                    assertEquals(false, r.get("unique"));
+                    assertEquals("KEPT", r.get("action"));
 
-            r = result.next();
-            assertEquals("Foo", r.get("label"));
-            assertEquals(expectedKeys("foo", "faa"), r.get("keys"));
-            assertEquals(false, r.get("unique"));
-            assertEquals("CREATED", r.get("action"));
-        });
-        
+                    r = result.next();
+                    assertEquals("Foo", r.get("label"));
+                    assertEquals(expectedKeys("foo", "faa"), r.get("keys"));
+                    assertEquals(false, r.get("unique"));
+                    assertEquals("CREATED", r.get("action"));
+                });
+
         try (Transaction tx = db.beginTx()) {
             List<IndexDefinition> indexes = Iterables.asList(tx.schema().getIndexes());
             assertEquals(2, indexes.size());
@@ -672,39 +696,44 @@ public class SchemasTest {
 
     @Test
     public void testAssertWithFullTextIndexes() {
-        db.executeTransactionally("CREATE FULLTEXT INDEX fullIdxNode FOR (n:Moon|Blah) ON EACH [n.weightProp, n.anotherProp]");
-        db.executeTransactionally("CREATE FULLTEXT INDEX fullIdxRel FOR ()-[r:TYPE_1|TYPE_2]->() ON EACH [r.alpha, r.beta]");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX fullIdxNode FOR (n:Moon|Blah) ON EACH [n.weightProp, n.anotherProp]");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX fullIdxRel FOR ()-[r:TYPE_1|TYPE_2]->() ON EACH [r.alpha, r.beta]");
         // fulltext with single label, should return label field as string
         db.executeTransactionally("CREATE FULLTEXT INDEX fullIdxNodeSingle FOR (n:Asd) ON EACH [n.uno, n.due]");
         awaitIndexesOnline();
-        testResult(db, "CALL apoc.schema.assert({Bar:[['foo','bar']]}, {One:['two']}) " +
-                "YIELD label, key, keys, unique, action RETURN * ORDER BY label", (result) -> {
-            Map<String, Object> r = result.next();
-            assertEquals("Asd", r.get("label"));
-            assertEquals(expectedKeys("uno", "due"), r.get("keys"));
-            assertEquals(false, r.get("unique"));
-            assertEquals("DROPPED", r.get("action"));
+        testResult(
+                db,
+                "CALL apoc.schema.assert({Bar:[['foo','bar']]}, {One:['two']}) "
+                        + "YIELD label, key, keys, unique, action RETURN * ORDER BY label",
+                (result) -> {
+                    Map<String, Object> r = result.next();
+                    assertEquals("Asd", r.get("label"));
+                    assertEquals(expectedKeys("uno", "due"), r.get("keys"));
+                    assertEquals(false, r.get("unique"));
+                    assertEquals("DROPPED", r.get("action"));
 
-            r = result.next();
-            assertEquals("Bar", r.get("label"));
-            assertEquals(expectedKeys("foo", "bar"), r.get("keys"));
-            assertEquals(false, r.get("unique"));
-            assertEquals("CREATED", r.get("action"));
+                    r = result.next();
+                    assertEquals("Bar", r.get("label"));
+                    assertEquals(expectedKeys("foo", "bar"), r.get("keys"));
+                    assertEquals(false, r.get("unique"));
+                    assertEquals("CREATED", r.get("action"));
 
-            r = result.next();
-            assertEquals("One", r.get("label"));
-            assertEquals("two", r.get("key"));
-            assertEquals(true, r.get("unique"));
-            assertEquals("CREATED", r.get("action"));
-            assertFalse(result.hasNext());
-        });
+                    r = result.next();
+                    assertEquals("One", r.get("label"));
+                    assertEquals("two", r.get("key"));
+                    assertEquals(true, r.get("unique"));
+                    assertEquals("CREATED", r.get("action"));
+                    assertFalse(result.hasNext());
+                });
         try (Transaction tx = db.beginTx()) {
             List<IndexDefinition> indexes = Iterables.asList(tx.schema().getIndexes());
             assertEquals(4, indexes.size());
-            List<ConstraintDefinition> constraints = Iterables.asList(tx.schema().getConstraints());
+            List<ConstraintDefinition> constraints =
+                    Iterables.asList(tx.schema().getConstraints());
             assertEquals(1, constraints.size());
         }
-
     }
 
     @Test
@@ -713,7 +742,7 @@ public class SchemasTest {
         awaitIndexesOnline();
         testCall(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null)", (r) -> {
             assertEquals("Foo", r.get("label"));
-            assertEquals(expectedKeys("bar","baa"), r.get("keys"));
+            assertEquals(expectedKeys("bar", "baa"), r.get("keys"));
             assertEquals(false, r.get("unique"));
             assertEquals("KEPT", r.get("action"));
         });
@@ -723,10 +752,9 @@ public class SchemasTest {
         }
     }
 
-    private List<String> expectedKeys(String... keys){
+    private List<String> expectedKeys(String... keys) {
         return asList(keys);
     }
-
 
     @Test
     public void testIndexesOneLabel() {
@@ -735,7 +763,9 @@ public class SchemasTest {
         db.executeTransactionally("CREATE TEXT INDEX index3 FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE TEXT INDEX index4 FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
-        testResult(db, "CALL apoc.schema.nodes({labels:['Foo']})", // Get the index info
+        testResult(
+                db,
+                "CALL apoc.schema.nodes({labels:['Foo']})", // Get the index info
                 SchemasTest::accept);
     }
 
@@ -753,7 +783,9 @@ public class SchemasTest {
         db.executeTransactionally("CREATE TEXT INDEX index3 FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE TEXT INDEX index4 FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
-        testResult(db, "CALL apoc.schema.nodes({labels:['Foo', 'Person']})", // Get the index info
+        testResult(
+                db,
+                "CALL apoc.schema.nodes({labels:['Foo', 'Person']})", // Get the index info
                 SchemasTest::accept2);
     }
 
@@ -762,6 +794,7 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR (book:Book) REQUIRE book.isbn IS UNIQUE");
         testResult(db, "CALL apoc.schema.nodes({excludeLabels:['Book']})", (result) -> assertFalse(result.hasNext()));
     }
+
     @Test
     public void testIndexesLabelsAndExcludeLabelsValuatedShouldFail() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
@@ -770,10 +803,16 @@ public class SchemasTest {
         db.executeTransactionally("CREATE INDEX FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
 
-        QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                () ->  testResult(db, "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})", (result) -> {})
-        );
-        TestCase.assertTrue(e.getMessage().contains("Parameters labels and excludeLabels are both valuated. Please check parameters and valuate only one."));
+        QueryExecutionException e = Assert.assertThrows(
+                QueryExecutionException.class,
+                () -> testResult(
+                        db,
+                        "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})",
+                        (result) -> {}));
+        TestCase.assertTrue(
+                e.getMessage()
+                        .contains(
+                                "Parameters labels and excludeLabels are both valuated. Please check parameters and valuate only one."));
     }
 
     @Test
@@ -789,10 +828,16 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
 
-        QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                () ->  testResult(db, "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})", (result) -> {})
-        );
-        TestCase.assertTrue(e.getMessage().contains("Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
+        QueryExecutionException e = Assert.assertThrows(
+                QueryExecutionException.class,
+                () -> testResult(
+                        db,
+                        "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})",
+                        (result) -> {}));
+        TestCase.assertTrue(
+                e.getMessage()
+                        .contains(
+                                "Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
     }
 
     @Test
@@ -800,23 +845,21 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         awaitIndexesOnline();
 
-        testResult(db, "CALL apoc.schema.relationships({})",
-                    result -> {
-                        Map<String, Object> r = result.next();
-                        assertEquals("CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE", r.get("name"));
-                        assertEquals("RELATIONSHIP_UNIQUENESS", r.get("type"));
-                        assertEquals("SINCE", r.get("relationshipType"));
-                        assertEquals("year", ((List<String>) r.get("properties")).get(0));
+        testResult(db, "CALL apoc.schema.relationships({})", result -> {
+            Map<String, Object> r = result.next();
+            assertEquals("CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE", r.get("name"));
+            assertEquals("RELATIONSHIP_UNIQUENESS", r.get("type"));
+            assertEquals("SINCE", r.get("relationshipType"));
+            assertEquals("year", ((List<String>) r.get("properties")).get(0));
 
-                        r = result.next();
+            r = result.next();
 
-                        assertEquals(":SINCE(year)", r.get("name"));
-                        assertEquals("RANGE", r.get("type"));
-                        assertEquals("SINCE", r.get("relationshipType"));
-                        assertEquals("year", ((List<String>) r.get("properties")).get(0));
-                        assertTrue(!result.hasNext());
-                    }
-        );
+            assertEquals(":SINCE(year)", r.get("name"));
+            assertEquals("RANGE", r.get("type"));
+            assertEquals("SINCE", r.get("relationshipType"));
+            assertEquals("year", ((List<String>) r.get("properties")).get(0));
+            assertTrue(!result.hasNext());
+        });
     }
 
     @Test
@@ -832,58 +875,41 @@ public class SchemasTest {
                 "RELATIONSHIP_UNIQUENESS",
                 List.of("year"),
                 "",
-                "SINCE"
-        ));
-        relConstraints.add(new IndexConstraintRelationshipInfo(
-                ":SINCE(year)",
-                "RANGE",
-                List.of("year"),
-                "ONLINE",
-                "SINCE"
-        ));
+                "SINCE"));
+        relConstraints.add(
+                new IndexConstraintRelationshipInfo(":SINCE(year)", "RANGE", List.of("year"), "ONLINE", "SINCE"));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 "CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.when IS UNIQUE",
                 "RELATIONSHIP_UNIQUENESS",
                 List.of("when"),
                 "",
-                "LIKED"
-        ));
-        relConstraints.add(new IndexConstraintRelationshipInfo(
-                ":LIKED(when)",
-                "RANGE",
-                List.of("when"),
-                "ONLINE",
-                "LIKED"
-        ));
+                "LIKED"));
+        relConstraints.add(
+                new IndexConstraintRelationshipInfo(":LIKED(when)", "RANGE", List.of("when"), "ONLINE", "LIKED"));
         relConstraints.add(new IndexConstraintRelationshipInfo(
                 "CONSTRAINT FOR ()-[know:KNOW]-() REQUIRE know.how IS UNIQUE",
                 "RELATIONSHIP_UNIQUENESS",
                 List.of("how"),
                 "",
-                "KNOW"
-        ));
-        relConstraints.add(new IndexConstraintRelationshipInfo(
-                ":KNOW(how)",
-                "RANGE",
-                List.of("how"),
-                "ONLINE",
-                "KNOW"
-        ));
+                "KNOW"));
+        relConstraints.add(
+                new IndexConstraintRelationshipInfo(":KNOW(how)", "RANGE", List.of("how"), "ONLINE", "KNOW"));
 
-        testResult(db, "CALL apoc.schema.relationships",
-                    result -> {
-                        while  (result.hasNext()) {
-                            Map<String, Object> r = result.next();
+        testResult(db, "CALL apoc.schema.relationships", result -> {
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
 
-                            assertEquals(1, relConstraints.stream().filter(
-                                    c -> c.name.equals(r.get("name")) &&
-                                            c.properties.containsAll((List<String>) r.get("properties")) &&
-                                            c.type.equals(r.get("type")) &&
-                                            c.relationshipType.equals(r.get("relationshipType"))
-                            ).toList().size());
-                        }
-                    }
-        );
+                assertEquals(
+                        1,
+                        relConstraints.stream()
+                                .filter(c -> c.name.equals(r.get("name"))
+                                        && c.properties.containsAll((List<String>) r.get("properties"))
+                                        && c.type.equals(r.get("type"))
+                                        && c.relationshipType.equals(r.get("relationshipType")))
+                                .toList()
+                                .size());
+            }
+        });
     }
 
     @Test
@@ -897,26 +923,26 @@ public class SchemasTest {
             assertEquals("ONLINE", row.get("status"));
             assertEquals(TOKEN_LABEL, row.get("label"));
             assertEquals("LOOKUP", row.get("type"));
-            assertTrue(((List)row.get("properties")).isEmpty());
+            assertTrue(((List) row.get("properties")).isEmpty());
             assertEquals("NO FAILURE", row.get("failure"));
             assertEquals(100d, row.get("populationProgress"));
             assertEquals(1d, row.get("valuesSelectivity"));
-            final String expectedUserDesc = "name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0'";
-            Assertions.assertThat( row.get( "userDescription").toString() ).contains(expectedUserDesc);
+            final String expectedUserDesc =
+                    "name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0'";
+            Assertions.assertThat(row.get("userDescription").toString()).contains(expectedUserDesc);
         });
-        
+
         testCall(db, "CALL apoc.schema.relationships()", (row) -> {
             assertEquals(":" + TOKEN_REL_TYPE + "()", row.get("name"));
             assertEquals("ONLINE", row.get("status"));
             assertEquals("LOOKUP", row.get("type"));
             assertEquals(TOKEN_REL_TYPE, row.get("relationshipType"));
-            assertTrue(((List)row.get("properties")).isEmpty());
+            assertTrue(((List) row.get("properties")).isEmpty());
         });
     }
 
-    private void dropSchema()
-    {
-        try(Transaction tx = db.beginTx()) {
+    private void dropSchema() {
+        try (Transaction tx = db.beginTx()) {
             Schema schema = tx.schema();
             schema.getConstraints().forEach(ConstraintDefinition::drop);
             schema.getIndexes().forEach(IndexDefinition::drop);
@@ -927,10 +953,12 @@ public class SchemasTest {
     @Test
     public void testIndexesWithMultipleLabelsAndRelTypes() {
         final String idxName = "fullIdxNode";
-        db.executeTransactionally(String.format("CREATE FULLTEXT INDEX %s FOR (n:Blah|Moon) ON EACH [n.weightProp, n.anotherProp]", idxName));
-        db.executeTransactionally("CREATE FULLTEXT INDEX fullIdxRel FOR ()-[r:TYPE_1|TYPE_2]->() ON EACH [r.alpha, r.beta]");
+        db.executeTransactionally(String.format(
+                "CREATE FULLTEXT INDEX %s FOR (n:Blah|Moon) ON EACH [n.weightProp, n.anotherProp]", idxName));
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX fullIdxRel FOR ()-[r:TYPE_1|TYPE_2]->() ON EACH [r.alpha, r.beta]");
         awaitIndexesOnline();
-        
+
         testCall(db, "CALL apoc.schema.nodes()", (r) -> {
             assertEquals(":[Blah, Moon],(weightProp,anotherProp)", r.get("name"));
             assertEquals("ONLINE", r.get("status"));
@@ -940,10 +968,14 @@ public class SchemasTest {
             assertEquals("NO FAILURE", r.get("failure"));
             assertEquals(100d, r.get("populationProgress"));
             assertEquals(1d, r.get("valuesSelectivity"));
-            final long indexId = db.executeTransactionally("SHOW INDEXES YIELD id, name WHERE name = $indexName RETURN id",
-                    Map.of("indexName", idxName), res -> res.<Long>columnAs("id").next());
-            String expectedIndexDescription = String.format("Index( id=%s, name='%s', type='FULLTEXT', " +
-                    "schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-1.0' )", indexId, idxName);
+            final long indexId = db.executeTransactionally(
+                    "SHOW INDEXES YIELD id, name WHERE name = $indexName RETURN id",
+                    Map.of("indexName", idxName),
+                    res -> res.<Long>columnAs("id").next());
+            String expectedIndexDescription = String.format(
+                    "Index( id=%s, name='%s', type='FULLTEXT', "
+                            + "schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-1.0' )",
+                    indexId, idxName);
             assertEquals(expectedIndexDescription, r.get("userDescription"));
         });
 
@@ -966,6 +998,7 @@ public class SchemasTest {
             assertEquals(true, r.get("output"));
         });
     }
+
     @Test
     public void testNodeConstraintDoesntExist() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
@@ -976,6 +1009,7 @@ public class SchemasTest {
             assertEquals(false, r.get("output"));
         });
     }
+
     @Test
     public void testNodeDoesntCheckRelationshipConstraintExist() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
@@ -986,6 +1020,7 @@ public class SchemasTest {
             assertEquals(false, r.get("output"));
         });
     }
+
     @Test
     public void testRelationshipConstraintExists() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
@@ -996,16 +1031,21 @@ public class SchemasTest {
             assertEquals(true, r.get("output"));
         });
     }
+
     @Test
     public void testRelationshipConstraintDoesntExist() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
         awaitIndexesOnline();
 
-        testCall(db, "RETURN apoc.schema.relationship.constraintExists(\"SINCE\", [\"year\", \"when\"]) AS output;", (r) -> {
-            assertEquals(false, r.get("output"));
-        });
+        testCall(
+                db,
+                "RETURN apoc.schema.relationship.constraintExists(\"SINCE\", [\"year\", \"when\"]) AS output;",
+                (r) -> {
+                    assertEquals(false, r.get("output"));
+                });
     }
+
     @Test
     public void testRelationshipDoesntCheckNodesConstraintExist() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
@@ -1021,8 +1061,7 @@ public class SchemasTest {
     public void testSchemaNodesWithFailedIndex() {
         // create property which will cause an index failure
         String largeProp = Util.readResourceFile("movies.cypher");
-        db.executeTransactionally("CREATE (n:LabelTest {prop: $largeProp})",
-                Map.of("largeProp", largeProp));
+        db.executeTransactionally("CREATE (n:LabelTest {prop: $largeProp})", Map.of("largeProp", largeProp));
 
         // create the failed index and check that has state "FAILED"
         db.executeTransactionally("CREATE INDEX failedIdx FOR (n:LabelTest) ON (n.prop)");
@@ -1035,7 +1074,8 @@ public class SchemasTest {
         // then
         testCall(db, "CALL apoc.schema.nodes", r -> {
             String actualFailure = (String) r.get("failure");
-            String expectedFailure = "Property value is too large to index, please see index documentation for limitations.";
+            String expectedFailure =
+                    "Property value is too large to index, please see index documentation for limitations.";
             assertThat(actualFailure, containsString(expectedFailure));
             assertEquals(":LabelTest(prop)", r.get("name"));
             assertEquals("FAILED", r.get("status"));
@@ -1049,7 +1089,8 @@ public class SchemasTest {
     public void testSchemaRelationshipsWithFailedIndex() {
         // create property which will cause an index failure
         String largeProp = Util.readResourceFile("movies.cypher");
-        db.executeTransactionally("CREATE (:Start)-[:REL_TEST {prop: $largeProp}]->(:End)",
+        db.executeTransactionally(
+                "CREATE (:Start)-[:REL_TEST {prop: $largeProp}]->(:End)",
                 Map.of("largeProp", largeProp),
                 Result::resultAsString);
 

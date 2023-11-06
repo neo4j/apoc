@@ -26,8 +26,7 @@ import org.neo4j.graphdb.ResourceIterator;
 /**
  * Methods from Neo4js Iterators.java which are only needed in tests in APOC
  */
-public class CollectionTestHelper
-{
+public class CollectionTestHelper {
     public static <T> ResourceIterator<T> resourceIterator(final Iterator<T> iterator, final Resource resource) {
         return new PrefetchingResourceIterator<>() {
             @Override
@@ -41,6 +40,7 @@ public class CollectionTestHelper
             }
         };
     }
+
     @SuppressWarnings("unchecked")
     public static <T> ResourceIterator<T> emptyResourceIterator() {
         return (ResourceIterator<T>) EmptyResourceIterator.EMPTY_RESOURCE_ITERATOR;

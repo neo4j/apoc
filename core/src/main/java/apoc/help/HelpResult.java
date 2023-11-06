@@ -63,7 +63,6 @@ public class HelpResult {
                 null,
                 (Boolean) row.get("writes"),
                 core,
-                (Boolean) row.get("isDeprecated")
-        );
+                (Boolean) row.get("isDeprecated"));
     }
 }

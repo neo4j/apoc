@@ -18,7 +18,16 @@
  */
 package apoc.trigger;
 
+import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
+
 import apoc.util.Util;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -29,36 +38,27 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
-
-
 public class TriggerNewProcedures {
     public static final String NON_SYS_DB_ERROR = "The procedure should be executed against a system database.";
-    public static final String TRIGGER_NOT_ROUTED_ERROR = "No write operations are allowed directly on this database. " +
-            "Writes must pass through the leader. The role of this server is: FOLLOWER";
+    public static final String TRIGGER_NOT_ROUTED_ERROR = "No write operations are allowed directly on this database. "
+            + "Writes must pass through the leader. The role of this server is: FOLLOWER";
     public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
     public static final String DB_NOT_FOUND_ERROR = "The user database with name '%s' does not exist";
 
-    @Context public GraphDatabaseAPI db;
-    
-    @Context public Transaction tx;
+    @Context
+    public GraphDatabaseAPI db;
+
+    @Context
+    public Transaction tx;
 
     private void checkInSystemWriter() {
         TriggerHandlerNewProcedures.checkEnabled();
-        
+
         if (!db.databaseName().equals(SYSTEM_DATABASE_NAME) || !Util.isWriteableInstance(db)) {
             throw new RuntimeException(TRIGGER_NOT_ROUTED_ERROR);
         }
     }
-    
+
     private void checkInSystem() {
         TriggerHandlerNewProcedures.checkEnabled();
 
@@ -68,12 +68,11 @@ public class TriggerNewProcedures {
     }
 
     private void checkTargetDatabase(String databaseName) {
-        final Set<String> databases = tx.execute("SHOW DATABASES", Collections.emptyMap())
-                .<String>columnAs("name")
-                .stream()
-                .collect(Collectors.toSet());
+        final Set<String> databases =
+                tx.execute("SHOW DATABASES", Collections.emptyMap()).<String>columnAs("name").stream()
+                        .collect(Collectors.toSet());
         if (!databases.contains(databaseName)) {
-            throw new RuntimeException( String.format(DB_NOT_FOUND_ERROR, databaseName) );
+            throw new RuntimeException(String.format(DB_NOT_FOUND_ERROR, databaseName));
         }
 
         if (databaseName.equals(SYSTEM_DATABASE_NAME)) {
@@ -85,34 +84,39 @@ public class TriggerNewProcedures {
     @SystemProcedure
     @Admin
     @Procedure(name = "apoc.trigger.install", mode = Mode.WRITE)
-    @Description("Eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
-    public Stream<TriggerInfo> install(@Name("databaseName") String databaseName, @Name("name") String name, @Name("statement") String statement, @Name(value = "selector")  Map<String,Object> selector, @Name(value = "config", defaultValue = "{}") Map<String,Object> config) {
+    @Description(
+            "Eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
+    public Stream<TriggerInfo> install(
+            @Name("databaseName") String databaseName,
+            @Name("name") String name,
+            @Name("statement") String statement,
+            @Name(value = "selector") Map<String, Object> selector,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         checkInSystemWriter();
         checkTargetDatabase(databaseName);
-        Map<String,Object> params = (Map)config.getOrDefault("params", Collections.emptyMap());
+        Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
 
         return withTransaction(tx -> {
-            TriggerInfo triggerInfo = TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params, tx);
+            TriggerInfo triggerInfo =
+                    TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params, tx);
             return Stream.of(triggerInfo);
         });
     }
-
 
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Admin
     @Procedure(name = "apoc.trigger.drop", mode = Mode.WRITE)
     @Description("Eventually removes the given trigger.")
-    public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name")String name) {
+    public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name") String name) {
         checkInSystemWriter();
-        
+
         return withTransaction(tx -> {
             final TriggerInfo removed = TriggerHandlerNewProcedures.drop(databaseName, name, tx);
             return Stream.ofNullable(removed);
         });
     }
-    
-    
+
     // TODO - change with @SystemOnlyProcedure
     @SystemProcedure
     @Admin
@@ -121,9 +125,8 @@ public class TriggerNewProcedures {
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
 
-        return withTransaction( tx -> TriggerHandlerNewProcedures.dropAll(databaseName, tx)
-                .stream().sorted( Comparator.comparing(i -> i.name) )
-        );
+        return withTransaction(tx -> TriggerHandlerNewProcedures.dropAll(databaseName, tx).stream()
+                .sorted(Comparator.comparing(i -> i.name)));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -131,9 +134,9 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.stop", mode = Mode.WRITE)
     @Description("Eventually stops the given trigger.")
-    public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name")String name) {
+    public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name") String name) {
         checkInSystemWriter();
-        
+
         return withTransaction(tx -> {
             final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, true, tx);
             return Stream.ofNullable(triggerInfo);
@@ -145,9 +148,9 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.start", mode = Mode.WRITE)
     @Description("Eventually restarts the given paused trigger.")
-    public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name")String name) {
+    public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name") String name) {
         checkInSystemWriter();
-        
+
         return withTransaction(tx -> {
             final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false, tx);
             return Stream.ofNullable(triggerInfo);
@@ -164,7 +167,6 @@ public class TriggerNewProcedures {
 
         return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx);
     }
-
 
     public <T> T withTransaction(Function<Transaction, T> action) {
         try (Transaction tx = db.beginTx()) {

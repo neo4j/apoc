@@ -19,7 +19,6 @@
 package apoc.export.csv;
 
 import apoc.meta.Types;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -62,9 +61,9 @@ public class CsvHeaderField {
     }
 
     public boolean isId() {
-        return CsvLoaderConstants.ID_FIELD.equals(type) ||
-                CsvLoaderConstants.START_ID_FIELD.equals(type) ||
-                CsvLoaderConstants.END_ID_FIELD.equals(type);
+        return CsvLoaderConstants.ID_FIELD.equals(type)
+                || CsvLoaderConstants.START_ID_FIELD.equals(type)
+                || CsvLoaderConstants.END_ID_FIELD.equals(type);
     }
 
     public boolean isMeta() {
@@ -84,9 +83,9 @@ public class CsvHeaderField {
         final String rawName = extractGroup(matcher, "name");
         final String typeExtracted = extractGroup(matcher, "type");
         String optParExtracted = extractGroup(matcher, "optPar");
-        
+
         Map<String, Object> optionalData = new HashMap<>();
-        
+
         if (optParExtracted != null) {
             optParExtracted = optParExtracted.replace("{", "").replace("}", "");
             Matcher matcherKeyValue = CsvLoaderConstants.KEY_VALUE_PATTERN.matcher(optParExtracted);
@@ -96,7 +95,7 @@ public class CsvHeaderField {
                 optionalData.put(key, value);
             }
         }
-        
+
         final String type = (typeExtracted != null) ? typeExtracted : Types.STRING.name();
         final String name = nameAndTypeToAttribute(rawName, type);
 
@@ -106,9 +105,7 @@ public class CsvHeaderField {
 
         // arrays are denoted with '[]'.
         // additionally, the ':LABEL' header type always denotes an array
-        boolean array =
-                CsvLoaderConstants.ARRAY_PATTERN.equals(extractGroup(matcher, "array")) ||
-                "LABEL".equals(type);
+        boolean array = CsvLoaderConstants.ARRAY_PATTERN.equals(extractGroup(matcher, "array")) || "LABEL".equals(type);
 
         return new CsvHeaderField(name, type, array, idSpace, optionalData);
     }
@@ -140,5 +137,4 @@ public class CsvHeaderField {
             return null;
         }
     }
-
 }

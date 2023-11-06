@@ -18,40 +18,6 @@
  */
 package apoc.export.cypher;
 
-import apoc.export.util.ExportConfig;
-import apoc.util.BinaryTestUtil;
-import apoc.util.CompressionAlgo;
-import apoc.util.MapUtil;
-import apoc.util.TestUtil;
-import apoc.util.Util;
-import org.junit.After;
-import org.junit.Assert;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.cypher.export.DatabaseSubGraph;
-import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.export.util.ExportFormat.*;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
@@ -66,6 +32,38 @@ import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
+import apoc.export.util.ExportConfig;
+import apoc.util.BinaryTestUtil;
+import apoc.util.CompressionAlgo;
+import apoc.util.MapUtil;
+import apoc.util.TestUtil;
+import apoc.util.Util;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.cypher.export.DatabaseSubGraph;
+import org.neo4j.graphdb.QueryExecutionException;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.test.rule.DbmsRule;
+import org.neo4j.test.rule.ImpermanentDbmsRule;
+
 /**
  * @author mh
  * @since 22.05.16
@@ -73,18 +71,21 @@ import static org.neo4j.configuration.SettingValueParsers.BOOL;
 public class ExportCypherTest {
     private static final String queryWithRelOnly = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN rel";
     private static final String queryWithStartAndRel = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN start, rel";
-    private final static String exportQuery = "CALL apoc.export.cypher.query($query, $file, $config)";
+    private static final String exportQuery = "CALL apoc.export.cypher.query($query, $file, $config)";
 
-    private static final String exportDataWithStartAndRel = """
+    private static final String exportDataWithStartAndRel =
+            """
                 MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
                 CALL apoc.export.cypher.data([start], [rel], $file, $config)
                 YIELD nodes, relationships, properties RETURN *""";
-    private static final String exportDataWithRelOnly = """
+    private static final String exportDataWithRelOnly =
+            """
                 MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
                 CALL apoc.export.cypher.data([], [rel], $file, $config)
                 YIELD nodes, relationships, properties RETURN *""";
 
-    private static final Map<String, Object> exportConfig = map("useOptimizations", map("type", "none"), "separateFiles", true, "format", "neo4j-admin");
+    private static final Map<String, Object> exportConfig =
+            map("useOptimizations", map("type", "none"), "separateFiles", true, "format", "neo4j-admin");
 
     private static final File directory = new File("target/import");
 
@@ -94,9 +95,15 @@ public class ExportCypherTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath())
-            .withSetting(newBuilder( "internal.dbms.debug.track_cursor_close", BOOL, false ).build(), false)
-            .withSetting(newBuilder( "internal.dbms.debug.trace_cursors", BOOL, false ).build(), false);
+            .withSetting(
+                    GraphDatabaseSettings.load_csv_file_url_root,
+                    directory.toPath().toAbsolutePath())
+            .withSetting(
+                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
+                            .build(),
+                    false)
+            .withSetting(
+                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
 
     @Rule
     public TestName testName = new TestName();
@@ -114,64 +121,72 @@ public class ExportCypherTest {
     @Test
     public void testRoundTripCypherExportAll() {
         final String cypherStatements = Util.readResourceFile("exportAll.cypher");
-        db.executeTransactionally(
-                "CALL apoc.cypher.runMany($statements, {})",
-                map("statements", cypherStatements)
-        );
+        db.executeTransactionally("CALL apoc.cypher.runMany($statements, {})", map("statements", cypherStatements));
 
         String fileName = "all.cypher";
-        final String query = "CALL apoc.export.cypher.all($fileName, {batchSize: 100, format: 'cypher-shell', saveIndexNames: true, saveConstraintNames: true, multipleRelationshipsWithType: true})";
+        final String query =
+                "CALL apoc.export.cypher.all($fileName, {batchSize: 100, format: 'cypher-shell', saveIndexNames: true, saveConstraintNames: true, multipleRelationshipsWithType: true})";
 
         TestUtil.testCall(db, query, map("fileName", fileName), (r) -> assertEquals(fileName, r.get("file")));
 
         assertEquals(cypherStatements, readFile("all.cypher").strip());
     }
 
-   @Test
-   public void testUniqueNodeLabels() {
+    @Test
+    public void testUniqueNodeLabels() {
         // Check the unique node test doesn't fail if the node has extra non-unique constrained labels
         String createExtraNodes = "MATCH (n) SET n:EXTRA_LABEL";
         db.executeTransactionally(createExtraNodes);
 
-       try(Transaction tx = db.beginTx()) {
-           MultiStatementCypherSubGraphExporter exporter = new MultiStatementCypherSubGraphExporter(
-                   new DatabaseSubGraph(tx),
-                   new ExportConfig(null),
-                   db
-           );
+        try (Transaction tx = db.beginTx()) {
+            MultiStatementCypherSubGraphExporter exporter =
+                    new MultiStatementCypherSubGraphExporter(new DatabaseSubGraph(tx), new ExportConfig(null), db);
 
-           assertEquals(exporter.countArtificialUniques(tx.getAllNodes()), 2);
-       }
-   }
+            assertEquals(exporter.countArtificialUniques(tx.getAllNodes()), 2);
+        }
+    }
 
     @Test
     public void testExportAllCypherResults() {
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all(null,{useOptimizations: { type: 'none'}, format: 'neo4j-shell'})", (r) -> {
-            assertResults(null, r, "database");
-            assertEquals(EXPECTED_NEO4J_SHELL, r.get("cypherStatements"));
-        });
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all(null,{useOptimizations: { type: 'none'}, format: 'neo4j-shell'})",
+                (r) -> {
+                    assertResults(null, r, "database");
+                    assertEquals(EXPECTED_NEO4J_SHELL, r.get("cypherStatements"));
+                });
     }
 
     @Test
     public void testExportAllCypherStreaming() {
-        final String query = "CALL apoc.export.cypher.all(null,{useOptimizations: { type: 'none'}, streamStatements:true,batchSize:3, format: 'neo4j-shell'})";
+        final String query =
+                "CALL apoc.export.cypher.all(null,{useOptimizations: { type: 'none'}, streamStatements:true,batchSize:3, format: 'neo4j-shell'})";
         assertExportAllCypherStreaming(CompressionAlgo.NONE, query);
     }
 
     @Test
     public void testExportAllWithCompressionCypherStreaming() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
-        final String query = "CALL apoc.export.cypher.all(null,{compression: '" + algo.name() + "', useOptimizations: { type: 'none'}, streamStatements:true,batchSize:3, format: 'neo4j-shell'})";
+        final String query = "CALL apoc.export.cypher.all(null,{compression: '" + algo.name()
+                + "', useOptimizations: { type: 'none'}, streamStatements:true,batchSize:3, format: 'neo4j-shell'})";
         assertExportAllCypherStreaming(algo, query);
     }
-    
+
     @Test
     public void testExportAllWithStreamingSeparatedAndCompressedFile() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
-        final Map<String, Object> config = map("compression", algo.name(),
-                "useOptimizations", map("type", "none"), 
-                "stream", true, "separateFiles", true, "format", "neo4j-admin");
-        
+        final Map<String, Object> config = map(
+                "compression",
+                algo.name(),
+                "useOptimizations",
+                map("type", "none"),
+                "stream",
+                true,
+                "separateFiles",
+                true,
+                "format",
+                "neo4j-admin");
+
         TestUtil.testCall(db, "CALL apoc.export.cypher.all(null, $config)", map("config", config), r -> {
             assertEquals(EXPECTED_NODES, getDecompressedData(algo, r.get("nodeStatements")));
             assertEquals(EXPECTED_RELATIONSHIPS, getDecompressedData(algo, r.get("relationshipStatements")));
@@ -190,9 +205,9 @@ public class ExportCypherTest {
             assertEquals(3L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(5L, r.get("properties"));
-            assertNull("Should get file",r.get("file"));
+            assertNull("Should get file", r.get("file"));
             assertEquals("cypher", r.get("format"));
-            assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
             sb.append(getDecompressedData(algo, r.get("cypherStatements")));
             r = res.next();
             assertEquals(3L, r.get("batchSize"));
@@ -201,7 +216,7 @@ public class ExportCypherTest {
             assertEquals(4L, r.get("rows"));
             assertEquals(1L, r.get("relationships"));
             assertEquals(6L, r.get("properties"));
-            assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
             sb.append(getDecompressedData(algo, r.get("cypherStatements")));
         });
         assertEquals(EXPECTED_NEO4J_SHELL.replace("LIMIT 20000", "LIMIT 3"), sb.toString());
@@ -211,7 +226,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherDefault() {
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($fileName,{useOptimizations: { type: 'none'}, format: 'neo4j-shell'})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($fileName,{useOptimizations: { type: 'none'}, format: 'neo4j-shell'})",
                 map("fileName", fileName),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_NEO4J_SHELL, readFile(fileName));
@@ -220,7 +237,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherForCypherShell() {
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,$config)",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,$config)",
                 map("file", fileName, "config", map("useOptimizations", map("type", "none"), "format", "cypher-shell")),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_CYPHER_SHELL, readFile(fileName));
@@ -230,17 +249,24 @@ public class ExportCypherTest {
     public void testExportQueryCypherForNeo4j() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")), (r) -> {
-                });
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
+                (r) -> {});
         assertEquals(EXPECTED_NEO4J_SHELL, readFile(fileName));
     }
 
     @Test
     public void testExportQueryOnlyRel() {
-        final Map<String, Object> config = withoutOptimization( map("format", "neo4j-shell") );
-        Map<String, Object> params = Map.of("query", queryWithRelOnly,
-                "config", config);
+        final Map<String, Object> config = withoutOptimization(map("format", "neo4j-shell"));
+        Map<String, Object> params = Map.of("query", queryWithRelOnly, "config", config);
         assertExportRelOnly(params, exportQuery);
 
         // check that apoc.export.cypher.data returns consistent results
@@ -250,12 +276,9 @@ public class ExportCypherTest {
     @Test
     public void testExportQueryOnlyRelWithNodeOfRelsTrue() {
         // check that `nodesOfRelationships: true` doesn't change the result
-        final Map<String, Object> config = withoutOptimization(
-                map("format", "neo4j-shell",
-                        "nodesOfRelationships", true)
-        );
-        Map<String, Object> params = Map.of("query", queryWithRelOnly,
-                "config", config);
+        final Map<String, Object> config =
+                withoutOptimization(map("format", "neo4j-shell", "nodesOfRelationships", true));
+        Map<String, Object> params = Map.of("query", queryWithRelOnly, "config", config);
         assertExportRelOnly(params, exportQuery);
 
         // check that apoc.export.cypher.data returns consistent results
@@ -264,9 +287,8 @@ public class ExportCypherTest {
 
     @Test
     public void testExportQueryOnlyRelAndStart() {
-        final Map<String, Object> config = withoutOptimization( map("format", "neo4j-shell") );
-        Map<String, Object> params = Map.of("query", queryWithStartAndRel,
-                "config", config);
+        final Map<String, Object> config = withoutOptimization(map("format", "neo4j-shell"));
+        Map<String, Object> params = Map.of("query", queryWithStartAndRel, "config", config);
         assertExportWithoutEndNode(params, exportQuery);
 
         // check that apoc.export.cypher.data returns consistent results
@@ -276,20 +298,17 @@ public class ExportCypherTest {
     @Test
     public void testExportQueryOnlyRelAndStartWithNodeOfRelsTrue() {
         // check that with {nodesOfRelationships: true} the end node is returned as well
-        final Map<String, Object> config = withoutOptimization(
-                map("format", "neo4j-shell",
-                        "nodesOfRelationships", true)
-        );
-        Map<String, Object> params = Map.of("query", queryWithStartAndRel,
-                "config", config);
+        final Map<String, Object> config =
+                withoutOptimization(map("format", "neo4j-shell", "nodesOfRelationships", true));
+        Map<String, Object> params = Map.of("query", queryWithStartAndRel, "config", config);
 
-        String expectedNodesWithEndNode = String.format(EXPECTED_BEGIN_AND_FOO +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:42, name:\"bar\", `UNIQUE IMPORT ID`:1});%n" +
-                "COMMIT%n");
-        String expectedWithEndNode = expectedNodesWithEndNode + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
+        String expectedNodesWithEndNode = String.format(EXPECTED_BEGIN_AND_FOO
+                + "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:42, name:\"bar\", `UNIQUE IMPORT ID`:1});%n"
+                + "COMMIT%n");
+        String expectedWithEndNode =
+                expectedNodesWithEndNode + EXPECTED_SCHEMA_ONLY_START + EXPECTED_REL_ONLY + EXPECTED_CLEAN_UP;
 
-        commonDataAndQueryAssertions(exportQuery, params,
-                expectedWithEndNode, 2L, 5L);
+        commonDataAndQueryAssertions(exportQuery, params, expectedWithEndNode, 2L, 5L);
 
         // apoc.export.cypher.data doesn't accept `nodesOfRelationships` config,
         // so it returns the same result as the above one
@@ -297,54 +316,45 @@ public class ExportCypherTest {
     }
 
     private void assertExportWithoutEndNode(Map<String, Object> params, String exportData) {
-        commonDataAndQueryAssertions(exportData, params,
-                EXPECTED_WITHOUT_END_NODE, 1L, 3L);
+        commonDataAndQueryAssertions(exportData, params, EXPECTED_WITHOUT_END_NODE, 1L, 3L);
     }
 
     private void assertExportRelOnly(Map<String, Object> params, String exportData) {
-        commonDataAndQueryAssertions(exportData, params,
-                EXPECTED_REL_ONLY, 0L, 1L);
+        commonDataAndQueryAssertions(exportData, params, EXPECTED_REL_ONLY, 0L, 1L);
     }
 
     private void commonDataAndQueryAssertions(
-            String query,
-            Map<String, Object> config,
-            String expectedOutput,
-            long nodes,
-            long properties
-    ) {
+            String query, Map<String, Object> config, String expectedOutput, long nodes, long properties) {
         String fileName = "testFile.cypher";
 
         Map<String, Object> params = map("file", fileName);
         params.putAll(config);
 
         TestUtil.testCall(db, query, params, r -> {
-                    assertEquals(nodes, r.get("nodes"));
-                    assertEquals(1L, r.get("relationships"));
-                    assertEquals(properties, r.get("properties"));
-                });
+            assertEquals(nodes, r.get("nodes"));
+            assertEquals(1L, r.get("relationships"));
+            assertEquals(properties, r.get("properties"));
+        });
         assertEquals(expectedOutput, readFile(fileName));
     }
-
 
     @Test
     public void testExportCypherAdminOperationErrorMessage() {
         String filename = "test.cypher";
-        List<String> invalidQueries = List.of(
-                "SHOW CONSTRAINTS YIELD id, name, type RETURN *",
-                "SHOW INDEXES YIELD id, name, type RETURN *"
-        );
+        List<String> invalidQueries =
+                List.of("SHOW CONSTRAINTS YIELD id, name, type RETURN *", "SHOW INDEXES YIELD id, name, type RETURN *");
 
         for (String query : invalidQueries) {
-            QueryExecutionException e = Assert.assertThrows(QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, exportQuery,
+            QueryExecutionException e = Assert.assertThrows(
+                    QueryExecutionException.class,
+                    () -> TestUtil.testCall(
+                            db,
+                            exportQuery,
                             MapUtil.map(
                                     "query", query,
                                     "file", filename,
                                     "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
-                            (r) -> assertResults(filename, r, "database")
-                    )
-            );
+                            (r) -> assertResults(filename, r, "database")));
 
             assertError(e, INVALID_QUERY_MODE_ERROR, RuntimeException.class, "apoc.export.cypher.query");
         }
@@ -353,7 +363,7 @@ public class ExportCypherTest {
     private static String readFile(String fileName) {
         return readFile(fileName, CompressionAlgo.NONE);
     }
-    
+
     private static String readFile(String fileName, CompressionAlgo algo) {
         return BinaryTestUtil.readFileToString(new File(directory, fileName), UTF_8, algo);
     }
@@ -361,10 +371,17 @@ public class ExportCypherTest {
     @Test
     public void testExportGraphCypher() {
         String fileName = "graph.cypher";
-        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) " +
-                "YIELD nodes, relationships, properties, file, source,format, time " +
-                "RETURN *", map("file", fileName, "exportConfig", map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.graph.fromDB('test',{}) yield graph "
+                        + "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) "
+                        + "YIELD nodes, relationships, properties, file, source,format, time "
+                        + "RETURN *",
+                map(
+                        "file",
+                        fileName,
+                        "exportConfig",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
                 (r) -> assertResults(fileName, r, "graph"));
         assertEquals(EXPECTED_NEO4J_SHELL, readFile(fileName));
     }
@@ -373,7 +390,10 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherNodes() {
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,$exportConfig)", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,$exportConfig)",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_NODES, readFile("all.nodes.cypher"));
     }
@@ -381,7 +401,10 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherRelationships() {
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,$exportConfig)", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,$exportConfig)",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_RELATIONSHIPS, readFile("all.relationships.cypher"));
     }
@@ -389,7 +412,10 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherSchema() {
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,$exportConfig)", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,$exportConfig)",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_SCHEMA, readFile("all.schema.cypher"));
     }
@@ -399,7 +425,9 @@ public class ExportCypherTest {
         final Map<String, Object> config = new HashMap<>(ExportCypherTest.exportConfig);
         config.put("saveIndexNames", true);
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,$config)", 
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,$config)",
                 map("file", fileName, "config", config),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_SCHEMA_WITH_NAMES, readFile("all.schema.cypher"));
@@ -408,7 +436,10 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherCleanUp() {
         String fileName = "all.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,$exportConfig)", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,$exportConfig)",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_CLEAN_UP, readFile("all.cleanup.cypher"));
     }
@@ -416,20 +447,27 @@ public class ExportCypherTest {
     @Test
     public void testExportGraphCypherNodes() {
         String fileName = "graph.cypher";
-        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) " +
-                "YIELD nodes, relationships, properties, file, source,format, time " +
-                "RETURN *", map("file", fileName, "exportConfig", exportConfig), (r) -> assertResults(fileName, r, "graph"));
+        TestUtil.testCall(
+                db,
+                "CALL apoc.graph.fromDB('test',{}) yield graph "
+                        + "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) "
+                        + "YIELD nodes, relationships, properties, file, source,format, time "
+                        + "RETURN *",
+                map("file", fileName, "exportConfig", exportConfig),
+                (r) -> assertResults(fileName, r, "graph"));
         assertEquals(EXPECTED_NODES, readFile("graph.nodes.cypher"));
     }
 
     @Test
     public void testExportGraphCypherRelationships() {
         String fileName = "graph.cypher";
-        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                        "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) " +
-                        "YIELD nodes, relationships, properties, file, source,format, time " +
-                        "RETURN *", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.graph.fromDB('test',{}) yield graph "
+                        + "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) "
+                        + "YIELD nodes, relationships, properties, file, source,format, time "
+                        + "RETURN *",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "graph"));
         assertEquals(EXPECTED_RELATIONSHIPS, readFile("graph.relationships.cypher"));
     }
@@ -437,10 +475,13 @@ public class ExportCypherTest {
     @Test
     public void testExportGraphCypherSchema() {
         String fileName = "graph.cypher";
-        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                        "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) " +
-                        "YIELD nodes, relationships, properties, file, source,format, time " +
-                        "RETURN *", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.graph.fromDB('test',{}) yield graph "
+                        + "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) "
+                        + "YIELD nodes, relationships, properties, file, source,format, time "
+                        + "RETURN *",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "graph"));
         assertEquals(EXPECTED_SCHEMA, readFile("graph.schema.cypher"));
     }
@@ -448,10 +489,13 @@ public class ExportCypherTest {
     @Test
     public void testExportGraphCypherCleanUp() {
         String fileName = "graph.cypher";
-        TestUtil.testCall(db, "CALL apoc.graph.fromDB('test',{}) yield graph " +
-                        "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) " +
-                        "YIELD nodes, relationships, properties, file, source,format, time " +
-                        "RETURN *", map("file", fileName, "exportConfig", exportConfig),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.graph.fromDB('test',{}) yield graph "
+                        + "CALL apoc.export.cypher.graph(graph, $file,$exportConfig) "
+                        + "YIELD nodes, relationships, properties, file, source,format, time "
+                        + "RETURN *",
+                map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResults(fileName, r, "graph"));
         assertEquals(EXPECTED_CLEAN_UP, readFile("graph.cleanup.cypher"));
     }
@@ -463,16 +507,24 @@ public class ExportCypherTest {
         assertEquals(fileName, r.get("file"));
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
     }
 
     @Test
     public void testExportQueryCypherPlainFormat() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "plain")), (r) -> {
-                });
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "plain")),
+                (r) -> {});
         assertEquals(EXPECTED_PLAIN, readFile(fileName));
     }
 
@@ -480,9 +532,23 @@ public class ExportCypherTest {
     public void testExportQueryCypherFormatUpdateAll() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell", "cypherFormat", "updateAll")), (r) -> {
-                });
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map(
+                                "useOptimizations",
+                                map("type", "none"),
+                                "format",
+                                "neo4j-shell",
+                                "cypherFormat",
+                                "updateAll")),
+                (r) -> {});
         assertEquals(EXPECTED_NEO4J_MERGE, readFile(fileName));
     }
 
@@ -490,27 +556,68 @@ public class ExportCypherTest {
     public void testExportQueryCypherFormatAddStructure() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell", "cypherFormat", "addStructure")), (r) -> {
-                });
-        assertEquals(EXPECTED_NODES_MERGE_ON_CREATE_SET + EXPECTED_SCHEMA_EMPTY + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP_EMPTY, readFile(fileName));
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map(
+                                "useOptimizations",
+                                map("type", "none"),
+                                "format",
+                                "neo4j-shell",
+                                "cypherFormat",
+                                "addStructure")),
+                (r) -> {});
+        assertEquals(
+                EXPECTED_NODES_MERGE_ON_CREATE_SET
+                        + EXPECTED_SCHEMA_EMPTY
+                        + EXPECTED_RELATIONSHIPS
+                        + EXPECTED_CLEAN_UP_EMPTY,
+                readFile(fileName));
     }
 
     @Test
     public void testExportQueryCypherFormatUpdateStructure() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"), "format", "neo4j-shell", "cypherFormat", "updateStructure")), (r) -> {
-                });
-        assertEquals(EXPECTED_NODES_EMPTY + EXPECTED_SCHEMA_EMPTY + EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET + EXPECTED_CLEAN_UP_EMPTY, readFile(fileName));
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map(
+                                "useOptimizations",
+                                map("type", "none"),
+                                "format",
+                                "neo4j-shell",
+                                "cypherFormat",
+                                "updateStructure")),
+                (r) -> {});
+        assertEquals(
+                EXPECTED_NODES_EMPTY
+                        + EXPECTED_SCHEMA_EMPTY
+                        + EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET
+                        + EXPECTED_CLEAN_UP_EMPTY,
+                readFile(fileName));
     }
 
     @Test
     public void testExportSchemaCypher() {
         String fileName = "onlySchema.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.schema($file,$exportConfig)", map("file", fileName, "exportConfig", exportConfig), (r) -> {
-        });
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.schema($file,$exportConfig)",
+                map("file", fileName, "exportConfig", exportConfig),
+                (r) -> {});
         assertEquals(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL, readFile(fileName));
     }
 
@@ -522,20 +629,17 @@ public class ExportCypherTest {
         };
 
         // with {stream: true}
-        TestUtil.testCall(db, "CALL apoc.export.cypher.schema(null, {stream: true})",
-                resultAssertion);
+        TestUtil.testCall(db, "CALL apoc.export.cypher.schema(null, {stream: true})", resultAssertion);
 
         // with {streamStatements: true}
-        TestUtil.testCall(db, "CALL apoc.export.cypher.schema(null, {streamStatements: true})",
-                resultAssertion);
+        TestUtil.testCall(db, "CALL apoc.export.cypher.schema(null, {streamStatements: true})", resultAssertion);
 
         // assert `schemaStatements` of `apoc.export.cypher.all`
         // is equal to `cypher.schema` output plus the `CREATE CONSTRAINT UNIQUE_IMPORT_NAME ...` statement
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all(null, { separateFiles: true, stream: true})",
-                r -> {
-                    Object actual = r.get("schemaStatements");
-                    assertEquals(convertToCypherShellFormat(EXPECTED_SCHEMA), actual);
-                });
+        TestUtil.testCall(db, "CALL apoc.export.cypher.all(null, { separateFiles: true, stream: true})", r -> {
+            Object actual = r.get("schemaStatements");
+            assertEquals(convertToCypherShellFormat(EXPECTED_SCHEMA), actual);
+        });
     }
 
     @Test
@@ -543,76 +647,113 @@ public class ExportCypherTest {
         final Map<String, Object> config = new HashMap<>(ExportCypherTest.exportConfig);
         config.putAll(map("saveIndexNames", true));
         String fileName = "onlySchema.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.schema($file,$config)", 
-                map("file", fileName, "config", config), (r) -> {});
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.schema($file,$config)",
+                map("file", fileName, "config", config),
+                (r) -> {});
         assertEquals(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL_WITH_NAMES, readFile(fileName));
     }
 
     @Test
     public void testExportSchemaCypherShell() {
         String fileName = "onlySchema.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.schema($file,$exportConfig)",
-                map("file", fileName, "exportConfig", map("useOptimizations", map("type", "none"), "format", "cypher-shell")),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.schema($file,$exportConfig)",
+                map(
+                        "file",
+                        fileName,
+                        "exportConfig",
+                        map("useOptimizations", map("type", "none"), "format", "cypher-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_ONLY_SCHEMA_CYPHER_SHELL, readFile(fileName));
     }
 
     @Test
     public void testExportCypherNodePoint() {
-        db.executeTransactionally("CREATE (f:Test {name:'foo'," +
-                "place2d:point({ x: 2.3, y: 4.5 })," +
-                "place3d1:point({ x: 2.3, y: 4.5 , z: 1.2})})" +
-                "-[:FRIEND_OF {place2d:point({ longitude: 56.7, latitude: 12.78 })}]->" +
-                "(:Bar {place3d:point({ longitude: 12.78, latitude: 56.7, height: 100 })})");
+        db.executeTransactionally("CREATE (f:Test {name:'foo'," + "place2d:point({ x: 2.3, y: 4.5 }),"
+                + "place3d1:point({ x: 2.3, y: 4.5 , z: 1.2})})"
+                + "-[:FRIEND_OF {place2d:point({ longitude: 56.7, latitude: 12.78 })}]->"
+                + "(:Bar {place3d:point({ longitude: 12.78, latitude: 56.7, height: 100 })})");
         String fileName = "temporalPoint.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_POINT, readFile(fileName));
     }
 
     @Test
     public void testExportCypherNodeDate() {
-        db.executeTransactionally("CREATE (f:Test {name:'foo', " +
-                "date:date('2018-10-30'), " +
-                "datetime:datetime('2018-10-30T12:50:35.556+0100'), " +
-                "localTime:localdatetime('20181030T19:32:24')})" +
-                "-[:FRIEND_OF {date:date('2018-10-30')}]->" +
-                "(:Bar {datetime:datetime('2018-10-30T12:50:35.556')})");
+        db.executeTransactionally("CREATE (f:Test {name:'foo', " + "date:date('2018-10-30'), "
+                + "datetime:datetime('2018-10-30T12:50:35.556+0100'), "
+                + "localTime:localdatetime('20181030T19:32:24')})"
+                + "-[:FRIEND_OF {date:date('2018-10-30')}]->"
+                + "(:Bar {datetime:datetime('2018-10-30T12:50:35.556')})");
         String fileName = "temporalDate.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_DATE, readFile(fileName));
     }
 
     @Test
     public void testExportCypherNodeTime() {
-        db.executeTransactionally("CREATE (f:Test {name:'foo', " +
-                "local:localtime('12:50:35.556')," +
-                "t:time('125035.556+0100')})" +
-                "-[:FRIEND_OF {t:time('125035.556+0100')}]->" +
-                "(:Bar {datetime:datetime('2018-10-30T12:50:35.556+0100')})");
+        db.executeTransactionally("CREATE (f:Test {name:'foo', " + "local:localtime('12:50:35.556'),"
+                + "t:time('125035.556+0100')})"
+                + "-[:FRIEND_OF {t:time('125035.556+0100')}]->"
+                + "(:Bar {datetime:datetime('2018-10-30T12:50:35.556+0100')})");
         String fileName = "temporalTime.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_TIME, readFile(fileName));
     }
 
     @Test
     public void testExportCypherNodeDuration() {
-        db.executeTransactionally("CREATE (f:Test {name:'foo', " +
-                "duration:duration('P5M1.5D')})" +
-                "-[:FRIEND_OF {duration:duration('P5M1.5D')}]->" +
-                "(:Bar {duration:duration('P5M1.5D')})");
+        db.executeTransactionally("CREATE (f:Test {name:'foo', " + "duration:duration('P5M1.5D')})"
+                + "-[:FRIEND_OF {duration:duration('P5M1.5D')}]->"
+                + "(:Bar {duration:duration('P5M1.5D')})");
         String fileName = "temporalDuration.cypher";
         String query = "MATCH (n:Test)-[r]-(m) RETURN n,r,m";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_DURATION, readFile(fileName));
     }
@@ -622,8 +763,16 @@ public class ExportCypherTest {
         db.executeTransactionally("CREATE (f:User:User1:User0:User12 {name:'Alan'})");
         String fileName = "ascendingLabels.cypher";
         String query = "MATCH (f:User) WHERE f.name='Alan' RETURN f";
-        TestUtil.testCall(db, exportQuery,
-                map("file", fileName, "query", query, "config", map("useOptimizations", map("type", "none"),"format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "file",
+                        fileName,
+                        "query",
+                        query,
+                        "config",
+                        map("useOptimizations", map("type", "none"), "format", "neo4j-shell")),
                 (r) -> {});
         assertEquals(EXPECTED_CYPHER_LABELS_ASCENDEND, readFile(fileName));
     }
@@ -631,7 +780,10 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherDefaultWithUnwindBatchSizeOptimized() {
         String fileName = "allDefaultOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, format: 'neo4j-shell'})", map("file", fileName),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, format: 'neo4j-shell'})",
+                map("file", fileName),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE, readFile(fileName));
     }
@@ -639,7 +791,10 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherDefaultOptimized() {
         String fileName = "allDefaultOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file, $exportConfig)", map("file", fileName, "exportConfig", map("format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file, $exportConfig)",
+                map("file", fileName, "exportConfig", map("format", "neo4j-shell")),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_NEO4J_OPTIMIZED, readFile(fileName));
     }
@@ -647,7 +802,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherDefaultSeparatedFilesOptimized() {
         String fileName = "allDefaultOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file, $exportConfig)",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file, $exportConfig)",
                 map("file", fileName, "exportConfig", map("separateFiles", true, "format", "neo4j-shell")),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_NODES_OPTIMIZED, readFile("allDefaultOptimized.nodes.cypher"));
@@ -659,8 +816,14 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherWithIfNotExistsFalseOptimized() {
         String fileName = "ifNotExists.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file, $config)",
-                map("file", fileName, "config", map("ifNotExists", true, "separateFiles", true, "format", "neo4j-shell")),
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file, $config)",
+                map(
+                        "file",
+                        fileName,
+                        "config",
+                        map("ifNotExists", true, "separateFiles", true, "format", "neo4j-shell")),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_SCHEMA_OPTIMIZED_WITH_IF_NOT_EXISTS, readFile("ifNotExists.schema.cypher"));
         assertEquals(EXPECTED_NODES_OPTIMIZED, readFile("ifNotExists.nodes.cypher"));
@@ -671,7 +834,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherCypherShellWithUnwindBatchSizeOptimized() {
         String fileName = "allCypherShellOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: {type: 'unwind_batch'}})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: {type: 'unwind_batch'}})",
                 map("file", fileName),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE, readFile(fileName));
@@ -680,7 +845,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherCypherShellOptimized() {
         String fileName = "allCypherShellOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'cypher-shell'})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'cypher-shell'})",
                 map("file", fileName),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_CYPHER_SHELL_OPTIMIZED, readFile(fileName));
@@ -689,7 +856,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherPlainWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'plain', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'plain', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
                 map("file", fileName),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_PLAIN_OPTIMIZED_BATCH_SIZE, readFile(fileName));
@@ -698,22 +867,28 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherPlainAddStructureWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainAddStructureOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'plain', cypherFormat: 'addStructure', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
-                map("file", fileName), (r) -> assertResultsOptimized(fileName, r));
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'plain', cypherFormat: 'addStructure', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
+                map("file", fileName),
+                (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_PLAIN_ADD_STRUCTURE_UNWIND, readFile(fileName));
     }
 
     @Test
     public void testExportAllCypherPlainUpdateStructureWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainUpdateStructureOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'plain', cypherFormat: 'updateStructure', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
-                map("file", fileName), (r) -> {
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'plain', cypherFormat: 'updateStructure', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
+                map("file", fileName),
+                (r) -> {
                     assertEquals(0L, r.get("nodes"));
                     assertEquals(2L, r.get("relationships"));
                     assertEquals(2L, r.get("properties"));
                     assertEquals(fileName, r.get("file"));
                     assertEquals("cypher", r.get("format"));
-                    assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
                 });
         assertEquals(EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND, readFile(fileName));
     }
@@ -721,15 +896,20 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherPlainUpdateAllWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainUpdateAllOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'plain', cypherFormat: 'updateAll', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
-                map("file", fileName), (r) -> assertResultsOptimized(fileName, r));
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'plain', cypherFormat: 'updateAll', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}})",
+                map("file", fileName),
+                (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_UPDATE_ALL_UNWIND, readFile(fileName));
     }
 
     @Test
     public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOptimized() {
         String fileName = "allPlainOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
                 map("file", fileName),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND, readFile(fileName));
@@ -739,7 +919,10 @@ public class ExportCypherTest {
     public void testExportQueryCypherShellWithCompressionWithUnwindBatchSizeWithBatchSizeOptimized() {
         final CompressionAlgo algo = CompressionAlgo.DEFLATE;
         String fileName = "allPlainOptimized.cypher.ZZ";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{compression: '" + algo.name() + "', format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{compression: '" + algo.name()
+                        + "', format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
                 map("file", fileName),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND, readFile(fileName, algo));
@@ -748,25 +931,33 @@ public class ExportCypherTest {
     @Test
     public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOddDataset() {
         String fileName = "allPlainOdd.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
-                map("file", fileName), (r) -> assertResultsOdd(fileName, r));
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch', unwindBatchSize: 2}, batchSize: 2})",
+                map("file", fileName),
+                (r) -> assertResultsOdd(fileName, r));
         assertEquals(EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD, readFile(fileName));
     }
 
     @Test
     public void testExportQueryCypherShellUnwindBatchParamsWithOddDataset() {
         String fileName = "allPlainOdd.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:2})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:2})",
                 map("file", fileName),
                 (r) -> assertResultsOdd(fileName, r));
         assertEquals(EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD, readFile(fileName));
     }
-    
+
     @Test
     public void testExportWithCompressionQueryCypherShellUnwindBatchParamsWithOddDataset() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
         String fileName = "allPlainOdd.cypher.bz2";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{compression: '" + algo.name() + "', format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:2})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{compression: '" + algo.name()
+                        + "', format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:2})",
                 map("file", fileName),
                 (r) -> assertResultsOdd(fileName, r));
         assertEquals(EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD, readFile(fileName, algo));
@@ -775,7 +966,9 @@ public class ExportCypherTest {
     @Test
     public void testExportAllCypherPlainOptimized() {
         String fileName = "queryPlainOptimized.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.query('MATCH (f:Foo)-[r:KNOWS]->(b:Bar) return f,r,b', $file,{format:'cypher-shell', useOptimizations: {type: 'unwind_batch'}})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.query('MATCH (f:Foo)-[r:KNOWS]->(b:Bar) return f,r,b', $file,{format:'cypher-shell', useOptimizations: {type: 'unwind_batch'}})",
                 map("file", fileName),
                 (r) -> {
                     assertEquals(4L, r.get("nodes"));
@@ -784,21 +977,24 @@ public class ExportCypherTest {
                     assertEquals(fileName, r.get("file"));
                     assertEquals("statement: nodes(4), rels(2)", r.get("source"));
                     assertEquals("cypher", r.get("format"));
-                    assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
                 });
         String actual = readFile(fileName);
-        assertTrue("expected generated output ",
-                EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED.equals(actual) ||
-                        EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2.equals(actual) ||
-                        EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3.equals(actual) ||
-                        EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4.equals(actual));
+        assertTrue(
+                "expected generated output ",
+                EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED.equals(actual)
+                        || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2.equals(actual)
+                        || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3.equals(actual)
+                        || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4.equals(actual));
     }
 
     @Test
     public void testExportQueryCypherShellUnwindBatchParamsWithOddBatchSizeOddDataset() {
         db.executeTransactionally("CREATE (:Bar {name:'bar3',age:35}), (:Bar {name:'bar4',age:36})");
         String fileName = "allPlainOddNew.cypher";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:3})",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file,{format:'cypher-shell', useOptimizations: { type: 'unwind_batch_params', unwindBatchSize: 2}, batchSize:3})",
                 map("file", fileName),
                 (r) -> {});
         db.executeTransactionally("MATCH (n:Bar {name:'bar3',age:35}), (n1:Bar {name:'bar4',age:36}) DELETE n, n1");
@@ -810,71 +1006,69 @@ public class ExportCypherTest {
         // given
         db.executeTransactionally("CREATE (n:TempNode {value:'value', value2:'value'})");
         db.executeTransactionally("CREATE (n:TempNode2 {value:'value', value:'value2'})");
-        db.executeTransactionally("CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode|TempNode2) ON EACH [n.value, n.value2]");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode|TempNode2) ON EACH [n.value, n.value2]");
 
         String query = "MATCH (t:TempNode) return t";
         Map<String, Object> config = map("awaitForIndexes", 3000);
-        String expected = String.format(":begin%n" +
-                "CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode|TempNode2) ON EACH [n.`value`,n.`value2`];%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                ":commit%n" +
-                "CALL db.awaitIndexes(3000);%n" +
-                ":begin%n" +
-                "UNWIND [{_id:3, properties:{value2:\"value\", value:\"value\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
-                ":commit%n");
+        String expected = String.format(":begin%n"
+                + "CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode|TempNode2) ON EACH [n.`value`,n.`value2`];%n"
+                + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                + ":commit%n"
+                + "CALL db.awaitIndexes(3000);%n"
+                + ":begin%n"
+                + "UNWIND [{_id:3, properties:{value2:\"value\", value:\"value\"}}] AS row%n"
+                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n"
+                + ":commit%n"
+                + ":begin%n"
+                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                + ":commit%n"
+                + ":begin%n"
+                + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n"
+                + ":commit%n");
 
         // when
-        TestUtil.testCall(db, exportQuery,
-                map("query", query, "file", null, "config", config),
-                (r) -> {
-                    // then
-                    assertEquals(expected, r.get("cypherStatements"));
-                });
+        TestUtil.testCall(db, exportQuery, map("query", query, "file", null, "config", config), (r) -> {
+            // then
+            assertEquals(expected, r.get("cypherStatements"));
+        });
     }
 
     @Test
     public void shouldExportFulltextIndexForRelationship() {
         // given
         db.executeTransactionally("CREATE (s:TempNode)-[:REL{rel_value: 'the rel value'}]->(e:TempNode2)");
-        db.executeTransactionally("CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.rel_value]");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.rel_value]");
         String query = "MATCH (t:TempNode)-[r:REL{rel_value: 'the rel value'}]->(e:TempNode2) return t,r";
         Map<String, Object> config = map("awaitForIndexes", 3000);
-        String expected = String.format(":begin%n" +
-                "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.`rel_value`];%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                ":commit%n" +
-                "CALL db.awaitIndexes(3000);%n" +
-                ":begin%n" +
-                "UNWIND [{_id:3, properties:{}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:\"the rel value\"}}] AS row%n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
-                "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})%n" +
-                "CREATE (start)-[r:REL]->(end) SET r += row.properties;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
-                ":commit%n");
+        String expected = String.format(":begin%n"
+                + "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.`rel_value`];%n"
+                + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                + ":commit%n"
+                + "CALL db.awaitIndexes(3000);%n"
+                + ":begin%n"
+                + "UNWIND [{_id:3, properties:{}}] AS row%n"
+                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n"
+                + ":commit%n"
+                + ":begin%n"
+                + "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:\"the rel value\"}}] AS row%n"
+                + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
+                + "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})%n"
+                + "CREATE (start)-[r:REL]->(end) SET r += row.properties;%n"
+                + ":commit%n"
+                + ":begin%n"
+                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                + ":commit%n"
+                + ":begin%n"
+                + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n"
+                + ":commit%n");
 
         // when
-        TestUtil.testCall(db, exportQuery,
-                map("query", query, "file", null, "config", config),
-                (r) -> {
-                    // then
-                    assertEquals(expected, r.get("cypherStatements"));
-                });
+        TestUtil.testCall(db, exportQuery, map("query", query, "file", null, "config", config), (r) -> {
+            // then
+            assertEquals(expected, r.get("cypherStatements"));
+        });
     }
 
     @Test
@@ -886,10 +1080,13 @@ public class ExportCypherTest {
         CREATE (n:Bar{name: row.name, `UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Baz;
         But should be the expected variable
          */
-        final String expected = "UNWIND [{name:\"A\", properties:{}}] AS row\n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties SET n:Baz";
-        TestUtil.testCall(db, exportQuery,
-                map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
+        final String expected = "UNWIND [{name:\"A\", properties:{}}] AS row\n"
+                + "CREATE (n:Bar{name: row.name}) SET n += row.properties SET n:Baz";
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map("file", null, "query", query, "config", map("format", "plain", "stream", true)),
+                (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
                             .map(String::trim)
@@ -904,10 +1101,14 @@ public class ExportCypherTest {
     public void shouldManageBigNumbersCorrectly() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         db.executeTransactionally("CREATE (:Bar{name:'Foo', var1:1.416785E32}), (:Bar{name:'Bar', var1:12E4});");
-        final String expected = "UNWIND [{name:\"Foo\", properties:{var1:1.416785E32}}, {name:\"Bar\", properties:{var1:120000.0}}] AS row\n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties";
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file, $config)",
-                map("file", null, "config", map("format", "plain", "stream", true)), (r) -> {
+        final String expected =
+                "UNWIND [{name:\"Foo\", properties:{var1:1.416785E32}}, {name:\"Bar\", properties:{var1:120000.0}}] AS row\n"
+                        + "CREATE (n:Bar{name: row.name}) SET n += row.properties";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file, $config)",
+                map("file", null, "config", map("format", "plain", "stream", true)),
+                (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
                             .map(String::trim)
@@ -917,15 +1118,18 @@ public class ExportCypherTest {
                     assertEquals(expected, unwind);
                 });
     }
-    
+
     @Test
     public void shouldQuotePropertyNameStartingWithDollarCharacter() {
         db.executeTransactionally("CREATE (n:Bar:Baz{name: 'A', `$lock`: true})");
         String query = "MATCH (n:Baz) RETURN n";
-        final String expected = "UNWIND [{name:\"A\", properties:{`$lock`:true}}] AS row\n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties SET n:Baz";
-        TestUtil.testCall(db, exportQuery,
-                map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
+        final String expected = "UNWIND [{name:\"A\", properties:{`$lock`:true}}] AS row\n"
+                + "CREATE (n:Bar{name: row.name}) SET n += row.properties SET n:Baz";
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map("file", null, "query", query, "config", map("format", "plain", "stream", true)),
+                (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
                             .map(String::trim)
@@ -935,12 +1139,12 @@ public class ExportCypherTest {
                     assertEquals(expected, unwind);
                 });
     }
-  
+
     @Test
     public void shouldHandleTwoLabelsWithOneUniqueConstraintEach() {
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint1 FOR (b:Base) REQUIRE b.id IS UNIQUE");
-        db.executeTransactionally("CREATE (b:Bar:Base {id:'waBfk3z', name:'barista',age:42})" +
-                "-[:KNOWS]->(f:Foo {name:'foosha', born:date('2018-10-31')})");
+        db.executeTransactionally("CREATE (b:Bar:Base {id:'waBfk3z', name:'barista',age:42})"
+                + "-[:KNOWS]->(f:Foo {name:'foosha', born:date('2018-10-31')})");
         String query = "MATCH (b:Bar:Base)-[r:KNOWS]-(f:Foo) RETURN b, f, r";
         /* The bug was:
         UNWIND [{start: {name:"barista"}, end: {_id:4}, properties:{}}] AS row
@@ -949,13 +1153,17 @@ public class ExportCypherTest {
         CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
         But should be the expected variable
          */
-        final String expected = """
+        final String expected =
+                """
                 UNWIND [{start: {name:"barista"}, end: {_id:4}, properties:{}}] AS row
                 MATCH (start:Bar{name: row.start.name})
                 MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
                 CREATE (start)-[r:KNOWS]->(end) SET r += row.properties""";
-        TestUtil.testCall(db, exportQuery,
-                map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map("file", null, "query", query, "config", map("format", "plain", "stream", true)),
+                (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
                             .map(String::trim)
@@ -973,16 +1181,20 @@ public class ExportCypherTest {
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint1 FOR (b:Base) REQUIRE b.id IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint2 FOR (b:Base) REQUIRE b.oid IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint3 FOR (b:Bar) REQUIRE b.oname IS UNIQUE");
-        db.executeTransactionally("CREATE (b:Bar:Base {id:'waBfk3z',oid:42,name:'barista',oname:'bar',age:42})" +
-                "-[:KNOWS]->(f:Foo {name:'foosha', born:date('2018-10-31')})");
+        db.executeTransactionally("CREATE (b:Bar:Base {id:'waBfk3z',oid:42,name:'barista',oname:'bar',age:42})"
+                + "-[:KNOWS]->(f:Foo {name:'foosha', born:date('2018-10-31')})");
         String query = "MATCH (b:Bar:Base)-[r:KNOWS]-(f:Foo) RETURN b, f, r";
-        final String expected = """
+        final String expected =
+                """
                 UNWIND [{start: {name:"barista"}, end: {_id:4}, properties:{}}] AS row
                 MATCH (start:Bar{name: row.start.name})
                 MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
                 CREATE (start)-[r:KNOWS]->(end) SET r += row.properties""";
-        TestUtil.testCall(db, exportQuery,
-                map("file", null, "query", query, "config", map("format", "plain", "stream", true)), (r) -> {
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map("file", null, "query", query, "config", map("format", "plain", "stream", true)),
+                (r) -> {
                     final String cypherStatements = (String) r.get("cypherStatements");
                     String unwind = Stream.of(cypherStatements.split(";"))
                             .map(String::trim)
@@ -994,7 +1206,7 @@ public class ExportCypherTest {
                     assertEquals(expected, unwind);
                 });
     }
-    
+
     @Test
     public void shouldSaveCorrectlyRelIndexesOptimized() {
         String fileName = "relIndex.cypher";
@@ -1007,16 +1219,22 @@ public class ExportCypherTest {
 
         db.executeTransactionally("DROP INDEX rel_index_name");
     }
-    
+
     @Test
     public void shouldSaveCorrectlyRelIndexesWithNameOptimized() {
         String fileName = "relIndex.cypher";
         db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
 
-        relIndexTestCommon(fileName, EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED, map("ifNotExists", false, "saveIndexNames", true));
+        relIndexTestCommon(
+                fileName,
+                EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED,
+                map("ifNotExists", false, "saveIndexNames", true));
 
         // with ifNotExists: true
-        relIndexTestCommon(fileName, EXPECTED_SCHEMA_OPTIMIZED_WITH_RELS_IF_NOT_EXISTS_AND_NAME, map("ifNotExists", true, "saveIndexNames", true));
+        relIndexTestCommon(
+                fileName,
+                EXPECTED_SCHEMA_OPTIMIZED_WITH_RELS_IF_NOT_EXISTS_AND_NAME,
+                map("ifNotExists", true, "saveIndexNames", true));
 
         db.executeTransactionally("DROP INDEX rel_index_name");
     }
@@ -1024,35 +1242,43 @@ public class ExportCypherTest {
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatCreate() {
         final Map<String, Object> config = map("cypherFormat", "create");
-        issue2886Common(actual -> check2886FullStructureNonOptimized(actual, "create"), withoutOptimization(config), true);
+        issue2886Common(
+                actual -> check2886FullStructureNonOptimized(actual, "create"), withoutOptimization(config), true);
     }
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatAddStructure() {
         final Map<String, Object> config = map("cypherFormat", "addStructure");
-        issue2886Common(actual -> {
-            String[] lines = actual.split("[\r\n]+");
-            assertEquals(6, lines.length);
-            check2886UpdateNodeStructureNoOptimization(lines[0], lines[1], lines[2], lines[3], "addStructure");
-            check2886UpdateRelStructureNoOptimization(lines[4], lines[5], "addStructure");
-            check2886IdsNoOptimization(actual);
-        }, withoutOptimization(config), true);
+        issue2886Common(
+                actual -> {
+                    String[] lines = actual.split("[\r\n]+");
+                    assertEquals(6, lines.length);
+                    check2886UpdateNodeStructureNoOptimization(lines[0], lines[1], lines[2], lines[3], "addStructure");
+                    check2886UpdateRelStructureNoOptimization(lines[4], lines[5], "addStructure");
+                    check2886IdsNoOptimization(actual);
+                },
+                withoutOptimization(config),
+                true);
     }
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatUpdateStructure() {
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
-        issue2886Common(actual -> {
-            String[] lines = actual.split("[\r\n]+");
-            assertEquals(2, lines.length);
-            check2886UpdateRelStructureNoOptimization(lines[0], lines[1], "updateStructure");
-        }, withoutOptimization(config), false);
+        issue2886Common(
+                actual -> {
+                    String[] lines = actual.split("[\r\n]+");
+                    assertEquals(2, lines.length);
+                    check2886UpdateRelStructureNoOptimization(lines[0], lines[1], "updateStructure");
+                },
+                withoutOptimization(config),
+                false);
     }
 
     @Test
     public void testIssue2886OptimizationsNoneAndCypherFormatUpdateAll() {
         final Map<String, Object> config = map("cypherFormat", "updateAll");
-        issue2886Common(actual -> check2886FullStructureNonOptimized(actual, "updateAll"), withoutOptimization(config), true);
+        issue2886Common(
+                actual -> check2886FullStructureNonOptimized(actual, "updateAll"), withoutOptimization(config), true);
     }
 
     @Test
@@ -1064,23 +1290,29 @@ public class ExportCypherTest {
     @Test
     public void testIssue2886CypherFormatAddStructure() {
         final Map<String, Object> config = map("cypherFormat", "addStructure");
-        issue2886Common(actual -> {
-            String[] lines = actual.split("[\r\n]+");
-            assertEquals(8, lines.length);
-            check2886UpdateNodeStructure(lines[0], lines[1], lines[2], lines[3], "MERGE", "ON CREATE SET");
-            check2886UpdateRelStructure(lines[4], lines[5], lines[6], lines[7], "CREATE");
-            check2886Ids(actual);
-        }, config, true);
+        issue2886Common(
+                actual -> {
+                    String[] lines = actual.split("[\r\n]+");
+                    assertEquals(8, lines.length);
+                    check2886UpdateNodeStructure(lines[0], lines[1], lines[2], lines[3], "MERGE", "ON CREATE SET");
+                    check2886UpdateRelStructure(lines[4], lines[5], lines[6], lines[7], "CREATE");
+                    check2886Ids(actual);
+                },
+                config,
+                true);
     }
 
     @Test
     public void testIssue2886CypherFormatUpdateStructure() {
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
-        issue2886Common(actual -> {
-            String[] lines = actual.split("[\r\n]+");
-            assertEquals(4, lines.length);
-            check2886UpdateRelStructure(lines[0], lines[1], lines[2], lines[3], "MERGE");
-        }, config, false);
+        issue2886Common(
+                actual -> {
+                    String[] lines = actual.split("[\r\n]+");
+                    assertEquals(4, lines.length);
+                    check2886UpdateRelStructure(lines[0], lines[1], lines[2], lines[3], "MERGE");
+                },
+                config,
+                false);
     }
 
     @Test
@@ -1101,16 +1333,18 @@ public class ExportCypherTest {
         final long relOne = 1L;
         final String startTwo = "Second";
         final long relTwo = 2L;
-        db.executeTransactionally("CREATE (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
+        db.executeTransactionally(
+                "CREATE (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
                 map("name", startOne, "id", relOne));
-        db.executeTransactionally("CREATE (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
+        db.executeTransactionally(
+                "CREATE (:Person {name: $name})-[:WORKS_FOR {id: $id}]->(:Project)",
                 map("name", startTwo, "id", relTwo));
 
         final Map<String, Object> conf = map("format", "plain");
         conf.putAll(config);
-        final String cypherStatements = db.executeTransactionally("CALL apoc.export.cypher.all(null, $config)",
-                map("config", conf),
-                r -> (String) r.next().get("cypherStatements"));
+        final String cypherStatements =
+                db.executeTransactionally("CALL apoc.export.cypher.all(null, $config)", map("config", conf), r ->
+                        (String) r.next().get("cypherStatements"));
 
         beforeAfterIssue2886();
 
@@ -1121,8 +1355,8 @@ public class ExportCypherTest {
         }
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         db.executeTransactionally("CALL apoc.schema.assert({}, {})");
-        
-        for (String i: cypherStatements.split(";\n")) {
+
+        for (String i : cypherStatements.split(";\n")) {
             db.executeTransactionally(i);
         }
 
@@ -1143,165 +1377,218 @@ public class ExportCypherTest {
     }
 
     private void check2886Cleanup(String line1, String line2) {
-            assertEquals("MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;", line1);
-            assertEquals("DROP CONSTRAINT UNIQUE_IMPORT_NAME;", line2);
+        assertEquals(
+                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;",
+                line1);
+        assertEquals("DROP CONSTRAINT UNIQUE_IMPORT_NAME;", line2);
     }
 
-        private void check2886Schema(List<String> lines) {
-            assertEquals(5, lines.size());
-            assertTrue(lines.contains("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);"));
-            assertTrue(lines.contains("CREATE RANGE INDEX FOR (n:Foo) ON (n.name);"));
-            assertTrue(lines.contains("CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;"));
-            assertTrue(lines.contains("CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;"));
-            assertTrue(lines.contains("CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;"));
-        }
+    private void check2886Schema(List<String> lines) {
+        assertEquals(5, lines.size());
+        assertTrue(lines.contains("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);"));
+        assertTrue(lines.contains("CREATE RANGE INDEX FOR (n:Foo) ON (n.name);"));
+        assertTrue(lines.contains("CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;"));
+        assertTrue(lines.contains(
+                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;"));
+        assertTrue(
+                lines.contains(
+                        "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;"));
+    }
 
-        private List<String> extractIds(String s, String idName) {
-            List<String> ids = new ArrayList<>();
-            Pattern idPattern = Pattern.compile(String.format("%s:\\d+", idName));
-            Matcher idMatcher = idPattern.matcher(s);
-            while(idMatcher.find()) {
-                ids.add(String.valueOf(idMatcher.group()));
+    private List<String> extractIds(String s, String idName) {
+        List<String> ids = new ArrayList<>();
+        Pattern idPattern = Pattern.compile(String.format("%s:\\d+", idName));
+        Matcher idMatcher = idPattern.matcher(s);
+        while (idMatcher.find()) {
+            ids.add(String.valueOf(idMatcher.group()));
+        }
+        return ids;
+    }
+
+    private void check2886Ids(String actual) {
+        // Check that the non-deterministic ids are sensible
+        List<String> ids = extractIds(actual, "_id");
+        assertEquals(8, ids.size());
+        List<String> endIds = ids.subList(0, 2);
+        List<String> startIds = ids.subList(2, 4);
+        assertTrue(startIds.contains(ids.get(4))
+                && startIds.contains(ids.get(6))
+                && !Objects.equals(ids.get(4), ids.get(6)));
+        assertTrue(
+                endIds.contains(ids.get(5)) && endIds.contains(ids.get(7)) && !Objects.equals(ids.get(5), ids.get(7)));
+    }
+
+    private void check2886IdsNoOptimization(String actual) {
+        // Check that the non-deterministic ids are sensible
+        List<String> ids = extractIds(actual, "`UNIQUE IMPORT ID`");
+        assertEquals(8, ids.size());
+        List<String> startIds = new ArrayList<>();
+        startIds.add(ids.get(0));
+        startIds.add(ids.get(2));
+        List<String> endIds = new ArrayList<>();
+        endIds.add(ids.get(1));
+        endIds.add(ids.get(3));
+        assertTrue(startIds.contains(ids.get(4))
+                && startIds.contains(ids.get(6))
+                && !Objects.equals(ids.get(4), ids.get(6)));
+        assertTrue(
+                endIds.contains(ids.get(5)) && endIds.contains(ids.get(7)) && !Objects.equals(ids.get(5), ids.get(7)));
+    }
+
+    private void check2886UpdateNodeStructure(
+            String line1, String line2, String line3, String line4, String createOrMerge, String setCommand) {
+        assertTrue(regexMatch("UNWIND [{_id:\\d, properties:{}}, {_id:\\d, properties:{}}] AS row", line1));
+        assertEquals(
+                String.format(
+                        "%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Project;",
+                        createOrMerge, setCommand),
+                line2);
+
+        assertTrue(regexMatch(
+                        "UNWIND [{_id:\\d, properties:{name:\"First\"}}, {_id:\\d, properties:{name:\"Second\"}}] AS row",
+                        line3)
+                || regexMatch(
+                        "UNWIND [{_id:\\d, properties:{name:\"Second\"}}, {_id:\\d, properties:{name:\"First\"}}] AS row",
+                        line3));
+        assertEquals(
+                String.format(
+                        "%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Person;",
+                        createOrMerge, setCommand),
+                line4);
+    }
+
+    private void check2886UpdateNodeStructureNoOptimization(
+            String line1, String line2, String line3, String line4, String cypherFormat) {
+        switch (cypherFormat) {
+            case "create" -> {
+                assertTrue(regexMatch(
+                        "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"First\", `UNIQUE IMPORT ID`:\\d});", line1));
+                assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line2));
+                assertTrue(regexMatch(
+                        "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"Second\", `UNIQUE IMPORT ID`:\\d});", line3));
+                assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line4));
             }
-            return ids;
-        }
-
-        private void check2886Ids(String actual) {
-            // Check that the non-deterministic ids are sensible
-            List<String> ids = extractIds(actual, "_id");
-            assertEquals(8, ids.size());
-            List<String> endIds = ids.subList(0, 2);
-            List<String> startIds = ids.subList(2, 4);
-            assertTrue(startIds.contains(ids.get(4)) && startIds.contains(ids.get(6)) && !Objects.equals(ids.get(4), ids.get(6)));
-            assertTrue(endIds.contains(ids.get(5)) && endIds.contains(ids.get(7)) && !Objects.equals(ids.get(5), ids.get(7)));
-        }
-
-        private void check2886IdsNoOptimization(String actual) {
-            // Check that the non-deterministic ids are sensible
-            List<String> ids = extractIds(actual, "`UNIQUE IMPORT ID`");
-            assertEquals(8, ids.size());
-            List<String> startIds = new ArrayList<>();
-            startIds.add(ids.get(0));
-            startIds.add(ids.get(2));
-            List<String> endIds = new ArrayList<>();
-            endIds.add(ids.get(1));
-            endIds.add(ids.get(3));
-            assertTrue(startIds.contains(ids.get(4)) && startIds.contains(ids.get(6)) && !Objects.equals(ids.get(4), ids.get(6)));
-            assertTrue(endIds.contains(ids.get(5)) && endIds.contains(ids.get(7)) && !Objects.equals(ids.get(5), ids.get(7)));
-        }
-
-        private void check2886UpdateNodeStructure(String line1, String line2, String line3, String line4, String createOrMerge, String setCommand) {
-            assertTrue(regexMatch("UNWIND [{_id:\\d, properties:{}}, {_id:\\d, properties:{}}] AS row", line1));
-            assertEquals(String.format("%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Project;", createOrMerge, setCommand), line2);
-
-            assertTrue(
-                    regexMatch("UNWIND [{_id:\\d, properties:{name:\"First\"}}, {_id:\\d, properties:{name:\"Second\"}}] AS row", line3)
-                            || regexMatch("UNWIND [{_id:\\d, properties:{name:\"Second\"}}, {_id:\\d, properties:{name:\"First\"}}] AS row", line3)
-            );
-            assertEquals(String.format("%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Person;", createOrMerge, setCommand), line4);
-        }
-
-        private void check2886UpdateNodeStructureNoOptimization(String line1, String line2, String line3, String line4, String cypherFormat) {
-            switch (cypherFormat) {
-                case "create" -> {
-                    assertTrue(regexMatch("CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"First\", `UNIQUE IMPORT ID`:\\d});", line1));
-                    assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line2));
-                    assertTrue(regexMatch("CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"Second\", `UNIQUE IMPORT ID`:\\d});", line3));
-                    assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line4));
-                }
-                case "updateAll" -> {
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"First\", n:Person;", line1));
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line2));
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"Second\", n:Person;", line3));
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line4));
-                }
-                case "addStructure" -> {
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"First\", n:Person;", line1));
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line2));
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"Second\", n:Person;", line3));
-                    assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line4));
-                }
-                default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            case "updateAll" -> {
+                assertTrue(regexMatch(
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"First\", n:Person;",
+                        line1));
+                assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line2));
+                assertTrue(regexMatch(
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"Second\", n:Person;",
+                        line3));
+                assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line4));
             }
-        }
-
-        private void check2886UpdateRelStructure(String line1, String line2, String line3, String line4, String createOrMerge) {
-            assertTrue(
-                    regexMatch("UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}] AS row", line1)
-                            || regexMatch("UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}] AS row", line1)
-            );
-
-            assertEquals("MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})", line2);
-            assertEquals("MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})", line3);
-            assertTrue(
-                    regexMatch(String.format("%s (start)-[r:WORKS_FOR]->(end) SET r += row.properties;", createOrMerge), line4)
-                            || regexMatch(String.format("%s (start)-[r:WORKS_FOR]->(end)  SET r += row.properties;", createOrMerge), line4)
-            );
-        }
-
-        private void check2886UpdateRelStructureNoOptimization(String line1, String line2, String cypherFormat) {
-            switch (cypherFormat) {
-                case "create", "addStructure" -> {
-                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);", line1));
-                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);", line2));
-                }
-                case "updateAll" -> {
-                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=1;", line1));
-                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=2;", line2));
-                }
-                case "updateStructure" -> {
-                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;", line1));
-                    assertTrue(regexMatch("MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;", line2));
-                }
-                default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            case "addStructure" -> {
+                assertTrue(regexMatch(
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"First\", n:Person;",
+                        line1));
+                assertTrue(regexMatch(
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line2));
+                assertTrue(regexMatch(
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"Second\", n:Person;",
+                        line3));
+                assertTrue(regexMatch(
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line4));
             }
+            default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
+    }
+
+    private void check2886UpdateRelStructure(
+            String line1, String line2, String line3, String line4, String createOrMerge) {
+        assertTrue(regexMatch(
+                        "UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}] AS row",
+                        line1)
+                || regexMatch(
+                        "UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}] AS row",
+                        line1));
+
+        assertEquals("MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})", line2);
+        assertEquals("MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})", line3);
+        assertTrue(regexMatch(
+                        String.format("%s (start)-[r:WORKS_FOR]->(end) SET r += row.properties;", createOrMerge), line4)
+                || regexMatch(
+                        String.format("%s (start)-[r:WORKS_FOR]->(end)  SET r += row.properties;", createOrMerge),
+                        line4));
+    }
+
+    private void check2886UpdateRelStructureNoOptimization(String line1, String line2, String cypherFormat) {
+        switch (cypherFormat) {
+            case "create", "addStructure" -> {
+                assertTrue(regexMatch(
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);",
+                        line1));
+                assertTrue(regexMatch(
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);",
+                        line2));
+            }
+            case "updateAll" -> {
+                assertTrue(regexMatch(
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=1;",
+                        line1));
+                assertTrue(regexMatch(
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=2;",
+                        line2));
+            }
+            case "updateStructure" -> {
+                assertTrue(regexMatch(
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;",
+                        line1));
+                assertTrue(regexMatch(
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
+                        line2));
+            }
+            default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+        }
+    }
 
     private void check2886FullStructure(String actual, String cypherFormat) {
-            String createOrMerge = "";
-            switch (cypherFormat) {
-                case "updateAll" -> {
-                    createOrMerge = "MERGE";
-                }
-                case "create" -> {
-                    createOrMerge = "CREATE";
-                }
-                default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+        String createOrMerge = "";
+        switch (cypherFormat) {
+            case "updateAll" -> {
+                createOrMerge = "MERGE";
             }
-
-            String[] lines = actual.split("[\r\n]+");
-            assertEquals(15, lines.length);
-            check2886Schema(Arrays.stream(lines).toList().subList(0, 5));
-            check2886UpdateNodeStructure(lines[5], lines[6], lines[7], lines[8], createOrMerge, "SET");
-            check2886UpdateRelStructure(lines[9], lines[10], lines[11], lines[12], createOrMerge);
-            check2886Cleanup(lines[13], lines[14]);
-            check2886Ids(actual);
+            case "create" -> {
+                createOrMerge = "CREATE";
+            }
+            default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
 
-        private void check2886FullStructureNonOptimized(String actual, String cypherFormat) {
+        String[] lines = actual.split("[\r\n]+");
+        assertEquals(15, lines.length);
+        check2886Schema(Arrays.stream(lines).toList().subList(0, 5));
+        check2886UpdateNodeStructure(lines[5], lines[6], lines[7], lines[8], createOrMerge, "SET");
+        check2886UpdateRelStructure(lines[9], lines[10], lines[11], lines[12], createOrMerge);
+        check2886Cleanup(lines[13], lines[14]);
+        check2886Ids(actual);
+    }
 
-            String[] lines = actual.split("[\r\n]+");
-            assertEquals(13, lines.length);
+    private void check2886FullStructureNonOptimized(String actual, String cypherFormat) {
 
-            check2886UpdateNodeStructureNoOptimization(lines[0], lines[1], lines[2], lines[3], cypherFormat);
-            check2886Schema(Arrays.stream(lines).toList().subList(4, 9));
-            check2886UpdateRelStructureNoOptimization(lines[9], lines[10], cypherFormat);
-            check2886Cleanup(lines[11], lines[12]);
-            check2886IdsNoOptimization(actual);
-        }
+        String[] lines = actual.split("[\r\n]+");
+        assertEquals(13, lines.length);
 
-        private boolean regexMatch(String regex, String actual) {
-            Pattern SPECIAL_REGEX_CHARS = Pattern.compile("[^A-Za-z0-9\\\\d\\n\\r\\s]");
-            String escapedRegex = SPECIAL_REGEX_CHARS.matcher(regex).replaceAll("\\\\$0");
-            Pattern pattern = Pattern.compile(escapedRegex);
-            Matcher matcher = pattern.matcher(actual);
-            return matcher.matches();
-        }
+        check2886UpdateNodeStructureNoOptimization(lines[0], lines[1], lines[2], lines[3], cypherFormat);
+        check2886Schema(Arrays.stream(lines).toList().subList(4, 9));
+        check2886UpdateRelStructureNoOptimization(lines[9], lines[10], cypherFormat);
+        check2886Cleanup(lines[11], lines[12]);
+        check2886IdsNoOptimization(actual);
+    }
+
+    private boolean regexMatch(String regex, String actual) {
+        Pattern SPECIAL_REGEX_CHARS = Pattern.compile("[^A-Za-z0-9\\\\d\\n\\r\\s]");
+        String escapedRegex = SPECIAL_REGEX_CHARS.matcher(regex).replaceAll("\\\\$0");
+        Pattern pattern = Pattern.compile(escapedRegex);
+        Matcher matcher = pattern.matcher(actual);
+        return matcher.matches();
+    }
 
     private void relIndexTestCommon(String fileName, String expectedSchema, Map<String, Object> config) {
         Map<String, Object> exportConfig = map("separateFiles", true, "format", "neo4j-shell");
         exportConfig.putAll(config);
-        TestUtil.testCall(db, "CALL apoc.export.cypher.all($file, $exportConfig)",
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.cypher.all($file, $exportConfig)",
                 map("file", fileName, "exportConfig", exportConfig),
                 (r) -> assertResultsOptimized(fileName, r));
         assertEquals(EXPECTED_NODES_OPTIMIZED, readFile("relIndex.nodes.cypher"));
@@ -1317,7 +1604,7 @@ public class ExportCypherTest {
         assertEquals(fileName, r.get("file"));
         assertEquals("database" + ": nodes(7), rels(2)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
     }
 
     private void assertResultsOdd(String fileName, Map<String, Object> r) {
@@ -1327,102 +1614,97 @@ public class ExportCypherTest {
         assertEquals(fileName, r.get("file"));
         assertEquals("database" + ": nodes(7), rels(1)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0",((long) r.get("time")) >= 0);
+        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
     }
 
     public static class ExportCypherResults {
-        static final String EXPECTED_ISOLATED_NODE = "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});\n";
+        static final String EXPECTED_ISOLATED_NODE =
+                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});\n";
         static final String EXPECTED_BAR_END_NODE = "CREATE (:Bar {age:42, name:\"bar\"});%n";
-        static final String EXPECTED_BEGIN_AND_FOO = "BEGIN%n" +
-                "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n";
+        static final String EXPECTED_BEGIN_AND_FOO = "BEGIN%n"
+                + "CREATE (:Foo:`UNIQUE IMPORT LABEL` {born:date('2018-10-31'), name:\"foo\", `UNIQUE IMPORT ID`:0});%n";
 
-        public static final String EXPECTED_NODES = String.format(EXPECTED_BEGIN_AND_FOO +
-                EXPECTED_BAR_END_NODE +
-                EXPECTED_ISOLATED_NODE +
-                "COMMIT%n");
+        public static final String EXPECTED_NODES =
+                String.format(EXPECTED_BEGIN_AND_FOO + EXPECTED_BAR_END_NODE + EXPECTED_ISOLATED_NODE + "COMMIT%n");
 
-        private static final String EXPECTED_NODES_MERGE = String.format("BEGIN%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}) SET n.name=\"foo\", n.born=date('2018-10-31'), n:Foo;%n" +
-                "MERGE (n:Bar{name:\"bar\"}) SET n.age=42;%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:2}) SET n.age=12, n:Bar;%n" +
-                "COMMIT%n");
+        private static final String EXPECTED_NODES_MERGE = String.format("BEGIN%n"
+                + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}) SET n.name=\"foo\", n.born=date('2018-10-31'), n:Foo;%n"
+                + "MERGE (n:Bar{name:\"bar\"}) SET n.age=42;%n"
+                + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:2}) SET n.age=12, n:Bar;%n"
+                + "COMMIT%n");
 
         public static final String EXPECTED_NODES_MERGE_ON_CREATE_SET =
                 EXPECTED_NODES_MERGE.replaceAll(" SET ", " ON CREATE SET ");
 
-        public static final String EXPECTED_NODES_EMPTY = String.format("BEGIN%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_NODES_EMPTY = String.format("BEGIN%n" + "COMMIT%n");
 
-        static final String EXPECTED_REL_ONLY = """
+        static final String EXPECTED_REL_ONLY =
+                """
                 BEGIN
                 MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:1}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);
                 COMMIT
                 """;
 
-
-        private static final String EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT = "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n";
+        private static final String EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT =
+                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                        + "COMMIT%n"
+                        + "SCHEMA AWAIT%n";
 
         private static final String EXPECTED_CONSTRAINTS_AND_AWAIT =
-                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT;
+                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n"
+                        + EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT;
 
         private static final String EXPECTED_IDX_FOO = "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n";
 
-        public static final String EXPECTED_SCHEMA = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                EXPECTED_IDX_FOO +
-                EXPECTED_CONSTRAINTS_AND_AWAIT);
+        public static final String EXPECTED_SCHEMA =
+                String.format("BEGIN%n" + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + EXPECTED_IDX_FOO
+                        + EXPECTED_CONSTRAINTS_AND_AWAIT);
 
-        static final String EXPECTED_SCHEMA_ONLY_START = String.format("BEGIN%n" +
-                EXPECTED_IDX_FOO +
-                EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT);
+        static final String EXPECTED_SCHEMA_ONLY_START =
+                String.format("BEGIN%n" + EXPECTED_IDX_FOO + EXPECTED_UNIQUE_IMPORT_CONSTRAINT_AND_AWAIT);
 
-        static final String EXPECTED_SCHEMA_WITH_NAMES = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT);
+        static final String EXPECTED_SCHEMA_WITH_NAMES =
+                String.format("BEGIN%n" + "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);%n"
+                        + EXPECTED_CONSTRAINTS_AND_AWAIT);
 
-        public static final String EXPECTED_SCHEMA_EMPTY = String.format("BEGIN%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n");
+        public static final String EXPECTED_SCHEMA_EMPTY = String.format("BEGIN%n" + "COMMIT%n" + "SCHEMA AWAIT%n");
 
         public static final String EXPECTED_INDEXES_AWAIT = String.format("CALL db.awaitIndexes(300);%n");
 
-        public static final String EXPECTED_RELATIONSHIPS = String.format("BEGIN%n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_RELATIONSHIPS = String.format("BEGIN%n"
+                + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) CREATE (n1)-[r:KNOWS {since:2016}]->(n2);%n"
+                + "COMMIT%n");
 
-        private static final String EXPECTED_RELATIONSHIPS_MERGE = String.format("BEGIN%n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) MERGE (n1)-[r:KNOWS]->(n2) SET r.since=2016;%n" +
-                "COMMIT%n");
+        private static final String EXPECTED_RELATIONSHIPS_MERGE = String.format("BEGIN%n"
+                + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:Bar{name:\"bar\"}) MERGE (n1)-[r:KNOWS]->(n2) SET r.since=2016;%n"
+                + "COMMIT%n");
 
         public static final String EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET =
                 EXPECTED_RELATIONSHIPS_MERGE.replaceAll(" SET ", " ON CREATE SET ");
 
-        public static final String EXPECTED_CLEAN_UP = String.format("BEGIN%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_CLEAN_UP = String.format("BEGIN%n"
+                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n"
+                + "COMMIT%n");
 
-        public static final String EXPECTED_CLEAN_UP_EMPTY = String.format("BEGIN%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_CLEAN_UP_EMPTY =
+                String.format("BEGIN%n" + "COMMIT%n" + "BEGIN%n" + "COMMIT%n");
 
-        public static final String EXPECTED_ONLY_SCHEMA_NEO4J_SHELL = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
-                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n");
+        public static final String EXPECTED_ONLY_SCHEMA_NEO4J_SHELL =
+                String.format("BEGIN%n" + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n"
+                        + "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n"
+                        + "COMMIT%n"
+                        + "SCHEMA AWAIT%n");
 
-        static final String EXPECTED_ONLY_SCHEMA_NEO4J_SHELL_WITH_NAMES = """
+        static final String EXPECTED_ONLY_SCHEMA_NEO4J_SHELL_WITH_NAMES =
+                """
                 BEGIN
                 CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);
                 CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);
@@ -1432,196 +1714,196 @@ public class ExportCypherTest {
                 SCHEMA AWAIT
                 """;
 
-        public static final String EXPECTED_CYPHER_POINT = String.format("BEGIN%n" +
-                "CREATE (:Test:`UNIQUE IMPORT LABEL` {name:\"foo\", place2d:point({x: 2.3, y: 4.5, crs: 'cartesian'}), place3d1:point({x: 2.3, y: 4.5, z: 1.2, crs: 'cartesian-3d'}), `UNIQUE IMPORT ID`:3});%n" +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {place3d:point({x: 12.78, y: 56.7, z: 100.0, crs: 'wgs-84-3d'}), `UNIQUE IMPORT ID`:4});%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT +
-                "BEGIN%n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {place2d:point({x: 56.7, y: 12.78, crs: 'wgs-84'})}]->(n2);%n" +
-                "COMMIT%n" +
-                EXPECTED_CLEAN_UP);
+        public static final String EXPECTED_CYPHER_POINT = String.format("BEGIN%n"
+                + "CREATE (:Test:`UNIQUE IMPORT LABEL` {name:\"foo\", place2d:point({x: 2.3, y: 4.5, crs: 'cartesian'}), place3d1:point({x: 2.3, y: 4.5, z: 1.2, crs: 'cartesian-3d'}), `UNIQUE IMPORT ID`:3});%n"
+                + "CREATE (:Bar:`UNIQUE IMPORT LABEL` {place3d:point({x: 12.78, y: 56.7, z: 100.0, crs: 'wgs-84-3d'}), `UNIQUE IMPORT ID`:4});%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                + EXPECTED_CONSTRAINTS_AND_AWAIT
+                + "BEGIN%n"
+                + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {place2d:point({x: 56.7, y: 12.78, crs: 'wgs-84'})}]->(n2);%n"
+                + "COMMIT%n"
+                + EXPECTED_CLEAN_UP);
 
-        public static final String EXPECTED_CYPHER_DATE = String.format("BEGIN%n" +
-                "CREATE (:Test:`UNIQUE IMPORT LABEL` {date:date('2018-10-30'), datetime:datetime('2018-10-30T12:50:35.556+01:00'), localTime:localdatetime('2018-10-30T19:32:24'), name:\"foo\", `UNIQUE IMPORT ID`:3});%n" +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {datetime:datetime('2018-10-30T12:50:35.556Z'), `UNIQUE IMPORT ID`:4});%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT +
-                "BEGIN%n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {date:date('2018-10-30')}]->(n2);%n" +
-                "COMMIT%n" +
-                EXPECTED_CLEAN_UP);
+        public static final String EXPECTED_CYPHER_DATE = String.format("BEGIN%n"
+                + "CREATE (:Test:`UNIQUE IMPORT LABEL` {date:date('2018-10-30'), datetime:datetime('2018-10-30T12:50:35.556+01:00'), localTime:localdatetime('2018-10-30T19:32:24'), name:\"foo\", `UNIQUE IMPORT ID`:3});%n"
+                + "CREATE (:Bar:`UNIQUE IMPORT LABEL` {datetime:datetime('2018-10-30T12:50:35.556Z'), `UNIQUE IMPORT ID`:4});%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                + EXPECTED_CONSTRAINTS_AND_AWAIT
+                + "BEGIN%n"
+                + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {date:date('2018-10-30')}]->(n2);%n"
+                + "COMMIT%n"
+                + EXPECTED_CLEAN_UP);
 
-        public static final String EXPECTED_CYPHER_TIME = String.format("BEGIN%n" +
-                "CREATE (:Test:`UNIQUE IMPORT LABEL` {local:localtime('12:50:35.556'), name:\"foo\", t:time('12:50:35.556+01:00'), `UNIQUE IMPORT ID`:3});%n" +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {datetime:datetime('2018-10-30T12:50:35.556+01:00'), `UNIQUE IMPORT ID`:4});%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT +
-                "BEGIN%n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {t:time('12:50:35.556+01:00')}]->(n2);%n" +
-                "COMMIT%n" +
-                EXPECTED_CLEAN_UP);
+        public static final String EXPECTED_CYPHER_TIME = String.format("BEGIN%n"
+                + "CREATE (:Test:`UNIQUE IMPORT LABEL` {local:localtime('12:50:35.556'), name:\"foo\", t:time('12:50:35.556+01:00'), `UNIQUE IMPORT ID`:3});%n"
+                + "CREATE (:Bar:`UNIQUE IMPORT LABEL` {datetime:datetime('2018-10-30T12:50:35.556+01:00'), `UNIQUE IMPORT ID`:4});%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                + EXPECTED_CONSTRAINTS_AND_AWAIT
+                + "BEGIN%n"
+                + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {t:time('12:50:35.556+01:00')}]->(n2);%n"
+                + "COMMIT%n"
+                + EXPECTED_CLEAN_UP);
 
-        public static final String EXPECTED_CYPHER_DURATION = String.format("BEGIN%n" +
-                "CREATE (:Test:`UNIQUE IMPORT LABEL` {duration:duration('P5M1DT12H'), name:\"foo\", `UNIQUE IMPORT ID`:3});%n" +
-                "CREATE (:Bar:`UNIQUE IMPORT LABEL` {duration:duration('P5M1DT12H'), `UNIQUE IMPORT ID`:4});%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT +
-                "BEGIN%n" +
-                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {duration:duration('P5M1DT12H')}]->(n2);%n" +
-                "COMMIT%n" +
-                EXPECTED_CLEAN_UP);
+        public static final String EXPECTED_CYPHER_DURATION = String.format("BEGIN%n"
+                + "CREATE (:Test:`UNIQUE IMPORT LABEL` {duration:duration('P5M1DT12H'), name:\"foo\", `UNIQUE IMPORT ID`:3});%n"
+                + "CREATE (:Bar:`UNIQUE IMPORT LABEL` {duration:duration('P5M1DT12H'), `UNIQUE IMPORT ID`:4});%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                + EXPECTED_CONSTRAINTS_AND_AWAIT
+                + "BEGIN%n"
+                + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:4}) CREATE (n1)-[r:FRIEND_OF {duration:duration('P5M1DT12H')}]->(n2);%n"
+                + "COMMIT%n"
+                + EXPECTED_CLEAN_UP);
 
-        public static final String EXPECTED_CYPHER_LABELS_ASCENDEND = String.format("BEGIN%n" +
-                "CREATE (:User:User0:User1:User12:`UNIQUE IMPORT LABEL` {name:\"Alan\", `UNIQUE IMPORT ID`:3});%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n" +
-                EXPECTED_CLEAN_UP);
+        public static final String EXPECTED_CYPHER_LABELS_ASCENDEND = String.format("BEGIN%n"
+                + "CREATE (:User:User0:User1:User12:`UNIQUE IMPORT LABEL` {name:\"Alan\", `UNIQUE IMPORT ID`:3});%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                + "COMMIT%n"
+                + "SCHEMA AWAIT%n"
+                + EXPECTED_CLEAN_UP);
 
-        static final String EXPECTED_SCHEMA_WITH_RELS_OPTIMIZED = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
-                "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT);
+        static final String EXPECTED_SCHEMA_WITH_RELS_OPTIMIZED =
+                String.format("BEGIN%n" + "CREATE RANGE INDEX FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n"
+                        + "CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n"
+                        + EXPECTED_CONSTRAINTS_AND_AWAIT);
 
-        static final String EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);%n" +
-                "CREATE RANGE INDEX rel_index_name FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
-                EXPECTED_CONSTRAINTS_AND_AWAIT);
+        static final String EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED =
+                String.format("BEGIN%n" + "CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name);%n"
+                        + "CREATE RANGE INDEX rel_index_name FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n"
+                        + EXPECTED_CONSTRAINTS_AND_AWAIT);
 
-        static final String EXPECTED_SCHEMA_WITH_RELS_AND_IF_NOT_EXISTS = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX IF NOT EXISTS FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
-                "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Foo) ON (n.name);%n" +
-                "CREATE CONSTRAINT uniqueConstraint IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME IF NOT EXISTS FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n");
+        static final String EXPECTED_SCHEMA_WITH_RELS_AND_IF_NOT_EXISTS = String.format(
+                "BEGIN%n" + "CREATE RANGE INDEX IF NOT EXISTS FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n"
+                        + "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Foo) ON (n.name);%n"
+                        + "CREATE CONSTRAINT uniqueConstraint IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT uniqueConstraintComposite IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME IF NOT EXISTS FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                        + "COMMIT%n"
+                        + "SCHEMA AWAIT%n");
 
-        static final String EXPECTED_SCHEMA_OPTIMIZED_WITH_IF_NOT_EXISTS = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Foo) ON (n.name);%n" +
-                "CREATE CONSTRAINT uniqueConstraint IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME IF NOT EXISTS FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n");
+        static final String EXPECTED_SCHEMA_OPTIMIZED_WITH_IF_NOT_EXISTS = String.format(
+                "BEGIN%n" + "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX IF NOT EXISTS FOR (n:Foo) ON (n.name);%n"
+                        + "CREATE CONSTRAINT uniqueConstraint IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT uniqueConstraintComposite IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME IF NOT EXISTS FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                        + "COMMIT%n"
+                        + "SCHEMA AWAIT%n");
 
-        static final String EXPECTED_SCHEMA_OPTIMIZED_WITH_RELS_IF_NOT_EXISTS_AND_NAME = String.format("BEGIN%n" +
-                "CREATE RANGE INDEX barIndex IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX fooIndex IF NOT EXISTS FOR (n:Foo) ON (n.name);%n" +
-                "CREATE RANGE INDEX rel_index_name IF NOT EXISTS FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n" +
-                "CREATE CONSTRAINT uniqueConstraint IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME IF NOT EXISTS FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n");
+        static final String EXPECTED_SCHEMA_OPTIMIZED_WITH_RELS_IF_NOT_EXISTS_AND_NAME = String.format(
+                "BEGIN%n" + "CREATE RANGE INDEX barIndex IF NOT EXISTS FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX fooIndex IF NOT EXISTS FOR (n:Foo) ON (n.name);%n"
+                        + "CREATE RANGE INDEX rel_index_name IF NOT EXISTS FOR ()-[rel:KNOWS]-() ON (rel.since, rel.foo);%n"
+                        + "CREATE CONSTRAINT uniqueConstraint IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT uniqueConstraintComposite IF NOT EXISTS FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME IF NOT EXISTS FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                        + "COMMIT%n"
+                        + "SCHEMA AWAIT%n");
 
-        static final String EXPECTED_NODES_OPTIMIZED_BATCH_SIZE = String.format("BEGIN%n" +
-                "UNWIND [{_id:3, properties:{age:17}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n" +
-                "UNWIND [{_id:2, properties:{age:12}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar:Person;%n" +
-                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "UNWIND [{_id:6, properties:{age:99}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n" +
-                "COMMIT%n");
+        static final String EXPECTED_NODES_OPTIMIZED_BATCH_SIZE =
+                String.format("BEGIN%n" + "UNWIND [{_id:3, properties:{age:17}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n"
+                        + "UNWIND [{_id:2, properties:{age:12}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar:Person;%n"
+                        + "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                        + "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n"
+                        + "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                        + "UNWIND [{_id:6, properties:{age:99}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n"
+                        + "COMMIT%n");
 
-        public static final String EXPECTED_NODES_OPTIMIZED = String.format("BEGIN%n" +
-                "UNWIND [{_id:3, properties:{age:17}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n" +
-                "UNWIND [{_id:2, properties:{age:12}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar:Person;%n" +
-                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "UNWIND [{_id:6, properties:{age:99}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_NODES_OPTIMIZED =
+                String.format("BEGIN%n" + "UNWIND [{_id:3, properties:{age:17}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n"
+                        + "UNWIND [{_id:2, properties:{age:12}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar:Person;%n"
+                        + "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                        + "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n"
+                        + "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                        + "UNWIND [{_id:6, properties:{age:99}}] AS row%n"
+                        + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n"
+                        + "COMMIT%n");
 
         // The order in UNWIND is non-deterministic so we need to check for all 4 combinations of orders
-        static final String EXPECTED_QUERY_NODES_OPTIMIZED = String.format("BEGIN%n" +
-                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "COMMIT%n");
+        static final String EXPECTED_QUERY_NODES_OPTIMIZED = String.format("BEGIN%n"
+                + "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n"
+                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                + "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n"
+                + "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                + "COMMIT%n");
 
-        static final String EXPECTED_QUERY_NODES_OPTIMIZED2 = String.format("BEGIN%n" +
-                "UNWIND [{_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "COMMIT%n");
+        static final String EXPECTED_QUERY_NODES_OPTIMIZED2 = String.format("BEGIN%n"
+                + "UNWIND [{_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}] AS row%n"
+                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                + "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n"
+                + "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                + "COMMIT%n");
 
-        static final String EXPECTED_QUERY_NODES_OPTIMIZED3 = String.format("BEGIN%n" +
-                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar2\", properties:{age:44}}, {name:\"bar\", properties:{age:42}}] AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "COMMIT%n");
+        static final String EXPECTED_QUERY_NODES_OPTIMIZED3 = String.format("BEGIN%n"
+                + "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n"
+                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                + "UNWIND [{name:\"bar2\", properties:{age:44}}, {name:\"bar\", properties:{age:42}}] AS row%n"
+                + "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                + "COMMIT%n");
 
-        static final String EXPECTED_QUERY_NODES_OPTIMIZED4 = String.format("BEGIN%n" +
-                "UNWIND [{_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}] AS row%n" +
-                "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar2\", properties:{age:44}}, {name:\"bar\", properties:{age:42}}] AS row%n" +
-                "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "COMMIT%n");
+        static final String EXPECTED_QUERY_NODES_OPTIMIZED4 = String.format("BEGIN%n"
+                + "UNWIND [{_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}, {_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}] AS row%n"
+                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                + "UNWIND [{name:\"bar2\", properties:{age:44}}, {name:\"bar\", properties:{age:42}}] AS row%n"
+                + "CREATE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                + "COMMIT%n");
 
-        public static final String EXPECTED_RELATIONSHIPS_OPTIMIZED = String.format("BEGIN%n" +
-                "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
-                "MATCH (end:Bar{name: row.end.name})%n" +
-                "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_RELATIONSHIPS_OPTIMIZED = String.format("BEGIN%n"
+                + "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n"
+                + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
+                + "MATCH (end:Bar{name: row.end.name})%n"
+                + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n"
+                + "COMMIT%n");
 
-        static final String EXPECTED_RELATIONSHIPS_ODD = String.format("BEGIN%n" +
-                "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}] AS row%n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
-                "MATCH (end:Bar{name: row.end.name})%n" +
-                "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n" +
-                "COMMIT%n");
+        static final String EXPECTED_RELATIONSHIPS_ODD = String.format(
+                "BEGIN%n" + "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}] AS row%n"
+                        + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
+                        + "MATCH (end:Bar{name: row.end.name})%n"
+                        + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n"
+                        + "COMMIT%n");
 
         static final String EXPECTED_RELATIONSHIPS_PARAMS_ODD = String.format(
-                "BEGIN%n" +
-                ":param rows => [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}]%n" +
-                "UNWIND $rows AS row%n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
-                "MATCH (end:Bar{name: row.end.name})%n" +
-                "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n" +
-                "COMMIT%n");
+                "BEGIN%n" + ":param rows => [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}]%n"
+                        + "UNWIND $rows AS row%n"
+                        + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
+                        + "MATCH (end:Bar{name: row.end.name})%n"
+                        + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n"
+                        + "COMMIT%n");
 
-        static final String DROP_UNIQUE_OPTIMIZED_BATCH = String.format("BEGIN%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 2 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 2 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 2 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
-                "COMMIT%n");
+        static final String DROP_UNIQUE_OPTIMIZED_BATCH = String.format("BEGIN%n"
+                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 2 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 2 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 2 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                + "COMMIT%n"
+                + "BEGIN%n"
+                + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n"
+                + "COMMIT%n");
 
-        static final String EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_UNWIND = """
+        static final String EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_UNWIND =
+                """
                 BEGIN
                 UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:"foo"}}] AS row
                 CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;
@@ -1646,7 +1928,8 @@ public class ExportCypherTest {
                 COMMIT
                 """;
 
-        static final String EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_ODD = """
+        static final String EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_ODD =
+                """
                 :begin
                 UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:"foo"}}, {_id:1, properties:{born:date('2017-09-29'), name:"foo2"}}] AS row
                 CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;
@@ -1667,7 +1950,8 @@ public class ExportCypherTest {
                 :commit
                 """;
 
-        static final String EXPECTED_NODES_OPTIMIZED_PARAMS_BATCH_SIZE_ODD = """
+        static final String EXPECTED_NODES_OPTIMIZED_PARAMS_BATCH_SIZE_ODD =
+                """
                 :begin
                 :param rows => [{_id:0, properties:{born:date('2018-10-31'), name:"foo"}}, {_id:1, properties:{born:date('2017-09-29'), name:"foo2"}}]
                 UNWIND $rows AS row
@@ -1693,65 +1977,94 @@ public class ExportCypherTest {
                 :commit
                 """;
 
-        public static final String EXPECTED_PLAIN_ADD_STRUCTURE_UNWIND = String.format("UNWIND [{_id:3, properties:{age:17}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Bar;%n" +
-                "UNWIND [{_id:2, properties:{age:12}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Bar:Person;%n" +
-                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
-                "MERGE (n:Bar{name: row.name}) ON CREATE SET n += row.properties;%n" +
-                "UNWIND [{_id:6, properties:{age:99}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties;%n" +
-                "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
-                "MATCH (end:Bar{name: row.end.name})%n" +
-                "CREATE (start)-[r:KNOWS]->(end)  SET r += row.properties;%n");
+        public static final String EXPECTED_PLAIN_ADD_STRUCTURE_UNWIND =
+                String.format("UNWIND [{_id:3, properties:{age:17}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Bar;%n"
+                        + "UNWIND [{_id:2, properties:{age:12}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Bar:Person;%n"
+                        + "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties SET n:Foo;%n"
+                        + "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n"
+                        + "MERGE (n:Bar{name: row.name}) ON CREATE SET n += row.properties;%n"
+                        + "UNWIND [{_id:6, properties:{age:99}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) ON CREATE SET n += row.properties;%n"
+                        + "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n"
+                        + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
+                        + "MATCH (end:Bar{name: row.end.name})%n"
+                        + "CREATE (start)-[r:KNOWS]->(end)  SET r += row.properties;%n");
 
-        public static final String EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND = String.format("UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n" +
-                "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n" +
-                "MATCH (end:Bar{name: row.end.name})%n" +
-                "MERGE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
+        public static final String EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND = String.format(
+                "UNWIND [{start: {_id:0}, end: {name:\"bar\"}, properties:{since:2016}}, {start: {_id:4}, end: {name:\"bar2\"}, properties:{since:2015}}] AS row%n"
+                        + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
+                        + "MATCH (end:Bar{name: row.end.name})%n"
+                        + "MERGE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
 
-        public static final String EXPECTED_UPDATE_ALL_UNWIND = String.format("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n" +
-                "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n" +
-                "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n" +
-                "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n" +
-                "UNWIND [{_id:3, properties:{age:17}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n" +
-                "UNWIND [{_id:2, properties:{age:12}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar:Person;%n" +
-                "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n" +
-                "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n" +
-                "MERGE (n:Bar{name: row.name}) SET n += row.properties;%n" +
-                "UNWIND [{_id:6, properties:{age:99}}] AS row%n" +
-                "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n" +
-                EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n");
+        public static final String EXPECTED_UPDATE_ALL_UNWIND =
+                String.format("CREATE RANGE INDEX FOR (n:Bar) ON (n.first_name, n.last_name);%n"
+                        + "CREATE RANGE INDEX FOR (n:Foo) ON (n.name);%n"
+                        + "CREATE CONSTRAINT uniqueConstraint FOR (node:Bar) REQUIRE (node.name) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT uniqueConstraintComposite FOR (node:Bar) REQUIRE (node.name, node.age) IS UNIQUE;%n"
+                        + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
+                        + "UNWIND [{_id:3, properties:{age:17}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar;%n"
+                        + "UNWIND [{_id:2, properties:{age:12}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Bar:Person;%n"
+                        + "UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:\"foo\"}}, {_id:4, properties:{born:date('2017-09-29'), name:\"foo2\"}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;%n"
+                        + "UNWIND [{name:\"bar\", properties:{age:42}}, {name:\"bar2\", properties:{age:44}}] AS row%n"
+                        + "MERGE (n:Bar{name: row.name}) SET n += row.properties;%n"
+                        + "UNWIND [{_id:6, properties:{age:99}}] AS row%n"
+                        + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties;%n"
+                        + EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND
+                        + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                        + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n");
 
-        public static final String EXPECTED_NEO4J_OPTIMIZED = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_OPTIMIZED =
+                EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
 
-        public static final String EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE = EXPECTED_SCHEMA
+                + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE
+                + EXPECTED_RELATIONSHIPS_OPTIMIZED
+                + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_QUERY_NODES =  EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
-        static final String EXPECTED_QUERY_NODES2 =  EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED2 + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
-        static final String EXPECTED_QUERY_NODES3 =  EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED3 + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
-        static final String EXPECTED_QUERY_NODES4 =  EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED4 + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
+        static final String EXPECTED_QUERY_NODES =
+                EXPECTED_SCHEMA + EXPECTED_QUERY_NODES_OPTIMIZED + EXPECTED_RELATIONSHIPS_OPTIMIZED + EXPECTED_CLEAN_UP;
+        static final String EXPECTED_QUERY_NODES2 = EXPECTED_SCHEMA
+                + EXPECTED_QUERY_NODES_OPTIMIZED2
+                + EXPECTED_RELATIONSHIPS_OPTIMIZED
+                + EXPECTED_CLEAN_UP;
+        static final String EXPECTED_QUERY_NODES3 = EXPECTED_SCHEMA
+                + EXPECTED_QUERY_NODES_OPTIMIZED3
+                + EXPECTED_RELATIONSHIPS_OPTIMIZED
+                + EXPECTED_CLEAN_UP;
+        static final String EXPECTED_QUERY_NODES4 = EXPECTED_SCHEMA
+                + EXPECTED_QUERY_NODES_OPTIMIZED4
+                + EXPECTED_RELATIONSHIPS_OPTIMIZED
+                + EXPECTED_CLEAN_UP;
 
-        static final String EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_UNWIND + EXPECTED_RELATIONSHIPS_OPTIMIZED + DROP_UNIQUE_OPTIMIZED_BATCH;
+        static final String EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND = EXPECTED_SCHEMA
+                + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_UNWIND
+                + EXPECTED_RELATIONSHIPS_OPTIMIZED
+                + DROP_UNIQUE_OPTIMIZED_BATCH;
 
-        static final String EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_ODD + EXPECTED_RELATIONSHIPS_ODD + DROP_UNIQUE_OPTIMIZED_BATCH;
+        static final String EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD = EXPECTED_SCHEMA
+                + EXPECTED_NODES_OPTIMIZED_BATCH_SIZE_ODD
+                + EXPECTED_RELATIONSHIPS_ODD
+                + DROP_UNIQUE_OPTIMIZED_BATCH;
 
-        static final String EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = EXPECTED_SCHEMA + EXPECTED_NODES_OPTIMIZED_PARAMS_BATCH_SIZE_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + DROP_UNIQUE_OPTIMIZED_BATCH;
+        static final String EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = EXPECTED_SCHEMA
+                + EXPECTED_NODES_OPTIMIZED_PARAMS_BATCH_SIZE_ODD
+                + EXPECTED_RELATIONSHIPS_PARAMS_ODD
+                + DROP_UNIQUE_OPTIMIZED_BATCH;
 
-        public static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND);
+        public static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND =
+                convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_UNWIND);
 
-        public static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD);
+        public static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD =
+                convertToCypherShellFormat(EXPECTED_CYPHER_OPTIMIZED_BATCH_SIZE_ODD);
 
-        public static final String EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD = convertToCypherShellFormat(EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD);
+        public static final String EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD =
+                convertToCypherShellFormat(EXPECTED_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD);
 
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_QUERY_NODES);
 
@@ -1761,63 +2074,69 @@ public class ExportCypherTest {
 
         static final String EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4 = convertToCypherShellFormat(EXPECTED_QUERY_NODES4);
 
-        public static final String EXPECTED_CYPHER_SHELL_OPTIMIZED = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED);
+        public static final String EXPECTED_CYPHER_SHELL_OPTIMIZED =
+                convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED);
 
-        public static final String EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE = convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE);
+        public static final String EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE =
+                convertToCypherShellFormat(EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE);
 
         public static final String EXPECTED_PLAIN_OPTIMIZED_BATCH_SIZE = EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE
                 .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin())
                 .replace(NEO4J_SHELL.commit(), PLAIN_FORMAT.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), PLAIN_FORMAT.schemaAwait());
 
-        public static final String EXPECTED_NEO4J_SHELL = EXPECTED_NODES + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_SHELL =
+                EXPECTED_NODES + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS + EXPECTED_CLEAN_UP;
 
         public static final String EXPECTED_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL);
 
         public static final String EXPECTED_PLAIN = EXPECTED_NEO4J_SHELL
-                .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin()).replace(NEO4J_SHELL.commit(), PLAIN_FORMAT.commit())
+                .replace(NEO4J_SHELL.begin(), PLAIN_FORMAT.begin())
+                .replace(NEO4J_SHELL.commit(), PLAIN_FORMAT.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), PLAIN_FORMAT.schemaAwait());
 
-        public static final String EXPECTED_NEO4J_MERGE = EXPECTED_NODES_MERGE + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS_MERGE + EXPECTED_CLEAN_UP;
+        public static final String EXPECTED_NEO4J_MERGE =
+                EXPECTED_NODES_MERGE + EXPECTED_SCHEMA + EXPECTED_RELATIONSHIPS_MERGE + EXPECTED_CLEAN_UP;
 
-        public static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL = convertToCypherShellFormat(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL);
+        public static final String EXPECTED_ONLY_SCHEMA_CYPHER_SHELL =
+                convertToCypherShellFormat(EXPECTED_ONLY_SCHEMA_NEO4J_SHELL);
 
         public static final List<String> EXPECTED_CONSTRAINTS = List.of(
-             "CREATE CONSTRAINT SingleUnique FOR (node:Label) REQUIRE (node.prop) IS UNIQUE;",
-             "CREATE CONSTRAINT SingleUniqueRel FOR ()-[rel:TYPE]-() REQUIRE (rel.prop) IS UNIQUE;",
-             "CREATE CONSTRAINT CompositeUnique FOR (node:Label) REQUIRE (node.prop1, node.prop2) IS UNIQUE;",
-             "CREATE CONSTRAINT CompositeUniqueRel FOR ()-[rel:TYPE]-() REQUIRE (rel.prop1, rel.prop2) IS UNIQUE;",
-             "CREATE CONSTRAINT SingleExists FOR (node:Label2) REQUIRE (node.prop) IS NOT NULL;",
-             "CREATE CONSTRAINT SingleExistsRel FOR ()-[rel:TYPE2]-() REQUIRE (rel.prop) IS NOT NULL;",
-             "CREATE CONSTRAINT SingleNodeKey FOR (node:Label3) REQUIRE (node.prop) IS NODE KEY;",
-             "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;"
-        );
+                "CREATE CONSTRAINT SingleUnique FOR (node:Label) REQUIRE (node.prop) IS UNIQUE;",
+                "CREATE CONSTRAINT SingleUniqueRel FOR ()-[rel:TYPE]-() REQUIRE (rel.prop) IS UNIQUE;",
+                "CREATE CONSTRAINT CompositeUnique FOR (node:Label) REQUIRE (node.prop1, node.prop2) IS UNIQUE;",
+                "CREATE CONSTRAINT CompositeUniqueRel FOR ()-[rel:TYPE]-() REQUIRE (rel.prop1, rel.prop2) IS UNIQUE;",
+                "CREATE CONSTRAINT SingleExists FOR (node:Label2) REQUIRE (node.prop) IS NOT NULL;",
+                "CREATE CONSTRAINT SingleExistsRel FOR ()-[rel:TYPE2]-() REQUIRE (rel.prop) IS NOT NULL;",
+                "CREATE CONSTRAINT SingleNodeKey FOR (node:Label3) REQUIRE (node.prop) IS NODE KEY;",
+                "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;");
 
-        public static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT = String.format(
-                "COMMIT%n" +
-                "SCHEMA AWAIT%n" +
-                "BEGIN%n" +
-                "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n" +
-                "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n" +
-                "COMMIT%n" +
-                "BEGIN%n" +
-                "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n" +
-                "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n" +
-                "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n" +
-                "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n" +
-                "COMMIT%n");
+        public static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT =
+                String.format("COMMIT%n" + "SCHEMA AWAIT%n"
+                        + "BEGIN%n"
+                        + "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n"
+                        + "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n"
+                        + "COMMIT%n"
+                        + "BEGIN%n"
+                        + "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n"
+                        + "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n"
+                        + "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n"
+                        + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n"
+                        + "COMMIT%n");
 
-        public static final String EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT = convertToCypherShellFormat(EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT);
+        public static final String EXPECTED_CYPHER_SHELL_WITH_COMPOUND_CONSTRAINT =
+                convertToCypherShellFormat(EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT);
 
         public static final String EXPECTED_PLAIN_FORMAT_WITH_COMPOUND_CONSTRAINT = String.format(
-                "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n" +
-                "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n" +
-                "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n" +
-                "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n" +
-                "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n" +
-                "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
+                "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n"
+                        + "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n"
+                        + "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n"
+                        + "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n"
+                        + "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n"
+                        + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
 
-        static final String EXPECTED_NODES_PARAMS_ODD = """
+        static final String EXPECTED_NODES_PARAMS_ODD =
+                """
                 :begin
                 :param rows => [{_id:0, properties:{born:date('2018-10-31'), name:"foo"}}, {_id:1, properties:{born:date('2017-09-29'), name:"foo2"}}]
                 UNWIND $rows AS row
@@ -1844,33 +2163,37 @@ public class ExportCypherTest {
                 :commit
                 """;
 
-        static final String EXPECTED_DROP_PARAMS_ODD = String.format(":begin%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n" +
-                ":commit%n" +
-                ":begin%n" +
-                "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n" +
-                ":commit%n", 3);
+        static final String EXPECTED_DROP_PARAMS_ODD = String.format(
+                ":begin%n"
+                        + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                        + ":commit%n"
+                        + ":begin%n"
+                        + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT %1$d REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
+                        + ":commit%n"
+                        + ":begin%n"
+                        + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n"
+                        + ":commit%n",
+                3);
 
         static final String EXPECTED_WITHOUT_END_NODE = String.format(EXPECTED_BEGIN_AND_FOO + "COMMIT%n")
                 + EXPECTED_SCHEMA_ONLY_START
                 + EXPECTED_REL_ONLY
                 + EXPECTED_CLEAN_UP;
 
-        public static final String EXPECTED_QUERY_PARAMS_ODD = (EXPECTED_SCHEMA + EXPECTED_NODES_PARAMS_ODD + EXPECTED_RELATIONSHIPS_PARAMS_ODD + EXPECTED_DROP_PARAMS_ODD)
+        public static final String EXPECTED_QUERY_PARAMS_ODD = (EXPECTED_SCHEMA
+                        + EXPECTED_NODES_PARAMS_ODD
+                        + EXPECTED_RELATIONSHIPS_PARAMS_ODD
+                        + EXPECTED_DROP_PARAMS_ODD)
                 .replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
                 .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
                 .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
                 .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
 
         public static String convertToCypherShellFormat(String input) {
-            return input
-                .replace( NEO4J_SHELL.begin(), CYPHER_SHELL.begin() )
-                .replace( NEO4J_SHELL.commit(), CYPHER_SHELL.commit() )
-                .replace( NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT )
-                .replace( NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait() );
+            return input.replace(NEO4J_SHELL.begin(), CYPHER_SHELL.begin())
+                    .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
+                    .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
+                    .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
         }
     }
 }

@@ -18,10 +18,9 @@
  */
 package apoc.agg;
 
-import org.neo4j.procedure.*;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.neo4j.procedure.*;
 
 /**
  * @author mh
@@ -29,7 +28,8 @@ import java.util.List;
  */
 public class CollAggregation {
     @UserAggregationFunction("apoc.agg.nth")
-    @Description("Returns the nth value in the given collection (to fetch the last item of an unknown length collection, -1 can be used).")
+    @Description(
+            "Returns the nth value in the given collection (to fetch the last item of an unknown length collection, -1 can be used).")
     public NthFunction nthFunction() {
         return new NthFunction();
     }
@@ -47,8 +47,9 @@ public class CollAggregation {
     }
 
     @UserAggregationFunction("apoc.agg.slice")
-    @Description("Returns a subset of non-null values from the given collection (the collection is considered to be zero-indexed).\n" +
-            "To specify the range from start until the end of the collection, the length should be set to -1.")
+    @Description(
+            "Returns a subset of non-null values from the given collection (the collection is considered to be zero-indexed).\n"
+                    + "To specify the range from start until the end of the collection, the length should be set to -1.")
     public SliceFunction slice() {
         return new SliceFunction();
     }
@@ -79,7 +80,10 @@ public class CollAggregation {
         private int index;
 
         @UserAggregationUpdate
-        public void nth(@Name("value") Object value, @Name(value = "from", defaultValue = "0") long from, @Name(value = "to", defaultValue = "-1") long len) {
+        public void nth(
+                @Name("value") Object value,
+                @Name(value = "from", defaultValue = "0") long from,
+                @Name(value = "to", defaultValue = "-1") long len) {
             if (value != null) {
                 if (index >= from && (len == -1 || index < from + len)) {
                     this.values.add(value);

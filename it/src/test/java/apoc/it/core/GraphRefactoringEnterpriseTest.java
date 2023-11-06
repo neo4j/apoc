@@ -18,14 +18,6 @@
  */
 package apoc.it.core;
 
-import apoc.util.Neo4jContainerExtension;
-import apoc.util.TestContainerUtil.ApocPackage;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import java.util.List;
-import org.neo4j.driver.Session;
-
 import static apoc.refactor.GraphRefactoringTest.CLONE_NODES_QUERY;
 import static apoc.refactor.GraphRefactoringTest.CLONE_SUBGRAPH_QUERY;
 import static apoc.refactor.GraphRefactoringTest.EXTRACT_QUERY;
@@ -34,8 +26,17 @@ import static apoc.util.TestContainerUtil.testCall;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import apoc.util.Neo4jContainerExtension;
+import apoc.util.TestContainerUtil.ApocPackage;
+import java.util.List;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.neo4j.driver.Session;
+
 public class GraphRefactoringEnterpriseTest {
-    private static final String CREATE_REL_FOR_EXTRACT_NODE = "CREATE (:Start)-[r:TO_MOVE {name: 'foobar', surname: 'baz'}]->(:End)";
+    private static final String CREATE_REL_FOR_EXTRACT_NODE =
+            "CREATE (:Start)-[r:TO_MOVE {name: 'foobar', surname: 'baz'}]->(:End)";
     private static final String DELETE_REL_FOR_EXTRACT_NODE = "MATCH p=(:Start)-[r:TO_MOVE]->(:End) DELETE p";
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
@@ -52,7 +53,7 @@ public class GraphRefactoringEnterpriseTest {
         session.close();
         neo4jContainer.close();
     }
-    
+
     @Test
     public void testCloneNodesWithNodeKeyConstraint() {
         nodeKeyCommons(CLONE_NODES_QUERY);
@@ -62,7 +63,7 @@ public class GraphRefactoringEnterpriseTest {
     public void testCloneNodesWithBothExistenceAndUniqueConstraint() {
         uniqueNotNullCommons(CLONE_NODES_QUERY);
     }
-    
+
     @Test
     public void testCloneSubgraphWithNodeKeyConstraint() {
         nodeKeyCommons(CLONE_SUBGRAPH_QUERY);
@@ -72,7 +73,7 @@ public class GraphRefactoringEnterpriseTest {
     public void testCloneSubgraphWithBothExistenceAndUniqueConstraint() {
         uniqueNotNullCommons(CLONE_SUBGRAPH_QUERY);
     }
-    
+
     @Test
     public void testExtractNodesWithNodeKeyConstraint() {
         session.writeTransaction(tx -> tx.run(CREATE_REL_FOR_EXTRACT_NODE));
@@ -88,10 +89,11 @@ public class GraphRefactoringEnterpriseTest {
     }
 
     private void nodeKeyCommons(String query) {
-        session.writeTransaction(tx -> tx.run("CREATE CONSTRAINT nodeKey FOR (p:MyBook) REQUIRE (p.name, p.surname) IS NODE KEY"));
-        cloneNodesAssertions(query, "already exists with label `MyBook` and properties `name` = 'foobar', `surname` = 'baz'");
+        session.writeTransaction(
+                tx -> tx.run("CREATE CONSTRAINT nodeKey FOR (p:MyBook) REQUIRE (p.name, p.surname) IS NODE KEY"));
+        cloneNodesAssertions(
+                query, "already exists with label `MyBook` and properties `name` = 'foobar', `surname` = 'baz'");
         session.writeTransaction(tx -> tx.run("DROP CONSTRAINT nodeKey"));
-        
     }
 
     private void uniqueNotNullCommons(String query) {
@@ -105,13 +107,11 @@ public class GraphRefactoringEnterpriseTest {
 
     private void cloneNodesAssertions(String query, String message) {
         session.writeTransaction(tx -> tx.run("CREATE (n:MyBook {name: 'foobar', surname: 'baz'})"));
-        testCall(session, query,
-                r -> {
-                    final String error = (String) r.get("error");
-                    assertTrue(error.contains(message));
-                    assertNull(r.get("output"));
-                    
-                });
+        testCall(session, query, r -> {
+            final String error = (String) r.get("error");
+            assertTrue(error.contains(message));
+            assertNull(r.get("output"));
+        });
         session.writeTransaction(tx -> tx.run("MATCH (n:MyBook) DELETE n"));
     }
 }

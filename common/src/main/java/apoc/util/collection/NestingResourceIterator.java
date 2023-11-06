@@ -18,12 +18,10 @@
  */
 package apoc.util.collection;
 
-
 import java.util.Iterator;
 import org.neo4j.graphdb.ResourceIterator;
 
-public abstract class NestingResourceIterator<T, U> extends PrefetchingResourceIterator<T>
-{
+public abstract class NestingResourceIterator<T, U> extends PrefetchingResourceIterator<T> {
     private final Iterator<U> source;
     private ResourceIterator<T> currentNestedIterator;
 

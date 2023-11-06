@@ -18,6 +18,13 @@
  */
 package apoc.export;
 
+import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
+import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.apocConfig;
+import static apoc.util.TransactionTestUtil.checkTerminationGuard;
+import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
+import static org.neo4j.configuration.SettingValueParsers.BYTES;
+
 import apoc.export.csv.ExportCSV;
 import apoc.export.csv.ImportCsv;
 import apoc.export.cypher.ExportCypher;
@@ -30,6 +37,11 @@ import apoc.refactor.GraphRefactoring;
 import apoc.refactor.rename.Rename;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -39,41 +51,41 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.IntStream;
-
-import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
-import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
-import static apoc.ApocConfig.apocConfig;
-import static apoc.util.TransactionTestUtil.checkTerminationGuard;
-import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
-import static org.neo4j.configuration.SettingValueParsers.BYTES;
-
 public class BigGraphTest {
     private static final File directory = new File("target/import");
+
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
     }
-    
+
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
             .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
             .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"))
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
+            .withSetting(
+                    GraphDatabaseSettings.load_csv_file_url_root,
+                    directory.toPath().toAbsolutePath());
 
     @BeforeClass
     public static void setUp() {
-        TestUtil.registerProcedure(db, Rename.class, ExportCSV.class, ExportJson.class, ExportCypher.class, ExportGraphML.class, Graphs.class, Meta.class, GraphRefactoring.class,
-                ImportCsv.class, ImportJson.class);
+        TestUtil.registerProcedure(
+                db,
+                Rename.class,
+                ExportCSV.class,
+                ExportJson.class,
+                ExportCypher.class,
+                ExportGraphML.class,
+                Graphs.class,
+                Meta.class,
+                GraphRefactoring.class,
+                ImportCsv.class,
+                ImportJson.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
 
         final String query = Util.readResourceFile("moviesMod.cypher");
-        IntStream.range(0, 10000).forEach(__-> db.executeTransactionally(query));
+        IntStream.range(0, 10000).forEach(__ -> db.executeTransactionally(query));
     }
 
     @AfterClass
@@ -108,18 +120,18 @@ public class BigGraphTest {
 
     @Test
     public void testTerminateRenameType() {
-        checkTerminationGuard(db,  50L, "CALL apoc.refactor.rename.type('DIRECTED', 'DIRECTED_TWO')");
+        checkTerminationGuard(db, 50L, "CALL apoc.refactor.rename.type('DIRECTED', 'DIRECTED_TWO')");
     }
 
     @Test
     public void testTerminateRefactorProcs() {
-        List<Node> nodes = db.executeTransactionally("MATCH (n:Person) RETURN collect(n) as nodes", Collections.emptyMap(),
+        List<Node> nodes = db.executeTransactionally(
+                "MATCH (n:Person) RETURN collect(n) as nodes",
+                Collections.emptyMap(),
                 r -> r.<List<Node>>columnAs("nodes").next());
-        
-        checkTerminationGuard(db, "CALL apoc.refactor.cloneNodes($nodes)", 
-                Map.of("nodes", nodes));
 
-        checkTerminationGuard(db, "CALL apoc.refactor.cloneSubgraph($nodes)",
-                Map.of("nodes", nodes));
+        checkTerminationGuard(db, "CALL apoc.refactor.cloneNodes($nodes)", Map.of("nodes", nodes));
+
+        checkTerminationGuard(db, "CALL apoc.refactor.cloneSubgraph($nodes)", Map.of("nodes", nodes));
     }
 }

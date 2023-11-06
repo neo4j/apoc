@@ -18,14 +18,6 @@
  */
 package apoc.util;
 
-import org.junit.Test;
-import org.neo4j.graphdb.schema.ConstraintType;
-import org.neo4j.graphdb.schema.IndexType;
-
-import java.util.Arrays;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_KEY;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_PROPERTY_EXISTENCE;
@@ -42,6 +34,13 @@ import static org.neo4j.graphdb.schema.IndexType.RANGE;
 import static org.neo4j.graphdb.schema.IndexType.TEXT;
 import static org.neo4j.graphdb.schema.IndexType.VECTOR;
 
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.junit.Test;
+import org.neo4j.graphdb.schema.ConstraintType;
+import org.neo4j.graphdb.schema.IndexType;
+
 public class UtilTest {
 
     /**
@@ -51,27 +50,23 @@ public class UtilTest {
      */
     @Test
     public void testAPOCisAwareOfAllConstraints() {
-        assertEquals(Arrays.stream(ConstraintType.values()).collect(Collectors.toSet()), Set.of(
-                UNIQUENESS,
-                NODE_PROPERTY_EXISTENCE,
-                RELATIONSHIP_PROPERTY_EXISTENCE,
-                NODE_KEY,
-                RELATIONSHIP_KEY,
-                RELATIONSHIP_UNIQUENESS,
-                RELATIONSHIP_PROPERTY_TYPE,
-                NODE_PROPERTY_TYPE
-        ));
+        assertEquals(
+                Arrays.stream(ConstraintType.values()).collect(Collectors.toSet()),
+                Set.of(
+                        UNIQUENESS,
+                        NODE_PROPERTY_EXISTENCE,
+                        RELATIONSHIP_PROPERTY_EXISTENCE,
+                        NODE_KEY,
+                        RELATIONSHIP_KEY,
+                        RELATIONSHIP_UNIQUENESS,
+                        RELATIONSHIP_PROPERTY_TYPE,
+                        NODE_PROPERTY_TYPE));
     }
 
     @Test
     public void testAPOCisAwareOfAllIndexes() {
-        assertEquals(Arrays.stream(IndexType.values()).collect(Collectors.toSet()), Set.of(
-                FULLTEXT,
-                LOOKUP,
-                TEXT,
-                RANGE,
-                POINT,
-                VECTOR
-        ));
+        assertEquals(
+                Arrays.stream(IndexType.values()).collect(Collectors.toSet()),
+                Set.of(FULLTEXT, LOOKUP, TEXT, RANGE, POINT, VECTOR));
     }
 }

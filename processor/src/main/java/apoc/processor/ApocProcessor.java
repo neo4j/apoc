@@ -18,19 +18,18 @@
  */
 package apoc.processor;
 
-import org.neo4j.procedure.Procedure;
-import org.neo4j.procedure.UserAggregationFunction;
-import org.neo4j.procedure.UserFunction;
-
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.UserAggregationFunction;
+import org.neo4j.procedure.UserFunction;
 
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class ApocProcessor extends AbstractProcessor {
@@ -45,28 +44,19 @@ public class ApocProcessor extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedAnnotationTypes() {
-        return Set.of(
-                Procedure.class.getName(),
-                UserFunction.class.getName(),
-                UserAggregationFunction.class.getName()
-        );
+        return Set.of(Procedure.class.getName(), UserFunction.class.getName(), UserAggregationFunction.class.getName());
     }
-
 
     @Override
     public synchronized void init(ProcessingEnvironment processingEnv) {
         procedureSignatures = new ArrayList<>();
         userFunctionSignatures = new ArrayList<>();
         extensionClassWriter = new ExtensionClassWriter(processingEnv.getFiler());
-        signatureVisitor = new SignatureVisitor(
-                processingEnv.getElementUtils(),
-                processingEnv.getMessager()
-        );
+        signatureVisitor = new SignatureVisitor(processingEnv.getElementUtils(), processingEnv.getMessager());
     }
 
     @Override
-    public boolean process(Set<? extends TypeElement> annotations,
-                           RoundEnvironment roundEnv) {
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
         annotations.forEach(annotation -> extractSignature(annotation, roundEnv));
 
@@ -88,5 +78,4 @@ public class ApocProcessor extends AbstractProcessor {
         }
         return userFunctionSignatures;
     }
-
 }

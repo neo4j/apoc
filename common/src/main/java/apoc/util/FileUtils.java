@@ -18,6 +18,12 @@
  */
 package apoc.util;
 
+import static apoc.ApocConfig.APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM;
+import static apoc.ApocConfig.apocConfig;
+import static apoc.util.Util.ERROR_BYTES_OR_STRING;
+import static apoc.util.Util.REDIRECT_LIMIT;
+import static apoc.util.Util.readHttpInputStream;
+
 import apoc.ApocConfig;
 import apoc.export.util.CountingInputStream;
 import apoc.export.util.CountingReader;
@@ -25,9 +31,6 @@ import apoc.export.util.ExportConfig;
 import apoc.util.hdfs.HDFSUtils;
 import apoc.util.s3.S3URLConnection;
 import apoc.util.s3.S3UploadUtils;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -43,12 +46,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
-
-import static apoc.ApocConfig.APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM;
-import static apoc.ApocConfig.apocConfig;
-import static apoc.util.Util.ERROR_BYTES_OR_STRING;
-import static apoc.util.Util.REDIRECT_LIMIT;
-import static apoc.util.Util.readHttpInputStream;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * @author mh
@@ -67,31 +66,34 @@ public class FileUtils {
         }
     }
 
-    public static StreamConnection getStreamConnection(SupportedProtocols protocol, String urlAddress, Map<String, Object> headers, String payload) throws IOException {
+    public static StreamConnection getStreamConnection(
+            SupportedProtocols protocol, String urlAddress, Map<String, Object> headers, String payload)
+            throws IOException {
         switch (protocol) {
-        case s3:
-            return FileUtils.openS3InputStream(urlAddress);
-        case hdfs:
-            return FileUtils.openHdfsInputStream(urlAddress);
-        case ftp:
-        case http:
-        case https:
-        case gs:
-            return readHttpInputStream(urlAddress, headers, payload, REDIRECT_LIMIT);
-        default:
-            try {
-                return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
-            } catch (IllegalArgumentException iae) {
-                return new StreamConnection.FileStreamConnection(getFileUrl(urlAddress));
-            }
+            case s3:
+                return FileUtils.openS3InputStream(urlAddress);
+            case hdfs:
+                return FileUtils.openHdfsInputStream(urlAddress);
+            case ftp:
+            case http:
+            case https:
+            case gs:
+                return readHttpInputStream(urlAddress, headers, payload, REDIRECT_LIMIT);
+            default:
+                try {
+                    return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
+                } catch (IllegalArgumentException iae) {
+                    return new StreamConnection.FileStreamConnection(getFileUrl(urlAddress));
+                }
         }
     }
 
     public static URLStreamHandler createURLStreamHandler(SupportedProtocols protocol) {
         URLStreamHandler handler = Optional.ofNullable(protocol.getUrlStreamHandlerClassName())
-                                           .map(Util::createInstanceOrNull)
-                                           .map(urlStreamHandlerFactory -> ((URLStreamHandlerFactory) urlStreamHandlerFactory).createURLStreamHandler(protocol.name()))
-                                           .orElse(null);
+                .map(Util::createInstanceOrNull)
+                .map(urlStreamHandlerFactory ->
+                        ((URLStreamHandlerFactory) urlStreamHandlerFactory).createURLStreamHandler(protocol.name()))
+                .orElse(null);
         return handler;
     }
 
@@ -118,13 +120,14 @@ public class FileUtils {
                     // we retrieve the related enum and throw the associated MissingDependencyException(..)
                     // otherwise we return unknown protocol: yyyyy
                     return SupportedProtocols.valueOf(new URI(source).getScheme());
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
 
                 // in case a Windows user write an url like `C:/User/...`
                 if (e.getMessage().contains("unknown protocol") && Util.isWindows()) {
-                    throw new RuntimeException(e.getMessage() +
-                            "\n Please note that for Windows absolute paths they have to be explicit by prepending `file:` or supplied without the drive, " +
-                            "\n e.g. `file:C:/my/path/file` or `/my/path/file`, instead of `C:/my/path/file`");
+                    throw new RuntimeException(e.getMessage()
+                            + "\n Please note that for Windows absolute paths they have to be explicit by prepending `file:` or supplied without the drive, "
+                            + "\n e.g. `file:C:/my/path/file` or `/my/path/file`, instead of `C:/my/path/file`");
                 }
                 throw new RuntimeException(e);
             }
@@ -132,19 +135,22 @@ public class FileUtils {
         }
     }
 
-    public static final String ERROR_READ_FROM_FS_NOT_ALLOWED = "Import file %s not enabled, please set " + APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM + "=true in your neo4j.conf";
-    public static final String ACCESS_OUTSIDE_DIR_ERROR = "You're providing a directory outside the import directory " +
-            "defined into `server.directories.import`";
+    public static final String ERROR_READ_FROM_FS_NOT_ALLOWED = "Import file %s not enabled, please set "
+            + APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM + "=true in your neo4j.conf";
+    public static final String ACCESS_OUTSIDE_DIR_ERROR =
+            "You're providing a directory outside the import directory " + "defined into `server.directories.import`";
 
     public static CountingReader readerFor(Object input, String compressionAlgo) throws IOException {
         return readerFor(input, null, null, compressionAlgo);
     }
 
-    public static CountingReader readerFor(Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
+    public static CountingReader readerFor(
+            Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
         return inputStreamFor(input, headers, payload, compressionAlgo).asReader();
     }
 
-    public static CountingInputStream inputStreamFor(Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
+    public static CountingInputStream inputStreamFor(
+            Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
         if (input == null) return null;
         if (input instanceof String) {
             String fileName = (String) input;
@@ -164,10 +170,7 @@ public class FileUtils {
                 throw new RuntimeException(String.format(ERROR_READ_FROM_FS_NOT_ALLOWED, url));
             }
             final Path resolvedPath = resolvePath(url);
-            return resolvedPath
-                    .normalize()
-                    .toUri()
-                    .toString();
+            return resolvedPath.normalize().toUri().toString();
         }
         return url;
     }
@@ -245,16 +248,15 @@ public class FileUtils {
         final CompressionAlgo compressionAlgo = CompressionAlgo.valueOf(config.getCompressionAlgo());
         final OutputStream outputStream;
         try {
-            switch ( protocol )
-            {
-            case s3 -> outputStream = S3UploadUtils.writeFile( fileName );
-            case hdfs -> outputStream = HDFSUtils.writeFile( fileName );
-            default -> {
-                final File file = isImportUsingNeo4jConfig()
-                        ? resolvePath(fileName).toFile()
-                        : new File(getFileUrl(fileName));
-                outputStream = new FileOutputStream(file);
-            }
+            switch (protocol) {
+                case s3 -> outputStream = S3UploadUtils.writeFile(fileName);
+                case hdfs -> outputStream = HDFSUtils.writeFile(fileName);
+                default -> {
+                    final File file = isImportUsingNeo4jConfig()
+                            ? resolvePath(fileName).toFile()
+                            : new File(getFileUrl(fileName));
+                    outputStream = new FileOutputStream(file);
+                }
             }
             return new BufferedOutputStream(compressionAlgo.getOutputStream(outputStream));
         } catch (Exception e) {
@@ -268,22 +270,24 @@ public class FileUtils {
 
     public static StreamConnection openS3InputStream(String urlAddress) throws IOException {
         if (!SupportedProtocols.s3.isEnabled()) {
-            throw new MissingDependencyException("Cannot find the S3 jars in the plugins folder. \n" +
-                    "Please put these files into the plugins folder :\n\n" +
-                    "aws-java-sdk-core-x.y.z.jar\n" +
-                    "aws-java-sdk-s3-x.y.z.jar\n" +
-                    "httpclient-x.y.z.jar\n" +
-                    "httpcore-x.y.z.jar\n" +
-                    "joda-time-x.y.z.jar\n" +
-                    "\nSee the documentation: https://neo4j.com/docs/apoc/current/import/web-apis/#_using_google_cloud_storage");
+            throw new MissingDependencyException(
+                    "Cannot find the S3 jars in the plugins folder. \n"
+                            + "Please put these files into the plugins folder :\n\n"
+                            + "aws-java-sdk-core-x.y.z.jar\n"
+                            + "aws-java-sdk-s3-x.y.z.jar\n"
+                            + "httpclient-x.y.z.jar\n"
+                            + "httpcore-x.y.z.jar\n"
+                            + "joda-time-x.y.z.jar\n"
+                            + "\nSee the documentation: https://neo4j.com/docs/apoc/current/import/web-apis/#_using_google_cloud_storage");
         }
         return S3URLConnection.openS3InputStream(new URL(urlAddress));
     }
 
     public static StreamConnection openHdfsInputStream(String urlAddress) throws IOException {
         if (!SupportedProtocols.hdfs.isEnabled()) {
-            throw new MissingDependencyException("Cannot find the HDFS/Hadoop jars in the plugins folder. \n" +
-                    "\nPlease, see the documentation: https://neo4j.com/docs/apoc/current/import/web-apis/#_using_google_cloud_storage");
+            throw new MissingDependencyException(
+                    "Cannot find the HDFS/Hadoop jars in the plugins folder. \n"
+                            + "\nPlease, see the documentation: https://neo4j.com/docs/apoc/current/import/web-apis/#_using_google_cloud_storage");
         }
         return HDFSUtils.readFile(new URL(urlAddress));
     }

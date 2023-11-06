@@ -17,14 +17,6 @@
  * limitations under the License.
  */
 package apoc.it.core;
-import apoc.util.Neo4jContainerExtension;
-import apoc.util.TestContainerUtil;
-import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
-import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.driver.Session;
-
-import java.util.List;
 
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
@@ -32,6 +24,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+
+import apoc.util.Neo4jContainerExtension;
+import apoc.util.TestContainerUtil;
+import java.util.List;
+import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.driver.Session;
 
 public class WarmupEnterpriseTest {
 
@@ -43,7 +43,8 @@ public class WarmupEnterpriseTest {
         neo4jContainer.start();
         Session session = neo4jContainer.getSession();
 
-        RuntimeException e = assertThrows(RuntimeException.class, () -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}));
+        RuntimeException e =
+                assertThrows(RuntimeException.class, () -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}));
         assertTrue(e.getMessage().contains("Record engine type unsupported"));
 
         session.close();
@@ -60,7 +61,7 @@ public class WarmupEnterpriseTest {
 
         testCall(session, "CALL apoc.warmup.run(true,true,true)", r -> {
             assertEquals(true, r.get("indexesLoaded"));
-            assertNotEquals( 0L, r.get("indexPages") );
+            assertNotEquals(0L, r.get("indexPages"));
         });
 
         session.close();
