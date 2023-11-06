@@ -78,14 +78,12 @@ public interface ExportArrowStreamStrategy<IN> extends ExportArrowStrategy<IN, S
             }
 
             @Override
-            public boolean hasNext()
-            {
+            public boolean hasNext() {
                 return current != null;
             }
 
             @Override
-            public ByteArrayResult next()
-            {
+            public ByteArrayResult next() {
                 ByteArrayResult result = current;
                 current = null;
                 computeBatch();
