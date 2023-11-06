@@ -80,7 +80,7 @@ dependencies {
 
 
 task testJar(type: Jar, dependsOn: testClasses) {
-    classifier = 'tests'
+    archiveClassifier = 'tests'
     from sourceSets.test.output
 }
 
