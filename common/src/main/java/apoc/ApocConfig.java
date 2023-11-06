@@ -18,11 +18,32 @@
  */
 package apoc;
 
+import static apoc.util.FileUtils.isFile;
+import static java.lang.String.format;
+import static org.neo4j.configuration.BootloaderSettings.lib_directory;
+import static org.neo4j.configuration.BootloaderSettings.run_directory;
+import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
+import static org.neo4j.configuration.GraphDatabaseSettings.data_directory;
+import static org.neo4j.configuration.GraphDatabaseSettings.load_csv_file_url_root;
+import static org.neo4j.configuration.GraphDatabaseSettings.logs_directory;
+import static org.neo4j.configuration.GraphDatabaseSettings.neo4j_home;
+import static org.neo4j.configuration.GraphDatabaseSettings.plugin_dir;
+import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_root_path;
+import static org.neo4j.internal.helpers.ProcessUtils.executeCommandWithOutput;
+
 import apoc.export.util.ExportConfig;
 import inet.ipaddr.IPAddressString;
-
 import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.net.URL;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
@@ -44,53 +65,30 @@ import org.neo4j.logging.NullLog;
 import org.neo4j.logging.internal.LogService;
 import org.neo4j.util.Preconditions;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URL;
-import java.time.Duration;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Stream;
-
-import static apoc.util.FileUtils.isFile;
-import static java.lang.String.format;
-import static org.neo4j.configuration.BootloaderSettings.lib_directory;
-import static org.neo4j.configuration.BootloaderSettings.run_directory;
-import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
-import static org.neo4j.configuration.GraphDatabaseSettings.data_directory;
-import static org.neo4j.configuration.GraphDatabaseSettings.load_csv_file_url_root;
-import static org.neo4j.configuration.GraphDatabaseSettings.logs_directory;
-import static org.neo4j.configuration.GraphDatabaseSettings.neo4j_home;
-import static org.neo4j.configuration.GraphDatabaseSettings.plugin_dir;
-import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_root_path;
-import static org.neo4j.internal.helpers.ProcessUtils.executeCommandWithOutput;
-
 public class ApocConfig extends LifecycleAdapter {
     public static final String SUN_JAVA_COMMAND = "sun.java.command";
     public static final String APOC_IMPORT_FILE_ENABLED = "apoc.import.file.enabled";
     public static final String APOC_EXPORT_FILE_ENABLED = "apoc.export.file.enabled";
     public static final String APOC_IMPORT_FILE_USE_NEO4J_CONFIG = "apoc.import.file.use_neo4j_config";
     public static final String APOC_TRIGGER_ENABLED = "apoc.trigger.enabled";
-    public static final String APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM = "apoc.import.file.allow_read_from_filesystem";
+    public static final String APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM =
+            "apoc.import.file.allow_read_from_filesystem";
     public static final String APOC_CONFIG_JOBS_SCHEDULED_NUM_THREADS = "apoc.jobs.scheduled.num_threads";
     public static final String APOC_CONFIG_JOBS_POOL_NUM_THREADS = "apoc.jobs.pool.num_threads";
     public static final String APOC_CONFIG_JOBS_QUEUE_SIZE = "apoc.jobs.queue.size";
     public static final String APOC_CONFIG_INITIALIZER = "apoc.initializer";
-    public static final String LOAD_FROM_FILE_ERROR = "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
+    public static final String LOAD_FROM_FILE_ERROR =
+            "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
     public static final String APOC_MAX_DECOMPRESSION_RATIO = "apoc.max.decompression.ratio";
     public static final Integer DEFAULT_MAX_DECOMPRESSION_RATIO = 200;
     private static final WebURLAccessRule webAccessRule = new WebURLAccessRule();
 
     // These were earlier added via the Neo4j config using the ApocSettings.java class
-    private static final Map<String,Object> configDefaultValues =
-            Map.of(
-                    APOC_EXPORT_FILE_ENABLED, false,
-                    APOC_IMPORT_FILE_ENABLED, false,
-                    APOC_IMPORT_FILE_USE_NEO4J_CONFIG, true,
-                    APOC_TRIGGER_ENABLED, false
-            );
+    private static final Map<String, Object> configDefaultValues = Map.of(
+            APOC_EXPORT_FILE_ENABLED, false,
+            APOC_IMPORT_FILE_ENABLED, false,
+            APOC_IMPORT_FILE_USE_NEO4J_CONFIG, true,
+            APOC_TRIGGER_ENABLED, false);
     private static final List<Setting> NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES = new ArrayList<>(Arrays.asList(
             data_directory,
             load_csv_file_url_root,
@@ -99,13 +97,13 @@ public class ApocConfig extends LifecycleAdapter {
             transaction_logs_root_path,
             run_directory,
             lib_directory,
-            neo4j_home
-    ));
+            neo4j_home));
     private static final String DEFAULT_PATH = ".";
     private static final String CONFIG_DIR = "config-dir=";
-    public static final String EXPORT_NOT_ENABLED_ERROR = "Export to files not enabled, please set apoc.export.file.enabled=true in your apoc.conf.";
-    public static final String EXPORT_TO_FILE_ERROR = EXPORT_NOT_ENABLED_ERROR +
-            "\nOtherwise, if you are running in a cloud environment without filesystem access, use the `{stream:true}` config and null as a 'file' parameter to stream the export back to your client.";
+    public static final String EXPORT_NOT_ENABLED_ERROR =
+            "Export to files not enabled, please set apoc.export.file.enabled=true in your apoc.conf.";
+    public static final String EXPORT_TO_FILE_ERROR = EXPORT_NOT_ENABLED_ERROR
+            + "\nOtherwise, if you are running in a cloud environment without filesystem access, use the `{stream:true}` config and null as a 'file' parameter to stream the export back to your client.";
 
     private final Config neo4jConfig;
     private final Log log;
@@ -122,12 +120,18 @@ public class ApocConfig extends LifecycleAdapter {
 
     private Duration commandEvaluationTimeout;
 
-    public ApocConfig(Config neo4jConfig, LogService log, GlobalProcedures globalProceduresRegistry, DatabaseManagementService databaseManagementService) {
+    public ApocConfig(
+            Config neo4jConfig,
+            LogService log,
+            GlobalProcedures globalProceduresRegistry,
+            DatabaseManagementService databaseManagementService) {
         this.neo4jConfig = neo4jConfig;
         this.blockedIpRanges = neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist);
-        this.commandEvaluationTimeout = neo4jConfig.get(GraphDatabaseInternalSettings.config_command_evaluation_timeout);
+        this.commandEvaluationTimeout =
+                neo4jConfig.get(GraphDatabaseInternalSettings.config_command_evaluation_timeout);
         if (this.commandEvaluationTimeout == null) {
-            this.commandEvaluationTimeout = GraphDatabaseInternalSettings.config_command_evaluation_timeout.defaultValue();
+            this.commandEvaluationTimeout =
+                    GraphDatabaseInternalSettings.config_command_evaluation_timeout.defaultValue();
         }
         this.expandCommands = neo4jConfig.expandCommands();
         this.log = log.getInternalLog(ApocConfig.class);
@@ -189,7 +193,9 @@ public class ApocConfig extends LifecycleAdapter {
     protected String determineNeo4jConfFolder() {
         String command = System.getProperty(SUN_JAVA_COMMAND);
         if (command == null) {
-            log.warn("system property %s is not set, assuming '.' as conf dir. This might cause `apoc.conf` not getting loaded.", SUN_JAVA_COMMAND);
+            log.warn(
+                    "system property %s is not set, assuming '.' as conf dir. This might cause `apoc.conf` not getting loaded.",
+                    SUN_JAVA_COMMAND);
             return DEFAULT_PATH;
         } else {
             final String neo4jConfFolder = Stream.of(command.split("--"))
@@ -220,23 +226,24 @@ public class ApocConfig extends LifecycleAdapter {
             config = builder.getConfiguration();
 
             // Command Expansion if needed
-            config.getKeys().forEachRemaining(configKey -> config.setProperty(
-                    configKey,
-                    evaluateIfCommand(configKey, config.getProperty(configKey).toString())
-            ));
+            config.getKeys()
+                    .forEachRemaining(configKey -> config.setProperty(
+                            configKey,
+                            evaluateIfCommand(
+                                    configKey, config.getProperty(configKey).toString())));
 
             // set config settings not explicitly set in apoc.conf to their default value
-            configDefaultValues.forEach((k,v) -> {
+            configDefaultValues.forEach((k, v) -> {
                 if (!config.containsKey(k)) {
-                   config.setProperty(k, v);
-                   log.info("setting APOC config to default value: " + k + "=" + v);
+                    config.setProperty(k, v);
+                    log.info("setting APOC config to default value: " + k + "=" + v);
                 }
             });
 
             addDbmsDirectoriesMetricsSettings();
             for (Setting s : NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES) {
                 Object value = neo4jConfig.get(s);
-                if (value!=null) {
+                if (value != null) {
                     config.setProperty(s.name(), value.toString());
                 }
             }
@@ -245,13 +252,15 @@ public class ApocConfig extends LifecycleAdapter {
                 config.setProperty(APOC_MAX_DECOMPRESSION_RATIO, DEFAULT_MAX_DECOMPRESSION_RATIO);
             }
             if (config.getInt(APOC_MAX_DECOMPRESSION_RATIO) == 0) {
-                throw new IllegalArgumentException(format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO));
+                throw new IllegalArgumentException(
+                        format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO));
             }
 
             boolean allowFileUrls = neo4jConfig.get(GraphDatabaseSettings.allow_file_urls);
             config.setProperty(APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM, allowFileUrls);
-            
-            // todo - evaluate default timezone here [maybe is reusable], otherwise through db.execute('CALL dbms.listConfig()')
+
+            // todo - evaluate default timezone here [maybe is reusable], otherwise through db.execute('CALL
+            // dbms.listConfig()')
             final Setting<ZoneId> db_temporal_timezone = GraphDatabaseSettings.db_temporal_timezone;
             config.setProperty(db_temporal_timezone.name(), neo4jConfig.get(db_temporal_timezone));
         } catch (ConfigurationException e) {
@@ -261,7 +270,8 @@ public class ApocConfig extends LifecycleAdapter {
 
     private void addDbmsDirectoriesMetricsSettings() {
         try {
-            Class<?> metricsSettingsClass = Class.forName("com.neo4j.kernel.impl.enterprise.configuration.MetricsSettings");
+            Class<?> metricsSettingsClass =
+                    Class.forName("com.neo4j.kernel.impl.enterprise.configuration.MetricsSettings");
             Field csvPathField = metricsSettingsClass.getDeclaredField("csvPath");
             Setting<Path> dbms_directories_metrics = (Setting<Path>) csvPathField.get(null);
             NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES.add(dbms_directories_metrics);
@@ -311,7 +321,9 @@ public class ApocConfig extends LifecycleAdapter {
 
     public void checkWriteAllowed(ExportConfig exportConfig, String fileName) {
         if (!config.getBoolean(APOC_EXPORT_FILE_ENABLED)) {
-            if (exportConfig == null || (fileName != null && !fileName.equals("")) || !exportConfig.streamStatements()) {
+            if (exportConfig == null
+                    || (fileName != null && !fileName.equals(""))
+                    || !exportConfig.streamStatements()) {
                 throw new RuntimeException(EXPORT_TO_FILE_ERROR);
             }
         }
@@ -322,14 +334,14 @@ public class ApocConfig extends LifecycleAdapter {
     public void checkStorageEngine() {
         final List<String> supportedTypes = Arrays.asList("standard", "aligned", "high_limit");
         if (!supportedTypes.contains(neo4jConfig.get(GraphDatabaseSettings.db_format))) {
-            throw new RuntimeException("Record engine type unsupported; please use one of the following; standard, aligned or high_limit");
+            throw new RuntimeException(
+                    "Record engine type unsupported; please use one of the following; standard, aligned or high_limit");
         }
     }
 
     public static ApocConfig apocConfig() {
         return theInstance;
     }
-
 
     /*
      * delegate methods for Configuration
@@ -355,7 +367,7 @@ public class ApocConfig extends LifecycleAdapter {
         // in case we're test database import path is TestDatabaseManagementServiceBuilder.EPHEMERAL_PATH
 
         String importFolder = getImportDir();
-        if (importFolder==null) {
+        if (importFolder == null) {
             return false;
         } else {
             return !"/target/test data/neo4j".equals(importFolder);
@@ -372,7 +384,7 @@ public class ApocConfig extends LifecycleAdapter {
         } catch (ConversionException e) {
             Object o = getConfig().getProperty(key);
             if (o instanceof Duration) {
-                return (int) ((Duration)o).getSeconds();
+                return (int) ((Duration) o).getSeconds();
             } else {
                 throw new IllegalArgumentException("don't know how to convert for config option " + key, e);
             }

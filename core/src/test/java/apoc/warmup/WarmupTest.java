@@ -18,7 +18,13 @@
  */
 package apoc.warmup;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 import apoc.util.TestUtil;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -26,13 +32,6 @@ import org.junit.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author Sascha Peukert
@@ -48,14 +47,14 @@ public class WarmupTest {
         TestUtil.registerProcedure(db, Warmup.class);
         // Create enough nodes and relationships to span 2 pages
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.foo IS UNIQUE");
-        db.executeTransactionally("UNWIND range(1, 300) AS i CREATE (n:Foo {foo:i})-[:KNOWS {bar:2}]->(m {foobar:3, array:range(1,100)})");
+        db.executeTransactionally(
+                "UNWIND range(1, 300) AS i CREATE (n:Foo {foo:i})-[:KNOWS {bar:2}]->(m {foobar:3, array:range(1,100)})");
         // Delete all relationships and their nodes, but ones with the minimum and maximum relationship ids, so
         // they still span 2 pages
-        db.executeTransactionally("MATCH ()-[r:KNOWS]->() " +
-                "WITH [min(id(r)), max(id(r))] AS ids " +
-                "MATCH (n)-[r:KNOWS]->(m) " +
-                "WHERE NOT id(r) IN ids " +
-                "DELETE n, m, r");
+        db.executeTransactionally("MATCH ()-[r:KNOWS]->() " + "WITH [min(id(r)), max(id(r))] AS ids "
+                + "MATCH (n)-[r:KNOWS]->(m) "
+                + "WHERE NOT id(r) IN ids "
+                + "DELETE n, m, r");
     }
 
     @After
@@ -94,7 +93,7 @@ public class WarmupTest {
     public void testWarmupIndexes() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true,true,true)", r -> {
             assertEquals(true, r.get("indexesLoaded"));
-            assertNotEquals( 0L, r.get("indexPages") );
+            assertNotEquals(0L, r.get("indexPages"));
         });
     }
 
@@ -107,7 +106,7 @@ public class WarmupTest {
 
             TestUtil.testCall(db, "CALL apoc.warmup.run(true,true,true)", r -> {
                 assertEquals(true, r.get("indexesLoaded"));
-                assertNotEquals( 0L, r.get("indexPages") );
+                assertNotEquals(0L, r.get("indexPages"));
             });
         }
     }

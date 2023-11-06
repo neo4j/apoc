@@ -18,6 +18,11 @@
  */
 package apoc.help;
 
+import static apoc.util.Util.map;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import apoc.bitwise.BitwiseOperations;
 import apoc.coll.Coll;
 import apoc.create.Create;
@@ -29,11 +34,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
-
-import static apoc.util.Util.map;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author mh
@@ -56,32 +56,33 @@ public class HelpTest {
 
     @Test
     public void info() {
-        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","bitwise"), (row) -> {
-            assertEquals("function",row.get("type"));
-            assertEquals("apoc.bitwise.op",row.get("name"));
+        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "bitwise"), (row) -> {
+            assertEquals("function", row.get("type"));
+            assertEquals("apoc.bitwise.op", row.get("name"));
             assertTrue(((String) row.get("text")).contains("bitwise operation"));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
         TestUtil.testCall(
                 db,
-                "CALL apoc.help($text)",map("text","operation+"),
-                (row) -> assertEquals("apoc.bitwise.op",row.get("name"))
-        );
-        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","toSet"), (row) -> {
-            assertEquals("function",row.get("type"));
-            assertEquals("apoc.coll.toSet",row.get("name"));
+                "CALL apoc.help($text)",
+                map("text", "operation+"),
+                (row) -> assertEquals("apoc.bitwise.op", row.get("name")));
+        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "toSet"), (row) -> {
+            assertEquals("function", row.get("type"));
+            assertEquals("apoc.coll.toSet", row.get("name"));
             assertTrue(((String) row.get("text")).contains("unique `LIST<ANY>`"));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
-        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","diff.nodes"), (row) -> {
-            assertEquals("function",row.get("type"));
-            assertEquals("apoc.diff.nodes",row.get("name"));
-            assertTrue(((String) row.get("text")).contains("Returns a `MAP` detailing the differences between the two given `NODE` values."));
+        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "diff.nodes"), (row) -> {
+            assertEquals("function", row.get("type"));
+            assertEquals("apoc.diff.nodes", row.get("name"));
+            assertTrue(((String) row.get("text"))
+                    .contains("Returns a `MAP` detailing the differences between the two given `NODE` values."));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
-        TestUtil.testCall(db,"CALL apoc.help($text)",map("text","apoc.create.uuids"), (row) -> {
+        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "apoc.create.uuids"), (row) -> {
             assertEquals("procedure", row.get("type"));
-            assertEquals("apoc.create.uuids",row.get("name"));
+            assertEquals("apoc.create.uuids", row.get("name"));
             assertTrue(((String) row.get("text")).contains("Returns a stream of UUIDs."));
             assertTrue(((Boolean) row.get("isDeprecated")));
         });
@@ -91,9 +92,8 @@ public class HelpTest {
     public void indicateCore() {
         TestUtil.testCall(
                 db,
-                "CALL apoc.help($text)",map("text","coll.zipToRows"),
-                (row) -> assertEquals(true, row.get("core"))
-        );
+                "CALL apoc.help($text)",
+                map("text", "coll.zipToRows"),
+                (row) -> assertEquals(true, row.get("core")));
     }
-
 }

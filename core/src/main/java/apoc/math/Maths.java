@@ -30,49 +30,49 @@ public class Maths {
 
     @UserFunction("apoc.math.maxLong")
     @Description("Returns the maximum value of a long.")
-    public Long maxLong(){
+    public Long maxLong() {
         return Long.MAX_VALUE;
     }
 
     @UserFunction("apoc.math.minLong")
     @Description("Returns the minimum value of a long.")
-    public Long minLong(){
+    public Long minLong() {
         return Long.MIN_VALUE;
     }
 
     @UserFunction("apoc.math.maxDouble")
     @Description("Returns the largest positive finite value of type double.")
-    public Double maxDouble(){
+    public Double maxDouble() {
         return Double.MAX_VALUE;
     }
 
     @UserFunction("apoc.math.minDouble")
     @Description("Returns the smallest positive non-zero value of type double.")
-    public Double minDouble(){
+    public Double minDouble() {
         return Double.MIN_VALUE;
     }
 
     @UserFunction("apoc.math.maxInt")
     @Description("Returns the maximum value of an integer.")
-    public Long maxInt(){
+    public Long maxInt() {
         return Long.valueOf(Integer.MAX_VALUE);
     }
 
     @UserFunction("apoc.math.minInt")
     @Description("Returns the minimum value of an integer.")
-    public Long minInt(){
+    public Long minInt() {
         return Long.valueOf(Integer.MIN_VALUE);
     }
 
     @UserFunction("apoc.math.maxByte")
     @Description("Returns the maximum value of a byte.")
-    public Long maxByte(){
+    public Long maxByte() {
         return Long.valueOf(Byte.MAX_VALUE);
     }
 
     @UserFunction("apoc.math.minByte")
     @Description("Returns the minimum value of a byte.")
-    public Long minByte(){
+    public Long minByte() {
         return Long.valueOf(Byte.MIN_VALUE);
     }
 
@@ -131,5 +131,4 @@ public class Maths {
         if (value == null || value.equals(0D)) return null;
         return 1 / sinh(value);
     }
-
 }

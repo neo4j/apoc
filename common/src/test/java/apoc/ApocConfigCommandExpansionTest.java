@@ -18,29 +18,6 @@
  */
 package apoc;
 
-import com.google.common.collect.Sets;
-import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Collections;
-import java.util.Set;
-
-import org.neo4j.configuration.Config;
-import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.dbms.api.DatabaseManagementService;
-import org.neo4j.logging.AssertableLogProvider;
-import org.neo4j.logging.InternalLogProvider;
-import org.neo4j.logging.internal.SimpleLogService;
-import org.neo4j.procedure.impl.GlobalProceduresRegistry;
-
 import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_RATIO;
 import static apoc.ApocConfig.SUN_JAVA_COMMAND;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE;
@@ -58,6 +35,27 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.google.common.collect.Sets;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Collections;
+import java.util.Set;
+import org.assertj.core.api.Assertions;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.neo4j.configuration.Config;
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.dbms.api.DatabaseManagementService;
+import org.neo4j.logging.AssertableLogProvider;
+import org.neo4j.logging.InternalLogProvider;
+import org.neo4j.logging.internal.SimpleLogService;
+import org.neo4j.procedure.impl.GlobalProceduresRegistry;
+
 public class ApocConfigCommandExpansionTest {
 
     private ApocConfig apocConfig;
@@ -73,16 +71,21 @@ public class ApocConfigCommandExpansionTest {
 
         Config neo4jConfig = mock(Config.class);
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
-        when(neo4jConfig.get( any())).thenReturn(null);
+        when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.get(GraphDatabaseSettings.allow_file_urls)).thenReturn(false);
         when(neo4jConfig.expandCommands()).thenReturn(true);
 
-        apocConfigCommandExpansionFile = new File(getClass().getClassLoader().getResource("apoc-config-command-expansion/apoc.conf").toURI());
-        Files.setPosixFilePermissions(apocConfigCommandExpansionFile.toPath(), permittedFilePermissionsForCommandExpansion);
+        apocConfigCommandExpansionFile = new File(getClass()
+                .getClassLoader()
+                .getResource("apoc-config-command-expansion/apoc.conf")
+                .toURI());
+        Files.setPosixFilePermissions(
+                apocConfigCommandExpansionFile.toPath(), permittedFilePermissionsForCommandExpansion);
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
-        apocConfig = new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
+        apocConfig =
+                new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
     }
 
     @After
@@ -93,16 +96,16 @@ public class ApocConfigCommandExpansionTest {
     private void setApocConfigFilePermissions(Set<PosixFilePermission> forbidden) throws Exception {
         Files.setPosixFilePermissions(
                 apocConfigCommandExpansionFile.toPath(),
-                Sets.union(permittedFilePermissionsForCommandExpansion, forbidden)
-        );
+                Sets.union(permittedFilePermissionsForCommandExpansion, forbidden));
     }
 
     private void setApocConfigSystemProperty() {
         System.setProperty(
                 SUN_JAVA_COMMAND,
-                "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir=" +  apocConfigCommandExpansionFile.getParent()
-        );
+                "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir="
+                        + apocConfigCommandExpansionFile.getParent());
     }
+
     @Test
     public void testApocConfWithExpandCommands() {
         setApocConfigSystemProperty();
@@ -118,7 +121,8 @@ public class ApocConfigCommandExpansionTest {
         setApocConfigSystemProperty();
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
-        String expectedMessage = "java.io.IOException: Cannot run program \"fakeCommand\": error=2, No such file or directory";
+        String expectedMessage =
+                "java.io.IOException: Cannot run program \"fakeCommand\": error=2, No such file or directory";
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
 
         removeLineFromApocConfig(invalidExpandLine);
@@ -144,17 +148,19 @@ public class ApocConfigCommandExpansionTest {
 
         Config neo4jConfig = mock(Config.class);
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
-        when(neo4jConfig.get( any())).thenReturn(null);
+        when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.expandCommands()).thenReturn(false);
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
-        ApocConfig apocConfig = new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
+        ApocConfig apocConfig =
+                new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
 
         setApocConfigSystemProperty();
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
-        String expectedMessage = "$(echo \"expanded value\") is a command, but config is not explicitly told to expand it. (Missing --expand-commands argument?)";
+        String expectedMessage =
+                "$(echo \"expanded value\") is a command, but config is not explicitly told to expand it. (Missing --expand-commands argument?)";
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
     }
 
@@ -171,10 +177,12 @@ public class ApocConfigCommandExpansionTest {
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
         System.setProperty(APOC_MAX_DECOMPRESSION_RATIO, "0");
-        ApocConfig apocConfig = new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
+        ApocConfig apocConfig =
+                new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
-        String expectedMessage = String.format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO);
+        String expectedMessage =
+                String.format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO);
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
         System.clearProperty(APOC_MAX_DECOMPRESSION_RATIO);
     }
@@ -191,9 +199,8 @@ public class ApocConfigCommandExpansionTest {
     }
 
     private void addLineToApocConfig(String line) throws IOException {
-        FileWriter fw = new FileWriter(apocConfigCommandExpansionFile,true);
+        FileWriter fw = new FileWriter(apocConfigCommandExpansionFile, true);
         fw.write(line);
         fw.close();
     }
-
 }

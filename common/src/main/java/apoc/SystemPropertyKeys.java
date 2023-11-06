@@ -18,7 +18,7 @@
  */
 package apoc;
 
-public enum SystemPropertyKeys  {
+public enum SystemPropertyKeys {
     database,
     name,
 

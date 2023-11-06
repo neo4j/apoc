@@ -18,17 +18,16 @@
  */
 package apoc.result;
 
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
+import static java.util.Arrays.asList;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static java.util.Arrays.asList;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 
 /**
  * @author mh
@@ -60,7 +59,8 @@ public class VirtualRelationship implements Relationship {
     }
 
     @SuppressWarnings("unused") // used from extended
-    public VirtualRelationship(long id, Node startNode, Node endNode, RelationshipType type, Map<String, Object> props) {
+    public VirtualRelationship(
+            long id, Node startNode, Node endNode, RelationshipType type, Map<String, Object> props) {
         validateNodes(startNode, endNode);
         this.id = id;
         this.startNode = startNode;
@@ -68,7 +68,7 @@ public class VirtualRelationship implements Relationship {
         this.type = type;
         this.props.putAll(props);
     }
-    
+
     public static Relationship from(VirtualNode start, VirtualNode end, Relationship rel) {
         return new VirtualRelationship(start, end, rel.getType()).withProperties(rel.getAllProperties());
     }
@@ -84,9 +84,8 @@ public class VirtualRelationship implements Relationship {
     }
 
     @Override
-    public String getElementId()
-    {
-        return String.valueOf( id );
+    public String getElementId() {
+        return String.valueOf(id);
     }
 
     @Override
@@ -112,9 +111,7 @@ public class VirtualRelationship implements Relationship {
 
     @Override
     public Node[] getNodes() {
-        return new Node[] {
-            startNode, endNode
-        } ;
+        return new Node[] {startNode, endNode};
     }
 
     @Override
@@ -172,8 +169,8 @@ public class VirtualRelationship implements Relationship {
 
     @Override
     public boolean equals(Object o) {
-        return this == o || o instanceof Relationship &&
-                Objects.equals(getElementId(), ((Relationship) o).getElementId());
+        return this == o
+                || o instanceof Relationship && Objects.equals(getElementId(), ((Relationship) o).getElementId());
     }
 
     @Override
@@ -187,9 +184,8 @@ public class VirtualRelationship implements Relationship {
     }
 
     @Override
-    public String toString()
-    {
-        return "VirtualRelationship{" + "startNode=" + startNode.getLabels() + ", endNode=" + endNode.getLabels() + ", " +
-                "type=" + type + '}';
+    public String toString() {
+        return "VirtualRelationship{" + "startNode=" + startNode.getLabels() + ", endNode=" + endNode.getLabels() + ", "
+                + "type=" + type + '}';
     }
 }

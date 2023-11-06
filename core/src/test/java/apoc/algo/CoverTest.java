@@ -18,17 +18,16 @@
  */
 package apoc.algo;
 
+import static org.junit.Assert.assertEquals;
+
 import apoc.util.TestUtil;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * @author mh
@@ -47,21 +46,24 @@ public class CoverTest {
 
     @AfterClass
     public static void teardown() {
-       db.shutdown();
+        db.shutdown();
     }
 
     @Test
     public void testCover() {
         List<String> nodeRepresentations = List.of("n", "id(n)", "elementId(n)");
-        for (String nodeRep: nodeRepresentations) {
-            TestUtil.testCall(db,
-                    String.format("""
+        for (String nodeRep : nodeRepresentations) {
+            TestUtil.testCall(
+                    db,
+                    String.format(
+                            """
                             MATCH (n)
                             WITH collect(%s) AS nodes
                             CALL apoc.algo.cover(nodes)
                             YIELD rel
                             RETURN count(*) AS c
-                        """, nodeRep),
+                        """,
+                            nodeRep),
                     (r) -> assertEquals(3L, r.get("c")));
         }
     }

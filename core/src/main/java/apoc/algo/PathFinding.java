@@ -18,9 +18,15 @@
  */
 package apoc.algo;
 
+import static apoc.algo.PathFindingUtils.buildPathExpander;
+
 import apoc.result.PathResult;
 import apoc.result.WeightedPathResult;
 import apoc.util.Util;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import org.neo4j.graphalgo.*;
 import org.neo4j.graphdb.*;
 import org.neo4j.procedure.Context;
@@ -28,12 +34,6 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
-
-import java.util.Collections;
-import java.util.Map;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-import static apoc.algo.PathFindingUtils.buildPathExpander;
 
 public class PathFinding {
 
@@ -44,7 +44,8 @@ public class PathFinding {
     public Transaction tx;
 
     @Procedure("apoc.algo.aStar")
-    @Description("Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.")
+    @Description(
+            "Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.")
     public Stream<WeightedPathResult> aStar(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
@@ -62,8 +63,9 @@ public class PathFinding {
     }
 
     @Procedure("apoc.algo.aStarConfig")
-    @Description("Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.\n" +
-            "This procedure looks for weight, latitude and longitude properties in the config.")
+    @Description(
+            "Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.\n"
+                    + "This procedure looks for weight, latitude and longitude properties in the config.")
     public Stream<WeightedPathResult> aStarConfig(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
@@ -71,7 +73,8 @@ public class PathFinding {
             @Name("config") Map<String, Object> config) {
 
         config = config == null ? Collections.emptyMap() : config;
-        String relationshipCostPropertyKey = config.getOrDefault("weight", "distance").toString();
+        String relationshipCostPropertyKey =
+                config.getOrDefault("weight", "distance").toString();
         double defaultCost = ((Number) config.getOrDefault("default", Double.MAX_VALUE)).doubleValue();
         String pointPropertyName = (String) config.get("pointPropName");
         final EstimateEvaluator<Double> estimateEvaluator;
@@ -103,15 +106,15 @@ public class PathFinding {
         PathFinder<WeightedPath> algo = GraphAlgoFactory.dijkstra(
                 buildPathExpander(relTypesAndDirs),
                 (relationship, direction) -> Util.toDouble(relationship.getProperty(weightPropertyName, defaultWeight)),
-                (int)numberOfWantedPaths
-        );
+                (int) numberOfWantedPaths);
         return WeightedPathResult.streamWeightedPathResult(startNode, endNode, algo);
     }
 
     @NotThreadSafe
     @Procedure("apoc.algo.allSimplePaths")
-    @Description("Runs a search algorithm to find all of the simple paths between the given `RELATIONSHIP` values, up to a max depth described by `maxNodes`.\n" +
-            "The returned paths will not contain loops.")
+    @Description(
+            "Runs a search algorithm to find all of the simple paths between the given `RELATIONSHIP` values, up to a max depth described by `maxNodes`.\n"
+                    + "The returned paths will not contain loops.")
     public Stream<PathResult> allSimplePaths(
             @Name("startNode") Node startNode,
             @Name("endNode") Node endNode,
@@ -119,13 +122,8 @@ public class PathFinding {
             @Name("maxNodes") long maxNodes) {
 
         PathFinder<Path> algo = GraphAlgoFactory.allSimplePaths(
-                new BasicEvaluationContext(tx, db),
-                buildPathExpander(relTypesAndDirs),
-                (int) maxNodes
-        );
+                new BasicEvaluationContext(tx, db), buildPathExpander(relTypesAndDirs), (int) maxNodes);
         Iterable<Path> allPaths = algo.findAllPaths(startNode, endNode);
-        return StreamSupport.stream(allPaths.spliterator(), false)
-                .map(PathResult::new);
+        return StreamSupport.stream(allPaths.spliterator(), false).map(PathResult::new);
     }
-
 }

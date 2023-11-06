@@ -32,10 +32,6 @@ import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
-import org.apache.commons.lang3.StringUtils;
-import org.neo4j.graphdb.spatial.Point;
-import org.neo4j.values.storable.DurationValue;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.temporal.Temporal;
@@ -45,16 +41,22 @@ import java.util.Map;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.commons.lang3.StringUtils;
+import org.neo4j.graphdb.spatial.Point;
+import org.neo4j.values.storable.DurationValue;
 
 /**
  * @author mh
  * @since 04.05.16
  */
 public class JsonUtil {
-    private final static Option[] defaultJsonPathOptions = { Option.DEFAULT_PATH_LEAF_TO_NULL, Option.SUPPRESS_EXCEPTIONS };
-    
+    private static final Option[] defaultJsonPathOptions = {Option.DEFAULT_PATH_LEAF_TO_NULL, Option.SUPPRESS_EXCEPTIONS
+    };
+
     public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    public static final String PATH_OPTIONS_ERROR_MESSAGE = "Invalid pathOptions. The allowed values are: " + EnumSet.allOf(Option.class);
+    public static final String PATH_OPTIONS_ERROR_MESSAGE =
+            "Invalid pathOptions. The allowed values are: " + EnumSet.allOf(Option.class);
+
     static {
         OBJECT_MAPPER.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
         OBJECT_MAPPER.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
@@ -73,7 +75,9 @@ public class JsonUtil {
 
     private static Configuration getJsonPathConfig(List<String> options) {
         try {
-            Option[] opts = options == null ? defaultJsonPathOptions : options.stream().map(Option::valueOf).toArray(Option[]::new);
+            Option[] opts = options == null
+                    ? defaultJsonPathOptions
+                    : options.stream().map(Option::valueOf).toArray(Option[]::new);
             return Configuration.builder()
                     .options(opts)
                     .jsonProvider(new JacksonJsonProvider(OBJECT_MAPPER))
@@ -83,12 +87,25 @@ public class JsonUtil {
             throw new RuntimeException(PATH_OPTIONS_ERROR_MESSAGE, e);
         }
     }
-    
-    public static Stream<Object> loadJson(Object urlOrBinary, Map<String,Object> headers, String payload, String path, boolean failOnError, List<String> options) {
+
+    public static Stream<Object> loadJson(
+            Object urlOrBinary,
+            Map<String, Object> headers,
+            String payload,
+            String path,
+            boolean failOnError,
+            List<String> options) {
         return loadJson(urlOrBinary, headers, payload, path, failOnError, null, options);
     }
-    
-    public static Stream<Object> loadJson(Object urlOrBinary, Map<String,Object> headers, String payload, String path, boolean failOnError, String compressionAlgo, List<String> options) {
+
+    public static Stream<Object> loadJson(
+            Object urlOrBinary,
+            Map<String, Object> headers,
+            String payload,
+            String path,
+            boolean failOnError,
+            String compressionAlgo,
+            List<String> options) {
         try {
             if (urlOrBinary instanceof String) {
                 String url = (String) urlOrBinary;
@@ -98,9 +115,12 @@ public class JsonUtil {
             JsonParser parser = OBJECT_MAPPER.getFactory().createParser(input);
             MappingIterator<Object> it = OBJECT_MAPPER.readValues(parser, Object.class);
             Stream<Object> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, 0), false);
-            return StringUtils.isBlank(path) ? stream : stream.map((value) -> JsonPath.parse(value, getJsonPathConfig(options)).read(path));
+            return StringUtils.isBlank(path)
+                    ? stream
+                    : stream.map((value) ->
+                            JsonPath.parse(value, getJsonPathConfig(options)).read(path));
         } catch (IOException e) {
-            if(!failOnError) {
+            if (!failOnError) {
                 return Stream.of();
             } else {
                 throw new RuntimeException(e);
@@ -109,26 +129,28 @@ public class JsonUtil {
     }
 
     public static Stream<Object> loadJson(String url) {
-        return loadJson(url,null,null,"", true, null, null);
+        return loadJson(url, null, null, "", true, null, null);
     }
 
     public static <T> T parse(String json, String path, Class<T> type) {
         return parse(json, path, type, null);
     }
-    
+
     public static <T> T parse(String json, String path, Class<T> type, List<String> options) {
-        if (json==null || json.isEmpty()) return null;
+        if (json == null || json.isEmpty()) return null;
         try {
             final String listOpt = Option.ALWAYS_RETURN_LIST.name();
             if (type == Map.class && options != null && options.contains(listOpt)) {
-                throw new RuntimeException("It's not possible to use " + listOpt + " option because the conversion should return a Map");
+                throw new RuntimeException(
+                        "It's not possible to use " + listOpt + " option because the conversion should return a Map");
             }
             if (path == null || path.isEmpty()) {
                 return OBJECT_MAPPER.readValue(json, type);
             }
             return JsonPath.parse(json, getJsonPathConfig(options)).read(path, type);
         } catch (IOException e) {
-            throw new RuntimeException("Can't convert " + json + " to "+type.getSimpleName()+" with path "+path, e);
+            throw new RuntimeException(
+                    "Can't convert " + json + " to " + type.getSimpleName() + " with path " + path, e);
         }
     }
 

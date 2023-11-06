@@ -24,15 +24,14 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
-
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
-import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ExtensionClassWriter {
 
@@ -42,16 +41,13 @@ public class ExtensionClassWriter {
         this.filer = filer;
     }
 
-    public void write(List<String> procedureSignatures,
-                      List<String> userFunctionSignatures) {
+    public void write(List<String> procedureSignatures, List<String> userFunctionSignatures) {
 
         try {
             String suffix = isExtendedProject() ? "Extended" : "";
             final TypeSpec typeSpec = defineClass(procedureSignatures, userFunctionSignatures, suffix);
 
-            JavaFile.builder("apoc", typeSpec)
-                    .build()
-                    .writeTo(filer);
+            JavaFile.builder("apoc", typeSpec).build().writeTo(filer);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -75,10 +71,8 @@ public class ExtensionClassWriter {
     }
 
     private FieldSpec signatureListField(String fieldName, List<String> signatures) {
-        ParameterizedTypeName fieldType = ParameterizedTypeName.get(
-                ClassName.get(List.class),
-                ClassName.get(String.class)
-        );
+        ParameterizedTypeName fieldType =
+                ParameterizedTypeName.get(ClassName.get(List.class), ClassName.get(String.class));
         return FieldSpec.builder(fieldType, fieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
                 .initializer(CodeBlock.builder()
                         .addStatement(String.format("List.of(%s)", placeholders(signatures)), signatures.toArray())

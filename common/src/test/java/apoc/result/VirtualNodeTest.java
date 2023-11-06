@@ -18,8 +18,12 @@
  */
 package apoc.result;
 
+import static org.junit.Assert.*;
+
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import java.util.Iterator;
+import java.util.Map;
 import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -30,11 +34,6 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
-import java.util.Iterator;
-import java.util.Map;
-
-import static org.junit.Assert.*;
-
 public class VirtualNodeTest {
 
     @ClassRule
@@ -42,7 +41,7 @@ public class VirtualNodeTest {
 
     @AfterClass
     public static void teardown() {
-       db.shutdown();
+        db.shutdown();
     }
 
     @Test
@@ -142,5 +141,4 @@ public class VirtualNodeTest {
         assertEquals(node2, node2);
         assertNotEquals(node1, node2);
     }
-
 }

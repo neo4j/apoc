@@ -3,14 +3,6 @@ import org.gradle.api.internal.artifacts.DefaultExcludeRule
 plugins {
     id 'java'
     id 'maven-publish'
-    id "com.diffplug.spotless" version "6.7.2"
-}
-
-spotless {
-    java {
-        target 'src/*/java/**/*.java'
-        removeUnusedImports()
-    }
 }
 
 archivesBaseName = "apoc"
@@ -80,7 +72,7 @@ dependencies {
 
 
 task testJar(type: Jar, dependsOn: testClasses) {
-    classifier = 'tests'
+    archiveClassifier = 'tests'
     from sourceSets.test.output
 }
 

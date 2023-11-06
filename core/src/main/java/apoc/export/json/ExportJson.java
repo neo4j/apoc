@@ -28,6 +28,11 @@ import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.ProgressReporter;
 import apoc.result.ProgressInfo;
 import apoc.util.Util;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -41,12 +46,6 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
 
 public class ExportJson {
     @Context
@@ -67,7 +66,8 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.all")
     @Description("Exports the full database to the provided JSON file.")
-    public Stream<ProgressInfo> all(@Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ProgressInfo> all(
+            @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportJson(fileName, source, new DatabaseSubGraph(tx), config);
@@ -76,7 +76,11 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.data")
     @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided JSON file.")
-    public Stream<ProgressInfo> data(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ProgressInfo> data(
+            @Name("nodes") List<Node> nodes,
+            @Name("rels") List<Relationship> rels,
+            @Name("file") String fileName,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         // initialize empty lists if nodes or rels are null
         nodes = nodes == null ? Collections.emptyList() : nodes;
         rels = rels == null ? Collections.emptyList() : rels;
@@ -88,7 +92,10 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.graph")
     @Description("Exports the given graph to the provided JSON file.")
-    public Stream<ProgressInfo> graph(@Name("graph") Map<String,Object> graph, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ProgressInfo> graph(
+            @Name("graph") Map<String, Object> graph,
+            @Name("file") String fileName,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
@@ -99,14 +106,19 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.query")
     @Description("Exports the results from the Cypher statement to the provided JSON file.")
-    public Stream<ProgressInfo> query(@Name("statement") String query, @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        Map<String,Object> params = config == null ? Collections.emptyMap() : (Map<String,Object>)config.getOrDefault("params", Collections.emptyMap());
-        Result result = tx.execute(query,params);
+    public Stream<ProgressInfo> query(
+            @Name("statement") String query,
+            @Name("file") String fileName,
+            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+        Map<String, Object> params = config == null
+                ? Collections.emptyMap()
+                : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
+        Result result = tx.execute(query, params);
         String source = String.format("statement: cols(%d)", result.columns().size());
-        return exportJson(fileName, source,result,config);
+        return exportJson(fileName, source, result, config);
     }
 
-    private Stream<ProgressInfo> exportJson(String fileName, String source, Object data, Map<String,Object> config) {
+    private Stream<ProgressInfo> exportJson(String fileName, String source, Object data, Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config);
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "json";
@@ -114,8 +126,16 @@ public class ExportJson {
         JsonFormat exporter = new JsonFormat(db, getJsonFormat(config));
         ExportFileManager cypherFileManager = FileManagerFactory.createFileManager(fileName, false, exportConfig);
         if (exportConfig.streamStatements()) {
-            return ExportUtils.getProgressInfoStream(db, pools.getDefaultExecutorService() ,terminationGuard, format, exportConfig, reporter, cypherFileManager,
-                    (reporterWithConsumer) -> dump(data, exportConfig, reporterWithConsumer, exporter, cypherFileManager));
+            return ExportUtils.getProgressInfoStream(
+                    db,
+                    pools.getDefaultExecutorService(),
+                    terminationGuard,
+                    format,
+                    exportConfig,
+                    reporter,
+                    cypherFileManager,
+                    (reporterWithConsumer) ->
+                            dump(data, exportConfig, reporterWithConsumer, exporter, cypherFileManager));
         } else {
             dump(data, exportConfig, reporter, exporter, cypherFileManager);
             return reporter.stream();
@@ -132,12 +152,15 @@ public class ExportJson {
         return JsonFormat.Format.valueOf(jsonFormat);
     }
 
-    private void dump(Object data, ExportConfig c, ProgressReporter reporter, JsonFormat exporter, ExportFileManager cypherFileManager) {
+    private void dump(
+            Object data,
+            ExportConfig c,
+            ProgressReporter reporter,
+            JsonFormat exporter,
+            ExportFileManager cypherFileManager) {
         try {
-            if (data instanceof SubGraph)
-                exporter.dump(((SubGraph)data),cypherFileManager,reporter,c);
-            if (data instanceof Result)
-                exporter.dump(((Result)data),cypherFileManager,reporter,c);
+            if (data instanceof SubGraph) exporter.dump(((SubGraph) data), cypherFileManager, reporter, c);
+            if (data instanceof Result) exporter.dump(((Result) data), cypherFileManager, reporter, c);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -18,6 +18,8 @@
  */
 package apoc.cypher;
 
+import static apoc.SystemPropertyKeys.database;
+
 import apoc.ApocConfig;
 import apoc.SystemLabels;
 import apoc.util.LogsUtil;
@@ -25,6 +27,10 @@ import apoc.util.QueryUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import apoc.version.Version;
+import java.util.Collection;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
@@ -39,14 +45,6 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.kernel.monitoring.DatabaseEventListeners;
 import org.neo4j.logging.Log;
 
-import java.util.Collection;
-
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.function.BiConsumer;
-
-import static apoc.SystemPropertyKeys.database;
-
 public class CypherInitializer implements AvailabilityListener {
 
     private final GraphDatabaseAPI db;
@@ -60,9 +58,11 @@ public class CypherInitializer implements AvailabilityListener {
      */
     private volatile boolean finished = false;
 
-    public CypherInitializer(GraphDatabaseAPI db, Log userLog,
-                             DatabaseManagementService databaseManagementService,
-                             DatabaseEventListeners databaseEventListeners) {
+    public CypherInitializer(
+            GraphDatabaseAPI db,
+            Log userLog,
+            DatabaseManagementService databaseManagementService,
+            DatabaseEventListeners databaseEventListeners) {
         this.db = db;
         this.userLog = userLog;
         this.databaseManagementService = databaseManagementService;
@@ -80,47 +80,54 @@ public class CypherInitializer implements AvailabilityListener {
         // we need to wait until apoc procs are registered
         // unfortunately an AvailabilityListener is triggered before that
         Util.newDaemonThread(() -> {
-            try {
-                // Wait for database to become available, once it is available
-                // procedures are also available by necessity.
-                while (!db.isAvailable(100));
+                    try {
+                        // Wait for database to become available, once it is available
+                        // procedures are also available by necessity.
+                        while (!db.isAvailable(100))
+                            ;
 
-                // An initializer is attached to the lifecycle for each database. To ensure that this
-                // check is performed **once** during the DBMS startup, we validate the version if and
-                // only if we are the AvailabilityListener for the system database - since there is only
-                // ever one of those.
-                if (db.databaseId().isSystemDatabase() ) {
-                    String neo4jVersion = org.neo4j.kernel.internal.Version.getNeo4jVersion();
-                    final String apocVersion = Version.class.getPackage().getImplementationVersion();
-                    if (isVersionDifferent(neo4jVersion, apocVersion))
-                    {
-                        userLog.warn( "The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n" +
-                                      "The two first numbers of both versions needs to be the same.",
-                                      apocVersion, neo4jVersion );
-                    }
-                    databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
-                }
-
-                Configuration config = dependencyResolver.resolveDependency(ApocConfig.class).getConfig();
-                for (String query : collectInitializers(config)) {
-                    if (QueryUtil.isValidQuery(query)) {
-                        String sanitizedQuery = LogsUtil.sanitizeQuery(query);
-                        try {
-                            // we need to apply a retry strategy here since in systemdb we potentially conflict with
-                            // creating constraints which could cause our query to fail with a transient error.
-                            Util.retryInTx(userLog, db, tx -> Iterators.count(tx.execute(query)), 0, 5, retries -> { });
-                            userLog.info("successfully initialized: " + sanitizedQuery);
-                        } catch (Exception e) {
-                            userLog.error("error upon initialization, running: " + sanitizedQuery, e);
+                        // An initializer is attached to the lifecycle for each database. To ensure that this
+                        // check is performed **once** during the DBMS startup, we validate the version if and
+                        // only if we are the AvailabilityListener for the system database - since there is only
+                        // ever one of those.
+                        if (db.databaseId().isSystemDatabase()) {
+                            String neo4jVersion = org.neo4j.kernel.internal.Version.getNeo4jVersion();
+                            final String apocVersion =
+                                    Version.class.getPackage().getImplementationVersion();
+                            if (isVersionDifferent(neo4jVersion, apocVersion)) {
+                                userLog.warn(
+                                        "The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n"
+                                                + "The two first numbers of both versions needs to be the same.",
+                                        apocVersion, neo4jVersion);
+                            }
+                            databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
                         }
-                    } else {
-                        userLog.error("error upon initialization, invalid query: " + query);
+
+                        Configuration config = dependencyResolver
+                                .resolveDependency(ApocConfig.class)
+                                .getConfig();
+                        for (String query : collectInitializers(config)) {
+                            if (QueryUtil.isValidQuery(query)) {
+                                String sanitizedQuery = LogsUtil.sanitizeQuery(query);
+                                try {
+                                    // we need to apply a retry strategy here since in systemdb we potentially conflict
+                                    // with
+                                    // creating constraints which could cause our query to fail with a transient error.
+                                    Util.retryInTx(
+                                            userLog, db, tx -> Iterators.count(tx.execute(query)), 0, 5, retries -> {});
+                                    userLog.info("successfully initialized: " + sanitizedQuery);
+                                } catch (Exception e) {
+                                    userLog.error("error upon initialization, running: " + sanitizedQuery, e);
+                                }
+                            } else {
+                                userLog.error("error upon initialization, invalid query: " + query);
+                            }
+                        }
+                    } finally {
+                        finished = true;
                     }
-                }
-            } finally {
-                finished = true;
-            }
-        }).start();
+                })
+                .start();
     }
 
     // the visibility is public only for testing purpose, it could be private otherwise
@@ -128,7 +135,8 @@ public class CypherInitializer implements AvailabilityListener {
         final String[] apocSplit = splitVersion(apocVersion);
         final String[] neo4jSplit = splitVersion(neo4jVersion);
 
-        return !(apocSplit != null && neo4jSplit != null
+        return !(apocSplit != null
+                && neo4jSplit != null
                 && apocSplit[0].equals(neo4jSplit[0])
                 && apocSplit[1].equals(neo4jSplit[1]));
     }
@@ -149,8 +157,8 @@ public class CypherInitializer implements AvailabilityListener {
         return initializers.values();
     }
 
-    private void putIfNotBlank(Map<String,String> map, String key, String value) {
-        if ((value!=null) && (!value.isBlank())) {
+    private void putIfNotBlank(Map<String, String> map, String key, String value) {
+        if ((value != null) && (!value.isBlank())) {
             map.put(key, value);
         }
     }
@@ -186,7 +194,7 @@ public class CypherInitializer implements AvailabilityListener {
 
     private void forEachSystemLabel(BiConsumer<Transaction, Label> consumer) {
         try (Transaction tx = db.beginTx()) {
-            for (Label label: SystemLabels.values()) {
+            for (Label label : SystemLabels.values()) {
                 consumer.accept(tx, label);
             }
             tx.commit();

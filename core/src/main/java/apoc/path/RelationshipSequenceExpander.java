@@ -24,7 +24,6 @@ import apoc.util.collection.NestingResourceIterator;
 import apoc.util.collection.ResourceClosingIterator;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
@@ -57,7 +56,8 @@ public class RelationshipSequenceExpander implements PathExpander {
 
         for (String sequenceStep : relSequenceString.split(",")) {
             sequenceStep = sequenceStep.trim();
-            Iterable<Pair<RelationshipType, Direction>> relDirIterable = RelationshipTypeAndDirections.parse(sequenceStep);
+            Iterable<Pair<RelationshipType, Direction>> relDirIterable =
+                    RelationshipTypeAndDirections.parse(sequenceStep);
 
             List<Pair<RelationshipType, Direction>> stepRels = new ArrayList<>();
             for (Pair<RelationshipType, Direction> pair : relDirIterable) {
@@ -79,7 +79,8 @@ public class RelationshipSequenceExpander implements PathExpander {
 
         for (String sequenceStep : relSequenceList) {
             sequenceStep = sequenceStep.trim();
-            Iterable<Pair<RelationshipType, Direction>> relDirIterable = RelationshipTypeAndDirections.parse(sequenceStep);
+            Iterable<Pair<RelationshipType, Direction>> relDirIterable =
+                    RelationshipTypeAndDirections.parse(sequenceStep);
 
             List<Pair<RelationshipType, Direction>> stepRels = new ArrayList<>();
             for (Pair<RelationshipType, Direction> pair : relDirIterable) {
@@ -97,7 +98,7 @@ public class RelationshipSequenceExpander implements PathExpander {
     }
 
     @Override
-    public ResourceIterable<Relationship> expand( Path path, BranchState state ) {
+    public ResourceIterable<Relationship> expand(Path path, BranchState state) {
         final Node node = path.endNode();
         final int depth = path.length();
         final List<Pair<RelationshipType, Direction>> stepRels;
@@ -107,24 +108,22 @@ public class RelationshipSequenceExpander implements PathExpander {
         } else {
             stepRels = relSequences.get((initialRels == null ? depth : depth - 1) % relSequences.size());
         }
-        
+
         return Iterables.asResourceIterable(Iterators.asList(new NestingResourceIterator<>(stepRels.iterator()) {
             @Override
-            protected ResourceIterator<Relationship> createNestedIterator( Pair<RelationshipType,Direction> entry ) {
+            protected ResourceIterator<Relationship> createNestedIterator(Pair<RelationshipType, Direction> entry) {
                 RelationshipType type = entry.getLeft();
                 Direction dir = entry.getRight();
 
                 ResourceIterable<Relationship> relationships1;
-                if ( type == null )
-                {
-                    relationships1 = (dir == Direction.BOTH) ? node.getRelationships() : node.getRelationships( dir );
-                }
-                else
-                {
-                    relationships1 = (dir == Direction.BOTH) ? node.getRelationships( type ) : node.getRelationships( dir, type );
+                if (type == null) {
+                    relationships1 = (dir == Direction.BOTH) ? node.getRelationships() : node.getRelationships(dir);
+                } else {
+                    relationships1 =
+                            (dir == Direction.BOTH) ? node.getRelationships(type) : node.getRelationships(dir, type);
                 }
 
-                return ResourceClosingIterator.fromResourceIterable( relationships1 );
+                return ResourceClosingIterator.fromResourceIterable(relationships1);
             }
         }));
     }
@@ -134,4 +133,3 @@ public class RelationshipSequenceExpander implements PathExpander {
         throw new RuntimeException("Not implemented");
     }
 }
-

@@ -21,13 +21,6 @@ package apoc.export.arrow;
 import apoc.convert.Json;
 import apoc.result.ByteArrayResult;
 import apoc.util.Util;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.dictionary.DictionaryProvider;
-import org.apache.arrow.vector.ipc.ArrowStreamWriter;
-import org.apache.arrow.vector.ipc.ArrowWriter;
-import org.apache.arrow.vector.types.pojo.Schema;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,6 +32,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.dictionary.DictionaryProvider;
+import org.apache.arrow.vector.ipc.ArrowStreamWriter;
+import org.apache.arrow.vector.ipc.ArrowWriter;
+import org.apache.arrow.vector.types.pojo.Schema;
 
 public interface ExportArrowStreamStrategy<IN> extends ExportArrowStrategy<IN, Stream<ByteArrayResult>> {
 
@@ -46,17 +45,16 @@ public interface ExportArrowStreamStrategy<IN> extends ExportArrowStrategy<IN, S
 
     default byte[] writeBatch(BufferAllocator bufferAllocator, List<Map<String, Object>> rows) {
         try (final VectorSchemaRoot root = VectorSchemaRoot.create(schemaFor(rows), bufferAllocator);
-             final ByteArrayOutputStream out = new ByteArrayOutputStream();
-             final ArrowWriter writer = newArrowWriter(root, out)) {
+                final ByteArrayOutputStream out = new ByteArrayOutputStream();
+                final ArrowWriter writer = newArrowWriter(root, out)) {
             AtomicInteger counter = new AtomicInteger();
             root.allocateNew();
             rows.forEach(row -> {
                 final int index = counter.getAndIncrement();
-                root.getFieldVectors()
-                        .forEach(fe -> {
-                            Object value = convertValue(row.get(fe.getName()));
-                            write(index, value, fe);
-                        });
+                root.getFieldVectors().forEach(fe -> {
+                    Object value = convertValue(row.get(fe.getName()));
+                    write(index, value, fe);
+                });
             });
             root.setRowCount(counter.get());
             writer.writeBatch();

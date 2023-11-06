@@ -23,16 +23,6 @@ import apoc.export.util.ProgressReporter;
 import apoc.result.ProgressInfo;
 import apoc.util.FileUtils;
 import apoc.util.Util;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.dictionary.DictionaryProvider;
-import org.apache.arrow.vector.ipc.ArrowFileWriter;
-import org.apache.arrow.vector.ipc.ArrowWriter;
-import org.apache.arrow.vector.types.pojo.Schema;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.logging.Log;
-import org.neo4j.procedure.TerminationGuard;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -43,6 +33,16 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.arrow.vector.dictionary.DictionaryProvider;
+import org.apache.arrow.vector.ipc.ArrowFileWriter;
+import org.apache.arrow.vector.ipc.ArrowWriter;
+import org.apache.arrow.vector.types.pojo.Schema;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.logging.Log;
+import org.neo4j.procedure.TerminationGuard;
 
 public interface ExportArrowFileStrategy<IN> extends ExportArrowStrategy<IN, Stream<ProgressInfo>> {
 
@@ -91,17 +91,15 @@ public interface ExportArrowFileStrategy<IN> extends ExportArrowStrategy<IN, Str
 
     String getSource(IN data);
 
-
     default void writeBatch(VectorSchemaRoot root, ArrowWriter writer, List<Map<String, Object>> rows) {
         AtomicInteger counter = new AtomicInteger();
         root.allocateNew();
         rows.forEach(row -> {
             final int index = counter.getAndIncrement();
-            root.getFieldVectors()
-                    .forEach(fe -> {
-                        Object value = convertValue(row.get(fe.getName()));
-                        write(index, value, fe);
-                    });
+            root.getFieldVectors().forEach(fe -> {
+                Object value = convertValue(row.get(fe.getName()));
+                write(index, value, fe);
+            });
         });
         root.setRowCount(counter.get());
         try {

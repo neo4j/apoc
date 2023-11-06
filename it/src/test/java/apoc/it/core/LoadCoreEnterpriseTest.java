@@ -18,16 +18,18 @@
  */
 package apoc.it.core;
 
+import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_RATIO;
+import static apoc.ApocConfig.DEFAULT_MAX_DECOMPRESSION_RATIO;
+import static apoc.export.util.LimitedSizeInputStream.SIZE_EXCEEDED_ERROR;
+import static apoc.util.TestContainerUtil.createEnterpriseDB;
+import static apoc.util.TestContainerUtil.testCall;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import apoc.util.CompressionAlgo;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
-import org.apache.commons.io.FileUtils;
-import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.neo4j.driver.Session;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,16 +42,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.LongStream;
-
-import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_RATIO;
-import static apoc.ApocConfig.DEFAULT_MAX_DECOMPRESSION_RATIO;
-import static apoc.export.util.LimitedSizeInputStream.SIZE_EXCEEDED_ERROR;
-import static apoc.util.TestContainerUtil.createEnterpriseDB;
-import static apoc.util.TestContainerUtil.testCall;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-
+import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.Assertions;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.neo4j.driver.Session;
 
 public class LoadCoreEnterpriseTest {
     private static final File directory = new File("target/import");
@@ -102,7 +100,8 @@ public class LoadCoreEnterpriseTest {
         try {
             File file = new File(directory, fileName);
             FileOutputStream fileOutputStream = new FileOutputStream(file);
-            BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(algo.getOutputStream(fileOutputStream));
+            BufferedOutputStream bufferedOutputStream =
+                    new BufferedOutputStream(algo.getOutputStream(fileOutputStream));
             PrintWriter writer = new PrintWriter(bufferedOutputStream);
 
             supplier.accept(writer);
@@ -130,22 +129,26 @@ public class LoadCoreEnterpriseTest {
 
     @Test
     public void testLoadJsonShouldPreventZipBombAttack() {
-        RuntimeException e = assertThrows(RuntimeException.class,
-                () -> testCall( session, "CALL apoc.load.json($url)",
+        RuntimeException e = assertThrows(
+                RuntimeException.class,
+                () -> testCall(
+                        session,
+                        "CALL apoc.load.json($url)",
                         Map.of("url", "https://github.com/iamtraction/ZOD/raw/master/42.zip"),
-                        r -> {} )
-        );
+                        r -> {}));
 
         Assertions.assertThat(e.getMessage()).contains("Invalid UTF-8 start byte");
     }
 
     @Test
     public void testLoadXmlShouldPreventZipBombAttack() {
-        RuntimeException e = assertThrows(RuntimeException.class,
-                () -> testCall( session, "CALL apoc.load.xml($url)",
+        RuntimeException e = assertThrows(
+                RuntimeException.class,
+                () -> testCall(
+                        session,
+                        "CALL apoc.load.xml($url)",
                         Map.of("url", "https://github.com/iamtraction/ZOD/raw/master/42.zip"),
-                        r -> {} )
-        );
+                        r -> {}));
 
         Assertions.assertThat(e.getMessage()).contains("Content is not allowed in prolog.");
     }
@@ -155,11 +158,12 @@ public class LoadCoreEnterpriseTest {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
             String fileName = COMPRESSED_JSON_FILE + algoName;
-            testMaxSizeExceeded( session,
-                                 "CALL apoc.load.json($file, '', {compression: $compression})",
-                                 Map.of("file", fileName, "compression", algoName),
-                                 new File(directory, fileName).length(),
-                                 DEFAULT_MAX_DECOMPRESSION_RATIO );
+            testMaxSizeExceeded(
+                    session,
+                    "CALL apoc.load.json($file, '', {compression: $compression})",
+                    Map.of("file", fileName, "compression", algoName),
+                    new File(directory, fileName).length(),
+                    DEFAULT_MAX_DECOMPRESSION_RATIO);
         });
     }
 
@@ -170,11 +174,12 @@ public class LoadCoreEnterpriseTest {
                 String algoName = algo.name();
                 byte[] bytes = bytesFromFile(COMPRESSED_XML_FILE, algoName);
 
-                testMaxSizeExceeded( session,
-                                     "CALL apoc.load.xml($file, null, {compression: $compression})",
-                                     Map.of("file", bytes, "compression", algoName),
-                                     bytes.length,
-                                     DEFAULT_MAX_DECOMPRESSION_RATIO );
+                testMaxSizeExceeded(
+                        session,
+                        "CALL apoc.load.xml($file, null, {compression: $compression})",
+                        Map.of("file", bytes, "compression", algoName),
+                        bytes.length,
+                        DEFAULT_MAX_DECOMPRESSION_RATIO);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -188,11 +193,12 @@ public class LoadCoreEnterpriseTest {
                 String algoName = algo.name();
                 byte[] bytes = bytesFromFile(COMPRESSED_JSON_FILE, algoName);
 
-                testMaxSizeExceeded( session,
-                                     "CALL apoc.load.json($file, '', {compression: $compression})",
-                                     Map.of("file", bytes, "compression", algoName),
-                                     bytes.length,
-                                     DEFAULT_MAX_DECOMPRESSION_RATIO );
+                testMaxSizeExceeded(
+                        session,
+                        "CALL apoc.load.json($file, '', {compression: $compression})",
+                        Map.of("file", bytes, "compression", algoName),
+                        bytes.length,
+                        DEFAULT_MAX_DECOMPRESSION_RATIO);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -204,10 +210,12 @@ public class LoadCoreEnterpriseTest {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
             String fileName = COMPRESSED_XML_FILE + algoName;
-            testMaxSizeExceeded( session,
-                                 "CALL apoc.load.xml($file, null, {compression: $compression})",
-                                 Map.of("file", fileName, "compression", algoName),
-                                 new File(directory, fileName).length(), DEFAULT_MAX_DECOMPRESSION_RATIO );
+            testMaxSizeExceeded(
+                    session,
+                    "CALL apoc.load.xml($file, null, {compression: $compression})",
+                    Map.of("file", fileName, "compression", algoName),
+                    new File(directory, fileName).length(),
+                    DEFAULT_MAX_DECOMPRESSION_RATIO);
         });
     }
 
@@ -218,9 +226,12 @@ public class LoadCoreEnterpriseTest {
                 String algoName = algo.name();
                 byte[] bytes = bytesFromFile(COMPRESSED_JSON_FILE, algoName);
 
-                testMaxSizeExceeded( session,
-                                     "RETURN apoc.util.decompress($file, {compression: $algo})",
-                                     Map.of("file", bytes, "algo", algoName), bytes.length, DEFAULT_MAX_DECOMPRESSION_RATIO );
+                testMaxSizeExceeded(
+                        session,
+                        "RETURN apoc.util.decompress($file, {compression: $algo})",
+                        Map.of("file", bytes, "algo", algoName),
+                        bytes.length,
+                        DEFAULT_MAX_DECOMPRESSION_RATIO);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -235,9 +246,11 @@ public class LoadCoreEnterpriseTest {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
             String fileName = COMPRESSED_JSON_FILE + algoName;
-            testCall( session, "CALL apoc.load.json($file, '', {compression: $compression})",
-                      Map.of("file", fileName, "compression", algoName),
-                      r -> assertFalse(r.isEmpty()));
+            testCall(
+                    session,
+                    "CALL apoc.load.json($file, '', {compression: $compression})",
+                    Map.of("file", fileName, "compression", algoName),
+                    r -> assertFalse(r.isEmpty()));
         });
 
         neo4jContainer.close();
@@ -253,9 +266,11 @@ public class LoadCoreEnterpriseTest {
         String algoName = compressionAlgorithm.name();
         String fileName = COMPRESSED_JSON_FILE + algoName;
 
-        testCall( session, "CALL apoc.load.json($file, '', {compression: $compression})",
-                  Map.of("file", fileName, "compression", algoName),
-                  r -> assertFalse(r.isEmpty()));
+        testCall(
+                session,
+                "CALL apoc.load.json($file, '', {compression: $compression})",
+                Map.of("file", fileName, "compression", algoName),
+                r -> assertFalse(r.isEmpty()));
 
         neo4jContainer.close();
         session.close();
@@ -270,11 +285,12 @@ public class LoadCoreEnterpriseTest {
         var compressionAlgorithm = CompressionAlgo.GZIP;
         String algoName = compressionAlgorithm.name();
         String fileName = COMPRESSED_JSON_FILE + algoName;
-        testMaxSizeExceeded( session,
-                            "CALL apoc.load.json($file, '', {compression: $compression})",
-                             Map.of("file", fileName, "compression", algoName),
-                             new File(directory, fileName).length(),
-                             compressionRatio);
+        testMaxSizeExceeded(
+                session,
+                "CALL apoc.load.json($file, '', {compression: $compression})",
+                Map.of("file", fileName, "compression", algoName),
+                new File(directory, fileName).length(),
+                compressionRatio);
 
         neo4jContainer.close();
         session.close();
@@ -293,13 +309,11 @@ public class LoadCoreEnterpriseTest {
         return Files.readAllBytes(path);
     }
 
-    private void testMaxSizeExceeded(Session session, String query, Map<String, Object> params, long fileSize, int compressionRatio) {
-        RuntimeException e = assertThrows(RuntimeException.class,
-                () -> testCall( session, query, params, r -> {} )
-        );
+    private void testMaxSizeExceeded(
+            Session session, String query, Map<String, Object> params, long fileSize, int compressionRatio) {
+        RuntimeException e = assertThrows(RuntimeException.class, () -> testCall(session, query, params, r -> {}));
 
-        String sizeExceededError = String.format(SIZE_EXCEEDED_ERROR,
-                fileSize * compressionRatio, compressionRatio);
+        String sizeExceededError = String.format(SIZE_EXCEEDED_ERROR, fileSize * compressionRatio, compressionRatio);
         Assertions.assertThat(e.getMessage()).contains(sizeExceededError);
     }
 }

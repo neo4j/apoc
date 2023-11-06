@@ -27,8 +27,7 @@ import java.util.function.Predicate;
  *
  * @param <T> the type of items in the iteration.
  */
-public class FilteringIterator<T> extends PrefetchingIterator<T>
-{
+public class FilteringIterator<T> extends PrefetchingIterator<T> {
     private final Iterator<T> source;
     private final Predicate<T> predicate;
 
