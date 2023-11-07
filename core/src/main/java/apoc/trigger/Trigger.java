@@ -117,11 +117,11 @@ public class Trigger {
     public Stream<TriggerInfo> removeAll() {
         preprocessDeprecatedProcedures();
 
-        Map<String, Object> removed = triggerHandler.removeAll();
+        final var removed = triggerHandler.removeAll();
         if (removed == null) {
             return Stream.of(new TriggerInfo(null, null, null, false, false));
         }
-        return removed.entrySet().stream().map(TriggerInfo::entryToTriggerInfo);
+        return removed.entrySet().stream().map(r -> TriggerInfo.from(r.getValue(), false, r.getKey()));
     }
 
     @Admin

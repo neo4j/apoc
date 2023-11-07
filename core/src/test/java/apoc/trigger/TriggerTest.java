@@ -29,6 +29,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestrict
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -156,15 +157,16 @@ public class TriggerTest {
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed-2','RETURN 2',{}) YIELD name RETURN name", 1);
         TestUtil.testCallCount(db, "CALL apoc.trigger.list()", 2);
         TestUtil.testResult(db, "CALL apoc.trigger.removeAll()", (res) -> {
-            Map<String, Object> row = res.next();
-            assertEquals("to-be-removed-1", row.get("name"));
-            assertEquals("RETURN 1", row.get("query"));
-            assertEquals(false, row.get("installed"));
-            row = res.next();
-            assertEquals("to-be-removed-2", row.get("name"));
-            assertEquals("RETURN 2", row.get("query"));
-            assertEquals(false, row.get("installed"));
-            assertFalse(res.hasNext());
+            final var rows = res.stream()
+                    .sorted(Comparator.comparing(r -> (String) r.get("name")))
+                    .toList();
+            assertEquals(2, rows.size());
+            assertEquals("to-be-removed-1", rows.get(0).get("name"));
+            assertEquals("RETURN 1", rows.get(0).get("query"));
+            assertEquals(false, rows.get(0).get("installed"));
+            assertEquals("to-be-removed-2", rows.get(1).get("name"));
+            assertEquals("RETURN 2", rows.get(1).get("query"));
+            assertEquals(false, rows.get(1).get("installed"));
         });
         TestUtil.testCallCount(db, "CALL apoc.trigger.list()", 0);
         TestUtil.testCallCount(db, "CALL apoc.trigger.removeAll()", 0);
