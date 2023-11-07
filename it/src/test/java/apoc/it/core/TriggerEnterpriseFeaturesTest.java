@@ -42,7 +42,6 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 import apoc.SystemLabels;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -415,7 +414,7 @@ class CreateNodes implements Runnable {
     public static final String Label = "StressTest";
     private final Driver driver;
     private final String db;
-    private final AtomicBoolean done = new AtomicBoolean( false);
+    private final AtomicBoolean done = new AtomicBoolean(false);
 
     CreateNodes(Driver driver, String db) {
         this.driver = driver;

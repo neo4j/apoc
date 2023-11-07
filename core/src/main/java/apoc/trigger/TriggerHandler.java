@@ -134,19 +134,19 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         return withSystemDb(tx -> {
             final var dbName = db.databaseName();
             return tx.findNodes(ApocTrigger, SystemPropertyKeys.database.name(), dbName).stream()
-                     .collect(Collectors.toUnmodifiableMap(
-                             node -> (String) node.getProperty(SystemPropertyKeys.name.name()),
-                             node -> MapUtil.map(
-                                     "statement", node.getProperty(SystemPropertyKeys.statement.name()),
-                                     "selector",
-                                     Util.fromJson(
-                                             (String) node.getProperty(SystemPropertyKeys.selector.name()),
-                                             Map.class),
-                                     "params",
-                                     Util.fromJson(
-                                             (String) node.getProperty(SystemPropertyKeys.params.name()),
-                                             Map.class),
-                                     "paused", node.getProperty(SystemPropertyKeys.paused.name()))));
+                    .collect(Collectors.toUnmodifiableMap(
+                            node -> (String) node.getProperty(SystemPropertyKeys.name.name()),
+                            node -> MapUtil.map(
+                                    "statement",
+                                    node.getProperty(SystemPropertyKeys.statement.name()),
+                                    "selector",
+                                    Util.fromJson(
+                                            (String) node.getProperty(SystemPropertyKeys.selector.name()), Map.class),
+                                    "params",
+                                    Util.fromJson(
+                                            (String) node.getProperty(SystemPropertyKeys.params.name()), Map.class),
+                                    "paused",
+                                    node.getProperty(SystemPropertyKeys.paused.name()))));
         });
     }
 
