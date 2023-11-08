@@ -121,9 +121,11 @@ public class ParallelNodeSearch {
             @Name("operator") final String operator,
             @Name("value") final String value)
             throws Exception {
-        return createWorkersFromValidInput(labelProperties, operator, value)
-                .flatMap(QueryWorker::queryForNodeId)
-                .map(nodeId -> new NodeResult(tx.getNodeById(nodeId)));
+        final var ids = createWorkersFromValidInput(labelProperties, operator, value)
+                .flatMapToLong(w -> w.queryForNodeId().mapToLong(i -> i))
+                .toArray();
+        // It's not safe to access a transaction from multiple threads so this part needs to be sequential
+        return Arrays.stream(ids).mapToObj(id -> new NodeResult(tx.getNodeById(id)));
     }
 
     @NotThreadSafe
@@ -134,10 +136,11 @@ public class ParallelNodeSearch {
             @Name("operator") final String operator,
             @Name("value") final String value)
             throws Exception {
-        return createWorkersFromValidInput(labelProperties, operator, value)
-                .flatMap(QueryWorker::queryForNodeId)
-                .map(nodeId -> new NodeResult(tx.getNodeById(nodeId)))
-                .distinct();
+        final var ids = createWorkersFromValidInput(labelProperties, operator, value)
+                .flatMapToLong(w -> w.queryForNodeId().mapToLong(i -> i))
+                .toArray();
+        // It's not safe to access a transaction from multiple threads so this part needs to be sequential
+        return Arrays.stream(ids).boxed().distinct().map(id -> new NodeResult(tx.getNodeById(id)));
     }
 
     private Stream<QueryWorker> createWorkersFromValidInput(
