@@ -22,6 +22,7 @@ import static apoc.trigger.Trigger.SYS_DB_NON_WRITER_ERROR;
 import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testResult;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -32,6 +33,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestcontainersCausalCluster;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -129,8 +131,16 @@ public class TriggerClusterRoutingTest {
         };
 
         succeedsInLeader(installTrigger, triggerName, SYSTEM_DATABASE_NAME);
-        succeedsInLeader(showTrigger, triggerName, SYSTEM_DATABASE_NAME, checkTriggerIsListed);
-        succeedsInFollowers(showTrigger, triggerName, SYSTEM_DATABASE_NAME, checkTriggerIsListed);
+
+        // Triggers are installed eventually
+        await("triggers installed")
+                .atMost(Duration.ofMinutes(5))
+                .pollDelay(Duration.ofMillis(50))
+                .pollInSameThread()
+                .untilAsserted(() -> {
+                    succeedsInLeader(showTrigger, triggerName, SYSTEM_DATABASE_NAME, checkTriggerIsListed);
+                    succeedsInFollowers(showTrigger, triggerName, SYSTEM_DATABASE_NAME, checkTriggerIsListed);
+                });
     }
 
     private static void succeedsInLeader(String triggerOperation, String triggerName, String dbName) {
