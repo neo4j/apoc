@@ -25,7 +25,7 @@ import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
-import static apoc.util.TransactionTestUtil.checkTransactionTime;
+import static apoc.util.TransactionTestUtil.checkTransactionTimeReasonable;
 import static apoc.util.TransactionTestUtil.lastTransactionChecks;
 import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
@@ -228,7 +228,7 @@ public class CypherTest {
         // check that the query returns nothing and terminate before `timeout`
         long timeout = 5L;
         db.executeTransactionally(query, Map.of("innerQuery", innerQuery, "timeout", timeout), Result::resultAsString);
-        checkTransactionTime(timeout, timeBefore);
+        checkTransactionTimeReasonable(timeout, timeBefore);
     }
 
     @Test

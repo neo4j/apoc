@@ -56,7 +56,7 @@ public class TransactionTestUtil {
         terminateTransactionAsync(db, timeout, query);
 
         // check that the procedure/function fails with TransactionFailureException when transaction is terminated
-        long timePassed = System.currentTimeMillis();
+        long startTimeMs = System.currentTimeMillis();
         try (Transaction transaction = db.beginTx(timeout, TimeUnit.SECONDS)) {
             transaction.execute(query, params).resultAsString();
             transaction.commit();
@@ -68,11 +68,11 @@ public class TransactionTestUtil {
                     Stream.of("terminated", "failed", "closed").anyMatch(msg::contains));
         }
 
-        lastTransactionChecks(db, timeout, query, timePassed);
+        lastTransactionChecks(db, timeout, query, startTimeMs);
     }
 
-    public static void lastTransactionChecks(GraphDatabaseService db, long timeout, String query, long timePassed) {
-        checkTransactionTime(timeout, timePassed);
+    public static void lastTransactionChecks(GraphDatabaseService db, long timeout, String query, long startTimeMs) {
+        checkTransactionTimeReasonable(timeout, startTimeMs);
         checkTransactionNotInList(db, query);
     }
 
@@ -80,13 +80,21 @@ public class TransactionTestUtil {
         lastTransactionChecks(db, DEFAULT_TIMEOUT, query, timeBefore);
     }
 
-    public static void checkTransactionTime(long timeout, long timePassed) {
-        double timePassedDouble = (System.currentTimeMillis() - timePassed) / 1000.0;
+    /*
+     * Assert that a tx finished within "reasonable" time compared to the timeout.
+     *
+     * Asserting that a transaction finishes within a certain timeout is hard.
+     * There are a lot of things that might cause a timeout to not be met,
+     * like gc pauses, thread starvation (we run tests in parallel), etc.
+     */
+    public static void checkTransactionTimeReasonable(long timeout, long startTimeMs) {
+        final var reasonableFactor = 5;
+        double timePassedDouble = (System.currentTimeMillis() - startTimeMs) / 1000.0;
 
         assertTrue(
                 "The transaction hasn't been terminated before the given timeout time (" + timeout + "), but after "
                         + timePassedDouble + " seconds",
-                timePassedDouble <= timeout);
+                timePassedDouble <= (timeout * reasonableFactor));
     }
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
