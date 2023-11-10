@@ -4,11 +4,16 @@ inputs:
   project-name:
     description: "Name of gradle project to test"
     required: true
+  java-version:
+    description: "JDK to use"
+    required: true
 
 runs:
   using: "composite"
   steps:
     - uses: ./.github/actions/setup-jdk
+      with:
+        java-version: ${{inputs.java-version}}
     - uses: ./.github/actions/setup-gradle-cache
     - name: Run tests
       shell: bash

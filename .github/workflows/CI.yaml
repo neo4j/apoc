@@ -81,6 +81,7 @@ jobs:
       fail-fast: false
       matrix:
         project: ['common', 'core', 'processor', 'test-utils', 'it']
+        java-version: ['17', '21']
     env:
       DOCKER_ENTERPRISE_DEV_URL: ${{ secrets.DOCKER_ENTERPRISE_DEV_URL }}
       DOCKER_COMMUNITY_DEV_URL: ${{ secrets.DOCKER_COMMUNITY_DEV_URL }}
@@ -100,7 +101,8 @@ jobs:
           docker load --input ${ENTERPRISE_TAR}
           docker load --input ${COMMUNITY_TAR}
 
-      - name: Run ${{ matrix.project }} tests
+      - name: Run ${{ matrix.project }} tests with JDK ${{ matrix.java-version }}
         uses: ./.github/actions/test-gradle-project
         with:
           project-name: ${{ matrix.project }}
+          java-version: ${{ matrix.java-version }}
