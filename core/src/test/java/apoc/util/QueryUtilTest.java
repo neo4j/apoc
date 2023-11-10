@@ -36,4 +36,10 @@ public class QueryUtilTest {
         assertFalse(
                 QueryUtil.isValidQuery("MATCH USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED"));
     }
+
+    @Test
+    public void shouldReturnTrueForQueryWithParserDeprecation() {
+        assertTrue(
+                QueryUtil.isValidQuery("CREATE (n:My\u0085Label)"));
+    }
 }
