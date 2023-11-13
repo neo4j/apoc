@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -40,6 +41,9 @@ public class LoadJson {
     @Context
     public TerminationGuard terminationGuard;
 
+    @Context
+    public URLAccessChecker urlAccessChecker;
+
     @SuppressWarnings("unchecked")
     @Procedure("apoc.load.jsonArray")
     @Description("Loads array from a JSON URL (e.g. web-API) to then import the given JSON file as a stream of values.")
@@ -47,7 +51,8 @@ public class LoadJson {
             @Name("url") String url,
             @Name(value = "path", defaultValue = "") String path,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        return JsonUtil.loadJson(url, null, null, path, true, (List<String>) config.get("pathOptions"))
+        return JsonUtil.loadJson(
+                        url, null, null, path, true, (List<String>) config.get("pathOptions"), urlAccessChecker)
                 .flatMap((value) -> {
                     if (value instanceof List) {
                         List list = (List) value;
@@ -84,6 +89,14 @@ public class LoadJson {
         String compressionAlgo = (String) config.getOrDefault(COMPRESSION, CompressionAlgo.NONE.name());
         List<String> pathOptions = (List<String>) config.get("pathOptions");
         return loadJsonStream(
-                urlOrKeyOrBinary, headers, payload, path, failOnError, compressionAlgo, pathOptions, terminationGuard);
+                urlOrKeyOrBinary,
+                headers,
+                payload,
+                path,
+                failOnError,
+                compressionAlgo,
+                pathOptions,
+                terminationGuard,
+                urlAccessChecker);
     }
 }

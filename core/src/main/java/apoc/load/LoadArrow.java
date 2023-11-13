@@ -46,12 +46,17 @@ import org.apache.arrow.vector.ipc.ArrowFileReader;
 import org.apache.arrow.vector.ipc.ArrowReader;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.util.Text;
+import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.values.storable.Values;
 
 public class LoadArrow {
+
+    @Context
+    public URLAccessChecker urlAccessChecker;
 
     private static class ArrowSpliterator extends Spliterators.AbstractSpliterator<MapResult> {
 
@@ -114,8 +119,8 @@ public class LoadArrow {
     public Stream<MapResult> file(
             @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
             throws IOException {
-        final SeekableByteChannel channel =
-                FileUtils.inputStreamFor(fileName, null, null, null).asChannel();
+        final SeekableByteChannel channel = FileUtils.inputStreamFor(fileName, null, null, null, urlAccessChecker)
+                .asChannel();
         RootAllocator allocator = new RootAllocator();
         ArrowFileReader streamReader = new ArrowFileReader(channel, allocator);
         VectorSchemaRoot schemaRoot = streamReader.getVectorSchemaRoot();

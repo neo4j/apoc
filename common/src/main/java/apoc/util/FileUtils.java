@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.neo4j.graphdb.security.URLAccessChecker;
 
 /**
  * @author mh
@@ -67,7 +68,11 @@ public class FileUtils {
     }
 
     public static StreamConnection getStreamConnection(
-            SupportedProtocols protocol, String urlAddress, Map<String, Object> headers, String payload)
+            SupportedProtocols protocol,
+            String urlAddress,
+            Map<String, Object> headers,
+            String payload,
+            URLAccessChecker urlAccessChecker)
             throws IOException {
         switch (protocol) {
             case s3:
@@ -78,7 +83,7 @@ public class FileUtils {
             case http:
             case https:
             case gs:
-                return readHttpInputStream(urlAddress, headers, payload, REDIRECT_LIMIT);
+                return readHttpInputStream(urlAddress, headers, payload, REDIRECT_LIMIT, urlAccessChecker);
             default:
                 try {
                     return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
@@ -140,23 +145,35 @@ public class FileUtils {
     public static final String ACCESS_OUTSIDE_DIR_ERROR =
             "You're providing a directory outside the import directory " + "defined into `server.directories.import`";
 
-    public static CountingReader readerFor(Object input, String compressionAlgo) throws IOException {
-        return readerFor(input, null, null, compressionAlgo);
+    public static CountingReader readerFor(Object input, String compressionAlgo, URLAccessChecker urlAccessChecker)
+            throws IOException {
+        return readerFor(input, null, null, compressionAlgo, urlAccessChecker);
     }
 
     public static CountingReader readerFor(
-            Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
-        return inputStreamFor(input, headers, payload, compressionAlgo).asReader();
+            Object input,
+            Map<String, Object> headers,
+            String payload,
+            String compressionAlgo,
+            URLAccessChecker urlAccessChecker)
+            throws IOException {
+        return inputStreamFor(input, headers, payload, compressionAlgo, urlAccessChecker)
+                .asReader();
     }
 
     public static CountingInputStream inputStreamFor(
-            Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
+            Object input,
+            Map<String, Object> headers,
+            String payload,
+            String compressionAlgo,
+            URLAccessChecker urlAccessChecker)
+            throws IOException {
         if (input == null) return null;
         if (input instanceof String) {
             String fileName = (String) input;
-            apocConfig().checkReadAllowed(fileName);
+            apocConfig().checkReadAllowed(fileName, urlAccessChecker);
             fileName = changeFileUrlIfImportDirectoryConstrained(fileName);
-            return Util.openInputStream(fileName, headers, payload, compressionAlgo);
+            return Util.openInputStream(fileName, headers, payload, compressionAlgo, urlAccessChecker);
         } else if (input instanceof byte[]) {
             return getInputStreamFromBinary((byte[]) input, compressionAlgo);
         } else {

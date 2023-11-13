@@ -43,6 +43,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -71,6 +72,9 @@ public class ExportGraphML {
     @Context
     public TerminationGuard terminationGuard;
 
+    @Context
+    public URLAccessChecker urlAccessChecker;
+
     @Procedure(name = "apoc.import.graphml", mode = Mode.WRITE)
     @Description("Imports a graph from the provided GraphML file.")
     public Stream<ProgressInfo> file(
@@ -95,7 +99,8 @@ public class ExportGraphML {
             if (exportConfig.storeNodeIds()) graphMLReader.storeNodeIds();
 
             graphMLReader.parseXML(
-                    FileUtils.readerFor(urlOrBinaryFile, exportConfig.getCompressionAlgo()), terminationGuard);
+                    FileUtils.readerFor(urlOrBinaryFile, exportConfig.getCompressionAlgo(), urlAccessChecker),
+                    terminationGuard);
             return reporter.getTotal();
         });
         return Stream.of(result);

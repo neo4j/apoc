@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -46,6 +47,9 @@ public class ImportJson {
     @Context
     public TerminationGuard terminationGuard;
 
+    @Context
+    public URLAccessChecker urlAccessChecker;
+
     @Procedure(value = "apoc.import.json", mode = Mode.WRITE)
     @Description("Imports a graph from the provided JSON file.")
     public Stream<ProgressInfo> all(
@@ -61,8 +65,8 @@ public class ImportJson {
             }
             ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "json"));
 
-            try (final CountingReader reader =
-                            FileUtils.readerFor(urlOrBinaryFile, importJsonConfig.getCompressionAlgo());
+            try (final CountingReader reader = FileUtils.readerFor(
+                            urlOrBinaryFile, importJsonConfig.getCompressionAlgo(), urlAccessChecker);
                     final Scanner scanner = new Scanner(reader).useDelimiter("\n|\r");
                     JsonImporter jsonImporter = new JsonImporter(importJsonConfig, db, reporter)) {
                 while (scanner.hasNext() && !Util.transactionIsTerminated(terminationGuard)) {
