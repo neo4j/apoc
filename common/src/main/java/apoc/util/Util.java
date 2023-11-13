@@ -107,6 +107,7 @@ import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.util.ValueUtils;
@@ -370,15 +371,20 @@ public class Util {
     }
 
     public static CountingInputStream openInputStream(
-            Object input, Map<String, Object> headers, String payload, String compressionAlgo) throws IOException {
+            Object input,
+            Map<String, Object> headers,
+            String payload,
+            String compressionAlgo,
+            URLAccessChecker urlAccessChecker)
+            throws IOException {
         if (input instanceof String) {
             String urlAddress = (String) input;
             final ArchiveType archiveType = ArchiveType.from(urlAddress);
             if (archiveType.isArchive()) {
-                return getStreamCompressedFile(urlAddress, headers, payload, archiveType);
+                return getStreamCompressedFile(urlAddress, headers, payload, archiveType, urlAccessChecker);
             }
 
-            StreamConnection sc = getStreamConnection(urlAddress, headers, payload);
+            StreamConnection sc = getStreamConnection(urlAddress, headers, payload, urlAccessChecker);
             return sc.toCountingInputStream(compressionAlgo);
         } else if (input instanceof byte[]) {
             return FileUtils.getInputStreamFromBinary((byte[]) input, compressionAlgo);
@@ -388,7 +394,11 @@ public class Util {
     }
 
     private static CountingInputStream getStreamCompressedFile(
-            String urlAddress, Map<String, Object> headers, String payload, ArchiveType archiveType)
+            String urlAddress,
+            Map<String, Object> headers,
+            String payload,
+            ArchiveType archiveType,
+            URLAccessChecker urlAccessChecker)
             throws IOException {
         StreamConnection sc;
         InputStream stream;
@@ -397,7 +407,7 @@ public class Util {
         String zipFileName;
         if (tokens.length == 2) {
             zipFileName = tokens[1];
-            sc = getStreamConnection(urlAddress, headers, payload);
+            sc = getStreamConnection(urlAddress, headers, payload, urlAccessChecker);
             stream = getFileStreamIntoCompressedFile(sc.getInputStream(), zipFileName, archiveType);
             stream = toLimitedIStream(stream, sc.getLength());
         } else throw new IllegalArgumentException("filename can't be null or empty");
@@ -405,9 +415,11 @@ public class Util {
         return new CountingInputStream(stream, sc.getLength());
     }
 
-    public static StreamConnection getStreamConnection(String urlAddress, Map<String, Object> headers, String payload)
+    public static StreamConnection getStreamConnection(
+            String urlAddress, Map<String, Object> headers, String payload, URLAccessChecker urlAccessChecker)
             throws IOException {
-        return FileUtils.getStreamConnection(FileUtils.from(urlAddress), urlAddress, headers, payload);
+        return FileUtils.getStreamConnection(
+                FileUtils.from(urlAddress), urlAddress, headers, payload, urlAccessChecker);
     }
 
     private static InputStream getFileStreamIntoCompressedFile(InputStream is, String fileName, ArchiveType archiveType)
@@ -426,8 +438,13 @@ public class Util {
     }
 
     public static StreamConnection readHttpInputStream(
-            String urlAddress, Map<String, Object> headers, String payload, int redirectLimit) throws IOException {
-        URL url = ApocConfig.apocConfig().checkAllowedUrlAndPinToIP(urlAddress);
+            String urlAddress,
+            Map<String, Object> headers,
+            String payload,
+            int redirectLimit,
+            URLAccessChecker urlAccessChecker)
+            throws IOException {
+        URL url = ApocConfig.apocConfig().checkAllowedUrlAndPinToIP(urlAddress, urlAccessChecker);
         URLConnection con = openUrlConnection(url, headers);
         writePayload(con, payload);
         String newUrl = handleRedirect(con, urlAddress);
@@ -436,7 +453,7 @@ public class Util {
             if (redirectLimit == 0) {
                 throw new IOException("Redirect limit exceeded");
             }
-            return readHttpInputStream(newUrl, headers, payload, --redirectLimit);
+            return readHttpInputStream(newUrl, headers, payload, --redirectLimit, urlAccessChecker);
         }
 
         return new StreamConnection.UrlStreamConnection(con);

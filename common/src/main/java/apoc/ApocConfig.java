@@ -57,8 +57,8 @@ import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.config.Setting;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
-import org.neo4j.kernel.impl.security.WebURLAccessRule;
 import org.neo4j.kernel.lifecycle.LifecycleAdapter;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.NullLog;
@@ -81,7 +81,6 @@ public class ApocConfig extends LifecycleAdapter {
             "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
     public static final String APOC_MAX_DECOMPRESSION_RATIO = "apoc.max.decompression.ratio";
     public static final Integer DEFAULT_MAX_DECOMPRESSION_RATIO = 200;
-    private static final WebURLAccessRule webAccessRule = new WebURLAccessRule();
 
     // These were earlier added via the Neo4j config using the ApocSettings.java class
     private static final Map<String, Object> configDefaultValues = Map.of(
@@ -298,24 +297,20 @@ public class ApocConfig extends LifecycleAdapter {
         }
     }
 
-    public URL checkAllowedUrlAndPinToIP(String url) throws IOException {
+    public URL checkAllowedUrlAndPinToIP(String url, URLAccessChecker urlAccessChecker) throws IOException {
         try {
             URL parsedUrl = new URL(url);
-            if (blockedIpRanges != null && !blockedIpRanges.isEmpty()) {
-                return webAccessRule.checkNotBlockedAndPinToIP(parsedUrl, blockedIpRanges);
-            } else {
-                return parsedUrl;
-            }
+            return urlAccessChecker.checkURL(parsedUrl);
         } catch (Exception e) {
             throw new IOException(e);
         }
     }
 
-    public void checkReadAllowed(String url) throws IOException {
+    public void checkReadAllowed(String url, URLAccessChecker urlAccessChecker) throws IOException {
         if (isFile(url)) {
             isImportFileEnabled();
         } else {
-            checkAllowedUrlAndPinToIP(url);
+            checkAllowedUrlAndPinToIP(url, urlAccessChecker);
         }
     }
 

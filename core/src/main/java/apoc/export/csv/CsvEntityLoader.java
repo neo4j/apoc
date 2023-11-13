@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.logging.Log;
 
 public class CsvEntityLoader {
@@ -41,15 +42,17 @@ public class CsvEntityLoader {
     private final CsvLoaderConfig clc;
     private final ProgressReporter reporter;
     private final Log log;
+    private final URLAccessChecker urlAccessChecker;
 
     /**
      * @param clc configuration object
      * @param reporter
      */
-    public CsvEntityLoader(CsvLoaderConfig clc, ProgressReporter reporter, Log log) {
+    public CsvEntityLoader(CsvLoaderConfig clc, ProgressReporter reporter, Log log, URLAccessChecker urlAccessChecker) {
         this.clc = clc;
         this.reporter = reporter;
         this.log = log;
+        this.urlAccessChecker = urlAccessChecker;
     }
 
     /**
@@ -70,7 +73,7 @@ public class CsvEntityLoader {
             final Map<String, Map<String, String>> idMapping)
             throws IOException {
 
-        try (final CountingReader reader = FileUtils.readerFor(fileName, clc.getCompressionAlgo())) {
+        try (final CountingReader reader = FileUtils.readerFor(fileName, clc.getCompressionAlgo(), urlAccessChecker)) {
             final String header = readFirstLine(reader);
             final List<CsvHeaderField> fields =
                     CsvHeaderFields.processHeader(header, clc.getDelimiter(), clc.getQuotationCharacter());
@@ -201,10 +204,11 @@ public class CsvEntityLoader {
             final Object data,
             final String type,
             final GraphDatabaseService db,
-            final Map<String, Map<String, String>> idMapping)
+            final Map<String, Map<String, String>> idMapping,
+            final URLAccessChecker urlAccessChecker)
             throws IOException {
 
-        try (final CountingReader reader = FileUtils.readerFor(data, clc.getCompressionAlgo())) {
+        try (final CountingReader reader = FileUtils.readerFor(data, clc.getCompressionAlgo(), urlAccessChecker)) {
             final String header = readFirstLine(reader);
             final List<CsvHeaderField> fields =
                     CsvHeaderFields.processHeader(header, clc.getDelimiter(), clc.getQuotationCharacter());

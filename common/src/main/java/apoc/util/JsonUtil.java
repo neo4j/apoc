@@ -42,6 +42,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.StringUtils;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.values.storable.DurationValue;
 
@@ -94,8 +95,9 @@ public class JsonUtil {
             String payload,
             String path,
             boolean failOnError,
-            List<String> options) {
-        return loadJson(urlOrBinary, headers, payload, path, failOnError, null, options);
+            List<String> options,
+            URLAccessChecker urlAccessChecker) {
+        return loadJson(urlOrBinary, headers, payload, path, failOnError, null, options, urlAccessChecker);
     }
 
     public static Stream<Object> loadJson(
@@ -105,13 +107,15 @@ public class JsonUtil {
             String path,
             boolean failOnError,
             String compressionAlgo,
-            List<String> options) {
+            List<String> options,
+            URLAccessChecker urlAccessChecker) {
         try {
             if (urlOrBinary instanceof String) {
                 String url = (String) urlOrBinary;
                 urlOrBinary = Util.getLoadUrlByConfigFile("json", url, "url").orElse(url);
             }
-            InputStream input = FileUtils.inputStreamFor(urlOrBinary, headers, payload, compressionAlgo);
+            InputStream input =
+                    FileUtils.inputStreamFor(urlOrBinary, headers, payload, compressionAlgo, urlAccessChecker);
             JsonParser parser = OBJECT_MAPPER.getFactory().createParser(input);
             MappingIterator<Object> it = OBJECT_MAPPER.readValues(parser, Object.class);
             Stream<Object> stream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(it, 0), false);
