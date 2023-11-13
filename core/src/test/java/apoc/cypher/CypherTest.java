@@ -239,12 +239,22 @@ public class CypherTest {
         terminateTransactionAsync(db, innerLongQuery);
 
         long timeBefore = System.currentTimeMillis();
-        // assert query terminated (RETURN 0)
-        TestUtil.testCall(
-                db,
-                query,
-                Map.of("innerQuery", innerLongQuery),
-                row -> assertEquals(Map.of("0", 0L), row.get("value")));
+
+        try (final var tx = db.beginTx()) {
+            final var result = tx.execute(query, Map.of("innerQuery", innerLongQuery));
+            /*
+             * There are two possible valid outcomes of this query:
+             * 1. The inner query is terminated but successfully finishes and returns 0.
+             *    apoc.util.sleep will try to keep going even after tx termination weirdly enough ¯\_(ツ)_/¯.
+             * 2. The inner query do not finish or return anything,
+             *    runtime has its own termination guards that can make this happen.
+             */
+            if (result.hasNext()) {
+                final var row = result.next();
+                assertEquals(Map.of("0", 0L), row.get("value"));
+                assertFalse("Expected one or zero rows", result.hasNext());
+            }
+        }
 
         lastTransactionChecks(db, query, timeBefore);
     }
