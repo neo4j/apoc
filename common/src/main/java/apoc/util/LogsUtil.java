@@ -37,7 +37,7 @@ public class LogsUtil {
 
     public static String sanitizeQuery(String query) {
         try {
-            var statement = JavaCCParser.parse(query, exceptionFactory);
+            var statement = JavaCCParser.parse(query, exceptionFactory, null);
             var rewriter = sensitiveLiteralReplacement.apply(statement)._1;
             var res = (Statement) rewriter.apply(statement);
 

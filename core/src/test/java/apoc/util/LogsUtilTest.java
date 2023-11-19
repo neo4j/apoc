@@ -38,4 +38,11 @@ public class LogsUtilTest {
 
         assertEquals(sanitized, invalidQuery);
     }
+
+    @Test
+    public void whitespaceDeprecationSucceedsSanitization() {
+        String sanitized =
+                LogsUtil.sanitizeQuery("CREATE USER dum\u0085my IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED");
+        assertEquals(sanitized, "CREATE USER dum\u0085my IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
+    }
 }

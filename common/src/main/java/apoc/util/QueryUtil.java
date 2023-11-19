@@ -26,7 +26,7 @@ public class QueryUtil {
 
     public static boolean isValidQuery(String query) {
         try {
-            JavaCCParser.parse(query, exceptionFactory);
+            JavaCCParser.parse(query, exceptionFactory, null);
             return true;
         } catch (Exception e) {
             return false;
