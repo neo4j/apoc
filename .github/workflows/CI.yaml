@@ -96,6 +96,7 @@ jobs:
         run: |
           curl -s -L0 -u "${TEAMCITY_USER}:${TEAMCITY_PASSWORD}" -X GET ${DOCKER_ENTERPRISE_DEV_URL} -o ${ENTERPRISE_TAR} &
           curl -s -L0 -u "${TEAMCITY_USER}:${TEAMCITY_PASSWORD}" -X GET ${DOCKER_COMMUNITY_DEV_URL} -o ${COMMUNITY_TAR} &
+          set
           wait
           docker load --input ${ENTERPRISE_TAR}
           docker load --input ${COMMUNITY_TAR}
