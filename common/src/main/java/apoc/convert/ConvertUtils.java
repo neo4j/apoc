@@ -40,20 +40,24 @@ public class ConvertUtils {
         else if (list instanceof Iterable) return Iterables.asList((Iterable) list);
         else if (list instanceof Iterator) return Iterators.asList((Iterator) list);
         else if (list.getClass().isArray()) {
-            final Object[] objectArray;
-            if (list.getClass().getComponentType().isPrimitive()) {
-                int length = Array.getLength(list);
-                objectArray = new Object[length];
-                for (int i = 0; i < length; i++) {
-                    objectArray[i] = Array.get(list, i);
-                }
-            } else {
-                objectArray = (Object[]) list;
-            }
-            List result = new ArrayList<>(objectArray.length);
-            Collections.addAll(result, objectArray);
-            return result;
+            return convertArrayToList(list);
         }
         return Collections.singletonList(list);
+    }
+
+    public static List convertArrayToList(Object list) {
+        final Object[] objectArray;
+        if (list.getClass().getComponentType().isPrimitive()) {
+            int length = Array.getLength(list);
+            objectArray = new Object[length];
+            for (int i = 0; i < length; i++) {
+                objectArray[i] = Array.get(list, i);
+            }
+        } else {
+            objectArray = (Object[]) list;
+        }
+        List result = new ArrayList<>(objectArray.length);
+        Collections.addAll(result, objectArray);
+        return result;
     }
 }
