@@ -34,7 +34,9 @@ public enum ExportFormat {
 
     GEPHI("gephi", "", "", "", ""),
 
-    TINKERPOP("tinkerpop", "", "", "", "");
+    TINKERPOP("tinkerpop", "", "", "", ""),
+
+    CSV("csv", "", "", "", "");
 
     private final String format;
 
@@ -54,6 +56,9 @@ public enum ExportFormat {
         this.indexAwait = indexAwait;
     }
 
+    public String getFormat() {
+        return format;
+    }
     public static final ExportFormat fromString(String format) {
         if (format != null && !format.isEmpty()) {
             for (ExportFormat exportFormat : ExportFormat.values()) {

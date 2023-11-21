@@ -486,7 +486,7 @@ public class ExportCsvTest {
     @Test
     public void testExportAllCsvStreaming() {
         String statement =
-                "CALL apoc.export.csv.all(null,{stream:true,batchSize:2,useOptimizations:{unwindBatchSize:2}})";
+                "CALL apoc.export.csv.all(null,{stream:true,batchSize:2})";
         assertExportStreaming(statement, NONE);
     }
 
@@ -494,7 +494,7 @@ public class ExportCsvTest {
     public void testExportAllCsvStreamingCompressed() {
         final CompressionAlgo algo = GZIP;
         String statement = "CALL apoc.export.csv.all(null, {compression: '" + algo.name()
-                + "',stream:true,batchSize:2,useOptimizations:{unwindBatchSize:2}})";
+                + "',stream:true,batchSize:2})";
         assertExportStreaming(statement, algo);
     }
 
@@ -550,7 +550,7 @@ public class ExportCsvTest {
         StringBuilder sb = new StringBuilder();
         testResult(
                 db,
-                "CALL apoc.export.csv.query($query,null,{stream:true,batchSize:2, useOptimizations:{unwindBatchSize:2}})",
+                "CALL apoc.export.csv.query($query,null,{stream:true,batchSize:2})",
                 map("query", query),
                 getAndCheckStreamingMetadataQueryMatchUsers(sb));
         assertEquals(EXPECTED_QUERY, sb.toString());
@@ -562,7 +562,7 @@ public class ExportCsvTest {
         StringBuilder sb = new StringBuilder();
         testResult(
                 db,
-                "CALL apoc.export.csv.query($query,null,{quotes: false, stream:true,batchSize:2, useOptimizations:{unwindBatchSize:2}})",
+                "CALL apoc.export.csv.query($query,null,{quotes: false, stream:true,batchSize:2})",
                 map("query", query),
                 getAndCheckStreamingMetadataQueryMatchUsers(sb));
 
@@ -600,7 +600,7 @@ public class ExportCsvTest {
         StringBuilder sb = new StringBuilder();
         testResult(
                 db,
-                "CALL apoc.export.csv.query($query,null,{quotes: 'always', stream:true,batchSize:2, useOptimizations:{unwindBatchSize:2}})",
+                "CALL apoc.export.csv.query($query,null,{quotes: 'always', stream:true,batchSize:2})",
                 map("query", query),
                 getAndCheckStreamingMetadataQueryMatchAddress(sb));
 
@@ -613,7 +613,7 @@ public class ExportCsvTest {
         StringBuilder sb = new StringBuilder();
         testResult(
                 db,
-                "CALL apoc.export.csv.query($query,null,{quotes: 'ifNeeded', stream:true,batchSize:2, useOptimizations:{unwindBatchSize:2}})",
+                "CALL apoc.export.csv.query($query,null,{quotes: 'ifNeeded', stream:true,batchSize:2})",
                 map("query", query),
                 getAndCheckStreamingMetadataQueryMatchAddress(sb));
 
@@ -626,7 +626,7 @@ public class ExportCsvTest {
         StringBuilder sb = new StringBuilder();
         testResult(
                 db,
-                "CALL apoc.export.csv.query($query,null,{quotes: 'none', stream:true,batchSize:2, useOptimizations:{unwindBatchSize:2}})",
+                "CALL apoc.export.csv.query($query,null,{quotes: 'none', stream:true,batchSize:2})",
                 map("query", query),
                 getAndCheckStreamingMetadataQueryMatchAddress(sb));
 
