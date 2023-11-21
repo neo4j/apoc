@@ -34,7 +34,9 @@ public enum ExportFormat {
 
     GEPHI("gephi", "", "", "", ""),
 
-    TINKERPOP("tinkerpop", "", "", "", "");
+    TINKERPOP("tinkerpop", "", "", "", ""),
+
+    CSV("csv", "", "", "", "");
 
     private final String format;
 
