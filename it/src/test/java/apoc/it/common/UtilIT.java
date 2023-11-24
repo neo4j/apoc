@@ -29,8 +29,9 @@ import inet.ipaddr.IPAddressString;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
@@ -39,6 +40,8 @@ import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.kernel.impl.security.WebURLAccessRule;
+
 import org.testcontainers.containers.GenericContainer;
 
 public class UtilIT {
@@ -65,12 +68,15 @@ public class UtilIT {
 
     @Test
     public void redirectShouldWorkWhenProtocolNotChangesWithUrlLocation() throws IOException {
-        httpServer = setUpServer(null, "http://www.google.com");
+        Config neo4jConfig = mock(Config.class);
+        when(neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist)).thenReturn(Collections.emptyList());
+        httpServer = setUpServer(neo4jConfig, "https://www.google.com");
+
         // given
         String url = getServerUrl(httpServer);
 
         // when
-        String page = IOUtils.toString(Util.openInputStream(url, null, null, null), Charset.forName("UTF-8"));
+        String page = IOUtils.toString( Util.openInputStream(url, null, null, null, new WebURLAccessRule(neo4jConfig)), StandardCharsets.UTF_8);
 
         // then
         assertTrue(page.contains("<title>Google</title>"));
@@ -86,7 +92,7 @@ public class UtilIT {
         httpServer = setUpServer(neo4jConfig, "http://127.168.0.1");
         String url = getServerUrl(httpServer);
 
-        IOException e = Assert.assertThrows(IOException.class, () -> Util.openInputStream(url, null, null, null));
+        IOException e = Assert.assertThrows(IOException.class, () -> Util.openInputStream(url, null, null, null, new WebURLAccessRule(neo4jConfig)));
         TestCase.assertTrue(
                 e.getMessage()
                         .contains(
@@ -104,7 +110,7 @@ public class UtilIT {
         String url = getServerUrl(httpServer);
 
         // when
-        String page = IOUtils.toString(Util.openInputStream(url, null, null, null), Charset.forName("UTF-8"));
+        String page = IOUtils.toString( Util.openInputStream(url, null, null, null, new WebURLAccessRule(neo4jConfig)), StandardCharsets.UTF_8 );
 
         // then
         assertTrue(page.contains("<title>Google</title>"));
@@ -125,6 +131,7 @@ public class UtilIT {
     @Test
     public void shouldFailForExceedingRedirectLimit() {
         Config neo4jConfig = mock(Config.class);
+        when(neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist)).thenReturn(Collections.emptyList());
 
         httpServer = setUpServer(neo4jConfig, "https://127.0.0.0");
         String url = getServerUrl(httpServer);
@@ -137,7 +144,7 @@ public class UtilIT {
         }
 
         String finalUrl = url;
-        IOException e = Assert.assertThrows(IOException.class, () -> Util.openInputStream(finalUrl, null, null, null));
+        IOException e = Assert.assertThrows(IOException.class, () -> Util.openInputStream(finalUrl, null, null, null, new WebURLAccessRule(neo4jConfig)));
 
         TestCase.assertTrue(e.getMessage().contains("Redirect limit exceeded"));
 
@@ -151,10 +158,12 @@ public class UtilIT {
         httpServer = setUpServer(null, "file:/etc/passwd");
         // given
         String url = getServerUrl(httpServer);
+        Config neo4jConfig = mock(Config.class);
+        when(neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist)).thenReturn(Collections.emptyList());
 
         // when
         RuntimeException e =
-                Assert.assertThrows(RuntimeException.class, () -> Util.openInputStream(url, null, null, null));
+                Assert.assertThrows(RuntimeException.class, () -> Util.openInputStream(url, null, null, null, new WebURLAccessRule(neo4jConfig)));
 
         assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
     }
