@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -38,13 +39,14 @@ public class LoadJsonUtils {
             boolean failOnError,
             String compressionAlgo,
             List<String> pathOptions,
-            TerminationGuard terminationGuard) {
+            TerminationGuard terminationGuard,
+            URLAccessChecker urlAccessChecker) {
         if (urlOrKeyOrBinary instanceof String) {
             headers = null != headers ? headers : new HashMap<>();
             headers.putAll(Util.extractCredentialsIfNeeded((String) urlOrKeyOrBinary, failOnError));
         }
-        Stream<Object> stream =
-                JsonUtil.loadJson(urlOrKeyOrBinary, headers, payload, path, failOnError, compressionAlgo, pathOptions);
+        Stream<Object> stream = JsonUtil.loadJson(
+                urlOrKeyOrBinary, headers, payload, path, failOnError, compressionAlgo, pathOptions, urlAccessChecker);
         return stream.flatMap((value) -> {
             if (terminationGuard != null) {
                 terminationGuard.check();

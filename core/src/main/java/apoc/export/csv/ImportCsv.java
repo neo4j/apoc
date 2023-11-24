@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
@@ -39,6 +40,9 @@ public class ImportCsv {
 
     @Context
     public Log log;
+
+    @Context
+    public URLAccessChecker urlAccessChecker;
 
     @Procedure(name = "apoc.import.csv", mode = Mode.SCHEMA)
     @Description("Imports `NODE` and `RELATIONSHIP` values with the given labels and types from the provided CSV file.")
@@ -55,7 +59,7 @@ public class ImportCsv {
             }
             final CsvLoaderConfig clc = CsvLoaderConfig.from(config);
             final ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "csv"));
-            final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log);
+            final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log, urlAccessChecker);
 
             final Map<String, Map<String, String>> idMapping = new HashMap<>();
             for (Map<String, Object> node : nodes) {
@@ -67,7 +71,7 @@ public class ImportCsv {
             for (Map<String, Object> relationship : relationships) {
                 final Object fileName = relationship.getOrDefault("fileName", relationship.get("data"));
                 final String type = (String) relationship.get("type");
-                loader.loadRelationships(fileName, type, db, idMapping);
+                loader.loadRelationships(fileName, type, db, idMapping, urlAccessChecker);
             }
 
             return reporter.getTotal();

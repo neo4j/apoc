@@ -68,6 +68,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -106,6 +107,9 @@ public class Xml {
     @Context
     public TerminationGuard terminationGuard;
 
+    @Context
+    public URLAccessChecker urlAccessChecker;
+
     @Procedure("apoc.load.xml")
     @Description("Loads a single nested `MAP` from an XML URL (e.g. web-API).")
     public Stream<MapResult> xml(
@@ -140,7 +144,11 @@ public class Xml {
         try {
             Map<String, Object> headers = (Map) config.getOrDefault("headers", Collections.emptyMap());
             CountingInputStream is = FileUtils.inputStreamFor(
-                    urlOrBinary, headers, null, (String) config.getOrDefault(COMPRESSION, CompressionAlgo.NONE.name()));
+                    urlOrBinary,
+                    headers,
+                    null,
+                    (String) config.getOrDefault(COMPRESSION, CompressionAlgo.NONE.name()),
+                    urlAccessChecker);
             return parse(is, simpleMode, path, failOnError);
         } catch (Exception e) {
             if (!failOnError) return Stream.of(new MapResult(Collections.emptyMap()));
@@ -188,14 +196,15 @@ public class Xml {
         return result.stream();
     }
 
-    private XMLStreamReader getXMLStreamReader(Object urlOrBinary, XmlImportConfig config)
+    private XMLStreamReader getXMLStreamReader(
+            Object urlOrBinary, XmlImportConfig config, URLAccessChecker urlAccessChecker)
             throws IOException, XMLStreamException {
         InputStream inputStream;
         if (urlOrBinary instanceof String) {
             String url = (String) urlOrBinary;
-            apocConfig.checkReadAllowed(url);
+            apocConfig.checkReadAllowed(url, urlAccessChecker);
             url = FileUtils.changeFileUrlIfImportDirectoryConstrained(url);
-            StreamConnection streamConnection = getStreamConnection(url, null, null);
+            StreamConnection streamConnection = getStreamConnection(url, null, null, urlAccessChecker);
             inputStream = toLimitedIStream(streamConnection.getInputStream(), streamConnection.getLength());
         } else if (urlOrBinary instanceof byte[]) {
             inputStream = toLimitedIStream(
@@ -510,7 +519,7 @@ public class Xml {
         XmlImportConfig importConfig = new XmlImportConfig(config);
         // TODO: make labels, reltypes and magic properties configurable
 
-        final XMLStreamReader xml = getXMLStreamReader(urlOrBinary, importConfig);
+        final XMLStreamReader xml = getXMLStreamReader(urlOrBinary, importConfig, urlAccessChecker);
 
         // stores parents and their most recent child
         org.neo4j.graphdb.Node root = tx.createNode(Label.label("XmlDocument"));
