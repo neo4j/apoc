@@ -145,7 +145,7 @@ public class SpatialTest {
         TestUtil.registerProcedure(db, MockGeocode.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         URL url = ClassLoader.getSystemResource("spatial.json");
-        Map tests = (Map) JsonUtil.loadJson(url.toString()).findFirst().orElse(null);
+        Map tests = (Map) JsonUtil.loadJson(url.toString(), null).findFirst().orElse(null);
         for (Object event : (List) tests.get("events")) {
             addEventData((Map) event);
         }

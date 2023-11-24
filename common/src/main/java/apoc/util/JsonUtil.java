@@ -132,8 +132,8 @@ public class JsonUtil {
         }
     }
 
-    public static Stream<Object> loadJson(String url) {
-        return loadJson(url, null, null, "", true, null, null);
+    public static Stream<Object> loadJson(String url, URLAccessChecker urlAccessChecker) {
+        return loadJson(url, null, null, "", true, null, urlAccessChecker);
     }
 
     public static <T> T parse(String json, String path, Class<T> type) {

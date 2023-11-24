@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.configuration2.Configuration;
+
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.procedure.*;
 
 public class Geocode {
@@ -42,10 +44,13 @@ public class Geocode {
     @Context
     public TerminationGuard terminationGuard;
 
-    interface GeocodeSupplier {
-        Stream<GeoCodeResult> geocode(String params, long maxResults);
+    @Context
+    public URLAccessChecker urlAccessChecker;
 
-        Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude);
+    interface GeocodeSupplier {
+        Stream<GeoCodeResult> geocode(String params, long maxResults, URLAccessChecker urlAccessChecker);
+
+        Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker);
     }
 
     private static class Throttler {
@@ -123,13 +128,13 @@ public class Geocode {
         }
 
         @SuppressWarnings("unchecked")
-        public Stream<GeoCodeResult> geocode(String address, long maxResults) {
+        public Stream<GeoCodeResult> geocode(String address, long maxResults, URLAccessChecker urlAccessChecker) {
             if (address.isEmpty()) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
             String url = urlTemplate.replace("PLACE", Util.encodeUrlComponent(address));
-            Object value = JsonUtil.loadJson(url).findFirst().orElse(null);
+            Object value = JsonUtil.loadJson(url, urlAccessChecker).findFirst().orElse(null);
             if (value instanceof List) {
                 return findResults((List<Map<String, Object>>) value, maxResults);
             } else if (value instanceof Map) {
@@ -142,13 +147,13 @@ public class Geocode {
         }
 
         @Override
-        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude) {
+        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
             if (latitude == null || longitude == null) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
             String url = urlTemplateReverse.replace("LAT", latitude.toString()).replace("LNG", longitude.toString());
-            Object value = JsonUtil.loadJson(url).findFirst().orElse(null);
+            Object value = JsonUtil.loadJson(url, urlAccessChecker).findFirst().orElse(null);
             if (value instanceof List) {
                 return findResults((List<Map<String, Object>>) value, 1);
             } else if (value instanceof Map) {
@@ -203,12 +208,12 @@ public class Geocode {
         }
 
         @SuppressWarnings("unchecked")
-        public Stream<GeoCodeResult> geocode(String address, long maxResults) {
+        public Stream<GeoCodeResult> geocode(String address, long maxResults, URLAccessChecker urlAccessChecker) {
             if (address.isEmpty()) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
-            Object value = JsonUtil.loadJson(OSM_URL_GEOCODE + Util.encodeUrlComponent(address))
+            Object value = JsonUtil.loadJson(OSM_URL_GEOCODE + Util.encodeUrlComponent(address), urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof List) {
@@ -225,14 +230,14 @@ public class Geocode {
         }
 
         @Override
-        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude) {
+        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
             if (latitude == null || longitude == null) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
 
             Object value = JsonUtil.loadJson(
-                            OSM_URL_REVERSE_GEOCODE + String.format("lat=%s&lon=%s", latitude, longitude))
+                            OSM_URL_REVERSE_GEOCODE + String.format("lat=%s&lon=%s", latitude, longitude), urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof Map) {
@@ -275,13 +280,13 @@ public class Geocode {
         }
 
         @SuppressWarnings("unchecked")
-        public Stream<GeoCodeResult> geocode(String address, long maxResults) {
+        public Stream<GeoCodeResult> geocode(String address, long maxResults, URLAccessChecker urlAccessChecker) {
             if (address.isEmpty()) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
             Object value = JsonUtil.loadJson(
-                            String.format(GEOCODE_URL, credentials(this.config)) + Util.encodeUrlComponent(address))
+                            String.format(GEOCODE_URL, credentials(this.config)) + Util.encodeUrlComponent(address), urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof Map) {
@@ -306,13 +311,13 @@ public class Geocode {
         }
 
         @Override
-        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude) {
+        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
             if (latitude == null || longitude == null) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
             Object value = JsonUtil.loadJson(String.format(REVERSE_GEOCODE_URL, credentials(this.config))
-                            + Util.encodeUrlComponent(latitude + "," + longitude))
+                            + Util.encodeUrlComponent(latitude + "," + longitude), urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof Map) {
@@ -397,7 +402,7 @@ public class Geocode {
                 return getSupplier(config)
                         .geocode(
                                 address,
-                                maxResults == 0 ? MAX_RESULTS : Math.min(Math.max(maxResults, 1), MAX_RESULTS));
+                                maxResults == 0 ? MAX_RESULTS : Math.min(Math.max(maxResults, 1), MAX_RESULTS), urlAccessChecker);
             } catch (IllegalStateException re) {
                 if (!quotaException && re.getMessage().startsWith("QUOTA_EXCEEDED")) return Stream.empty();
                 throw re;
@@ -415,7 +420,7 @@ public class Geocode {
             @Name(value = "quotaException", defaultValue = "false") boolean quotaException,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         try {
-            return getSupplier(config).reverseGeocode(latitude, longitude);
+            return getSupplier(config).reverseGeocode(latitude, longitude, urlAccessChecker);
         } catch (IllegalStateException re) {
             if (!quotaException && re.getMessage().startsWith("QUOTA_EXCEEDED")) return Stream.empty();
             throw re;
