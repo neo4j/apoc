@@ -113,8 +113,6 @@ public class ApocConfig extends LifecycleAdapter {
     private static ApocConfig theInstance;
     private GraphDatabaseService systemDb;
 
-    private List<IPAddressString> blockedIpRanges = List.of();
-
     private boolean expandCommands;
 
     private Duration commandEvaluationTimeout;
@@ -125,7 +123,6 @@ public class ApocConfig extends LifecycleAdapter {
             GlobalProcedures globalProceduresRegistry,
             DatabaseManagementService databaseManagementService) {
         this.neo4jConfig = neo4jConfig;
-        this.blockedIpRanges = neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist);
         this.commandEvaluationTimeout =
                 neo4jConfig.get(GraphDatabaseInternalSettings.config_command_evaluation_timeout);
         if (this.commandEvaluationTimeout == null) {
@@ -145,9 +142,6 @@ public class ApocConfig extends LifecycleAdapter {
     // use only for unit tests
     public ApocConfig(Config neo4jConfig) {
         this.neo4jConfig = neo4jConfig;
-        if (neo4jConfig != null) {
-            this.blockedIpRanges = neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist);
-        }
         this.log = NullLog.getInstance();
         this.databaseManagementService = null;
         theInstance = this;
