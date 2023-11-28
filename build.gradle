@@ -1,8 +1,8 @@
 plugins {
     id 'java-library'
-    id 'com.github.johnrengelman.shadow' version '7.1.0'  apply false
+    id 'com.github.johnrengelman.shadow' version '7.1.0' apply false
     id 'maven-publish'
-    id "com.github.hierynomus.license-report" version"0.16.1"
+    id "com.github.hierynomus.license-report" version "0.16.1"
     id "com.diffplug.spotless" version "6.22.0"
 }
 
@@ -28,6 +28,15 @@ repositories {
     /*maven {  // this contains the neo4j 4.0.0-beta jars
     url "https://neo4j.bintray.com/community/"
 }*/
+    if (System.getenv("CUSTOM_REPO_URL") ?: "" != "") {
+        maven {
+            url System.env.CUSTOM_REPO_URL
+            credentials {
+                username System.env.CUSTOM_REPO_USERNAME
+                password System.env.CUSTOM_REPO_TOKEN
+            }
+        }
+    }
     mavenCentral()
     maven {
         url "https://repo.gradle.org/gradle/libs-releases"
@@ -52,6 +61,15 @@ subprojects {
         /*maven {  // this contains the neo4j 4.0.0-beta jars
         url "https://neo4j.bintray.com/community/"
     }*/
+        if (System.getenv("CUSTOM_REPO_URL") ?: "" != "") {
+            maven {
+                url System.env.CUSTOM_REPO_URL
+                credentials {
+                    username System.env.CUSTOM_REPO_USERNAME
+                    password System.env.CUSTOM_REPO_TOKEN
+                }
+            }
+        }
         mavenCentral()
         maven {
             url "https://repo.gradle.org/gradle/libs-releases"
@@ -78,10 +96,10 @@ subprojects {
         //exclude '**/CypherProceduresClusterTest.class'//, '**/AtomicTest.class'
 
         // neo4jDockerImage system property is used in TestContainerUtil
-        systemProperties 'user.language' : 'en' ,
-                'user.country' : 'US',
-                'neo4jDockerImage' : project.hasProperty("neo4jDockerVersionOverride") ? 'neo4j:' + project.getProperty("neo4jDockerVersionOverride") + '-enterprise-debian' : 'neo4j:5.15.0-enterprise-debian',
-                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerVersionOverride") ? 'neo4j:' + project.getProperty("neo4jDockerVersionOverride") + '-debian': 'neo4j:5.15.0-debian',
+        systemProperties 'user.language': 'en',
+                'user.country': 'US',
+                'neo4jDockerImage': project.hasProperty("neo4jDockerVersionOverride") ? 'neo4j:' + project.getProperty("neo4jDockerVersionOverride") + '-enterprise-debian' : 'neo4j:5.15.0-enterprise-debian',
+                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerVersionOverride") ? 'neo4j:' + project.getProperty("neo4jDockerVersionOverride") + '-debian' : 'neo4j:5.15.0-debian',
                 'coreDir': 'core'
 
         maxHeapSize = "5G"
@@ -99,18 +117,18 @@ subprojects {
             }
         }
 
-        jvmArgs = [ "--add-opens", "java.base/java.lang=ALL-UNNAMED",
-                    "--add-opens", "java.base/java.nio=ALL-UNNAMED",
-                    "--add-opens", "java.base/java.io=ALL-UNNAMED",
-                    "--add-opens", "java.base/java.util=ALL-UNNAMED",
-                    "--add-opens", "java.base/java.util.concurrent=ALL-UNNAMED",
-                    "--add-opens", "java.base/sun.net.www.protocol.http=ALL-UNNAMED",
-                    "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
-                    "--add-opens", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-                    "--add-opens", "jdk.compiler/com.sun.tools.javac=ALL-UNNAMED",
-                    "--add-opens", "jdk.compiler/com.sun.source.doctree=ALL-UNNAMED",
-                    "--add-opens", "jdk.compiler/com.sun.source.tree=ALL-UNNAMED",
-                    "--add-opens", "jdk.compiler/com.sun.source.util=ALL-UNNAMED" ]
+        jvmArgs = ["--add-opens", "java.base/java.lang=ALL-UNNAMED",
+                   "--add-opens", "java.base/java.nio=ALL-UNNAMED",
+                   "--add-opens", "java.base/java.io=ALL-UNNAMED",
+                   "--add-opens", "java.base/java.util=ALL-UNNAMED",
+                   "--add-opens", "java.base/java.util.concurrent=ALL-UNNAMED",
+                   "--add-opens", "java.base/sun.net.www.protocol.http=ALL-UNNAMED",
+                   "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
+                   "--add-opens", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+                   "--add-opens", "jdk.compiler/com.sun.tools.javac=ALL-UNNAMED",
+                   "--add-opens", "jdk.compiler/com.sun.source.doctree=ALL-UNNAMED",
+                   "--add-opens", "jdk.compiler/com.sun.source.tree=ALL-UNNAMED",
+                   "--add-opens", "jdk.compiler/com.sun.source.util=ALL-UNNAMED"]
 
         filter {
             setFailOnNoMatchingTests(false)
@@ -140,7 +158,7 @@ apply from: "licenses-3rdparties.gradle"
 apply from: "licenses-source-header.gradle"
 
 ext {
-    publicDir =  "${project.rootDir}"
+    publicDir = "${project.rootDir}"
     neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.15.0"
     testContainersVersion = '1.19.1'
 }
