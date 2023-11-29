@@ -39,7 +39,6 @@ public class QueryUtilTest {
 
     @Test
     public void shouldReturnTrueForQueryWithParserDeprecation() {
-        assertTrue(
-                QueryUtil.isValidQuery("CREATE (n:My\u0085Label)"));
+        assertTrue(QueryUtil.isValidQuery("CREATE (n:My\u0085Label)"));
     }
 }
