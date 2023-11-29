@@ -32,7 +32,6 @@ import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_roo
 import static org.neo4j.internal.helpers.ProcessUtils.executeCommandWithOutput;
 
 import apoc.export.util.ExportConfig;
-import inet.ipaddr.IPAddressString;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
