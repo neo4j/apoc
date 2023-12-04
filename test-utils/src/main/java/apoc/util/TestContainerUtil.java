@@ -57,6 +57,8 @@ public class TestContainerUtil {
         EXTENDED
     }
 
+    public static final String APOC_TEST_DOCKER_BUNDLE = "testDockerBundle";
+
     // read neo4j version from build.gradle
     public static final String neo4jEnterpriseDockerImageVersion = System.getProperty("neo4jDockerImage");
     public static final String neo4jCommunityDockerImageVersion = System.getProperty("neo4jCommunityDockerImage");
@@ -129,24 +131,32 @@ public class TestContainerUtil {
             e.printStackTrace();
         }
 
-        for (ApocPackage apocPackage : apocPackages) {
-            if (apocPackage == ApocPackage.CORE) {
-                projectDir = coreDir;
-            } else {
-                projectDir = extendedDir;
+        boolean testDockerBundle = System.getProperty(APOC_TEST_DOCKER_BUNDLE).equals("true");
+
+        if (!testDockerBundle) {
+            for (ApocPackage apocPackage : apocPackages) {
+                if (apocPackage == ApocPackage.CORE) {
+                    projectDir = coreDir;
+                } else {
+                    projectDir = extendedDir;
+                }
+
+                executeGradleTasks(projectDir, "shadowJar");
+
+                copyFilesToPlugin(
+                        new File(projectDir, "build/libs"),
+                        new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")),
+                        pluginsFolder);
             }
+        }
 
-            executeGradleTasks(projectDir, "shadowJar");
-
-            copyFilesToPlugin(
-                    new File(projectDir, "build/libs"),
-                    new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")),
-                    pluginsFolder);
+        if (testDockerBundle && apocPackages.contains(ApocPackage.EXTENDED)) {
+            throw new IllegalArgumentException("You cannot run these tests with apoc extended bundled inside"
+                    + "the docker container because only apoc core comes bundled in those");
         }
 
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
         Neo4jContainerExtension neo4jContainer = new Neo4jContainerExtension(dockerImage)
-                .withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()))
                 .withAdminPassword(password)
                 .withEnv("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
                 .withEnv("apoc.export.file.enabled", "true")
@@ -185,6 +195,11 @@ public class TestContainerUtil {
             neo4jContainer.withLogging();
         }
 
+        if (testDockerBundle) {
+            neo4jContainer.withEnv("NEO4J_PLUGINS", "[\"apoc\"]");
+        } else {
+            neo4jContainer.withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()));
+        }
         return neo4jContainer.withWaitForNeo4jDatabaseReady(password, version);
     }
 
