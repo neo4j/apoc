@@ -135,7 +135,7 @@ public class TriggerHandlerNewProcedures {
         return tx.findNodes(label, dbNameKey, databaseName, SystemPropertyKeys.name.name(), name);
     }
 
-    private static void setLastUpdate(String databaseName, Transaction tx) {
+    public static void setLastUpdate(String databaseName, Transaction tx) {
         Node node = tx.findNode(SystemLabels.ApocTriggerMeta, SystemPropertyKeys.database.name(), databaseName);
         if (node == null) {
             node = tx.createNode(SystemLabels.ApocTriggerMeta);
