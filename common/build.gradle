@@ -33,10 +33,10 @@ dependencies {
     // We need this to avoid seeing SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder" on startup
     api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
 
-    // We need to force this dependency's verion due to a vulnerability https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/3048
+    // We need to force this dependency's version due to a vulnerability https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/3048
     api group: 'org.apache.commons', name: 'commons-lang3', {
         version {
-            strictly '3.13.0'
+            strictly '3.14.0'
         }
     }
     api group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
