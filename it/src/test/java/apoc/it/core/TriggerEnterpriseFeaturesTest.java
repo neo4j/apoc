@@ -21,7 +21,7 @@ package apoc.it.core;
 import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.SystemPropertyKeys.database;
-import static apoc.it.core.CreateTriggers.CreateTrigger;
+import static apoc.it.core.CreateAndDropTriggers.CreateTrigger;
 import static apoc.trigger.TriggerHandler.TRIGGER_REFRESH;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
@@ -350,10 +350,8 @@ public class TriggerEnterpriseFeaturesTest {
         try {
             final var nodesFuture1 = executor.submit(createNodes);
             final var nodesFuture2 = executor.submit(createNodes);
-            final var createTriggersFuture = executor.submit(new CreateTriggers(driver, db, iterations));
-            final var removeTriggersFuture = executor.submit(new DropRandomTriggers(driver, db, iterations));
+            final var createTriggersFuture = executor.submit(new CreateAndDropTriggers(driver, db, iterations));
             createTriggersFuture.get(5, TimeUnit.MINUTES);
-            removeTriggersFuture.get(30, TimeUnit.SECONDS);
             createNodes.stop();
             nodesFuture1.get(30, TimeUnit.SECONDS);
             nodesFuture2.get(30, TimeUnit.SECONDS);
@@ -435,22 +433,8 @@ class CreateNodes implements Runnable {
     }
 }
 
-record CreateTriggers(Driver driver, String db, int iterations) implements Runnable {
+record CreateAndDropTriggers(Driver driver, String db, int iterations) implements Runnable {
     public static final String CreateTrigger = "call apoc.trigger.install($db, $name, $trigger,{})";
-
-    @Override
-    public void run() {
-        try (final var session = driver.session(forDatabase(SYSTEM_DATABASE_NAME))) {
-            for (int i = 0; i < iterations; ++i) {
-                final var name = "temp-trigger-" + i;
-                session.run(CreateTrigger, Map.of("db", db, "name", name, "trigger", "RETURN 1"))
-                        .consume();
-            }
-        }
-    }
-}
-
-record DropRandomTriggers(Driver driver, String db, int iterations) implements Runnable {
     static final String DropTrigger = "call apoc.trigger.drop($db, $name)";
 
     @Override
@@ -458,9 +442,11 @@ record DropRandomTriggers(Driver driver, String db, int iterations) implements R
         final var rand = new Random();
         try (final var session = driver.session(forDatabase(SYSTEM_DATABASE_NAME))) {
             for (int i = 0; i < iterations; ++i) {
-                final var name = "temp-trigger-" + rand.nextInt(iterations);
-                session.run(DropTrigger, Map.<String, Object>of("db", db, "name", name))
+                final var name = "temp-trigger-" + i;
+                session.run(CreateTrigger, Map.of("db", db, "name", name, "trigger", "RETURN 1"))
                         .consume();
+                final var deleteName = "temp-trigger-" + rand.nextInt(iterations);
+                session.run(DropTrigger, Map.of("db", db, "name", deleteName)).consume();
             }
         }
     }

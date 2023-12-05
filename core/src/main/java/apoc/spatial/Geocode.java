@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.configuration2.Configuration;
-
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.procedure.*;
 
@@ -147,7 +146,8 @@ public class Geocode {
         }
 
         @Override
-        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
+        public Stream<GeoCodeResult> reverseGeocode(
+                Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
             if (latitude == null || longitude == null) {
                 return Stream.empty();
             }
@@ -230,14 +230,16 @@ public class Geocode {
         }
 
         @Override
-        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
+        public Stream<GeoCodeResult> reverseGeocode(
+                Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
             if (latitude == null || longitude == null) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
 
             Object value = JsonUtil.loadJson(
-                            OSM_URL_REVERSE_GEOCODE + String.format("lat=%s&lon=%s", latitude, longitude), urlAccessChecker)
+                            OSM_URL_REVERSE_GEOCODE + String.format("lat=%s&lon=%s", latitude, longitude),
+                            urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof Map) {
@@ -286,7 +288,8 @@ public class Geocode {
             }
             throttler.waitForThrottle();
             Object value = JsonUtil.loadJson(
-                            String.format(GEOCODE_URL, credentials(this.config)) + Util.encodeUrlComponent(address), urlAccessChecker)
+                            String.format(GEOCODE_URL, credentials(this.config)) + Util.encodeUrlComponent(address),
+                            urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof Map) {
@@ -311,13 +314,16 @@ public class Geocode {
         }
 
         @Override
-        public Stream<GeoCodeResult> reverseGeocode(Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
+        public Stream<GeoCodeResult> reverseGeocode(
+                Double latitude, Double longitude, URLAccessChecker urlAccessChecker) {
             if (latitude == null || longitude == null) {
                 return Stream.empty();
             }
             throttler.waitForThrottle();
-            Object value = JsonUtil.loadJson(String.format(REVERSE_GEOCODE_URL, credentials(this.config))
-                            + Util.encodeUrlComponent(latitude + "," + longitude), urlAccessChecker)
+            Object value = JsonUtil.loadJson(
+                            String.format(REVERSE_GEOCODE_URL, credentials(this.config))
+                                    + Util.encodeUrlComponent(latitude + "," + longitude),
+                            urlAccessChecker)
                     .findFirst()
                     .orElse(null);
             if (value instanceof Map) {
@@ -402,7 +408,8 @@ public class Geocode {
                 return getSupplier(config)
                         .geocode(
                                 address,
-                                maxResults == 0 ? MAX_RESULTS : Math.min(Math.max(maxResults, 1), MAX_RESULTS), urlAccessChecker);
+                                maxResults == 0 ? MAX_RESULTS : Math.min(Math.max(maxResults, 1), MAX_RESULTS),
+                                urlAccessChecker);
             } catch (IllegalStateException re) {
                 if (!quotaException && re.getMessage().startsWith("QUOTA_EXCEEDED")) return Stream.empty();
                 throw re;

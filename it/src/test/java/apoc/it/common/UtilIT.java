@@ -38,19 +38,18 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
+import org.mockito.stubbing.Answer;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
-import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.graphdb.security.URLAccessChecker;
-
-import org.mockito.stubbing.Answer;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.testcontainers.containers.GenericContainer;
 
 public class UtilIT {
     private GenericContainer httpServer;
 
     public UtilIT() throws Exception {
-        googleUrl = new URL( "https://www.google.com" );
+        googleUrl = new URL("https://www.google.com");
     }
 
     private GenericContainer setUpServer(String redirectURL) {
@@ -81,26 +80,28 @@ public class UtilIT {
 
         // given
         URL url = getServerUrl(httpServer);
-        when( mockChecker.checkURL( url ) ).thenReturn( url );
-        when( mockChecker.checkURL( googleUrl ) ).thenReturn( googleUrl );
+        when(mockChecker.checkURL(url)).thenReturn(url);
+        when(mockChecker.checkURL(googleUrl)).thenReturn(googleUrl);
 
         // when
-        String page = IOUtils.toString( Util.openInputStream(url.toString(), null, null, null, mockChecker ), StandardCharsets.UTF_8);
+        String page = IOUtils.toString(
+                Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
 
         // then
         assertTrue(page.contains("<title>Google</title>"));
     }
 
     @Test
-    public void redirectWithBlockedIPsWithUrlLocation() throws Exception{
+    public void redirectWithBlockedIPsWithUrlLocation() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
 
         httpServer = setUpServer("http://127.168.0.1");
         URL url = getServerUrl(httpServer);
-        when( mockChecker.checkURL( url ) ).thenReturn( url );
-        when( mockChecker.checkURL( new URL("http://127.168.0.1") ) ).thenThrow( new URLAccessValidationError( "no" ) );
+        when(mockChecker.checkURL(url)).thenReturn(url);
+        when(mockChecker.checkURL(new URL("http://127.168.0.1"))).thenThrow(new URLAccessValidationError("no"));
 
-        IOException e = Assert.assertThrows(IOException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
+        IOException e = Assert.assertThrows(
+                IOException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
         TestCase.assertTrue(e.getMessage().contains("no"));
     }
 
@@ -109,11 +110,12 @@ public class UtilIT {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("https://www.google.com");
         URL url = getServerUrl(httpServer);
-        when( mockChecker.checkURL( url ) ).thenReturn( url );
-        when( mockChecker.checkURL( googleUrl ) ).thenReturn( googleUrl );
+        when(mockChecker.checkURL(url)).thenReturn(url);
+        when(mockChecker.checkURL(googleUrl)).thenReturn(googleUrl);
 
         // when
-        String page = IOUtils.toString( Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8 );
+        String page = IOUtils.toString(
+                Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
 
         // then
         assertTrue(page.contains("<title>Google</title>"));
@@ -136,7 +138,8 @@ public class UtilIT {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("https://127.0.0.0");
         URL url = getServerUrl(httpServer);
-        when( mockChecker.checkURL( any() ) ).thenAnswer( (Answer<URL>) invocation -> (URL) invocation.getArguments()[0] );
+        when(mockChecker.checkURL(any()))
+                .thenAnswer((Answer<URL>) invocation -> (URL) invocation.getArguments()[0]);
 
         ArrayList<GenericContainer> servers = new ArrayList<>();
         for (int i = 1; i <= 10; i++) {
@@ -146,7 +149,8 @@ public class UtilIT {
         }
 
         URL finalUrl = url;
-        IOException e = Assert.assertThrows(IOException.class, () -> Util.openInputStream(finalUrl.toString(), null, null, null, mockChecker));
+        IOException e = Assert.assertThrows(
+                IOException.class, () -> Util.openInputStream(finalUrl.toString(), null, null, null, mockChecker));
 
         TestCase.assertTrue(e.getMessage().contains("Redirect limit exceeded"));
 
@@ -161,19 +165,19 @@ public class UtilIT {
         httpServer = setUpServer("file:/etc/passwd");
         // given
         URL url = getServerUrl(httpServer);
-        when( mockChecker.checkURL( url ) ).thenReturn( url );
+        when(mockChecker.checkURL(url)).thenReturn(url);
         Config neo4jConfig = mock(Config.class);
         when(neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist)).thenReturn(Collections.emptyList());
 
         // when
-        RuntimeException e =
-                Assert.assertThrows(RuntimeException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
+        RuntimeException e = Assert.assertThrows(
+                RuntimeException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
 
         assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
     }
 
-    private URL getServerUrl(GenericContainer httpServer) throws MalformedURLException
-    {
-        return new URL(String.format("http://%s:%s", httpServer.getContainerIpAddress(), httpServer.getMappedPort(8000)));
+    private URL getServerUrl(GenericContainer httpServer) throws MalformedURLException {
+        return new URL(
+                String.format("http://%s:%s", httpServer.getContainerIpAddress(), httpServer.getMappedPort(8000)));
     }
 }
