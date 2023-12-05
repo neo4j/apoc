@@ -127,6 +127,10 @@ public class ExportConfig extends CompressionConfig {
     }
 
     public ExportConfig(Map<String, Object> config) {
+        this(config, ExportFormat.CYPHER_SHELL);
+    }
+
+    public ExportConfig(Map<String, Object> config, ExportFormat exportFormat) {
         super(config);
         config = config != null ? config : Collections.emptyMap();
         this.saveIndexNames = toBoolean(config.getOrDefault("saveIndexNames", false));
@@ -138,7 +142,7 @@ public class ExportConfig extends CompressionConfig {
         this.nodesOfRelationships = toBoolean(config.get("nodesOfRelationships"));
         this.bulkImport = toBoolean(config.get("bulkImport"));
         this.separateHeader = toBoolean(config.get("separateHeader"));
-        this.format = ExportFormat.fromString((String) config.getOrDefault("format", "cypher-shell"));
+        this.format = ExportFormat.fromString((String) config.getOrDefault("format", exportFormat.getFormat()));
         this.cypherFormat = CypherFormat.fromString((String) config.getOrDefault("cypherFormat", "create"));
         this.config = config;
         this.streamStatements = toBoolean(config.get("streamStatements")) || toBoolean(config.get("stream"));
@@ -169,7 +173,9 @@ public class ExportConfig extends CompressionConfig {
                     "`useOptimizations: 'UNWIND_BATCH_PARAMS'` can be used only in combination with `format: 'CYPHER_SHELL' but got [format:`"
                             + this.format + "]");
         }
-        if (!OptimizationType.NONE.equals(this.optimizationType) && this.unwindBatchSize > this.batchSize) {
+        // CSV doesn't use optimization type
+        if (!OptimizationType.NONE.equals(this.optimizationType) && this.unwindBatchSize > this.batchSize
+            && !ExportFormat.CSV.equals(this.format)) {
             throw new RuntimeException("`unwindBatchSize` must be <= `batchSize`, but got [unwindBatchSize:"
                     + unwindBatchSize + ", batchSize:" + batchSize + "]");
         }
