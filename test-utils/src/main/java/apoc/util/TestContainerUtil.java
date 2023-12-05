@@ -151,7 +151,7 @@ public class TestContainerUtil {
         }
 
         if (testDockerBundle && apocPackages.contains(ApocPackage.EXTENDED)) {
-            throw new IllegalArgumentException("You cannot run these tests with apoc extended bundled inside"
+            throw new IllegalArgumentException("You cannot run these tests with apoc extended bundled inside "
                     + "the docker container because only apoc core comes bundled in those");
         }
 
