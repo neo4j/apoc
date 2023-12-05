@@ -96,11 +96,10 @@ public class TriggerNewProcedures {
         checkTargetDatabase(databaseName);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
 
-        return withTransaction(tx -> {
-            TriggerInfo triggerInfo =
-                    TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params, tx);
-            return Stream.of(triggerInfo);
-        });
+        return withUpdatingTransaction(
+                databaseName,
+                tx -> Stream.of(
+                        TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params, tx)));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -111,10 +110,8 @@ public class TriggerNewProcedures {
     public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name") String name) {
         checkInSystemWriter();
 
-        return withTransaction(tx -> {
-            final TriggerInfo removed = TriggerHandlerNewProcedures.drop(databaseName, name, tx);
-            return Stream.ofNullable(removed);
-        });
+        return withUpdatingTransaction(
+                databaseName, tx -> Stream.ofNullable(TriggerHandlerNewProcedures.drop(databaseName, name, tx)));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -125,8 +122,9 @@ public class TriggerNewProcedures {
     public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
         checkInSystemWriter();
 
-        return withTransaction(tx -> TriggerHandlerNewProcedures.dropAll(databaseName, tx).stream()
-                .sorted(Comparator.comparing(i -> i.name)));
+        return withUpdatingTransaction(
+                databaseName, tx -> TriggerHandlerNewProcedures.dropAll(databaseName, tx).stream()
+                        .sorted(Comparator.comparing(i -> i.name)));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -137,7 +135,7 @@ public class TriggerNewProcedures {
     public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name") String name) {
         checkInSystemWriter();
 
-        return withTransaction(tx -> {
+        return withUpdatingTransaction(databaseName, tx -> {
             final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, true, tx);
             return Stream.ofNullable(triggerInfo);
         });
@@ -151,7 +149,7 @@ public class TriggerNewProcedures {
     public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name") String name) {
         checkInSystemWriter();
 
-        return withTransaction(tx -> {
+        return withUpdatingTransaction(databaseName, tx -> {
             final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false, tx);
             return Stream.ofNullable(triggerInfo);
         });
@@ -168,11 +166,18 @@ public class TriggerNewProcedures {
         return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx);
     }
 
-    public <T> T withTransaction(Function<Transaction, T> action) {
+    public <T> T withUpdatingTransaction(String databaseName, Function<Transaction, T> action) {
+        T result = null;
         try (Transaction tx = db.beginTx()) {
-            T result = action.apply(tx);
+            result = action.apply(tx);
             tx.commit();
-            return result;
         }
+
+        // Last update time needs to be after the installation commit happened to not risk missing updates
+        try (final var tx = db.beginTx()) {
+            TriggerHandlerNewProcedures.setLastUpdate(databaseName, tx);
+            tx.commit();
+        }
+        return result;
     }
 }
