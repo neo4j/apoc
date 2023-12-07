@@ -70,7 +70,6 @@ public class StartupTest {
                         .get("count")
                         .asInt();
                 String startupLog = neo4jContainer.getLogs();
-
                 assertTrue(procedureCount > 0);
                 assertTrue(functionCount > 0);
                 assertTrue(coreCount > 0);
