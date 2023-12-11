@@ -103,7 +103,11 @@ public class ExportCSV {
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
         String source = String.format("graph: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportCsv(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config, ExportFormat.CSV));
+        return exportCsv(
+                fileName,
+                source,
+                new NodesAndRelsSubGraph(tx, nodes, rels),
+                new ExportConfig(config, ExportFormat.CSV));
     }
 
     @NotThreadSafe
