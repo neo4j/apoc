@@ -123,6 +123,8 @@ public class CypherInitializer implements AvailabilityListener {
                                 userLog.error("error upon initialization, invalid query: " + query);
                             }
                         }
+                    } catch (Exception e) {
+                        userLog.error("error upon initialization", e);
                     } finally {
                         finished = true;
                     }
