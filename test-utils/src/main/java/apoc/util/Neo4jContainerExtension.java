@@ -22,6 +22,8 @@ import static apoc.util.TestContainerUtil.Neo4jVersion;
 import static apoc.util.TestContainerUtil.Neo4jVersion.ENTERPRISE;
 
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Scanner;
 import org.neo4j.driver.AuthToken;
@@ -51,13 +53,16 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
     private boolean withDriver = true;
 
     private boolean isRunning = false;
+    private final Path logsDir;
 
     public Neo4jContainerExtension() {
         super();
+        this.logsDir = null;
     }
 
-    public Neo4jContainerExtension(String dockerImage) {
+    public Neo4jContainerExtension(String dockerImage, Path logsDir) {
         setDockerImageName(dockerImage);
+        this.logsDir = logsDir;
     }
 
     public Neo4jContainerExtension withInitScript(String filePath) {
@@ -83,17 +88,32 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
             }
             isRunning = true;
         } catch (Exception startException) {
-            try {
-                System.out.println(this.execInContainer("cat", "logs/debug.log").toString());
-                System.out.println(this.execInContainer("cat", "logs/http.log").toString());
-                System.out.println(
-                        this.execInContainer("cat", "logs/security.log").toString());
-            } catch (Exception ex) {
-                // we addSuppressed the exception produced by execInContainer, but we finally throw the original
-                // `startException`
-                startException.addSuppressed(new RuntimeException("Exception during fallback execInContainer", ex));
-            }
+            dumpLogs();
             throw startException;
+        }
+    }
+
+    public void dumpLogs() {
+        try {
+            if (logsDir != null && Files.exists(logsDir)) {
+                System.err.println("--- Dumping logs ---");
+                System.err.println();
+                for (final var logFile : Files.list(logsDir).toList()) {
+                    System.err.println(logFile.toString() + ":");
+                    System.err.println(Files.readString(logFile));
+                    System.err.println();
+                    System.err.println();
+                }
+                System.err.println("--- No more logs ---");
+            } else if (isRunning) {
+                System.err.println(execInContainer("cat", "logs/debug.log").toString());
+                System.err.println(execInContainer("cat", "logs/http.log").toString());
+                System.err.println(execInContainer("cat", "logs/security.log").toString());
+            } else {
+                System.err.println("Failed to find logs");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to dump logs: " + e.getMessage());
         }
     }
 

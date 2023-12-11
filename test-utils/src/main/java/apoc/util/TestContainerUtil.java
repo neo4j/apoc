@@ -29,6 +29,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
@@ -125,6 +127,13 @@ public class TestContainerUtil {
         pluginsFolder.mkdirs();
         String canonicalPath = null;
 
+        final Path logsDir;
+        try {
+            logsDir = Files.createTempDirectory("neo4j-logs");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         try {
             canonicalPath = importFolder.getCanonicalPath();
         } catch (IOException e) {
@@ -156,7 +165,7 @@ public class TestContainerUtil {
         }
 
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
-        Neo4jContainerExtension neo4jContainer = new Neo4jContainerExtension(dockerImage)
+        Neo4jContainerExtension neo4jContainer = new Neo4jContainerExtension(dockerImage, logsDir)
                 .withAdminPassword(password)
                 .withEnv("NEO4J_ACCEPT_LICENSE_AGREEMENT", "yes")
                 .withEnv("apoc.export.file.enabled", "true")
@@ -168,6 +177,7 @@ public class TestContainerUtil {
                 .withNeo4jConfig("dbms.logs.debug.level", "DEBUG")
                 .withNeo4jConfig("dbms.routing.driver.logging.level", "DEBUG")
                 .withNeo4jConfig("internal.dbms.type_constraints", "true")
+                .withFileSystemBind(logsDir.toString(), "/logs")
                 .withFileSystemBind(
                         canonicalPath, "/var/lib/neo4j/import") // map the "target/import" dir as the Neo4j's import dir
                 .withCreateContainerCmdModifier(cmd -> cmd.withMemory(2024 * 1024 * 1024L)) // 2gb
