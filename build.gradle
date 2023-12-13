@@ -96,12 +96,20 @@ subprojects {
         //exclude '**/CypherProceduresClusterTest.class'//, '**/AtomicTest.class'
 
         // neo4jDockerImage system property is used in TestContainerUtil
-        systemProperties 'user.language': 'en',
-                'user.country': 'US',
-                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.16.0-enterprise-debian',
-                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.16.0-debian',
-                'coreDir': 'core',
-                'testDockerBundle': project.hasProperty("testDockerBundle") ? true : false
+        systemProperty 'user.language', 'en'
+        systemProperty 'user.country', 'US'
+        systemProperty 'neo4jDockerImage', project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.16.0-enterprise-debian'
+        systemProperty 'neo4jCommunityDockerImage', project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.16.0-debian'
+        systemProperty 'coreDir', 'core'
+        systemProperty 'testDockerBundle', project.hasProperty("testDockerBundle")
+
+//        systemProperties 'user.language': 'en',
+//                'user.country': 'US',
+//                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.16.0-enterprise-debian',
+//                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.16.0-debian',
+//                'coreDir': 'core',
+//                'testDockerBundle': project.hasProperty("testDockerBundle"),
+//                "maven.repo.local": System.getProperty("maven.repo.local")
 
         maxHeapSize = "5G"
         forkEvery = 50
