@@ -29,6 +29,8 @@ import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testCallEmpty;
 import static apoc.util.TestContainerUtil.testResult;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -43,6 +45,7 @@ import apoc.SystemLabels;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -205,6 +208,19 @@ public class TriggerEnterpriseFeaturesTest {
 
     @Test
     public void testDeleteTriggerAfterDatabaseDeletionCreatedViaCypherInit() {
+        await("initdb exists")
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofSeconds(1))
+                .pollInSameThread()
+                .untilAsserted(() -> {
+                    try (Session session = session(SYSTEM_DATABASE_NAME)) {
+                        final var result = session.run("show databases yield name").stream()
+                                .map(row -> row.get(0).asString())
+                                .toList();
+                        assertThat(result).contains(INIT_DB);
+                    }
+                });
+
         try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             // the database `initDb` is created via `apoc.initializer.*`
             testDeleteTriggerAfterDropDb(INIT_DB, sysSession);
