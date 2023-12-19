@@ -5,18 +5,20 @@ import java.security.MessageDigest
 
 // Gets all Neo4j 5.0.0+ releases from Maven, ordered from oldest to most recent.
 static def neo4jReleases() {
-    def url = new URL("https://repo1.maven.org/maven2/org/neo4j/neo4j-kernel/")
-    def htmlString = url.getText()
-            .replace("<!DOCTYPE html>", "")
-            .replace("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">", "")
+    def url = new URL("https://repo1.maven.org/maven2/org/neo4j/neo4j-kernel/maven-metadata.xml")
+    def xmlString = url.getText()
 
-    def rootNode = new XmlParser().parseText(htmlString)
+    def rootNode = new XmlParser().parseText(xmlString)
     def releases = initialiseNeo4jReleases()
 
-    for (a in rootNode.body.main.pre.a) {
-        def href = a.attributes()["href"]
+    def versions = rootNode.versioning.versions.version
 
-        if (!href.contains("xml")) releases.add(href[0..-2])
+    for (a in versions) {
+        def version = a.value()
+        def size = version.size()
+        if (size > 0) {
+            releases.add(version.get(0))
+        }
     }
 
     return releases
