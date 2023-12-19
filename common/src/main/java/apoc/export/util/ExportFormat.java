@@ -59,6 +59,7 @@ public enum ExportFormat {
     public String getFormat() {
         return format;
     }
+
     public static final ExportFormat fromString(String format) {
         if (format != null && !format.isEmpty()) {
             for (ExportFormat exportFormat : ExportFormat.values()) {

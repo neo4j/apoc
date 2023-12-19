@@ -485,16 +485,15 @@ public class ExportCsvTest {
 
     @Test
     public void testExportAllCsvStreaming() {
-        String statement =
-                "CALL apoc.export.csv.all(null,{stream:true,batchSize:2})";
+        String statement = "CALL apoc.export.csv.all(null,{stream:true,batchSize:2})";
         assertExportStreaming(statement, NONE);
     }
 
     @Test
     public void testExportAllCsvStreamingCompressed() {
         final CompressionAlgo algo = GZIP;
-        String statement = "CALL apoc.export.csv.all(null, {compression: '" + algo.name()
-                + "',stream:true,batchSize:2})";
+        String statement =
+                "CALL apoc.export.csv.all(null, {compression: '" + algo.name() + "',stream:true,batchSize:2})";
         assertExportStreaming(statement, algo);
     }
 
