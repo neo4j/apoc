@@ -20,24 +20,31 @@ package apoc.spatial;
 
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
-import static org.junit.Assert.*;
-import static org.neo4j.test.assertion.Assert.assertEventually;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import inet.ipaddr.IPAddressString;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+import org.assertj.core.description.LazyTextDescription;
 import org.junit.*;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
+import org.neo4j.internal.helpers.Exceptions;
 import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -295,8 +302,11 @@ public class GeocodeTest {
 
     private void waitForServerResponseOK(
             String query, Map<String, Object> params, AtomicLong time, Consumer<Result> resultObjectFunction) {
-        assertEventually(
-                () -> {
+        await("waitForServerResponseOK")
+                .atMost(Duration.ofSeconds(40))
+                .pollInterval(Duration.ofMillis(250))
+                .pollInSameThread()
+                .untilAsserted(() -> {
                     try {
                         long start = System.currentTimeMillis();
                         db.executeTransactionally(query, params, res -> {
@@ -305,17 +315,11 @@ public class GeocodeTest {
                         });
 
                         time.addAndGet(System.currentTimeMillis() - start);
-                        return true;
                     } catch (Exception e) {
-                        String msg = e.getMessage();
-                        if (msg.contains("Server returned HTTP response code") || msg.contains("connect timed out")) {
-                            return false;
-                        }
-                        throw e;
+                        assertThat(e.getMessage())
+                                .describedAs(new LazyTextDescription(() -> Exceptions.stringify(e)))
+                                .containsAnyOf("Server returned HTTP response code", "connect timed out");
                     }
-                },
-                (value) -> value,
-                20L,
-                TimeUnit.SECONDS);
+                });
     }
 }
