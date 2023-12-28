@@ -20,7 +20,6 @@ package apoc.spatial;
 
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -39,12 +38,10 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import org.assertj.core.description.LazyTextDescription;
 import org.junit.*;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
-import org.neo4j.internal.helpers.Exceptions;
 import org.neo4j.internal.helpers.collection.Iterators;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
@@ -303,23 +300,17 @@ public class GeocodeTest {
     private void waitForServerResponseOK(
             String query, Map<String, Object> params, AtomicLong time, Consumer<Result> resultObjectFunction) {
         await("waitForServerResponseOK")
-                .atMost(Duration.ofSeconds(40))
+                .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofMillis(250))
                 .pollInSameThread()
                 .untilAsserted(() -> {
-                    try {
-                        long start = System.currentTimeMillis();
-                        db.executeTransactionally(query, params, res -> {
-                            resultObjectFunction.accept(res);
-                            return null;
-                        });
+                    long start = System.currentTimeMillis();
+                    db.executeTransactionally(query, params, res -> {
+                        resultObjectFunction.accept(res);
+                        return null;
+                    });
 
-                        time.addAndGet(System.currentTimeMillis() - start);
-                    } catch (Exception e) {
-                        assertThat(e.getMessage())
-                                .describedAs(new LazyTextDescription(() -> Exceptions.stringify(e)))
-                                .containsAnyOf("Server returned HTTP response code", "connect timed out");
-                    }
+                    time.addAndGet(System.currentTimeMillis() - start);
                 });
     }
 }
