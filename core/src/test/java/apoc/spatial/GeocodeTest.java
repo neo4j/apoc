@@ -20,17 +20,21 @@ package apoc.spatial;
 
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
-import static org.junit.Assert.*;
-import static org.neo4j.test.assertion.Assert.assertEventually;
+import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import inet.ipaddr.IPAddressString;
 import java.io.InputStream;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -295,27 +299,18 @@ public class GeocodeTest {
 
     private void waitForServerResponseOK(
             String query, Map<String, Object> params, AtomicLong time, Consumer<Result> resultObjectFunction) {
-        assertEventually(
-                () -> {
-                    try {
-                        long start = System.currentTimeMillis();
-                        db.executeTransactionally(query, params, res -> {
-                            resultObjectFunction.accept(res);
-                            return null;
-                        });
+        await("waitForServerResponseOK")
+                .atMost(Duration.ofSeconds(30))
+                .pollInterval(Duration.ofMillis(250))
+                .pollInSameThread()
+                .untilAsserted(() -> {
+                    long start = System.currentTimeMillis();
+                    db.executeTransactionally(query, params, res -> {
+                        resultObjectFunction.accept(res);
+                        return null;
+                    });
 
-                        time.addAndGet(System.currentTimeMillis() - start);
-                        return true;
-                    } catch (Exception e) {
-                        String msg = e.getMessage();
-                        if (msg.contains("Server returned HTTP response code") || msg.contains("connect timed out")) {
-                            return false;
-                        }
-                        throw e;
-                    }
-                },
-                (value) -> value,
-                20L,
-                TimeUnit.SECONDS);
+                    time.addAndGet(System.currentTimeMillis() - start);
+                });
     }
 }
