@@ -281,7 +281,6 @@ BSD-2-Clause
   zstd-jni-1.5.5-10.jar
 
 BSD-3-Clause
-  asm-9.3.jar
   asm-9.6.jar
   asm-analysis-9.6.jar
   asm-commons-5.0.3.jar
