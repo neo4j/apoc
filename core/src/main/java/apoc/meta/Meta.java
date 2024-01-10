@@ -392,8 +392,8 @@ public class Meta {
                 labelCount,
                 relTypeCount,
                 tokenRead.propertyKeyCount(),
-                read.countsForNodeWithoutTxState(ANY_LABEL),
-                read.countsForRelationshipWithoutTxState(ANY_LABEL, ANY_RELATIONSHIP_TYPE, ANY_LABEL),
+                read.countsForNode(ANY_LABEL),
+                read.countsForRelationship(ANY_LABEL, ANY_RELATIONSHIP_TYPE, ANY_LABEL),
                 labelStats,
                 relStats,
                 relStatsCount);
@@ -682,7 +682,7 @@ public class Meta {
                 Iterables.stream(tx.getAllLabelsInUse()).map(Label::name).collect(Collectors.toList());
         TokenRead tokenRead = kernelTx.tokenRead();
         return labels.stream().collect(Collectors.toMap(e -> e, e -> kernelTx.dataRead()
-                .countsForNodeWithoutTxState(tokenRead.nodeLabel(e))));
+                .countsForNode(tokenRead.nodeLabel(e))));
     }
 
     public static long getSampleForLabelCount(long labelCount, long sample) {
