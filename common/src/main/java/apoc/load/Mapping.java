@@ -21,6 +21,7 @@ package apoc.load;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.Util.parseCharFromConfig;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 import static org.neo4j.configuration.GraphDatabaseSettings.db_temporal_timezone;
 
 import apoc.meta.Types;
@@ -55,7 +56,7 @@ public class Mapping {
     public Mapping(String name, Map<String, Object> mapping, char arraySep, boolean ignore) {
         this.name = mapping.getOrDefault("name", name).toString();
         this.array = (Boolean) mapping.getOrDefault("array", false);
-        this.optionalData = (Map<String, Object>) mapping.get("optionalData");
+        this.optionalData = (Map<String, Object>) mapping.getOrDefault("optionalData", emptyMap());
 
         this.ignore = (Boolean) mapping.getOrDefault("ignore", ignore);
         this.nullValues = (Collection<String>) mapping.getOrDefault("nullValues", emptyList());
