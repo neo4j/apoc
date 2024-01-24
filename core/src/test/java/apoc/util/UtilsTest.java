@@ -44,6 +44,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
@@ -341,8 +342,10 @@ public class UtilsTest {
         // Create node with random property values
         try (final var tx = db.beginTx()) {
             final var node = tx.createNode(Label.label("HashFunctionsAreStable"));
+            final var rel = node.createRelationshipTo(node, RelationshipType.withName("R"));
             for (int i = randStorables.size() - 1; i >= 0; --i) {
                 node.setProperty("p" + i, randStorables.get(i));
+                rel.setProperty("p" + i, randStorables.get(i));
             }
             tx.commit();
         }
@@ -395,6 +398,15 @@ public class UtilsTest {
                 """
                             .formatted(hashFunc, listCypher, hashFunc);
             assertStableHash(seed, randStorables, tx, listOfListsQuery, Map.of("value", randStorables));
+
+            final var nodesHashQuery =
+                """
+                match (a:HashFunctionsAreStable)-[r]->(b:HashFunctionsAreStable)
+                return
+                  apoc.util.%s([a, b, r, [a, b, r]]) as hash1,
+                  apoc.util.%s([a, b, r, [a, b, r]]) as hash2
+                """.formatted(hashFunc, hashFunc);
+            assertStableHash(seed, "nodes and rels", tx, nodesHashQuery, Map.of());
         } finally {
             db.executeTransactionally("cypher runtime=slotted match (n) detach delete n");
         }
