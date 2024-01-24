@@ -50,8 +50,8 @@ dependencies {
         exclude group: 'io.netty', module: 'netty-buffer'
     }
 
-    implementation group: 'org.apache.arrow', name: 'arrow-vector', version: '13.0.0', arrowExclusions
-    implementation group: 'org.apache.arrow', name: 'arrow-memory-netty', version: '13.0.0', arrowExclusions
+    implementation group: 'org.apache.arrow', name: 'arrow-vector', version: '15.0.0', arrowExclusions
+    implementation group: 'org.apache.arrow', name: 'arrow-memory-netty', version: '15.0.0', arrowExclusions
 
     // These will be dependencies not packaged with the .jar
     // They need to be provided either through the database or in an extra .jar
