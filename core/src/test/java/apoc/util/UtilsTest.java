@@ -408,8 +408,7 @@ public class UtilsTest {
                 """
                 match (a:HashFunctionsAreStable)-[r]->(b:HashFunctionsAreStable)
                 return
-                  apoc.util.%s([a, b, r, [a, b, r]]) as hash1,
-                  apoc.util.%s([a, b, r, [a, b, r]]) as hash2
+                  apoc.util.%s([a, b, r, [a, b, r]]) as hash1
                 """.formatted(hashFunc, hashFunc);
             assertStableHash(seed, "nodes and rels", tx, nodesHashQuery, Map.of());
         } finally {
