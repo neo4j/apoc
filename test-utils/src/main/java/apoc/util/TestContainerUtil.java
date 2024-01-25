@@ -277,13 +277,12 @@ public class TestContainerUtil {
             String call,
             Map<String, Object> params,
             Consumer<Iterator<Map<String, Object>>> resultConsumer) {
-        session.writeTransaction(tx -> {
+        session.executeWrite(tx -> {
             Map<String, Object> p = (params == null) ? Collections.<String, Object>emptyMap() : params;
             resultConsumer.accept(tx.run(call, p).list().stream()
                     .map(Record::asMap)
                     .collect(Collectors.toList())
                     .iterator());
-            tx.commit();
             return null;
         });
     }
@@ -314,13 +313,12 @@ public class TestContainerUtil {
             String call,
             Map<String, Object> params,
             Consumer<Iterator<Map<String, Object>>> resultConsumer) {
-        session.readTransaction(tx -> {
+        session.executeRead(tx -> {
             Map<String, Object> p = (params == null) ? Collections.<String, Object>emptyMap() : params;
             resultConsumer.accept(tx.run(call, p).list().stream()
                     .map(Record::asMap)
                     .collect(Collectors.toList())
                     .iterator());
-            tx.commit();
             return null;
         });
     }

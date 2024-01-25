@@ -64,8 +64,8 @@ public class ExportCsvIT {
                 + "This article is distributed by The American Society for Cell Biology under license from the author(s). Two months after publication it is available to the public under an Attribution-Noncommercial-Share Alike 3.0 Unported Creative Commons License.\n"
                 + "\n";
         String pk = "5921569";
-        session.writeTransaction(tx ->
-                tx.run("CREATE (n:Document{pk:$pk, copyright: $copyright})", map("copyright", copyright, "pk", pk)));
+        session.executeWrite(tx ->
+                tx.run("CREATE (n:Document{pk:$pk, copyright: $copyright})", map("copyright", copyright, "pk", pk)).consume());
         String query = "MATCH (n:Document{pk:'5921569'}) return n.pk as pk, n.copyright as copyright";
         testCall(
                 session,
@@ -77,6 +77,6 @@ public class ExportCsvIT {
                     assertArrayEquals(new String[] {"pk", "copyright"}, csv.get(0));
                     assertArrayEquals(new String[] {"5921569", copyright}, csv.get(1));
                 });
-        session.writeTransaction(tx -> tx.run("MATCH (d:Document) DETACH DELETE d"));
+        session.executeWrite(tx -> tx.run("MATCH (d:Document) DETACH DELETE d").consume());
     }
 }
