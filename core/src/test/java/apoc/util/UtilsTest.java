@@ -326,6 +326,11 @@ public class UtilsTest {
     }
 
     @Test
+    public void sha512IsStableOnAllTypes() {
+        hashIsStable("sha512");
+    }
+
+    @Test
     public void sha384IsStableOnAllTypes() {
         hashIsStable("sha384");
     }
