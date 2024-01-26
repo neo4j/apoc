@@ -65,18 +65,17 @@ public class CypherTestUtil {
 
     public static void testRunProcedureWithSimpleReturnResults(
             Session session, String query, Map<String, Object> params) {
-        session.writeTransaction(tx -> tx.run(CREATE_RETURNQUERY_NODES));
+        session.executeWrite(tx -> tx.run(CREATE_RETURNQUERY_NODES).consume());
         // Due to flaky tests, this is a debug section to see if we can
         // figure out a reason why the results aren't always returning the
         // entire result set.
-        session.readTransaction(tx -> {
+        session.executeRead(tx -> {
             List<Record> result = tx.run("MATCH (n:ReturnQuery) RETURN n.id").list();
             System.out.println("DEBUG: testRunProcedureWithSimpleReturnResults");
             System.out.println("DEBUG: " + result.size());
             for (Record r : result) {
                 System.out.println("DEBUG: " + r);
             }
-            tx.commit();
             return null;
         });
         testResult(session, query, params, r -> {
@@ -123,7 +122,7 @@ public class CypherTestUtil {
     // placed in test-utils because is used by extended as well
     public static void testRunProcedureWithSetAndReturnResults(
             Session session, String query, Map<String, Object> params) {
-        session.writeTransaction(tx -> tx.run(CREATE_RESULT_NODES));
+        session.executeWrite(tx -> tx.run(CREATE_RESULT_NODES).consume());
 
         testResult(session, query, params, r -> {
             // check that all results from the 1st statement are correctly returned

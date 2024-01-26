@@ -76,42 +76,42 @@ public class GraphRefactoringEnterpriseTest {
 
     @Test
     public void testExtractNodesWithNodeKeyConstraint() {
-        session.writeTransaction(tx -> tx.run(CREATE_REL_FOR_EXTRACT_NODE));
+        session.executeWrite(tx -> tx.run(CREATE_REL_FOR_EXTRACT_NODE).consume());
         nodeKeyCommons(EXTRACT_QUERY);
-        session.writeTransaction(tx -> tx.run(DELETE_REL_FOR_EXTRACT_NODE));
+        session.executeWrite(tx -> tx.run(DELETE_REL_FOR_EXTRACT_NODE).consume());
     }
 
     @Test
     public void testExtractNodesWithBothExistenceAndUniqueConstraint() {
-        session.writeTransaction(tx -> tx.run(CREATE_REL_FOR_EXTRACT_NODE));
+        session.executeWrite(tx -> tx.run(CREATE_REL_FOR_EXTRACT_NODE).consume());
         uniqueNotNullCommons(EXTRACT_QUERY);
-        session.writeTransaction(tx -> tx.run(DELETE_REL_FOR_EXTRACT_NODE));
+        session.executeWrite(tx -> tx.run(DELETE_REL_FOR_EXTRACT_NODE).consume());
     }
 
     private void nodeKeyCommons(String query) {
-        session.writeTransaction(
-                tx -> tx.run("CREATE CONSTRAINT nodeKey FOR (p:MyBook) REQUIRE (p.name, p.surname) IS NODE KEY"));
+        session.executeWrite(
+                tx -> tx.run("CREATE CONSTRAINT nodeKey FOR (p:MyBook) REQUIRE (p.name, p.surname) IS NODE KEY").consume());
         cloneNodesAssertions(
                 query, "already exists with label `MyBook` and properties `name` = 'foobar', `surname` = 'baz'");
-        session.writeTransaction(tx -> tx.run("DROP CONSTRAINT nodeKey"));
+        session.executeWrite(tx -> tx.run("DROP CONSTRAINT nodeKey").consume());
     }
 
     private void uniqueNotNullCommons(String query) {
-        session.writeTransaction(tx -> tx.run("CREATE CONSTRAINT unique FOR (p:MyBook) REQUIRE (p.name) IS UNIQUE"));
-        session.writeTransaction(tx -> tx.run("CREATE CONSTRAINT notNull FOR (p:MyBook) REQUIRE (p.name) IS NOT NULL"));
+        session.executeWrite(tx -> tx.run("CREATE CONSTRAINT unique FOR (p:MyBook) REQUIRE (p.name) IS UNIQUE").consume());
+        session.executeWrite(tx -> tx.run("CREATE CONSTRAINT notNull FOR (p:MyBook) REQUIRE (p.name) IS NOT NULL").consume());
 
         cloneNodesAssertions(query, "already exists with label `MyBook` and property `name` = 'foobar'");
-        session.writeTransaction(tx -> tx.run("DROP CONSTRAINT unique"));
-        session.writeTransaction(tx -> tx.run("DROP CONSTRAINT notNull"));
+        session.executeWrite(tx -> tx.run("DROP CONSTRAINT unique").consume());
+        session.executeWrite(tx -> tx.run("DROP CONSTRAINT notNull").consume());
     }
 
     private void cloneNodesAssertions(String query, String message) {
-        session.writeTransaction(tx -> tx.run("CREATE (n:MyBook {name: 'foobar', surname: 'baz'})"));
+        session.executeWrite(tx -> tx.run("CREATE (n:MyBook {name: 'foobar', surname: 'baz'})").consume());
         testCall(session, query, r -> {
             final String error = (String) r.get("error");
             assertTrue(error.contains(message));
             assertNull(r.get("output"));
         });
-        session.writeTransaction(tx -> tx.run("MATCH (n:MyBook) DELETE n"));
+        session.executeWrite(tx -> tx.run("MATCH (n:MyBook) DELETE n").consume());
     }
 }

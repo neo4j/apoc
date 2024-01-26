@@ -61,7 +61,7 @@ public class CypherEnterpriseTest {
 
     @After
     public void after() {
-        session.writeTransaction(tx -> tx.run("MATCH (n) DETACH DELETE n"));
+        session.executeWrite(tx -> tx.run("MATCH (n) DETACH DELETE n").consume());
     }
 
     @Test
@@ -85,7 +85,7 @@ public class CypherEnterpriseTest {
         String query = "CALL apoc.cypher.runManyReadOnly($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_AND_RETURN_QUERIES);
 
-        session.writeTransaction(tx -> tx.run(CREATE_RESULT_NODES));
+        session.executeWrite(tx -> tx.run(CREATE_RESULT_NODES).consume());
 
         // even if this procedure is read-only and execute a write operation, it doesn't fail but just skip the
         // statements
@@ -137,7 +137,7 @@ public class CypherEnterpriseTest {
         String query = "CALL apoc.cypher.run($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_NODE);
 
-        session.writeTransaction(tx -> tx.run(CREATE_RESULT_NODES));
+        session.executeWrite(tx -> tx.run(CREATE_RESULT_NODES).consume());
 
         RuntimeException e = assertThrows(RuntimeException.class, () -> testCall(session, query, params, (res) -> {}));
         String expectedMessage =
@@ -154,7 +154,7 @@ public class CypherEnterpriseTest {
     }
 
     private static void testRunSingleStatementProcedureWithResults(String query, Map<String, Object> params) {
-        session.writeTransaction(tx -> tx.run(CREATE_RETURNQUERY_NODES));
+        session.executeWrite(tx -> tx.run(CREATE_RETURNQUERY_NODES).consume());
 
         testResult(session, query, params, r -> {
             Map<String, Object> next = r.next();
@@ -171,7 +171,7 @@ public class CypherEnterpriseTest {
     }
 
     private static void testRunSingleStatementProcedureWithSetAndResults(String query, Map<String, Object> params) {
-        session.writeTransaction(tx -> tx.run(CREATE_RESULT_NODES));
+        session.executeWrite(tx -> tx.run(CREATE_RESULT_NODES).consume());
 
         testResult(session, query, params, r -> {
             Map<String, Object> next = r.next();
