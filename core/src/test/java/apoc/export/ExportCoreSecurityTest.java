@@ -174,14 +174,18 @@ public class ExportCoreSecurityTest {
         not found. They all attempt to exit the import folder back to the apoc folder:
         Directory Layout: .../apoc/core/target/import
         */
-        private static final String case10 = "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/apoc/" + FILENAME;
-        private static final String case11 = "file://../../../../apoc/" + FILENAME;
-        private static final String case12 = "file:///..//..//..//..//apoc//core//..//" + FILENAME;
-        private static final String case13 = "file:///..//..//..//..//apoc/" + FILENAME;
-        private static final String case14 =
-                "file://" + directory.getAbsolutePath() + "//..//..//..//..//apoc/" + FILENAME;
-        private static final String case15 =
-                "file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/apoc/" + FILENAME;
+        private static final String nonExistingDirectory = "__non-existing-dir__";
+        private static final String case10 =
+                "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/" + nonExistingDirectory + "/" + FILENAME;
+        private static final String case11 = String.format("file://../../../../%s/%s", nonExistingDirectory, FILENAME);
+        private static final String case12 =
+                String.format("file:///..//..//..//..//%s//core//..//%s", nonExistingDirectory, FILENAME);
+        private static final String case13 =
+                String.format("file:///..//..//..//..//%s/%s", nonExistingDirectory, FILENAME);
+        private static final String case14 = String.format(
+                "file://" + directory.getAbsolutePath() + "//..//..//..//..//%s/%s", nonExistingDirectory, FILENAME);
+        private static final String case15 = "file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/"
+                + nonExistingDirectory + "/" + FILENAME;
 
         public static final List<String> casesNotExistingDir =
                 Arrays.asList(case10, case11, case12, case13, case14, case15);
