@@ -170,14 +170,12 @@ public class Json {
     }
 
     @Procedure("apoc.convert.toTree")
-    @Description(
-            "Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
-    // todo optinally provide root node
+    @Description("Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
     public Stream<MapResult> toTree(
             @Name("paths") List<Path> paths,
             @Name(value = "lowerCaseRels", defaultValue = "true") boolean lowerCaseRels,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        if (paths.isEmpty()) return Stream.of(new MapResult(Collections.emptyMap()));
+        if (paths == null || paths.isEmpty()) return Stream.of(new MapResult(Collections.emptyMap()));
         ConvertConfig conf = new ConvertConfig(config);
         Map<String, List<String>> nodes = conf.getNodes();
         Map<String, List<String>> rels = conf.getRels();
@@ -203,8 +201,12 @@ public class Json {
                     // parent-[:HAS_CHILD]->(child) vs. (parent)<-[:PARENT_OF]-(child)
                     if (!nMap.containsKey(typeName)) nMap.put(typeName, new ArrayList<>(16));
                     List<Map<String, Object>> list = (List) nMap.get(typeName);
+                    // Check that this combination of rel and node doesn't already exist
                     Optional<Map<String, Object>> optMap = list.stream()
-                            .filter(elem -> elem.get("_id").equals(m.getId()))
+                            .filter(elem ->
+                                    elem.get("_elementId").equals(m.getElementId())
+                                            && elem.get(typeName + "._elementId").equals(r.getElementId())
+                            )
                             .findFirst();
                     if (!optMap.isPresent()) {
                         Map<String, Object> mMap = toMap(m, nodes);
@@ -255,9 +257,10 @@ public class Json {
 
     private Map<String, Object> addRelProperties(
             Map<String, Object> mMap, String typeName, Relationship r, Map<String, List<String>> relFilters) {
+        String prefix = typeName + ".";
+        mMap.put(prefix + "_elementId", r.getElementId());
         Map<String, Object> rProps = r.getAllProperties();
         if (rProps.isEmpty()) return mMap;
-        String prefix = typeName + ".";
         if (relFilters.containsKey(typeName)) {
             rProps = filterProperties(rProps, relFilters.get(typeName));
         }
@@ -269,7 +272,8 @@ public class Json {
         Map<String, Object> props = n.getAllProperties();
         Map<String, Object> result = new LinkedHashMap<>(props.size() + 2);
         String type = Util.labelString(n);
-        result.put("_id", n.getId());
+        result.put("_id", n.getId());;
+        result.put("_elementId", n.getElementId());
         result.put("_type", type);
         if (nodeFilters.containsKey(type)) { // Check if list contains LABEL
             props = filterProperties(props, nodeFilters.get(type));
