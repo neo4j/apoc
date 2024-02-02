@@ -27,20 +27,22 @@ import static apoc.cypher.CypherTestUtil.assertResultNode;
 import static apoc.cypher.CypherTestUtil.assertReturnQueryNode;
 import static apoc.cypher.CypherTestUtil.testRunProcedureWithSetAndReturnResults;
 import static apoc.cypher.CypherTestUtil.testRunProcedureWithSimpleReturnResults;
-import static apoc.util.TestContainerUtil.*;
-import static org.junit.Assert.assertFalse;
+import static apoc.util.TestContainerUtil.ApocPackage;
+import static apoc.util.TestContainerUtil.createEnterpriseDB;
+import static apoc.util.TestContainerUtil.testCall;
+import static apoc.util.TestContainerUtil.testCallEmpty;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 
 import apoc.util.Neo4jContainerExtension;
 import java.util.List;
 import java.util.Map;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.neo4j.driver.Session;
-import org.neo4j.driver.types.Node;
+import org.neo4j.driver.Value;
 
 public class CypherEnterpriseTest {
     private static Neo4jContainerExtension neo4jContainer;
@@ -142,7 +144,7 @@ public class CypherEnterpriseTest {
         RuntimeException e = assertThrows(RuntimeException.class, () -> testCall(session, query, params, (res) -> {}));
         String expectedMessage =
                 "Set property for property 'updated' on database 'neo4j' is not allowed for user 'neo4j' with roles [PUBLIC, admin] overridden by READ.";
-        Assertions.assertThat(e.getMessage()).contains(expectedMessage);
+        assertThat(e.getMessage()).contains(expectedMessage);
     }
 
     @Test
@@ -156,34 +158,22 @@ public class CypherEnterpriseTest {
     private static void testRunSingleStatementProcedureWithResults(String query, Map<String, Object> params) {
         session.executeWrite(tx -> tx.run(CREATE_RETURNQUERY_NODES).consume());
 
-        testResult(session, query, params, r -> {
-            Map<String, Object> next = r.next();
-            assertReturnQueryNode(0L, (Map<String, Node>) next.get("value"));
-            next = r.next();
-            assertReturnQueryNode(1L, (Map<String, Node>) next.get("value"));
-            next = r.next();
-            assertReturnQueryNode(2L, (Map<String, Node>) next.get("value"));
-            next = r.next();
-            assertReturnQueryNode(3L, (Map<String, Node>) next.get("value"));
-
-            assertFalse(r.hasNext());
-        });
+        assertThat(session.run(query, params).list())
+                .satisfiesExactly(
+                        row -> assertReturnQueryNode(0L, row.get("value").asMap(Value::asNode)),
+                        row -> assertReturnQueryNode(1L, row.get("value").asMap(Value::asNode)),
+                        row -> assertReturnQueryNode(2L, row.get("value").asMap(Value::asNode)),
+                        row -> assertReturnQueryNode(3L, row.get("value").asMap(Value::asNode)));
     }
 
     private static void testRunSingleStatementProcedureWithSetAndResults(String query, Map<String, Object> params) {
         session.executeWrite(tx -> tx.run(CREATE_RESULT_NODES).consume());
 
-        testResult(session, query, params, r -> {
-            Map<String, Object> next = r.next();
-            assertResultNode(0L, (Map<String, Node>) next.get("value"));
-            next = r.next();
-            assertResultNode(1L, (Map<String, Node>) next.get("value"));
-            next = r.next();
-            assertResultNode(2L, (Map<String, Node>) next.get("value"));
-            next = r.next();
-            assertResultNode(3L, (Map<String, Node>) next.get("value"));
-
-            assertFalse(r.hasNext());
-        });
+        assertThat(session.run(query, params).list())
+                .satisfiesExactly(
+                        row -> assertResultNode(0L, row.get("value").asMap(Value::asNode)),
+                        row -> assertResultNode(1L, row.get("value").asMap(Value::asNode)),
+                        row -> assertResultNode(2L, row.get("value").asMap(Value::asNode)),
+                        row -> assertResultNode(3L, row.get("value").asMap(Value::asNode)));
     }
 }

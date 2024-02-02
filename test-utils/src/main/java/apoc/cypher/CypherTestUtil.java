@@ -18,16 +18,14 @@
  */
 package apoc.cypher;
 
-import static apoc.util.TestContainerUtil.testResult;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 import apoc.util.collection.Iterables;
-import apoc.util.collection.Iterators;
 import java.util.List;
 import java.util.Map;
-import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
+import org.neo4j.driver.Value;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Relationship;
 
@@ -43,7 +41,8 @@ public class CypherTestUtil {
             """
             MATCH (n:Result)-[:REL]->(:Other)
             SET n.updated = true
-            RETURN n;
+            RETURN n
+            ORDER BY n.id;
             """;
 
     public static String SET_AND_RETURN_QUERIES =
@@ -66,46 +65,23 @@ public class CypherTestUtil {
     public static void testRunProcedureWithSimpleReturnResults(
             Session session, String query, Map<String, Object> params) {
         session.executeWrite(tx -> tx.run(CREATE_RETURNQUERY_NODES).consume());
-        // Due to flaky tests, this is a debug section to see if we can
-        // figure out a reason why the results aren't always returning the
-        // entire result set.
-        session.executeRead(tx -> {
-            List<Record> result = tx.run("MATCH (n:ReturnQuery) RETURN n.id").list();
-            System.out.println("DEBUG: testRunProcedureWithSimpleReturnResults");
-            System.out.println("DEBUG: " + result.size());
-            for (Record r : result) {
-                System.out.println("DEBUG: " + r);
-            }
-            return null;
-        });
-        testResult(session, query, params, r -> {
-            // check that all results from the 1st statement are correctly returned
-            Map<String, Object> row = r.next();
-            assertReturnQueryNode(row, 0L);
-            row = r.next();
-            assertReturnQueryNode(row, 1L);
-            row = r.next();
-            assertReturnQueryNode(row, 2L);
-            row = r.next();
-            assertReturnQueryNode(row, 3L);
-
-            // check `queryStatistics` row
-            row = r.next();
-            assertReadOnlyResult(row);
-
-            assertFalse(r.hasNext());
-        });
+        assertThat(session.run(query, params).list())
+                .satisfiesExactly(
+                        row -> assertReturnQueryNode(row.asMap(), 0L),
+                        row -> assertReturnQueryNode(row.asMap(), 1L),
+                        row -> assertReturnQueryNode(row.asMap(), 2L),
+                        row -> assertReturnQueryNode(row.asMap(), 3L),
+                        row -> assertReadOnlyResult(row.asMap()));
     }
 
     public static void assertReadOnlyResult(Map<String, Object> row) {
-        Map result = (Map) row.get("result");
+        Map<?, ?> result = (Map<?, ?>) row.get("result");
         assertEquals(-1L, row.get("row"));
         assertEquals(0L, (long) result.get("nodesCreated"));
         assertEquals(0L, (long) result.get("propertiesSet"));
     }
 
     private static void assertReturnQueryNode(Map<String, Object> row, long id) {
-        System.out.println("DEBUG: " + row);
         assertEquals(id, row.get("row"));
 
         Map<String, Node> result = (Map<String, Node>) row.get("result");
@@ -124,62 +100,39 @@ public class CypherTestUtil {
             Session session, String query, Map<String, Object> params) {
         session.executeWrite(tx -> tx.run(CREATE_RESULT_NODES).consume());
 
-        testResult(session, query, params, r -> {
-            // check that all results from the 1st statement are correctly returned
-            Map<String, Object> row = r.next();
-            assertRunProcNode(row, 0L);
-            row = r.next();
-            assertRunProcNode(row, 1L);
-            row = r.next();
-            assertRunProcNode(row, 2L);
-            row = r.next();
-            assertRunProcNode(row, 3L);
-
-            // check `queryStatistics` row
-            row = r.next();
-            assertRunProcStatistics(row);
-
-            // check that all results from the 2nd statement are correctly returned
-            row = r.next();
-            assertRunProcRel(row, 0L);
-            row = r.next();
-            assertRunProcRel(row, 1L);
-            row = r.next();
-            assertRunProcRel(row, 2L);
-            row = r.next();
-            assertRunProcRel(row, 3L);
-
-            // check `queryStatistics` row
-            row = r.next();
-            assertRunProcStatistics(row);
-
-            // check that all results from the 3rd statement are correctly returned
-            row = r.next();
-            assertEquals(0L, row.get("row"));
-            Map<String, Object> result = (Map<String, Object>) row.get("result");
-            assertEquals(3, result.size());
-            List<Relationship> rels = (List<Relationship>) result.get("rels");
-            List<Node> nodes = (List<Node>) result.get("nodes");
-            List<Node> others = (List<Node>) result.get("others");
-            assertEquals(4L, rels.size());
-            assertEquals(4L, nodes.size());
-            assertEquals(4L, others.size());
-            row = r.next();
-
-            // check `queryStatistics` row
-            assertRunProcStatistics(row);
-            assertFalse(r.hasNext());
-        });
+        assertThat(session.run(query, params).list())
+                .satisfiesExactly(
+                        // check that all results from the 1st statement are correctly returned
+                        row -> assertRunProcNode(row.asMap(), 0L),
+                        row -> assertRunProcNode(row.asMap(), 1L),
+                        row -> assertRunProcNode(row.asMap(), 2L),
+                        row -> assertRunProcNode(row.asMap(), 3L),
+                        // check `queryStatistics` row
+                        row -> assertRunProcStatistics(row.asMap()),
+                        // check that all results from the 2nd statement are correctly returned
+                        row -> assertRunProcRel(row.asMap(), 0L),
+                        row -> assertRunProcRel(row.asMap(), 1L),
+                        row -> assertRunProcRel(row.asMap(), 2L),
+                        row -> assertRunProcRel(row.asMap(), 3L),
+                        // check `queryStatistics` row
+                        row -> assertRunProcStatistics(row.asMap()),
+                        // check that all results from the 3rd statement are correctly returned
+                        row -> {
+                            assertEquals(0L, row.get("row").asInt());
+                            assertThat(row.get("result").asMap(Value::asList))
+                                    .containsOnlyKeys("rels", "nodes", "others")
+                                    .allSatisfy((k, v) -> assertThat(v).hasSize(4));
+                        },
+                        // check `queryStatistics` row
+                        row -> assertRunProcStatistics(row.asMap()));
 
         // check that the procedure's SET operations work properly
-        testResult(
-                session,
-                "MATCH p=(:Result {updated:true})-[:REL {updated: 1}]->(:Other {updated: 'true'}) RETURN *",
-                r -> assertEquals(4L, Iterators.count(r)));
+        final var sq = "MATCH p=(:Result {updated:true})-[:REL {updated: 1}]->(:Other {updated: 'true'}) RETURN *";
+        assertThat(session.run(sq).list()).hasSize(4);
     }
 
     private static void assertRunProcStatistics(Map<String, Object> row) {
-        Map result = (Map) row.get("result");
+        Map<?, ?> result = (Map<?, ?>) row.get("result");
         assertEquals(-1L, row.get("row"));
         assertEquals(0L, (long) result.get("nodesCreated"));
         assertEquals(4L, (long) result.get("propertiesSet"));

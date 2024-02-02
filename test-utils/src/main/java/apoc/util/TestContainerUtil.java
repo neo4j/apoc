@@ -19,6 +19,7 @@
 package apoc.util;
 
 import static apoc.util.TestUtil.printFullStackTrace;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -33,13 +34,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.assertj.core.description.LazyTextDescription;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -279,11 +286,24 @@ public class TestContainerUtil {
             Consumer<Iterator<Map<String, Object>>> resultConsumer) {
         session.executeWrite(tx -> {
             Map<String, Object> p = (params == null) ? Collections.<String, Object>emptyMap() : params;
-            resultConsumer.accept(tx.run(call, p).list().stream()
-                    .map(Record::asMap)
-                    .collect(Collectors.toList())
-                    .iterator());
+            final var result = tx.run(call, p).list();
+            assertThat(result)
+                    .describedAs(describe(call, params, result))
+                    .satisfies(r ->
+                            resultConsumer.accept(r.stream().map(Record::asMap).iterator()));
             return null;
+        });
+    }
+
+    private static LazyTextDescription describe(final String cypher, Map<String, Object> params, List<Record> result) {
+        return new LazyTextDescription(() -> {
+            final var resultString = result.stream().map(Record::toString).collect(Collectors.joining("\n"));
+            return """
+            Cypher: %s
+            Params: %s
+            Results (%s rows):
+            %s"""
+                    .formatted(cypher, params, result.size(), resultString);
         });
     }
 
