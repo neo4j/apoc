@@ -681,8 +681,8 @@ public class Meta {
         List<String> labels =
                 Iterables.stream(tx.getAllLabelsInUse()).map(Label::name).collect(Collectors.toList());
         TokenRead tokenRead = kernelTx.tokenRead();
-        return labels.stream().collect(Collectors.toMap(e -> e, e -> kernelTx.dataRead()
-                .countsForNode(tokenRead.nodeLabel(e))));
+        return labels.stream()
+                .collect(Collectors.toMap(e -> e, e -> kernelTx.dataRead().countsForNode(tokenRead.nodeLabel(e))));
     }
 
     public static long getSampleForLabelCount(long labelCount, long sample) {

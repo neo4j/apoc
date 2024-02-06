@@ -18,9 +18,14 @@
  */
 package apoc.util;
 
+import static java.util.stream.Collectors.joining;
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
+
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.procedure.*;
@@ -38,37 +43,32 @@ public class Utils {
     @Description("Returns the SHA1 of the concatenation of all `STRING` values in the given `LIST<ANY>`.\n"
             + "SHA1 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
     public String sha1(@Name("values") List<Object> values) {
-        String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
-        return DigestUtils.sha1Hex(value);
+        return hexHash(DigestUtils.getSha1Digest(), values);
     }
 
     @UserFunction("apoc.util.sha256")
     @Description("Returns the SHA256 of the concatenation of all `STRING` values in the given `LIST<ANY>`.")
     public String sha256(@Name("values") List<Object> values) {
-        String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
-        return DigestUtils.sha256Hex(value);
+        return hexHash(DigestUtils.getSha256Digest(), values);
     }
 
     @UserFunction("apoc.util.sha384")
     @Description("Returns the SHA384 of the concatenation of all `STRING` values in the given `LIST<ANY>`.")
     public String sha384(@Name("values") List<Object> values) {
-        String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
-        return DigestUtils.sha384Hex(value);
+        return hexHash(DigestUtils.getSha384Digest(), values);
     }
 
     @UserFunction("apoc.util.sha512")
     @Description("Returns the SHA512 of the concatenation of all `STRING` values in the `LIST<ANY>`.")
     public String sha512(@Name("values") List<Object> values) {
-        String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
-        return DigestUtils.sha512Hex(value);
+        return hexHash(DigestUtils.getSha512Digest(), values);
     }
 
     @UserFunction("apoc.util.md5")
     @Description("Returns the MD5 checksum of the concatenation of all `STRING` values in the given `LIST<ANY>`.\n"
             + "MD5 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
     public String md5(@Name("values") List<Object> values) {
-        String value = values.stream().map(v -> v == null ? "" : v.toString()).collect(Collectors.joining());
-        return DigestUtils.md5Hex(value);
+        return hexHash(DigestUtils.getMd5Digest(), values);
     }
 
     @Procedure("apoc.util.sleep")
@@ -133,5 +133,41 @@ public class Utils {
 
         CompressionConfig conf = new CompressionConfig(config, CompressionAlgo.GZIP.name());
         return CompressionAlgo.valueOf(conf.getCompressionAlgo()).compress(data, conf.getCharset());
+    }
+
+    private static String hexHash(final MessageDigest digest, final List<Object> values) {
+        for (final var value : values) digest.update(getBytesUtf8(toHashString(value)));
+        return Hex.encodeHexString(digest.digest());
+    }
+
+    /*
+     * This is not the most efficient way to produce a hash, but it is backwards compatible.
+     * This function is only intended to be used on strings (as documented on the hash functions above)
+     * But it turns out that is not how everyone is using it, so as a safety we have stable implementations
+     * for all neo4j types.
+     */
+    private static String toHashString(Object value) {
+        if (value instanceof String string) return string;
+        else if (value == null) return "";
+        else if (value instanceof List<?> list) {
+            return list.stream().map(Utils::toHashString).collect(joining(", ", "[", "]"));
+        } else if (value instanceof Map<?, ?> map) {
+            return map.entrySet().stream()
+                    .map(e -> Map.entry(e.getKey().toString(), toHashString(e.getValue())))
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(joining(", ", "{", "}"));
+        } else if (value.getClass().isArray()) {
+            if (value instanceof Object[] objectArray) return Arrays.toString(objectArray);
+            else if (value instanceof int[] intArray) return Arrays.toString(intArray);
+            else if (value instanceof long[] longArray) return Arrays.toString(longArray);
+            else if (value instanceof double[] doubleArray) return Arrays.toString(doubleArray);
+            else if (value instanceof short[] shortArray) return Arrays.toString(shortArray);
+            else if (value instanceof boolean[] boolArray) return Arrays.toString(boolArray);
+            else if (value instanceof byte[] byteArray) return Arrays.toString(byteArray);
+            else if (value instanceof float[] floatArray) return Arrays.toString(floatArray);
+            else if (value instanceof char[] charArray) return Arrays.toString(charArray);
+            else return value.toString();
+        } else return value.toString();
     }
 }
