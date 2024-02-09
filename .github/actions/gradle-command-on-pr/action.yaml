@@ -17,7 +17,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout branch from fork
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal access token.
         repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
@@ -103,7 +103,7 @@ runs:
         reaction-type: '-1'
 
     - name: Go back to original branch
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ github.event.client_payload.pull_request.head.repo.full_name }}
         ref: ${{ github.event.client_payload.pull_request.base.ref }}
