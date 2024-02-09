@@ -84,30 +84,7 @@ import org.neo4j.procedure.UserFunction;
  * It is part of the APOC (Awesome Procedures on Cypher) library.
  */
 public class Meta {
-    private class MetadataKey {
-        Types type;
-        String key;
-
-        MetadataKey(Types type, String key) {
-            this.type = type;
-            this.key = key;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof MetadataKey) {
-                MetadataKey other = ((MetadataKey) obj);
-                return other.type.equals(this.type) && other.key.equals(this.key);
-            }
-
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return (type.toString() + "-" + key).hashCode();
-        }
-    }
+    private record MetadataKey(Types type, String key) {}
 
     @Context
     public Transaction tx;
