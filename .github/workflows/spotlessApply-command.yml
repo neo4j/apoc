@@ -4,7 +4,7 @@ on:
     types: [spotlessApply-command]
 
 jobs:
-  format:
+  spotlessApply:
     runs-on: ubuntu-latest
 
     steps:
