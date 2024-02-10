@@ -90,15 +90,18 @@ public class GraphRefactoringEnterpriseTest {
 
     private void nodeKeyCommons(String query) {
         session.executeWrite(
-                tx -> tx.run("CREATE CONSTRAINT nodeKey FOR (p:MyBook) REQUIRE (p.name, p.surname) IS NODE KEY").consume());
+                tx -> tx.run("CREATE CONSTRAINT nodeKey FOR (p:MyBook) REQUIRE (p.name, p.surname) IS NODE KEY")
+                        .consume());
         cloneNodesAssertions(
                 query, "already exists with label `MyBook` and properties `name` = 'foobar', `surname` = 'baz'");
         session.executeWrite(tx -> tx.run("DROP CONSTRAINT nodeKey").consume());
     }
 
     private void uniqueNotNullCommons(String query) {
-        session.executeWrite(tx -> tx.run("CREATE CONSTRAINT unique FOR (p:MyBook) REQUIRE (p.name) IS UNIQUE").consume());
-        session.executeWrite(tx -> tx.run("CREATE CONSTRAINT notNull FOR (p:MyBook) REQUIRE (p.name) IS NOT NULL").consume());
+        session.executeWrite(tx -> tx.run("CREATE CONSTRAINT unique FOR (p:MyBook) REQUIRE (p.name) IS UNIQUE")
+                .consume());
+        session.executeWrite(tx -> tx.run("CREATE CONSTRAINT notNull FOR (p:MyBook) REQUIRE (p.name) IS NOT NULL")
+                .consume());
 
         cloneNodesAssertions(query, "already exists with label `MyBook` and property `name` = 'foobar'");
         session.executeWrite(tx -> tx.run("DROP CONSTRAINT unique").consume());
@@ -106,7 +109,8 @@ public class GraphRefactoringEnterpriseTest {
     }
 
     private void cloneNodesAssertions(String query, String message) {
-        session.executeWrite(tx -> tx.run("CREATE (n:MyBook {name: 'foobar', surname: 'baz'})").consume());
+        session.executeWrite(tx ->
+                tx.run("CREATE (n:MyBook {name: 'foobar', surname: 'baz'})").consume());
         testCall(session, query, r -> {
             final String error = (String) r.get("error");
             assertTrue(error.contains(message));
