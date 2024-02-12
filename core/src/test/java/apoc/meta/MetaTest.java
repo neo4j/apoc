@@ -1011,6 +1011,15 @@ public class MetaTest {
     }
 
     @Test
+    public void testRelationshipAndNodeNames() {
+        db.executeTransactionally("CREATE (a:NODE)-[r:RELATIONSHIP]->(m:Movie)");
+        TestUtil.testResult(db, "CALL apoc.meta.data()", (r) -> {
+            Assertions.assertThat(r.stream().map(m -> m.get("label"))).contains("RELATIONSHIP", "NODE");
+            r.close();
+        });
+    }
+
+    @Test
     public void testMetaDataWithSample5() {
         db.executeTransactionally("create index for (n:Person) on (n.name)");
         db.executeTransactionally("CREATE (:Person {name:'John', surname:'Brown'})");
