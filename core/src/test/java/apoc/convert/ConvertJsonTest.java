@@ -464,7 +464,7 @@ public class ConvertJsonTest {
                     List<Object> actedInList = (List<Object>) root.get("acted_in");
                     assertEquals(7, actedInList.size());
                     List<Object> innerList = (List) ((Map<String, Object>) actedInList.get(1)).get("acted_in");
-                    assertEquals(8, ((Map<String, Object>) innerList.get(0)).size());
+                    assertEquals(9, ((Map<String, Object>) innerList.get(0)).size());
                 });
     }
 
@@ -677,6 +677,7 @@ public class ConvertJsonTest {
                             "_elementId", generatedIdsMapping.get("facebook|680594762097202").get("elementId"),
                             "id", "facebook|680594762097202",
                             "flag.id", "rel3",
+                            "flag._id", Long.parseLong(generatedIdsMapping.get("rel3").get("id")),
                             "flag._elementId", generatedIdsMapping.get("rel3").get("elementId"),
                             "flag.id", "rel3",
                             "flag.FlagType", 4L)));
@@ -690,6 +691,7 @@ public class ConvertJsonTest {
                             "_elementId", generatedIdsMapping.get("google-oauth2|106707535753175966005").get("elementId"),
                             "id", "google-oauth2|106707535753175966005",
                             "flag.id", "rel6",
+                            "flag._id", Long.parseLong(generatedIdsMapping.get("rel6").get("id")),
                             "flag._elementId", generatedIdsMapping.get("rel6").get("elementId"),
                             "flag.FlagType", 1L)));
             hasPart = has.get(1);

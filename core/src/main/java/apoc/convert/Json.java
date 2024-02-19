@@ -259,6 +259,7 @@ public class Json {
             Map<String, Object> mMap, String typeName, Relationship r, Map<String, List<String>> relFilters) {
         String prefix = typeName + ".";
         mMap.put(prefix + "_elementId", r.getElementId());
+        mMap.put(prefix + "_id", r.getId());
         Map<String, Object> rProps = r.getAllProperties();
         if (rProps.isEmpty()) return mMap;
         if (relFilters.containsKey(typeName)) {
