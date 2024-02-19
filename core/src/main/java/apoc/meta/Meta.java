@@ -284,11 +284,11 @@ public class Meta {
      * The StatsCallback interface defines callback methods for collecting label and relationship statistics.
      */
     interface StatsCallback {
-        void label(int labelId, String labelName, long count);
+        void label(String labelName, long count);
 
-        void rel(int typeId, String typeName, long count);
+        void rel(String typeName, long count);
 
-        void rel(int typeId, String typeName, int labelId, String labelName, long out, long in);
+        void rel(String typeName, String labelName, long out, long in);
     }
 
     @NotThreadSafe
@@ -305,7 +305,7 @@ public class Meta {
             @Name(value = "nodes", defaultValue = "[]") List<String> nodes,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         MetaConfig conf = new MetaConfig(config);
-        final DatabaseSubGraph subGraph = new DatabaseSubGraph(transaction);
+        final var subGraph = DatabaseSubGraph.optimizedForCount(transaction, kernelTx);
         Stream<Label> labels = CollectionUtils.isEmpty(nodes)
                 ? StreamSupport.stream(subGraph.getAllLabelsInUse().spliterator(), false)
                 : nodes.stream().filter(Objects::nonNull).map(String::trim).map(Label::label);
@@ -367,19 +367,22 @@ public class Meta {
         Map<String, Long> labelStats = new LinkedHashMap<>((int) labelCount);
         Map<String, Long> relStats = new LinkedHashMap<>(2 * (int) relTypeCount);
 
-        collectStats(new DatabaseSubGraph(transaction), null, null, new StatsCallback() {
-            public void label(int labelId, String labelName, long count) {
+        collectStats(DatabaseSubGraph.optimizedForCount(transaction, kernelTx), new StatsCallback() {
+            @Override
+            public void label(String labelName, long count) {
                 if (count > 0) labelStats.put(labelName, count);
             }
 
-            public void rel(int typeId, String typeName, long count) {
+            @Override
+            public void rel(String typeName, long count) {
                 if (count > 0) {
                     relStatsCount.merge(typeName, count, Long::sum);
                     relStats.put("()-[:" + typeName + "]->()", count);
                 }
             }
 
-            public void rel(int typeId, String typeName, int labelId, String labelName, long out, long in) {
+            @Override
+            public void rel(String typeName, String labelName, long out, long in) {
                 if (out > 0) {
                     relStats.put("(:" + labelName + ")-[:" + typeName + "]->()", out);
                 }
@@ -404,41 +407,28 @@ public class Meta {
      * Collects statistics about a subgraph of the database.
      *
      * @param subGraph      The subgraph to collect statistics for.
-     * @param labelNames    Optional collection of label names to filter the statistics. Defaults to null if not provided.
-     * @param relTypeNames  Optional collection of relationship type names to filter the statistics. Defaults to null if not provided.
      * @param cb            The callback to receive the collected statistics.
      */
-    private void collectStats(
-            SubGraph subGraph, Collection<String> labelNames, Collection<String> relTypeNames, StatsCallback cb) {
-        TokenRead tokenRead = kernelTx.tokenRead();
+    private void collectStats(SubGraph subGraph, StatsCallback cb) {
 
-        Map<String, Integer> labelMap = subGraph.labelsInUse(tokenRead, labelNames);
-        Map<String, Integer> typeMap = subGraph.relTypesInUse(tokenRead, relTypeNames);
-
-        Iterable<Label> labels = CollectionUtils.isNotEmpty(labelNames)
-                ? labelNames.stream().map(Label::label).collect(Collectors.toList())
-                : subGraph.getAllLabelsInUse();
-        Iterable<RelationshipType> types = CollectionUtils.isNotEmpty(relTypeNames)
-                ? relTypeNames.stream().map(RelationshipType::withName).collect(Collectors.toList())
-                : subGraph.getAllRelationshipTypesInUse();
+        final var labels = subGraph.getAllLabelsInUse();
+        final var types = subGraph.getAllRelationshipTypesInUse();
 
         labels.forEach(label -> {
             long count = subGraph.countsForNode(label);
             if (count > 0) {
                 String name = label.name();
-                int id = labelMap.get(name);
-                cb.label(id, name, count);
+                cb.label(name, count);
                 types.forEach(type -> {
                     long relCountOut = subGraph.countsForRelationship(label, type);
                     long relCountIn = subGraph.countsForRelationship(type, label);
-                    cb.rel(typeMap.get(type.name()), type.name(), id, name, relCountOut, relCountIn);
+                    cb.rel(type.name(), name, relCountOut, relCountIn);
                 });
             }
         });
         types.forEach(type -> {
             String name = type.name();
-            int id = typeMap.get(name);
-            cb.rel(id, name, subGraph.countsForRelationship(type));
+            cb.rel(name, subGraph.countsForRelationship(type));
         });
     }
 
@@ -478,7 +468,7 @@ public class Meta {
     @Description("Examines the full graph and returns a table of metadata.")
     public Stream<MetaResult> data(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         SampleMetaConfig metaConfig = new SampleMetaConfig(config);
-        return collectMetaData(new DatabaseSubGraph(transaction), metaConfig).values().stream()
+        return collectMetaData(DatabaseSubGraph.optimizedForCount(transaction, kernelTx), metaConfig).values().stream()
                 .flatMap(x -> x.values().stream());
     }
 
@@ -489,7 +479,7 @@ public class Meta {
         MetaStats metaStats = collectStats();
         SampleMetaConfig metaConfig = new SampleMetaConfig(config);
         Map<MetadataKey, Map<String, MetaItem>> metaData =
-                collectMetaData(new DatabaseSubGraph(transaction), metaConfig);
+                collectMetaData(DatabaseSubGraph.optimizedForCount(transaction, kernelTx), metaConfig);
 
         Map<String, Object> relationships = collectRelationshipsMetaData(metaStats, metaData);
         Map<String, Object> nodes = collectNodesMetaData(metaStats, metaData, relationships);
@@ -1015,7 +1005,7 @@ public class Meta {
     @Description("Examines the full graph and returns a meta-graph.")
     public Stream<GraphResult> graph(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         SampleMetaConfig metaConfig = new SampleMetaConfig(config, false);
-        return metaGraph(new DatabaseSubGraph(transaction), null, null, true, metaConfig);
+        return metaGraph(DatabaseSubGraph.optimizedForCount(transaction, kernelTx), null, null, true, metaConfig);
     }
 
     @NotThreadSafe
@@ -1199,7 +1189,12 @@ public class Meta {
             + "Unlike `apoc.meta.graph`, this procedure does not filter away non-existing paths.")
     public Stream<GraphResult> graphSample(
             @Name(value = "config", defaultValue = "{}") @Deprecated Map<String, Object> config) {
-        return metaGraph(new DatabaseSubGraph(transaction), null, null, false, new SampleMetaConfig(null));
+        return metaGraph(
+                DatabaseSubGraph.optimizedForCount(transaction, kernelTx),
+                null,
+                null,
+                false,
+                new SampleMetaConfig(null));
     }
 
     @NotThreadSafe
@@ -1210,7 +1205,7 @@ public class Meta {
         return filterResultStream(
                 metaConfig.getExcludeLabels(),
                 metaGraph(
-                        new DatabaseSubGraph(transaction),
+                        DatabaseSubGraph.optimizedForCount(transaction, kernelTx),
                         metaConfig.getIncludeLabels(),
                         metaConfig.getIncludeRels(),
                         true,
