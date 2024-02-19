@@ -93,7 +93,8 @@ public class TriggerEnterpriseFeaturesTest {
         assertTrue(neo4jContainer.isRunning());
 
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
-            sysSession.executeWrite(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", FOO_DB)).consume());
+            sysSession.executeWrite(tx ->
+                    tx.run(String.format("CREATE DATABASE %s WAIT;", FOO_DB)).consume());
 
             sysSession.run(String.format(
                     "CREATE USER %s SET PASSWORD '%s' SET PASSWORD CHANGE NOT REQUIRED", NO_ADMIN_USER, NO_ADMIN_PWD));
@@ -200,7 +201,8 @@ public class TriggerEnterpriseFeaturesTest {
             final String dbToDelete = "todelete";
 
             // create database with name `todelete`
-            sysSession.executeWrite(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)).consume());
+            sysSession.executeWrite(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete))
+                    .consume());
 
             testDeleteTriggerAfterDropDb(dbToDelete, sysSession);
         }
@@ -244,7 +246,8 @@ public class TriggerEnterpriseFeaturesTest {
                 r -> assertEquals(defaultTriggerName, r.get("name")));
 
         // drop database
-        sysSession.executeWrite(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)).consume());
+        sysSession.executeWrite(tx ->
+                tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)).consume());
 
         // check that the trigger has been removed
         testCallEmpty(sysSession, "CALL apoc.trigger.show($dbName)", Map.of("dbName", dbToDelete));
@@ -256,13 +259,15 @@ public class TriggerEnterpriseFeaturesTest {
 
         // create a node in the Neo4j db that looks like a trigger
         try (Session defaultSession = session(DEFAULT_DATABASE_NAME)) {
-            defaultSession.executeWrite(tx -> tx.run(
-                    String.format("CREATE (:%s {%s:'%s'})", SystemLabels.ApocTrigger, database.name(), dbToDelete)).consume());
+            defaultSession.executeWrite(tx -> tx.run(String.format(
+                            "CREATE (:%s {%s:'%s'})", SystemLabels.ApocTrigger, database.name(), dbToDelete))
+                    .consume());
         }
 
         try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             // create database with name `todelete`
-            sysSession.executeWrite(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete)).consume());
+            sysSession.executeWrite(tx -> tx.run(String.format("CREATE DATABASE %s WAIT;", dbToDelete))
+                    .consume());
 
             // install a trigger for the database
             final String defaultTriggerName = UUID.randomUUID().toString();
@@ -273,7 +278,8 @@ public class TriggerEnterpriseFeaturesTest {
                     r -> assertEquals(defaultTriggerName, r.get("name")));
 
             // drop database
-            sysSession.executeWrite(tx -> tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)).consume());
+            sysSession.executeWrite(tx ->
+                    tx.run(String.format("DROP DATABASE %s WAIT;", dbToDelete)).consume());
         }
 
         // check that the node in Neo4j database is still there

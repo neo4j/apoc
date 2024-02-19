@@ -405,11 +405,12 @@ public class UtilsTest {
             assertStableHash(seed, randStorables, tx, listOfListsQuery, Map.of("value", randStorables));
 
             final var nodesHashQuery =
-                """
+                    """
                 match (a:HashFunctionsAreStable)-[r]->(b:HashFunctionsAreStable)
                 return
                   apoc.util.%s([a, b, r, [a, b, r]]) as hash1
-                """.formatted(hashFunc, hashFunc);
+                """
+                            .formatted(hashFunc, hashFunc);
             assertStableHash(seed, "nodes and rels", tx, nodesHashQuery, Map.of());
         } finally {
             db.executeTransactionally("cypher runtime=slotted match (n) detach delete n");
