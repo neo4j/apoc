@@ -41,6 +41,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
 import java.util.Set;
@@ -74,6 +75,7 @@ public class ApocConfigCommandExpansionTest {
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.get(GraphDatabaseSettings.allow_file_urls)).thenReturn(false);
         when(neo4jConfig.expandCommands()).thenReturn(true);
+        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         apocConfigCommandExpansionFile = new File(getClass()
                 .getClassLoader()
@@ -150,6 +152,7 @@ public class ApocConfigCommandExpansionTest {
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.expandCommands()).thenReturn(false);
+        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
@@ -173,6 +176,7 @@ public class ApocConfigCommandExpansionTest {
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.expandCommands()).thenReturn(false);
+        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);

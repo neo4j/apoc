@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collections;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class ApocConfigTest {
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.get(GraphDatabaseSettings.allow_file_urls)).thenReturn(false);
+        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         apocConfigFile =
                 new File(getClass().getClassLoader().getResource("apoc.conf").toURI());
@@ -69,7 +71,7 @@ public class ApocConfigTest {
     @Test
     public void testDetermineNeo4jConfFolderDefault() {
         System.setProperty(SUN_JAVA_COMMAND, "");
-        assertEquals(".", apocConfig.determineNeo4jConfFolder());
+        assertEquals("C:/neo4j/neo4j-enterprise-5.x.0/conf", apocConfig.determineNeo4jConfFolder());
     }
 
     @Test
