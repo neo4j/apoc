@@ -314,3 +314,11 @@ Or as normal, click the play button on the test you would like to run.
 To apply the https://github.com/diffplug/spotless/tree/main/plugin-gradle#how-do-i-preview-what-spotlessapply-will-do[spotless] code-style, run the above gradle command, this will remove all unused imports
 
 // end::codestyle[]
+// tag::generatelicence[]
+=== Generate license files
+
+----
+./gradlew generateLicensesFiles
+----
+
+// end::generatelicence[]
