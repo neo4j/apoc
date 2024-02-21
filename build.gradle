@@ -14,7 +14,7 @@ downloadLicenses {
 
 allprojects {
     group = 'org.neo4j.procedure'
-    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '5.17.0'
+    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '5.17.1'
     archivesBaseName = 'apoc'
     description = """neo4j-apoc-procedures"""
 }
