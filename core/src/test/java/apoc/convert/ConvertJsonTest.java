@@ -30,13 +30,10 @@ import static org.junit.Assert.*;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
-
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.util.Arrays;
@@ -46,10 +43,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.rule.DbmsRule;
@@ -470,7 +465,8 @@ public class ConvertJsonTest {
 
     @Test
     public void testToTreeIssue2190() {
-        db.executeTransactionally("""
+        db.executeTransactionally(
+                """
                 CREATE (root:TreeNode {name:'root'})
                 CREATE (c0:TreeNode {name: 'c0'})
                 CREATE (c1:TreeNode {name: 'c1'})
@@ -555,14 +551,16 @@ public class ConvertJsonTest {
 
     @Test
     public void testToTreeLeafNodes() {
-        String createStatement = """
+        String createStatement =
+                """
                 CREATE
                 (c1:Category {name: 'PC'}),
                 (c1)-[:subcategory {id:1}]->(c2:Category {name: 'Parts'}),
                 (c2)-[:subcategory {id:2}]->(c3:Category {name: 'CPU'})""";
         db.executeTransactionally(createStatement);
 
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -614,7 +612,8 @@ public class ConvertJsonTest {
                         (u1)-[:Flag {id: "rel6", Created: '2018-11-21T11:20:31', FlagType: 1}]->(c1)""";
         db.executeTransactionally(createDatabase);
 
-        String queryToGetGeneratedIds = """
+        String queryToGetGeneratedIds =
+                """
                 MATCH (n)
                 RETURN n.id as givenId, id(n) as id, elementId(n) as elementId
                 UNION
@@ -623,21 +622,16 @@ public class ConvertJsonTest {
                 """;
 
         db.executeTransactionally(queryToGetGeneratedIds);
-        Map<String, Map<String, String>> generatedIdsMapping = db.executeTransactionally(
-                queryToGetGeneratedIds,
-                Collections.emptyMap(),
-                result -> result.stream()
-                        .collect(
-                                Collectors.toMap(
-                                        row -> row.get("givenId").toString(),
-                                        row -> Map.of(
-                                                "id", row.get("id").toString(),
-                                                "elementId", row.get("elementId").toString()
-                                        )
-                                )
-                        ));
+        Map<String, Map<String, String>> generatedIdsMapping =
+                db.executeTransactionally(queryToGetGeneratedIds, Collections.emptyMap(), result -> result.stream()
+                        .collect(Collectors.toMap(
+                                row -> row.get("givenId").toString(),
+                                row -> Map.of(
+                                        "id", row.get("id").toString(),
+                                        "elementId", row.get("elementId").toString()))));
 
-        String call = """
+        String call =
+                """
                 MATCH (parent:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd'})
                 WITH parent
                 OPTIONAL MATCH childFlagPath=(parent)-[:HAS]->(:Comm)<-[:Flag]-(:User)
@@ -649,8 +643,16 @@ public class ConvertJsonTest {
             Map<?, ?> root = (Map<?, ?>) row.get("value");
 
             assertEquals("Bib", root.get("_type"));
-            assertEquals(generatedIdsMapping.get("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd").get("id"), root.get("_id").toString());
-            assertEquals(generatedIdsMapping.get("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd").get("elementId"), root.get("_elementId").toString());
+            assertEquals(
+                    generatedIdsMapping
+                            .get("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd")
+                            .get("id"),
+                    root.get("_id").toString());
+            assertEquals(
+                    generatedIdsMapping
+                            .get("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd")
+                            .get("elementId"),
+                    root.get("_elementId").toString());
             assertEquals("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd", root.get("id"));
             assertEquals(2L, root.get("langId"));
 
@@ -660,8 +662,16 @@ public class ConvertJsonTest {
             Map<?, ?> hasPart = has.get(0);
 
             assertEquals("Comm", hasPart.get("_type"));
-            assertEquals(generatedIdsMapping.get("a34fd608-262b-678a-cb38-6991297fa9c8").get("id"), hasPart.get("_id").toString());
-            assertEquals(generatedIdsMapping.get("a34fd608-262b-678a-cb38-6991297fa9c8").get("elementId"), hasPart.get("_elementId").toString());
+            assertEquals(
+                    generatedIdsMapping
+                            .get("a34fd608-262b-678a-cb38-6991297fa9c8")
+                            .get("id"),
+                    hasPart.get("_id").toString());
+            assertEquals(
+                    generatedIdsMapping
+                            .get("a34fd608-262b-678a-cb38-6991297fa9c8")
+                            .get("elementId"),
+                    hasPart.get("_elementId").toString());
             assertEquals("a34fd608-262b-678a-cb38-6991297fa9c8", hasPart.get("id"));
             assertEquals(2L, hasPart.get("langId"));
             List<Map> subParts = (List<Map>) hasPart.get("flag");
@@ -671,33 +681,62 @@ public class ConvertJsonTest {
             MatcherAssert.assertThat(
                     subParts,
                     Matchers.hasItem(MapUtil.map(
-                            "_type", "User",
-                            "flag.Created", "2018-11-21T11:22:01",
-                            "_id", Long.parseLong(generatedIdsMapping.get("facebook|680594762097202").get("id")),
-                            "_elementId", generatedIdsMapping.get("facebook|680594762097202").get("elementId"),
-                            "id", "facebook|680594762097202",
-                            "flag.id", "rel3",
-                            "flag._id", Long.parseLong(generatedIdsMapping.get("rel3").get("id")),
-                            "flag._elementId", generatedIdsMapping.get("rel3").get("elementId"),
-                            "flag.id", "rel3",
-                            "flag.FlagType", 4L)));
+                            "_type",
+                            "User",
+                            "flag.Created",
+                            "2018-11-21T11:22:01",
+                            "_id",
+                            Long.parseLong(generatedIdsMapping
+                                    .get("facebook|680594762097202")
+                                    .get("id")),
+                            "_elementId",
+                            generatedIdsMapping.get("facebook|680594762097202").get("elementId"),
+                            "id",
+                            "facebook|680594762097202",
+                            "flag.id",
+                            "rel3",
+                            "flag._id",
+                            Long.parseLong(generatedIdsMapping.get("rel3").get("id")),
+                            "flag._elementId",
+                            generatedIdsMapping.get("rel3").get("elementId"),
+                            "flag.id",
+                            "rel3",
+                            "flag.FlagType",
+                            4L)));
 
             MatcherAssert.assertThat(
                     subParts,
                     Matchers.hasItem(MapUtil.map(
-                            "_type", "User",
-                            "flag.Created", "2018-11-21T11:20:31",
-                            "_id", Long.parseLong(generatedIdsMapping.get("google-oauth2|106707535753175966005").get("id")),
-                            "_elementId", generatedIdsMapping.get("google-oauth2|106707535753175966005").get("elementId"),
-                            "id", "google-oauth2|106707535753175966005",
-                            "flag.id", "rel6",
-                            "flag._id", Long.parseLong(generatedIdsMapping.get("rel6").get("id")),
-                            "flag._elementId", generatedIdsMapping.get("rel6").get("elementId"),
-                            "flag.FlagType", 1L)));
+                            "_type",
+                            "User",
+                            "flag.Created",
+                            "2018-11-21T11:20:31",
+                            "_id",
+                            Long.parseLong(generatedIdsMapping
+                                    .get("google-oauth2|106707535753175966005")
+                                    .get("id")),
+                            "_elementId",
+                            generatedIdsMapping
+                                    .get("google-oauth2|106707535753175966005")
+                                    .get("elementId"),
+                            "id",
+                            "google-oauth2|106707535753175966005",
+                            "flag.id",
+                            "rel6",
+                            "flag._id",
+                            Long.parseLong(generatedIdsMapping.get("rel6").get("id")),
+                            "flag._elementId",
+                            generatedIdsMapping.get("rel6").get("elementId"),
+                            "flag.FlagType",
+                            1L)));
             hasPart = has.get(1);
 
             assertEquals("Comm", hasPart.get("_type"));
-            assertEquals(Long.parseLong(generatedIdsMapping.get("a34fd608-1751-0b5d-cb38-6991297fa9c9").get("id")), hasPart.get("_id"));
+            assertEquals(
+                    Long.parseLong(generatedIdsMapping
+                            .get("a34fd608-1751-0b5d-cb38-6991297fa9c9")
+                            .get("id")),
+                    hasPart.get("_id"));
             assertEquals("a34fd608-1751-0b5d-cb38-6991297fa9c9", hasPart.get("id"));
             assertEquals(2L, hasPart.get("langId"));
         });
@@ -706,7 +745,8 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigInclude() {
         statementForConfig(db);
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -736,7 +776,8 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigExclude() {
         statementForConfig(db);
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -766,7 +807,8 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigExcludeInclude() {
         statementForConfig(db);
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -796,7 +838,8 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigOnlyInclude() {
         statementForConfig(db);
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -826,7 +869,8 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigErrorInclude() {
         statementForConfig(db);
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -843,7 +887,8 @@ public class ConvertJsonTest {
 
     @Test
     public void testToTreeDoesNotRemoveNonDuplicateRels() {
-        String createStatement = """
+        String createStatement =
+                """
             CREATE (v1:N {id: 'n21', name: 'Node 21', p2: 'node21'})
             CREATE (v2:N {id: 'n22', name: 'Node 22', p2: 'node22'})
             CREATE (v1)-[:R {prop1: 'n21->n22 [1]', prop2: 'Rel 1'}]->(v2)
@@ -851,42 +896,43 @@ public class ConvertJsonTest {
 
         db.executeTransactionally(createStatement);
 
-        String query = """
+        String query =
+                """
                 MATCH p1 = (n:N {id:'n21'})-[e1]->(m1:N)
                 WITH  COLLECT(p1) as paths
                 CALL apoc.convert.toTree(paths, false)
                 YIELD value
                 RETURN value""";
 
-        testResult(
-                db,
-                query,
-                res -> {
-                    Map<String, Object> value = (Map<String, Object>) res.next().get("value");
-                    // Check Parent Node: (v1:T1 {id: 'v21', name: 'Vertex 21', p2: 'value21'})
-                    assertEquals("n21", value.get("id"));
-                    assertEquals("N", value.get("_type"));
-                    assertEquals("node21", value.get("p2"));
-                    assertEquals("Node 21", value.get("name"));
-                    // Check Children Nodes
-                    List<Map<String, Object>> RBranches = (List<Map<String, Object>>) value.get("R");
-                    Map<String, Object> rel1 = Map.of("p2", "node22", "name", "Node 22", "id", "n22", "R.prop1", "n21->n22 [1]", "R.prop2", "Rel 1");
-                    Map<String, Object> rel2 = Map.of("p2", "node22", "name", "Node 22", "id", "n22", "R.prop1", "n21->n22 [2]", "R.prop2", "Rel 2");
-                    assertEquals(2, RBranches.size());
-                    if (RBranches.get(0).entrySet().containsAll(rel1.entrySet())) {
-                        assertTrue(RBranches.get(1).entrySet().containsAll(rel2.entrySet()));
-                    } else {
-                        assertTrue(RBranches.get(0).entrySet().containsAll(rel1.entrySet()));
-                        assertTrue(RBranches.get(1).entrySet().containsAll(rel2.entrySet()));
-                    }
-                    assertFalse(res.hasNext());
-                });
+        testResult(db, query, res -> {
+            Map<String, Object> value = (Map<String, Object>) res.next().get("value");
+            // Check Parent Node: (v1:T1 {id: 'v21', name: 'Vertex 21', p2: 'value21'})
+            assertEquals("n21", value.get("id"));
+            assertEquals("N", value.get("_type"));
+            assertEquals("node21", value.get("p2"));
+            assertEquals("Node 21", value.get("name"));
+            // Check Children Nodes
+            List<Map<String, Object>> RBranches = (List<Map<String, Object>>) value.get("R");
+            Map<String, Object> rel1 = Map.of(
+                    "p2", "node22", "name", "Node 22", "id", "n22", "R.prop1", "n21->n22 [1]", "R.prop2", "Rel 1");
+            Map<String, Object> rel2 = Map.of(
+                    "p2", "node22", "name", "Node 22", "id", "n22", "R.prop1", "n21->n22 [2]", "R.prop2", "Rel 2");
+            assertEquals(2, RBranches.size());
+            if (RBranches.get(0).entrySet().containsAll(rel1.entrySet())) {
+                assertTrue(RBranches.get(1).entrySet().containsAll(rel2.entrySet()));
+            } else {
+                assertTrue(RBranches.get(0).entrySet().containsAll(rel1.entrySet()));
+                assertTrue(RBranches.get(1).entrySet().containsAll(rel2.entrySet()));
+            }
+            assertFalse(res.hasNext());
+        });
     }
 
     @Test
     public void testToTreeLeafNodesWithConfigErrorExclude() {
         statementForConfig(db);
-        String call = """
+        String call =
+                """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -902,7 +948,8 @@ public class ConvertJsonTest {
     }
 
     private static void statementForConfig(GraphDatabaseService db) {
-        String createStatement = """
+        String createStatement =
+                """
                 CREATE
                 (c1:Category {name: 'PC', surname: 'computer'}),
                 (c1)-[:subcategory {id:1, subCat: 'gen'}]->(c2:Category {name: 'Parts'}),

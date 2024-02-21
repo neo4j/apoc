@@ -170,7 +170,8 @@ public class Json {
     }
 
     @Procedure("apoc.convert.toTree")
-    @Description("Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
+    @Description(
+            "Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
     public Stream<MapResult> toTree(
             @Name("paths") List<Path> paths,
             @Name(value = "lowerCaseRels", defaultValue = "true") boolean lowerCaseRels,
@@ -203,10 +204,8 @@ public class Json {
                     List<Map<String, Object>> list = (List) nMap.get(typeName);
                     // Check that this combination of rel and node doesn't already exist
                     Optional<Map<String, Object>> optMap = list.stream()
-                            .filter(elem ->
-                                    elem.get("_elementId").equals(m.getElementId())
-                                            && elem.get(typeName + "._elementId").equals(r.getElementId())
-                            )
+                            .filter(elem -> elem.get("_elementId").equals(m.getElementId())
+                                    && elem.get(typeName + "._elementId").equals(r.getElementId()))
                             .findFirst();
                     if (!optMap.isPresent()) {
                         Map<String, Object> mMap = toMap(m, nodes);
@@ -273,7 +272,7 @@ public class Json {
         Map<String, Object> props = n.getAllProperties();
         Map<String, Object> result = new LinkedHashMap<>(props.size() + 2);
         String type = Util.labelString(n);
-        result.put("_id", n.getId());;
+        result.put("_id", n.getId());
         result.put("_elementId", n.getElementId());
         result.put("_type", type);
         if (nodeFilters.containsKey(type)) { // Check if list contains LABEL

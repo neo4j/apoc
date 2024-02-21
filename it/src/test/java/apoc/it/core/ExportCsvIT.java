@@ -64,8 +64,9 @@ public class ExportCsvIT {
                 + "This article is distributed by The American Society for Cell Biology under license from the author(s). Two months after publication it is available to the public under an Attribution-Noncommercial-Share Alike 3.0 Unported Creative Commons License.\n"
                 + "\n";
         String pk = "5921569";
-        session.executeWrite(tx ->
-                tx.run("CREATE (n:Document{pk:$pk, copyright: $copyright})", map("copyright", copyright, "pk", pk)).consume());
+        session.executeWrite(tx -> tx.run(
+                        "CREATE (n:Document{pk:$pk, copyright: $copyright})", map("copyright", copyright, "pk", pk))
+                .consume());
         String query = "MATCH (n:Document{pk:'5921569'}) return n.pk as pk, n.copyright as copyright";
         testCall(
                 session,

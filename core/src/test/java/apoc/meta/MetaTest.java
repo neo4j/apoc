@@ -25,6 +25,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -40,6 +41,7 @@ import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import com.google.common.collect.ImmutableMap;
 import java.io.InputStreamReader;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -50,7 +52,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.commons.io.IOUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -369,23 +370,93 @@ public class MetaTest {
                 result -> assertEquals(false, result.get("value")));
     }
 
+    private void assertStats(String setupQuery, Map<String, Object> expected) {
+        // Stats works on committed data
+        db.executeTransactionally(setupQuery);
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute("CALL apoc.meta.stats()").stream().toList())
+                    .satisfiesExactly(row -> assertThat(row).containsExactlyInAnyOrderEntriesOf(expected));
+            tx.commit();
+        }
+
+        // Stats works on uncommited data
+        db.executeTransactionally("CREATE (:UnrelatedLabel)-[:UNRELATED_REL]->()");
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute("MATCH (n) DETACH DELETE n").stream().toList())
+                    .size()
+                    .isLessThanOrEqualTo(0);
+            assertThat(tx.execute(setupQuery).stream().toList()).size().isGreaterThanOrEqualTo(0);
+            assertThat(tx.execute("CALL apoc.meta.stats()").stream().toList())
+                    .satisfiesExactly(row -> assertThat(row).containsExactlyInAnyOrderEntriesOf(expected));
+            tx.commit();
+        }
+    }
+
+    private Map<String, Object> statsMap(Map<String, Object> values) {
+        final var stats = values.entrySet().stream()
+                .filter(e -> !"relTypesCount".equals(e.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return ImmutableMap.<String, Object>builder()
+                .putAll(values)
+                .put("stats", stats)
+                .build();
+    }
+
     @Test
     public void testMetaStats() {
-        db.executeTransactionally("CREATE (:Actor)-[:ACTED_IN]->(:Movie) ");
-        TestUtil.testCall(db, "CALL apoc.meta.stats()", r -> {
-            assertEquals(2L, r.get("labelCount"));
-            assertEquals(1L, r.get("relTypeCount"));
-            assertEquals(0L, r.get("propertyKeyCount"));
-            assertEquals(2L, r.get("nodeCount"));
-            assertEquals(1L, r.get("relCount"));
-            assertEquals(map("Actor", 1L, "Movie", 1L), r.get("labels"));
-            assertEquals(
-                    map(
-                            "(:Actor)-[:ACTED_IN]->()", 1L,
-                            "()-[:ACTED_IN]->(:Movie)", 1L,
-                            "()-[:ACTED_IN]->()", 1L),
-                    r.get("relTypes"));
-        });
+        final var setup =
+                "CREATE (:Actor)-[:ACTED_IN]->(:Movie), ()-[:ACTED_IN]->(:Movie), (:Actor)-[:ACTED_IN]->(), ()-[:ACTED_IN]->()";
+        final var expected = statsMap(Map.of(
+                "relTypeCount", 1L,
+                "propertyKeyCount", 0L,
+                "labelCount", 2L,
+                "nodeCount", 8L,
+                "relCount", 4L,
+                "labels", Map.of("Movie", 2L, "Actor", 2L),
+                "relTypes",
+                        Map.of(
+                                "()-[:ACTED_IN]->(:Movie)",
+                                2L,
+                                "()-[:ACTED_IN]->()",
+                                4L,
+                                "(:Actor)-[:ACTED_IN]->()",
+                                2L),
+                "relTypesCount", Map.of("ACTED_IN", 4L)));
+        assertStats(setup, expected);
+    }
+
+    @Test
+    public void testMetaStats2() {
+        final var nodeLabels = List.of("", ":A", ":B", ":A:B");
+        final var setup = new StringBuilder();
+        for (final var labelsA : nodeLabels) {
+            setup.append("CREATE (%s)%n".formatted(labelsA));
+            for (final var labelsB : nodeLabels) {
+                setup.append("CREATE (%s)-[:R1]->(%s)%n".formatted(labelsA, labelsB));
+                setup.append("CREATE (%s)<-[:R2]-(%s)%n".formatted(labelsA, labelsB));
+            }
+        }
+        final var expected = statsMap(Map.of(
+                "relTypeCount", 2L,
+                "propertyKeyCount", 0L,
+                "labelCount", 2L,
+                "nodeCount", 68L,
+                "relCount", 32L,
+                "labels", Map.of("A", 34L, "B", 34L),
+                "relTypes",
+                        Map.of(
+                                "()-[:R1]->()", 16L,
+                                "()-[:R2]->()", 16L,
+                                "()-[:R1]->(:A)", 8L,
+                                "()-[:R1]->(:B)", 8L,
+                                "()-[:R2]->(:A)", 8L,
+                                "()-[:R2]->(:B)", 8L,
+                                "(:A)-[:R1]->()", 8L,
+                                "(:A)-[:R2]->()", 8L,
+                                "(:B)-[:R1]->()", 8L,
+                                "(:B)-[:R2]->()", 8L),
+                "relTypesCount", Map.of("R1", 16L, "R2", 16L)));
+        assertStats(setup.toString(), expected);
     }
 
     @Test
@@ -971,7 +1042,7 @@ public class MetaTest {
         db.executeTransactionally("CREATE (:Person {name:'Sarah', surname:'Taylor'})");
         db.executeTransactionally("CREATE (:Person {name:'Jane'})");
         db.executeTransactionally("CREATE (:Person {name:'Jeff', surname:'Logan'})");
-        TestUtil.testResult(db, "CALL apoc.meta.data({sample:2})", (r) -> Assertions.assertThat(
+        TestUtil.testResult(db, "CALL apoc.meta.data({sample:2})", (r) -> assertThat(
                         r.stream().map(m -> m.get("property")))
                 .containsExactlyInAnyOrder("name", "surname"));
     }
@@ -1014,7 +1085,7 @@ public class MetaTest {
     public void testRelationshipAndNodeNames() {
         db.executeTransactionally("CREATE (a:NODE)-[r:RELATIONSHIP]->(m:Movie)");
         TestUtil.testResult(db, "CALL apoc.meta.data()", (r) -> {
-            Assertions.assertThat(r.stream().map(m -> m.get("label"))).contains("RELATIONSHIP", "NODE");
+            assertThat(r.stream().map(m -> m.get("label"))).contains("RELATIONSHIP", "NODE");
             r.close();
         });
     }
@@ -1033,7 +1104,7 @@ public class MetaTest {
         db.executeTransactionally("CREATE (:Person {name:'Jeff', surname:'Logan'})");
         db.executeTransactionally("CREATE (:Person {name:'Tom'})");
         TestUtil.testResult(db, "CALL apoc.meta.data({sample:5})", (r) -> {
-            Assertions.assertThat(r.stream().map(m -> m.get("property"))).contains("name");
+            assertThat(r.stream().map(m -> m.get("property"))).contains("name");
             r.close();
         });
     }

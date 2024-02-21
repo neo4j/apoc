@@ -32,12 +32,19 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.TokenRead;
+import org.neo4j.kernel.api.KernelTransaction;
 
 public class DatabaseSubGraph implements SubGraph {
     private final Transaction transaction;
 
     public DatabaseSubGraph(Transaction transaction) {
         this.transaction = transaction;
+    }
+
+    public static SubGraph optimizedForCount(Transaction transaction, KernelTransaction kernelTransaction) {
+        return new CountOptimisedDatabaseSubGraph(transaction, kernelTransaction);
     }
 
     @Override
@@ -115,5 +122,43 @@ public class DatabaseSubGraph implements SubGraph {
     @Override
     public Iterator<Node> findNodes(Label label) {
         return transaction.findNodes(label);
+    }
+}
+
+/**
+ * Implementation of DatabaseSubGraph that uses internal kernel APIs directly for better performance when retrieving counts.
+ * The default implementation can cause a lot of subqueries that requires time for planning.
+ */
+class CountOptimisedDatabaseSubGraph extends DatabaseSubGraph {
+    private final TokenRead tokenRead;
+    private final Read read;
+
+    public CountOptimisedDatabaseSubGraph(Transaction transaction, KernelTransaction kernelTx) {
+        super(transaction);
+        this.tokenRead = kernelTx.tokenRead();
+        this.read = kernelTx.dataRead();
+    }
+
+    @Override
+    public long countsForNode(Label label) {
+        return read.countsForNode(tokenRead.nodeLabel(label.name()));
+    }
+
+    @Override
+    public long countsForRelationship(RelationshipType type, Label end) {
+        return read.countsForRelationship(
+                TokenRead.ANY_LABEL, tokenRead.relationshipType(type.name()), tokenRead.nodeLabel(end.name()));
+    }
+
+    @Override
+    public long countsForRelationship(Label start, RelationshipType type) {
+        return read.countsForRelationship(
+                tokenRead.nodeLabel(start.name()), tokenRead.relationshipType(type.name()), TokenRead.ANY_LABEL);
+    }
+
+    @Override
+    public long countsForRelationship(RelationshipType type) {
+        return read.countsForRelationship(
+                TokenRead.ANY_LABEL, tokenRead.relationshipType(type.name()), TokenRead.ANY_LABEL);
     }
 }

@@ -5,3 +5,4 @@ include("common")
 include("core")
 include("test-utils")
 include("it")
+// include("benchmark") Disabled because we only run this locally right now
