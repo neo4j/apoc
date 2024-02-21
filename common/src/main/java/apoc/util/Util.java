@@ -22,6 +22,7 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 import static apoc.util.DateFormatUtil.getOrCreate;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
+import static java.util.stream.Collectors.toUnmodifiableMap;
 import static org.eclipse.jetty.util.URIUtil.encodePath;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
@@ -933,6 +934,38 @@ public class Util {
 
     public static <T extends Entity> List<T> rebind(List<T> entities, Transaction tx) {
         return entities.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Map<String, Object>> rebindRows(Transaction tx, List<Map<String, Object>> rows) {
+        for (var row : rows) if (needsRebind(row)) return (List<Map<String, Object>>) recursiveRebind(tx, rows);
+        return rows;
+    }
+
+    private static Object recursiveRebind(Transaction tx, Object o) {
+        if (o instanceof Entity entity) {
+            return rebind(tx, entity);
+        } else if (o instanceof Map<?, ?> map && needsRebind(map)) {
+            return map.entrySet().stream()
+                    .collect(toUnmodifiableMap(e -> e.getKey().toString(), e -> recursiveRebind(tx, e.getValue())));
+        } else if (o instanceof List<?> list && needsRebind(list)) {
+            return list.stream().map(e -> recursiveRebind(tx, e)).toList();
+        } else {
+            return o;
+        }
+    }
+
+    private static boolean needsRebind(Map<?, ?> map) {
+        return needsRebind(map.values());
+    }
+
+    private static boolean needsRebind(Collection<?> values) {
+        for (var value : values) {
+            if (value instanceof Map || value instanceof List || value instanceof Entity) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Node mergeNode(
