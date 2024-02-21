@@ -681,35 +681,54 @@ public class ConvertJsonTest {
             MatcherAssert.assertThat(
                     subParts,
                     Matchers.hasItem(MapUtil.map(
-                            "_type", "User",
-                            "flag.Created", "2018-11-21T11:22:01",
+                            "_type",
+                            "User",
+                            "flag.Created",
+                            "2018-11-21T11:22:01",
                             "_id",
-                                    Long.parseLong(generatedIdsMapping
-                                            .get("facebook|680594762097202")
-                                            .get("id")),
+                            Long.parseLong(generatedIdsMapping
+                                    .get("facebook|680594762097202")
+                                    .get("id")),
                             "_elementId",
-                                    generatedIdsMapping
-                                            .get("facebook|680594762097202")
-                                            .get("elementId"),
-                            "id", "facebook|680594762097202",
-                            "flag.id", "rel3",
-                            "flag._id", Long.parseLong(generatedIdsMapping.get("rel3").get("id")),
-                            "flag._elementId", generatedIdsMapping.get("rel3").get("elementId"),
-                            "flag.id", "rel3",
-                            "flag.FlagType", 4L)));
+                            generatedIdsMapping.get("facebook|680594762097202").get("elementId"),
+                            "id",
+                            "facebook|680594762097202",
+                            "flag.id",
+                            "rel3",
+                            "flag._id",
+                            Long.parseLong(generatedIdsMapping.get("rel3").get("id")),
+                            "flag._elementId",
+                            generatedIdsMapping.get("rel3").get("elementId"),
+                            "flag.id",
+                            "rel3",
+                            "flag.FlagType",
+                            4L)));
 
             MatcherAssert.assertThat(
                     subParts,
                     Matchers.hasItem(MapUtil.map(
-                            "_type", "User",
-                            "flag.Created", "2018-11-21T11:20:31",
-                            "_id", Long.parseLong(generatedIdsMapping.get("google-oauth2|106707535753175966005").get("id")),
-                            "_elementId", generatedIdsMapping.get("google-oauth2|106707535753175966005").get("elementId"),
-                            "id", "google-oauth2|106707535753175966005",
-                            "flag.id", "rel6",
-                            "flag._id", Long.parseLong(generatedIdsMapping.get("rel6").get("id")),
-                            "flag._elementId", generatedIdsMapping.get("rel6").get("elementId"),
-                            "flag.FlagType", 1L)));
+                            "_type",
+                            "User",
+                            "flag.Created",
+                            "2018-11-21T11:20:31",
+                            "_id",
+                            Long.parseLong(generatedIdsMapping
+                                    .get("google-oauth2|106707535753175966005")
+                                    .get("id")),
+                            "_elementId",
+                            generatedIdsMapping
+                                    .get("google-oauth2|106707535753175966005")
+                                    .get("elementId"),
+                            "id",
+                            "google-oauth2|106707535753175966005",
+                            "flag.id",
+                            "rel6",
+                            "flag._id",
+                            Long.parseLong(generatedIdsMapping.get("rel6").get("id")),
+                            "flag._elementId",
+                            generatedIdsMapping.get("rel6").get("elementId"),
+                            "flag.FlagType",
+                            1L)));
             hasPart = has.get(1);
 
             assertEquals("Comm", hasPart.get("_type"));
