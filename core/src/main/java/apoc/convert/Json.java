@@ -273,7 +273,6 @@ public class Json {
         Map<String, Object> result = new LinkedHashMap<>(props.size() + 2);
         String type = Util.labelString(n);
         result.put("_id", n.getId());
-        ;
         result.put("_elementId", n.getElementId());
         result.put("_type", type);
         if (nodeFilters.containsKey(type)) { // Check if list contains LABEL
