@@ -24,7 +24,8 @@ import static apoc.util.FileTestUtil.assertStreamEquals;
 import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.assertS3KeyEventually;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import apoc.export.json.ExportJson;
 import apoc.graph.Graphs;

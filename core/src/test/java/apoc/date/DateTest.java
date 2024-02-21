@@ -23,7 +23,9 @@ import static apoc.util.TestUtil.testCall;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import apoc.temporal.TemporalProcedures;
 import apoc.util.TestUtil;

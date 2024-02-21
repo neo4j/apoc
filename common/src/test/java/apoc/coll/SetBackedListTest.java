@@ -21,9 +21,13 @@ package apoc.coll;
 import static java.util.Arrays.asList;
 import static java.util.Collections.EMPTY_SET;
 import static java.util.Collections.singleton;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.ListIterator;
 import org.junit.Test;
 
 /**

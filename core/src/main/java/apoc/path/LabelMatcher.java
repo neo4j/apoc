@@ -18,7 +18,10 @@
  */
 package apoc.path;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A generic label matcher which evaluates whether or not a node has at least one of the labels added on the matcher.

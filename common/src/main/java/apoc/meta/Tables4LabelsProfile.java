@@ -21,11 +21,20 @@ package apoc.meta;
 import apoc.meta.tablesforlabels.OrderedLabels;
 import apoc.meta.tablesforlabels.PropertyContainerProfile;
 import apoc.meta.tablesforlabels.PropertyTracker;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 
 public class Tables4LabelsProfile {
     Map<OrderedLabels, PropertyContainerProfile> labelMap;

@@ -19,7 +19,10 @@
 package apoc.meta.tablesforlabels;
 
 import apoc.meta.ConstraintTracker;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import org.neo4j.graphdb.Entity;
 
 /**

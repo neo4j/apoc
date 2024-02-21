@@ -21,7 +21,11 @@ package apoc.agg;
 import apoc.util.Util;
 import java.util.ArrayList;
 import java.util.List;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.UserAggregationFunction;
+import org.neo4j.procedure.UserAggregationResult;
+import org.neo4j.procedure.UserAggregationUpdate;
 
 /**
  * Aggregation functions for collecting items with only the minimal or maximal values.

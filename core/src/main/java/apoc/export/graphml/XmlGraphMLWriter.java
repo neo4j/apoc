@@ -18,9 +18,15 @@
  */
 package apoc.export.graphml;
 
-import static apoc.export.util.MetaInformation.*;
+import static apoc.export.util.MetaInformation.getLabelsString;
+import static apoc.export.util.MetaInformation.getLabelsStringGephi;
+import static apoc.export.util.MetaInformation.updateKeyTypes;
 
-import apoc.export.util.*;
+import apoc.export.util.ExportConfig;
+import apoc.export.util.ExportFormat;
+import apoc.export.util.FormatUtils;
+import apoc.export.util.MetaInformation;
+import apoc.export.util.Reporter;
 import java.io.Writer;
 import java.util.HashMap;
 import java.util.Map;

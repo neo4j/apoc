@@ -33,7 +33,11 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.configuration2.Configuration;
 import org.neo4j.graphdb.security.URLAccessChecker;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.TerminationGuard;
 
 public class Geocode {
     public static final int MAX_RESULTS = 100;
