@@ -19,7 +19,6 @@
 package apoc.math;
 
 import java.util.stream.Stream;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.ResourceIterator;
@@ -53,14 +52,14 @@ public class Regression {
             "Returns the coefficient of determination (R-squared) for the values of propertyY and propertyX in the given label.")
     public Stream<Output> regr(@Name("label") String label, @Name("propertyY") String y, @Name("propertyX") String x) {
 
-        SimpleRegression regr = new SimpleRegression(false);
+        SimpleRegression regr = new SimpleRegression();
         double regrAvgX = 0;
         double regrAvgY = 0;
         int count = 0;
 
-        try (ResourceIterator it = tx.findNodes(Label.label(label))) {
+        try (ResourceIterator<Node> it = tx.findNodes(Label.label(label))) {
             while (it.hasNext()) {
-                Node node = (Node) it.next();
+                Node node = it.next();
                 Number propX = (Number) node.getProperty(x, null);
                 Number propY = (Number) node.getProperty(y, null);
                 if (propX != null && propY != null) {
