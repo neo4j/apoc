@@ -39,7 +39,6 @@ dependencies {
             strictly '3.14.0'
         }
     }
-    api group: 'org.apache.commons', name: 'commons-math3', version: '3.6.1'
     api group: 'com.github.seancfoley', name: 'ipaddress', version: '5.3.3'
 
     // These will be dependencies not packaged with the .jar

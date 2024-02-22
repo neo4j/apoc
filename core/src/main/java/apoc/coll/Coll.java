@@ -50,8 +50,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
-import org.apache.commons.math3.util.Combinations;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
@@ -78,8 +76,8 @@ public class Coll {
             @Name("list") List<Number> list,
             @Name(value = "isBiasCorrected", defaultValue = "true") boolean isBiasCorrected) {
         if (list == null || list.isEmpty()) return null;
-        final double stdev = new StandardDeviation(isBiasCorrected)
-                .evaluate(list.stream().mapToDouble(Number::doubleValue).toArray());
+        final double stdev = StandardDeviation.stdDev(
+                list.stream().mapToDouble(Number::doubleValue).toArray(), isBiasCorrected);
         if ((long) stdev == stdev) return (long) stdev;
         return stdev;
     }
