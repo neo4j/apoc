@@ -39,7 +39,6 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.apache.commons.collections4.IterableUtils;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
@@ -512,8 +511,8 @@ public class GraphRefactoring {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
 
         RefactorConfig refactorConfig = new RefactorConfig(config);
-
-        List<Node> nodes = IterableUtils.toList(path.nodes());
+        List<Node> nodes = new ArrayList<>();
+        path.nodes().forEach(nodes::add);
         Set<Relationship> rels = Iterables.asSet(path.relationships());
 
         if (!nodes.containsAll(nodesToRemove)) {

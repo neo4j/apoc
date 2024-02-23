@@ -26,7 +26,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.commons.collections4.MapUtils;
 
 public class GraphsConfig {
 
@@ -40,10 +39,10 @@ public class GraphsConfig {
         private static final String PROPERTIES = "properties";
         private static final String WILDCARD = "*";
 
-        private List<String> valueObjects = new ArrayList<>();
-        private List<String> ids = new ArrayList<>();
-        private List<String> properties = new ArrayList<>();
-        private List<String> labels = new ArrayList<>();
+        private final List<String> valueObjects = new ArrayList<>();
+        private final List<String> ids = new ArrayList<>();
+        private final List<String> properties = new ArrayList<>();
+        private final List<String> labels = new ArrayList<>();
 
         private boolean allProps = true;
 
@@ -115,21 +114,21 @@ public class GraphsConfig {
                             return new AbstractMap.SimpleEntry<>(key, value);
                         }
                     })
-                    .filter(e -> e != null)
+                    .filter(Objects::nonNull)
                     .collect(Collectors.groupingBy(
                             Map.Entry::getKey, Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
             return new GraphMapping(map.get(VALUE_OBJECTS), map.get(IDS), map.get(PROPERTIES), labels, allProps.get());
         }
     }
 
-    private boolean write;
-    private String labelField;
-    private String idField;
-    private boolean generateId;
-    private Map<String, GraphMapping> mappings;
-    private Map<String, String> relMapping;
+    private final boolean write;
+    private final String labelField;
+    private final String idField;
+    private final boolean generateId;
+    private final Map<String, GraphMapping> mappings;
+    private final Map<String, String> relMapping;
 
-    private boolean skipValidation;
+    private final boolean skipValidation;
 
     public GraphsConfig(Map<String, Object> config) {
         if (config == null) {
@@ -141,7 +140,7 @@ public class GraphsConfig {
         labelField = config.getOrDefault("labelField", "type").toString();
         mappings = toMappings((Map<String, String>) config.getOrDefault("mappings", Collections.emptyMap()));
         skipValidation = toBoolean(config.getOrDefault("skipValidation", false));
-        relMapping = MapUtils.emptyIfNull((Map<String, String>) config.get("relMapping"));
+        relMapping = (Map<String, String>) config.getOrDefault("relMapping", Collections.emptyMap());
     }
 
     private Map<String, GraphMapping> toMappings(Map<String, String> mappings) {
@@ -196,7 +195,7 @@ public class GraphsConfig {
                 .map(key -> path.length() >= key.length() ? "" : key.substring(path.length() + 1))
                 .map(key -> key.split("\\.")[0])
                 .filter(key -> !key.isEmpty())
-                .collect(Collectors.toList());
+                .toList();
         List<String> properties =
                 mappings.getOrDefault(path, GraphMapping.EMPTY).getProperties();
         properties.addAll(pathProperties);

@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -1428,8 +1427,8 @@ public class GraphRefactoringTest {
                 "MATCH (n:A), (m:B) WITH [n,m] as nodes CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true, produceSelfRel: true}) yield node return node",
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    List<Relationship> relationships =
-                            IteratorUtils.toList(node.getRelationships().iterator());
+                    ArrayList<Relationship> relationships = new ArrayList<>();
+                    node.getRelationships().forEach(relationships::add);
 
                     assertEquals(4, relationships.size());
                     relationships.sort(Comparator.comparing(
@@ -1531,8 +1530,8 @@ public class GraphRefactoringTest {
                 "MATCH (n:A) WITH collect(n) as nodes CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true, produceSelfRel: false}) yield node return node",
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    List<Relationship> relationships =
-                            IteratorUtils.toList(node.getRelationships().iterator());
+                    List<Relationship> relationships = new ArrayList<>();
+                    node.getRelationships().forEach(relationships::add);
 
                     assertEquals(3, relationships.size());
                     relationships.sort(Comparator.comparing(
@@ -1621,9 +1620,7 @@ public class GraphRefactoringTest {
                 "match (a:One),(b:Two),(c:Three) with [a,b,c] as nodes CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true}) yield node return node",
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    List<String> relNodeList = IteratorUtils.toList(
-                                    node.getRelationships().iterator())
-                            .stream()
+                    List<String> relNodeList = node.getRelationships().stream()
                             .map(i -> i.getType().name())
                             .collect(Collectors.toList());
                     assertThat(relNodeList, Matchers.containsInAnyOrder("ASD", "QWE", "ZXC", "TEST_REL1", "TEST_REL2"));

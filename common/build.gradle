@@ -29,7 +29,6 @@ dependencies {
     // These will be dependencies packaged with the .jar
     api group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0'
     api group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
-    api group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
     // We need this to avoid seeing SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder" on startup
     api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
 

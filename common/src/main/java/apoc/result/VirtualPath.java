@@ -18,17 +18,14 @@
  */
 package apoc.result;
 
-import static org.apache.commons.collections4.IterableUtils.reversedIterable;
-
+import apoc.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
@@ -79,30 +76,17 @@ public class VirtualPath implements Path {
 
     @Override
     public Iterable<Relationship> reverseRelationships() {
-        return reversedIterable(relationships());
+        return () -> new ReverseIterator<>(relationships);
     }
 
     @Override
     public Iterable<Node> nodes() {
-        List<Node> nodes = new ArrayList<>();
-        nodes.add(start);
-
-        AtomicReference<Node> currNode = new AtomicReference<>(start);
-        final List<Node> otherNodes = relationships.stream()
-                .map(rel -> {
-                    final Node otherNode = rel.getOtherNode(currNode.get());
-                    currNode.set(otherNode);
-                    return otherNode;
-                })
-                .collect(Collectors.toList());
-
-        nodes.addAll(otherNodes);
-        return nodes;
+        return nodeList();
     }
 
     @Override
     public Iterable<Node> reverseNodes() {
-        return reversedIterable(nodes());
+        return () -> new ReverseIterator<>(nodeList());
     }
 
     @Override
@@ -153,6 +137,23 @@ public class VirtualPath implements Path {
         }
     }
 
+    private List<Node> nodeList() {
+        List<Node> nodes = new ArrayList<>();
+        nodes.add(start);
+
+        AtomicReference<Node> currNode = new AtomicReference<>(start);
+        final List<Node> otherNodes = relationships.stream()
+                .map(rel -> {
+                    final Node otherNode = rel.getOtherNode(currNode.get());
+                    currNode.set(otherNode);
+                    return otherNode;
+                })
+                .toList();
+
+        nodes.addAll(otherNodes);
+        return nodes;
+    }
+
     private List<Node> getPreviousNodes() {
         Relationship previousRelationship = lastRelationship();
         if (previousRelationship != null) {
@@ -161,21 +162,23 @@ public class VirtualPath implements Path {
         return List.of(endNode());
     }
 
-    public static final class Builder {
-        private final Node start;
-        private final List<Relationship> relationships = new ArrayList<>();
+    private static class ReverseIterator<T> implements Iterator<T> {
+        private final List<T> list;
+        private int index;
 
-        public Builder(Node start) {
-            this.start = start;
+        private ReverseIterator(List<T> list) {
+            this.list = list;
+            index = list.size() - 1;
         }
 
-        public Builder push(Relationship relationship) {
-            this.relationships.add(relationship);
-            return this;
+        @Override
+        public boolean hasNext() {
+            return index >= 0;
         }
 
-        public VirtualPath build() {
-            return new VirtualPath(start, relationships);
+        @Override
+        public T next() {
+            return list.get(index--);
         }
     }
 }
