@@ -169,4 +169,5 @@ ext {
     publicDir = "${project.rootDir}"
     neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.18.0"
     testContainersVersion = '1.19.1'
+    apacheArrowVersion = '15.0.0'
 }

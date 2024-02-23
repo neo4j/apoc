@@ -43,8 +43,8 @@ dependencies {
     api group: 'org.testcontainers', name: 'postgresql', version: testContainersVersion
     api group: 'org.testcontainers', name: 'cassandra', version: testContainersVersion
     api group: 'org.testcontainers', name: 'localstack', version: testContainersVersion
-    api group: 'org.apache.arrow', name: 'arrow-vector', version: '14.0.2'
-    api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: '14.0.2'
+    api group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion
+    api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion
 
     implementation project(":common")
     implementation group: 'org.neo4j', name: 'neo4j-common', version: neo4jVersionEffective, classifier: "tests"

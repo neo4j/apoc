@@ -32,13 +32,6 @@ dependencies {
     // We need this to avoid seeing SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder" on startup
     api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.9'
 
-    // We need to force this dependency's version due to a vulnerability https://github.com/neo4j-contrib/neo4j-apoc-procedures/issues/3048
-    api group: 'org.apache.commons', name: 'commons-lang3', {
-        version {
-            strictly '3.14.0'
-        }
-    }
-    api group: 'com.github.seancfoley', name: 'ipaddress', version: '5.3.3'
 
     // These will be dependencies not packaged with the .jar
     // They need to be provided either through the database or in an extra .jar
@@ -49,6 +42,8 @@ dependencies {
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.3.6', withoutServers
     compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.26.1'
+    compileOnly group: 'com.github.seancfoley', name: 'ipaddress', version: '5.3.3'
+    compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.14.0'
 
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(':test-utils')
