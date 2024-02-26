@@ -26,12 +26,11 @@ import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
 import static apoc.util.Util.map;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -39,6 +38,7 @@ import static org.neo4j.driver.internal.util.Iterables.count;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 import apoc.cypher.Cypher;
+import apoc.refactor.GraphRefactoring;
 import apoc.schema.Schemas;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
@@ -98,7 +98,8 @@ public class PeriodicTest {
 
     @Before
     public void initDb() {
-        TestUtil.registerProcedure(db, Periodic.class, Schemas.class, Cypher.class, Utils.class, MockLogger.class);
+        TestUtil.registerProcedure(
+                db, Periodic.class, Schemas.class, Cypher.class, Utils.class, MockLogger.class, GraphRefactoring.class);
         db.executeTransactionally(
                 "call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
@@ -171,7 +172,7 @@ public class PeriodicTest {
 
         long count = tryReadCount(50, "MATCH (:Foo) RETURN COUNT(*) AS count", 1L);
 
-        assertThat(count, equalTo(1L));
+        assertEquals(1L, count);
 
         testCall(db, callList, (r) -> assertEquals(true, r.get("done")));
     }
@@ -230,7 +231,7 @@ public class PeriodicTest {
 
         long count = tryReadCount(50, "MATCH (:Foo { id: '(╯°□°)╯︵ ┻━┻' }) RETURN COUNT(*) AS count", 1L);
 
-        assertThat(count, equalTo(1L));
+        assertEquals(1L, count);
 
         testCall(db, callList, (r) -> assertEquals(true, r.get("done")));
     }
@@ -838,6 +839,27 @@ public class PeriodicTest {
 
         TestUtil.testCallEmpty(db, "CALL apoc.periodic.truncate({dropSchema: true})", Collections.emptyMap());
         assertCountEntitiesAndIndexes(0, 0, 0, 0);
+    }
+
+    @Test
+    public void testMergeNodesInApocPeriodicIterate() {
+        db.executeTransactionally("UNWIND range(1,1000) as i CREATE (p1:Person) RETURN 1");
+        final var query =
+                """
+        CALL apoc.periodic.iterate(
+          'MATCH (p:Person) RETURN p',
+          'CALL apoc.refactor.mergeNodes([item in $_batch | item.p]) YIELD node RETURN node',
+          {batchSize: 100, parallel: false}
+        )
+        YIELD batch, operations
+        """;
+        final var expected = Map.of(
+                "batch", Map.of("committed", 10L, "errors", Map.of(), "failed", 0L, "total", 10L),
+                "operations", Map.of("committed", 1000L, "errors", Map.of(), "failed", 0L, "total", 1000L));
+        testCall(db, query, map(), (r) -> {
+            // The important assertion is that we don't cause any deadlocks or exceptions
+            assertThat(r).containsExactlyInAnyOrderEntriesOf(expected);
+        });
     }
 
     private void dropSchema() {

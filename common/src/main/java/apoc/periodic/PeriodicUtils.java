@@ -89,7 +89,7 @@ public class PeriodicUtils {
 
         protected TerminationGuard terminationGuard;
         protected BatchAndTotalCollector collector;
-        protected List<Map<String, Object>> batch;
+        private List<Map<String, Object>> batch;
         protected BiFunction<Transaction, Map<String, Object>, QueryStatistics> consumer;
 
         ExecuteBatch(
@@ -101,6 +101,10 @@ public class PeriodicUtils {
             this.collector = collector;
             this.batch = batch;
             this.consumer = consumer;
+        }
+
+        protected List<Map<String, Object>> rebindBatch(Transaction tx) {
+            return Util.rebindRows(tx, batch);
         }
 
         public void release() {
@@ -124,6 +128,7 @@ public class PeriodicUtils {
         @Override
         public final Long apply(Transaction txInThread) {
             if (Util.transactionIsTerminated(terminationGuard)) return 0L;
+            final var batch = rebindBatch(txInThread);
             Map<String, Object> params = Util.map("_count", collector.getCount(), "_batch", batch);
             return executeAndReportErrors(txInThread, consumer, params, batch, batch.size(), null, collector);
         }
@@ -143,6 +148,7 @@ public class PeriodicUtils {
         public final Long apply(Transaction txInThread) {
             if (Util.transactionIsTerminated(terminationGuard)) return 0L;
             AtomicLong localCount = new AtomicLong(collector.getCount());
+            final var batch = rebindBatch(txInThread);
             return batch.stream()
                     .mapToLong(p -> {
                         if (localCount.get() % 1000 == 0 && Util.transactionIsTerminated(terminationGuard)) {
