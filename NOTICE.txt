@@ -73,7 +73,7 @@ Apache-2.0
   commons-io-2.15.1.jar
   commons-lang3-3.14.0.jar
   commons-logging-1.2.jar
-  commons-math3-3.6.1.jar
+  commons-math3-3.1.1.jar
   commons-net-3.9.0.jar
   commons-text-1.10.0.jar
   commons-text-1.11.0.jar
