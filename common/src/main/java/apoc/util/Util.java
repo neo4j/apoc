@@ -168,6 +168,19 @@ public class Util {
         return new Label[] {Label.label(labelNames.toString())};
     }
 
+    public static Label[] getLabelsArray(Node node) {
+        List<Label> labels = getLabels(node);
+        return labels.toArray(new Label[0]);
+    }
+
+    public static List<Label> getLabels(Node node) {
+        return getLabelsAsStream(node).collect(Collectors.toList());
+    }
+
+    private static Stream<Label> getLabelsAsStream(Node node) {
+        return StreamSupport.stream(node.getLabels().spliterator(), false);
+    }
+
     public static Stream<Object> stream(Object values) {
         return ConvertUtils.convertToList(values).stream();
     }

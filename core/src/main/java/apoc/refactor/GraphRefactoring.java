@@ -58,35 +58,6 @@ public class GraphRefactoring {
     @Context
     public Pools pools;
 
-    private Stream<NodeRefactorResult> doCloneNodes(
-            @Name("nodes") List<Node> nodes,
-            @Name("withRelationships") boolean withRelationships,
-            List<String> skipProperties) {
-        if (nodes == null) return Stream.empty();
-        return nodes.stream().map(node -> Util.rebind(tx, node)).map(node -> {
-            NodeRefactorResult result = new NodeRefactorResult(node.getId());
-            try {
-                Node copy = withTransactionAndRebind(db, tx, transaction -> {
-                    Node newNode = copyLabels(node, transaction.createNode());
-
-                    Map<String, Object> properties = node.getAllProperties();
-                    if (skipProperties != null && !skipProperties.isEmpty())
-                        for (String skip : skipProperties) properties.remove(skip);
-
-                    newNode = copyProperties(properties, newNode);
-                    copyLabels(node, newNode);
-                    return newNode;
-                });
-                if (withRelationships) {
-                    copyRelationships(node, copy, false, true);
-                }
-                return result.withOther(copy);
-            } catch (Exception e) {
-                return result.withError(e);
-            }
-        });
-    }
-
     @Procedure(name = "apoc.refactor.extractNode", mode = Mode.WRITE)
     @Description("Expands the given `RELATIONSHIP` VALUES into intermediate `NODE` VALUES.\n"
             + "The intermediate `NODE` values are connected by the given `outType` and `inType`.")
@@ -154,7 +125,32 @@ public class GraphRefactoring {
             @Name("nodes") List<Node> nodes,
             @Name(value = "withRelationships", defaultValue = "false") boolean withRelationships,
             @Name(value = "skipProperties", defaultValue = "[]") List<String> skipProperties) {
-        return doCloneNodes(nodes, withRelationships, skipProperties);
+        if (nodes == null) return Stream.empty();
+        return nodes.stream().map(node -> {
+            NodeRefactorResult result = new NodeRefactorResult(node.getId());
+            Node newNode = tx.createNode(Util.getLabelsArray(node));
+            Map<String, Object> properties = node.getAllProperties();
+            if (skipProperties != null && !skipProperties.isEmpty()) {
+                for (String skip : skipProperties) properties.remove(skip);
+            }
+            try {
+                copyProperties(properties, newNode);
+                if (withRelationships) {
+                    copyRelationships(node, newNode, false, true);
+                }
+            } catch (Exception e) {
+                // If there was an error, the procedure still passes, but this node + its rels should not
+                // be created. Instead, an error is returned to the user in the output.
+                if (withRelationships) {
+                    for (Relationship rel: newNode.getRelationships()) {
+                        rel.delete();
+                    }
+                }
+                newNode.delete();
+                return result.withError(e);
+            }
+            return result.withOther(newNode);
+        });
     }
 
     /**

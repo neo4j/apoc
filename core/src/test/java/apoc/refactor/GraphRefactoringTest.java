@@ -54,6 +54,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -1674,6 +1676,55 @@ public class GraphRefactoringTest {
     }
 
     @Test
+    public void issue3960WithCloneNodes() {
+    // Any node created in cloneNodes should not be committed if the entire query fails.
+        String query = """
+                CREATE (original:Person {uid: "original"}), (original2:Person {uid: "original"})
+                WITH original, original2
+                CALL apoc.refactor.cloneNodes([original, original2], false, ["uid"])
+                YIELD input, output AS clone, error
+                SET clone.uid = "clone"
+                RETURN 1/0
+                """;
+
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        query,
+                        (r) -> {}));
+        Throwable except = ExceptionUtils.getRootCause(e);
+        TestCase.assertTrue(except instanceof RuntimeException);
+        TestCase.assertEquals("/ by zero", except.getMessage());
+
+        testCall(db, "MATCH (n) RETURN count(*) AS count", r -> assertEquals(0L, r.get("count")));
+    }
+
+    @Test
+    public void ShouldErrorOnConstraintsFailedCommon() {
+        db.executeTransactionally(("CREATE CONSTRAINT unique_id FOR ()-[r:HAS_PET]-() REQUIRE r.id IS UNIQUE"));
+
+        String query = """
+                CREATE (a:Person {name: 'Mark', city: 'London'})-[:HAS_PET {id: 1}]->(:Cat {name: "Mittens"})
+                WITH a
+                CALL apoc.refactor.cloneNodes([a], true, ["city"])
+                YIELD input, output, error
+                RETURN *
+                """;
+
+        testCall(db, query, r -> {
+            final String actualError = (String) r.get("error");
+            assertTrue(actualError.contains("already exists with type `HAS_PET` and property `id` = 1"));
+            assertNull(r.get("output"));
+        });
+
+        testCall(db, "MATCH (n) RETURN count(*) AS count", r -> assertEquals(2L, r.get("count")));
+
+        db.executeTransactionally("DROP CONSTRAINT unique_id");
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
     public void issue2797WithCloneNodes() {
         issue2797Common(CLONE_NODES_QUERY);
     }
@@ -1703,6 +1754,10 @@ public class GraphRefactoringTest {
         testCall(db, "MATCH (n:MyBook) RETURN properties(n) AS props", r -> {
             final Map<String, Long> expected = Map.of("name", 1L);
             assertEquals(expected, r.get("props"));
+        });
+
+        testCall(db, "MATCH (n:MyBook) RETURN count(n) as count", r -> {
+            assertEquals(1L, r.get("count"));
         });
 
         db.executeTransactionally("DROP CONSTRAINT unique_book");
