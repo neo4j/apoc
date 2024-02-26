@@ -29,8 +29,10 @@ import apoc.result.MapResult;
 import apoc.result.VirtualGraph;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
+import apoc.util.CollectionUtils;
 import apoc.util.MapUtil;
 import apoc.util.collection.Iterables;
+import com.google.common.collect.Sets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,7 +52,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.cypher.export.CypherResultSubGraph;
 import org.neo4j.cypher.export.DatabaseSubGraph;
@@ -483,7 +484,7 @@ public class Meta {
 
         Map<String, Object> relationships = collectRelationshipsMetaData(metaStats, metaData);
         Map<String, Object> nodes = collectNodesMetaData(metaStats, metaData, relationships);
-        final Collection<String> commonKeys = CollectionUtils.intersection(nodes.keySet(), relationships.keySet());
+        final Collection<String> commonKeys = Sets.intersection(nodes.keySet(), relationships.keySet());
         if (!commonKeys.isEmpty()) {
             relationships = relationships.entrySet().stream()
                     .map(e -> {

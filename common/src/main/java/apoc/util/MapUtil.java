@@ -18,14 +18,25 @@
  */
 package apoc.util;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author mh
  * @since 04.05.16
  */
-public class MapUtil {
+public final class MapUtil {
+    private MapUtil() {}
+
     public static Map<String, Object> map(Object... values) {
         return Util.map(values);
+    }
+
+    public static <K, V> Map<V, K> invertMap(final Map<K, V> map) {
+        final Map<V, K> out = new HashMap<>(map.size());
+        for (final Map.Entry<K, V> entry : map.entrySet()) {
+            out.put(entry.getValue(), entry.getKey());
+        }
+        return out;
     }
 }

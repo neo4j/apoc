@@ -20,12 +20,12 @@ package org.neo4j.cypher.export;
 
 import static java.util.stream.Collectors.toMap;
 
+import apoc.util.CollectionUtils;
 import apoc.util.collection.Iterables;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.apache.commons.collections4.CollectionUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;

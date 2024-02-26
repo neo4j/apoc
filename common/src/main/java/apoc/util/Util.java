@@ -82,7 +82,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.lang.model.SourceVersion;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.io.IOUtils;
@@ -1214,7 +1213,10 @@ public class Util {
     }
 
     public static int indexOf(List<Object> list, Object value) {
-        return ListUtils.indexOf(list, (i) -> Util.valueEquals(i, value));
+        return IntStream.range(0, list.size())
+                .filter((i) -> Util.valueEquals(list.get(i), value))
+                .findFirst()
+                .orElse(-1);
     }
 
     /*

@@ -24,13 +24,13 @@ import static apoc.util.collection.Iterables.stream;
 import static java.util.Arrays.asList;
 
 import apoc.meta.Types;
+import apoc.util.MapUtil;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.Entity;
@@ -47,7 +47,7 @@ import org.neo4j.graphdb.ResultTransformer;
  */
 public class MetaInformation {
 
-    private static final Map<String, String> REVERSED_TYPE_MAP = MapUtils.invertMap(typeMappings);
+    private static final Map<String, String> REVERSED_TYPE_MAP = MapUtil.invertMap(typeMappings);
 
     public static Map<String, Class> collectPropTypesForNodes(
             SubGraph graph, GraphDatabaseService db, ExportConfig config) {
