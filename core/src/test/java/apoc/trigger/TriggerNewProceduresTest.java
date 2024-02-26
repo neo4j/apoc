@@ -18,12 +18,24 @@
  */
 package apoc.trigger;
 
-import static apoc.trigger.TriggerNewProcedures.*;
+import static apoc.trigger.TriggerNewProcedures.DB_NOT_FOUND_ERROR;
+import static apoc.trigger.TriggerNewProcedures.NON_SYS_DB_ERROR;
+import static apoc.trigger.TriggerNewProcedures.TRIGGER_BAD_TARGET_ERROR;
+import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
-import static apoc.util.TestUtil.*;
-import static org.junit.Assert.*;
+import static apoc.util.TestUtil.singleResultFirstColumn;
+import static apoc.util.TestUtil.testCall;
+import static apoc.util.TestUtil.testCallCount;
+import static apoc.util.TestUtil.testCallCountEventually;
+import static apoc.util.TestUtil.testCallEmpty;
+import static apoc.util.TestUtil.testCallEventually;
+import static apoc.util.TestUtil.testResult;
+import static apoc.util.TestUtil.waitDbsAvailable;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 import static org.neo4j.internal.helpers.collection.MapUtil.map;

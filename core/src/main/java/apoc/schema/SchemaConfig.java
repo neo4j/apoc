@@ -18,7 +18,11 @@
  */
 package apoc.schema;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ab-larus

@@ -21,7 +21,13 @@ package apoc.create;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
 import apoc.get.Get;
-import apoc.result.*;
+import apoc.result.NodeResult;
+import apoc.result.PathResult;
+import apoc.result.RelationshipResult;
+import apoc.result.VirtualNode;
+import apoc.result.VirtualPath;
+import apoc.result.VirtualPathResult;
+import apoc.result.VirtualRelationship;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import apoc.uuid.UuidUtil;
@@ -31,9 +37,20 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Mode;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.UserFunction;
 
 public class Create {
 

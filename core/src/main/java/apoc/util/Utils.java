@@ -28,7 +28,12 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.neo4j.graphdb.TransactionTerminatedException;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Context;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.Procedure;
+import org.neo4j.procedure.TerminationGuard;
+import org.neo4j.procedure.UserFunction;
 
 /**
  * @author mh

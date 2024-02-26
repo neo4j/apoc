@@ -18,7 +18,10 @@
  */
 package apoc.path;
 
-import static apoc.path.PathExplorer.NodeFilter.*;
+import static apoc.path.PathExplorer.NodeFilter.ALLOWLIST_NODES;
+import static apoc.path.PathExplorer.NodeFilter.DENYLIST_NODES;
+import static apoc.path.PathExplorer.NodeFilter.END_NODES;
+import static apoc.path.PathExplorer.NodeFilter.TERMINATOR_NODES;
 
 import apoc.algo.Cover;
 import apoc.result.GraphResult;
@@ -26,7 +29,14 @@ import apoc.result.NodeResult;
 import apoc.result.PathResult;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -34,7 +44,11 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.traversal.*;
+import org.neo4j.graphdb.traversal.Evaluator;
+import org.neo4j.graphdb.traversal.Evaluators;
+import org.neo4j.graphdb.traversal.TraversalDescription;
+import org.neo4j.graphdb.traversal.Traverser;
+import org.neo4j.graphdb.traversal.Uniqueness;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;

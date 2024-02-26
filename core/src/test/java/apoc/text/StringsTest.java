@@ -24,7 +24,10 @@ import static apoc.util.TestUtil.testResult;
 import static java.lang.Math.toIntExact;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;

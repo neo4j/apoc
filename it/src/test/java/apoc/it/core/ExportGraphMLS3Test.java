@@ -28,7 +28,9 @@ import static apoc.export.graphml.ExportGraphMLTestUtil.assertXMLEquals;
 import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
 import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;

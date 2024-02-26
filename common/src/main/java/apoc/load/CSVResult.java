@@ -23,7 +23,11 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
 import apoc.load.util.Results;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CSVResult {
     public long lineNo;

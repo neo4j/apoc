@@ -23,7 +23,10 @@ import static apoc.util.TestUtil.testCallEmpty;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static java.util.stream.IntStream.range;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.Base64;

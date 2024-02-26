@@ -25,7 +25,11 @@ import java.util.List;
 import org.HdrHistogram.DoubleHistogram;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.HistogramUtil;
-import org.neo4j.procedure.*;
+import org.neo4j.procedure.Description;
+import org.neo4j.procedure.Name;
+import org.neo4j.procedure.UserAggregationFunction;
+import org.neo4j.procedure.UserAggregationResult;
+import org.neo4j.procedure.UserAggregationUpdate;
 
 /**
  * @author mh

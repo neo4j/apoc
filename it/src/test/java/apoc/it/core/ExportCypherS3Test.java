@@ -18,10 +18,44 @@
  */
 package apoc.it.core;
 
-import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CLEAN_UP;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CLEAN_UP_EMPTY;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_DATE;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_DURATION;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_LABELS_ASCENDEND;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_POINT;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_SHELL;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_SHELL_OPTIMIZED;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_SHELL_OPTIMIZED_BATCH_SIZE;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_CYPHER_TIME;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NEO4J_MERGE;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NEO4J_OPTIMIZED;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NEO4J_OPTIMIZED_BATCH_SIZE;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NEO4J_SHELL;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NODES;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NODES_EMPTY;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NODES_MERGE_ON_CREATE_SET;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_NODES_OPTIMIZED;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_ONLY_SCHEMA_CYPHER_SHELL;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_ONLY_SCHEMA_NEO4J_SHELL;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_PLAIN;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_PLAIN_ADD_STRUCTURE_UNWIND;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_PLAIN_OPTIMIZED_BATCH_SIZE;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_ODD;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED_UNWIND;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_QUERY_CYPHER_SHELL_PARAMS_OPTIMIZED_ODD;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_QUERY_PARAMS_ODD;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_RELATIONSHIPS;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_RELATIONSHIPS_MERGE_ON_CREATE_SET;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_RELATIONSHIPS_OPTIMIZED;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_SCHEMA;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_SCHEMA_EMPTY;
+import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_UPDATE_ALL_UNWIND;
 import static apoc.util.Util.map;
 import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import apoc.export.cypher.ExportCypherTestUtils;
 import apoc.util.TestUtil;

@@ -22,7 +22,8 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertThrows;
 
 import apoc.util.TestUtil;
 import java.util.Arrays;

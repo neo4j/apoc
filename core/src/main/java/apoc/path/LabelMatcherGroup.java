@@ -18,7 +18,10 @@
  */
 package apoc.path;
 
-import static org.neo4j.graphdb.traversal.Evaluation.*;
+import static org.neo4j.graphdb.traversal.Evaluation.EXCLUDE_AND_CONTINUE;
+import static org.neo4j.graphdb.traversal.Evaluation.EXCLUDE_AND_PRUNE;
+import static org.neo4j.graphdb.traversal.Evaluation.INCLUDE_AND_CONTINUE;
+import static org.neo4j.graphdb.traversal.Evaluation.INCLUDE_AND_PRUNE;
 
 import java.util.HashSet;
 import java.util.Set;

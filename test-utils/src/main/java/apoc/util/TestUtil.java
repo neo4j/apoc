@@ -18,7 +18,11 @@
  */
 package apoc.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 import apoc.util.collection.Iterables;
