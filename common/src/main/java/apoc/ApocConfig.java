@@ -96,7 +96,7 @@ public class ApocConfig extends LifecycleAdapter {
             run_directory,
             lib_directory,
             neo4j_home));
-    private static final String DEFAULT_PATH = ".";
+
     private static final String CONFIG_DIR = "config-dir=";
     public static final String EXPORT_NOT_ENABLED_ERROR =
             "Export to files not enabled, please set apoc.export.file.enabled=true in your apoc.conf.";
@@ -169,7 +169,7 @@ public class ApocConfig extends LifecycleAdapter {
     @Override
     public void init() {
         log.debug("called init");
-        // grab NEO4J_CONF from environment. If not set, calculate it from sun.java.command system property
+        // grab NEO4J_CONF from environment. If not set, calculate it from sun.java.command system property or Neo4j default
         String neo4jConfFolder = System.getenv().getOrDefault("NEO4J_CONF", determineNeo4jConfFolder());
         System.setProperty("NEO4J_CONF", neo4jConfFolder);
         log.info("system property NEO4J_CONF set to %s", neo4jConfFolder);
@@ -183,21 +183,25 @@ public class ApocConfig extends LifecycleAdapter {
     }
 
     protected String determineNeo4jConfFolder() {
+        String defaultPath = neo4jConfig
+                .get(neo4j_home)
+                .resolve(Config.DEFAULT_CONFIG_DIR_NAME)
+                .toString();
         String command = System.getProperty(SUN_JAVA_COMMAND);
         if (command == null) {
             log.warn(
-                    "system property %s is not set, assuming '.' as conf dir. This might cause `apoc.conf` not getting loaded.",
-                    SUN_JAVA_COMMAND);
-            return DEFAULT_PATH;
+                    "system property %s is not set, assuming %s as conf dir. This might cause `apoc.conf` not getting loaded.",
+                    SUN_JAVA_COMMAND, defaultPath);
+            return defaultPath;
         } else {
             final String neo4jConfFolder = Stream.of(command.split("--"))
                     .map(String::trim)
                     .filter(s -> s.startsWith(CONFIG_DIR))
                     .map(s -> s.substring(CONFIG_DIR.length()))
                     .findFirst()
-                    .orElse(DEFAULT_PATH);
-            if (DEFAULT_PATH.equals(neo4jConfFolder)) {
-                log.info("cannot determine conf folder from sys property %s, assuming '.' ", command);
+                    .orElse(defaultPath);
+            if (defaultPath.equals(neo4jConfFolder)) {
+                log.info("cannot determine conf folder from sys property %s, assuming %s", command, defaultPath);
             } else {
                 log.info("from system properties: NEO4J_CONF=%s", neo4jConfFolder);
             }
