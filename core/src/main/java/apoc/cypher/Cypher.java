@@ -190,6 +190,7 @@ public class Cypher {
         return runCypherQuery(tx, statement, params);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.when")
     @Description(
             "This procedure will run the read-only `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
@@ -220,6 +221,7 @@ public class Cypher {
         return when(condition, ifQuery, elseQuery, params);
     }
 
+    @NotThreadSafe
     @Procedure("apoc.case")
     @Description(
             "For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.")
