@@ -25,7 +25,6 @@ import static java.util.Arrays.asList;
 
 import apoc.result.ListResult;
 import apoc.util.Util;
-import com.google.common.util.concurrent.AtomicDouble;
 import java.lang.reflect.Array;
 import java.text.Collator;
 import java.util.ArrayList;
@@ -48,6 +47,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.mutable.MutableDouble;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.Node;
@@ -86,7 +86,7 @@ public class Coll {
     @Description("Returns an accumulative `LIST<INTEGER | FLOAT>`.")
     public List<Number> runningTotal(@Name("list") List<Number> list) {
         if (list == null || list.isEmpty()) return null;
-        AtomicDouble sum = new AtomicDouble();
+        MutableDouble sum = new MutableDouble();
         return list.stream()
                 .map(i -> {
                     double value = sum.addAndGet(i.doubleValue());
