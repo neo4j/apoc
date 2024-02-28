@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import apoc.ApocSignatures;
 import apoc.util.Neo4jContainerExtension;
@@ -37,62 +38,74 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.driver.Session;
 
 /*
 This test is just to verify if the APOC procedures and functions are correctly deployed into a Neo4j instance without any startup issue.
 If you don't have docker installed it will fail, and you can simply ignore it.
 */
+@RunWith(Parameterized.class)
 public class StartupTest {
+
+    @Parameterized.Parameters(name = "edition={0}")
+    public static Neo4jVersion[] allEditions() {
+        return Neo4jVersion.values();
+    }
+
+    private Neo4jVersion version;
+
+    public StartupTest(Neo4jVersion version) {
+        this.version = version;
+    }
 
     @Test
     public void check_basic_deployment() {
-        for (var version : Neo4jVersion.values()) {
-            try {
-                Neo4jContainerExtension neo4jContainer = createDB(
-                                version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
-                        .withNeo4jConfig("dbms.transaction.timeout", "60s");
+        try {
+            Neo4jContainerExtension neo4jContainer = createDB(
+                            version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                    .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
-                neo4jContainer.start();
+            neo4jContainer.start();
 
-                Session session = neo4jContainer.getSession();
-                int procedureCount = session.run(
-                                "SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN count(*) AS count")
-                        .peek()
-                        .get("count")
-                        .asInt();
-                int functionCount = session.run(
-                                "SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc' RETURN count(*) AS count")
-                        .peek()
-                        .get("count")
-                        .asInt();
-                int coreCount = session.run("CALL apoc.help('') YIELD core WHERE core = true RETURN count(*) AS count")
-                        .peek()
-                        .get("count")
-                        .asInt();
-                String startupLog = neo4jContainer.getLogs();
-                assertTrue(procedureCount > 0);
-                assertTrue(functionCount > 0);
-                assertTrue(coreCount > 0);
-                // Check there's one and only one logger for apoc inside the container
-                // and it doesn't override the one inside the database
-                assertFalse(startupLog.contains("[main] INFO org.eclipse.jetty.server.Server"));
-                assertFalse(startupLog.contains("SLF4J: No SLF4J providers were found"));
-                assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
-                assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
+            Session session = neo4jContainer.getSession();
+            int procedureCount = session.run(
+                            "SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN count(*) AS count")
+                    .peek()
+                    .get("count")
+                    .asInt();
+            int functionCount = session.run(
+                            "SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc' RETURN count(*) AS count")
+                    .peek()
+                    .get("count")
+                    .asInt();
+            int coreCount = session.run("CALL apoc.help('') YIELD core WHERE core = true RETURN count(*) AS count")
+                    .peek()
+                    .get("count")
+                    .asInt();
+            String startupLog = neo4jContainer.getLogs();
+            assertTrue(procedureCount > 0);
+            assertTrue(functionCount > 0);
+            assertTrue(coreCount > 0);
+            // Check there's one and only one logger for apoc inside the container
+            // and it doesn't override the one inside the database
+            assertFalse(startupLog.contains("[main] INFO org.eclipse.jetty.server.Server"));
+            assertFalse(startupLog.contains("SLF4J: No SLF4J providers were found"));
+            assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
+            assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
 
-                session.close();
-                neo4jContainer.close();
-            } catch (Exception ex) {
-                // if Testcontainers wasn't able to retrieve the docker image we ignore the test
-                if (TestContainerUtil.isDockerImageAvailable(ex)) {
-                    ex.printStackTrace();
-                    fail("Should not have thrown exception when trying to start Neo4j: " + ex);
-                } else if (!TestUtil.isRunningInCI()) {
-                    fail("The docker image " + dockerImageForNeo4j(version)
-                            + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
-                            + ex);
-                }
+            session.close();
+            neo4jContainer.close();
+        } catch (Exception ex) {
+            // if Testcontainers wasn't able to retrieve the docker image we ignore the test
+            if (TestContainerUtil.isDockerImageAvailable(ex)) {
+                ex.printStackTrace();
+                fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+            } else if (!TestUtil.isRunningInCI()) {
+                fail("The docker image " + dockerImageForNeo4j(version)
+                        + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
+                        + ex);
             }
         }
     }
@@ -100,7 +113,7 @@ public class StartupTest {
     @Test
     public void check_cypherInitializer_waits_for_systemDb_to_be_available() {
         // we check that with apoc-core jar and all extra-dependencies jars every procedure/function is detected
-        var version = Neo4jVersion.ENTERPRISE;
+        assumeTrue(version == Neo4jVersion.ENTERPRISE);
         Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
                 .withEnv(
                         "apoc.initializer.system.0",
@@ -144,34 +157,32 @@ public class StartupTest {
 
     @Test
     public void compare_with_sources() {
-        for (var version : Neo4jVersion.values()) {
-            try {
-                Neo4jContainerExtension neo4jContainer =
-                        createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
-                neo4jContainer.start();
+        try {
+            Neo4jContainerExtension neo4jContainer =
+                    createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
+            neo4jContainer.start();
 
-                try (Session session = neo4jContainer.getSession()) {
-                    final List<String> functionNames = session.run(
-                                    "CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'function' RETURN name")
-                            .list(record -> record.get("name").asString());
-                    final List<String> procedureNames = session.run(
-                                    "CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
-                            .list(record -> record.get("name").asString());
+            try (Session session = neo4jContainer.getSession()) {
+                final List<String> functionNames = session.run(
+                                "CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'function' RETURN name")
+                        .list(record -> record.get("name").asString());
+                final List<String> procedureNames = session.run(
+                                "CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
+                        .list(record -> record.get("name").asString());
 
-                    assertEquals(sorted(ApocSignatures.PROCEDURES), procedureNames);
-                    assertEquals(sorted(ApocSignatures.FUNCTIONS), functionNames);
-                }
+                assertEquals(sorted(ApocSignatures.PROCEDURES), procedureNames);
+                assertEquals(sorted(ApocSignatures.FUNCTIONS), functionNames);
+            }
 
-                neo4jContainer.close();
-            } catch (Exception ex) {
-                if (TestContainerUtil.isDockerImageAvailable(ex)) {
-                    ex.printStackTrace();
-                    fail("Should not have thrown exception when trying to start Neo4j: " + ex);
-                } else {
-                    fail("The docker image " + dockerImageForNeo4j(version)
-                            + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
-                            + ex);
-                }
+            neo4jContainer.close();
+        } catch (Exception ex) {
+            if (TestContainerUtil.isDockerImageAvailable(ex)) {
+                ex.printStackTrace();
+                fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+            } else {
+                fail("The docker image " + dockerImageForNeo4j(version)
+                        + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
+                        + ex);
             }
         }
     }

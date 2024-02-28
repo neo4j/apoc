@@ -40,7 +40,6 @@ dependencies {
     implementation project(":common")
     implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1'
     implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
-    implementation group: 'com.google.guava', name: 'guava', version: '32.0.1-jre'
 
     def arrowExclusions = {
         exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
@@ -50,12 +49,13 @@ dependencies {
         exclude group: 'io.netty', module: 'netty-buffer'
     }
 
-    implementation group: 'org.apache.arrow', name: 'arrow-vector', version: '14.0.2', arrowExclusions
-    implementation group: 'org.apache.arrow', name: 'arrow-memory-netty', version: '14.0.2', arrowExclusions
-
     // These will be dependencies not packaged with the .jar
     // They need to be provided either through the database or in an extra .jar
+    compileOnly group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion, arrowExclusions
+    compileOnly group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
+
     compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
+    compileOnly group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
 
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(":common").sourceSets.test.output
