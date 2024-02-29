@@ -29,7 +29,6 @@ Apache-2.0
   commons-cli-1.2.jar
   commons-codec-1.16.0.jar
   commons-collections-3.2.2.jar
-  commons-collections4-4.4.jar
   commons-compress-1.25.0.jar
   commons-configuration2-2.9.0.jar
   commons-csv-1.9.0.jar
