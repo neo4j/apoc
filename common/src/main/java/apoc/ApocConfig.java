@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -43,18 +44,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.apache.commons.configuration2.CombinedConfiguration;
 import org.apache.commons.configuration2.Configuration;
+import org.apache.commons.configuration2.EnvironmentConfiguration;
 import org.apache.commons.configuration2.PropertiesConfiguration;
-import org.apache.commons.configuration2.builder.combined.CombinedConfigurationBuilder;
-import org.apache.commons.configuration2.builder.fluent.Parameters;
+import org.apache.commons.configuration2.SystemConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.configuration2.ex.ConversionException;
+import org.apache.commons.configuration2.io.FileHandler;
+import org.apache.commons.configuration2.tree.OverrideCombiner;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.config.Setting;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.kernel.api.procedure.GlobalProcedures;
@@ -87,7 +90,7 @@ public class ApocConfig extends LifecycleAdapter {
             APOC_IMPORT_FILE_ENABLED, false,
             APOC_IMPORT_FILE_USE_NEO4J_CONFIG, true,
             APOC_TRIGGER_ENABLED, false);
-    private static final List<Setting> NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES = new ArrayList<>(Arrays.asList(
+    private static final List<Setting<?>> NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES = new ArrayList<>(Arrays.asList(
             data_directory,
             load_csv_file_url_root,
             logs_directory,
@@ -115,6 +118,7 @@ public class ApocConfig extends LifecycleAdapter {
     private boolean expandCommands;
 
     private Duration commandEvaluationTimeout;
+    private File apocConfFile;
 
     public ApocConfig(
             Config neo4jConfig,
@@ -134,7 +138,7 @@ public class ApocConfig extends LifecycleAdapter {
         theInstance = this;
 
         // expose this config instance via `@Context ApocConfig config`
-        globalProceduresRegistry.registerComponent((Class<ApocConfig>) getClass(), ctx -> this, true);
+        globalProceduresRegistry.registerComponent(ApocConfig.class, ctx -> this, true);
         this.log.info("successfully registered ApocConfig for @Context");
     }
 
@@ -169,11 +173,12 @@ public class ApocConfig extends LifecycleAdapter {
     @Override
     public void init() {
         log.debug("called init");
-        // grab NEO4J_CONF from environment. If not set, calculate it from sun.java.command system property or Neo4j default
+        // grab NEO4J_CONF from environment. If not set, calculate it from sun.java.command system property or Neo4j
+        // default
         String neo4jConfFolder = System.getenv().getOrDefault("NEO4J_CONF", determineNeo4jConfFolder());
         System.setProperty("NEO4J_CONF", neo4jConfFolder);
         log.info("system property NEO4J_CONF set to %s", neo4jConfFolder);
-        File apocConfFile = new File(neo4jConfFolder + "/apoc.conf");
+        apocConfFile = new File(neo4jConfFolder + "/apoc.conf");
         // Command Expansion required check from Neo4j
         if (apocConfFile.exists() && this.expandCommands) {
             Config.Builder.validateFilePermissionForCommandExpansion(List.of(apocConfFile.toPath()));
@@ -211,15 +216,10 @@ public class ApocConfig extends LifecycleAdapter {
 
     /**
      * use apache commons to load configuration
-     * classpath:/apoc-config.xml contains a description where to load configuration from
      */
     protected void loadConfiguration() {
         try {
-            URL resource = getClass().getClassLoader().getResource("apoc-config.xml");
-            log.info("loading apoc meta config from %s", resource.toString());
-            CombinedConfigurationBuilder builder = new CombinedConfigurationBuilder()
-                    .configure(new Parameters().fileBased().setURL(resource));
-            config = builder.getConfiguration();
+            config = setupConfigurations(apocConfFile);
 
             // Command Expansion if needed
             config.getKeys()
@@ -237,7 +237,7 @@ public class ApocConfig extends LifecycleAdapter {
             });
 
             addDbmsDirectoriesMetricsSettings();
-            for (Setting s : NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES) {
+            for (Setting<?> s : NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES) {
                 Object value = neo4jConfig.get(s);
                 if (value != null) {
                     config.setProperty(s.name(), value.toString());
@@ -264,11 +264,29 @@ public class ApocConfig extends LifecycleAdapter {
         }
     }
 
+    private static Configuration setupConfigurations(File propertyFile) throws ConfigurationException {
+        PropertiesConfiguration configFile = new PropertiesConfiguration();
+        if (propertyFile.exists()) {
+            final FileHandler handler = new FileHandler(configFile);
+            handler.setFile(propertyFile);
+            handler.load();
+        }
+
+        // OverrideCombiner will evaluate keys in order, i.e. env before sys etc.
+        CombinedConfiguration combined = new CombinedConfiguration();
+        combined.setNodeCombiner(new OverrideCombiner());
+        combined.addConfiguration(new EnvironmentConfiguration());
+        combined.addConfiguration(new SystemConfiguration());
+        combined.addConfiguration(configFile);
+
+        return combined;
+    }
+
+    @SuppressWarnings("unchecked")
     private void addDbmsDirectoriesMetricsSettings() {
         try {
-            Class<?> metricsSettingsClass =
-                    Class.forName("com.neo4j.kernel.impl.enterprise.configuration.MetricsSettings");
-            Field csvPathField = metricsSettingsClass.getDeclaredField("csvPath");
+            Class<?> metricsSettingsClass = Class.forName("com.neo4j.configuration.MetricsSettings");
+            Field csvPathField = metricsSettingsClass.getDeclaredField("csv_path");
             Setting<Path> dbms_directories_metrics = (Setting<Path>) csvPathField.get(null);
             NEO4J_DIRECTORY_CONFIGURATION_SETTING_NAMES.add(dbms_directories_metrics);
         } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
@@ -313,9 +331,7 @@ public class ApocConfig extends LifecycleAdapter {
 
     public void checkWriteAllowed(ExportConfig exportConfig, String fileName) {
         if (!config.getBoolean(APOC_EXPORT_FILE_ENABLED)) {
-            if (exportConfig == null
-                    || (fileName != null && !fileName.equals(""))
-                    || !exportConfig.streamStatements()) {
+            if (exportConfig == null || (fileName != null && !fileName.isEmpty()) || !exportConfig.streamStatements()) {
                 throw new RuntimeException(EXPORT_TO_FILE_ERROR);
             }
         }

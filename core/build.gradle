@@ -38,7 +38,10 @@ dependencies {
 
     // These will be dependencies packaged with the .jar
     implementation project(":common")
-    implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1'
+    implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1', {
+        exclude group: 'commons-beanutils', module: 'commons-beanutils'
+        exclude group: 'org.apache.commons', module: 'commons-collections4'
+    }
     implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
 
     def arrowExclusions = {

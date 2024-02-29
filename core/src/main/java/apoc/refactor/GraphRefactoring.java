@@ -142,7 +142,7 @@ public class GraphRefactoring {
                 // If there was an error, the procedure still passes, but this node + its rels should not
                 // be created. Instead, an error is returned to the user in the output.
                 if (withRelationships) {
-                    for (Relationship rel: newNode.getRelationships()) {
+                    for (Relationship rel : newNode.getRelationships()) {
                         rel.delete();
                     }
                 }
