@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.Matchers;
@@ -1677,8 +1676,9 @@ public class GraphRefactoringTest {
 
     @Test
     public void issue3960WithCloneNodes() {
-    // Any node created in cloneNodes should not be committed if the entire query fails.
-        String query = """
+        // Any node created in cloneNodes should not be committed if the entire query fails.
+        String query =
+                """
                 CREATE (original:Person {uid: "original"}), (original2:Person {uid: "original"})
                 WITH original, original2
                 CALL apoc.refactor.cloneNodes([original, original2], false, ["uid"])
@@ -1687,12 +1687,7 @@ public class GraphRefactoringTest {
                 RETURN 1/0
                 """;
 
-        QueryExecutionException e = assertThrows(
-                QueryExecutionException.class,
-                () -> testCall(
-                        db,
-                        query,
-                        (r) -> {}));
+        QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
         TestCase.assertTrue(except instanceof RuntimeException);
         TestCase.assertEquals("/ by zero", except.getMessage());
@@ -1704,7 +1699,8 @@ public class GraphRefactoringTest {
     public void ShouldErrorOnConstraintsFailedCommon() {
         db.executeTransactionally(("CREATE CONSTRAINT unique_id FOR ()-[r:HAS_PET]-() REQUIRE r.id IS UNIQUE"));
 
-        String query = """
+        String query =
+                """
                 CREATE (a:Person {name: 'Mark', city: 'London'})-[:HAS_PET {id: 1}]->(:Cat {name: "Mittens"})
                 WITH a
                 CALL apoc.refactor.cloneNodes([a], true, ["city"])
