@@ -40,11 +40,12 @@ Apache-2.0
   WMI4Java-1.6.3.jar
   accessors-smart-2.5.0.jar
   annotations-17.0.0.jar
+  annotations-4.1.1.4.jar
   arrow-format-15.0.0.jar
   arrow-memory-core-15.0.0.jar
   arrow-memory-netty-15.0.0.jar
   arrow-vector-15.0.0.jar
-  assertj-core-3.25.1.jar
+  assertj-core-3.25.3.jar
   audience-annotations-0.5.0.jar
   avro-1.7.7.jar
   awaitility-4.2.0.jar
@@ -52,14 +53,14 @@ Apache-2.0
   aws-java-sdk-kms-1.12.643.jar
   aws-java-sdk-s3-1.12.643.jar
   byte-buddy-1.14.11.jar
-  byte-buddy-agent-1.14.10.jar
+  byte-buddy-agent-1.14.11.jar
   caffeine-3.1.8.jar
   cassandra-driver-core-3.10.0.jar
   commons-beanutils-1.9.4.jar
   commons-cli-1.2.jar
-  commons-codec-1.16.0.jar
+  commons-codec-1.16.1.jar
   commons-collections-3.2.2.jar
-  commons-compress-1.25.0.jar
+  commons-compress-1.26.0.jar
   commons-configuration2-2.9.0.jar
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
@@ -78,14 +79,23 @@ Apache-2.0
   docker-java-transport-3.3.3.jar
   docker-java-transport-zerodep-3.3.3.jar
   ehcache-3.3.1.jar
-  error_prone_annotations-2.2.0.jar
-  failureaccess-1.0.jar
+  error_prone_annotations-2.23.0.jar
+  failureaccess-1.0.2.jar
   flatbuffers-java-23.5.26.jar
+  flight-core-15.0.0.jar
   fst-2.50.jar
   geronimo-jcache_1.0_spec-1.0-alpha-1.jar
   gradle-tooling-api-7.3.jar
-  gson-2.9.0.jar
-  guava-27.0-jre.jar
+  grpc-api-1.61.1.jar
+  grpc-context-1.61.1.jar
+  grpc-core-1.61.1.jar
+  grpc-netty-1.61.1.jar
+  grpc-protobuf-1.61.1.jar
+  grpc-protobuf-lite-1.61.1.jar
+  grpc-stub-1.61.1.jar
+  grpc-util-1.61.1.jar
+  gson-2.10.1.jar
+  guava-33.0.0-jre.jar
   guice-4.0.jar
   guice-servlet-4.0.jar
   hadoop-annotations-3.3.6.jar
@@ -121,8 +131,7 @@ Apache-2.0
   http2-server-10.0.17.jar
   httpclient-4.5.13.jar
   httpcore-4.4.13.jar
-  ipaddress-5.4.0.jar
-  j2objc-annotations-1.1.jar
+  ipaddress-5.4.2.jar
   jPowerShell-3.0.jar
   jProcesses-1.6.5.jar
   jackson-annotations-2.16.1.jar
@@ -219,6 +228,7 @@ Apache-2.0
   netty-resolver-dns-classes-macos-4.1.101.Final.jar
   netty-resolver-dns-native-macos-4.1.101.Final-osx-aarch_64.jar
   netty-resolver-dns-native-macos-4.1.101.Final-osx-x86_64.jar
+  netty-tcnative-boringssl-static-2.0.61.Final.jar
   netty-tcnative-classes-2.0.61.Final.jar
   netty-transport-4.1.101.Final.jar
   netty-transport-classes-epoll-4.1.101.Final.jar
@@ -238,8 +248,10 @@ Apache-2.0
   okio-jvm-2.8.0.jar
   opencsv-5.7.1.jar
   opentest4j-1.3.0.jar
+  perfmark-api-0.26.0.jar
   picocli-4.7.5.jar
-  reactor-core-3.6.1.jar
+  proto-google-common-protos-2.29.0.jar
+  reactor-core-3.6.2.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.11.jar
@@ -287,7 +299,9 @@ BSD-3-Clause
   hamcrest-library-2.2.jar
   leveldbjni-all-1.8.jar
   paranamer-2.3.jar
-  protobuf-java-2.5.0.jar
+
+BSD-3-Clause
+  protobuf-java-3.25.1.jar
 
 Common Development and Distribution License Version 1.1
   jaxb-api-2.2.11.jar
@@ -369,14 +383,14 @@ Eclipse Public License - v 2.0
   jersey-container-servlet-core-2.34.jar
   jersey-hk2-2.34.jar
   jersey-server-2.34.jar
-  junit-jupiter-5.10.1.jar
-  junit-jupiter-api-5.10.1.jar
-  junit-jupiter-engine-5.10.1.jar
-  junit-jupiter-params-5.10.1.jar
-  junit-platform-commons-1.10.1.jar
-  junit-platform-engine-1.10.1.jar
-  junit-platform-launcher-1.10.1.jar
-  junit-platform-testkit-1.10.1.jar
+  junit-jupiter-5.10.2.jar
+  junit-jupiter-api-5.10.2.jar
+  junit-jupiter-engine-5.10.2.jar
+  junit-jupiter-params-5.10.2.jar
+  junit-platform-commons-1.10.2.jar
+  junit-platform-engine-1.10.2.jar
+  junit-platform-launcher-1.10.2.jar
+  junit-platform-testkit-1.10.2.jar
   osgi-resource-locator-1.0.3.jar
 
 GNU General Public License (GPL), version 2, with the Classpath exception
@@ -417,14 +431,14 @@ LGPL-2.1-or-later
   jna-5.14.0.jar
 
 MIT
-  animal-sniffer-annotations-1.17.jar
+  animal-sniffer-annotations-1.23.jar
   bcpkix-jdk15on-1.68.jar
   bcpkix-jdk18on-1.77.jar
   bcprov-jdk15on-1.68.jar
   bcprov-jdk18on-1.77.jar
   bcutil-jdk18on-1.77.jar
   cassandra-1.19.1.jar
-  checker-qual-2.5.2.jar
+  checker-qual-3.41.0.jar
   couchbase-1.19.1.jar
   database-commons-1.19.1.jar
   duct-tape-1.0.8.jar
@@ -436,7 +450,7 @@ MIT
   jersey-hk2-2.34.jar
   jnr-x86asm-1.0.2.jar
   localstack-1.19.1.jar
-  mockito-core-5.8.0.jar
+  mockito-core-5.10.0.jar
   mssql-jdbc-6.2.1.jre7.jar
   mysql-1.19.1.jar
   neo4j-1.19.1.jar
