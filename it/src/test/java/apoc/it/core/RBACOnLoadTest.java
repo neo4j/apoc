@@ -72,7 +72,7 @@ public class RBACOnLoadTest {
         List<String> queries = List.of(
                 "CREATE ROLE test",
                 "CREATE USER " + user + " SET PASSWORD '" + userP + "' SET PASSWORD CHANGE NOT REQUIRED",
-                "GRANT ROLE test, reader, editor TO testUser");
+                "GRANT ROLE test, editor TO testUser");
         for (String query : queries) testCallEmpty(session, query, emptyMap());
     }
 
