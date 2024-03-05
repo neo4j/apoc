@@ -23,6 +23,7 @@ import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testCallEmpty;
 import static java.util.Collections.emptyMap;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -48,10 +49,14 @@ public class RBACOnLoadTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Driver testUserDriver;
+    private static Driver testUserWithBoostedPrivilegesDriver;
     private static Session session;
     private static Session testUserSession;
+    private static Session testUserWithBoostedPrivilegesSession;
     private static final String user = "testUser";
     private static final String userP = "password1234";
+    private static final String userWithBoostedPrivileges = "testUserWithBoostedPrivileges";
+    private static final String userPWithBoostedPrivileges = "password1234WithBoostedPrivileges";
 
     @BeforeClass
     public static void beforeClass() {
@@ -63,9 +68,7 @@ public class RBACOnLoadTest {
         session = neo4jContainer.getSession();
 
         setupUser();
-        testUserDriver = GraphDatabase.driver(neo4jContainer.getBoltUrl(), AuthTokens.basic(user, userP));
-        testUserDriver.verifyConnectivity();
-        testUserSession = testUserDriver.session();
+        setupUserWithBoostedPrivileges();
     }
 
     private static void setupUser() {
@@ -74,12 +77,32 @@ public class RBACOnLoadTest {
                 "CREATE USER " + user + " SET PASSWORD '" + userP + "' SET PASSWORD CHANGE NOT REQUIRED",
                 "GRANT ROLE test, editor TO testUser");
         for (String query : queries) testCallEmpty(session, query, emptyMap());
+        testUserDriver = GraphDatabase.driver(neo4jContainer.getBoltUrl(), AuthTokens.basic(user, userP));
+        testUserDriver.verifyConnectivity();
+        testUserSession = testUserDriver.session();
     }
 
-    private static void addRBACOnLoad(String urlString) throws MalformedURLException, UnknownHostException {
+    private static void setupUserWithBoostedPrivileges() {
+        List<String> queries = List.of(
+                "CREATE ROLE testUserWithBoostedPrivileges",
+                "CREATE USER " + userWithBoostedPrivileges + " SET PASSWORD '" + userPWithBoostedPrivileges
+                        + "' SET PASSWORD CHANGE NOT REQUIRED",
+                "GRANT ROLE testUserWithBoostedPrivileges, editor TO " + userWithBoostedPrivileges,
+                "GRANT EXECUTE PROCEDURE * ON DBMS TO testUserWithBoostedPrivileges",
+                "GRANT EXECUTE BOOSTED PROCEDURE apoc.import.csv ON DBMS TO testUserWithBoostedPrivileges");
+        for (String query : queries) testCallEmpty(session, query, emptyMap());
+
+        testUserWithBoostedPrivilegesDriver = GraphDatabase.driver(
+                neo4jContainer.getBoltUrl(), AuthTokens.basic(userWithBoostedPrivileges, userPWithBoostedPrivileges));
+        testUserWithBoostedPrivilegesDriver.verifyConnectivity();
+        testUserWithBoostedPrivilegesSession = testUserWithBoostedPrivilegesDriver.session();
+    }
+
+    private static void addRBACOnLoad(String urlString, String role)
+            throws MalformedURLException, UnknownHostException {
         InetAddress address = InetAddress.getByName(new URL(urlString).getHost());
         String ip = address.getHostAddress();
-        String query = "DENY LOAD ON CIDR \"" + ip + "/32\" TO test";
+        String query = "DENY LOAD ON CIDR \"" + ip + "/32\" TO " + role;
 
         testCallEmpty(session, query, emptyMap());
     }
@@ -87,7 +110,7 @@ public class RBACOnLoadTest {
     @Test
     public void testRBACOnDeny() throws IOException {
         String url = "https://neo4j.com/docs/cypher-refcard/3.3/csv/artists.csv";
-        addRBACOnLoad(url);
+        addRBACOnLoad(url, "test");
 
         List<String> loadableAPOCProcs = List.of(
                 "apoc.load.json($url)",
@@ -107,9 +130,8 @@ public class RBACOnLoadTest {
 
             Assertions.assertThat(e.getMessage()).contains("URLAccessValidationError");
             Assertions.assertThat(e.getMessage())
-                    .contains(
-                            "Cause: LOAD on URL '" + url
-                                    + "' is denied for user 'testUser' with roles [PUBLIC, editor, reader, test] restricted to");
+                    .contains("Cause: LOAD on URL '" + url
+                            + "' is denied for user 'testUser' with roles [PUBLIC, editor, test] restricted to");
         }
     }
 
@@ -117,7 +139,7 @@ public class RBACOnLoadTest {
     public void testRBACOnDenyGeocode() throws IOException {
         String url = "http://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY";
         String reverseUrl = "http://api.opencagedata.com/geocode/v1/json?q=LAT+LNG&key=KEY";
-        addRBACOnLoad(url);
+        addRBACOnLoad(url, "test");
 
         final Map<String, Object> config =
                 map("provider", "opencage", "url", url, "reverseUrl", reverseUrl, "key", "myOwnMockKey");
@@ -142,16 +164,29 @@ public class RBACOnLoadTest {
             String erroredUrl = "http://api.opencagedata.com/geocode/v1/json?" + urlEnd;
             Assertions.assertThat(e.getMessage()).contains("URLAccessValidationError");
             Assertions.assertThat(e.getMessage())
-                    .contains(
-                            "Cause: LOAD on URL '" + erroredUrl
-                                    + "' is denied for user 'testUser' with roles [PUBLIC, editor, reader, test] restricted to");
+                    .contains("Cause: LOAD on URL '" + erroredUrl
+                            + "' is denied for user 'testUser' with roles [PUBLIC, editor, test] restricted to");
         }
+    }
+
+    @Test
+    public void testBoostedPrivilegesOverridesLoadPrivileges() throws IOException {
+        String url = "https://neo4j.com/docs/cypher-refcard/3.3/csv/artists.csv";
+        addRBACOnLoad(url, "testUserWithBoostedPrivileges");
+
+        testCall(
+                testUserWithBoostedPrivilegesSession,
+                "CALL apoc.import.csv([{fileName: $url, labels: ['Artist']}], [], {})",
+                Map.of("url", url),
+                r -> assertEquals(3L, r.get("nodes")));
     }
 
     @AfterClass
     public static void afterClass() {
         testUserSession.close();
         testUserDriver.close();
+        testUserWithBoostedPrivilegesDriver.close();
+        testUserWithBoostedPrivilegesSession.close();
         session.close();
         neo4jContainer.close();
     }
