@@ -100,11 +100,13 @@ public class RBACOnLoadTest {
 
     private static void addRBACOnLoad(String urlString, String role)
             throws MalformedURLException, UnknownHostException {
-        InetAddress address = InetAddress.getByName(new URL(urlString).getHost());
-        String ip = address.getHostAddress();
-        String query = "DENY LOAD ON CIDR \"" + ip + "/32\" TO " + role;
 
-        testCallEmpty(session, query, emptyMap());
+        for (InetAddress addr : InetAddress.getAllByName(new URL(urlString).getHost())) {
+            String ip = addr.getHostAddress();
+            String query = "DENY LOAD ON CIDR \"" + ip + "/32\" TO " + role;
+
+            testCallEmpty(session, query, emptyMap());
+        }
     }
 
     @Test
