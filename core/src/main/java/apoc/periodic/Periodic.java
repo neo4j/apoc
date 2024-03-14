@@ -43,6 +43,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
@@ -307,6 +308,13 @@ public class Periodic {
                 "retries", 0)); // todo sleep/delay or push to end of batch to try again or immediate ?
         int failedParams = Util.toInteger(config.getOrDefault("failedParams", -1));
 
+        final Map<String, Object> metaData;
+        if(tx instanceof InternalTransaction iTx){
+            metaData = iTx.kernelTransaction().getMetaData();
+        } else {
+            metaData = Map.of();
+        }
+
         BatchMode batchMode = BatchMode.fromConfig(config);
         Map<String, Object> params = (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
 
@@ -333,6 +341,9 @@ public class Periodic {
                     retries,
                     result,
                     (tx, p) -> {
+                        if(tx instanceof InternalTransaction iTx){
+                            iTx.setMetaData(metaData);
+                        }
                         final Result r = tx.execute(innerStatement, merge(params, p));
                         Iterators.count(r); // XXX: consume all results
                         return r.getQueryStatistics();
