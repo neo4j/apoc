@@ -120,7 +120,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
     }
 
     public String queryLogs() throws IOException, InterruptedException {
-       return execInContainer("cat", "logs/query.log").toString();
+        return execInContainer("cat", "logs/query.log").toString();
     }
 
     private void executeScript(String filePath) {
