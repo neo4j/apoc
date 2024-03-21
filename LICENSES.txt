@@ -22,8 +22,8 @@ Apache-2.0
   aws-java-sdk-core-1.12.643.jar
   aws-java-sdk-kms-1.12.643.jar
   aws-java-sdk-s3-1.12.643.jar
-  byte-buddy-1.14.11.jar
-  byte-buddy-agent-1.14.11.jar
+  byte-buddy-1.14.12.jar
+  byte-buddy-agent-1.14.12.jar
   caffeine-3.1.8.jar
   cassandra-driver-core-3.10.0.jar
   commons-beanutils-1.9.4.jar
@@ -56,14 +56,14 @@ Apache-2.0
   fst-2.50.jar
   geronimo-jcache_1.0_spec-1.0-alpha-1.jar
   gradle-tooling-api-7.3.jar
-  grpc-api-1.61.1.jar
-  grpc-context-1.61.1.jar
-  grpc-core-1.61.1.jar
-  grpc-netty-1.61.1.jar
-  grpc-protobuf-1.61.1.jar
-  grpc-protobuf-lite-1.61.1.jar
-  grpc-stub-1.61.1.jar
-  grpc-util-1.61.1.jar
+  grpc-api-1.62.2.jar
+  grpc-context-1.62.2.jar
+  grpc-core-1.62.2.jar
+  grpc-netty-1.62.2.jar
+  grpc-protobuf-1.62.2.jar
+  grpc-protobuf-lite-1.62.2.jar
+  grpc-stub-1.62.2.jar
+  grpc-util-1.62.2.jar
   gson-2.10.1.jar
   guava-33.0.0-jre.jar
   guice-4.0.jar
@@ -96,9 +96,9 @@ Apache-2.0
   hadoop-yarn-server-tests-3.3.6-tests.jar
   hadoop-yarn-server-timelineservice-3.3.6.jar
   hadoop-yarn-server-web-proxy-3.3.6.jar
-  http2-common-10.0.17.jar
-  http2-hpack-10.0.17.jar
-  http2-server-10.0.17.jar
+  http2-common-10.0.20.jar
+  http2-hpack-10.0.20.jar
+  http2-server-10.0.20.jar
   httpclient-4.5.13.jar
   httpcore-4.4.13.jar
   ipaddress-5.4.2.jar
@@ -123,19 +123,19 @@ Apache-2.0
   javax-websocket-server-impl-9.4.51.v20230217.jar
   javax.inject-1.jar
   jcip-annotations-1.0-1.jar
-  jctools-core-4.0.2.jar
+  jctools-core-4.0.3.jar
   jettison-1.5.4.jar
-  jetty-alpn-java-server-10.0.17.jar
-  jetty-alpn-server-10.0.17.jar
-  jetty-http-10.0.17.jar
-  jetty-io-10.0.17.jar
-  jetty-security-10.0.17.jar
-  jetty-server-10.0.17.jar
-  jetty-servlet-10.0.17.jar
+  jetty-alpn-java-server-10.0.20.jar
+  jetty-alpn-server-10.0.20.jar
+  jetty-http-10.0.20.jar
+  jetty-io-10.0.20.jar
+  jetty-security-10.0.20.jar
+  jetty-server-10.0.20.jar
+  jetty-servlet-10.0.20.jar
   jetty-servlet-api-4.0.6.jar
-  jetty-util-10.0.17.jar
-  jetty-webapp-10.0.17.jar
-  jetty-xml-10.0.17.jar
+  jetty-util-10.0.20.jar
+  jetty-webapp-10.0.20.jar
+  jetty-xml-10.0.20.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.643.jar
@@ -168,10 +168,10 @@ Apache-2.0
   log4j-api-2.20.0.jar
   log4j-core-2.20.0.jar
   log4j-layout-template-json-2.20.0.jar
-  lucene-analysis-common-9.8.0.jar
-  lucene-backward-codecs-9.8.0.jar
-  lucene-core-9.8.0.jar
-  lucene-queryparser-9.8.0.jar
+  lucene-analysis-common-9.10.0.jar
+  lucene-backward-codecs-9.10.0.jar
+  lucene-core-9.10.0.jar
+  lucene-queryparser-9.10.0.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
   netty-3.10.6.Final.jar
@@ -227,14 +227,16 @@ Apache-2.0
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.11.jar
   scala-reflect-2.13.11.jar
-  shiro-cache-1.13.0.jar
-  shiro-config-core-1.13.0.jar
-  shiro-core-1.13.0.jar
-  shiro-crypto-cipher-1.13.0.jar
-  shiro-crypto-core-1.13.0.jar
-  shiro-crypto-hash-1.13.0.jar
-  shiro-event-1.13.0.jar
-  shiro-lang-1.13.0.jar
+  shiro-cache-2.0.0.jar
+  shiro-config-core-2.0.0.jar
+  shiro-core-2.0.0.jar
+  shiro-crypto-cipher-2.0.0.jar
+  shiro-crypto-core-2.0.0.jar
+  shiro-crypto-hash-2.0.0.jar
+  shiro-event-2.0.0.jar
+  shiro-hashes-argon2-2.0.0.jar
+  shiro-hashes-bcrypt-2.0.0.jar
+  shiro-lang-2.0.0.jar
   snappy-java-1.1.8.2.jar
   token-provider-1.0.1.jar
   websocket-api-9.4.51.v20230217.jar
@@ -2610,14 +2612,14 @@ MIT
   jersey-hk2-2.34.jar
   jnr-x86asm-1.0.2.jar
   localstack-1.19.1.jar
-  mockito-core-5.10.0.jar
+  mockito-core-5.11.0.jar
   mssql-jdbc-6.2.1.jre7.jar
   mysql-1.19.1.jar
   neo4j-1.19.1.jar
   postgresql-1.19.1.jar
   reactive-streams-1.0.4.jar
   slf4j-api-2.0.11.jar
-  slf4j-api-2.0.9.jar
+  slf4j-api-2.0.12.jar
   testcontainers-1.19.1.jar
 ------------------------------------------------------------------------------
 
