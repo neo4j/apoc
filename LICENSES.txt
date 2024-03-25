@@ -5,7 +5,7 @@ libraries. For an overview of the licenses see the NOTICE.txt file.
 ------------------------------------------------------------------------------
 Apache-2.0
   FastInfoset-1.2.16.jar
-  HikariCP-java7-2.4.12.jar
+  HikariCP-4.0.3.jar
   RoaringBitmap-0.7.17.jar
   WMI4Java-1.6.3.jar
   accessors-smart-2.5.0.jar
@@ -16,18 +16,18 @@ Apache-2.0
   arrow-memory-netty-15.0.0.jar
   arrow-vector-15.0.0.jar
   assertj-core-3.25.3.jar
-  audience-annotations-0.5.0.jar
-  avro-1.7.7.jar
+  audience-annotations-0.12.0.jar
+  avro-1.9.2.jar
   awaitility-4.2.0.jar
   aws-java-sdk-core-1.12.643.jar
   aws-java-sdk-kms-1.12.643.jar
   aws-java-sdk-s3-1.12.643.jar
-  byte-buddy-1.14.11.jar
-  byte-buddy-agent-1.14.11.jar
+  byte-buddy-1.14.12.jar
+  byte-buddy-agent-1.14.12.jar
   caffeine-3.1.8.jar
   cassandra-driver-core-3.10.0.jar
   commons-beanutils-1.9.4.jar
-  commons-cli-1.2.jar
+  commons-cli-1.5.0.jar
   commons-codec-1.16.1.jar
   commons-collections-3.2.2.jar
   commons-compress-1.26.0.jar
@@ -35,10 +35,11 @@ Apache-2.0
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
   commons-io-2.15.1.jar
+  commons-lang-2.6.jar
   commons-lang3-3.12.0.jar
   commons-lang3-3.14.0.jar
   commons-logging-1.2.jar
-  commons-math3-3.1.1.jar
+  commons-math3-3.6.1.jar
   commons-net-3.9.0.jar
   commons-text-1.10.0.jar
   commons-text-1.11.0.jar
@@ -56,49 +57,49 @@ Apache-2.0
   fst-2.50.jar
   geronimo-jcache_1.0_spec-1.0-alpha-1.jar
   gradle-tooling-api-7.3.jar
-  grpc-api-1.61.1.jar
-  grpc-context-1.61.1.jar
-  grpc-core-1.61.1.jar
-  grpc-netty-1.61.1.jar
-  grpc-protobuf-1.61.1.jar
-  grpc-protobuf-lite-1.61.1.jar
-  grpc-stub-1.61.1.jar
-  grpc-util-1.61.1.jar
+  grpc-api-1.62.2.jar
+  grpc-context-1.62.2.jar
+  grpc-core-1.62.2.jar
+  grpc-netty-1.62.2.jar
+  grpc-protobuf-1.62.2.jar
+  grpc-protobuf-lite-1.62.2.jar
+  grpc-stub-1.62.2.jar
+  grpc-util-1.62.2.jar
   gson-2.10.1.jar
   guava-33.0.0-jre.jar
-  guice-4.0.jar
-  guice-servlet-4.0.jar
-  hadoop-annotations-3.3.6.jar
-  hadoop-auth-3.3.6.jar
-  hadoop-common-3.3.6-tests.jar
-  hadoop-common-3.3.6.jar
-  hadoop-hdfs-3.3.6-tests.jar
-  hadoop-hdfs-3.3.6.jar
-  hadoop-hdfs-client-3.3.6.jar
-  hadoop-mapreduce-client-app-3.3.6.jar
-  hadoop-mapreduce-client-common-3.3.6.jar
-  hadoop-mapreduce-client-core-3.3.6.jar
-  hadoop-mapreduce-client-hs-3.3.6.jar
-  hadoop-mapreduce-client-jobclient-3.3.6-tests.jar
-  hadoop-mapreduce-client-jobclient-3.3.6.jar
-  hadoop-mapreduce-client-shuffle-3.3.6.jar
-  hadoop-minicluster-3.3.6.jar
-  hadoop-registry-3.3.6.jar
-  hadoop-shaded-guava-1.1.1.jar
-  hadoop-shaded-protobuf_3_7-1.1.1.jar
-  hadoop-yarn-api-3.3.6.jar
-  hadoop-yarn-client-3.3.6.jar
-  hadoop-yarn-common-3.3.6.jar
-  hadoop-yarn-server-applicationhistoryservice-3.3.6.jar
-  hadoop-yarn-server-common-3.3.6.jar
-  hadoop-yarn-server-nodemanager-3.3.6.jar
-  hadoop-yarn-server-resourcemanager-3.3.6.jar
-  hadoop-yarn-server-tests-3.3.6-tests.jar
-  hadoop-yarn-server-timelineservice-3.3.6.jar
-  hadoop-yarn-server-web-proxy-3.3.6.jar
-  http2-common-10.0.17.jar
-  http2-hpack-10.0.17.jar
-  http2-server-10.0.17.jar
+  guice-4.2.3.jar
+  guice-servlet-4.2.3.jar
+  hadoop-annotations-3.4.0.jar
+  hadoop-auth-3.4.0.jar
+  hadoop-common-3.4.0-tests.jar
+  hadoop-common-3.4.0.jar
+  hadoop-hdfs-3.4.0-tests.jar
+  hadoop-hdfs-3.4.0.jar
+  hadoop-hdfs-client-3.4.0.jar
+  hadoop-mapreduce-client-app-3.4.0.jar
+  hadoop-mapreduce-client-common-3.4.0.jar
+  hadoop-mapreduce-client-core-3.4.0.jar
+  hadoop-mapreduce-client-hs-3.4.0.jar
+  hadoop-mapreduce-client-jobclient-3.4.0-tests.jar
+  hadoop-mapreduce-client-jobclient-3.4.0.jar
+  hadoop-mapreduce-client-shuffle-3.4.0.jar
+  hadoop-minicluster-3.4.0.jar
+  hadoop-registry-3.4.0.jar
+  hadoop-shaded-guava-1.2.0.jar
+  hadoop-shaded-protobuf_3_21-1.2.0.jar
+  hadoop-yarn-api-3.4.0.jar
+  hadoop-yarn-client-3.4.0.jar
+  hadoop-yarn-common-3.4.0.jar
+  hadoop-yarn-server-applicationhistoryservice-3.4.0.jar
+  hadoop-yarn-server-common-3.4.0.jar
+  hadoop-yarn-server-nodemanager-3.4.0.jar
+  hadoop-yarn-server-resourcemanager-3.4.0.jar
+  hadoop-yarn-server-tests-3.4.0-tests.jar
+  hadoop-yarn-server-timelineservice-3.4.0.jar
+  hadoop-yarn-server-web-proxy-3.4.0.jar
+  http2-common-10.0.20.jar
+  http2-hpack-10.0.20.jar
+  http2-server-10.0.20.jar
   httpclient-4.5.13.jar
   httpcore-4.4.13.jar
   ipaddress-5.4.2.jar
@@ -106,36 +107,33 @@ Apache-2.0
   jProcesses-1.6.5.jar
   jackson-annotations-2.16.1.jar
   jackson-core-2.16.1.jar
-  jackson-core-asl-1.9.13.jar
   jackson-databind-2.16.1.jar
   jackson-dataformat-cbor-2.16.1.jar
   jackson-dataformat-csv-2.16.1.jar
   jackson-datatype-jsr310-2.16.1.jar
   jackson-jaxrs-base-2.16.1.jar
   jackson-jaxrs-json-provider-2.16.1.jar
-  jackson-mapper-asl-1.9.13.jar
   jackson-module-jaxb-annotations-2.16.1.jar
   jakarta.validation-api-2.0.2.jar
-  java-util-1.9.0.jar
   javapoet-1.13.0.jar
   javassist-3.25.0-GA.jar
-  javax-websocket-client-impl-9.4.51.v20230217.jar
-  javax-websocket-server-impl-9.4.51.v20230217.jar
+  javax-websocket-client-impl-9.4.53.v20231009.jar
+  javax-websocket-server-impl-9.4.53.v20231009.jar
   javax.inject-1.jar
   jcip-annotations-1.0-1.jar
-  jctools-core-4.0.2.jar
+  jctools-core-4.0.3.jar
   jettison-1.5.4.jar
-  jetty-alpn-java-server-10.0.17.jar
-  jetty-alpn-server-10.0.17.jar
-  jetty-http-10.0.17.jar
-  jetty-io-10.0.17.jar
-  jetty-security-10.0.17.jar
-  jetty-server-10.0.17.jar
-  jetty-servlet-10.0.17.jar
+  jetty-alpn-java-server-10.0.20.jar
+  jetty-alpn-server-10.0.20.jar
+  jetty-http-10.0.20.jar
+  jetty-io-10.0.20.jar
+  jetty-security-10.0.20.jar
+  jetty-server-10.0.20.jar
+  jetty-servlet-10.0.20.jar
   jetty-servlet-api-4.0.6.jar
-  jetty-util-10.0.17.jar
-  jetty-webapp-10.0.17.jar
-  jetty-xml-10.0.17.jar
+  jetty-util-10.0.20.jar
+  jetty-webapp-10.0.20.jar
+  jetty-xml-10.0.20.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.643.jar
@@ -143,38 +141,34 @@ Apache-2.0
   jnr-constants-0.9.9.jar
   jnr-ffi-2.1.7.jar
   joda-time-2.8.1.jar
-  json-io-2.5.1.jar
   json-path-2.9.0.jar
   json-smart-2.5.0.jar
+  jsonschema2pojo-core-1.0.2.jar
   jsr305-3.0.2.jar
-  kerb-admin-1.0.1.jar
-  kerb-client-1.0.1.jar
-  kerb-common-1.0.1.jar
-  kerb-core-1.0.1.jar
-  kerb-crypto-1.0.1.jar
-  kerb-identity-1.0.1.jar
-  kerb-server-1.0.1.jar
-  kerb-simplekdc-1.0.1.jar
-  kerb-util-1.0.1.jar
-  kerby-asn1-1.0.1.jar
-  kerby-config-1.0.1.jar
-  kerby-pkix-1.0.1.jar
-  kerby-util-1.0.1.jar
-  kerby-xdr-1.0.1.jar
-  kotlin-stdlib-1.4.10.jar
-  kotlin-stdlib-common-1.4.10.jar
+  kerb-admin-2.0.3.jar
+  kerb-client-2.0.3.jar
+  kerb-common-2.0.3.jar
+  kerb-core-2.0.3.jar
+  kerb-crypto-2.0.3.jar
+  kerb-identity-2.0.3.jar
+  kerb-server-2.0.3.jar
+  kerb-simplekdc-2.0.3.jar
+  kerb-util-2.0.3.jar
+  kerby-asn1-2.0.3.jar
+  kerby-config-2.0.3.jar
+  kerby-pkix-2.0.3.jar
+  kerby-util-2.0.3.jar
+  kerby-xdr-2.0.3.jar
   listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar
-  log4j-1.2.17.jar
   log4j-api-2.20.0.jar
   log4j-core-2.20.0.jar
   log4j-layout-template-json-2.20.0.jar
-  lucene-analysis-common-9.8.0.jar
-  lucene-backward-codecs-9.8.0.jar
-  lucene-core-9.8.0.jar
-  lucene-queryparser-9.8.0.jar
+  lucene-analysis-common-9.10.0.jar
+  lucene-backward-codecs-9.10.0.jar
+  lucene-core-9.10.0.jar
+  lucene-queryparser-9.10.0.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
-  netty-3.10.6.Final.jar
   netty-all-4.1.101.Final.jar
   netty-buffer-4.1.101.Final.jar
   netty-codec-4.1.101.Final.jar
@@ -198,7 +192,6 @@ Apache-2.0
   netty-resolver-dns-classes-macos-4.1.101.Final.jar
   netty-resolver-dns-native-macos-4.1.101.Final-osx-aarch_64.jar
   netty-resolver-dns-native-macos-4.1.101.Final-osx-x86_64.jar
-  netty-tcnative-boringssl-static-2.0.61.Final.jar
   netty-tcnative-classes-2.0.61.Final.jar
   netty-transport-4.1.101.Final.jar
   netty-transport-classes-epoll-4.1.101.Final.jar
@@ -212,39 +205,38 @@ Apache-2.0
   netty-transport-rxtx-4.1.101.Final.jar
   netty-transport-sctp-4.1.101.Final.jar
   netty-transport-udt-4.1.101.Final.jar
-  nimbus-jose-jwt-9.8.1.jar
+  nimbus-jose-jwt-9.31.jar
   objenesis-3.3.jar
-  okhttp-4.9.3.jar
-  okio-jvm-2.8.0.jar
   opencsv-5.7.1.jar
   opentest4j-1.3.0.jar
   perfmark-api-0.26.0.jar
   picocli-4.7.5.jar
   proto-google-common-protos-2.29.0.jar
-  reactor-core-3.6.2.jar
   reactor-core-3.6.3.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.11.jar
   scala-reflect-2.13.11.jar
-  shiro-cache-1.13.0.jar
-  shiro-config-core-1.13.0.jar
-  shiro-core-1.13.0.jar
-  shiro-crypto-cipher-1.13.0.jar
-  shiro-crypto-core-1.13.0.jar
-  shiro-crypto-hash-1.13.0.jar
-  shiro-event-1.13.0.jar
-  shiro-lang-1.13.0.jar
-  snappy-java-1.1.8.2.jar
-  token-provider-1.0.1.jar
-  websocket-api-9.4.51.v20230217.jar
-  websocket-client-9.4.51.v20230217.jar
-  websocket-common-9.4.51.v20230217.jar
-  websocket-server-9.4.51.v20230217.jar
-  websocket-servlet-9.4.51.v20230217.jar
+  shiro-cache-2.0.0.jar
+  shiro-config-core-2.0.0.jar
+  shiro-core-2.0.0.jar
+  shiro-crypto-cipher-2.0.0.jar
+  shiro-crypto-core-2.0.0.jar
+  shiro-crypto-hash-2.0.0.jar
+  shiro-event-2.0.0.jar
+  shiro-hashes-argon2-2.0.0.jar
+  shiro-hashes-bcrypt-2.0.0.jar
+  shiro-lang-2.0.0.jar
+  snappy-java-1.1.10.4.jar
+  token-provider-2.0.3.jar
+  websocket-api-9.4.53.v20231009.jar
+  websocket-client-9.4.53.v20231009.jar
+  websocket-common-9.4.53.v20231009.jar
+  websocket-server-9.4.53.v20231009.jar
+  websocket-servlet-9.4.53.v20231009.jar
   woodstox-core-5.4.0.jar
-  zookeeper-3.6.3.jar
-  zookeeper-jute-3.6.3.jar
+  zookeeper-3.8.3.jar
+  zookeeper-jute-3.8.3.jar
 ------------------------------------------------------------------------------
 
                                  Apache License
@@ -451,11 +443,37 @@ Apache-2.0
 
 ------------------------------------------------------------------------------
 BSD-2-Clause
-  dnsjava-2.1.7.jar
-  jline-3.9.0.jar
   jsch-0.1.55.jar
   stax2-api-4.2.1.jar
   zstd-jni-1.5.5-11.jar
+------------------------------------------------------------------------------
+
+Copyright <year> <copyright holder>
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+	 this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+------------------------------------------------------------------------------
+BSD-2-Clause
+  dnsjava-3.4.0.jar
 ------------------------------------------------------------------------------
 
 Copyright <year> <copyright holder>
@@ -492,7 +510,6 @@ BSD-3-Clause
   hamcrest-core-2.2.jar
   hamcrest-library-2.2.jar
   leveldbjni-all-1.8.jar
-  paranamer-2.3.jar
 ------------------------------------------------------------------------------
 
 Copyright (c) <year>, <copyright holder>
@@ -1891,6 +1908,217 @@ after the cause of action arose. Each party waives its rights to a jury trial
 in any resulting litigation.
 
 ------------------------------------------------------------------------------
+Eclipse Public License - v 1.0
+  logback-classic-1.2.10.jar
+  logback-core-1.2.10.jar
+------------------------------------------------------------------------------
+
+Eclipse Public License - v 1.0
+
+THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE PUBLIC
+LICENSE ("AGREEMENT"). ANY USE, REPRODUCTION OR DISTRIBUTION OF THE PROGRAM
+CONSTITUTES RECIPIENT'S ACCEPTANCE OF THIS AGREEMENT.
+
+1. DEFINITIONS
+
+"Contribution" means:
+     a) in the case of the initial Contributor, the initial code and
+     documentation distributed under this Agreement, and
+     b) in the case of each subsequent Contributor:
+          i) changes to the Program, and
+          ii) additions to the Program;
+
+where such changes and/or additions to the Program originate from and are
+distributed by that particular Contributor. A Contribution 'originates' from a
+Contributor if it was added to the Program by such Contributor itself or
+anyone acting on such Contributor's behalf. Contributions do not include
+additions to the Program which: (i) are separate modules of software
+distributed in conjunction with the Program under their own license agreement,
+and (ii) are not derivative works of the Program.
+"Contributor" means any person or entity that distributes the Program.
+
+"Licensed Patents" mean patent claims licensable by a Contributor which are
+necessarily infringed by the use or sale of its Contribution alone or when
+combined with the Program.
+
+"Program" means the Contributions distributed in accordance with this
+Agreement.
+
+"Recipient" means anyone who receives the Program under this Agreement,
+including all Contributors.
+
+2. GRANT OF RIGHTS
+
+     a) Subject to the terms of this Agreement, each Contributor hereby grants
+     Recipient a non-exclusive, worldwide, royalty-free copyright license to
+     reproduce, prepare derivative works of, publicly display, publicly
+     perform, distribute and sublicense the Contribution of such Contributor,
+     if any, and such derivative works, in source code and object code form.
+
+     b) Subject to the terms of this Agreement, each Contributor hereby grants
+     Recipient a non-exclusive, worldwide, royalty-free patent license under
+     Licensed Patents to make, use, sell, offer to sell, import and otherwise
+     transfer the Contribution of such Contributor, if any, in source code and
+     object code form. This patent license shall apply to the combination of
+     the Contribution and the Program if, at the time the Contribution is
+     added by the Contributor, such addition of the Contribution causes such
+     combination to be covered by the Licensed Patents. The patent license
+     shall not apply to any other combinations which include the Contribution.
+     No hardware per se is licensed hereunder.
+
+     c) Recipient understands that although each Contributor grants the
+     licenses to its Contributions set forth herein, no assurances are
+     provided by any Contributor that the Program does not infringe the patent
+     or other intellectual property rights of any other entity. Each
+     Contributor disclaims any liability to Recipient for claims brought by
+     any other entity based on infringement of intellectual property rights or
+     otherwise. As a condition to exercising the rights and licenses granted
+     hereunder, each Recipient hereby assumes sole responsibility to secure
+     any other intellectual property rights needed, if any. For example, if a
+     third party patent license is required to allow Recipient to distribute
+     the Program, it is Recipient's responsibility to acquire that license
+     before distributing the Program.
+
+     d) Each Contributor represents that to its knowledge it has sufficient
+     copyright rights in its Contribution, if any, to grant the copyright
+     license set forth in this Agreement.
+
+3. REQUIREMENTS
+A Contributor may choose to distribute the Program in object code form under
+its own license agreement, provided that:
+
+     a) it complies with the terms and conditions of this Agreement; and
+
+     b) its license agreement:
+          i) effectively disclaims on behalf of all Contributors all
+          warranties and conditions, express and implied, including warranties
+          or conditions of title and non-infringement, and implied warranties
+          or conditions of merchantability and fitness for a particular
+          purpose;
+          ii) effectively excludes on behalf of all Contributors all liability
+          for damages, including direct, indirect, special, incidental and
+          consequential damages, such as lost profits;
+          iii) states that any provisions which differ from this Agreement are
+          offered by that Contributor alone and not by any other party; and
+          iv) states that source code for the Program is available from such
+          Contributor, and informs licensees how to obtain it in a reasonable
+          manner on or through a medium customarily used for software
+          exchange.
+
+When the Program is made available in source code form:
+
+     a) it must be made available under this Agreement; and
+
+     b) a copy of this Agreement must be included with each copy of the
+     Program.
+Contributors may not remove or alter any copyright notices contained within
+the Program.
+
+Each Contributor must identify itself as the originator of its Contribution,
+if any, in a manner that reasonably allows subsequent Recipients to identify
+the originator of the Contribution.
+
+4. COMMERCIAL DISTRIBUTION
+Commercial distributors of software may accept certain responsibilities with
+respect to end users, business partners and the like. While this license is
+intended to facilitate the commercial use of the Program, the Contributor who
+includes the Program in a commercial product offering should do so in a manner
+which does not create potential liability for other Contributors. Therefore,
+if a Contributor includes the Program in a commercial product offering, such
+Contributor ("Commercial Contributor") hereby agrees to defend and indemnify
+every other Contributor ("Indemnified Contributor") against any losses,
+damages and costs (collectively "Losses") arising from claims, lawsuits and
+other legal actions brought by a third party against the Indemnified
+Contributor to the extent caused by the acts or omissions of such Commercial
+Contributor in connection with its distribution of the Program in a commercial
+product offering. The obligations in this section do not apply to any claims
+or Losses relating to any actual or alleged intellectual property
+infringement. In order to qualify, an Indemnified Contributor must: a)
+promptly notify the Commercial Contributor in writing of such claim, and b)
+allow the Commercial Contributor to control, and cooperate with the Commercial
+Contributor in, the defense and any related settlement negotiations. The
+Indemnified Contributor may participate in any such claim at its own expense.
+
+For example, a Contributor might include the Program in a commercial product
+offering, Product X. That Contributor is then a Commercial Contributor. If
+that Commercial Contributor then makes performance claims, or offers
+warranties related to Product X, those performance claims and warranties are
+such Commercial Contributor's responsibility alone. Under this section, the
+Commercial Contributor would have to defend claims against the other
+Contributors related to those performance claims and warranties, and if a
+court requires any other Contributor to pay any damages as a result, the
+Commercial Contributor must pay those damages.
+
+5. NO WARRANTY
+EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS PROVIDED ON AN
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, EITHER EXPRESS OR
+IMPLIED INCLUDING, WITHOUT LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE,
+NON-INFRINGEMENT, MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each
+Recipient is solely responsible for determining the appropriateness of using
+and distributing the Program and assumes all risks associated with its
+exercise of rights under this Agreement , including but not limited to the
+risks and costs of program errors, compliance with applicable laws, damage to
+or loss of data, programs or equipment, and unavailability or interruption of
+operations.
+
+6. DISCLAIMER OF LIABILITY
+EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT NOR ANY
+CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING WITHOUT LIMITATION
+LOST PROFITS), HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
+EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY
+OF SUCH DAMAGES.
+
+7. GENERAL
+
+If any provision of this Agreement is invalid or unenforceable under
+applicable law, it shall not affect the validity or enforceability of the
+remainder of the terms of this Agreement, and without further action by the
+parties hereto, such provision shall be reformed to the minimum extent
+necessary to make such provision valid and enforceable.
+
+If Recipient institutes patent litigation against any entity (including a
+cross-claim or counterclaim in a lawsuit) alleging that the Program itself
+(excluding combinations of the Program with other software or hardware)
+infringes such Recipient's patent(s), then such Recipient's rights granted
+under Section 2(b) shall terminate as of the date such litigation is filed.
+
+All Recipient's rights under this Agreement shall terminate if it fails to
+comply with any of the material terms or conditions of this Agreement and does
+not cure such failure in a reasonable period of time after becoming aware of
+such noncompliance. If all Recipient's rights under this Agreement terminate,
+Recipient agrees to cease use and distribution of the Program as soon as
+reasonably practicable. However, Recipient's obligations under this Agreement
+and any licenses granted by Recipient relating to the Program shall continue
+and survive.
+
+Everyone is permitted to copy and distribute copies of this Agreement, but in
+order to avoid inconsistency the Agreement is copyrighted and may only be
+modified in the following manner. The Agreement Steward reserves the right to
+publish new versions (including revisions) of this Agreement from time to
+time. No one other than the Agreement Steward has the right to modify this
+Agreement. The Eclipse Foundation is the initial Agreement Steward. The
+Eclipse Foundation may assign the responsibility to serve as the Agreement
+Steward to a suitable separate entity. Each new version of the Agreement will
+be given a distinguishing version number. The Program (including
+Contributions) may always be distributed subject to the version of the
+Agreement under which it was received. In addition, after a new version of the
+Agreement is published, Contributor may elect to distribute the Program
+(including its Contributions) under the new version. Except as expressly
+stated in Sections 2(a) and 2(b) above, Recipient receives no rights or
+licenses to the intellectual property of any Contributor under this Agreement,
+whether expressly, by implication, estoppel or otherwise. All rights in the
+Program not expressly granted under this Agreement are reserved.
+
+This Agreement is governed by the laws of the State of New York and the
+intellectual property laws of the United States of America. No party to this
+Agreement will bring a legal action under this Agreement more than one year
+after the cause of action arose. Each party waives its rights to a jury trial
+in any resulting litigation.
+
+------------------------------------------------------------------------------
 Eclipse Public License - v 2.0
   hk2-api-2.6.1.jar
   hk2-locator-2.6.1.jar
@@ -2592,10 +2820,11 @@ and/or involve the use of third party software.
 ------------------------------------------------------------------------------
 MIT
   animal-sniffer-annotations-1.23.jar
-  bcpkix-jdk15on-1.68.jar
+  bcpkix-jdk15on-1.70.jar
   bcpkix-jdk18on-1.77.jar
-  bcprov-jdk15on-1.68.jar
+  bcprov-jdk15on-1.70.jar
   bcprov-jdk18on-1.77.jar
+  bcutil-jdk15on-1.70.jar
   bcutil-jdk18on-1.77.jar
   cassandra-1.19.1.jar
   checker-qual-3.41.0.jar
@@ -2610,14 +2839,14 @@ MIT
   jersey-hk2-2.34.jar
   jnr-x86asm-1.0.2.jar
   localstack-1.19.1.jar
-  mockito-core-5.10.0.jar
+  mockito-core-5.11.0.jar
   mssql-jdbc-6.2.1.jre7.jar
   mysql-1.19.1.jar
   neo4j-1.19.1.jar
   postgresql-1.19.1.jar
   reactive-streams-1.0.4.jar
   slf4j-api-2.0.11.jar
-  slf4j-api-2.0.9.jar
+  slf4j-api-2.0.12.jar
   testcontainers-1.19.1.jar
 ------------------------------------------------------------------------------
 

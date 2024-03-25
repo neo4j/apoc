@@ -26,6 +26,11 @@ dependencies {
         exclude group: 'org.apache.hive', module: 'hive-service'
     }
 
+    // The following dependencies needs to be excluded because they do not have licenses which we are allowed to include
+    def withoutLicenseViolations = {
+        exclude group: 'org.jline'
+    }
+
     // These will be dependencies packaged with the .jar
     api group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0'
     api group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
@@ -40,7 +45,7 @@ dependencies {
     compileOnly group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
     // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
-    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.3.6', withoutServers
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.0', withoutServers.andThen(withoutLicenseViolations)
     compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.26.1'
     compileOnly group: 'com.github.seancfoley', name: 'ipaddress', version: '5.3.3'
     compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.14.0'
