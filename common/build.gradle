@@ -41,7 +41,6 @@ dependencies {
     // These will be dependencies not packaged with the .jar
     // They need to be provided either through the database or in an extra .jar
     compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
-    compileOnly group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
     compileOnly group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
     // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
