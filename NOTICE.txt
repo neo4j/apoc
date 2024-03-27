@@ -282,6 +282,9 @@ BSD-2-Clause
 BSD-2-Clause
   dnsjava-3.4.0.jar
 
+BSD-2-Clause
+  jline-3.22.0.jar
+
 BSD-3-Clause
   asm-9.6.jar
   asm-analysis-9.6.jar
@@ -295,6 +298,9 @@ BSD-3-Clause
 
 BSD-3-Clause
   protobuf-java-3.25.1.jar
+
+Common Development and Distribution License Version 1.0
+  codemodel-2.6.jar
 
 Common Development and Distribution License Version 1.1
   jaxb-api-2.2.11.jar
