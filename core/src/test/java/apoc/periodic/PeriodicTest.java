@@ -715,6 +715,24 @@ public class PeriodicTest {
     }
 
     @Test
+    public void testIterateWithNullRebind() {
+        testResult(
+                db,
+                """
+                CALL apoc.periodic.iterate(
+                    "WITH {a: null, b: {c: 1}} as value RETURN value",
+                    "RETURN 1",
+                     {})
+                """,
+                result -> {
+                    Map<String, Object> row = Iterators.single(result);
+                    assertEquals(1L, row.get("batches"));
+                    assertEquals(1L, row.get("total"));
+                    assertEquals(0L, row.get("failedBatches"));
+                });
+    }
+
+    @Test
     public void testCountdown() {
         int startValue = 3;
         int rate = 1;
