@@ -720,7 +720,7 @@ public class PeriodicTest {
                 db,
                 """
                 CALL apoc.periodic.iterate(
-                    "WITH {a: null, b: {c: 1}} as value RETURN value",
+                    "WITH {a: null, b: {c: 1}, c: [null]} as value RETURN value",
                     "RETURN 1",
                      {})
                 """,
