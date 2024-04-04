@@ -21,6 +21,7 @@ package apoc.util;
 import static apoc.util.TestContainerUtil.Neo4jVersion;
 import static apoc.util.TestContainerUtil.Neo4jVersion.ENTERPRISE;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -109,12 +110,17 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
                 System.err.println(execInContainer("cat", "logs/debug.log").toString());
                 System.err.println(execInContainer("cat", "logs/http.log").toString());
                 System.err.println(execInContainer("cat", "logs/security.log").toString());
+                System.err.println(execInContainer("cat", "logs/query.log").toString());
             } else {
                 System.err.println("Failed to find logs");
             }
         } catch (Exception e) {
             System.err.println("Failed to dump logs: " + e.getMessage());
         }
+    }
+
+    public String queryLogs() throws IOException, InterruptedException {
+       return execInContainer("cat", "logs/query.log").toString();
     }
 
     private void executeScript(String filePath) {
