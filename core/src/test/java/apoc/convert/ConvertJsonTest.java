@@ -30,6 +30,7 @@ import static org.junit.Assert.*;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -461,6 +462,96 @@ public class ConvertJsonTest {
                     List<Object> innerList = (List) ((Map<String, Object>) actedInList.get(1)).get("acted_in");
                     assertEquals(9, ((Map<String, Object>) innerList.get(0)).size());
                 });
+    }
+
+    @Test
+    public void convertToTreeWithCycles() {
+        String createQuery =
+                """
+                CREATE (a {id: 10})-[:FLOW {id:19}]->(b {id: 4})-[:FLOW {id:2}]->({id: 12})-[:FLOW {id:17}]->(f {id: 6})-[:FLOW {id:7}]->(c {id: 11})-[:FLOW {id:16}]->(d {id: 8})
+                MERGE (b)-[:FLOW {id:8}]->(e {id: 17})-[:FLOW {id:12}]->(f)-[:FLOW {id:3}]->(g {id: 9})-[:FLOW {id:18}]->(h {id:7})
+                MERGE (f)-[:FLOW {id:6}]->(i {id: 15})-[:FLOW {id:11}]->(j {id:3})
+                MERGE (b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:7}]->(c)-[:FLOW {id:16}]->(d)
+                MERGE (b)-[:FLOW {id:9}]->(k {id: 13})-[:FLOW {id:14}]->(h)-[:FLOW {id:4}]->(a)
+                MERGE (h)-[:FLOW {id:10}]->(l {id: 16})-[:FLOW {id:15}]->(j)-[:FLOW {id:5}]->(m {id: 14})-[:FLOW {id:13}]->(n {id :5})
+                """;
+        db.executeTransactionally(createQuery);
+
+        testResult(
+                db,
+                """
+                        MATCH p1=(a {id: 10})-[:FLOW {id:19}]->(b {id: 4})-[:FLOW {id:2}]->({id: 12})-[:FLOW {id:17}]->(f {id: 6})-[:FLOW {id:7}]->(c {id: 11})-[:FLOW {id:16}]->(d {id: 8})
+                        MATCH p2=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e {id: 17})
+                        MATCH p3=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)
+                        MATCH p4=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:3}]->(g {id: 9})
+                        MATCH p5=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:3}]->(g)-[:FLOW {id:18}]->(h {id:7})
+                        MATCH p6=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:6}]->(i {id: 15})
+                        MATCH p7=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:6}]->(i)-[:FLOW {id:11}]->(j {id:3})
+                        MATCH p8=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:7}]->(c)
+                        MATCH p9=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:8}]->(e)-[:FLOW {id:12}]->(f)-[:FLOW {id:7}]->(c)-[:FLOW {id:16}]->(d)
+                        MATCH p10=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:9}]->(k {id: 13})
+                        MATCH p11=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:9}]->(k)-[:FLOW {id:14}]->(h)
+                        MATCH p12=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:9}]->(k)-[:FLOW {id:14}]->(h)-[:FLOW {id:4}]->(a)
+                        MATCH p13=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:9}]->(k)-[:FLOW {id:14}]->(h)-[:FLOW {id:10}]->(l {id: 16})
+                        MATCH p14=(a)-[:FLOW {id:19}]->(b)-[:FLOW {id:9}]->(k)-[:FLOW {id:14}]->(h)-[:FLOW {id:10}]->(l)-[:FLOW {id:15}]->(j)
+                        MATCH p15=(l)-[:FLOW {id:15}]->(j)
+                        MATCH p16=(l)-[:FLOW {id:15}]->(j)-[:FLOW {id:5}]->(m {id: 14})
+                        MATCH p17=(l)-[:FLOW {id:15}]->(j)-[:FLOW {id:5}]->(m)-[:FLOW {id:13}]->(n {id :5})
+
+                        CALL apoc.convert.toTree([p1, p2 , p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17]) YIELD value RETURN value
+                        """,
+                res -> {
+                    while (res.hasNext()) {
+                        Map<String, Object> tree =
+                                (Map<String, Object>) res.next().get("value");
+                        printTrees(tree);
+                    }
+                });
+
+        /*
+         * (10)-[19]->(4)-[2]->(12)-[17]->(6)-[7]->(11)-[16]->(8)
+         *               -[8]->(17)-[12]->(6)-[3]->(9)-[18]->(7)
+         *                                   -[6]->(15)-[11]->(3)
+         *                                   -[7]->(11)-[16]->(8)
+         *               -[9]->(13)-[14]->(7)-[4]->(10)
+         *                                   -[10]->(16)-[15]->(3)-[5]->(14)-[13]->(5)
+         * (16)-[15]->(3)-[5]->(14)-[13]->(5)
+         */
+        /*
+         * (10)-[19]->(4)-[2]->(12)-[17]->(6)-[7]->(11)-[16]->(8)
+         * (10)-[19]->(4)-[8]->(17)-[12]->(6)-[3]->(9)-[18]->(7)
+         * (10)-[19]->(4)-[8]->(17)-[12]->(6)-[6]->(15)-[11]->(3)
+         * (10)-[19]->(4)-[8]->(17)-[12]->(6)-[7]->(11)-[16]->(8)
+         * (10)-[19]->(4)-[9]->(13)-[14]->(7)-[4]->(10)
+         * (10)-[19]->(4)-[9]->(13)-[14]->(7)-[10]->(16)-[15]->(3)-[5]->(14)-[13]->(5)
+         * (16)-[15]->(3)-[5]->(14)-[13]->(5)
+         */
+    }
+
+    private void printTrees(Map<String, Object> tree) {
+        List<String> treeBranchStrings = returnTreeString(tree, true);
+
+        for (String treeString : treeBranchStrings) {
+            System.out.println(treeString);
+        }
+    }
+
+    private List<String> returnTreeString(Map<String, Object> treeBranch, boolean firstNode) {
+        String nodeString = firstNode
+                ? "(" + treeBranch.get("id") + ")"
+                : "-[" + treeBranch.get("flow.id") + "]->" + "(" + treeBranch.get("id") + ")";
+        if (treeBranch.get("flow") != null) {
+            List<Object> nextTreeBranches = (List<Object>) treeBranch.get("flow");
+            List<String> treeBranchStrings = new ArrayList<>();
+            for (Object nextTreeBranch : nextTreeBranches) {
+                List<String> newTreeBranchStrings = returnTreeString((Map<String, Object>) nextTreeBranch, false);
+                for (String newTreeBranchString : newTreeBranchStrings) {
+                    treeBranchStrings.add(nodeString + newTreeBranchString);
+                }
+            }
+            return treeBranchStrings;
+        }
+        return List.of(nodeString);
     }
 
     @Test

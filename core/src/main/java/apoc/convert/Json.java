@@ -181,7 +181,7 @@ public class Json {
         Map<String, List<String>> nodes = conf.getNodes();
         Map<String, List<String>> rels = conf.getRels();
 
-        Map<Long, Map<String, Object>> maps = new HashMap<>(paths.size() * 100);
+        Map<String, Map<String, Object>> maps = new HashMap<>(paths.size() * 100);
 
         Stream<Path> stream = paths.stream();
         if (conf.isSortPaths()) {
@@ -191,7 +191,14 @@ public class Json {
             Iterator<Entity> it = path.iterator();
             while (it.hasNext()) {
                 Node n = (Node) it.next();
-                Map<String, Object> nMap = maps.computeIfAbsent(n.getId(), (id) -> toMap(n, nodes));
+                ArrayList<Map<String, Object>> nMaps = new ArrayList<>();
+                nMaps.add(maps.computeIfAbsent("" + n.getId(), (id) -> toMap(n, nodes)));
+                for (String key : maps.keySet()) {
+                    String[] splitKey = key.split("-");
+                    if (splitKey.length == 2 && splitKey[0].equals("" + n.getId())) {
+                        nMaps.add(maps.get(key));
+                    }
+                }
                 if (it.hasNext()) {
                     Relationship r = (Relationship) it.next();
                     Node m = r.getOtherNode(n);
@@ -200,18 +207,29 @@ public class Json {
                             : r.getType().name();
                     // todo take direction into account and create collection into outgoing direction ??
                     // parent-[:HAS_CHILD]->(child) vs. (parent)<-[:PARENT_OF]-(child)
-                    if (!nMap.containsKey(typeName)) nMap.put(typeName, new ArrayList<>(16));
-                    List<Map<String, Object>> list = (List) nMap.get(typeName);
+                    ArrayList<ArrayList<Map<String, Object>>> lists = new ArrayList<>();
+                    for (Map<String, Object> nMap : nMaps) {
+                        if (!nMap.containsKey(typeName)) nMap.put(typeName, new ArrayList<>(16));
+                        lists.add((ArrayList<Map<String, Object>>) nMap.get(typeName));
+                    }
                     // Check that this combination of rel and node doesn't already exist
-                    Optional<Map<String, Object>> optMap = list.stream()
+                    Optional<Map<String, Object>> optMap = lists.stream().flatMap(List::stream).toList().stream()
                             .filter(elem -> elem.get("_elementId").equals(m.getElementId())
                                     && elem.get(typeName + "._elementId").equals(r.getElementId()))
                             .findFirst();
                     if (!optMap.isPresent()) {
+                        String mapId = m.getId() + "-" + r.getId();
                         Map<String, Object> mMap = toMap(m, nodes);
                         mMap = addRelProperties(mMap, typeName, r, rels);
-                        maps.put(m.getId(), mMap);
-                        list.add(maps.get(m.getId()));
+                        Map<String, Object> exisitingMap = null;
+                        if (maps.get(mapId) != null) {
+                            exisitingMap = maps.get(mapId);
+                        }
+                        System.out.println(exisitingMap);
+                        maps.put(mapId, mMap);
+                        for (ArrayList<Map<String, Object>> list : lists) {
+                            list.add(maps.get(mapId));
+                        }
                     }
                 }
             }
@@ -220,7 +238,7 @@ public class Json {
         return paths.stream()
                 .map(Path::startNode)
                 .distinct()
-                .map(n -> maps.remove(n.getId()))
+                .map(n -> maps.remove("" + n.getId()))
                 .map(m -> m == null ? Collections.<String, Object>emptyMap() : m)
                 .map(MapResult::new);
     }
