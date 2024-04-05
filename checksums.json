@@ -128,5 +128,10 @@
         "sha1": "e4e56232c7a1db601e33f2d2aad2af883888cddc",
         "sha256": "da1e2546af1476216c5f9fea89fd2f7ac38d585d56feb905854b3897034b18d4",
         "md5": "32fc136ec3d8a71450f4e803d30a7e98"
+    },
+    "5.19.0": {
+        "sha1": "95a05a124fa385d75afc6d2c9c6526d1317ae0bb",
+        "sha256": "8bf0fda3545cd41f0973610bc24a0b8f5380354d84ede380909206abd71deac4",
+        "md5": "9d2ffda2c50eefbd4b4323b8bf685fde"
     }
 }
