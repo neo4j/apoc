@@ -327,7 +327,7 @@ public class PeriodicTest {
                     assertEquals(100L, row.get("failedOperations"));
                     assertEquals(10L, row.get("failedBatches"));
 
-                    String expectedPattern = ".*(Mismatched input.*offset: 58|Invalid Input.*offset: 54).*";
+                    String expectedPattern = ".*(Mismatched input.*offset: 58|Invalid input.*offset: 54).*";
                     String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
                     assertError(row, "batch", expectedBatchPattern, 10);
                     assertError(row, "operations", expectedPattern, 10);
