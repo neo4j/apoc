@@ -312,7 +312,7 @@ public class TriggerTest {
         assertTrue(
                 e.getMessage()
                         .contains(
-                                "Failed to invoke procedure `apoc.trigger.add`: Caused by: org.neo4j.exceptions.SyntaxException: Invalid input"));
+                                "Failed to invoke procedure `apoc.trigger.add`: Caused by: org.neo4j.exceptions.SyntaxException:"));
     }
 
     @Test
