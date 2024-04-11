@@ -20,7 +20,7 @@ jobs:
       - uses: ./.github/actions/setup-jdk
       - uses: ./.github/actions/setup-gradle-cache
       - name: Compile
-        run: ./gradlew compileJava compileTestJava
+        run: ./gradlew compileJava compileTestJava --stacktrace
 
   snyk-test:
     runs-on: ubuntu-latest
@@ -61,7 +61,7 @@ jobs:
         with:
           languages: java
       - name: Compile
-        run: ./gradlew compileJava compileTestJava
+        run: ./gradlew compileJava compileTestJava --stacktrace
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
 
