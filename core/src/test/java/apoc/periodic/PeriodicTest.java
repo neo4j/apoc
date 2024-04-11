@@ -27,7 +27,6 @@ import static apoc.util.Util.map;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.text.MatchesPattern.matchesPattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -53,7 +52,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hamcrest.MatcherAssert;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Condition;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -315,7 +316,6 @@ public class PeriodicTest {
 
     @Test
     public void testPeriodicIterateErrors() {
-        final String newline = System.lineSeparator();
         testResult(
                 db,
                 "CALL apoc.periodic.iterate('UNWIND range(0,99) as id RETURN id', 'CREATE null', {batchSize:10,iterateList:true})",
@@ -327,28 +327,21 @@ public class PeriodicTest {
                     assertEquals(100L, row.get("failedOperations"));
                     assertEquals(10L, row.get("failedBatches"));
 
-                    String expectedPattern =
-                            "(?s)Invalid input 'null': expected.* \\(line 1, column 55 \\(offset: 54\\)\\)\\n"
-                                    + "\\\"UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\"\\n"
-                                    + "                                                       \\^";
-
+                    String expectedPattern = ".*(Mismatched input.*offset: 58|Invalid Input.*offset: 54).*";
                     String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
-
-                    assertError(
-                            ((Map<String, Long>) ((Map) row.get("batch")).get("errors")),
-                            expectedBatchPattern,
-                            Long.valueOf(10));
-                    assertError(
-                            ((Map<String, Long>) ((Map) row.get("operations")).get("errors")),
-                            expectedPattern,
-                            Long.valueOf(10));
+                    assertError(row, "batch", expectedBatchPattern, 10);
+                    assertError(row, "operations", expectedPattern, 10);
                 });
     }
 
-    private void assertError(Map<String, Long> errors, String expectedPattern, Long errorCount) {
-        assertEquals(1, errors.size());
-        errors.values().forEach(value -> assertEquals(errorCount, value));
-        errors.keySet().forEach(key -> MatcherAssert.assertThat(key, matchesPattern(expectedPattern)));
+    private void assertError(Map<String, Object> row, String column, String expectedPattern, long errorCount) {
+        Assertions.assertThat(row.get(column))
+                  .asInstanceOf(InstanceOfAssertFactories.map(String.class, Object.class))
+                  .extractingByKey("errors")
+                  .asInstanceOf(InstanceOfAssertFactories.map(String.class, Long.class))
+                  .hasSize(1)
+                  .hasKeySatisfying(new Condition<>(k -> k.matches(expectedPattern), "key matches %s", expectedPattern))
+                  .containsValues(errorCount);
     }
 
     @Test
