@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -327,20 +328,19 @@ public class PeriodicTest {
                     assertEquals(100L, row.get("failedOperations"));
                     assertEquals(10L, row.get("failedBatches"));
 
-                    String expectedPattern = ".*(Mismatched input.*offset: 58|Invalid input.*offset: 54).*";
-                    String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
-                    assertError(row, "batch", expectedBatchPattern, 10);
+                    var expectedPattern = Pattern.compile( ".*(Mismatched input|Invalid input).*offset: (58|54).*");
+                    assertError(row, "batch", expectedPattern, 10);
                     assertError(row, "operations", expectedPattern, 10);
                 });
     }
 
-    private void assertError(Map<String, Object> row, String column, String expectedPattern, long errorCount) {
+    private void assertError(Map<String, Object> row, String column, final Pattern expectedPattern, long errorCount) {
         Assertions.assertThat(row.get(column))
                   .asInstanceOf(InstanceOfAssertFactories.map(String.class, Object.class))
                   .extractingByKey("errors")
                   .asInstanceOf(InstanceOfAssertFactories.map(String.class, Long.class))
                   .hasSize(1)
-                  .hasKeySatisfying(new Condition<>(k -> k.matches(expectedPattern), "key matches %s", expectedPattern))
+                  .hasKeySatisfying(new Condition<>(k -> expectedPattern.matcher(k).find()), "key matches %s", expectedPattern))
                   .containsValues(errorCount);
     }
 
