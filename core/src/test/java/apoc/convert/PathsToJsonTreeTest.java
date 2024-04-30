@@ -22,6 +22,8 @@ import static org.junit.Assert.assertEquals;
 
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
@@ -34,7 +36,27 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 public class PathsToJsonTreeTest {
     private Object parseJson(String json) {
-        return JsonUtil.parse(json, null, null);
+        return JsonUtil.parse(json, null, Object.class);
+    }
+
+    // Because the nodes and relationships contain elementId, which is random,
+    // we need to test out equality leaving it out of the assertion
+    private Object removeElementId(Object a) {
+        if (a != null) {
+            if (a instanceof HashMap) {
+                HashMap<String, Object> obj = (HashMap<String, Object>) a;
+                var keysToRemove = obj.keySet().stream()
+                        .filter(key -> key.contains("elementId"))
+                        .collect(Collectors.toList());
+                keysToRemove.forEach((key) -> obj.remove(key));
+                obj.values().forEach((child) -> removeElementId(child));
+            } else if (a instanceof ArrayList) {
+                ArrayList<Object> obj = (ArrayList<Object>) a;
+                obj.forEach((child) -> removeElementId(child));
+            }
+        }
+
+        return a;
     }
 
     @Rule
@@ -86,7 +108,7 @@ public class PathsToJsonTreeTest {
                     + "   }"
                     + "}";
             assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -121,7 +143,8 @@ public class PathsToJsonTreeTest {
                     + "   }"
                     + "}";
             assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), rows.get(0));
+
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -146,31 +169,31 @@ public class PathsToJsonTreeTest {
             Result result = tx.execute(query);
             var rows = result.stream().collect(Collectors.toList());
             var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
+                    + "      \"nodeName\":\"b\","
                     + "      \"r\":["
                     + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r._id\":1,"
+                    + "            \"nodeName\":\"a\","
+                    + "            \"r._id\":0,"
                     + "            \"r\":["
                     + "               {"
-                    + "                  \"nodeName\":\"a\","
-                    + "                  \"r._id\":0,"
-                    + "                  \"_type\":\"A\","
-                    + "                  \"_id\":0,"
+                    + "                  \"nodeName\":\"b\","
+                    + "                  \"r._id\":1,"
+                    + "                  \"_type\":\"B\","
+                    + "                  \"_id\":1,"
                     + "                  \"r.relName\":\"r\""
                     + "               }"
                     + "            ],"
-                    + "            \"_type\":\"B\","
-                    + "            \"_id\":1,"
+                    + "            \"_type\":\"A\","
+                    + "            \"_id\":0,"
                     + "            \"r.relName\":\"r\""
                     + "         }"
                     + "      ],"
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0"
+                    + "      \"_type\":\"B\","
+                    + "      \"_id\":1"
                     + "   }"
                     + "}";
             assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -207,7 +230,7 @@ public class PathsToJsonTreeTest {
                     + "   }"
                     + "}";
             assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -233,30 +256,30 @@ public class PathsToJsonTreeTest {
 
             assertEquals(rows.size(), 1);
             var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"b\","
-                    + "      \"_type\":\"B\","
-                    + "      \"_id\":1,"
-                    + "      \"r2\":["
+                    + "      \"nodeName\":\"a\","
+                    + "      \"_type\":\"A\","
+                    + "      \"_id\":0,"
+                    + "      \"r1\":["
                     + "         {"
-                    + "            \"nodeName\":\"a\","
-                    + "            \"r1\":["
+                    + "            \"nodeName\":\"b\","
+                    + "            \"r2\":["
                     + "               {"
-                    + "                  \"nodeName\":\"b\","
-                    + "                  \"r1._id\":0,"
-                    + "                  \"_type\":\"B\","
-                    + "                  \"r1.relName\":\"r1\","
-                    + "                  \"_id\":1"
+                    + "                  \"nodeName\":\"a\","
+                    + "                  \"r2._id\":1,"
+                    + "                  \"_type\":\"A\","
+                    + "                  \"r2.relName\":\"r2\","
+                    + "                  \"_id\":0"
                     + "               }"
                     + "            ],"
-                    + "            \"_type\":\"A\","
-                    + "            \"r2._id\":1,"
-                    + "            \"_id\":0,"
-                    + "            \"r2.relName\":\"r2\""
+                    + "            \"_type\":\"B\","
+                    + "            \"r1._id\":0,"
+                    + "            \"_id\":1,"
+                    + "            \"r1.relName\":\"r1\""
                     + "         }"
                     + "      ]"
                     + "   }"
                     + "}";
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -316,7 +339,7 @@ public class PathsToJsonTreeTest {
                     + "    ]"
                     + "  }"
                     + "}";
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -377,7 +400,7 @@ public class PathsToJsonTreeTest {
                     + "    ]"
                     + "  }"
                     + "}";
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -436,7 +459,7 @@ public class PathsToJsonTreeTest {
                     + "      ]"
                     + "   }"
                     + "}";
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -488,8 +511,8 @@ public class PathsToJsonTreeTest {
                     + "      \"_id\":2"
                     + "   }"
                     + "}";
-            assertEquals(parseJson(expectedFirstRow), rows.get(0));
-            assertEquals(parseJson(expectedSecondRow), rows.get(1));
+            assertEquals(parseJson(expectedFirstRow), removeElementId(rows.get(0)));
+            assertEquals(parseJson(expectedSecondRow), removeElementId(rows.get(1)));
         }
     }
 
@@ -526,7 +549,7 @@ public class PathsToJsonTreeTest {
                     + "      \"_id\":0"
                     + "   }"
                     + "}";
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 
@@ -563,7 +586,7 @@ public class PathsToJsonTreeTest {
                     + "      \"_id\":0"
                     + "   }"
                     + "}";
-            assertEquals(parseJson(expectedRow), rows.get(0));
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
         }
     }
 }

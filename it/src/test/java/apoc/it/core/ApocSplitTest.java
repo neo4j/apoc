@@ -199,6 +199,7 @@ public class ApocSplitTest {
             "apoc.warmup.run",
             "apoc.stats.degrees",
             "apoc.help",
+            "apoc.paths.toJsonTree",
             "apoc.refactor.rename.label",
             "apoc.refactor.rename.type",
             "apoc.refactor.rename.nodeProperty",
