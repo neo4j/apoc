@@ -1,21 +1,18 @@
 package apoc.it.core;
 
-import apoc.util.Neo4jContainerExtension;
-import apoc.util.TestContainerUtil;
-import apoc.util.TestUtil;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.neo4j.driver.Session;
-import org.neo4j.driver.TransactionConfig;
-
-import java.util.List;
-import java.util.Map;
-
 import static apoc.util.TestContainerUtil.createDB;
 import static apoc.util.TestContainerUtil.dockerImageForNeo4j;
 import static org.junit.Assert.*;
 import static org.junit.Assert.fail;
+
+import apoc.util.Neo4jContainerExtension;
+import apoc.util.TestContainerUtil;
+import apoc.util.TestUtil;
+import java.util.List;
+import java.util.Map;
+import org.junit.Test;
+import org.neo4j.driver.Session;
+import org.neo4j.driver.TransactionConfig;
 
 public class PeriodicIterateTest {
 
@@ -24,23 +21,26 @@ public class PeriodicIterateTest {
     public void check_metadata_in_batches() {
         try {
             Neo4jContainerExtension neo4jContainer = createDB(
-                    TestContainerUtil.Neo4jVersion.ENTERPRISE, List.of(TestContainerUtil.ApocPackage.CORE), !TestUtil.isRunningInCI())
+                            TestContainerUtil.Neo4jVersion.ENTERPRISE,
+                            List.of(TestContainerUtil.ApocPackage.CORE),
+                            !TestUtil.isRunningInCI())
                     .withNeo4jConfig("dbms.transaction.timeout", "60s");
 
             neo4jContainer.start();
 
-
             Session session = neo4jContainer.getSession();
-            session.run(
-                    "CALL apoc.periodic.iterate(\"MATCH (p:Person) RETURN p\"," +
-                            "\"SET p.name='test'\"," +
-                            "{batchSize:1, parallel:false})",
-                    TransactionConfig.builder()
-                            .withMetadata(Map.of("shouldAppear", "inBatches"))
-                            .build()
-                    ).stream().count();
+            session
+                    .run(
+                            "CALL apoc.periodic.iterate(\"MATCH (p:Person) RETURN p\"," + "\"SET p.name='test'\","
+                                    + "{batchSize:1, parallel:false})",
+                            TransactionConfig.builder()
+                                    .withMetadata(Map.of("shouldAppear", "inBatches"))
+                                    .build())
+                    .stream()
+                    .count();
             var queryLogs = neo4jContainer.queryLogs();
-            assertTrue(queryLogs.contains("SET p.name='test' - {_batch: [], _count: 0} - runtime=pipelined - {shouldAppear: 'inBatches'}"));
+            assertTrue(queryLogs.contains(
+                    "SET p.name='test' - {_batch: [], _count: 0} - runtime=pipelined - {shouldAppear: 'inBatches'}"));
             session.close();
             neo4jContainer.close();
         } catch (Exception ex) {

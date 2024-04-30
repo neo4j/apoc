@@ -309,7 +309,7 @@ public class Periodic {
         int failedParams = Util.toInteger(config.getOrDefault("failedParams", -1));
 
         final Map<String, Object> metaData;
-        if(tx instanceof InternalTransaction iTx){
+        if (tx instanceof InternalTransaction iTx) {
             metaData = iTx.kernelTransaction().getMetaData();
         } else {
             metaData = Map.of();
@@ -341,7 +341,7 @@ public class Periodic {
                     retries,
                     result,
                     (tx, p) -> {
-                        if(tx instanceof InternalTransaction iTx){
+                        if (tx instanceof InternalTransaction iTx) {
                             iTx.setMetaData(metaData);
                         }
                         final Result r = tx.execute(innerStatement, merge(params, p));
