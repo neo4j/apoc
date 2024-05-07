@@ -336,6 +336,7 @@ public class XmlGraphMLReader {
             tx.rollback();
             throw e;
         } finally {
+            reader.close();
             tx.close();
         }
         return count;

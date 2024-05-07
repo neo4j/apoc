@@ -63,15 +63,15 @@ public class ImportCsv {
 
             final Map<String, Map<String, String>> idMapping = new HashMap<>();
             for (Map<String, Object> node : nodes) {
-                final Object data = node.getOrDefault("fileName", node.get("data"));
+                final Object fileName = node.getOrDefault("fileName", node.get("data"));
                 final List<String> labels = (List<String>) node.get("labels");
-                loader.loadNodes(data, labels, db, idMapping);
+                loader.loadNodes(fileName, labels, db, idMapping);
             }
 
             for (Map<String, Object> relationship : relationships) {
                 final Object fileName = relationship.getOrDefault("fileName", relationship.get("data"));
                 final String type = (String) relationship.get("type");
-                loader.loadRelationships(fileName, type, db, idMapping, urlAccessChecker);
+                loader.loadRelationships(fileName, type, db, idMapping);
             }
 
             return reporter.getTotal();
