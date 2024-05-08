@@ -205,8 +205,7 @@ public class CsvEntityLoader {
             final Object data,
             final String type,
             final GraphDatabaseService db,
-            final Map<String, Map<String, String>> idMapping,
-            final URLAccessChecker urlAccessChecker)
+            final Map<String, Map<String, String>> idMapping)
             throws IOException {
 
         try (final CountingReader reader = FileUtils.readerFor(data, clc.getCompressionAlgo(), urlAccessChecker)) {

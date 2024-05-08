@@ -22,6 +22,7 @@ import apoc.ApocConfig;
 import apoc.Pools;
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.cypher.FileManagerFactory;
+import apoc.export.util.CountingReader;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportUtils;
 import apoc.export.util.NodesAndRelsSubGraph;
@@ -98,9 +99,11 @@ public class ExportGraphML {
 
             if (exportConfig.storeNodeIds()) graphMLReader.storeNodeIds();
 
-            graphMLReader.parseXML(
-                    FileUtils.readerFor(urlOrBinaryFile, exportConfig.getCompressionAlgo(), urlAccessChecker),
-                    terminationGuard);
+            try (CountingReader reader =
+                    FileUtils.readerFor(urlOrBinaryFile, exportConfig.getCompressionAlgo(), urlAccessChecker)) {
+                graphMLReader.parseXML(reader, terminationGuard);
+            }
+
             return reporter.getTotal();
         });
         return Stream.of(result);
