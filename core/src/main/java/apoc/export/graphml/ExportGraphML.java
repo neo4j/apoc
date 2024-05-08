@@ -99,10 +99,9 @@ public class ExportGraphML {
 
             if (exportConfig.storeNodeIds()) graphMLReader.storeNodeIds();
 
-            try (CountingReader reader = FileUtils.readerFor(urlOrBinaryFile, exportConfig.getCompressionAlgo(), urlAccessChecker)) {
-                graphMLReader.parseXML(
-                        reader,
-                        terminationGuard);
+            try (CountingReader reader =
+                    FileUtils.readerFor(urlOrBinaryFile, exportConfig.getCompressionAlgo(), urlAccessChecker)) {
+                graphMLReader.parseXML(reader, terminationGuard);
             }
 
             return reporter.getTotal();
