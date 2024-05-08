@@ -142,9 +142,6 @@ public class ExportCypher {
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
-        // streamStatements
-        config.put("stream", false);
-        config.put("streamStatements", false);
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), true);
     }
 
@@ -195,7 +192,7 @@ public class ExportCypher {
             ExportFileManager cypherFileManager) {
         MultiStatementCypherSubGraphExporter exporter = new MultiStatementCypherSubGraphExporter(graph, c, db);
 
-        if (onlySchema) exporter.exportOnlySchema(cypherFileManager, c);
+        if (onlySchema) exporter.exportOnlySchema(cypherFileManager, reporter, c);
         else exporter.export(c, reporter, cypherFileManager);
     }
 
