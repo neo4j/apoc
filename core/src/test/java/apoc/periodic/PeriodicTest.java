@@ -326,7 +326,8 @@ public class PeriodicTest {
                     assertEquals(100L, row.get("failedOperations"));
                     assertEquals(10L, row.get("failedBatches"));
 
-                    String expectedPattern = "(?s)Invalid input.*\\\"UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\".*";
+                    String expectedPattern =
+                            "(?s)Invalid input.*\\\"UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\".*";
 
                     String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
 
