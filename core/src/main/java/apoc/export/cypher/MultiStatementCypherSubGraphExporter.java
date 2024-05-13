@@ -26,6 +26,7 @@ import apoc.export.cypher.formatter.CypherFormatter;
 import apoc.export.cypher.formatter.CypherFormatterUtils;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportFormat;
+import apoc.export.util.ProgressReporter;
 import apoc.export.util.Reporter;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
@@ -118,10 +119,11 @@ public class MultiStatementCypherSubGraphExporter {
         reporter.done();
     }
 
-    public void exportOnlySchema(ExportFileManager cypherFileManager, ExportConfig config) {
+    public void exportOnlySchema(ExportFileManager cypherFileManager, ProgressReporter reporter, ExportConfig config) {
         PrintWriter schemaWriter = cypherFileManager.getPrintWriter("schema");
         exportSchema(schemaWriter, config);
         schemaWriter.close();
+        reporter.done();
     }
 
     // ---- Nodes ----
