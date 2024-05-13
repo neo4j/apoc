@@ -34,8 +34,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
-import static org.neo4j.configuration.SettingValueParsers.BYTES;
 import static org.neo4j.graphdb.Label.label;
 
 import apoc.util.BinaryTestUtil;
@@ -95,8 +93,6 @@ public class ExportGraphMLTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("200m"))
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath());

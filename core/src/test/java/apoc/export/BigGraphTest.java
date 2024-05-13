@@ -22,8 +22,6 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
-import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
-import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
 import apoc.export.csv.ExportCSV;
 import apoc.export.csv.ImportCsv;
@@ -61,8 +59,6 @@ public class BigGraphTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("1G"))
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath());
