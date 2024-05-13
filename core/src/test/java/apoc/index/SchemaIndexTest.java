@@ -112,7 +112,7 @@ public class SchemaIndexTest {
                 .map(i -> i % 100)
                 .sorted()
                 .distinct()
-                .mapToObj(Long::new)
+                .mapToObj(Long::valueOf)
                 .collect(Collectors.toList());
         try (Transaction tx = db.beginTx()) {
             tx.schema().awaitIndexesOnline(2, TimeUnit.SECONDS);

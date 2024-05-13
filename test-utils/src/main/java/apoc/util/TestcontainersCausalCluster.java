@@ -52,13 +52,15 @@ public class TestcontainersCausalCluster {
     private static final int DEFAULT_BOLT_PORT = 7687;
 
     public enum ClusterInstanceType {
-        CORE(DEFAULT_BOLT_PORT),
-        READ_REPLICA(DEFAULT_BOLT_PORT + 1000);
+        CORE(DEFAULT_BOLT_PORT, "PRIMARY"),
+        READ_REPLICA(DEFAULT_BOLT_PORT + 1000, "SECONDARY");
 
         private final int port;
+        private final String mode;
 
-        ClusterInstanceType(int port) {
+        ClusterInstanceType(int port, String mode) {
             this.port = port;
+            this.mode = mode;
         }
     }
 
@@ -118,9 +120,9 @@ public class TestcontainersCausalCluster {
                         // but by default from 5.x onwards not every database is allocated in every instance
                         // so the endpoint would return 404 and we would not complete container startup
                         .withNeo4jConfig("initial.dbms.default_primaries_count", Integer.toString(numberOfCoreMembers))
-                        .withNeo4jConfig("dbms.default_advertised_address", member.getValue())
+                        .withNeo4jConfig("server.default_advertised_address", member.getValue())
                         .withNeo4jConfig(
-                                "dbms.connector.bolt.advertised_address",
+                                "server.bolt.advertised_address",
                                 String.format(
                                         "%s:%d",
                                         proxy.getContainerIpAddress(),
@@ -137,7 +139,7 @@ public class TestcontainersCausalCluster {
                                 envSettings)
                         .withNeo4jConfig("dbms.default_advertised_address", member.getValue())
                         .withNeo4jConfig(
-                                "dbms.connector.bolt.advertised_address",
+                                "server.bolt.advertised_address",
                                 String.format(
                                         "%s:%d",
                                         proxy.getContainerIpAddress(),
@@ -174,16 +176,16 @@ public class TestcontainersCausalCluster {
                 .withNetwork(network)
                 .withNetworkAliases(name)
                 .withCreateContainerCmdModifier(cmd -> cmd.withHostName(name))
-                .withNeo4jConfig("dbms.mode", instanceType.toString())
-                .withNeo4jConfig("dbms.default_listen_address", "0.0.0.0")
-                .withNeo4jConfig("causal_clustering.leadership_balancing", "NO_BALANCING")
-                .withNeo4jConfig("causal_clustering.initial_discovery_members", initialDiscoveryMembers)
+                .withNeo4jConfig("initial.server.mode_constraint", instanceType.mode)
+                .withNeo4jConfig("server.default_listen_address", "0.0.0.0")
+                .withNeo4jConfig("dbms.cluster.raft.leader_transfer.balancing_strategy", "NO_BALANCING")
+                .withNeo4jConfig("dbms.cluster.discovery.endpoints", initialDiscoveryMembers)
                 .withStartupTimeout(Duration.ofMinutes(MINUTES_TO_WAIT));
         if (withRoutingEnabled(envSettings)) {
             container
-                    .withEnv("NEO4J_dbms_routing_listen__address", "0.0.0.0:7618")
+                    .withEnv("NEO4J_server_routing_listen__address", "0.0.0.0:7618")
                     .withEnv("NEO4J_dbms_routing_default__router", "SERVER")
-                    .withEnv("NEO4J_dbms_routing_advertised__address", name + ":7618");
+                    .withEnv("NEO4J_server_routing_advertised__address", name + ":7618");
         } else {
             container.withoutDriver();
         }

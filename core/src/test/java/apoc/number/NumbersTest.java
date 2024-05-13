@@ -92,22 +92,19 @@ public class NumbersTest {
 
     @Test
     public void testParseInt() {
-        testCall(
-                db,
-                "RETURN apoc.number.parseInt('12,345') AS value",
-                row -> assertEquals(new Long(12345), row.get("value")));
+        testCall(db, "RETURN apoc.number.parseInt('12,345') AS value", row -> assertEquals(12345L, row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.parseInt('12.345', '' ,'it') AS value",
-                row -> assertEquals(new Long(12345), row.get("value")));
+                row -> assertEquals(12345L, row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.parseInt('12,345', '#,##0.00;(#,##0.00)') AS value",
-                row -> assertEquals(new Long(12345), row.get("value")));
+                row -> assertEquals(12345L, row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.parseInt('12.345', '#,##0.00;(#,##0.00)', 'it') AS value",
-                row -> assertEquals(new Long(12345), row.get("value")));
+                row -> assertEquals(12345L, row.get("value")));
         testCall(db, "RETURN apoc.number.parseInt('aaa') AS value", row -> assertEquals(null, row.get("value")));
         testCall(db, "RETURN apoc.number.parseInt(null) AS value", row -> assertNull(row.get("value")));
     }
@@ -119,19 +116,19 @@ public class NumbersTest {
         testCall(
                 db,
                 "RETURN apoc.number.parseFloat('12,345.67') AS value",
-                row -> assertEquals(new Double(12345.67), row.get("value")));
+                row -> assertEquals(12345.67, row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.parseFloat('12.345,67', '', 'it') AS value",
-                row -> assertEquals(new Double(12345.67), row.get("value")));
+                row -> assertEquals(12345.67, row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.parseFloat('12,345.67', '#,##0.00;(#,##0.00)') AS value",
-                row -> assertEquals(new Double(12345.67), row.get("value")));
+                row -> assertEquals(12345.67, row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.parseFloat('12.345,67', '#,##0.00;(#,##0.00)', 'it') AS value",
-                row -> assertEquals(new Double(12345.67), row.get("value")));
+                row -> assertEquals(12345.67, row.get("value")));
         testCall(db, "RETURN apoc.number.parseFloat('aaa') AS value", row -> assertEquals(null, row.get("value")));
         testCall(db, "RETURN apoc.number.parseFloat(null) AS value", row -> assertNull(row.get("value")));
     }
