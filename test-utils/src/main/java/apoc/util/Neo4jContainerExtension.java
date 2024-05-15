@@ -192,14 +192,9 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
                     .withReadTimeout(Duration.ofSeconds(3))
                     .withStartupTimeout(timeout));
         } else {
-            this.setWaitStrategy(Wait.forHttp("/")
-                    .forPort(7474)
-                    .forStatusCodeMatching(t -> {
-                        logger.debug("/ [" + t.toString() + "]");
-                        return t == 200;
-                    })
-                    .withReadTimeout(Duration.ofSeconds(3))
-                    .withStartupTimeout(timeout));
+            this.setWaitStrategy(
+                    Wait.forSuccessfulCommand("wget --no-verbose --tries=1 --spider localhost:7474 || exit 1")
+                            .withStartupTimeout(timeout));
         }
 
         return this;
