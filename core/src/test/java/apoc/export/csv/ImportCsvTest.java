@@ -33,8 +33,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.neo4j.configuration.GraphDatabaseSettings.TransactionStateMemoryAllocation.OFF_HEAP;
-import static org.neo4j.configuration.SettingValueParsers.BYTES;
 
 import apoc.csv.CsvTestUtil;
 import apoc.util.CompressionAlgo;
@@ -81,8 +79,6 @@ public class ImportCsvTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.allow_file_urls, true)
             .withSetting(GraphDatabaseSettings.db_temporal_timezone, DEFAULT_TIMEZONE)
-            .withSetting(GraphDatabaseSettings.tx_state_max_off_heap_memory, BYTES.parse("500m"))
-            .withSetting(GraphDatabaseSettings.tx_state_memory_allocation, OFF_HEAP)
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
