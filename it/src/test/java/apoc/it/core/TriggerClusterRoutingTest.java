@@ -218,7 +218,7 @@ public class TriggerClusterRoutingTest {
     }
 
     private static String getBoltAddress(Neo4jContainerExtension instance) {
-        return instance.getEnvMap().get("NEO4J_dbms_connector_bolt_advertised__address");
+        return instance.getEnvMap().get("NEO4J_server_bolt_advertised__address");
     }
 
     private static Session getSessionForDb(Neo4jContainerExtension instance, String dbName) {
