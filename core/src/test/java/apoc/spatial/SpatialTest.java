@@ -45,6 +45,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.test.rule.DbmsRule;
@@ -141,11 +143,19 @@ public class SpatialTest {
 
     @Before
     public void setUp() {
+        URLAccessChecker urlAccessChecker = new URLAccessChecker() {
+            @Override
+            public java.net.URL checkURL(java.net.URL url) throws URLAccessValidationError {
+                return url;
+            }
+        };
+
         TestUtil.registerProcedure(db, Date.class);
         TestUtil.registerProcedure(db, MockGeocode.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         URL url = ClassLoader.getSystemResource("spatial.json");
-        Map tests = (Map) JsonUtil.loadJson(url.toString(), null).findFirst().orElse(null);
+        Map tests = (Map)
+                JsonUtil.loadJson(url.toString(), urlAccessChecker).findFirst().orElse(null);
         for (Object event : (List) tests.get("events")) {
             addEventData((Map) event);
         }

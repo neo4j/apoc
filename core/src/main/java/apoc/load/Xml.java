@@ -38,6 +38,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -69,6 +70,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -198,12 +200,11 @@ public class Xml {
 
     private XMLStreamReader getXMLStreamReader(
             Object urlOrBinary, XmlImportConfig config, URLAccessChecker urlAccessChecker)
-            throws IOException, XMLStreamException {
+            throws IOException, XMLStreamException, URISyntaxException, URLAccessValidationError {
         InputStream inputStream;
         if (urlOrBinary instanceof String) {
             String url = (String) urlOrBinary;
-            apocConfig.checkReadAllowed(url, urlAccessChecker);
-            url = FileUtils.changeFileUrlIfImportDirectoryConstrained(url);
+            url = FileUtils.changeFileUrlIfImportDirectoryConstrained(url, urlAccessChecker);
             StreamConnection streamConnection = getStreamConnection(url, null, null, urlAccessChecker);
             inputStream = toLimitedIStream(streamConnection.getInputStream(), streamConnection.getLength());
         } else if (urlOrBinary instanceof byte[]) {
@@ -515,7 +516,7 @@ public class Xml {
     public Stream<NodeResult> importToGraph(
             @Name("urlOrBinary") Object urlOrBinary,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
-            throws IOException, XMLStreamException {
+            throws IOException, XMLStreamException, URISyntaxException, URLAccessValidationError {
         XmlImportConfig importConfig = new XmlImportConfig(config);
         // TODO: make labels, reltypes and magic properties configurable
 
