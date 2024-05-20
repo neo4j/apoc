@@ -63,6 +63,16 @@ publishing {
             name = 'pipeline'
             url = "file://${project(':core').buildDir}/repo"
         }
+        if (System.getenv("PUBLISH_REPO_URL") ?: "" != "") {
+            maven {
+                name = 'codeartifact'
+                url System.env.PUBLISH_REPO_URL
+                credentials {
+                    username System.env.PUBLISH_REPO_USERNAME
+                    password System.env.PUBLISH_REPO_TOKEN
+                }
+            }
+        }
     }
     publications {
         shadow(MavenPublication) { publication ->
