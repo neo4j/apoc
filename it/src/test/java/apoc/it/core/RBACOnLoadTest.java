@@ -109,6 +109,11 @@ public class RBACOnLoadTest {
         }
     }
 
+    private static void addRBACDenyAll(String role) {
+        String query = "DENY LOAD ON ALL DATA TO " + role;
+        testCallEmpty(session, query, emptyMap());
+    }
+
     @Test
     public void testRBACOnDeny() throws IOException {
         String url = "https://neo4j.com/docs/cypher-refcard/3.3/csv/artists.csv";
@@ -134,6 +139,48 @@ public class RBACOnLoadTest {
             Assertions.assertThat(e.getMessage())
                     .contains("Cause: LOAD on URL '" + url
                             + "' is denied for user 'testUser' with roles [PUBLIC, editor, test] restricted to");
+        }
+    }
+
+    @Test
+    public void testRBACOnFileDenyAll() throws IOException {
+        List<String> urls = List.of(
+                "dir/file.txt",
+                "/dir/file.txt",
+                "//dir/file.txt",
+                "///dir/file.txt",
+                "file:dir/file.txt",
+                "file:/dir/file.txt",
+                "file://dir/file.txt",
+                "file:///dir/file.txt",
+                "/../../../../dir/file.txt",
+                "//../../../../dir/file.txt",
+                "///../../../../dir/file.txt",
+                "file:/../../../../dir/file.txt",
+                "file://../../../../dir/file.txt",
+                "file:///../../../../dir/file.txt");
+
+        List<String> loadableAPOCProcs = List.of(
+                "apoc.load.json($url)",
+                "apoc.load.jsonArray($url)",
+                "apoc.load.jsonParams($url, null, null, null, {})",
+                "apoc.load.xml($url)",
+                "apoc.load.arrow($url)",
+                "apoc.import.csv([{fileName: $url, labels: ['Person']}], [], {})",
+                "apoc.import.graphml($url, {})",
+                "apoc.import.json($url)",
+                "apoc.import.xml($url)");
+
+        addRBACDenyAll("test");
+
+        for (String url : urls) {
+            for (String loadableAPOCProc : loadableAPOCProcs) {
+                RuntimeException e = assertThrows(
+                        RuntimeException.class,
+                        () -> testCall(testUserSession, "CALL " + loadableAPOCProc, Map.of("url", url), r -> {}));
+
+                Assertions.assertThat(e.getMessage()).contains("URLAccessValidationError");
+            }
         }
     }
 

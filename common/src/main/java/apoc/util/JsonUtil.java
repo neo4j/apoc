@@ -34,6 +34,7 @@ import com.jayway.jsonpath.spi.json.JacksonJsonProvider;
 import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.time.temporal.Temporal;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.values.storable.DurationValue;
 
@@ -129,6 +131,8 @@ public class JsonUtil {
             } else {
                 throw new RuntimeException(e);
             }
+        } catch (URISyntaxException | URLAccessValidationError e) {
+            throw new RuntimeException(e);
         }
     }
 

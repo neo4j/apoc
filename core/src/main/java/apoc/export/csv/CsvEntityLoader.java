@@ -30,12 +30,14 @@ import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.RFC4180ParserBuilder;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.logging.Log;
 
 public class CsvEntityLoader {
@@ -72,7 +74,7 @@ public class CsvEntityLoader {
             final List<String> labels,
             final GraphDatabaseService db,
             final Map<String, Map<String, String>> idMapping)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
 
         try (final CountingReader reader = FileUtils.readerFor(fileName, clc.getCompressionAlgo(), urlAccessChecker)) {
             final String header = readFirstLine(reader);
@@ -206,7 +208,7 @@ public class CsvEntityLoader {
             final String type,
             final GraphDatabaseService db,
             final Map<String, Map<String, String>> idMapping)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
 
         try (final CountingReader reader = FileUtils.readerFor(data, clc.getCompressionAlgo(), urlAccessChecker)) {
             final String header = readFirstLine(reader);

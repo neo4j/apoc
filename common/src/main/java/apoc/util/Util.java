@@ -44,6 +44,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -107,6 +108,7 @@ import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.util.ValueUtils;
@@ -388,7 +390,7 @@ public class Util {
             String payload,
             String compressionAlgo,
             URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         if (input instanceof String) {
             String urlAddress = (String) input;
             final ArchiveType archiveType = ArchiveType.from(urlAddress);
@@ -411,7 +413,7 @@ public class Util {
             String payload,
             ArchiveType archiveType,
             URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         StreamConnection sc;
         InputStream stream;
         String[] tokens = urlAddress.split("!");
@@ -429,7 +431,7 @@ public class Util {
 
     public static StreamConnection getStreamConnection(
             String urlAddress, Map<String, Object> headers, String payload, URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         return FileUtils.getStreamConnection(
                 FileUtils.from(urlAddress), urlAddress, headers, payload, urlAccessChecker);
     }

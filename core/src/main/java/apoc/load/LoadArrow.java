@@ -24,6 +24,7 @@ import apoc.util.JsonUtil;
 import apoc.util.Util;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -47,6 +48,7 @@ import org.apache.arrow.vector.ipc.ArrowReader;
 import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.util.Text;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -118,7 +120,7 @@ public class LoadArrow {
     @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.")
     public Stream<MapResult> file(
             @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         final SeekableByteChannel channel = FileUtils.inputStreamFor(fileName, null, null, null, urlAccessChecker)
                 .asChannel();
         RootAllocator allocator = new RootAllocator();

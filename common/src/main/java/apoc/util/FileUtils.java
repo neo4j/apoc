@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
@@ -49,12 +50,25 @@ import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.graphdb.security.URLAccessValidationError;
 
 /**
  * @author mh
  * @since 22.05.16
  */
 public class FileUtils {
+
+    public static String getLoadFileUrl(String fileName, URLAccessChecker urlAccessChecker)
+            throws MalformedURLException, URLAccessValidationError {
+        URL url;
+        try {
+            url = URI.create(fileName).toURL();
+        } catch (MalformedURLException | IllegalArgumentException e) {
+            String withFile = "file:///" + fileName;
+            url = URI.create(withFile).toURL();
+        }
+        return urlAccessChecker.checkURL(url).getFile();
+    }
 
     public static String getFileUrl(String fileName) throws MalformedURLException {
         try {
@@ -73,7 +87,7 @@ public class FileUtils {
             Map<String, Object> headers,
             String payload,
             URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URLAccessValidationError, URISyntaxException {
         switch (protocol) {
             case s3:
                 return FileUtils.openS3InputStream(urlAddress);
@@ -86,9 +100,10 @@ public class FileUtils {
                 return readHttpInputStream(urlAddress, headers, payload, REDIRECT_LIMIT, urlAccessChecker);
             default:
                 try {
-                    return new StreamConnection.FileStreamConnection(URI.create(urlAddress));
+                    URL url = urlAccessChecker.checkURL(URI.create(urlAddress).toURL());
+                    return new StreamConnection.FileStreamConnection(url.toURI());
                 } catch (IllegalArgumentException iae) {
-                    return new StreamConnection.FileStreamConnection(getFileUrl(urlAddress));
+                    return new StreamConnection.FileStreamConnection(getLoadFileUrl(urlAddress, urlAccessChecker));
                 }
         }
     }
@@ -146,7 +161,7 @@ public class FileUtils {
             "You're providing a directory outside the import directory " + "defined into `server.directories.import`";
 
     public static CountingReader readerFor(Object input, String compressionAlgo, URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         return readerFor(input, null, null, compressionAlgo, urlAccessChecker);
     }
 
@@ -156,7 +171,7 @@ public class FileUtils {
             String payload,
             String compressionAlgo,
             URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         return inputStreamFor(input, headers, payload, compressionAlgo, urlAccessChecker)
                 .asReader();
     }
@@ -167,12 +182,11 @@ public class FileUtils {
             String payload,
             String compressionAlgo,
             URLAccessChecker urlAccessChecker)
-            throws IOException {
+            throws IOException, URISyntaxException, URLAccessValidationError {
         if (input == null) return null;
         if (input instanceof String) {
             String fileName = (String) input;
-            apocConfig().checkReadAllowed(fileName, urlAccessChecker);
-            fileName = changeFileUrlIfImportDirectoryConstrained(fileName);
+            fileName = changeFileUrlIfImportDirectoryConstrained(fileName, urlAccessChecker);
             return Util.openInputStream(fileName, headers, payload, compressionAlgo, urlAccessChecker);
         } else if (input instanceof byte[]) {
             return getInputStreamFromBinary((byte[]) input, compressionAlgo);
@@ -181,11 +195,14 @@ public class FileUtils {
         }
     }
 
-    public static String changeFileUrlIfImportDirectoryConstrained(String url) throws IOException {
+    public static String changeFileUrlIfImportDirectoryConstrained(String url, URLAccessChecker urlAccessChecker)
+            throws IOException, URLAccessValidationError {
+        apocConfig().checkReadAllowed(url, urlAccessChecker);
         if (isFile(url) && isImportUsingNeo4jConfig()) {
             if (!apocConfig().getBoolean(APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM)) {
                 throw new RuntimeException(String.format(ERROR_READ_FROM_FS_NOT_ALLOWED, url));
             }
+            getLoadFileUrl(url, urlAccessChecker);
             final Path resolvedPath = resolvePath(url);
             return resolvedPath.normalize().toUri().toString();
         }
