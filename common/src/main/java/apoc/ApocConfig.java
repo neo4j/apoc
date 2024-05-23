@@ -337,16 +337,6 @@ public class ApocConfig extends LifecycleAdapter {
         }
     }
 
-    // Helper method for the apoc.warmup.run procedure, as upcoming storage engines are not able to work
-    // with it.
-    public void checkStorageEngine() {
-        final List<String> supportedTypes = Arrays.asList("standard", "aligned", "high_limit");
-        if (!supportedTypes.contains(neo4jConfig.get(GraphDatabaseSettings.db_format))) {
-            throw new RuntimeException(
-                    "Record engine type unsupported; please use one of the following; standard, aligned or high_limit");
-        }
-    }
-
     public static ApocConfig apocConfig() {
         return theInstance;
     }
