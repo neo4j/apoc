@@ -23,8 +23,6 @@ import static apoc.util.TestContainerUtil.testCall;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import apoc.util.TestContainerUtil;
 import java.util.List;
@@ -46,9 +44,10 @@ public class WarmupEnterpriseTest {
                 GraphDatabaseInternalSettings.include_versions_under_development.name(), "true",
                 GraphDatabaseSettings.db_format.name(), "multiversion");
         withSession(conf, session -> {
-            RuntimeException e =
-                    assertThrows(RuntimeException.class, () -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}));
-            assertTrue(e.getMessage().contains("Record engine type unsupported"));
+            assertThatThrownBy(() -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}))
+                    .isExactlyInstanceOf(ClientException.class)
+                    .hasMessageContaining(
+                            "Failed to invoke procedure `apoc.warmup.run`: Caused by: java.lang.IllegalArgumentException: `apoc.warmup.run` is only supported on record storage databases");
         });
     }
 
@@ -95,6 +94,6 @@ public class WarmupEnterpriseTest {
     }
 
     private void withSession(Map<String, String> conf, Consumer<Session> f) {
-        withDriver(conf, Driver::session);
+        withDriver(conf, d -> f.accept(d.session()));
     }
 }
