@@ -204,12 +204,23 @@ public class ExportCypherTestUtils {
             + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}) MERGE (n1)-[r:IS_TEAM_MEMBER_OF]->(n2) ON CREATE SET r.name=\"eee\";\n"
             + ":commit\n";
 
-    protected static final String CLEANUP_SMALL_BATCH = ":begin\n"
+    protected static final String CLEANUP_SMALL_BATCH_NODES = ":begin\n"
             + "MATCH (n:`UNIQUE IMPORT LABEL`) WITH n LIMIT 5 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;\n"
             + ":commit\n"
             + ":begin\n"
             + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;\n"
             + ":commit\n";
+
+    private static final String CLEANUP_SMALL_BATCH_MULTI_REL = ":begin\n"
+            + "MATCH ()-[r]->() WHERE r.`UNIQUE IMPORT ID REL` IS NOT NULL WITH r LIMIT 5 REMOVE r.`UNIQUE IMPORT ID REL`;\n"
+            + ":commit\n"
+            + ":begin\n"
+            + "MATCH ()-[r]->() WHERE r.`UNIQUE IMPORT ID REL` IS NOT NULL WITH r LIMIT 5 REMOVE r.`UNIQUE IMPORT ID REL`;\n"
+            + ":commit\n";
+
+    protected static final String CLEANUP_SMALL_BATCH = CLEANUP_SMALL_BATCH_NODES + CLEANUP_SMALL_BATCH_MULTI_REL;
+    protected static final String CLEANUP_SMALL_BATCH_ONLY_RELS =
+            ":begin\n:commit\n:begin\n:commit\n" + CLEANUP_SMALL_BATCH_MULTI_REL;
 
     protected static final String CLEANUP_EMPTY = ":begin\n:commit\n:begin\n:commit\n";
 }

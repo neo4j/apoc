@@ -21,6 +21,7 @@ package apoc.export.cypher.formatter;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_LABEL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_REL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
+import static apoc.export.cypher.formatter.CypherFormatterUtils.isUniqueRelationship;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.simpleKeyValue;
 
 import apoc.export.util.ExportConfig;
@@ -34,7 +35,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.StringUtils;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -66,6 +66,13 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         return "MATCH (n:" + Q_UNIQUE_ID_LABEL + ") " + " WITH n LIMIT "
                 + batchSize + " REMOVE n:"
                 + Q_UNIQUE_ID_LABEL + " REMOVE n." + Util.quote(UNIQUE_ID_PROP) + ";";
+    }
+
+    @Override
+    public String statementForCleanUpRelationships(int batchSize) {
+        return "MATCH ()-[r]->() WHERE r." + Q_UNIQUE_ID_REL + " IS NOT NULL"
+                + " WITH r LIMIT " + batchSize
+                + " REMOVE r." + Q_UNIQUE_ID_REL + ";";
     }
 
     @Override
@@ -209,14 +216,8 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         final Node endNode = relationship.getEndNode();
         result.append(CypherFormatterUtils.formatNodeLookup("n2", endNode, uniqueConstraints, indexedProperties));
         final RelationshipType type = relationship.getType();
-        final boolean withMultiRels = exportConfig.isMultipleRelationshipsWithType()
-                && StreamSupport.stream(
-                                startNode
-                                        .getRelationships(Direction.OUTGOING, type)
-                                        .spliterator(),
-                                false)
-                        .anyMatch(r -> !r.equals(relationship) && r.getEndNode().equals(endNode));
-
+        final boolean withMultiRels =
+                exportConfig.isMultipleRelationshipsWithType() && !isUniqueRelationship(relationship);
         String mergeUniqueKey = withMultiRels ? simpleKeyValue(Q_UNIQUE_ID_REL, relationship.getId()) : "";
         result.append(" MERGE (n1)-[r:" + Util.quote(type.name()) + mergeUniqueKey + "]->(n2)");
         if (relationship.getPropertyKeys().iterator().hasNext()) {

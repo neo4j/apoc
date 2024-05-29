@@ -22,6 +22,7 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_LABEL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_NAME;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
 
+import apoc.export.cypher.formatter.CypherFormat;
 import apoc.export.cypher.formatter.CypherFormatter;
 import apoc.export.cypher.formatter.CypherFormatterUtils;
 import apoc.export.util.ExportConfig;
@@ -55,6 +56,7 @@ public class MultiStatementCypherSubGraphExporter {
     private Set<String> indexNames = new LinkedHashSet<>();
     private Set<String> indexedProperties = new LinkedHashSet<>();
     private Long artificialUniqueNodes = 0L;
+    private Long artificialUniqueRels = 0L;
 
     private ExportFormat exportFormat;
     private CypherFormatter cypherFormat;
@@ -103,6 +105,13 @@ public class MultiStatementCypherSubGraphExporter {
                 break;
             default:
                 artificialUniqueNodes += countArtificialUniqueNodes(graph.getNodes());
+                // In this code path an artificial relationship property is added for each relationship
+                if (exportConfig.isMultipleRelationshipsWithType()) {
+                    artificialUniqueRels += StreamSupport.stream(
+                                    graph.getRelationships().spliterator(), false)
+                            .toList()
+                            .size();
+                }
                 exportSchema(schemaWriter, config);
                 reporter.update(0, 0, 0);
                 exportNodesUnwindBatch(nodesWriter, reporter);
@@ -193,6 +202,12 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void appendRelationship(PrintWriter out, Relationship rel, Reporter reporter) {
+        boolean updateFormat = exportConfig.getCypherFormat().equals(CypherFormat.UPDATE_ALL)
+                || exportConfig.getCypherFormat().equals(CypherFormat.UPDATE_STRUCTURE);
+
+        if (exportConfig.isMultipleRelationshipsWithType() && updateFormat) {
+            artificialUniqueRels += countArtificialUniqueRels(rel);
+        }
         String cypher =
                 this.cypherFormat.statementForRelationship(rel, uniqueConstraints, indexedProperties, exportConfig);
         if (cypher != null && !"".equals(cypher)) {
@@ -342,6 +357,17 @@ public class MultiStatementCypherSubGraphExporter {
             }
             commit(out);
         }
+        if (artificialUniqueRels > 0) {
+            while (artificialUniqueRels > 0) {
+                String cypher = this.cypherFormat.statementForCleanUpRelationships(batchSize);
+                begin(out);
+                if (cypher != null && !"".equals(cypher)) {
+                    out.println(cypher);
+                }
+                commit(out);
+                artificialUniqueRels -= batchSize;
+            }
+        }
         out.flush();
     }
 
@@ -393,10 +419,24 @@ public class MultiStatementCypherSubGraphExporter {
         return artificialUniques;
     }
 
+    private long countArtificialUniqueRels(Relationship rel) {
+        long artificialUniques = 0;
+        artificialUniques = getArtificialUniqueRels(rel, artificialUniques);
+        return artificialUniques;
+    }
+
     public long countArtificialUniqueNodes(Iterable<Node> n) {
         long artificialUniques = 0;
         for (Node node : n) {
             artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
+        }
+        return artificialUniques;
+    }
+
+    public long countArtificialUniqueRels(Iterable<Relationship> r) {
+        long artificialUniques = 0;
+        for (Relationship rel : r) {
+            artificialUniques = getArtificialUniqueRels(rel, artificialUniques);
         }
         return artificialUniques;
     }
@@ -410,6 +450,13 @@ public class MultiStatementCypherSubGraphExporter {
             uniqueFound = CypherFormatterUtils.isUniqueLabelFound(node, uniqueConstraints, labelName);
         }
         if (!uniqueFound) {
+            artificialUniques++;
+        }
+        return artificialUniques;
+    }
+
+    private long getArtificialUniqueRels(Relationship rel, long artificialUniques) {
+        if (!CypherFormatterUtils.isUniqueRelationship(rel)) {
             artificialUniques++;
         }
         return artificialUniques;

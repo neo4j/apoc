@@ -62,6 +62,8 @@ public interface CypherFormatter {
 
     String statementForCleanUpNodes(int batchSize);
 
+    String statementForCleanUpRelationships(int batchSize);
+
     void statementForNodes(
             Iterable<Node> node,
             Map<String, Set<String>> uniqueConstraints,
