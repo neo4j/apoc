@@ -62,7 +62,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
     private static final String ID_REL_KEY = "id";
 
     @Override
-    public String statementForCleanUp(int batchSize) {
+    public String statementForCleanUpNodes(int batchSize) {
         return "MATCH (n:" + Q_UNIQUE_ID_LABEL + ") " + " WITH n LIMIT "
                 + batchSize + " REMOVE n:"
                 + Q_UNIQUE_ID_LABEL + " REMOVE n." + Util.quote(UNIQUE_ID_PROP) + ";";

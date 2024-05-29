@@ -54,7 +54,7 @@ public class MultiStatementCypherSubGraphExporter {
     private final Map<String, Set<String>> uniqueConstraints = new HashMap<>();
     private Set<String> indexNames = new LinkedHashSet<>();
     private Set<String> indexedProperties = new LinkedHashSet<>();
-    private Long artificialUniques = 0L;
+    private Long artificialUniqueNodes = 0L;
 
     private ExportFormat exportFormat;
     private CypherFormatter cypherFormat;
@@ -102,7 +102,7 @@ public class MultiStatementCypherSubGraphExporter {
                 exportRelationships(relationshipsWriter, reporter, batchSize);
                 break;
             default:
-                artificialUniques += countArtificialUniques(graph.getNodes());
+                artificialUniqueNodes += countArtificialUniqueNodes(graph.getNodes());
                 exportSchema(schemaWriter, config);
                 reporter.update(0, 0, 0);
                 exportNodesUnwindBatch(nodesWriter, reporter);
@@ -155,7 +155,7 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void appendNode(PrintWriter out, Node node, Reporter reporter) {
-        artificialUniques += countArtificialUniques(node);
+        artificialUniqueNodes += countArtificialUniqueNodes(node);
         String cypher = this.cypherFormat.statementForNode(node, uniqueConstraints, indexedProperties, indexNames);
         if (Util.isNotNullOrEmpty(cypher)) {
             out.println(cypher);
@@ -207,12 +207,12 @@ public class MultiStatementCypherSubGraphExporter {
         List<String> indexesAndConstraints = new ArrayList<>();
         indexesAndConstraints.addAll(exportIndexes());
         indexesAndConstraints.addAll(exportConstraints());
-        if (indexesAndConstraints.isEmpty() && artificialUniques == 0) return;
+        if (indexesAndConstraints.isEmpty() && artificialUniqueNodes == 0) return;
         begin(out);
         for (String index : indexesAndConstraints) {
             out.println(index);
         }
-        if (artificialUniques > 0) {
+        if (artificialUniqueNodes > 0) {
             String cypher = this.cypherFormat.statementForCreateConstraint(
                     UNIQUE_ID_NAME,
                     UNIQUE_ID_LABEL,
@@ -325,15 +325,15 @@ public class MultiStatementCypherSubGraphExporter {
     // ---- CleanUp ----
 
     private void exportCleanUp(PrintWriter out, int batchSize) {
-        if (artificialUniques > 0) {
-            while (artificialUniques > 0) {
-                String cypher = this.cypherFormat.statementForCleanUp(batchSize);
+        if (artificialUniqueNodes > 0) {
+            while (artificialUniqueNodes > 0) {
+                String cypher = this.cypherFormat.statementForCleanUpNodes(batchSize);
                 begin(out);
                 if (cypher != null && !"".equals(cypher)) {
                     out.println(cypher);
                 }
                 commit(out);
-                artificialUniques -= batchSize;
+                artificialUniqueNodes -= batchSize;
             }
             begin(out);
             String cypher = this.cypherFormat.statementForDropConstraint(UNIQUE_ID_NAME);
@@ -387,21 +387,21 @@ public class MultiStatementCypherSubGraphExporter {
         }
     }
 
-    private long countArtificialUniques(Node node) {
+    private long countArtificialUniqueNodes(Node node) {
         long artificialUniques = 0;
-        artificialUniques = getArtificialUniques(node, artificialUniques);
+        artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
         return artificialUniques;
     }
 
-    public long countArtificialUniques(Iterable<Node> n) {
+    public long countArtificialUniqueNodes(Iterable<Node> n) {
         long artificialUniques = 0;
         for (Node node : n) {
-            artificialUniques = getArtificialUniques(node, artificialUniques);
+            artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
         }
         return artificialUniques;
     }
 
-    private long getArtificialUniques(Node node, long artificialUniques) {
+    private long getArtificialUniqueNodes(Node node, long artificialUniques) {
         Iterator<Label> labels = node.getLabels().iterator();
         boolean uniqueFound = false;
         while (labels.hasNext() && !uniqueFound) {

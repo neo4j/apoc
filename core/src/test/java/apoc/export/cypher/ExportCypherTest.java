@@ -142,7 +142,7 @@ public class ExportCypherTest {
             MultiStatementCypherSubGraphExporter exporter =
                     new MultiStatementCypherSubGraphExporter(new DatabaseSubGraph(tx), new ExportConfig(null), db);
 
-            assertEquals(exporter.countArtificialUniques(tx.getAllNodes()), 2);
+            assertEquals(exporter.countArtificialUniqueNodes(tx.getAllNodes()), 2);
         }
     }
 

@@ -60,7 +60,7 @@ public interface CypherFormatter {
 
     String statementForDropConstraint(String name);
 
-    String statementForCleanUp(int batchSize);
+    String statementForCleanUpNodes(int batchSize);
 
     void statementForNodes(
             Iterable<Node> node,

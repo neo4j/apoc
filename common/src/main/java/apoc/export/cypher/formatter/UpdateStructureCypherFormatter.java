@@ -55,7 +55,7 @@ public class UpdateStructureCypherFormatter extends AbstractCypherFormatter impl
     }
 
     @Override
-    public String statementForCleanUp(int batchSize) {
+    public String statementForCleanUpNodes(int batchSize) {
         return "";
     }
 
