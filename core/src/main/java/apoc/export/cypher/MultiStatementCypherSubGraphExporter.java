@@ -22,6 +22,7 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_LABEL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_NAME;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
 
+import apoc.export.cypher.formatter.CypherFormat;
 import apoc.export.cypher.formatter.CypherFormatter;
 import apoc.export.cypher.formatter.CypherFormatterUtils;
 import apoc.export.util.ExportConfig;
@@ -54,7 +55,8 @@ public class MultiStatementCypherSubGraphExporter {
     private final Map<String, Set<String>> uniqueConstraints = new HashMap<>();
     private Set<String> indexNames = new LinkedHashSet<>();
     private Set<String> indexedProperties = new LinkedHashSet<>();
-    private Long artificialUniques = 0L;
+    private Long artificialUniqueNodes = 0L;
+    private Long artificialUniqueRels = 0L;
 
     private ExportFormat exportFormat;
     private CypherFormatter cypherFormat;
@@ -102,7 +104,13 @@ public class MultiStatementCypherSubGraphExporter {
                 exportRelationships(relationshipsWriter, reporter, batchSize);
                 break;
             default:
-                artificialUniques += countArtificialUniques(graph.getNodes());
+                artificialUniqueNodes += countArtificialUniqueNodes(graph.getNodes());
+                // In this code path an artificial relationship property is added for each relationship
+                if (exportConfig.isMultipleRelationshipsWithType()) {
+                    artificialUniqueRels += StreamSupport.stream(
+                                    graph.getRelationships().spliterator(), false)
+                            .count();
+                }
                 exportSchema(schemaWriter, config);
                 reporter.update(0, 0, 0);
                 exportNodesUnwindBatch(nodesWriter, reporter);
@@ -155,7 +163,7 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void appendNode(PrintWriter out, Node node, Reporter reporter) {
-        artificialUniques += countArtificialUniques(node);
+        artificialUniqueNodes += countArtificialUniqueNodes(node);
         String cypher = this.cypherFormat.statementForNode(node, uniqueConstraints, indexedProperties, indexNames);
         if (Util.isNotNullOrEmpty(cypher)) {
             out.println(cypher);
@@ -193,6 +201,12 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void appendRelationship(PrintWriter out, Relationship rel, Reporter reporter) {
+        boolean updateFormat = exportConfig.getCypherFormat().equals(CypherFormat.UPDATE_ALL)
+                || exportConfig.getCypherFormat().equals(CypherFormat.UPDATE_STRUCTURE);
+
+        if (exportConfig.isMultipleRelationshipsWithType() && updateFormat) {
+            artificialUniqueRels += countArtificialUniqueRels(rel);
+        }
         String cypher =
                 this.cypherFormat.statementForRelationship(rel, uniqueConstraints, indexedProperties, exportConfig);
         if (cypher != null && !"".equals(cypher)) {
@@ -207,12 +221,12 @@ public class MultiStatementCypherSubGraphExporter {
         List<String> indexesAndConstraints = new ArrayList<>();
         indexesAndConstraints.addAll(exportIndexes());
         indexesAndConstraints.addAll(exportConstraints());
-        if (indexesAndConstraints.isEmpty() && artificialUniques == 0) return;
+        if (indexesAndConstraints.isEmpty() && artificialUniqueNodes == 0) return;
         begin(out);
         for (String index : indexesAndConstraints) {
             out.println(index);
         }
-        if (artificialUniques > 0) {
+        if (artificialUniqueNodes > 0) {
             String cypher = this.cypherFormat.statementForCreateConstraint(
                     UNIQUE_ID_NAME,
                     UNIQUE_ID_LABEL,
@@ -325,15 +339,15 @@ public class MultiStatementCypherSubGraphExporter {
     // ---- CleanUp ----
 
     private void exportCleanUp(PrintWriter out, int batchSize) {
-        if (artificialUniques > 0) {
-            while (artificialUniques > 0) {
-                String cypher = this.cypherFormat.statementForCleanUp(batchSize);
+        if (artificialUniqueNodes > 0) {
+            while (artificialUniqueNodes > 0) {
+                String cypher = this.cypherFormat.statementForCleanUpNodes(batchSize);
                 begin(out);
                 if (cypher != null && !"".equals(cypher)) {
                     out.println(cypher);
                 }
                 commit(out);
-                artificialUniques -= batchSize;
+                artificialUniqueNodes -= batchSize;
             }
             begin(out);
             String cypher = this.cypherFormat.statementForDropConstraint(UNIQUE_ID_NAME);
@@ -341,6 +355,17 @@ public class MultiStatementCypherSubGraphExporter {
                 out.println(cypher);
             }
             commit(out);
+        }
+        if (artificialUniqueRels > 0) {
+            while (artificialUniqueRels > 0) {
+                String cypher = this.cypherFormat.statementForCleanUpRelationships(batchSize);
+                begin(out);
+                if (cypher != null && !"".equals(cypher)) {
+                    out.println(cypher);
+                }
+                commit(out);
+                artificialUniqueRels -= batchSize;
+            }
         }
         out.flush();
     }
@@ -387,21 +412,31 @@ public class MultiStatementCypherSubGraphExporter {
         }
     }
 
-    private long countArtificialUniques(Node node) {
-        long artificialUniques = 0;
-        artificialUniques = getArtificialUniques(node, artificialUniques);
-        return artificialUniques;
+    private long countArtificialUniqueNodes(Node node) {
+        return getArtificialUniqueNodes(node, 0);
     }
 
-    public long countArtificialUniques(Iterable<Node> n) {
+    private long countArtificialUniqueRels(Relationship rel) {
+        return getArtificialUniqueRels(rel, 0);
+    }
+
+    public long countArtificialUniqueNodes(Iterable<Node> n) {
         long artificialUniques = 0;
         for (Node node : n) {
-            artificialUniques = getArtificialUniques(node, artificialUniques);
+            artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
         }
         return artificialUniques;
     }
 
-    private long getArtificialUniques(Node node, long artificialUniques) {
+    public long countArtificialUniqueRels(Iterable<Relationship> r) {
+        long artificialUniques = 0;
+        for (Relationship rel : r) {
+            artificialUniques = getArtificialUniqueRels(rel, artificialUniques);
+        }
+        return artificialUniques;
+    }
+
+    private long getArtificialUniqueNodes(Node node, long artificialUniques) {
         Iterator<Label> labels = node.getLabels().iterator();
         boolean uniqueFound = false;
         while (labels.hasNext() && !uniqueFound) {
@@ -409,7 +444,20 @@ public class MultiStatementCypherSubGraphExporter {
             String labelName = next.name();
             uniqueFound = CypherFormatterUtils.isUniqueLabelFound(node, uniqueConstraints, labelName);
         }
+        // A node is either truly unique (i.e. has a label/property combo with a uniqueness constraint)  or we need to
+        // make it artificially unique by adding the `UNIQUE IMPORT LABEL` label and `UNIQUE IMPORT ID` property.
+        // We are interested in the number of nodes of the second kind in order to do delete batching.
         if (!uniqueFound) {
+            artificialUniques++;
+        }
+        return artificialUniques;
+    }
+
+    private long getArtificialUniqueRels(Relationship rel, long artificialUniques) {
+        // A relationship is either truly unique (i.e. does not share both source node, target node, type and direction
+        // with any other relationship)  or we need to make it artificially unique by adding the `UNIQUE IMPORT ID REL`
+        // property. We are interested in the number of relationships of the second kind in order to do delete batching.
+        if (!CypherFormatterUtils.isUniqueRelationship(rel)) {
             artificialUniques++;
         }
         return artificialUniques;

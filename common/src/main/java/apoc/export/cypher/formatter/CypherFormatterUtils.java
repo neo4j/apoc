@@ -27,6 +27,8 @@ import java.lang.reflect.Array;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -155,6 +157,18 @@ public class CypherFormatterUtils {
         } else {
             return false;
         }
+    }
+
+    /*
+     * Returns true if there exists no other relationship with the same start node, end node and type
+     */
+    public static boolean isUniqueRelationship(Relationship rel) {
+        return StreamSupport.stream(
+                        rel.getStartNode()
+                                .getRelationships(Direction.OUTGOING, rel.getType())
+                                .spliterator(),
+                        false)
+                .noneMatch(r -> !r.equals(rel) && r.getEndNode().equals(rel.getEndNode()));
     }
 
     // ---- properties ----
