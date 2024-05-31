@@ -109,8 +109,7 @@ public class MultiStatementCypherSubGraphExporter {
                 if (exportConfig.isMultipleRelationshipsWithType()) {
                     artificialUniqueRels += StreamSupport.stream(
                                     graph.getRelationships().spliterator(), false)
-                            .toList()
-                            .size();
+                            .count();
                 }
                 exportSchema(schemaWriter, config);
                 reporter.update(0, 0, 0);
@@ -414,9 +413,7 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private long countArtificialUniqueNodes(Node node) {
-        long artificialUniques = 0;
-        artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
-        return artificialUniques;
+        return getArtificialUniqueNodes(node, 0);
     }
 
     private long countArtificialUniqueRels(Relationship rel) {
