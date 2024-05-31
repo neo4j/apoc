@@ -417,9 +417,7 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private long countArtificialUniqueRels(Relationship rel) {
-        long artificialUniques = 0;
-        artificialUniques = getArtificialUniqueRels(rel, artificialUniques);
-        return artificialUniques;
+        return getArtificialUniqueRels(rel, 0);
     }
 
     public long countArtificialUniqueNodes(Iterable<Node> n) {
@@ -446,6 +444,9 @@ public class MultiStatementCypherSubGraphExporter {
             String labelName = next.name();
             uniqueFound = CypherFormatterUtils.isUniqueLabelFound(node, uniqueConstraints, labelName);
         }
+        // A node is either truly unique (i.e. has a label/property combo with a uniqueness constraint)  or we need to
+        // make it artificially unique by adding the `UNIQUE IMPORT LABEL` label and `UNIQUE IMPORT ID` property.
+        // We are interested in the number of nodes of the second kind in order to do delete batching.
         if (!uniqueFound) {
             artificialUniques++;
         }
@@ -453,6 +454,9 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private long getArtificialUniqueRels(Relationship rel, long artificialUniques) {
+        // A relationship is either truly unique (i.e. does not share both source node, target node, type and direction
+        // with any other relationship)  or we need to make it artificially unique by adding the `UNIQUE IMPORT ID REL`
+        // property. We are interested in the number of relationships of the second kind in order to do delete batching.
         if (!CypherFormatterUtils.isUniqueRelationship(rel)) {
             artificialUniques++;
         }
