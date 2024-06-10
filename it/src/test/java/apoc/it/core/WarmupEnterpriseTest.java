@@ -42,7 +42,7 @@ public class WarmupEnterpriseTest {
     public void testWarmupIsntAllowedWithOtherStorageEngines() {
         final var conf = Map.of(
                 GraphDatabaseInternalSettings.include_versions_under_development.name(), "true",
-                GraphDatabaseSettings.db_format.name(), "multiversion");
+                GraphDatabaseSettings.db_format.name(), "block");
         withSession(conf, session -> {
             assertThatThrownBy(() -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}))
                     .isExactlyInstanceOf(ClientException.class)
