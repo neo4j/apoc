@@ -4,11 +4,11 @@ on:
     types: [spotlessApply-command]
 
 jobs:
-  format:
+  spotlessApply:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Format and push changes to PR
         uses: ./.github/actions/gradle-command-on-pr
         with:
