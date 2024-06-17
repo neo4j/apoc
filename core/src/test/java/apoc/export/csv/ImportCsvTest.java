@@ -290,6 +290,19 @@ public class ImportCsvTest {
                                     3,Arrays,a;;c;;e,withEmptyItem
                                     4,Arrays,a; ;c; ;e,withBlankItem
                                     5,Arrays, ,withWhiteSpace
+                                    """),
+                    new AbstractMap.SimpleEntry<>(
+                            "nodesWithSpecialCharInID",
+                            """
+                                    node_code:ID(node_code),:LABEL
+                                    806^04^150\\\\^123456,Person
+                                    2,Cat
+                                    """),
+                    new AbstractMap.SimpleEntry<>(
+                            "relsWithSpecialCharInID",
+                            """
+                                    :START_ID(node_code),:END_ID(node_code),:TYPE
+                                    806^04^150\\\\^123456,2,FRIENDS_WITH
                                     """))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
 
@@ -656,6 +669,26 @@ public class ImportCsvTest {
                 TestUtil.singleResultFirstColumn(
                         db,
                         "MATCH (p1:Person)-[:KNOWS]->(p2:Person) RETURN p1.name + ' ' + p2.name AS pair ORDER BY pair"));
+    }
+
+    @Test
+    public void testWithSpecialEscapes() {
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'FRIENDS_WITH'}], {ignoreDuplicateNodes: true})",
+                map(
+                        "nodeFile", "file:/nodesWithSpecialCharInID.csv",
+                        "relFile", "file:/relsWithSpecialCharInID.csv"),
+                (r) -> {
+                    assertEquals(2L, r.get("nodes"));
+                    assertEquals(1L, r.get("relationships"));
+                });
+
+        Assert.assertEquals(
+                "806^04^150\\\\^123456 2",
+                TestUtil.singleResultFirstColumn(
+                        db,
+                        "MATCH (p1:Person)-[:FRIENDS_WITH]->(p2:Person) RETURN p1.node_code + ' ' + p2.node_code AS pair ORDER BY pair"));
     }
 
     @Test

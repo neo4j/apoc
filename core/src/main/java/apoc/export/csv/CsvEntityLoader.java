@@ -25,7 +25,6 @@ import apoc.load.CSVResult;
 import apoc.load.Mapping;
 import apoc.load.util.Results;
 import apoc.util.FileUtils;
-import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.RFC4180ParserBuilder;
@@ -231,11 +230,14 @@ public class CsvEntityLoader {
                     .collect(Collectors.toList());
 
             final Map<String, Mapping> mapping = getMapping(fields);
-            final var parser =
-                    new CSVParserBuilder().withSeparator(clc.getDelimiter()).build();
 
-            try (final var csv =
-                    new CSVReaderBuilder(reader).withCSVParser(parser).build()) {
+            try (final var csv = new CSVReaderBuilder(reader)
+                    .withCSVParser(new RFC4180ParserBuilder()
+                            .withSeparator(clc.getDelimiter())
+                            .withQuoteChar(clc.getQuotationCharacter())
+                            .build())
+                    .withSkipLines(clc.getSkipLines() - 1)
+                    .build()) {
                 final String[] loadCsvCompatibleHeader =
                         fields.stream().map(f -> f.getName()).toArray(String[]::new);
 
