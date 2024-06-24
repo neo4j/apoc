@@ -379,6 +379,10 @@ public class XmlGraphMLReader {
         final String id = cache.get(sourceTargetValue);
         // without source/target config, we look for the internal id
         if (StringUtils.isBlank(nodeConfig.label)) {
+            if (id == null) {
+                throw new RuntimeException("The node with the given id: " + sourceTargetValue
+                        + " was not found. Check that it is defined before the referencing relationship.");
+            }
             return tx.getNodeByElementId(id);
         }
         // with source/target configured, we search a node with a specified label

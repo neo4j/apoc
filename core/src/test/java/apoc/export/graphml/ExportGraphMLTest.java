@@ -52,6 +52,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -131,6 +132,61 @@ public class ExportGraphMLTest {
                 "MATCH  (c:Bar {age: 12, values: [1,2,3]}) RETURN COUNT(c) AS c",
                 null,
                 (r) -> assertEquals(1L, r.get("c")));
+    }
+
+    @Test
+    public void testRelDefinedBeforeNodes() throws Exception {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+
+        String xml =
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns      http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+                  <edge id="e183" source="n27" target="n72">
+                    <data key="d8">structure</data>
+                    <data key="d23">183</data>
+                    <data key="d25">60574</data>
+                  </edge>
+                  <node id="n27">
+                    <data key="d22">HTML element</data>
+                    <data key="d24">69</data>
+                    <data key="d26">540</data>
+                    <data key="d19">14</data>
+                    <data key="d15">false</data>
+                    <data key="d20">TITLE</data>
+                  </node>
+                  <node id="n72">
+                    <data key="d22">text node</data>
+                    <data key="d24">72</data>
+                    <data key="d26">540</data>
+                    <data key="d19">15</data>
+                    <data key="d15">false</data>
+                    <data key="d21">Example Domain</data>
+                  </node>
+                  <node id="n75">
+                    <data key="d22">text node</data>
+                    <data key="d24">75</data>
+                    <data key="d26">540</data>
+                    <data key="d19">16</data>
+                    <data key="d15">false</data>
+                    <data key="d21"></data>
+                  </node>
+                </graphml>
+                """;
+
+        File output = new File(directory, "import.graphml");
+        FileWriter fw = new FileWriter(output);
+        fw.write(xml);
+        fw.close();
+
+        RuntimeException e = assertThrows(
+                RuntimeException.class,
+                () -> TestUtil.testCall(
+                        db, "CALL apoc.import.graphml($file,{})", map("file", output.getAbsolutePath()), r -> {}));
+
+        String expectedMessage =
+                "The node with the given id: n27 was not found. Check that it is defined before the referencing relationship.";
+        Assertions.assertThat(e.getMessage()).contains(expectedMessage);
     }
 
     @Test
