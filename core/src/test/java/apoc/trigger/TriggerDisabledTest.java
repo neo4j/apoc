@@ -20,6 +20,7 @@ package apoc.trigger;
 
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import apoc.util.TestUtil;
@@ -61,43 +62,48 @@ public class TriggerDisabledTest {
 
     @Test
     public void testTriggerDisabledList() {
-        assertThrows(
-                TriggerHandler.NOT_ENABLED_ERROR,
+        Exception e = assertThrows(
+                "Expected a runtime error when running apoc.trigger.list with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally(
                         "CALL apoc.trigger.list() YIELD name RETURN name", Map.of(), Result::resultAsString));
+        assertEquals(TriggerHandler.NOT_ENABLED_ERROR, e.getMessage());
     }
 
     @Test
     public void testTriggerDisabledAdd() {
-        assertThrows(
-                TriggerHandler.NOT_ENABLED_ERROR,
+        Exception e = assertThrows(
+                "Expected a runtime error when running apoc.trigger.add with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally(
                         "CALL apoc.trigger.add('test-trigger', 'RETURN 1', {phase: 'before'}) YIELD name RETURN name"));
+        assertEquals(TriggerHandler.NOT_ENABLED_ERROR, e.getMessage());
     }
 
     @Test
     public void testTriggerDisabledRemove() {
-        assertThrows(
-                TriggerHandler.NOT_ENABLED_ERROR,
+        Exception e = assertThrows(
+                "Expected a runtime error when running apoc.trigger.remove with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally("CALL apoc.trigger.remove('test-trigger')"));
+        assertEquals(TriggerHandler.NOT_ENABLED_ERROR, e.getMessage());
     }
 
     @Test
     public void testTriggerDisabledResume() {
-        assertThrows(
-                TriggerHandler.NOT_ENABLED_ERROR,
+        Exception e = assertThrows(
+                "Expected a runtime error when running apoc.trigger.resume with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally("CALL apoc.trigger.resume('test-trigger')"));
+        assertEquals(TriggerHandler.NOT_ENABLED_ERROR, e.getMessage());
     }
 
     @Test
     public void testTriggerDisabledPause() {
-        assertThrows(
-                TriggerHandler.NOT_ENABLED_ERROR,
+        Exception e = assertThrows(
+                "Expected a runtime error when running apoc.trigger.pause with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally("CALL apoc.trigger.pause('test-trigger')"));
+        assertEquals(TriggerHandler.NOT_ENABLED_ERROR, e.getMessage());
     }
 }
