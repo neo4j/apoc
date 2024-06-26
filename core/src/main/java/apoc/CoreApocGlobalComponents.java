@@ -18,6 +18,8 @@
  */
 package apoc;
 
+import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
+
 import apoc.cypher.CypherInitializer;
 import apoc.trigger.TriggerHandler;
 import java.util.Collection;
@@ -34,15 +36,20 @@ public class CoreApocGlobalComponents implements ApocGlobalComponents {
 
     @Override
     public Map<String, Lifecycle> getServices(GraphDatabaseAPI db, ApocExtensionFactory.Dependencies dependencies) {
-        return Collections.singletonMap(
-                "trigger",
-                new TriggerHandler(
-                        db,
-                        dependencies.databaseManagementService(),
-                        dependencies.apocConfig(),
-                        dependencies.log().getUserLog(TriggerHandler.class),
-                        dependencies.pools(),
-                        dependencies.scheduler()));
+        var apocConfig = dependencies.apocConfig();
+
+        if (apocConfig.getConfig().getBoolean(APOC_TRIGGER_ENABLED)) {
+            return Collections.singletonMap(
+                    "trigger",
+                    new TriggerHandler(
+                            db,
+                            dependencies.databaseManagementService(),
+                            apocConfig,
+                            dependencies.log().getUserLog(TriggerHandler.class),
+                            dependencies.pools(),
+                            dependencies.scheduler()));
+        }
+        return Collections.emptyMap();
     }
 
     @Override

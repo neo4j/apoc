@@ -19,7 +19,6 @@
 package apoc.trigger;
 
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
-import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static org.junit.Assert.*;
@@ -35,8 +34,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
@@ -53,6 +54,11 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
  */
 public class TriggerTest {
 
+    // we cannot set via apocConfig().setProperty(apoc.trigger.enabled, ...) in `@Before`, because is too late
+    @ClassRule
+    public static final ProvideSystemProperty systemPropertyRule =
+            new ProvideSystemProperty(APOC_TRIGGER_ENABLED, String.valueOf(true));
+
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule().withSetting(procedure_unrestricted, List.of("apoc*"));
 
@@ -62,7 +68,6 @@ public class TriggerTest {
     public void setUp() {
         start = System.currentTimeMillis();
         TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
-        apocConfig().setProperty(APOC_TRIGGER_ENABLED, true);
     }
 
     @After
