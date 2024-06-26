@@ -76,6 +76,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -1298,5 +1299,28 @@ public class Util {
         return StreamSupport.stream(transaction.schema().getIndexes(relType).spliterator(), false)
                 .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR)
                 .toList();
+    }
+
+    public static <T> T withBackOffRetries(Supplier<T> func, long initialTimeout, long upperTimeout) {
+        T result = null;
+        var timeout = initialTimeout;
+        var lastTry = System.currentTimeMillis() - timeout;
+
+        while (true) {
+            var timeStamp = System.currentTimeMillis();
+            if (timeStamp - lastTry >= timeout) {
+                try {
+                    result = func.get();
+                    break;
+                } catch (Exception e) {
+                    if (timeout >= upperTimeout) {
+                        throw e;
+                    }
+                }
+                lastTry = timeStamp;
+                timeout *= 2;
+            }
+        }
+        return result;
     }
 }

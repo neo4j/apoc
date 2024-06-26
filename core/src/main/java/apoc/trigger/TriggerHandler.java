@@ -354,11 +354,20 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     private <T> T withSystemDb(Function<Transaction, T> action) {
-        try (Transaction tx = apocConfig.getSystemDb().beginTx()) {
-            T result = action.apply(tx);
-            tx.commit();
-            return result;
-        }
+        var timeout = 500;
+
+        // When the timeout reaches 12 hours, we will have been trying for 24 hours - time to give up
+        var upperTimeout = 43200000;
+
+        return Util.withBackOffRetries(
+                () -> {
+                    Transaction tx = apocConfig.getSystemDb().beginTx();
+                    T result = action.apply(tx);
+                    tx.commit();
+                    return result;
+                },
+                timeout,
+                upperTimeout);
     }
 
     private long getLastUpdate() {

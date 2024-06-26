@@ -183,4 +183,39 @@ public class UtilTest {
     public void testIsWritableInstance() {
         assertTrue(Util.isWriteableInstance(db));
     }
+
+    @Test
+    public void testWithBackOffRetriesWithSuccess() {
+        long start = System.currentTimeMillis();
+        int result = Util.withBackOffRetries(this::testFunction, 100, 2000);
+        long time = System.currentTimeMillis() - start;
+
+        assertEquals(4, result);
+
+        // The method should be run directly, after 200ms, after 400ms and after 800 ms when it will succeed
+        // So the total time should be roughly 1400 ms
+        assertTrue(time > 1350);
+        assertTrue(time < 1450);
+    }
+
+    @Test
+    public void testWithBackOffRetriesWithError() {
+        long start = System.currentTimeMillis();
+        assertThrows(RuntimeException.class, () -> Util.withBackOffRetries(this::testFunction, 100, 300));
+
+        // The method should be run directly, after 200ms and after 400ms when it will fail
+        // So the total time should be roughly 600 ms
+        long time = System.currentTimeMillis() - start;
+        assertTrue(time > 550);
+        assertTrue(time < 650);
+    }
+
+    private static int i = 0;
+
+    private int testFunction() {
+        if (++i % 4 != 0) {
+            throw new RuntimeException("Unexpected i");
+        }
+        return i;
+    }
 }
