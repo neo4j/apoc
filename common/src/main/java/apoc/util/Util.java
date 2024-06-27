@@ -128,6 +128,7 @@ import org.neo4j.values.storable.Values;
  * @since 24.04.16
  */
 public class Util {
+
     public static final Label[] NO_LABELS = new Label[0];
     public static final String NODE_COUNT = "MATCH (n) RETURN count(*) as result";
     public static final String REL_COUNT = "MATCH ()-->() RETURN count(*) as result";
@@ -1301,10 +1302,11 @@ public class Util {
                 .toList();
     }
 
-    public static <T> T withBackOffRetries(Supplier<T> func, long initialTimeout, long upperTimeout) {
+    public static <T> T withBackOffRetries(Supplier<T> func, long initialTimeout, long upperTimeout, Log log) {
         T result = null;
+        var startTime = System.currentTimeMillis();
         var timeout = initialTimeout;
-        var lastTry = System.currentTimeMillis() - timeout;
+        var lastTry = startTime - timeout;
 
         while (true) {
             var timeStamp = System.currentTimeMillis();
@@ -1314,6 +1316,11 @@ public class Util {
                     break;
                 } catch (Exception e) {
                     if (timeout >= upperTimeout) {
+                        Long totalTime = (System.currentTimeMillis() - startTime) / 1000;
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format(
+                                    "Got %s: %s after %s seconds.", e.getClass(), e.getMessage(), totalTime));
+                        }
                         throw e;
                     }
                 }

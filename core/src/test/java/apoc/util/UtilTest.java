@@ -38,6 +38,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResultTransformer;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.logging.NullLog;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
@@ -187,7 +188,7 @@ public class UtilTest {
     @Test
     public void testWithBackOffRetriesWithSuccess() {
         long start = System.currentTimeMillis();
-        int result = Util.withBackOffRetries(this::testFunction, 100, 2000);
+        int result = Util.withBackOffRetries(this::testFunction, 100, 2000, NullLog.getInstance());
         long time = System.currentTimeMillis() - start;
 
         assertEquals(4, result);
@@ -201,7 +202,9 @@ public class UtilTest {
     @Test
     public void testWithBackOffRetriesWithError() {
         long start = System.currentTimeMillis();
-        assertThrows(RuntimeException.class, () -> Util.withBackOffRetries(this::testFunction, 100, 300));
+        assertThrows(
+                RuntimeException.class,
+                () -> Util.withBackOffRetries(this::testFunction, 100, 300, NullLog.getInstance()));
 
         // The method should be run directly, after 200ms and after 400ms when it will fail
         // So the total time should be roughly 600 ms

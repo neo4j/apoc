@@ -367,7 +367,8 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
                     return result;
                 },
                 timeout,
-                upperTimeout);
+                upperTimeout,
+                log);
     }
 
     private long getLastUpdate() {
