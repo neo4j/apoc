@@ -18,12 +18,12 @@
  */
 package apoc.trigger;
 
+import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.waitDbsAvailable;
 import static org.junit.Assert.assertEquals;
 
-import apoc.ApocConfig;
 import apoc.util.TestUtil;
 import java.io.IOException;
 import java.util.Collections;
@@ -54,6 +54,11 @@ public class TriggerRestartTest {
     public static final ProvideSystemProperty systemPropertyRule =
             new ProvideSystemProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
 
+    // we cannot set via apocConfig().setProperty(apoc.trigger.enabled, ...) in `@Before`, because is too late
+    @ClassRule
+    public static final ProvideSystemProperty systemPropertyRule2 =
+            new ProvideSystemProperty(APOC_TRIGGER_ENABLED, String.valueOf(true));
+
     @Before
     public void setUp() throws IOException {
         databaseManagementService =
@@ -61,7 +66,6 @@ public class TriggerRestartTest {
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
         waitDbsAvailable(db, sysDb);
-        ApocConfig.apocConfig().setProperty("apoc.trigger.enabled", "true");
         TestUtil.registerProcedure(db, TriggerNewProcedures.class, Trigger.class);
     }
 

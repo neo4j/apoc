@@ -18,8 +18,10 @@
  */
 package apoc.trigger;
 
+import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 
+import apoc.ApocConfig;
 import apoc.util.Util;
 import java.util.Collections;
 import java.util.Map;
@@ -37,6 +39,10 @@ import org.neo4j.procedure.Procedure;
  * @since 20.09.16
  */
 public class Trigger {
+
+    public static final String NOT_ENABLED_ERROR = "Triggers have not been enabled."
+            + " Set 'apoc.trigger.enabled=true' in your apoc.conf file located in the $NEO4J_HOME/conf/ directory.";
+
     public static final String SYS_DB_NON_WRITER_ERROR =
             """
             This instance is not allowed to write to the system database.
@@ -71,6 +77,7 @@ public class Trigger {
             @Name("statement") String statement,
             @Name(value = "selector") Map<String, Object> selector,
             @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+        checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
         Util.validateQuery(db, statement);
@@ -95,6 +102,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.remove", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.drop")
     @Description("Removes the given trigger.")
     public Stream<TriggerInfo> remove(@Name("name") String name) {
+        checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
         Map<String, Object> removed = triggerHandler.remove(name);
@@ -115,6 +123,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.removeAll", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.dropAll")
     @Description("Removes all previously added triggers.")
     public Stream<TriggerInfo> removeAll() {
+        checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
         final var removed = triggerHandler.removeAll();
@@ -128,6 +137,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.list", mode = Mode.READ)
     @Description("Lists all currently installed triggers for the session database.")
     public Stream<TriggerInfo> list() {
+        checkEnabled(apocConfig());
         return triggerHandler.list().entrySet().stream()
                 .map((e) -> new TriggerInfo(
                         e.getKey(),
@@ -143,6 +153,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.pause", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.stop")
     @Description("Pauses the given trigger.")
     public Stream<TriggerInfo> pause(@Name("name") String name) {
+        checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
         Map<String, Object> paused = triggerHandler.updatePaused(name, true);
@@ -161,6 +172,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.resume", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.start")
     @Description("Resumes the given paused trigger.")
     public Stream<TriggerInfo> resume(@Name("name") String name) {
+        checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
         Map<String, Object> resume = triggerHandler.updatePaused(name, false);
@@ -172,5 +184,11 @@ public class Trigger {
                 (Map<String, Object>) resume.get("params"),
                 true,
                 false));
+    }
+
+    private void checkEnabled(ApocConfig apocConfig) {
+        if (!apocConfig.getConfig().getBoolean(APOC_TRIGGER_ENABLED)) {
+            throw new RuntimeException(NOT_ENABLED_ERROR);
+        }
     }
 }

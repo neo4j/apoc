@@ -18,7 +18,6 @@
  */
 package apoc.trigger;
 
-import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.SystemLabels.ApocTrigger;
 
@@ -79,9 +78,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     private final AtomicBoolean registeredWithKernel = new AtomicBoolean(false);
 
-    public static final String NOT_ENABLED_ERROR = "Triggers have not been enabled."
-            + " Set 'apoc.trigger.enabled=true' in your apoc.conf file located in the $NEO4J_HOME/conf/ directory.";
-
     public TriggerHandler(
             GraphDatabaseService db,
             DatabaseManagementService databaseManagementService,
@@ -95,16 +91,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
         this.log = log;
         this.pools = pools;
         this.jobScheduler = jobScheduler;
-    }
-
-    private boolean isEnabled() {
-        return apocConfig.getBoolean(APOC_TRIGGER_ENABLED);
-    }
-
-    public void checkEnabled() {
-        if (!isEnabled()) {
-            throw new RuntimeException(NOT_ENABLED_ERROR);
-        }
     }
 
     public void updateCache() {
@@ -174,7 +160,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
     public Map<String, Object> add(
             String name, String statement, Map<String, Object> selector, Map<String, Object> params) {
-        checkEnabled();
         final var previous = triggersSnapshot.get().get(name);
 
         withSystemDb(tx -> {
@@ -197,7 +182,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     public Map<String, Object> remove(String name) {
-        checkEnabled();
         final var previous = triggersSnapshot.get().get(name);
 
         withSystemDb(tx -> {
@@ -216,7 +200,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     public Map<String, Object> updatePaused(String name, boolean paused) {
-        checkEnabled();
         withSystemDb(tx -> {
             tx.findNodes(
                             ApocTrigger,
@@ -233,7 +216,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     public Map<String, Map<String, Object>> removeAll() {
-        checkEnabled();
         final var previous = triggersSnapshot.get();
         withSystemDb(tx -> {
             tx.findNodes(ApocTrigger, SystemPropertyKeys.database.name(), db.databaseName())
@@ -246,7 +228,6 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     public Map<String, Map<String, Object>> list() {
-        checkEnabled();
         return triggersSnapshot.get();
     }
 
@@ -373,11 +354,21 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
     }
 
     private <T> T withSystemDb(Function<Transaction, T> action) {
-        try (Transaction tx = apocConfig.getSystemDb().beginTx()) {
-            T result = action.apply(tx);
-            tx.commit();
-            return result;
-        }
+        var timeout = 500;
+
+        // When the timeout reaches 12 hours, we will have been trying for 24 hours - time to give up
+        var upperTimeout = 43200000;
+
+        return Util.withBackOffRetries(
+                () -> {
+                    Transaction tx = apocConfig.getSystemDb().beginTx();
+                    T result = action.apply(tx);
+                    tx.commit();
+                    return result;
+                },
+                timeout,
+                upperTimeout,
+                log);
     }
 
     private long getLastUpdate() {

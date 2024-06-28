@@ -76,6 +76,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -127,6 +128,7 @@ import org.neo4j.values.storable.Values;
  * @since 24.04.16
  */
 public class Util {
+
     public static final Label[] NO_LABELS = new Label[0];
     public static final String NODE_COUNT = "MATCH (n) RETURN count(*) as result";
     public static final String REL_COUNT = "MATCH ()-->() RETURN count(*) as result";
@@ -1298,5 +1300,34 @@ public class Util {
         return StreamSupport.stream(transaction.schema().getIndexes(relType).spliterator(), false)
                 .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR)
                 .toList();
+    }
+
+    public static <T> T withBackOffRetries(Supplier<T> func, long initialTimeout, long upperTimeout, Log log) {
+        T result = null;
+        var startTime = System.currentTimeMillis();
+        var timeout = initialTimeout;
+        var lastTry = startTime - timeout;
+
+        while (true) {
+            var timeStamp = System.currentTimeMillis();
+            if (timeStamp - lastTry >= timeout) {
+                try {
+                    result = func.get();
+                    break;
+                } catch (Exception e) {
+                    if (timeout >= upperTimeout) {
+                        Long totalTime = (System.currentTimeMillis() - startTime) / 1000;
+                        if (log.isDebugEnabled()) {
+                            log.debug(String.format(
+                                    "Got %s: %s after %s seconds.", e.getClass(), e.getMessage(), totalTime));
+                        }
+                        throw e;
+                    }
+                }
+                lastTry = timeStamp;
+                timeout *= 2;
+            }
+        }
+        return result;
     }
 }
