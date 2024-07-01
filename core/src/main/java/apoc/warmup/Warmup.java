@@ -18,7 +18,6 @@
  */
 package apoc.warmup;
 
-import apoc.ApocConfig;
 import apoc.util.Util;
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.io.layout.recordstorage.RecordDatabaseLayout;
 import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
@@ -92,8 +92,9 @@ public class Warmup {
             @Name(value = "loadDynamicProperties", defaultValue = "false") boolean loadDynamicProperties,
             @Name(value = "loadIndexes", defaultValue = "false") boolean loadIndexes)
             throws IOException {
-        // This procedure is likely to break with future storage engines
-        ApocConfig.apocConfig().checkStorageEngine();
+        if (!(db.databaseLayout() instanceof RecordDatabaseLayout)) {
+            throw new IllegalArgumentException("`apoc.warmup.run` is only supported on record storage databases");
+        }
 
         PageCache pageCache = db.getDependencyResolver().resolveDependency(PageCache.class);
         KernelTransaction ktx = ((InternalTransaction) tx).kernelTransaction();
