@@ -72,6 +72,7 @@ public class ApocConfigTest {
     public void testDetermineNeo4jConfFolderDefault() {
         System.setProperty(SUN_JAVA_COMMAND, "");
         assertEquals("C:/neo4j/neo4j-enterprise-5.x.0/conf", apocConfig.determineNeo4jConfFolder());
+        //TOD
     }
 
     @Test
