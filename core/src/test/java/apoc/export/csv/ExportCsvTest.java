@@ -94,57 +94,202 @@ public class ExportCsvTest {
                     + "\"Andrea\",\"Milano\",\"Via Garibaldi, 7\",\"[\"\"Address1\"\",\"\"Address\"\"]\"%n"
                     + "\"Bar Sport\",\"\",\"\",\"[\"\"Address\"\"]\"%n"
                     + "\"\",\"\",\"via Benni\",\"[\"\"Address\"\"]\"%n");
-    private static final String EXPECTED_QUERY_QUOTES_NEEDED = String.format(
-            "a.name,a.city,a.street,labels(a)%n" + "Andrea,Milano,\"Via Garibaldi, 7\",\"[\"Address1\",\"Address\"]\"%n"
-                    + "Bar Sport,,,\"[\"Address\"]\"%n"
-                    + ",,via Benni,\"[\"Address\"]\"%n");
-    private static final String EXPECTED = String.format(
-            "\"_id\",\"_labels\",\"age\",\"city\",\"kids\",\"male\",\"name\",\"street\",\"_start\",\"_end\",\"_type\"%n"
-                    + "\"0\",\":User:User1\",\"42\",\"\",\"[\"\"a\"\",\"\"b\"\",\"\"c\"\"]\",\"true\",\"foo\",\"\",,,%n"
-                    + "\"1\",\":User\",\"42\",\"\",\"\",\"\",\"bar\",\"\",,,%n"
-                    + "\"2\",\":User\",\"12\",\"\",\"\",\"\",\"\",\"\",,,%n"
-                    + "\"3\",\":Address:Address1\",\"\",\"Milano\",\"\",\"\",\"Andrea\",\"Via Garibaldi, 7\",,,%n"
-                    + "\"4\",\":Address\",\"\",\"\",\"\",\"\",\"Bar Sport\",\"\",,,%n"
-                    + "\"5\",\":Address\",\"\",\"\",\"\",\"\",\"\",\"via Benni\",,,%n"
-                    + ",,,,,,,,\"0\",\"1\",\"KNOWS\"%n"
-                    + ",,,,,,,,\"3\",\"4\",\"NEXT_DELIVERY\"%n");
+    private static final String EXPECTED_QUERY_QUOTES_NEEDED = String.format("a.name,a.city,a.street,labels(a)%n"
+            + "Andrea,Milano,\"Via Garibaldi, 7\",\"[\"\"Address1\"\",\"\"Address\"\"]\"%n"
+            + "Bar Sport,,,\"[\"\"Address\"\"]\"%n"
+            + ",,via Benni,\"[\"\"Address\"\"]\"%n");
+    private static final String EXPECTED_ALL_ALWAYS =
+            """
+            "_id","_labels","age","city","kids","male","name","street","_start","_end","_type","id","value1","value2"
+            "0",":User:User1","42","","[""a"",""b"",""c""]","true","foo","",,,,,,
+            "1",":User","42","","","","bar","",,,,,,
+            "2",":User","12","","","","","",,,,,,
+            "3",":Address:Address1","","Milano","","","Andrea","Via Garibaldi, 7",,,,,,
+            "4",":Address","","","","","Bar Sport","",,,,,,
+            "5",":Address","","","","","","via Benni",,,,,,
+            "6",":ESCAPING","1","","","","I am ""groot"", and more ","",,,,,,
+            "7",":ESCAPING","2","","",""," ","",,,,,,
+            "8",":ESCAPING","3","","","","","",,,,,,
+            "9",":ESCAPING","4","","","","","",,,,,,
+            ,,,,,,,,"0","1","KNOWS","","",""
+            ,,,,,,,,"3","4","NEXT_DELIVERY","","",""
+            ,,,,,,,,"8","9","REL","0"," ",""
+            """;
 
     private static final String EXP_SAMPLE =
-            "\"_id\",\"_labels\",\"address\",\"age\",\"baz\",\"city\",\"foo\",\"kids\",\"last:Name\",\"male\",\"name\",\"street\",\"_start\",\"_end\",\"_type\",\"one\",\"three\"\n"
-                    + "\"0\",\":User:User1\",\"\",\"42\",\"\",\"\",\"\",\"[\"\"a\"\",\"\"b\"\",\"\"c\"\"]\",\"\",\"true\",\"foo\",\"\",,,,,\n"
-                    + "\"1\",\":User\",\"\",\"42\",\"\",\"\",\"\",\"\",\"\",\"\",\"bar\",\"\",,,,,\n"
-                    + "\"2\",\":User\",\"\",\"12\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",,,,,\n"
-                    + "\"3\",\":Address:Address1\",\"\",\"\",\"\",\"Milano\",\"\",\"\",\"\",\"\",\"Andrea\",\"Via Garibaldi, 7\",,,,,\n"
-                    + "\"4\",\":Address\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"Bar Sport\",\"\",,,,,\n"
-                    + "\"5\",\":Address\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"via Benni\",,,,,\n"
-                    + "\"6\",\":Sample:User\",\"\",\"\",\"\",\"\",\"\",\"\",\"Galilei\",\"\",\"\",\"\",,,,,\n"
-                    + "\"7\",\":Sample:User\",\"Universe\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\",,,,,\n"
-                    + "\"8\",\":Sample:User\",\"\",\"\",\"\",\"\",\"bar\",\"\",\"\",\"\",\"\",\"\",,,,,\n"
-                    + "\"9\",\":Sample:User\",\"\",\"\",\"baa\",\"\",\"true\",\"\",\"\",\"\",\"\",\"\",,,,,\n"
-                    + ",,,,,,,,,,,,\"0\",\"1\",\"KNOWS\",\"\",\"\"\n"
-                    + ",,,,,,,,,,,,\"3\",\"4\",\"NEXT_DELIVERY\",\"\",\"\"\n"
-                    + ",,,,,,,,,,,,\"8\",\"9\",\"KNOWS\",\"two\",\"four\"\n";
-
-    private static final String EXPECTED_NONE_QUOTES =
-            String.format("_id,_labels,age,city,kids,male,name,street,_start,_end,_type%n"
-                    + "0,:User:User1,42,,[\"a\",\"b\",\"c\"],true,foo,,,,%n"
-                    + "1,:User,42,,,,bar,,,,%n"
-                    + "2,:User,12,,,,,,,,%n"
-                    + "3,:Address:Address1,,Milano,,,Andrea,Via Garibaldi, 7,,,%n"
-                    + "4,:Address,,,,,Bar Sport,,,,%n"
-                    + "5,:Address,,,,,,via Benni,,,%n"
-                    + ",,,,,,,,0,1,KNOWS%n"
-                    + ",,,,,,,,3,4,NEXT_DELIVERY%n");
-    private static final String EXPECTED_NEEDED_QUOTES =
-            String.format("_id,_labels,age,city,kids,male,name,street,_start,_end,_type%n"
-                    + "0,:User:User1,42,,\"[\"a\",\"b\",\"c\"]\",true,foo,,,,%n"
-                    + "1,:User,42,,,,bar,,,,%n"
-                    + "2,:User,12,,,,,,,,%n"
-                    + "3,:Address:Address1,,Milano,,,Andrea,\"Via Garibaldi, 7\",,,%n"
-                    + "4,:Address,,,,,Bar Sport,,,,%n"
-                    + "5,:Address,,,,,,via Benni,,,%n"
-                    + ",,,,,,,,0,1,KNOWS%n"
-                    + ",,,,,,,,3,4,NEXT_DELIVERY%n");
+            """
+            "_id","_labels","address","age","baz","city","foo","kids","last:Name","male","name","street","_start","_end","_type","id","one","three","value1","value2"
+            "0",":User:User1","","42","","","","[""a"",""b"",""c""]","","true","foo","",,,,,,,,
+            "1",":User","","42","","","","","","","bar","",,,,,,,,
+            "2",":User","","12","","","","","","","","",,,,,,,,
+            "3",":Address:Address1","","","","Milano","","","","","Andrea","Via Garibaldi, 7",,,,,,,,
+            "4",":Address","","","","","","","","","Bar Sport","",,,,,,,,
+            "5",":Address","","","","","","","","","","via Benni",,,,,,,,
+            "6",":ESCAPING","","1","","","","","","","I am ""groot"", and more ","",,,,,,,,
+            "7",":ESCAPING","","2","","","","","",""," ","",,,,,,,,
+            "8",":ESCAPING","","3","","","","","","","","",,,,,,,,
+            "9",":ESCAPING","","4","","","","","","","","",,,,,,,,
+            "10",":Sample:User","","","","","","","Galilei","","","",,,,,,,,
+            "11",":Sample:User","Universe","","","","","","","","","",,,,,,,,
+            "12",":Sample:User","","","","","bar","","","","","",,,,,,,,
+            "13",":Sample:User","","","baa","","true","","","","","",,,,,,,,
+            ,,,,,,,,,,,,"0","1","KNOWS","","","","",""
+            ,,,,,,,,,,,,"3","4","NEXT_DELIVERY","","","","",""
+            ,,,,,,,,,,,,"8","9","REL","0","",""," ",""
+            ,,,,,,,,,,,,"12","13","KNOWS","","two","four","",""
+            """;
+    private static final String EXPECTED_ALL_NONE =
+            """
+            _id,_labels,age,city,kids,male,name,street,_start,_end,_type,id,value1,value2
+            0,:User:User1,42,,["a","b","c"],true,foo,,,,,,,
+            1,:User,42,,,,bar,,,,,,,
+            2,:User,12,,,,,,,,,,,
+            3,:Address:Address1,,Milano,,,Andrea,Via Garibaldi, 7,,,,,,
+            4,:Address,,,,,Bar Sport,,,,,,,
+            5,:Address,,,,,,via Benni,,,,,,
+            6,:ESCAPING,1,,,,I am "groot", and more ,,,,,,,
+            7,:ESCAPING,2,,,, ,,,,,,,
+            8,:ESCAPING,3,,,,,,,,,,,
+            9,:ESCAPING,4,,,,,,,,,,,
+            ,,,,,,,,0,1,KNOWS,,,
+            ,,,,,,,,3,4,NEXT_DELIVERY,,,
+            ,,,,,,,,8,9,REL,0, ,
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_RELS =
+            """
+            ,,,,,,,,0,1,KNOWS,,,
+            ,,,,,,,,3,4,NEXT_DELIVERY,,,
+            ,,,,,,,,8,9,REL,0, ,""
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED =
+            """
+            _id,_labels,age,city,kids,male,name,street,_start,_end,_type,id,value1,value2
+            0,:User:User1,42,,"[""a"",""b"",""c""]",true,foo,,,,,,,
+            1,:User,42,,,,bar,,,,,,,
+            2,:User,12,,,,,,,,,,,
+            3,:Address:Address1,,Milano,,,Andrea,"Via Garibaldi, 7",,,,,,
+            4,:Address,,,,,Bar Sport,,,,,,,
+            5,:Address,,,,,,via Benni,,,,,,
+            6,:ESCAPING,1,,,,"I am ""groot"", and more ",,,,,,,
+            7,:ESCAPING,2,,,, ,,,,,,,
+            8,:ESCAPING,3,,,,,,,,,,,
+            9,:ESCAPING,4,,,,,,,,,,,
+            ,,,,,,,,0,1,KNOWS,,,
+            ,,,,,,,,3,4,NEXT_DELIVERY,,,
+            ,,,,,,,,8,9,REL,0, ,
+            """;
+    private static final String EXPECTED_QUERY_DIFFERENTIATE_NULLS_NONE =
+            """
+            age,name
+            1,I am "groot", and more\s
+            2,\s
+            3,
+            4,
+            """;
+    private static final String EXPECTED_QUERY_DIFFERENTIATE_NULLS_IF_NEEDED =
+            """
+            age,name
+            1,"I am ""groot"", and more "
+            2,\s
+            3,""
+            4,
+            """;
+    private static final String EXPECTED_QUERY_DONT_DIFFERENTIATE_NULLS_IF_NEEDED =
+            """
+            age,name
+            1,"I am ""groot"", and more "
+            2,\s
+            3,
+            4,
+            """;
+    private static final String EXPECTED_QUERY_DIFFERENTIATE_NULLS_ALWAYS =
+            """
+            "age","name"
+            "1","I am ""groot"", and more "
+            "2"," "
+            "3",""
+            "4",
+            """;
+    private static final String EXPECTED_QUERY_DONT_DIFFERENTIATE_NULLS_ALWAYS =
+            """
+            "age","name"
+            "1","I am ""groot"", and more "
+            "2"," "
+            "3",""
+            "4",""
+            """;
+    private static final String EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE =
+            """
+            _id,_labels,age,name,_start,_end,_type
+            6,:ESCAPING,1,I am "groot", and more ,,,
+            7,:ESCAPING,2, ,,,
+            8,:ESCAPING,3,,,,
+            9,:ESCAPING,4,,,,
+            """;
+    private static final String EXPECTED_DATA_DIFFERENTIATE_NULLS_IF_NEEDED =
+            """
+            _id,_labels,age,name,_start,_end,_type
+            6,:ESCAPING,1,"I am ""groot"", and more ",,,
+            7,:ESCAPING,2, ,,,
+            8,:ESCAPING,3,"",,,
+            9,:ESCAPING,4,,,,
+            """;
+    private static final String EXPECTED_DATA_DONT_DIFFERENTIATE_NULLS_IF_NEEDED =
+            """
+            _id,_labels,age,name,_start,_end,_type
+            6,:ESCAPING,1,"I am ""groot"", and more ",,,
+            7,:ESCAPING,2, ,,,
+            8,:ESCAPING,3,,,,
+            9,:ESCAPING,4,,,,
+            """;
+    private static final String EXPECTED_DATA_DIFFERENTIATE_NULLS_ALWAYS =
+            """
+            "_id","_labels","age","name","_start","_end","_type"
+            "6",":ESCAPING","1","I am ""groot"", and more ",,,
+            "7",":ESCAPING","2"," ",,,
+            "8",":ESCAPING","3","",,,
+            "9",":ESCAPING","4",,,,
+            """;
+    private static final String EXPECTED_DATA_DONT_DIFFERENTIATE_NULLS_ALWAYS =
+            """
+            "_id","_labels","age","name","_start","_end","_type"
+            "6",":ESCAPING","1","I am ""groot"", and more ",,,
+            "7",":ESCAPING","2"," ",,,
+            "8",":ESCAPING","3","",,,
+            "9",":ESCAPING","4","",,,
+            """;
+    private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED =
+            """
+                    _id,_labels,age,city,kids,male,name,street,_start,_end,_type,id,value1,value2
+                    0,:User:User1,42,,"[""a"",""b"",""c""]",true,foo,,,,,,,
+                    1,:User,42,,,,bar,,,,,,,
+                    2,:User,12,,,,,,,,,,,
+                    3,:Address:Address1,,Milano,,,Andrea,"Via Garibaldi, 7",,,,,,
+                    4,:Address,,,,,Bar Sport,,,,,,,
+                    5,:Address,,,,,,via Benni,,,,,,
+                    6,:ESCAPING,1,,,,"I am ""groot"", and more ",,,,,,,
+                    7,:ESCAPING,2,,,, ,,,,,,,
+                    8,:ESCAPING,3,,,,"",,,,,,,
+                    9,:ESCAPING,4,,,,,,,,,,,
+                    """
+                    + EXPECTED_ALL_IF_NEEDED_RELS;
+    private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_ALWAYS =
+            """
+            "_id","_labels","age","city","kids","male","name","street","_start","_end","_type","id","value1","value2"
+            "0",":User:User1","42",,"[""a"",""b"",""c""]","true","foo",,,,,,,
+            "1",":User","42",,,,"bar",,,,,,,
+            "2",":User","12",,,,,,,,,,,
+            "3",":Address:Address1",,"Milano",,,"Andrea","Via Garibaldi, 7",,,,,,
+            "4",":Address",,,,,"Bar Sport",,,,,,,
+            "5",":Address",,,,,,"via Benni",,,,,,
+            "6",":ESCAPING","1",,,,"I am ""groot"", and more ",,,,,,,
+            "7",":ESCAPING","2",,,," ",,,,,,,
+            "8",":ESCAPING","3",,,,"",,,,,,,
+            "9",":ESCAPING","4",,,,,,,,,,,
+            ,,,,,,,,"0","1","KNOWS",,,
+            ,,,,,,,,"3","4","NEXT_DELIVERY",,,
+            ,,,,,,,,"8","9","REL","0"," ",""
+                    """;
 
     private static final File directory = new File("target/import");
 
@@ -168,6 +313,13 @@ public class ExportCsvTest {
                 "CREATE (f:User1:User {name:'foo',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
         db.executeTransactionally(
                 "CREATE (f:Address1:Address {name:'Andrea', city: 'Milano', street:'Via Garibaldi, 7'})-[:NEXT_DELIVERY]->(a:Address {name: 'Bar Sport'}), (b:Address {street: 'via Benni'})");
+        db.executeTransactionally(
+                """
+        CREATE
+            (:ESCAPING {age: 1, name: 'I am "groot", and more '}),
+            (:ESCAPING {age: 2, name: ' '}),
+            (:ESCAPING {age: 3, name: ''})-[:REL {id: 0, value1: ' ', value2: ""}]->(:ESCAPING {age: 4})
+        """);
     }
 
     @AfterClass
@@ -209,7 +361,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file, $config)",
                 map("file", fileName, "config", map("compression", compressionAlgo.name())),
                 (r) -> assertResults(fileName, r, "database"));
-        assertEquals(EXPECTED, readFile(fileName, UTF_8, compressionAlgo));
+        assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName, UTF_8, compressionAlgo));
     }
 
     @Test
@@ -266,7 +418,7 @@ public class ExportCsvTest {
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Test']}],[],{})",
                 params,
-                r -> assertEquals(9L, r.get("nodes")));
+                r -> assertEquals(14L, r.get("nodes")));
 
         TestUtil.testResult(db, "MATCH (n:Test) RETURN n.name as name, n.value as value", r -> {
             var nodes = r.stream().filter(node -> node.get("name").equals("Test"));
@@ -275,6 +427,157 @@ public class ExportCsvTest {
         });
 
         db.executeTransactionally(deleteQuery);
+    }
+
+    @Test
+    public void testCsvQueryWithDifferentiatedNulls() {
+        Map<String, String> differentiateNulls = Map.of(
+                "none", EXPECTED_QUERY_DIFFERENTIATE_NULLS_NONE,
+                "ifNeeded", EXPECTED_QUERY_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_QUERY_DIFFERENTIATE_NULLS_ALWAYS);
+        Map<String, String> dontDifferentiateNulls = Map.of(
+                "none", EXPECTED_QUERY_DIFFERENTIATE_NULLS_NONE,
+                "ifNeeded", EXPECTED_QUERY_DONT_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_QUERY_DONT_DIFFERENTIATE_NULLS_ALWAYS);
+
+        Map<Boolean, Map<String, String>> differentiateNullCases =
+                Map.of(true, differentiateNulls, false, dontDifferentiateNulls);
+
+        String fileName = "test.csv.diffNulls.csv";
+        for (Boolean shouldDifferentiateNulls : differentiateNullCases.keySet()) {
+            Map<String, String> currentCases = differentiateNullCases.get(shouldDifferentiateNulls);
+            for (String quotingType : currentCases.keySet()) {
+                final Map<String, Object> params = map(
+                        "file",
+                        fileName,
+                        "config",
+                        map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
+
+                TestUtil.testCall(
+                        db,
+                        "CALL apoc.export.csv.query(\"MATCH (d:ESCAPING) WITH d RETURN d.age as age, d.name as name\", $file, $config)",
+                        params,
+                        (r) -> assertEquals(fileName, r.get("file")));
+
+                assertEquals(currentCases.get(quotingType), readFile(fileName));
+            }
+        }
+    }
+
+    @Test
+    public void testCsvDataWithDifferentiatedNulls() {
+        Map<String, String> differentiateNulls = Map.of(
+                "none", EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE,
+                "ifNeeded", EXPECTED_DATA_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_DATA_DIFFERENTIATE_NULLS_ALWAYS);
+        Map<String, String> dontDifferentiateNulls = Map.of(
+                "none", EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE,
+                "ifNeeded", EXPECTED_DATA_DONT_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_DATA_DONT_DIFFERENTIATE_NULLS_ALWAYS);
+
+        Map<Boolean, Map<String, String>> differentiateNullCases =
+                Map.of(true, differentiateNulls, false, dontDifferentiateNulls);
+
+        String fileName = "test.csv.diffNulls.csv";
+        for (Boolean shouldDifferentiateNulls : differentiateNullCases.keySet()) {
+            Map<String, String> currentCases = differentiateNullCases.get(shouldDifferentiateNulls);
+            for (String quotingType : currentCases.keySet()) {
+                final Map<String, Object> params = map(
+                        "file",
+                        fileName,
+                        "config",
+                        map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
+
+                TestUtil.testCall(
+                        db,
+                        """
+                        MATCH (n:ESCAPING)
+                        WITH COLLECT(n) as nodes
+                        CALL apoc.export.csv.data(nodes, [], $file, $config)
+                        YIELD file
+                        RETURN file
+                        """,
+                        params,
+                        (r) -> assertEquals(fileName, r.get("file")));
+
+                assertEquals(currentCases.get(quotingType), readFile(fileName));
+            }
+        }
+    }
+
+    @Test
+    public void testCsvGraphWithDifferentiatedNulls() {
+        Map<String, String> differentiateNulls = Map.of(
+                "none", EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE,
+                "ifNeeded", EXPECTED_DATA_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_DATA_DIFFERENTIATE_NULLS_ALWAYS);
+        Map<String, String> dontDifferentiateNulls = Map.of(
+                "none", EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE,
+                "ifNeeded", EXPECTED_DATA_DONT_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_DATA_DONT_DIFFERENTIATE_NULLS_ALWAYS);
+
+        Map<Boolean, Map<String, String>> differentiateNullCases =
+                Map.of(true, differentiateNulls, false, dontDifferentiateNulls);
+
+        String fileName = "test.csv.diffNulls.csv";
+        for (Boolean shouldDifferentiateNulls : differentiateNullCases.keySet()) {
+            Map<String, String> currentCases = differentiateNullCases.get(shouldDifferentiateNulls);
+            for (String quotingType : currentCases.keySet()) {
+                final Map<String, Object> params = map(
+                        "file",
+                        fileName,
+                        "config",
+                        map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
+
+                TestUtil.testCall(
+                        db,
+                        """
+                        CALL apoc.graph.fromCypher('MATCH (n:ESCAPING) RETURN n',{}, 'test',{description: "test graph"}) yield graph
+                        CALL apoc.export.csv.graph(graph, $file, $config)
+                        YIELD file
+                        RETURN file
+                        """,
+                        params,
+                        (r) -> assertEquals(fileName, r.get("file")));
+
+                assertEquals(currentCases.get(quotingType), readFile(fileName));
+            }
+        }
+    }
+
+    @Test
+    public void testCsvAllWithDifferentiatedNulls() {
+        Map<String, String> differentiateNulls = Map.of(
+                "none", EXPECTED_ALL_NONE,
+                "ifNeeded", EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED,
+                "always", EXPECTED_ALL_DIFFERENTIATE_NULLS_ALWAYS);
+        Map<String, String> dontDifferentiateNulls = Map.of(
+                "none", EXPECTED_ALL_NONE,
+                "ifNeeded", EXPECTED_ALL_IF_NEEDED,
+                "always", EXPECTED_ALL_ALWAYS);
+
+        Map<Boolean, Map<String, String>> differentiateNullCases =
+                Map.of(true, differentiateNulls, false, dontDifferentiateNulls);
+
+        String fileName = "test.csv.diffNulls.csv";
+        for (Boolean shouldDifferentiateNulls : differentiateNullCases.keySet()) {
+            Map<String, String> currentCases = differentiateNullCases.get(shouldDifferentiateNulls);
+            for (String quotingType : currentCases.keySet()) {
+                final Map<String, Object> params = map(
+                        "file",
+                        fileName,
+                        "config",
+                        map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
+
+                TestUtil.testCall(
+                        db,
+                        "CALL apoc.export.csv.all($file, $config)",
+                        params,
+                        (r) -> assertEquals(fileName, r.get("file")));
+
+                assertEquals(currentCases.get(quotingType), readFile(fileName));
+            }
+        }
     }
 
     @Test
@@ -301,7 +604,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file,null)",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "database"));
-        assertEquals(EXPECTED, readFile(fileName));
+        assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName));
     }
 
     @Test
@@ -310,9 +613,9 @@ public class ExportCsvTest {
                 "CREATE (:User:Sample {`last:Name`:'Galilei'}), (:User:Sample {address:'Universe'}),\n"
                         + "(:User:Sample {foo:'bar'})-[:KNOWS {one: 'two', three: 'four'}]->(:User:Sample {baz:'baa', foo: true})");
         String fileName = "all.csv";
-        final long totalNodes = 10L;
-        final long totalRels = 3L;
-        final long totalProps = 19L;
+        final long totalNodes = 14L;
+        final long totalRels = 4L;
+        final long totalProps = 29L;
         TestUtil.testCall(
                 db,
                 "CALL apoc.export.csv.all($file, null)",
@@ -331,7 +634,7 @@ public class ExportCsvTest {
                 .findFirst()
                 .get()
                 .split(",");
-        assertTrue(s.length < 17);
+        assertTrue(s.length < 19);
         assertTrue(Arrays.asList(s).containsAll(List.of("_id", "_labels", "_start", "_end", "_type")));
 
         db.executeTransactionally("MATCH (n:Sample) DETACH DELETE n");
@@ -345,7 +648,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file,{quotes: true})",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "database"));
-        assertEquals(EXPECTED, readFile(fileName));
+        assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName));
     }
 
     @Test
@@ -356,7 +659,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file,{quotes: 'none'})",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "database"));
-        assertEquals(EXPECTED_NONE_QUOTES, readFile(fileName));
+        assertEquals(EXPECTED_ALL_NONE, readFile(fileName));
     }
 
     @Test
@@ -367,7 +670,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file,{quotes: 'ifNeeded'})",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "database"));
-        assertEquals(EXPECTED_NEEDED_QUOTES, readFile(fileName));
+        assertEquals(EXPECTED_ALL_IF_NEEDED, readFile(fileName));
     }
 
     @Test
@@ -381,7 +684,7 @@ public class ExportCsvTest {
                         + "RETURN *",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "graph"));
-        assertEquals(EXPECTED_NONE_QUOTES, readFile(fileName));
+        assertEquals(EXPECTED_ALL_NONE, readFile(fileName));
     }
 
     @Test
@@ -394,7 +697,7 @@ public class ExportCsvTest {
                         + "RETURN *",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "graph"));
-        assertEquals(EXPECTED, readFile(fileName));
+        assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName));
     }
 
     @Test
@@ -484,7 +787,7 @@ public class ExportCsvTest {
     }
 
     private void assertResults(String fileName, Map<String, Object> r, final String source) {
-        assertResults(fileName, r, source, 6L, 2L, 12L, true);
+        assertResults(fileName, r, source, 10L, 3L, 22L, true);
     }
 
     private void assertResults(
@@ -562,15 +865,42 @@ public class ExportCsvTest {
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
             assertEquals(4L, r.get("batches"));
-            assertEquals(6L, r.get("nodes"));
+            assertEquals(8L, r.get("nodes"));
             assertEquals(8L, r.get("rows"));
+            assertEquals(0L, r.get("relationships"));
+            assertEquals(16L, r.get("properties"));
+            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            sb.append(getDecompressedData(algo, r.get("data")));
+            r = res.next();
+            assertEquals(2L, r.get("batchSize"));
+            assertEquals(5L, r.get("batches"));
+            assertEquals(10L, r.get("nodes"));
+            assertEquals(10L, r.get("rows"));
+            assertEquals(0L, r.get("relationships"));
+            assertEquals(19L, r.get("properties"));
+            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            sb.append(getDecompressedData(algo, r.get("data")));
+            r = res.next();
+            assertEquals(2L, r.get("batchSize"));
+            assertEquals(6L, r.get("batches"));
+            assertEquals(10L, r.get("nodes"));
+            assertEquals(12L, r.get("rows"));
             assertEquals(2L, r.get("relationships"));
-            assertEquals(12L, r.get("properties"));
+            assertEquals(19L, r.get("properties"));
+            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            sb.append(getDecompressedData(algo, r.get("data")));
+            r = res.next();
+            assertEquals(2L, r.get("batchSize"));
+            assertEquals(7L, r.get("batches"));
+            assertEquals(10L, r.get("nodes"));
+            assertEquals(13L, r.get("rows"));
+            assertEquals(3L, r.get("relationships"));
+            assertEquals(22L, r.get("properties"));
             assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
             sb.append(getDecompressedData(algo, r.get("data")));
             res.close();
         });
-        assertEquals(EXPECTED, sb.toString());
+        assertEquals(EXPECTED_ALL_ALWAYS, sb.toString());
     }
 
     @Test

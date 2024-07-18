@@ -47,9 +47,9 @@ public class ExportConfig extends CompressionConfig {
     public static final ExportConfig EMPTY = new ExportConfig(null);
 
     public static final char QUOTECHAR = '"';
-    public static final String NONE_QUOTES = "none";
+    public static final String NO_QUOTES = "none";
     public static final String ALWAYS_QUOTES = "always";
-    public static final String IF_NEEDED_QUUOTES = "ifNeeded";
+    public static final String IF_NEEDED_QUOTES = "ifNeeded";
 
     public static final int DEFAULT_BATCH_SIZE = 20000;
     private static final int DEFAULT_UNWIND_BATCH_SIZE = 20;
@@ -68,6 +68,10 @@ public class ExportConfig extends CompressionConfig {
     private boolean sampling;
     private String delim;
     private String quotes;
+
+    // If true, null values and empty string values can be differentiated by an empty value, and ""
+    // Note: quotes must be ifNeeded or Always for this to work
+    private Boolean differentiateNulls;
     private boolean useTypes;
     private Set<String> caption;
     private boolean writeNodeProperties;
@@ -104,6 +108,10 @@ public class ExportConfig extends CompressionConfig {
 
     public String isQuotes() {
         return quotes;
+    }
+
+    public Boolean shouldDifferentiateNulls() {
+        return differentiateNulls;
     }
 
     public boolean useTypes() {
@@ -149,6 +157,7 @@ public class ExportConfig extends CompressionConfig {
         this.writeNodeProperties = toBoolean(config.getOrDefault("writeNodeProperties", true));
         this.ifNotExists = toBoolean(config.get("ifNotExists"));
         exportQuotes(config);
+        this.differentiateNulls = toBoolean(config.getOrDefault("differentiateNulls", false));
         this.optimizations = (Map<String, Object>) config.getOrDefault("useOptimizations", Collections.emptyMap());
         this.optimizationType = OptimizationType.valueOf(optimizations
                 .getOrDefault("type", OptimizationType.UNWIND_BATCH.toString())
@@ -186,12 +195,12 @@ public class ExportConfig extends CompressionConfig {
         try {
             this.quotes = (String) config.getOrDefault("quotes", DEFAULT_QUOTES);
 
-            if (!quotes.equals(ALWAYS_QUOTES) && !quotes.equals(NONE_QUOTES) && !quotes.equals(IF_NEEDED_QUUOTES)) {
+            if (!quotes.equals(ALWAYS_QUOTES) && !quotes.equals(NO_QUOTES) && !quotes.equals(IF_NEEDED_QUOTES)) {
                 throw new RuntimeException("The string value of the field quote is not valid");
             }
 
         } catch (ClassCastException e) { // backward compatibility
-            this.quotes = toBoolean(config.get("quotes")) ? ALWAYS_QUOTES : NONE_QUOTES;
+            this.quotes = toBoolean(config.get("quotes")) ? ALWAYS_QUOTES : NO_QUOTES;
         }
     }
 

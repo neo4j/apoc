@@ -87,7 +87,12 @@ public class FormatUtils {
     }
 
     public static String toString(Object value, Function<String, String> escapeFunction) {
-        if (value == null) return "";
+        return toString(value, escapeFunction, false);
+    }
+
+    public static String toString(Object value, Function<String, String> escapeFunction, boolean keepNulls) {
+        if (value == null && !keepNulls) return "";
+        if (value == null) return null;
         if (value instanceof Path) {
             return toString(StreamSupport.stream(((Path) value).spliterator(), false)
                     .map(FormatUtils::toMap)
@@ -110,6 +115,10 @@ public class FormatUtils {
 
     public static String toString(Object value) {
         return toString(value, Function.identity());
+    }
+
+    public static String toString(Object value, boolean keepNulls) {
+        return toString(value, Function.identity(), keepNulls);
     }
 
     public static String toXmlString(Object value) {
