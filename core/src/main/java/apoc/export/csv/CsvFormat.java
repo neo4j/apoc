@@ -96,32 +96,35 @@ public class CsvFormat {
     private CSVWriter getCsvWriter(Writer writer, ExportConfig config) {
         CSVWriter out;
         switch (config.isQuotes()) {
-            case ExportConfig.NONE_QUOTES:
-                out = new CSVWriter(
+            case ExportConfig.NO_QUOTES:
+                out = new CustomCSVWriter(
                         writer,
                         config.getDelimChar(),
                         '\0', // quote char
                         '\0', // escape char
-                        CSVWriter.DEFAULT_LINE_END);
+                        CSVWriter.DEFAULT_LINE_END,
+                        config.shouldDifferentiateNulls());
                 applyQuotesToAll = false;
                 break;
-            case ExportConfig.IF_NEEDED_QUUOTES:
-                out = new CSVWriter(
-                        writer,
-                        config.getDelimChar(),
-                        ExportConfig.QUOTECHAR,
-                        '\0', // escape char
-                        CSVWriter.DEFAULT_LINE_END);
-                applyQuotesToAll = false;
-                break;
-            case ExportConfig.ALWAYS_QUOTES:
-            default:
-                out = new CSVWriter(
+            case ExportConfig.IF_NEEDED_QUOTES:
+                out = new CustomCSVWriter(
                         writer,
                         config.getDelimChar(),
                         ExportConfig.QUOTECHAR,
                         CSVWriter.DEFAULT_ESCAPE_CHARACTER,
-                        CSVWriter.DEFAULT_LINE_END);
+                        CSVWriter.DEFAULT_LINE_END,
+                        config.shouldDifferentiateNulls());
+                applyQuotesToAll = false;
+                break;
+            case ExportConfig.ALWAYS_QUOTES:
+            default:
+                out = new CustomCSVWriter(
+                        writer,
+                        config.getDelimChar(),
+                        ExportConfig.QUOTECHAR,
+                        CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                        CSVWriter.DEFAULT_LINE_END,
+                        config.shouldDifferentiateNulls());
                 applyQuotesToAll = true;
                 break;
         }
@@ -139,7 +142,7 @@ public class CsvFormat {
                 for (int col = 0; col < header.length; col++) {
                     String key = header[col];
                     Object value = row.get(key);
-                    data[col] = FormatUtils.toString(value);
+                    data[col] = FormatUtils.toString(value, config.shouldDifferentiateNulls());
                     reporter.update(
                             value instanceof Node ? 1 : 0,
                             value instanceof Relationship ? 1 : 0,
@@ -181,7 +184,8 @@ public class CsvFormat {
                 reporter,
                 nodeHeader.subList(NODE_HEADER_FIXED_COLUMNS.length, nodeHeader.size()),
                 cols,
-                config.getBatchSize());
+                config.getBatchSize(),
+                config.shouldDifferentiateNulls());
         writeRels(
                 graph,
                 out,
@@ -189,7 +193,8 @@ public class CsvFormat {
                 relHeader.subList(REL_HEADER_FIXED_COLUMNS.length, relHeader.size()),
                 cols,
                 nodeHeader.size(),
-                config.getBatchSize());
+                config.getBatchSize(),
+                config.shouldDifferentiateNulls());
     }
 
     private void writeAllBulkImport(SubGraph graph, Reporter reporter, ExportConfig config, ExportFileManager writer) {
@@ -342,13 +347,19 @@ public class CsvFormat {
     }
 
     private void writeNodes(
-            SubGraph graph, CSVWriter out, Reporter reporter, List<String> header, int cols, int batchSize) {
+            SubGraph graph,
+            CSVWriter out,
+            Reporter reporter,
+            List<String> header,
+            int cols,
+            int batchSize,
+            boolean keepNulls) {
         String[] row = new String[cols];
         int nodes = 0;
         for (Node node : graph.getNodes()) {
             row[0] = String.valueOf(getNodeId(tx, node.getElementId()));
             row[1] = getLabelsString(node);
-            collectProps(header, node, reporter, row, 2);
+            collectProps(header, node, reporter, row, 2, keepNulls);
             out.writeNext(row, applyQuotesToAll);
             nodes++;
             if (batchSize == -1 || nodes % batchSize == 0) {
@@ -361,11 +372,14 @@ public class CsvFormat {
         }
     }
 
-    private void collectProps(Collection<String> fields, Entity pc, Reporter reporter, String[] row, int offset) {
+    private void collectProps(
+            Collection<String> fields, Entity pc, Reporter reporter, String[] row, int offset, boolean keepNulls) {
         for (String field : fields) {
             if (pc.hasProperty(field)) {
                 row[offset] = FormatUtils.toString(pc.getProperty(field));
                 reporter.update(0, 0, 1);
+            } else if (keepNulls) {
+                row[offset] = null;
             } else {
                 row[offset] = "";
             }
@@ -380,14 +394,15 @@ public class CsvFormat {
             List<String> relHeader,
             int cols,
             int offset,
-            int batchSize) {
+            int batchSize,
+            boolean keepNull) {
         String[] row = new String[cols];
         int rels = 0;
         for (Relationship rel : graph.getRelationships()) {
             row[offset] = String.valueOf(getNodeId(tx, rel.getStartNode().getElementId()));
             row[offset + 1] = String.valueOf(getNodeId(tx, rel.getEndNode().getElementId()));
             row[offset + 2] = rel.getType().name();
-            collectProps(relHeader, rel, reporter, row, 3 + offset);
+            collectProps(relHeader, rel, reporter, row, 3 + offset, keepNull);
             out.writeNext(row, applyQuotesToAll);
             rels++;
             if (batchSize == -1 || rels % batchSize == 0) {
