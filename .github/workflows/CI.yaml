@@ -7,20 +7,31 @@ on:
     branches: [ "dev" ]
 
 env:
-  TEAMCITY_DEV_URL: ${{ secrets.TEAMCITY_DEV_URL }}
-  TEAMCITY_USER: ${{ secrets.TEAMCITY_USER }}
-  TEAMCITY_PASSWORD: ${{ secrets.TEAMCITY_PASSWORD }}
+  CODEARTIFACT_URL: ${{ secrets.CODEARTIFACT_URL }}
   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 jobs:
   compile:
     runs-on: ubuntu-latest
     steps:
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+      
+      - name: Configure CodeArtifact Authentication Token 
+        run: |
+          CODEARTIFACT_TOKEN=`aws codeartifact get-authorization-token --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --query authorizationToken --output text`
+          echo "::add-mask::$CODEARTIFACT_TOKEN"
+          echo "CODEARTIFACT_TOKEN=$CODEARTIFACT_TOKEN" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-jdk
       - uses: ./.github/actions/setup-gradle-cache
       - name: Compile
-        run: ./gradlew compileJava
+        run: ./gradlew --info compileJava
 
   snyk-test:
     runs-on: ubuntu-latest
@@ -60,7 +71,20 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: java
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Configure CodeArtifact Authentication Token 
+        run: |
+          CODEARTIFACT_TOKEN=`aws codeartifact get-authorization-token --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --query authorizationToken --output text`
+          echo "::add-mask::$CODEARTIFACT_TOKEN"
+          echo "CODEARTIFACT_TOKEN=$CODEARTIFACT_TOKEN" >> "$GITHUB_ENV"
+      
       - name: Compile
-        run: ./gradlew compileJava compileTestJava
+        run: ./gradlew --info compileJava compileTestJava
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

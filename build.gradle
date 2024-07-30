@@ -36,8 +36,17 @@ repositories {
                 password System.env.CUSTOM_REPO_TOKEN
             }
         }
+    } else if (System.getenv("CODEARTIFACT_URL") ?: "" != "") {
+        maven {
+            url System.getenv('CODEARTIFACT_URL')
+            credentials {
+                username "aws"
+                password System.getenv('CODEARTIFACT_AUTH_TOKEN')
+            }
+        }
+    } else {
+        mavenCentral()
     }
-    mavenCentral()
     maven {
         url "https://repo.gradle.org/gradle/libs-releases"
     }
@@ -69,8 +78,17 @@ subprojects {
                     password System.env.CUSTOM_REPO_TOKEN
                 }
             }
+        } else if (System.getenv("CODEARTIFACT_URL") ?: "" != "") {
+            maven {
+                url System.getenv('CODEARTIFACT_URL')
+                credentials {
+                    username "aws"
+                    password System.getenv('CODEARTIFACT_AUTH_TOKEN')
+                }
+            }
+        } else {
+            mavenCentral()
         }
-        mavenCentral()
         maven {
             url "https://repo.gradle.org/gradle/libs-releases"
         }

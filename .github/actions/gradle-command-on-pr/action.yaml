@@ -4,12 +4,6 @@ inputs:
   gradle-command:
     description: "Gradle command to run"
     required: true
-  TEAMCITY_DEV_URL:
-    required: true
-  TEAMCITY_USER:
-    required: true
-  TEAMCITY_PASSWORD:
-    required: true
   SERVICE_ACCOUNT_PAT:
     required: true
 
@@ -28,10 +22,6 @@ runs:
 
     - name: Calls gradle command
       shell: bash
-      env:
-        TEAMCITY_DEV_URL: ${{ inputs.TEAMCITY_DEV_URL }}
-        TEAMCITY_USER: ${{ inputs.TEAMCITY_USER }}
-        TEAMCITY_PASSWORD: ${{ inputs.TEAMCITY_PASSWORD }}
       run: |
         ./gradlew ${{ inputs.gradle-command }} || true
 
