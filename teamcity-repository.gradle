@@ -3,10 +3,10 @@ allprojects {
         repositories {
             maven {
                 name = 'aws-codeartifact-repo'
-                url =  System.getenv('CODEARTIFACT_URL')
+                url =  System.getenv('CODEARTIFACT_DOWNLOAD_URL')
                 credentials {
-                    username "aws"
-                    password System.getenv('CODEARTIFACT_AUTH_TOKEN')
+                    username System.getenv('CODEARTIFACT_USERNAME')
+                    password System.getenv('CODEARTIFACT_TOKEN')
                 }
                 authentication {
                     basic(BasicAuthentication)

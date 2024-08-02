@@ -28,20 +28,12 @@ repositories {
     /*maven {  // this contains the neo4j 4.0.0-beta jars
     url "https://neo4j.bintray.com/community/"
 }*/
-    if (System.getenv("CUSTOM_REPO_URL") ?: "" != "") {
+    if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
         maven {
-            url System.env.CUSTOM_REPO_URL
+            url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
             credentials {
-                username System.env.CUSTOM_REPO_USERNAME
-                password System.env.CUSTOM_REPO_TOKEN
-            }
-        }
-    } else if (System.getenv("CODEARTIFACT_URL") ?: "" != "") {
-        maven {
-            url System.getenv('CODEARTIFACT_URL')
-            credentials {
-                username "aws"
-                password System.getenv('CODEARTIFACT_AUTH_TOKEN')
+                username System.getenv('CODEARTIFACT_USERNAME')
+                password System.getenv('CODEARTIFACT_TOKEN')
             }
         }
     } else {
@@ -70,20 +62,12 @@ subprojects {
         /*maven {  // this contains the neo4j 4.0.0-beta jars
         url "https://neo4j.bintray.com/community/"
     }*/
-        if (System.getenv("CUSTOM_REPO_URL") ?: "" != "") {
+        if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
             maven {
-                url System.env.CUSTOM_REPO_URL
+                url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
                 credentials {
-                    username System.env.CUSTOM_REPO_USERNAME
-                    password System.env.CUSTOM_REPO_TOKEN
-                }
-            }
-        } else if (System.getenv("CODEARTIFACT_URL") ?: "" != "") {
-            maven {
-                url System.getenv('CODEARTIFACT_URL')
-                credentials {
-                    username "aws"
-                    password System.getenv('CODEARTIFACT_AUTH_TOKEN')
+                    username System.getenv('CODEARTIFACT_USERNAME')
+                    password System.getenv('CODEARTIFACT_TOKEN')
                 }
             }
         } else {
