@@ -7,20 +7,41 @@ on:
     branches: [ "dev" ]
 
 env:
-  TEAMCITY_DEV_URL: ${{ secrets.TEAMCITY_DEV_URL }}
-  TEAMCITY_USER: ${{ secrets.TEAMCITY_USER }}
-  TEAMCITY_PASSWORD: ${{ secrets.TEAMCITY_PASSWORD }}
+  CODEARTIFACT_DOWNLOAD_URL: ${{ secrets.CODEARTIFACT_DOWNLOAD_URL }}
+  CODEARTIFACT_USERNAME: ${{ secrets.CODEARTIFACT_USERNAME }}
   SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
 jobs:
   compile:
     runs-on: ubuntu-latest
     steps:
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+      
+      - name: Configure CodeArtifact Authentication Token 
+        run: |
+          CODEARTIFACT_TOKEN=`aws codeartifact get-authorization-token --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --query authorizationToken --output text`
+          echo "::add-mask::$CODEARTIFACT_TOKEN"
+          echo "CODEARTIFACT_TOKEN=$CODEARTIFACT_TOKEN" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-jdk
       - uses: ./.github/actions/setup-gradle-cache
+
+      - name: Determine latest neo4j CI version
+        run: |
+          neo4j_version_base=$(grep -e ".*neo4jVersionOverride.* : .*" build.gradle  | cut -d ':' -f 2 | tr -d \'\" | tr -d ' ')
+          echo "neo4j_version_base=$neo4j_version_base"
+          NEO4J_VERSION_CI=`aws codeartifact list-package-versions --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --repository ci-live --format maven --namespace org.neo4j --package neo4j --sort-by PUBLISHED_TIME --max-items 1 --query "versions[?starts_with(version,'$neo4j_version_base')] | [0].version" --output text | head -n 1`
+          echo "NEO4J_VERSION_CI=$NEO4J_VERSION_CI" >> "$GITHUB_ENV"
+          echo "Found NEO4j_VERSION_CI=$NEO4J_VERSION_CI"
+          
       - name: Compile
-        run: ./gradlew compileJava
+        run: ./gradlew --info -Pneo4jVersionOverride=$NEO4J_VERSION_CI compileJava
 
   snyk-test:
     runs-on: ubuntu-latest
@@ -60,7 +81,28 @@ jobs:
         uses: github/codeql-action/init@v2
         with:
           languages: java
+      - name: Configure AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Configure CodeArtifact Authentication Token 
+        run: |
+          CODEARTIFACT_TOKEN=`aws codeartifact get-authorization-token --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --query authorizationToken --output text`
+          echo "::add-mask::$CODEARTIFACT_TOKEN"
+          echo "CODEARTIFACT_TOKEN=$CODEARTIFACT_TOKEN" >> "$GITHUB_ENV"
+      
+      - name: Determine latest neo4j CI version
+        run: |
+          neo4j_version_base=$(grep -e ".*neo4jVersionOverride.* : .*" build.gradle  | cut -d ':' -f 2 | tr -d \'\" | tr -d ' ')
+          echo "neo4j_version_base=$neo4j_version_base"
+          NEO4J_VERSION_CI=`aws codeartifact list-package-versions --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --repository ci-live --format maven --namespace org.neo4j --package neo4j --sort-by PUBLISHED_TIME --max-items 1 --query "versions[?starts_with(version,'$neo4j_version_base')] | [0].version" --output text | head -n 1`
+          echo "NEO4J_VERSION_CI=$NEO4J_VERSION_CI" >> "$GITHUB_ENV"
+          echo "Found NEO4j_VERSION_CI=$NEO4J_VERSION_CI"
+
       - name: Compile
-        run: ./gradlew compileJava compileTestJava
+        run: ./gradlew --info -Pneo4jVersionOverride=$NEO4J_VERSION_CI compileJava compileTestJava
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2

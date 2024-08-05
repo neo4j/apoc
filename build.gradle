@@ -14,7 +14,7 @@ downloadLicenses {
 
 allprojects {
     group = 'org.neo4j.procedure'
-    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '5.22.0'
+    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '5.23.0'
     archivesBaseName = 'apoc'
     description = """neo4j-apoc-procedures"""
 }
@@ -28,16 +28,17 @@ repositories {
     /*maven {  // this contains the neo4j 4.0.0-beta jars
     url "https://neo4j.bintray.com/community/"
 }*/
-    if (System.getenv("CUSTOM_REPO_URL") ?: "" != "") {
+    if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
         maven {
-            url System.env.CUSTOM_REPO_URL
+            url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
             credentials {
-                username System.env.CUSTOM_REPO_USERNAME
-                password System.env.CUSTOM_REPO_TOKEN
+                username System.getenv('CODEARTIFACT_USERNAME')
+                password System.getenv('CODEARTIFACT_TOKEN')
             }
         }
+    } else {
+        mavenCentral()
     }
-    mavenCentral()
     maven {
         url "https://repo.gradle.org/gradle/libs-releases"
     }
@@ -61,16 +62,17 @@ subprojects {
         /*maven {  // this contains the neo4j 4.0.0-beta jars
         url "https://neo4j.bintray.com/community/"
     }*/
-        if (System.getenv("CUSTOM_REPO_URL") ?: "" != "") {
+        if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
             maven {
-                url System.env.CUSTOM_REPO_URL
+                url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
                 credentials {
-                    username System.env.CUSTOM_REPO_USERNAME
-                    password System.env.CUSTOM_REPO_TOKEN
+                    username System.getenv('CODEARTIFACT_USERNAME')
+                    password System.getenv('CODEARTIFACT_TOKEN')
                 }
             }
+        } else {
+            mavenCentral()
         }
-        mavenCentral()
         maven {
             url "https://repo.gradle.org/gradle/libs-releases"
         }
@@ -98,8 +100,8 @@ subprojects {
         // neo4jDockerImage system property is used in TestContainerUtil
         systemProperties 'user.language': 'en',
                 'user.country': 'US',
-                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.22.0-enterprise-debian',
-                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.22.0-debian',
+                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.23.0-enterprise-debian',
+                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.23.0-debian',
                 'coreDir': 'core',
                 'testDockerBundle': project.hasProperty("testDockerBundle") ? true : false
 
@@ -167,7 +169,7 @@ apply from: "licenses-source-header.gradle"
 
 ext {
     publicDir = "${project.rootDir}"
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.22.0"
+    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.23.0"
     testContainersVersion = '1.19.1'
     apacheArrowVersion = '15.0.0'
 }
