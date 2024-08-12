@@ -78,16 +78,18 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeSimplePath() throws Exception {
+    public void testToTreeSimplePath() {
         /*            r:R
               a:A --------> b:B
         */
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'})-[r: R {relName: 'r'}]->(b: B {nodeName: 'b'})");
 
-        var query = "MATCH path = (n)-[r]->(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]->(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -113,16 +115,84 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
+    public void testSingleNode() {
+        // a:A
+        db.executeTransactionally("CREATE (a: A {nodeName: 'a'})");
+
+        var query =
+                """
+                MATCH path = (n)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
+
+        try (Transaction tx = db.beginTx()) {
+            Result result = tx.execute(query);
+            var rows = result.stream().collect(Collectors.toList());
+            var expectedRow = "{" + "   \"tree\":{"
+                    + "      \"nodeName\":\"a\","
+                    + "      \"_type\":\"A\","
+                    + "      \"_id\":0"
+                    + "   }"
+                    + "}";
+            assertEquals(rows.size(), 1);
+            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+        }
+    }
+
+    @Test
+    public void testSingleDisjointNodes() {
+        // a:A
+        db.executeTransactionally("CREATE (a: A {nodeName: 'a'}), (b: B {nodeName: 'b'}), (c: C {nodeName: 'c'})");
+
+        var query =
+                """
+                MATCH path = (n)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
+
+        try (Transaction tx = db.beginTx()) {
+            Result result = tx.execute(query);
+            var rows = result.stream().collect(Collectors.toList());
+            var expectedRowA = "{" + "   \"tree\":{"
+                    + "      \"nodeName\":\"a\","
+                    + "      \"_type\":\"A\","
+                    + "      \"_id\":0"
+                    + "   }"
+                    + "}";
+            var expectedRowB = "{" + "   \"tree\":{"
+                    + "      \"nodeName\":\"b\","
+                    + "      \"_type\":\"B\","
+                    + "      \"_id\":1"
+                    + "   }"
+                    + "}";
+            var expectedRowC = "{" + "   \"tree\":{"
+                    + "      \"nodeName\":\"c\","
+                    + "      \"_type\":\"C\","
+                    + "      \"_id\":2"
+                    + "   }"
+                    + "}";
+            assertEquals(rows.size(), 3);
+            assertEquals(parseJson(expectedRowA), removeElementId(rows.get(0)));
+            assertEquals(parseJson(expectedRowB), removeElementId(rows.get(1)));
+            assertEquals(parseJson(expectedRowC), removeElementId(rows.get(2)));
+        }
+    }
+
+    @Test
     public void testToTreeSimpleReversePath() {
         /*            r:R
               a:A <-------- b:B
         */
         db.executeTransactionally("CREATE " + "(a: A {nodeName: 'a'})<-[r: R {relName: 'r'}]-(b: B {nodeName: 'b'})");
 
-        var query = "MATCH path = (n)<-[r]-(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)<-[r]-(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -160,10 +230,12 @@ public class PathsToJsonTreeTest {
                 + "(a: A {nodeName: 'a'})<-[r1: R {relName: 'r'}]-(b: B {nodeName: 'b'}),"
                 + "(a)-[r2: R {relName: 'r'}]->(b)");
 
-        var query = "MATCH path = (n)-[r]-(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]-(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -206,10 +278,12 @@ public class PathsToJsonTreeTest {
 
         // Note this would be returning both the path (a)-[r]->(b) and (b)<-[r]-(a)
         // but we only expect a tree starting in 'a'
-        var query = "MATCH path = (n)-[r]-(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]-(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -235,6 +309,60 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
+    public void testToTreeSimpleQueryDisjointPaths() {
+        /*         r1:R
+             a:A --------> b:B
+        */
+        db.executeTransactionally("CREATE (a: A {nodeName: 'a'})-[r1: R {relName: 'r'}]->(b: B {nodeName: 'b'})");
+        db.executeTransactionally("CREATE (c: C {nodeName: 'c'})-[r2: R {relName: 'r'}]->(d: D {nodeName: 'd'})");
+
+        var query =
+                """
+                MATCH path = (n)-[r]->(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
+
+        try (Transaction tx = db.beginTx()) {
+            Result result = tx.execute(query);
+            var rows = result.stream().collect(Collectors.toList());
+            var expectedRowA = "{" + "   \"tree\":{"
+                    + "      \"nodeName\":\"a\","
+                    + "      \"r\":["
+                    + "         {"
+                    + "            \"nodeName\":\"b\","
+                    + "            \"r._id\":0,"
+                    + "            \"_type\":\"B\","
+                    + "            \"_id\":1,"
+                    + "            \"r.relName\":\"r\""
+                    + "         }"
+                    + "      ],"
+                    + "      \"_type\":\"A\","
+                    + "      \"_id\":0"
+                    + "   }"
+                    + "}";
+            var expectedRowC = "{" + "   \"tree\":{"
+                    + "      \"nodeName\":\"c\","
+                    + "      \"r\":["
+                    + "         {"
+                    + "            \"nodeName\":\"d\","
+                    + "            \"r._id\":1,"
+                    + "            \"_type\":\"D\","
+                    + "            \"_id\":3,"
+                    + "            \"r.relName\":\"r\""
+                    + "         }"
+                    + "      ],"
+                    + "      \"_type\":\"C\","
+                    + "      \"_id\":2"
+                    + "   }"
+                    + "}";
+            assertEquals(rows.size(), 2);
+            assertEquals(parseJson(expectedRowA), removeElementId(rows.get(0)));
+            assertEquals(parseJson(expectedRowC), removeElementId(rows.get(1)));
+        }
+    }
+
+    @Test
     public void testToTreeBidirectionalPathAndQuery() {
         /*          r1:R1         r2:R2
               a:A ---------> b:B --------> a
@@ -245,10 +373,12 @@ public class PathsToJsonTreeTest {
         // The query is bidirectional in this case, so
         // we would have duplicated paths, but we do not
         // expect duplicated trees
-        var query = "MATCH path = (n)-[r]-(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]-(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -296,10 +426,12 @@ public class PathsToJsonTreeTest {
                 + "(b)-[r2: R2 {relName: 'r2'}]->(c: C {nodeName: 'c'}),"
                 + "(b)-[r3: R3 {relName: 'r3'}]->(d: D {nodeName: 'd'})");
 
-        var query = "MATCH path = (n)-[r]->(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]->(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -357,10 +489,12 @@ public class PathsToJsonTreeTest {
                 + "(b)-[r3: R3 {relName: 'r3'}]->(d: D {nodeName: 'd'})");
 
         // The query is bidirectional in this case, we don't expect duplicated paths
-        var query = "MATCH path = (n)-[r]-(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]-(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -416,10 +550,12 @@ public class PathsToJsonTreeTest {
                 + "(b)-[r2: R2 {relName: 'r2'}]->(c:C {nodeName: 'c'}),"
                 + "(b)-[r3: R3 {relName: 'r3'}]->(b)");
 
-        var query = "MATCH path = (n)-[r]->(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]->(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -471,10 +607,12 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally(
                 "CREATE (a: A {nodeName: 'a'})-[r1: R1 {relName: 'r1'}]->(b: B {nodeName: 'b'})<-[r2: R2 {relName: 'r2'}]-(c:C {nodeName: 'c'})");
 
-        var query = "MATCH path = (n)-[:R1]->(m)<-[:R2]-(o)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[:R1]->(m)<-[:R2]-(o)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -524,10 +662,12 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally(
                 "CREATE " + "(a: A: B {nodeName: 'a & b'})-[r: R {relName: 'r'}]->(c: C {nodeName: 'c'})");
 
-        var query = "MATCH path = (n)-[r]->(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.paths.toJsonTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]->(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.paths.toJsonTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
@@ -561,10 +701,12 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally(
                 "CREATE " + "(a: A: B {nodeName: 'a & b'})-[r: R {relName: 'r'}]->(c: C {nodeName: 'c'})");
 
-        var query = "MATCH path = (n)-[r]->(m)\n"
-                + "WITH COLLECT(path) AS paths\n"
-                + "CALL apoc.convert.toTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree\n"
-                + "RETURN tree";
+        var query =
+                """
+                MATCH path = (n)-[r]->(m)
+                WITH COLLECT(path) AS paths
+                CALL apoc.convert.toTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree
+                RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
