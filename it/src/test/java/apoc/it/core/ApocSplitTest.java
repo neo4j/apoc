@@ -403,6 +403,7 @@ public class ApocSplitTest {
             "apoc.text.regreplace",
             "apoc.text.split",
             "apoc.text.regexGroups",
+            "apoc.text.regexGroupsByName",
             "apoc.text.join",
             "apoc.text.clean",
             "apoc.text.compareCleaned",
