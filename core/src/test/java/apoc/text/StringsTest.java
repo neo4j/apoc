@@ -24,6 +24,8 @@ import static apoc.util.TestUtil.testResult;
 import static java.lang.Math.toIntExact;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.*;
 
 import apoc.util.TestUtil;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -67,9 +70,12 @@ public class StringsTest {
 
     @Test
     public void testIndexOfSubstring() {
-        String query = "WITH 'Hello World!' as text\n"
-                + "WITH text, size(text) as len, apoc.text.indexOf(text, 'World',3) as index\n"
-                + "RETURN substring(text, case index when -1 then len-1 else index end, len) as value;\n";
+        String query =
+                """
+                WITH 'Hello World!' as text
+                WITH text, size(text) as len, apoc.text.indexOf(text, 'World',3) as index
+                RETURN substring(text, case index when -1 then len-1 else index end, len) as value;
+                """;
         testCall(db, query, (row) -> assertEquals("World!", row.get("value")));
     }
 
@@ -530,6 +536,139 @@ public class StringsTest {
                             new ArrayList<String>(asList("<link xxx2>yyy2</link>", "xxx2", "yyy2"))));
                     assertTrue(r.containsAll(expected));
                 });
+    }
+
+    @Test
+    public void singleGroupByName() {
+        testResult(
+                db,
+                "RETURN apoc.text.regexGroupsByName('tenable_asset','(?<firstPart>\\w+)\\_(?<secondPart>\\w+)') AS result",
+                result -> {
+                    final List<Object> r = Iterators.single(result.columnAs("result"));
+
+                    List<Map<String, Object>> expected = new ArrayList<>(List.of(Map.of(
+                            "group",
+                            "tenable_asset",
+                            "matches",
+                            Map.of("firstPart", "tenable", "secondPart", "asset"))));
+                    assertTrue(r.containsAll(expected));
+                });
+    }
+
+    @Test
+    public void multipleGroupsByName() {
+        testResult(
+                db,
+                "RETURN apoc.text.regexGroupsByName('abc <link xxx1>yyy1</link> def <link xxx2>yyy2</link>','<link (?<firstPart>\\\\w+)>(?<secondPart>\\\\w+)</link>') AS result",
+                result -> {
+                    final List<Object> r = Iterators.single(result.columnAs("result"));
+
+                    List<Map<String, Object>> expected = new ArrayList<>(List.of(
+                            Map.of(
+                                    "group",
+                                    "<link xxx1>yyy1</link>",
+                                    "matches",
+                                    Map.of("firstPart", "xxx1", "secondPart", "yyy1")),
+                            Map.of(
+                                    "group",
+                                    "<link xxx2>yyy2</link>",
+                                    "matches",
+                                    Map.of("firstPart", "xxx2", "secondPart", "yyy2"))));
+                    assertTrue(r.containsAll(expected));
+                });
+    }
+
+    @Test
+    public void groupByNameWithMissingFirstGroup() {
+        testResult(
+                db,
+                "RETURN apoc.text.regexGroupsByName('_asset','(?<firstPart>\\w+)?\\_(?<secondPart>\\w+)') AS result",
+                result -> {
+                    final List<Object> r = Iterators.single(result.columnAs("result"));
+
+                    List<Map<String, Object>> expected = new ArrayList<>(
+                            List.of(Map.of("group", "_asset", "matches", Map.of("secondPart", "asset"))));
+                    assertTrue(r.containsAll(expected));
+                });
+    }
+
+    @Test
+    public void groupByNameWithMissingSecondGroup() {
+        testResult(
+                db,
+                "RETURN apoc.text.regexGroupsByName('asset_','(?<firstPart>\\w+)?\\_(?<secondPart>\\w+)?') AS result",
+                result -> {
+                    final List<Object> r = Iterators.single(result.columnAs("result"));
+
+                    List<Map<String, Object>> expected = new ArrayList<>(
+                            List.of(Map.of("group", "asset_", "matches", Map.of("firstPart", "asset"))));
+                    assertTrue(r.containsAll(expected));
+                });
+    }
+
+    @Test
+    public void groupByNameNoMatches() {
+        testResult(
+                db,
+                "RETURN apoc.text.regexGroupsByName('hello','(?<firstPart>\\w+)?\\_(?<secondPart>\\w+)?') AS result",
+                result -> {
+                    final List<Object> r = Iterators.single(result.columnAs("result"));
+
+                    List<Map<String, Object>> expected = new ArrayList<>();
+                    assertTrue(r.containsAll(expected));
+                });
+    }
+
+    @Test
+    public void groupByNameWithInvalidPattern1() {
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "RETURN apoc.text.regexGroupsByName('asset_','(?<firstPart>\\w+)?\\_(?<firstPart>\\w+)?') AS result",
+                        (r) -> {}));
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(
+                """
+                Invalid regex pattern: Named capturing group <firstPart> is already defined near index 32
+                (?<firstPart>\\w+)?\\_(?<firstPart>\\w+)?
+                                                ^""",
+                except.getMessage());
+    }
+
+    @Test
+    public void groupByNameWithInvalidPattern2() {
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "RETURN apoc.text.regexGroupsByName('asset_','(?<firstPart') AS result", (r) -> {}));
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertTrue(except instanceof RuntimeException);
+        assertEquals(
+                """
+                Invalid regex pattern: named capturing group is missing trailing '>' near index 12
+                (?<firstPart""",
+                except.getMessage());
+    }
+
+    @Test
+    public void groupByNameWithNoGroupNames() {
+        testResult(db, "RETURN apoc.text.regexGroupsByName('asset_','(\\w+)?\\_(\\w+)?') AS result", result -> {
+            final List<Object> r = Iterators.single(result.columnAs("result"));
+
+            List<List<Object>> expected = new ArrayList<>();
+            assertTrue(r.containsAll(expected));
+        });
+    }
+
+    @Test
+    public void testRegexGroupsByNameForNPE() {
+        // throws no exception
+        testCall(
+                db,
+                "RETURN apoc.text.regexGroupsByName(null,'<link (?<firstPart>\\\\w+)>(?<secondPart>\\\\w+)</link>') AS result",
+                row -> {});
+        testCall(db, "RETURN apoc.text.regexGroupsByName('abc',null) AS result", row -> {});
     }
 
     @Test

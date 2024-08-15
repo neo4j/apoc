@@ -33,6 +33,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,6 +43,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.StringUtils;
@@ -180,6 +182,52 @@ public class Strings {
             }
             return result;
         }
+    }
+
+    @UserFunction("apoc.text.regexGroupsByName")
+    @Description("Returns all groups with their group name matching the given regular expression in the given text.")
+    public List<Map<String, Object>> regexGroupsByName(
+            final @Name("text") String text, final @Name("regex") String regex) {
+        if (text == null || regex == null) {
+            return Collections.EMPTY_LIST;
+        } else {
+            List<Map<String, Object>> result = new ArrayList<>();
+            try {
+                final Pattern pattern = Pattern.compile(regex);
+
+                final Matcher matcher = pattern.matcher(text);
+                List<String> namedGroups = getNamedGroups(regex);
+                while (matcher.find()) {
+                    Map<String, Object> matchGroupResult = new HashMap<>();
+                    matchGroupResult.put("group", matcher.group());
+                    Map<String, Object> matches = new HashMap<>();
+                    for (String groupName : namedGroups) {
+                        String match = matcher.group(groupName);
+                        if (match != null) {
+                            matches.put(groupName, match);
+                        }
+                    }
+                    matchGroupResult.put("matches", matches);
+                    result.add(matchGroupResult);
+                }
+            } catch (PatternSyntaxException e) {
+                throw new RuntimeException("Invalid regex pattern: " + e.getMessage());
+            }
+            return result;
+        }
+    }
+
+    private List<String> getNamedGroups(String text) {
+        List<String> namedGroups = new ArrayList<>();
+
+        Matcher mG = Pattern.compile("\\(\\?<(.+?)>").matcher(text);
+
+        while (mG.find()) {
+            for (int i = 1; i <= mG.groupCount(); i++) {
+                namedGroups.add(mG.group(i));
+            }
+        }
+        return namedGroups;
     }
 
     @UserFunction("apoc.text.join")
