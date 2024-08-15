@@ -539,7 +539,7 @@ public class StringsTest {
     }
 
     @Test
-    public void singleGroupNyName() {
+    public void singleGroupByName() {
         testResult(
                 db,
                 "RETURN apoc.text.regexGroupsByName('tenable_asset','(?<firstPart>\\w+)\\_(?<secondPart>\\w+)') AS result",
@@ -556,7 +556,7 @@ public class StringsTest {
     }
 
     @Test
-    public void multipleGroupsNyName() {
+    public void multipleGroupsByName() {
         testResult(
                 db,
                 "RETURN apoc.text.regexGroupsByName('abc <link xxx1>yyy1</link> def <link xxx2>yyy2</link>','<link (?<firstPart>\\\\w+)>(?<secondPart>\\\\w+)</link>') AS result",
@@ -579,7 +579,7 @@ public class StringsTest {
     }
 
     @Test
-    public void groupNyNameWithMissingFirstGroup() {
+    public void groupByNameWithMissingFirstGroup() {
         testResult(
                 db,
                 "RETURN apoc.text.regexGroupsByName('_asset','(?<firstPart>\\w+)?\\_(?<secondPart>\\w+)') AS result",
@@ -593,7 +593,7 @@ public class StringsTest {
     }
 
     @Test
-    public void groupNyNameWithMissingSecondGroup() {
+    public void groupByNameWithMissingSecondGroup() {
         testResult(
                 db,
                 "RETURN apoc.text.regexGroupsByName('asset_','(?<firstPart>\\w+)?\\_(?<secondPart>\\w+)?') AS result",
@@ -607,7 +607,7 @@ public class StringsTest {
     }
 
     @Test
-    public void groupNyNameNoMatches() {
+    public void groupByNameNoMatches() {
         testResult(
                 db,
                 "RETURN apoc.text.regexGroupsByName('hello','(?<firstPart>\\w+)?\\_(?<secondPart>\\w+)?') AS result",
@@ -620,7 +620,7 @@ public class StringsTest {
     }
 
     @Test
-    public void groupNyNameWithInvalidPattern1() {
+    public void groupByNameWithInvalidPattern1() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(
@@ -638,7 +638,7 @@ public class StringsTest {
     }
 
     @Test
-    public void groupNyNameWithInvalidPattern2() {
+    public void groupByNameWithInvalidPattern2() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(db, "RETURN apoc.text.regexGroupsByName('asset_','(?<firstPart') AS result", (r) -> {}));
@@ -652,7 +652,7 @@ public class StringsTest {
     }
 
     @Test
-    public void groupNyNameWithNoGroupNames() {
+    public void groupByNameWithNoGroupNames() {
         testResult(db, "RETURN apoc.text.regexGroupsByName('asset_','(\\w+)?\\_(\\w+)?') AS result", result -> {
             final List<Object> r = Iterators.single(result.columnAs("result"));
 
