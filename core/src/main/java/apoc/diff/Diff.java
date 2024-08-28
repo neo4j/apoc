@@ -41,7 +41,10 @@ public class Diff {
 
     @UserFunction("apoc.diff.nodes")
     @Description("Returns a `MAP` detailing the differences between the two given `NODE` values.")
-    public Map<String, Object> nodes(@Name("leftNode") Node leftNode, @Name("rightNode") Node rightNode) {
+    public Map<String, Object> nodes(
+            @Name(value = "leftNode", description = "The first node to compare against the second node.") Node leftNode,
+            @Name(value = "rightNode", description = "The second node to compare against the first node.")
+                    Node rightNode) {
         leftNode = Util.rebind(tx, leftNode);
         rightNode = Util.rebind(tx, rightNode);
         Map<String, Object> allLeftProperties = leftNode.getAllProperties();

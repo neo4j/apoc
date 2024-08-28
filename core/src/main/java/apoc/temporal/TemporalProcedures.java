@@ -41,7 +41,12 @@ public class TemporalProcedures {
     @UserFunction("apoc.temporal.format")
     @Description("Formats the given temporal value into the given time format.")
     public String format(
-            @Name("temporal") Object input, @Name(value = "format", defaultValue = "yyyy-MM-dd") String format) {
+            @Name(value = "temporal", description = "A temporal value to be formatted.") Object input,
+            @Name(
+                            value = "format",
+                            defaultValue = "yyyy-MM-dd",
+                            description = "The format to return the temporal value in.")
+                    String format) {
 
         try {
             DateTimeFormatter formatter = getOrCreate(format);
@@ -76,7 +81,9 @@ public class TemporalProcedures {
      */
     @UserFunction("apoc.temporal.formatDuration")
     @Description("Formats the given duration into the given time format.")
-    public String formatDuration(@Name("input") Object input, @Name("format") String format) {
+    public String formatDuration(
+            @Name(value = "input", description = "The duration value to be formatted into a string.") Object input,
+            @Name(value = "format", description = "The format to return the duration in.") String format) {
         DurationValue duration = ((DurationValue) input);
 
         try {
@@ -92,9 +99,11 @@ public class TemporalProcedures {
     @UserFunction("apoc.temporal.toZonedTemporal")
     @Description("Parses the given date `STRING` using the specified format into the given time zone.")
     public ZonedDateTime toZonedTemporal(
-            @Name("time") String time,
-            @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format,
-            final @Name(value = "timezone", defaultValue = "UTC") String timezone) {
+            @Name(value = "time", description = "The date string to be parsed.") String time,
+            @Name(value = "format", defaultValue = DEFAULT_FORMAT, description = "The format of the given date string.")
+                    String format,
+            final @Name(value = "timezone", defaultValue = "UTC", description = "The timezone the given string is in.")
+                    String timezone) {
         Long value = parseOrThrow(time, getFormat(format, timezone));
         return value == null ? null : Instant.ofEpochMilli(value).atZone(ZoneId.of(timezone));
     }

@@ -179,15 +179,23 @@ public class Create {
     @UserFunction("apoc.create.vNode")
     @Description("Returns a virtual `NODE`.")
     public Node vNodeFunction(
-            @Name("labels") List<String> labelNames,
-            @Name(value = "props", defaultValue = "{}") Map<String, Object> props) {
+            @Name(value = "labels", description = "The list of labels to assign to the virtual node.")
+                    List<String> labelNames,
+            @Name(
+                            value = "props",
+                            defaultValue = "{}",
+                            description = "The map of properties to assign to the virtual node.")
+                    Map<String, Object> props) {
         return new VirtualNode(Util.labels(labelNames), props);
     }
 
     @UserFunction("apoc.create.virtual.fromNode")
     @Description(
             "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.")
-    public Node virtualFromNodeFunction(@Name("node") Node node, @Name("propertyNames") List<String> propertyNames) {
+    public Node virtualFromNodeFunction(
+            @Name(value = "node", description = "The node to generate a virtual node from.") Node node,
+            @Name(value = "propertyNames", description = "The properties to copy to the virtual node.")
+                    List<String> propertyNames) {
         return new VirtualNode(node, propertyNames);
     }
 
@@ -212,10 +220,11 @@ public class Create {
     @UserFunction("apoc.create.vRelationship")
     @Description("Returns a virtual `RELATIONSHIP`.")
     public Relationship vRelationshipFunction(
-            @Name("from") Node from,
-            @Name("relType") String relType,
-            @Name("props") Map<String, Object> props,
-            @Name("to") Node to) {
+            @Name(value = "from", description = "The start node to assign to the virtual relationship.") Node from,
+            @Name(value = "relType", description = "The type to assign to the virtual relationship.") String relType,
+            @Name(value = "props", description = "The map of properties to assign to the virtual relationship.")
+                    Map<String, Object> props,
+            @Name(value = "to", description = "The end node to assign to the virtual relationship.") Node to) {
         return new VirtualRelationship(from, to, withName(relType)).withProperties(props);
     }
 
@@ -307,13 +316,16 @@ public class Create {
 
     @UserFunction("apoc.create.uuidBase64ToHex")
     @Description("Takes the given base64 encoded UUID and returns it as a hexadecimal `STRING`.")
-    public String uuidBase64ToHex(@Name("base64Uuid") String base64Uuid) {
+    public String uuidBase64ToHex(
+            @Name(value = "base64Uuid", description = "The string representing a UUID encoded with Base64.")
+                    String base64Uuid) {
         return UuidUtil.fromBase64ToHex(base64Uuid);
     }
 
     @UserFunction("apoc.create.uuidHexToBase64")
     @Description("Takes the given UUID represented as a hexadecimal `STRING` and returns it encoded with base64.")
-    public String uuidHexToBase64(@Name("uuid") String uuidHex) {
+    public String uuidHexToBase64(
+            @Name(value = "uuid", description = "The UUID represented as a hexadecimal string.") String uuidHex) {
         return UuidUtil.fromHexToBase64(uuidHex);
     }
 

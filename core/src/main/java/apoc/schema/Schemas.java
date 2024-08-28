@@ -117,7 +117,9 @@ public class Schemas {
     @Description(
             "Returns a `BOOLEAN` depending on whether or not an index exists for the given `NODE` label with the given property names.")
     public Boolean indexExistsOnNode(
-            @Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
+            @Name(value = "labelName", description = "The node label to check for an index on.") String labelName,
+            @Name(value = "propertyName", description = "The property names to check for an index on.")
+                    List<String> propertyNames) {
         return indexExists(labelName, propertyNames);
     }
 
@@ -126,7 +128,9 @@ public class Schemas {
     @Description(
             "Returns a `BOOLEAN` depending on whether or not an index exists for the given `RELATIONSHIP` type with the given property names.")
     public Boolean indexExistsOnRelationship(
-            @Name("type") String relName, @Name("propertyName") List<String> propertyNames) {
+            @Name(value = "type", description = "The relationship type to check for an index on.") String relName,
+            @Name(value = "propertyName", description = "The property names to check for an index on.")
+                    List<String> propertyNames) {
         return indexExistsForRelationship(relName, propertyNames);
     }
 
@@ -135,7 +139,9 @@ public class Schemas {
     @Description(
             "Returns a `BOOLEAN` depending on whether or not a constraint exists for the given `NODE` label with the given property names.")
     public Boolean constraintExistsOnNode(
-            @Name("labelName") String labelName, @Name("propertyName") List<String> propertyNames) {
+            @Name(value = "labelName", description = "The node label to check for a constraint on.") String labelName,
+            @Name(value = "propertyName", description = "The property names to check for a constraint on.")
+                    List<String> propertyNames) {
         return constraintsExists(labelName, propertyNames);
     }
 
@@ -144,7 +150,9 @@ public class Schemas {
     @Description(
             "Returns a `BOOLEAN` depending on whether or not a constraint exists for the given `RELATIONSHIP` type with the given property names.")
     public Boolean constraintExistsOnRelationship(
-            @Name("type") String type, @Name("propertyName") List<String> propertyNames) {
+            @Name(value = "type", description = "The relationship type to check for a constraint on.") String type,
+            @Name(value = "propertyName", description = "The property names to check for a constraint on.")
+                    List<String> propertyNames) {
         return constraintsExistsForRelationship(type, propertyNames);
     }
 

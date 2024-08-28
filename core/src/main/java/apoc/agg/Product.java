@@ -38,7 +38,8 @@ public class Product {
         private int count = 0;
 
         @UserAggregationUpdate
-        public void aggregate(@Name("value") Number number) {
+        public void aggregate(
+                @Name(value = "value", description = "A value to be multiplied in the aggregate.") Number number) {
             if (number != null) {
                 if (number instanceof Long) {
                     longProduct = Math.multiplyExact(longProduct, number.longValue());

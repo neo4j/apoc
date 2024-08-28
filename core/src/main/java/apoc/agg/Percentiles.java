@@ -46,8 +46,12 @@ public class Percentiles {
 
         @UserAggregationUpdate
         public void aggregate(
-                @Name("value") Number value,
-                @Name(value = "percentiles", defaultValue = "[0.5,0.75,0.9,0.95,0.99]") List<Double> percentiles) {
+                @Name(value = "value", description = "A value to be aggregated.") Number value,
+                @Name(
+                                value = "percentiles",
+                                defaultValue = "[0.5,0.75,0.9,0.95,0.99]",
+                                description = "The percentiles from which the values are obtained.")
+                        List<Double> percentiles) {
             if (value != null) {
                 if (doubles != null) {
                     doubles.recordValue(value.doubleValue());

@@ -56,8 +56,12 @@ public class Fingerprinting {
             "Calculates a MD5 checksum over a `NODE` or `RELATIONSHIP` (identical entities share the same checksum).\n"
                     + "Unsuitable for cryptographic use-cases.")
     public String fingerprint(
-            @Name("object") Object thing,
-            @Name(value = "excludedPropertyKeys", defaultValue = "[]") List<String> excludedPropertyKeys) {
+            @Name(value = "object", description = "A node or relationship to hash.") Object thing,
+            @Name(
+                            value = "excludedPropertyKeys",
+                            defaultValue = "[]",
+                            description = "Property keys to exclude from the hashing.")
+                    List<String> excludedPropertyKeys) {
         FingerprintingConfig config = new FingerprintingConfig(Util.map(
                 "allNodesDisallowList",
                 excludedPropertyKeys,
@@ -77,7 +81,26 @@ public class Fingerprinting {
             Unlike `apoc.hashing.fingerprint()`, this function supports a number of config parameters.
             Unsuitable for cryptographic use-cases.""")
     public String fingerprinting(
-            @Name("object") Object thing, @Name(value = "config", defaultValue = "{}") Map<String, Object> conf) {
+            @Name(value = "object", description = "A node or relationship to hash.") Object thing,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        digestAlgorithm = "MD5" :: STRING,
+                        strategy = "LAZY" :: STRING,
+                        nodeAllowMap = [] :: MAP<STRING, LIST<STRING>>,
+                        relAllowMap = [] :: MAP<STRING, LIST<STRING>>,
+                        relDisallowMap = [] :: MAP<STRING, LIST<STRING>>,
+                        mapAllowList = [] :: LIST<STRING>,
+                        mapDisallowList = [] :: LIST<STRING>,
+                        allNodesAllowList = [] :: LIST<STRING>,
+                        allNodesDisallowList = [] :: LIST<STRING>,
+                        allRelsAllowList = [] :: LIST<STRING>,
+                        allRelsDisallowList = [] :: LIST<STRING>
+                    }""")
+                    Map<String, Object> conf) {
         FingerprintingConfig config = new FingerprintingConfig(conf);
         return fingerprint(thing, config);
     }
@@ -135,7 +158,11 @@ public class Fingerprinting {
             This function uses in-memory data structures.
             Unsuitable for cryptographic use-cases.""")
     public String fingerprintGraph(
-            @Name(value = "propertyExcludes", defaultValue = "[]") List<String> excludedPropertyKeys) {
+            @Name(
+                            value = "propertyExcludes",
+                            defaultValue = "[]",
+                            description = "Property keys to exclude from the hashing.")
+                    List<String> excludedPropertyKeys) {
         FingerprintingConfig config = new FingerprintingConfig(Util.map(
                 "allNodesDisallowList",
                 excludedPropertyKeys,

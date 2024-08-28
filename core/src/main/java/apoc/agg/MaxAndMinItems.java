@@ -53,41 +53,83 @@ public class MaxAndMinItems {
     @UserAggregationFunction("apoc.agg.maxItems")
     @Description(
             "Returns a `MAP` `{items: LIST<ANY>, value: ANY}` where the `value` key is the maximum value present, and `items` represent all items with the same value. The size of the list of items can be limited to a given max size.")
-    public MaxOrMinItemsFunction maxItems() {
-        return new MaxOrMinItemsFunction(true);
+    public MaxItemsFunction maxItems() {
+        return new MaxItemsFunction();
     }
 
     @UserAggregationFunction("apoc.agg.minItems")
     @Description(
             "Returns a `MAP` `{items: LIST<ANY>, value: ANY}` where the `value` key is the minimum value present, and `items` represent all items with the same value. The size of the list of items can be limited to a given max size.")
-    public MaxOrMinItemsFunction minItems() {
-        return new MaxOrMinItemsFunction(false);
+    public MinItemsFunction minItems() {
+        return new MinItemsFunction();
     }
 
-    public static class MaxOrMinItemsFunction {
+    public static class MaxItemsFunction {
         private final List<Object> items = new ArrayList<>();
-        private final boolean isMax;
         private Comparable value;
 
-        private MaxOrMinItemsFunction(boolean isMax) {
-            this.isMax = isMax;
-        }
+        private MaxItemsFunction() {}
 
         @UserAggregationUpdate
         public void maxOrMinItems(
-                @Name("items") final Object item,
-                @Name("value") final Object inputValue,
-                @Name(value = "groupLimit", defaultValue = "-1") final Long groupLimitParam) {
+                @Name(value = "item", description = "A value to be aggregated.") final Object item,
+                @Name(value = "value", description = "The value from which the max is selected.")
+                        final Object inputValue,
+                @Name(
+                                value = "groupLimit",
+                                defaultValue = "-1",
+                                description = "The limit on the number of items returned.")
+                        final Long groupLimitParam) {
             int groupLimit = groupLimitParam.intValue();
             boolean noGroupLimit = groupLimit < 0;
 
             if (item != null && inputValue != null) {
-                int result = value == null ? (isMax ? -1 : 1) : value.compareTo(inputValue);
+                int result = value == null ? -1 : value.compareTo(inputValue);
                 if (result == 0) {
                     if (noGroupLimit || items.size() < groupLimit) {
                         items.add(item);
                     }
-                } else if (result < 0 == isMax) {
+                } else if (result < 0) {
+                    // xnor logic, interested value should replace current value
+                    items.clear();
+                    items.add(item);
+                    value = (Comparable) inputValue;
+                }
+            }
+        }
+
+        @UserAggregationResult
+        public Object result() {
+            return Util.map("items", items, "value", value);
+        }
+    }
+
+    public static class MinItemsFunction {
+        private final List<Object> items = new ArrayList<>();
+        private Comparable value;
+
+        private MinItemsFunction() {}
+
+        @UserAggregationUpdate
+        public void maxOrMinItems(
+                @Name(value = "item", description = "A value to be aggregated.") final Object item,
+                @Name(value = "value", description = "The value from which the min is selected.")
+                        final Object inputValue,
+                @Name(
+                                value = "groupLimit",
+                                defaultValue = "-1",
+                                description = "The limit on the number of items returned.")
+                        final Long groupLimitParam) {
+            int groupLimit = groupLimitParam.intValue();
+            boolean noGroupLimit = groupLimit < 0;
+
+            if (item != null && inputValue != null) {
+                int result = value == null ? 1 : value.compareTo(inputValue);
+                if (result == 0) {
+                    if (noGroupLimit || items.size() < groupLimit) {
+                        items.add(item);
+                    }
+                } else if (result >= 0) {
                     // xnor logic, interested value should replace current value
                     items.clear();
                     items.add(item);

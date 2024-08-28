@@ -48,7 +48,8 @@ public class Graph {
         private Set<Relationship> plainRels = new HashSet<>();
 
         @UserAggregationUpdate
-        public void aggregate(@Name("path") Object element) {
+        public void aggregate(
+                @Name(value = "path", description = "A path to return nodes and relationships from.") Object element) {
             consume(element);
         }
 

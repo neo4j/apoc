@@ -29,14 +29,19 @@ public class ArabicRoman {
 
     @UserFunction("apoc.number.romanToArabic")
     @Description("Converts the given Roman numbers to Arabic numbers.")
-    public Number romanToArabic(final @Name("romanNumber") String number) {
+    public Number romanToArabic(
+            final @Name(value = "romanNumber", description = "A Roman number to be converted.") String number) {
         if (number == null || number.isEmpty()) return 0;
         return toArabic(number.toUpperCase());
     }
 
     @UserFunction("apoc.number.arabicToRoman")
     @Description("Converts the given Arabic numbers to Roman numbers.")
-    public String arabicToRoman(final @Name("number") Object value) {
+    public String arabicToRoman(
+            final @Name(
+                            value = "number",
+                            description = "A number to be converted to a Roman number represented as a string.") Object
+                            value) {
         Number number = validateNumberParam(value);
         if (number == null) return null;
         return getRoman(number.intValue());
