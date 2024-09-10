@@ -217,7 +217,7 @@ public class TestContainerUtil {
         } else {
             neo4jContainer.withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()));
         }
-        return neo4jContainer.withWaitForNeo4jDatabaseReady(password, version);
+        return neo4jContainer;
     }
 
     public static void copyFilesToPlugin(File directory, IOFileFilter instance, File pluginsFolder) {
