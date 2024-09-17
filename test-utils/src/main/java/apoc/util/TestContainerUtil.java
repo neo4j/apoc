@@ -183,7 +183,6 @@ public class TestContainerUtil {
                 .withNeo4jConfig("dbms.logs.http.enabled", "true")
                 .withNeo4jConfig("dbms.logs.debug.level", "DEBUG")
                 .withNeo4jConfig("dbms.routing.driver.logging.level", "DEBUG")
-                .withNeo4jConfig("internal.dbms.type_constraints", "true")
                 .withFileSystemBind(logsDir.toString(), "/logs")
                 .withFileSystemBind(
                         canonicalPath, "/var/lib/neo4j/import") // map the "target/import" dir as the Neo4j's import dir
