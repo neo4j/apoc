@@ -35,6 +35,7 @@ import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.token.api.TokenConstants;
 
 public class DatabaseSubGraph implements SubGraph {
     private final Transaction transaction;
@@ -147,18 +148,18 @@ class CountOptimisedDatabaseSubGraph extends DatabaseSubGraph {
     @Override
     public long countsForRelationship(RelationshipType type, Label end) {
         return read.countsForRelationship(
-                TokenRead.ANY_LABEL, tokenRead.relationshipType(type.name()), tokenRead.nodeLabel(end.name()));
+                TokenConstants.ANY_LABEL, tokenRead.relationshipType(type.name()), tokenRead.nodeLabel(end.name()));
     }
 
     @Override
     public long countsForRelationship(Label start, RelationshipType type) {
         return read.countsForRelationship(
-                tokenRead.nodeLabel(start.name()), tokenRead.relationshipType(type.name()), TokenRead.ANY_LABEL);
+                tokenRead.nodeLabel(start.name()), tokenRead.relationshipType(type.name()), TokenConstants.ANY_LABEL);
     }
 
     @Override
     public long countsForRelationship(RelationshipType type) {
         return read.countsForRelationship(
-                TokenRead.ANY_LABEL, tokenRead.relationshipType(type.name()), TokenRead.ANY_LABEL);
+                TokenConstants.ANY_LABEL, tokenRead.relationshipType(type.name()), TokenConstants.ANY_LABEL);
     }
 }

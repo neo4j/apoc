@@ -20,8 +20,8 @@ package apoc.meta;
 
 import static apoc.util.MapUtil.map;
 import static java.lang.String.format;
-import static org.neo4j.internal.kernel.api.TokenRead.ANY_LABEL;
-import static org.neo4j.internal.kernel.api.TokenRead.ANY_RELATIONSHIP_TYPE;
+import static org.neo4j.token.api.TokenConstants.ANY_LABEL;
+import static org.neo4j.token.api.TokenConstants.ANY_RELATIONSHIP_TYPE;
 
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.result.GraphResult;
