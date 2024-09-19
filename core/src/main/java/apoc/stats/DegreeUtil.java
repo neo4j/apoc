@@ -18,7 +18,7 @@
  */
 package apoc.stats;
 
-import static org.neo4j.internal.kernel.api.TokenRead.ANY_RELATIONSHIP_TYPE;
+import static org.neo4j.token.api.TokenConstants.ANY_RELATIONSHIP_TYPE;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.internal.kernel.api.NodeCursor;
