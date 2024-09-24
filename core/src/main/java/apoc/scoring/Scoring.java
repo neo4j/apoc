@@ -25,17 +25,21 @@ import org.neo4j.procedure.UserFunction;
 public class Scoring {
     @UserFunction("apoc.scoring.existence")
     @Description("Returns the given score if true, 0 if false.")
-    public double existence(final @Name("score") long score, final @Name("exists") boolean exists) {
+    public double existence(
+            final @Name(value = "score", description = "The score to return if the exists is true.") long score,
+            final @Name(value = "exists", description = "Whether or not to return the score.") boolean exists) {
         return (double) (exists ? score : 0);
     }
 
     @UserFunction("apoc.scoring.pareto")
     @Description("Applies a Pareto scoring function over the given `INTEGER` values.")
     public double pareto(
-            final @Name("minimumThreshold") long minimumThreshold,
-            final @Name("eightyPercentValue") long eightyPercentValue,
-            final @Name("maximumValue") long maximumValue,
-            final @Name("score") long score) {
+            final @Name(value = "minimumThreshold", description = "The minimum threshold for the score.") long
+                            minimumThreshold,
+            final @Name(value = "eightyPercentValue", description = "The eighty percent value.") long
+                            eightyPercentValue,
+            final @Name(value = "maximumValue", description = "The maximum value.") long maximumValue,
+            final @Name(value = "score", description = "The score.") long score) {
         if (score < minimumThreshold) {
             return 0.0d;
         } else {

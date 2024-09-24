@@ -183,13 +183,15 @@ public class Meta {
 
     @UserFunction("apoc.meta.cypher.isType")
     @Description("Returns true if the given value matches the given type.")
-    public boolean isTypeCypher(@Name("value") Object value, @Name("type") String type) {
+    public boolean isTypeCypher(
+            @Name(value = "value", description = "An object to check the type of.") Object value,
+            @Name(value = "type", description = "The verification type.") String type) {
         return type.equalsIgnoreCase(typeCypher(value));
     }
 
     @UserFunction("apoc.meta.cypher.type")
     @Description("Returns the type name of the given value.")
-    public String typeCypher(@Name("value") Object value) {
+    public String typeCypher(@Name(value = "value", description = "An object to get the type of.") Object value) {
         Types type = Types.of(value);
 
         switch (type) {
@@ -202,7 +204,9 @@ public class Meta {
 
     @UserFunction("apoc.meta.cypher.types")
     @Description("Returns a `MAP` containing the type names of the given values.")
-    public Map<String, Object> typesCypher(@Name("props") Object target) {
+    public Map<String, Object> typesCypher(
+            @Name(value = "props", description = "A relationship, node or map to get the property types from.")
+                    Object target) {
         Map<String, Object> properties = Collections.emptyMap();
         if (target instanceof Node) properties = ((Node) target).getAllProperties();
         if (target instanceof Relationship) properties = ((Relationship) target).getAllProperties();
@@ -303,8 +307,13 @@ public class Meta {
     @UserFunction(name = "apoc.meta.nodes.count")
     @Description("Returns the sum of the `NODE` values with the given labels in the `LIST<STRING>`.")
     public long count(
-            @Name(value = "nodes", defaultValue = "[]") List<String> nodes,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "nodes", defaultValue = "[]", description = "A list of node labels.") List<String> nodes,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "A relationship, node or map to get the property types from. { includeRels = [] :: LIST<STRING> }")
+                    Map<String, Object> config) {
         MetaConfig conf = new MetaConfig(config);
         final var subGraph = DatabaseSubGraph.optimizedForCount(transaction, kernelTx);
         Stream<Label> labels = CollectionUtils.isEmpty(nodes)

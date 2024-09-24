@@ -69,7 +69,13 @@ public class Date {
     @UserFunction("apoc.date.toYears")
     @Description("Converts the given timestamp or the given date into a `FLOAT` representing years.")
     public double toYears(
-            @Name("value") Object value, @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format) {
+            @Name(value = "value", description = "The timestamp or datetime string to extract the years from.")
+                    Object value,
+            @Name(
+                            value = "format",
+                            defaultValue = DEFAULT_FORMAT,
+                            description = "The format the given datetime string is in.")
+                    String format) {
         if (value instanceof Number) {
             long time = ((Number) value).longValue();
             return (time / (365d * 24 * 3600 * 1000));
@@ -82,8 +88,11 @@ public class Date {
     @UserFunction("apoc.date.fields")
     @Description("Splits the given date into fields returning a `MAP` containing the values of each field.")
     public Map<String, Object> fields(
-            final @Name("date") String date,
-            final @Name(value = "pattern", defaultValue = DEFAULT_FORMAT) String pattern) {
+            final @Name(value = "date", description = "A string representation of a temporal value.") String date,
+            final @Name(
+                            value = "pattern",
+                            defaultValue = DEFAULT_FORMAT,
+                            description = "The format the given temporal is formatted as.") String pattern) {
         if (date == null) {
             return Util.map();
         }
@@ -101,9 +110,12 @@ public class Date {
     @UserFunction("apoc.date.field")
     @Description("Returns the value of one field from the given date time.")
     public Long field(
-            final @Name("time") Long time,
-            @Name(value = "unit", defaultValue = "d") String unit,
-            @Name(value = "timezone", defaultValue = "UTC") String timezone) {
+            final @Name(value = "time", description = "The timestamp in ms since epoch to return a field from.") Long
+                            time,
+            @Name(value = "unit", defaultValue = "d", description = "The unit of the field to return the value of.")
+                    String unit,
+            @Name(value = "timezone", defaultValue = "UTC", description = "The timezone the given timestamp is in.")
+                    String timezone) {
         return (time == null)
                 ? null
                 : (long) ZonedDateTime.ofInstant(Instant.ofEpochMilli(time), ZoneId.of(timezone))
@@ -170,33 +182,42 @@ public class Date {
             "Returns a `STRING` representation of the time value.\n"
                     + "The time unit (default: ms), date format (default: ISO), and time zone (default: current time zone) can all be changed.")
     public String format(
-            final @Name("time") Long time,
-            @Name(value = "unit", defaultValue = "ms") String unit,
-            @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format,
-            @Name(value = "timezone", defaultValue = "") String timezone) {
+            final @Name(value = "time", description = "The timestamp since epoch to format.") Long time,
+            @Name(value = "unit", defaultValue = "ms", description = "The unit of the given timestamp.") String unit,
+            @Name(
+                            value = "format",
+                            defaultValue = DEFAULT_FORMAT,
+                            description = "The format to convert the given temporal value to.")
+                    String format,
+            @Name(value = "timezone", defaultValue = "", description = "The timezone the given timestamp is in.")
+                    String timezone) {
         return time == null ? null : parse(unit(unit).toMillis(time), format, timezone);
     }
 
     @UserFunction("apoc.date.toISO8601")
     @Description("Returns a `STRING` representation of a specified time value in the ISO8601 format.")
-    public String toISO8601(final @Name("time") Long time, @Name(value = "unit", defaultValue = "ms") String unit) {
+    public String toISO8601(
+            final @Name(value = "time", description = "The timestamp since epoch to format.") Long time,
+            @Name(value = "unit", defaultValue = "ms", description = "The unit of the given timestamp.") String unit) {
         return time == null ? null : parse(unit(unit).toMillis(time), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", null);
     }
 
     @UserFunction("apoc.date.fromISO8601")
     @Description(
             "Converts the given date `STRING` (ISO8601) to an `INTEGER` representing the time value in milliseconds.")
-    public Long fromISO8601(final @Name("time") String time) {
+    public Long fromISO8601(final @Name(value = "time", description = "The datetime to convert to ms.") String time) {
         return time == null ? null : Instant.parse(time).toEpochMilli();
     }
 
     @UserFunction("apoc.date.parse")
     @Description("Parses the given date `STRING` from a specified format into the specified time unit.")
     public Long parse(
-            @Name("time") String time,
-            @Name(value = "unit", defaultValue = "ms") String unit,
-            @Name(value = "format", defaultValue = DEFAULT_FORMAT) String format,
-            final @Name(value = "timezone", defaultValue = "") String timezone) {
+            @Name(value = "time", description = "The datetime to convert.") String time,
+            @Name(value = "unit", defaultValue = "ms", description = "The conversion unit.") String unit,
+            @Name(value = "format", defaultValue = DEFAULT_FORMAT, description = "The format the given datetime is in.")
+                    String format,
+            final @Name(value = "timezone", defaultValue = "", description = "The timezone the given datetime is in.")
+                    String timezone) {
         Long value = StringUtils.isBlank(time) ? null : parseOrThrow(time, getFormat(format, timezone));
         return value == null ? null : unit(unit).convert(value, TimeUnit.MILLISECONDS);
     }
@@ -210,16 +231,23 @@ public class Date {
     @UserFunction("apoc.date.convert")
     @Description("Converts the given timestamp from one time unit into a timestamp of a different time unit.")
     public Long convert(
-            @Name("time") long time, @Name(value = "unit") String unit, @Name(value = "toUnit") String toUnit) {
+            @Name(value = "time", description = "The timestamp to be converted.") long time,
+            @Name(value = "unit", description = "The unit the given timestamp is in.") String unit,
+            @Name(value = "toUnit", description = "The unit to convert the given timestamp to.") String toUnit) {
         return unit(toUnit).convert(time, unit(unit));
     }
 
     @UserFunction("apoc.date.convertFormat")
     @Description("Converts a `STRING` of one type of date format into a `STRING` of another type of date format.")
     public String convertFormat(
-            @Name("temporal") String input,
-            @Name(value = "currentFormat") String currentFormat,
-            @Name(value = "convertTo", defaultValue = "yyyy-MM-dd") String convertTo) {
+            @Name(value = "temporal", description = "A string representation of a temporal value.") String input,
+            @Name(value = "currentFormat", description = "The format the given temporal is formatted as.")
+                    String currentFormat,
+            @Name(
+                            value = "convertTo",
+                            defaultValue = "yyyy-MM-dd",
+                            description = "The format to convert the given temporal value to.")
+                    String convertTo) {
         if (input == null || input.isEmpty()) {
             return null;
         }
@@ -233,10 +261,10 @@ public class Date {
     @UserFunction("apoc.date.add")
     @Description("Adds a unit of specified time to the given timestamp.")
     public Long add(
-            @Name("time") long time,
-            @Name(value = "unit") String unit,
-            @Name(value = "addValue") long addValue,
-            @Name(value = "addUnit") String addUnit) {
+            @Name(value = "time", description = "The timestamp to add time to.") long time,
+            @Name(value = "unit", description = "The unit the given timestamp is in.") String unit,
+            @Name(value = "addValue", description = "The amount of time to add to the given timestamp.") long addValue,
+            @Name(value = "addUnit", description = "The unit the added value is in.") String addUnit) {
         long valueToAdd = unit(unit).convert(addValue, unit(addUnit));
         return time + valueToAdd;
     }

@@ -204,7 +204,14 @@ public class Nodes {
     @UserFunction("apoc.node.relationship.exists")
     @Description(
             "Returns a `BOOLEAN` based on whether the given `NODE` has a connecting `RELATIONSHIP` (or whether the given `NODE` has a connecting `RELATIONSHIP` of the given type and direction).")
-    public boolean hasRelationship(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
+    public boolean hasRelationship(
+            @Name(value = "node", description = "The node to check for the specified relationship types.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to check for on the given node. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
         if (types == null || types.isEmpty()) return node.hasRelationship();
         long id = ((InternalTransaction) tx).elementIdMapper().nodeId(node.getElementId());
         try (NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
@@ -237,9 +244,18 @@ public class Nodes {
     @Description("Returns true when a given `NODE` is directly connected to another given `NODE`.\n"
             + "This function is optimized for dense nodes.")
     public boolean connected(
-            @Name("startNode") Node start,
-            @Name("endNode") Node end,
-            @Name(value = "types", defaultValue = "") String types) {
+            @Name(
+                            value = "startNode",
+                            description = "The node to check if it is directly connected to the second node.")
+                    Node start,
+            @Name(value = "endNode", description = "The node to check if it is directly connected to the first node.")
+                    Node end,
+            @Name(
+                            value = "types",
+                            defaultValue = "",
+                            description =
+                                    "If not empty, provides an allow list of relationship types the nodes can be connected by. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
         if (start == null || end == null) return false;
         if (start.equals(end)) return true;
 
@@ -422,7 +438,7 @@ public class Nodes {
 
     @UserFunction("apoc.node.labels")
     @Description("Returns the labels for the given virtual `NODE`.")
-    public List<String> labels(@Name("node") Node node) {
+    public List<String> labels(@Name(value = "node", description = "The node to return labels from.") Node node) {
         if (node == null) return null;
         Iterator<Label> labels = node.getLabels().iterator();
         if (!labels.hasNext()) return Collections.emptyList();
@@ -436,31 +452,33 @@ public class Nodes {
 
     @UserFunction("apoc.node.id")
     @Description("Returns the id for the given virtual `NODE`.")
-    public Long id(@Name("node") Node node) {
+    public Long id(@Name(value = "node", description = "The node to return the id from.") Node node) {
         return (node == null) ? null : node.getId();
     }
 
     @UserFunction("apoc.rel.id")
     @Description("Returns the id for the given virtual `RELATIONSHIP`.")
-    public Long relId(@Name("rel") Relationship rel) {
+    public Long relId(@Name(value = "rel", description = "The relationship to get the id from.") Relationship rel) {
         return (rel == null) ? null : rel.getId();
     }
 
     @UserFunction("apoc.rel.startNode")
     @Description("Returns the start `NODE` for the given virtual `RELATIONSHIP`.")
-    public Node startNode(@Name("rel") Relationship rel) {
+    public Node startNode(
+            @Name(value = "rel", description = "The relationship to get the start node from.") Relationship rel) {
         return (rel == null) ? null : rel.getStartNode();
     }
 
     @UserFunction("apoc.rel.endNode")
     @Description("Returns the end `NODE` for the given virtual `RELATIONSHIP`.")
-    public Node endNode(@Name("rel") Relationship rel) {
+    public Node endNode(
+            @Name(value = "rel", description = "The relationship to get the end node from.") Relationship rel) {
         return (rel == null) ? null : rel.getEndNode();
     }
 
     @UserFunction("apoc.rel.type")
     @Description("Returns the type for the given virtual `RELATIONSHIP`.")
-    public String type(@Name("rel") Relationship rel) {
+    public String type(@Name(value = "rel", description = "The relationship to get the type from.") Relationship rel) {
         return (rel == null) ? null : rel.getType().name();
     }
 
@@ -469,7 +487,13 @@ public class Nodes {
             "Returns all properties of the given object.\n"
                     + "The object can be a virtual `NODE`, a real `NODE`, a virtual `RELATIONSHIP`, a real `RELATIONSHIP`, or a `MAP`.")
     public Map<String, Object> properties(
-            @Name("object") Object thing, @Name(value = "keys", defaultValue = "null") List<String> keys) {
+            @Name(value = "object", description = "The object to return properties from.") Object thing,
+            @Name(
+                            value = "keys",
+                            defaultValue = "null",
+                            description =
+                                    "The keys of the properties to be returned (if null then all keys are returned).")
+                    List<String> keys) {
         if (thing == null) return null;
         if (thing instanceof Map) {
             Map<String, Object> map = (Map<String, Object>) thing;
@@ -487,7 +511,9 @@ public class Nodes {
     @Description(
             "Returns the property for the given key from an object.\n"
                     + "The object can be a virtual `NODE`, a real `NODE`, a virtual `RELATIONSHIP`, a real `RELATIONSHIP`, or a `MAP`.")
-    public Object property(@Name("object") Object thing, @Name(value = "key") String key) {
+    public Object property(
+            @Name(value = "object", description = "The object to return a property from.") Object thing,
+            @Name(value = "key", description = "The key of the property to return.") String key) {
         if (thing == null || key == null) return null;
         if (thing instanceof Map) {
             return ((Map<String, Object>) thing).get(key);
@@ -500,7 +526,14 @@ public class Nodes {
 
     @UserFunction("apoc.node.degree")
     @Description("Returns the total degrees of the given `NODE`.")
-    public long degree(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
+    public long degree(
+            @Name(value = "node", description = "The node to count the total number of relationships on.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to restrict the count to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
         if (types == null || types.isEmpty()) return node.getDegree();
         long degree = 0;
         for (Pair<RelationshipType, Direction> pair : parse(types)) {
@@ -511,7 +544,16 @@ public class Nodes {
 
     @UserFunction("apoc.node.degree.in")
     @Description("Returns the total number of incoming `RELATIONSHIP` values connected to the given `NODE`.")
-    public long degreeIn(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String type) {
+    public long degreeIn(
+            @Name(
+                            value = "node",
+                            description = "The node for which to count the total number of incoming relationships.")
+                    Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description = "The relationship type to restrict the count to.")
+                    String type) {
 
         if (type == null || type.isEmpty()) {
             return node.getDegree(Direction.INCOMING);
@@ -522,7 +564,16 @@ public class Nodes {
 
     @UserFunction("apoc.node.degree.out")
     @Description("Returns the total number of outgoing `RELATIONSHIP` values from the given `NODE`.")
-    public long degreeOut(@Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String type) {
+    public long degreeOut(
+            @Name(
+                            value = "node",
+                            description = "The node for which to count the total number of outgoing relationships.")
+                    Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description = "The relationship type to restrict the count to.")
+                    String type) {
 
         if (type == null || type.isEmpty()) {
             return node.getDegree(Direction.OUTGOING);
@@ -534,7 +585,13 @@ public class Nodes {
     @UserFunction("apoc.node.relationship.types")
     @Description("Returns a `LIST<STRING>` of distinct `RELATIONSHIP` types for the given `NODE`.")
     public List<String> relationshipTypes(
-            @Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
+            @Name(value = "node", description = "The node to return the connected relationship types from.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "If not empty, provides an allow list of relationship types to be returned. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
         if (node == null) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes())
                 .map(RelationshipType::name)
@@ -553,7 +610,13 @@ public class Nodes {
     @UserFunction("apoc.nodes.relationship.types")
     @Description("Returns a `LIST<STRING>` of distinct `RELATIONSHIP` types from the given `LIST<NODE>` values.")
     public List<Map<String, Object>> nodesRelationshipTypes(
-            @Name("nodes") Object ids, @Name(value = "types", defaultValue = "") String types) {
+            @Name(value = "nodes", description = "Nodes to return connected relationship types from.") Object ids,
+            @Name(
+                            value = "types",
+                            defaultValue = "",
+                            description =
+                                    "If not empty, provides an allow list of relationship types to be returned. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
         if (ids == null) return null;
         return Util.nodeStream((InternalTransaction) tx, ids)
                 .map(node -> {
@@ -573,7 +636,13 @@ public class Nodes {
     @Description(
             "Returns a `BOOLEAN` based on whether the given `NODE` has connecting `RELATIONSHIP` values (or whether the given `NODE` has connecting `RELATIONSHIP` values of the given type and direction).")
     public Map<String, Boolean> relationshipExists(
-            @Name("node") Node node, @Name(value = "relTypes", defaultValue = "") String types) {
+            @Name(value = "node", description = "The node to check for the specified relationship types.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to check for on the given node. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|....")
+                    String types) {
         if (node == null || types == null || types.isEmpty()) return null;
         List<String> relTypes = Iterables.stream(node.getRelationshipTypes())
                 .map(RelationshipType::name)
@@ -591,7 +660,13 @@ public class Nodes {
     @Description(
             "Returns a `BOOLEAN` based on whether or not the given `NODE` values have the given `RELATIONSHIP` values.")
     public List<Map<String, Object>> nodesRelationshipExists(
-            @Name("nodes") Object ids, @Name(value = "types", defaultValue = "") String types) {
+            @Name(value = "nodes", description = "Nodes to check for the specified relationship types.") Object ids,
+            @Name(
+                            value = "types",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to check for on the given nodes. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
         if (ids == null) return null;
         return Util.nodeStream((InternalTransaction) tx, ids)
                 .map(node -> {
@@ -609,7 +684,7 @@ public class Nodes {
 
     @UserFunction("apoc.nodes.isDense")
     @Description("Returns true if the given `NODE` is a dense node.")
-    public boolean isDense(@Name("node") Node node) {
+    public boolean isDense(@Name(value = "node", description = "The node to check for being dense or not.") Node node) {
         try (NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
             final long id = ((InternalTransaction) tx).elementIdMapper().nodeId(node.getElementId());
             ktx.dataRead().singleNode(id, nodeCursor);
@@ -624,7 +699,9 @@ public class Nodes {
     @NotThreadSafe
     @UserFunction("apoc.any.isDeleted")
     @Description("Returns true if the given `NODE` or `RELATIONSHIP` no longer exists.")
-    public boolean isDeleted(@Name("object") Object object) {
+    public boolean isDeleted(
+            @Name(value = "object", description = "The node or relationship to check the non-existence of.")
+                    Object object) {
         if (object == null) return true;
         final String query;
         if (object instanceof Node) {

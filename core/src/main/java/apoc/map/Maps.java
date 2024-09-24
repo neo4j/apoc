@@ -38,7 +38,9 @@ public class Maps {
 
     @UserFunction("apoc.map.groupBy")
     @Description("Creates a `MAP` of the `LIST<ANY>` keyed by the given property, with single values.")
-    public Map<String, Object> groupBy(@Name("values") List<Object> values, @Name("key") String key) {
+    public Map<String, Object> groupBy(
+            @Name(value = "values", description = "A list of map values to be grouped.") List<Object> values,
+            @Name(value = "key", description = "The key to group the map values by.") String key) {
         Map<String, Object> result = new LinkedHashMap<>(values.size());
         for (Object value : values) {
             Object id = getKey(key, value);
@@ -49,7 +51,9 @@ public class Maps {
 
     @UserFunction("apoc.map.groupByMulti")
     @Description("Creates a `MAP` of the `LIST<ANY>` values keyed by the given property, with the `LIST<ANY>` values.")
-    public Map<String, List<Object>> groupByMulti(@Name("values") List<Object> values, @Name("key") String key) {
+    public Map<String, List<Object>> groupByMulti(
+            @Name(value = "values", description = "A list of map values to be grouped.") List<Object> values,
+            @Name(value = "key", description = "The key to group the map values by.") String key) {
         Map<String, List<Object>> result = new LinkedHashMap<>(values.size());
         for (Object value : values) {
             Object id = getKey(key, value);
@@ -76,7 +80,9 @@ public class Maps {
 
     @UserFunction("apoc.map.fromNodes")
     @Description("Returns a `MAP` of the given prop to the node of the given label.")
-    public Map<String, Node> fromNodes(@Name("label") String label, @Name("prop") String property) {
+    public Map<String, Node> fromNodes(
+            @Name(value = "label", description = "The node labels from which the map will be created.") String label,
+            @Name(value = "prop", description = "The property name to map the returned nodes by.") String property) {
         Map<String, Node> result = new LinkedHashMap<>(10000);
         try (ResourceIterator<Node> nodes = tx.findNodes(Label.label(label))) {
             while (nodes.hasNext()) {
@@ -92,22 +98,31 @@ public class Maps {
 
     @UserFunction("apoc.map.fromPairs")
     @Description("Creates a `MAP` from the given `LIST<LIST<ANY>>` of key-value pairs.")
-    public Map<String, Object> fromPairs(@Name("pairs") List<List<Object>> pairs) {
+    public Map<String, Object> fromPairs(
+            @Name(value = "pairs", description = "A list of pairs to create a map from.") List<List<Object>> pairs) {
         return Util.mapFromPairs(pairs);
     }
 
     @UserFunction("apoc.map.fromLists")
     @Description("Creates a `MAP` from the keys and values in the given `LIST<ANY>` values.")
-    public Map<String, Object> fromLists(@Name("keys") List<String> keys, @Name("values") List<Object> values) {
+    public Map<String, Object> fromLists(
+            @Name(value = "keys", description = "A list of keys to create a map from.") List<String> keys,
+            @Name(value = "values", description = "A list of values associated with the keys to create a map from.")
+                    List<Object> values) {
         return Util.mapFromLists(keys, values);
     }
 
     @UserFunction("apoc.map.values")
     @Description("Returns a `LIST<ANY>` indicated by the given keys (returns a null value if a given key is missing).")
     public List<Object> values(
-            @Name("map") Map<String, Object> map,
-            @Name(value = "keys", defaultValue = "[]") List<String> keys,
-            @Name(value = "addNullsForMissing", defaultValue = "false") boolean addNullsForMissing) {
+            @Name(value = "map", description = "A map to extract values from.") Map<String, Object> map,
+            @Name(value = "keys", defaultValue = "[]", description = "A list of keys to extract from the given map.")
+                    List<String> keys,
+            @Name(
+                            value = "addNullsForMissing",
+                            defaultValue = "false",
+                            description = "Whether or not to return missing values as null values.")
+                    boolean addNullsForMissing) {
         if (keys == null || keys.isEmpty()) return Collections.emptyList();
         List<Object> values = new ArrayList<>(keys.size());
         for (String key : keys) {
@@ -118,20 +133,26 @@ public class Maps {
 
     @UserFunction("apoc.map.fromValues")
     @Description("Creates a `MAP` from the alternating keys and values in the given `LIST<ANY>`.")
-    public Map<String, Object> fromValues(@Name("values") List<Object> values) {
+    public Map<String, Object> fromValues(
+            @Name(value = "values", description = "A list of keys and values listed pairwise to create a map from.")
+                    List<Object> values) {
         return Util.map(values);
     }
 
     @UserFunction("apoc.map.merge")
     @Description("Merges the two given `MAP` values into one `MAP`.")
     public Map<String, Object> merge(
-            @Name("map1") Map<String, Object> first, @Name("map2") Map<String, Object> second) {
+            @Name(value = "map1", description = "The first map to merge with the second map.")
+                    Map<String, Object> first,
+            @Name(value = "map2", description = "The second map to merge with the first map.")
+                    Map<String, Object> second) {
         return Util.merge(first, second);
     }
 
     @UserFunction("apoc.map.mergeList")
     @Description("Merges all `MAP` values in the given `LIST<MAP<STRING, ANY>>` into one `MAP`.")
-    public Map<String, Object> mergeList(@Name("maps") List<Map<String, Object>> maps) {
+    public Map<String, Object> mergeList(
+            @Name(value = "maps", description = "A list of maps to merge.") List<Map<String, Object>> maps) {
         Map<String, Object> result = new LinkedHashMap<>(maps.size());
         for (Map<String, Object> map : maps) {
             result.putAll(map);
@@ -143,10 +164,16 @@ public class Maps {
     @Description("Returns a value for the given key.\n"
             + "If the given key does not exist, or lacks a default value, this function will throw an exception.")
     public Object get(
-            @Name("map") Map<String, Object> map,
-            @Name("key") String key,
-            @Name(value = "value", defaultValue = "null") Object value,
-            @Name(value = "fail", defaultValue = "true") boolean fail) {
+            @Name(value = "map", description = "The map to extract a value from.") Map<String, Object> map,
+            @Name(value = "key", description = "The key to extract.") String key,
+            @Name(value = "value", defaultValue = "null", description = "The default value of the given key.")
+                    Object value,
+            @Name(
+                            value = "fail",
+                            defaultValue = "true",
+                            description =
+                                    "If a key is not present and no default is provided, it will either throw an exception if true, or return a null value")
+                    boolean fail) {
         if (fail && value == null && !map.containsKey(key))
             throw new IllegalArgumentException("Key " + key + " is not of one of the existing keys " + map.keySet());
         return map.getOrDefault(key, value);
@@ -156,10 +183,16 @@ public class Maps {
     @Description("Returns a `LIST<ANY>` for the given keys.\n"
             + "If one of the keys does not exist, or lacks a default value, this function will throw an exception.")
     public List<Object> mget(
-            @Name("map") Map<String, Object> map,
-            @Name("keys") List<String> keys,
-            @Name(value = "values", defaultValue = "[]") List<Object> values,
-            @Name(value = "fail", defaultValue = "true") boolean fail) {
+            @Name(value = "map", description = "The map to extract a list of values from.") Map<String, Object> map,
+            @Name(value = "keys", description = "The list of keys to extract.") List<String> keys,
+            @Name(value = "values", defaultValue = "[]", description = "The default values of the given keys.")
+                    List<Object> values,
+            @Name(
+                            value = "fail",
+                            defaultValue = "true",
+                            description =
+                                    "If a key is not present and no default is provided, it will either throw an exception if true, or return a null value")
+                    boolean fail) {
         if (keys == null || map == null) return null;
         int keySize = keys.size();
         List<Object> result = new ArrayList<>(keySize);
@@ -174,10 +207,16 @@ public class Maps {
     @Description("Returns a sub-map for the given keys.\n"
             + "If one of the keys does not exist, or lacks a default value, this function will throw an exception.")
     public Map<String, Object> submap(
-            @Name("map") Map<String, Object> map,
-            @Name("keys") List<String> keys,
-            @Name(value = "values", defaultValue = "[]") List<Object> values,
-            @Name(value = "fail", defaultValue = "true") boolean fail) {
+            @Name(value = "map", description = "The map to extract a submap from.") Map<String, Object> map,
+            @Name(value = "keys", description = "The list of keys to extract into a submap.") List<String> keys,
+            @Name(value = "values", defaultValue = "[]", description = "The default values of the given keys.")
+                    List<Object> values,
+            @Name(
+                            value = "fail",
+                            defaultValue = "true",
+                            description =
+                                    "If a key is not present and no default is provided, it will either throw an exception if true, or return a null value.")
+                    boolean fail) {
         if (keys == null || map == null) return null;
         int keySize = keys.size();
         Map<String, Object> result = new LinkedHashMap<>(keySize);
@@ -192,20 +231,27 @@ public class Maps {
     @UserFunction("apoc.map.setKey")
     @Description("Adds or updates the given entry in the `MAP`.")
     public Map<String, Object> setKey(
-            @Name("map") Map<String, Object> map, @Name("key") String key, @Name("value") Object value) {
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "key", description = "The key to add or update the map with.") String key,
+            @Name(value = "value", description = "The value to set the given key to.") Object value) {
         return Util.merge(map, Util.map(key, value));
     }
 
     @UserFunction("apoc.map.setEntry")
     @Description("Adds or updates the given entry in the `MAP`.")
     public Map<String, Object> setEntry(
-            @Name("map") Map<String, Object> map, @Name("key") String key, @Name("value") Object value) {
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "key", description = "The key to add or update the map with.") String key,
+            @Name(value = "value", description = "The value to set the given key to.") Object value) {
         return Util.merge(map, Util.map(key, value));
     }
 
     @UserFunction("apoc.map.setPairs")
     @Description("Adds or updates the given key/value pairs (e.g. [key1,value1],[key2,value2]) in a `MAP`.")
-    public Map<String, Object> setPairs(@Name("map") Map<String, Object> map, @Name("pairs") List<List<Object>> pairs) {
+    public Map<String, Object> setPairs(
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "pairs", description = "A list of pairs to add or update the map with.")
+                    List<List<Object>> pairs) {
         return Util.merge(map, Util.mapFromPairs(pairs));
     }
 
@@ -213,24 +259,31 @@ public class Maps {
     @Description(
             "Adds or updates the given keys/value pairs provided in `LIST<ANY>` format (e.g. [key1, key2],[value1, value2]) in a `MAP`.")
     public Map<String, Object> setLists(
-            @Name("map") Map<String, Object> map,
-            @Name("keys") List<String> keys,
-            @Name("values") List<Object> values) {
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "keys", description = "A list of keys to add or update the map with.") List<String> keys,
+            @Name(
+                            value = "values",
+                            description = "A list of values associated to the keys to add or update the map with.")
+                    List<Object> values) {
         return Util.merge(map, Util.mapFromLists(keys, values));
     }
 
     @UserFunction("apoc.map.setValues")
     @Description("Adds or updates the alternating key/value pairs (e.g. [key1,value1,key2,value2]) in a `MAP`.")
-    public Map<String, Object> setValues(@Name("map") Map<String, Object> map, @Name("pairs") List<Object> pairs) {
+    public Map<String, Object> setValues(
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "pairs", description = "A list of items listed pairwise to add or update the map with.")
+                    List<Object> pairs) {
         return Util.merge(map, Util.map(pairs));
     }
 
     @UserFunction("apoc.map.removeKey")
     @Description("Removes the given key from the `MAP` (recursively if recursive is true).")
     public Map<String, Object> removeKey(
-            @Name("map") Map<String, Object> map,
-            @Name("key") String key,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "key", description = "The key to remove from the map.") String key,
+            @Name(value = "config", defaultValue = "{}", description = "{ recursive = false :: BOOLEAN }")
+                    Map<String, Object> config) {
         if (!map.containsKey(key)) {
             return map;
         }
@@ -241,9 +294,10 @@ public class Maps {
     @UserFunction("apoc.map.removeKeys")
     @Description("Removes the given keys from the `MAP` (recursively if recursive is true).")
     public Map<String, Object> removeKeys(
-            @Name("map") Map<String, Object> map,
-            @Name("keys") List<String> keys,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
+            @Name(value = "keys", description = "The keys to remove from the map.") List<String> keys,
+            @Name(value = "config", defaultValue = "{}", description = "{ recursive = false :: BOOLEAN }")
+                    Map<String, Object> config) {
         Map<String, Object> res = new LinkedHashMap<>(map);
         res.keySet().removeAll(keys);
         Map<String, Object> checkedConfig = config == null ? Collections.emptyMap() : config;
@@ -281,9 +335,9 @@ public class Maps {
     @UserFunction("apoc.map.clean")
     @Description("Filters the keys and values contained in the given `LIST<ANY>` values.")
     public Map<String, Object> clean(
-            @Name("map") Map<String, Object> map,
-            @Name("keys") List<String> keys,
-            @Name("values") List<Object> values) {
+            @Name(value = "map", description = "The map to clean.") Map<String, Object> map,
+            @Name(value = "keys", description = "The list of property keys to be removed.") List<String> keys,
+            @Name(value = "values", description = "The list of values to be removed.") List<Object> values) {
         HashSet<String> keySet = new HashSet<>(keys);
         HashSet<Object> valueSet = new HashSet<>(values);
 
@@ -302,7 +356,13 @@ public class Maps {
     @UserFunction("apoc.map.updateTree")
     @Description("Adds the data `MAP` on each level of the nested tree, where the key-value pairs match.")
     public Map<String, Object> updateTree(
-            @Name("tree") Map<String, Object> tree, @Name("key") String key, @Name("data") List<List<Object>> data) {
+            @Name(value = "tree", description = "The map to be updated.") Map<String, Object> tree,
+            @Name(value = "key", description = "The name of the key to match on.") String key,
+            @Name(
+                            value = "data",
+                            description =
+                                    "A list of pairs, where the first item is the value to match with the given key, and the second is a map to add to the tree.")
+                    List<List<Object>> data) {
         Map<Object, Map<String, Object>> map = new HashMap<>(data.size());
         for (List<Object> datum : data) {
             if (datum.size() < 2 || !((datum.get(1) instanceof Map)))
@@ -346,7 +406,12 @@ public class Maps {
     @Description("Flattens nested items in the given `MAP`.\n"
             + "This function is the reverse of the `apoc.map.unflatten` function.")
     public Map<String, Object> flatten(
-            @Name("map") Map<String, Object> map, @Name(value = "delimiter", defaultValue = ".") String delimiter) {
+            @Name(value = "map", description = "A nested map to flatten.") Map<String, Object> map,
+            @Name(
+                            value = "delimiter",
+                            defaultValue = ".",
+                            description = "The delimiter used to separate the levels of the flattened map.")
+                    String delimiter) {
         Map<String, Object> flattenedMap = new HashMap<>();
         flattenMapRecursively(flattenedMap, map, "", delimiter == null ? "." : delimiter);
         return flattenedMap;
@@ -372,7 +437,12 @@ public class Maps {
     @Description("Unflattens items in the given `MAP` to nested items.\n"
             + "This function is the reverse of the `apoc.map.flatten` function.")
     public Map<String, Object> unflatten(
-            @Name("map") Map<String, Object> map, @Name(value = "delimiter", defaultValue = ".") String delimiter) {
+            @Name(value = "map", description = "The map to unflatten.") Map<String, Object> map,
+            @Name(
+                            value = "delimiter",
+                            defaultValue = ".",
+                            description = "The delimiter used to separate the levels of the flattened map.")
+                    String delimiter) {
         return unflattenMapRecursively(map, StringUtils.isBlank(delimiter) ? "." : delimiter);
     }
 
@@ -401,8 +471,12 @@ public class Maps {
     @Description("Returns a `LIST<ANY>` of key/value pairs.\n"
             + "The pairs are sorted by alphabetically by key, with optional case sensitivity.")
     public List<List<Object>> sortedProperties(
-            @Name("map") Map<String, Object> map,
-            @Name(value = "ignoreCase", defaultValue = "true") boolean ignoreCase) {
+            @Name(value = "map", description = "The map to extract the properties from.") Map<String, Object> map,
+            @Name(
+                            value = "ignoreCase",
+                            defaultValue = "true",
+                            description = "Whether or not to take the case into account when sorting.")
+                    boolean ignoreCase) {
         List<List<Object>> sortedProperties = new ArrayList<>();
         List<String> keys = new ArrayList<>(map.keySet());
 

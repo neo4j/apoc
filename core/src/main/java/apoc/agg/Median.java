@@ -38,7 +38,7 @@ public class Median {
         private List<Double> values = new ArrayList<>();
 
         @UserAggregationUpdate
-        public void aggregate(@Name("value") Object value) {
+        public void aggregate(@Name(value = "value", description = "A value to be aggregated.") Object value) {
             if (value instanceof Number) {
                 values.add(((Number) value).doubleValue());
             }

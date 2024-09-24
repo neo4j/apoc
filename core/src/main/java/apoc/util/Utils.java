@@ -42,32 +42,52 @@ public class Utils {
     @UserFunction("apoc.util.sha1")
     @Description("Returns the SHA1 of the concatenation of all `STRING` values in the given `LIST<ANY>`.\n"
             + "SHA1 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
-    public String sha1(@Name("values") List<Object> values) {
+    public String sha1(
+            @Name(
+                            value = "values",
+                            description = "The list of values to concatenate and generate a sha1 checksum from.")
+                    List<Object> values) {
         return hexHash(DigestUtils.getSha1Digest(), values);
     }
 
     @UserFunction("apoc.util.sha256")
     @Description("Returns the SHA256 of the concatenation of all `STRING` values in the given `LIST<ANY>`.")
-    public String sha256(@Name("values") List<Object> values) {
+    public String sha256(
+            @Name(
+                            value = "values",
+                            description = "The list of values to concatenate and generate a sha256 checksum from.")
+                    List<Object> values) {
         return hexHash(DigestUtils.getSha256Digest(), values);
     }
 
     @UserFunction("apoc.util.sha384")
     @Description("Returns the SHA384 of the concatenation of all `STRING` values in the given `LIST<ANY>`.")
-    public String sha384(@Name("values") List<Object> values) {
+    public String sha384(
+            @Name(
+                            value = "values",
+                            description = "The list of values to concatenate and generate a sha384 checksum from.")
+                    List<Object> values) {
         return hexHash(DigestUtils.getSha384Digest(), values);
     }
 
     @UserFunction("apoc.util.sha512")
     @Description("Returns the SHA512 of the concatenation of all `STRING` values in the `LIST<ANY>`.")
-    public String sha512(@Name("values") List<Object> values) {
+    public String sha512(
+            @Name(
+                            value = "values",
+                            description = "The list of values to concatenate and generate a sha512 checksum from.")
+                    List<Object> values) {
         return hexHash(DigestUtils.getSha512Digest(), values);
     }
 
     @UserFunction("apoc.util.md5")
     @Description("Returns the MD5 checksum of the concatenation of all `STRING` values in the given `LIST<ANY>`.\n"
             + "MD5 is a weak hashing algorithm which is unsuitable for cryptographic use-cases.")
-    public String md5(@Name("values") List<Object> values) {
+    public String md5(
+            @Name(
+                            value = "values",
+                            description = "The list of values to concatenate and generate an md5 checksum from.")
+                    List<Object> values) {
         return hexHash(DigestUtils.getMd5Digest(), values);
     }
 
@@ -103,9 +123,10 @@ public class Utils {
     @Description(
             "If the given predicate is true an exception is thrown, otherwise it returns true (for use inside `WHERE` subclauses).")
     public boolean validatePredicate(
-            @Name("predicate") boolean predicate,
-            @Name("message") String message,
-            @Name("params") List<Object> params) {
+            @Name(value = "predicate", description = "The predicate to be evaluated.") boolean predicate,
+            @Name(value = "message", description = "The error message thrown if the predicate evaluates to `true`.")
+                    String message,
+            @Name(value = "params", description = "Parameters to format the message with.") List<Object> params) {
         if (predicate) {
             if (params != null && !params.isEmpty())
                 message = String.format(message, params.toArray(new Object[params.size()]));
@@ -118,7 +139,13 @@ public class Utils {
     @UserFunction("apoc.util.decompress")
     @Description("Unzips the given byte array.")
     public String decompress(
-            @Name("data") byte[] data, @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
+            @Name(value = "data", description = "The bytearray of data to decompress.") byte[] data,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "{ compression = \"GZIP\" :: [\"GZIP\", \"BZIP2\", \"DEFLATE\", \"BLOCK_LZ4\", \"FRAMED_SNAPPY\", \"NONE\"], charset = \"UTF_8\" ::[\"UTF-8\", \"UTF-16\", \"UTF-16BE\", \"UTF-16LE\", \"UTF-32\", \"US-ASCII\", \"ISO-8859-1\"] }")
+                    Map<String, Object> config)
             throws Exception {
 
         CompressionConfig conf = new CompressionConfig(config, CompressionAlgo.GZIP.name());
@@ -128,7 +155,13 @@ public class Utils {
     @UserFunction("apoc.util.compress")
     @Description("Zips the given `STRING`.")
     public byte[] compress(
-            @Name("data") String data, @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
+            @Name(value = "data", description = "The string to be compressed.") String data,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "{ compression = \"GZIP\" :: [\"GZIP\", \"BZIP2\", \"DEFLATE\", \"BLOCK_LZ4\", \"FRAMED_SNAPPY\", \"NONE\"], charset = \"UTF_8\" ::[\"UTF-8\", \"UTF-16\", \"UTF-16BE\", \"UTF-16LE\", \"UTF-32\", \"US-ASCII\", \"ISO-8859-1\"] }")
+                    Map<String, Object> config)
             throws Exception {
 
         CompressionConfig conf = new CompressionConfig(config, CompressionAlgo.GZIP.name());

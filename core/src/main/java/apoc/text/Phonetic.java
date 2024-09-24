@@ -35,7 +35,9 @@ public class Phonetic {
 
     @UserFunction("apoc.text.phonetic")
     @Description("Returns the US_ENGLISH phonetic soundex encoding of all words of the `STRING`.")
-    public String phonetic(final @Name("text") String value) {
+    public String phonetic(
+            final @Name(value = "text", description = "The string to encode using US_ENGLISH phonetic soundex.") String
+                            value) {
         if (value == null) return null;
         return Stream.of(value.split("\\W+")).map(US_ENGLISH::soundex).collect(Collectors.joining(""));
     }
@@ -53,7 +55,11 @@ public class Phonetic {
 
     @UserFunction("apoc.text.doubleMetaphone")
     @Description("Returns the double metaphone phonetic encoding of all words in the given `STRING` value.")
-    public String doubleMetaphone(final @Name("value") String value) {
+    public String doubleMetaphone(
+            final @Name(
+                            value = "value",
+                            description = "The string to be encoded using the double metaphone phonetic encoding.")
+                    String value) {
         if (value == null || value.trim().isEmpty()) return value;
         return Stream.of(value.split("\\W+"))
                 .map(DOUBLE_METAPHONE::doubleMetaphone)

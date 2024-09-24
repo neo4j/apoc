@@ -78,56 +78,56 @@ public class Maths {
 
     @UserFunction("apoc.math.sigmoid")
     @Description("Returns the sigmoid of the given value.")
-    public Double sigmoid(@Name("value") Double value) {
+    public Double sigmoid(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return 1.0 / (1.0 + Math.exp(-value));
     }
 
     @UserFunction("apoc.math.sigmoidPrime")
     @Description("Returns the sigmoid prime [ sigmoid(val) * (1 - sigmoid(val)) ] of the given value.")
-    public Double sigmoidPrime(@Name("value") Double value) {
+    public Double sigmoidPrime(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return sigmoid(value) * (1 - sigmoid(value));
     }
 
     @UserFunction("apoc.math.tanh")
     @Description("Returns the hyperbolic tangent of the given value.")
-    public Double tanh(@Name("value") Double value) {
+    public Double tanh(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return sinh(value) / cosh(value);
     }
 
     @UserFunction("apoc.math.coth")
     @Description("Returns the hyperbolic cotangent.")
-    public Double coth(@Name("value") Double value) {
+    public Double coth(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null || value.equals(0D)) return null;
         return cosh(value) / sinh(value);
     }
 
     @UserFunction("apoc.math.cosh")
     @Description("Returns the hyperbolic cosine.")
-    public Double cosh(@Name("value") Double value) {
+    public Double cosh(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return (Math.exp(value) + Math.exp(-value)) / 2;
     }
 
     @UserFunction("apoc.math.sinh")
     @Description("Returns the hyperbolic sine of the given value.")
-    public Double sinh(@Name("value") Double value) {
+    public Double sinh(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return (Math.exp(value) - Math.exp(-value)) / 2;
     }
 
     @UserFunction("apoc.math.sech")
     @Description("Returns the hyperbolic secant of the given value.")
-    public Double sech(@Name("value") Double value) {
+    public Double sech(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return 1 / cosh(value);
     }
 
     @UserFunction("apoc.math.csch")
     @Description("Returns the hyperbolic cosecant.")
-    public Double csch(@Name("value") Double value) {
+    public Double csch(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null || value.equals(0D)) return null;
         return 1 / sinh(value);
     }

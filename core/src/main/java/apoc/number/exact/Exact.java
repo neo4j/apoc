@@ -37,7 +37,15 @@ public class Exact {
 
     @UserFunction("apoc.number.exact.add")
     @Description("Returns the result of adding the two given large numbers (using Java BigDecimal).")
-    public String add(@Name("stringA") String stringA, @Name("stringB") String stringB) {
+    public String add(
+            @Name(
+                            value = "stringA",
+                            description = "A string representation of a number to be added to the second number.")
+                    String stringA,
+            @Name(
+                            value = "stringB",
+                            description = "A string representation of a number to be added to the first number.")
+                    String stringB) {
         if (stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
         return new BigDecimal(stringA).add(new BigDecimal(stringB)).toPlainString();
     }
@@ -45,7 +53,16 @@ public class Exact {
     @UserFunction("apoc.number.exact.sub")
     @Description(
             "Returns the result of subtracting a given large number from another given large number (using Java BigDecimal).")
-    public String sub(@Name("stringA") String stringA, @Name("stringB") String stringB) {
+    public String sub(
+            @Name(
+                            value = "stringA",
+                            description =
+                                    "A string representation of a number to have a second number subtracted from.")
+                    String stringA,
+            @Name(
+                            value = "stringB",
+                            description = "A string representation of a number to subtract from the first number.")
+                    String stringB) {
         if (stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
         return new BigDecimal(stringA).subtract(new BigDecimal(stringB)).toPlainString();
     }
@@ -53,10 +70,21 @@ public class Exact {
     @UserFunction("apoc.number.exact.mul")
     @Description("Returns the result of multiplying two given large numbers (using Java BigDecimal).")
     public String mul(
-            @Name("stringA") String stringA,
-            @Name("stringB") String stringB,
-            @Name(value = "precision", defaultValue = "0") Long precision,
-            @Name(value = "roundingMode", defaultValue = "HALF_UP") String roundingMode) {
+            @Name(
+                            value = "stringA",
+                            description = "A string representation of a number to multiply by the second number.")
+                    String stringA,
+            @Name(
+                            value = "stringB",
+                            description = "A string representation of a number to multiply by the first number.")
+                    String stringB,
+            @Name(value = "precision", defaultValue = "0", description = "The rounding precision.") Long precision,
+            @Name(
+                            value = "roundingMode",
+                            defaultValue = "HALF_UP",
+                            description =
+                                    "A precision rounding mode (`UP`, `DOWN`, `CEILING`, `FLOOR`, `HALF_UP`, `HALF_DOWN`, `HALF_EVEN`).")
+                    String roundingMode) {
         if (stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
         String s = new BigDecimal(stringA)
                 .multiply(new BigDecimal(stringB), createMathContext(precision, roundingMode))
@@ -68,10 +96,19 @@ public class Exact {
     @Description(
             "Returns the result of dividing a given large number with another given large number (using Java BigDecimal).")
     public String div(
-            @Name("stringA") String stringA,
-            @Name("stringB") String stringB,
-            @Name(value = "precision", defaultValue = "0") Long precision,
-            @Name(value = "roundingMode", defaultValue = "HALF_UP") String roundingMode) {
+            @Name(
+                            value = "stringA",
+                            description = "A string representation of a number to be divided by the second number.")
+                    String stringA,
+            @Name(value = "stringB", description = "A string representation of a number to divide the first number by.")
+                    String stringB,
+            @Name(value = "precision", defaultValue = "0", description = "The rounding precision.") Long precision,
+            @Name(
+                            value = "roundingMode",
+                            defaultValue = "HALF_UP",
+                            description =
+                                    "A precision rounding mode (`UP`, `DOWN`, `CEILING`, `FLOOR`, `HALF_UP`, `HALF_DOWN`, `HALF_EVEN`).")
+                    String roundingMode) {
         if (stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
         return new BigDecimal(stringA)
                 .divide(new BigDecimal(stringB), createMathContext(precision, roundingMode))
@@ -81,9 +118,14 @@ public class Exact {
     @UserFunction("apoc.number.exact.toInteger")
     @Description("Returns the `INTEGER` of the given large number (using Java BigDecimal).")
     public Long toInteger(
-            @Name("string") String string,
-            @Name(value = "precision", defaultValue = "0") Long precision,
-            @Name(value = "roundingMode", defaultValue = "HALF_UP") String roundingMode) {
+            @Name(value = "string", description = "A large number represented as a string.") String string,
+            @Name(value = "precision", defaultValue = "0", description = "The rounding precision.") Long precision,
+            @Name(
+                            value = "roundingMode",
+                            defaultValue = "HALF_UP",
+                            description =
+                                    "A precision rounding mode (`UP`, `DOWN`, `CEILING`, `FLOOR`, `HALF_UP`, `HALF_DOWN`, `HALF_EVEN`).")
+                    String roundingMode) {
         if (string == null || string.isEmpty()) return null;
         return new BigDecimal(string, createMathContextLong(precision, roundingMode)).longValue();
     }
@@ -91,16 +133,22 @@ public class Exact {
     @UserFunction("apoc.number.exact.toFloat")
     @Description("Returns the `FLOAT` of the given large number (using Java BigDecimal).")
     public Double toFloat(
-            @Name("string") String string,
-            @Name(value = "precision", defaultValue = "0") Long precision,
-            @Name(value = "roundingMode", defaultValue = "HALF_UP") String roundingMode) {
+            @Name(value = "string", description = "A large number represented as a string.") String string,
+            @Name(value = "precision", defaultValue = "0", description = "The rounding precision.") Long precision,
+            @Name(
+                            value = "roundingMode",
+                            defaultValue = "HALF_UP",
+                            description =
+                                    "A precision rounding mode (`UP`, `DOWN`, `CEILING`, `FLOOR`, `HALF_UP`, `HALF_DOWN`, `HALF_EVEN`).")
+                    String roundingMode) {
         if (string == null || string.isEmpty()) return null;
         return new BigDecimal(string, createMathContext(precision, roundingMode)).doubleValue();
     }
 
     @UserFunction("apoc.number.exact.toExact")
     @Description("Returns the exact value of the given number (using Java BigDecimal).")
-    public Long toExact(@Name("number") Long number) {
+    public Long toExact(
+            @Name(value = "number", description = "An integer to receive the exact value of.") Long number) {
         if (number == null) return null;
         return new BigDecimal(number).longValueExact();
     }

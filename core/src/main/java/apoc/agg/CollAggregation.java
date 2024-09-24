@@ -60,7 +60,12 @@ public class CollAggregation {
         private int index;
 
         @UserAggregationUpdate
-        public void nth(@Name("value") Object value, @Name("offset") long target) {
+        public void nth(
+                @Name(value = "value", description = "A value to be aggregated.") Object value,
+                @Name(
+                                value = "offset",
+                                description = "The index of the value to be returned, or -1 to return the last item.")
+                        long target) {
             if (value != null) {
                 if (target == index++ || target == -1) {
                     this.value = value;
@@ -81,9 +86,17 @@ public class CollAggregation {
 
         @UserAggregationUpdate
         public void nth(
-                @Name("value") Object value,
-                @Name(value = "from", defaultValue = "0") long from,
-                @Name(value = "to", defaultValue = "-1") long len) {
+                @Name(value = "value", description = "A value to be multiplied in the aggregate.") Object value,
+                @Name(
+                                value = "from",
+                                defaultValue = "0",
+                                description = "The index from which to start returning values in the specified range.")
+                        long from,
+                @Name(
+                                value = "to",
+                                defaultValue = "-1",
+                                description = "The non-inclusive index of the final value in the range.")
+                        long len) {
             if (value != null) {
                 if (index >= from && (len == -1 || index < from + len)) {
                     this.values.add(value);
@@ -102,7 +115,7 @@ public class CollAggregation {
         private Object value;
 
         @UserAggregationUpdate
-        public void first(@Name("value") Object value) {
+        public void first(@Name(value = "value", description = "A value to be aggregated.") Object value) {
             if (value != null && this.value == null) {
                 this.value = value;
             }
@@ -118,7 +131,7 @@ public class CollAggregation {
         private Object value;
 
         @UserAggregationUpdate
-        public void last(@Name("value") Object value) {
+        public void last(@Name(value = "value", description = "A value to be aggregated.") Object value) {
             if (value != null) {
                 this.value = value;
             }

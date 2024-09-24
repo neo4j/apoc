@@ -59,7 +59,9 @@ public class CypherFunctions {
     @Description(
             "Runs the given statement with the given parameters and returns the first column collected into a `LIST<ANY>`.")
     public List<Object> runFirstColumnMany(
-            @Name("statement") String statement, @Name("params") Map<String, Object> params) {
+            @Name(value = "statement", description = "The Cypher query to execute.") String statement,
+            @Name(value = "params", description = "The parameters needed for input to the given Cypher query.")
+                    Map<String, Object> params) {
         return (List) runFirstColumn(statement, params, true);
     }
 
@@ -68,7 +70,9 @@ public class CypherFunctions {
     @Description(
             "Runs the given statement with the given parameters and returns the first element of the first column.")
     public Object runFirstColumnSingle(
-            @Name("statement") String statement, @Name("params") Map<String, Object> params) {
+            @Name(value = "statement", description = "The Cypher query to execute.") String statement,
+            @Name(value = "params", description = "The parameters needed for input to the given Cypher query.")
+                    Map<String, Object> params) {
         return runFirstColumn(statement, params, false);
     }
 }

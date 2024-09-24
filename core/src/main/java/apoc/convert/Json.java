@@ -102,15 +102,21 @@ public class Json {
     @UserFunction("apoc.json.path")
     @Description("Returns the given JSON path.")
     public Object path(
-            @Name("json") String json,
-            @Name(value = "path", defaultValue = "$") String path,
-            @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
+            @Name(value = "json", description = "A JSON string.") String json,
+            @Name(value = "path", defaultValue = "$", description = "The path to extract from the JSON string.")
+                    String path,
+            @Name(
+                            value = "pathOptions",
+                            defaultValue = "null",
+                            description =
+                                    "A list of JSON path option enum values: ALWAYS_RETURN_LIST, AS_PATH_LIST, DEFAULT_PATH_LEAF_TO_NULL, REQUIRE_PROPERTIES, SUPPRESS_EXCEPTIONS.")
+                    List<String> pathOptions) {
         return JsonUtil.parse(json, path, Object.class, pathOptions);
     }
 
     @UserFunction("apoc.convert.toJson")
     @Description("Serializes the given JSON value.")
-    public String toJson(@Name("value") Object value) {
+    public String toJson(@Name(value = "value", description = "The value to serialize.") Object value) {
         try {
             return JsonUtil.OBJECT_MAPPER.writeValueAsString(writeJsonResult(value));
         } catch (IOException e) {
@@ -132,10 +138,20 @@ public class Json {
     @Description(
             "Converts a serialized JSON object from the property of the given `NODE` into the equivalent Cypher structure (e.g. `MAP`, `LIST<ANY>`).")
     public Object getJsonProperty(
-            @Name("node") Node node,
-            @Name("key") String key,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
+            @Name(value = "node", description = "The node containing a JSON string property.") Node node,
+            @Name(value = "key", description = "The property key to convert.") String key,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description =
+                                    "A JSON path expression used to extract a certain part from the node property string.")
+                    String path,
+            @Name(
+                            value = "pathOptions",
+                            defaultValue = "null",
+                            description =
+                                    "JSON path options: ('ALWAYS_RETURN_LIST', 'AS_PATH_LIST', 'DEFAULT_PATH_LEAF_TO_NULL', 'REQUIRE_PROPERTIES', 'SUPPRESS_EXCEPTIONS')")
+                    List<String> pathOptions) {
         String value = (String) node.getProperty(key, null);
         return JsonUtil.parse(value, path, Object.class, pathOptions);
     }
@@ -143,10 +159,20 @@ public class Json {
     @UserFunction("apoc.convert.getJsonPropertyMap")
     @Description("Converts a serialized JSON object from the property of the given `NODE` into a Cypher `MAP`.")
     public Map<String, Object> getJsonPropertyMap(
-            @Name("node") Node node,
-            @Name("key") String key,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
+            @Name(value = "node", description = "The node containing a JSON stringified map.") Node node,
+            @Name(value = "key", description = "The property key to convert.") String key,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description =
+                                    "A JSON path expression used to extract a certain part from the node property string.")
+                    String path,
+            @Name(
+                            value = "pathOptions",
+                            defaultValue = "null",
+                            description =
+                                    "JSON path options: ('ALWAYS_RETURN_LIST', 'AS_PATH_LIST', 'DEFAULT_PATH_LEAF_TO_NULL', 'REQUIRE_PROPERTIES', 'SUPPRESS_EXCEPTIONS')")
+                    List<String> pathOptions) {
         String value = (String) node.getProperty(key, null);
         return JsonUtil.parse(value, path, Map.class, pathOptions);
     }
@@ -154,18 +180,36 @@ public class Json {
     @UserFunction("apoc.convert.fromJsonMap")
     @Description("Converts the given JSON map into a Cypher `MAP`.")
     public Map<String, Object> fromJsonMap(
-            @Name("map") String value,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
+            @Name(value = "map", description = "A JSON stringified map.") String value,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description = "A JSON path expression used to extract a certain part from the map.")
+                    String path,
+            @Name(
+                            value = "pathOptions",
+                            defaultValue = "null",
+                            description =
+                                    "JSON path options: ('ALWAYS_RETURN_LIST', 'AS_PATH_LIST', 'DEFAULT_PATH_LEAF_TO_NULL', 'REQUIRE_PROPERTIES', 'SUPPRESS_EXCEPTIONS')")
+                    List<String> pathOptions) {
         return JsonUtil.parse(value, path, Map.class, pathOptions);
     }
 
     @UserFunction("apoc.convert.fromJsonList")
     @Description("Converts the given JSON list into a Cypher `LIST<STRING>`.")
     public List<Object> fromJsonList(
-            @Name("list") String value,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "pathOptions", defaultValue = "null") List<String> pathOptions) {
+            @Name(value = "list", description = "A JSON stringified list.") String value,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description = "A JSON path expression used to extract a certain part from the list.")
+                    String path,
+            @Name(
+                            value = "pathOptions",
+                            defaultValue = "null",
+                            description =
+                                    "JSON path options: ('ALWAYS_RETURN_LIST', 'AS_PATH_LIST', 'DEFAULT_PATH_LEAF_TO_NULL', 'REQUIRE_PROPERTIES', 'SUPPRESS_EXCEPTIONS')")
+                    List<String> pathOptions) {
         return JsonUtil.parse(value, path, List.class, pathOptions);
     }
 
@@ -304,7 +348,12 @@ public class Json {
     @UserFunction("apoc.convert.toSortedJsonMap")
     @Description("Converts a serialized JSON object from the property of a given `NODE` into a Cypher `MAP`.")
     public String toSortedJsonMap(
-            @Name("value") Object value, @Name(value = "ignoreCase", defaultValue = "true") boolean ignoreCase) {
+            @Name(value = "value", description = "The value to convert into a stringified JSON map.") Object value,
+            @Name(
+                            value = "ignoreCase",
+                            defaultValue = "true",
+                            description = "Whether or not to ignore the case of the keys when sorting.")
+                    boolean ignoreCase) {
         Map<String, Object> inputMap;
         Map<String, Object> sortedMap;
 

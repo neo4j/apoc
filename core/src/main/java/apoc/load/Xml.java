@@ -126,10 +126,20 @@ public class Xml {
     @UserFunction("apoc.xml.parse")
     @Description("Parses the given XML `STRING` as a `MAP`.")
     public Map<String, Object> parse(
-            @Name("data") String data,
-            @Name(value = "path", defaultValue = "/") String path,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config,
-            @Name(value = "simple", defaultValue = "false") boolean simpleMode)
+            @Name(value = "data", description = "The XML data to parse.") String data,
+            @Name(value = "path", defaultValue = "/", description = "An xPath expression.") String path,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "A config map describing whether or not to fail on an encountered error; { failOnError = true :: BOOLEAN }")
+                    Map<String, Object> config,
+            @Name(
+                            value = "simple",
+                            defaultValue = "false",
+                            description =
+                                    "Specify simple mode to make XML elements accessible via a property of the element name prefixed with an `_`.")
+                    boolean simpleMode)
             throws Exception {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);

@@ -36,7 +36,8 @@ import org.neo4j.procedure.UserFunction;
 public class ExtractURL {
     @UserFunction("apoc.data.url")
     @Description("Turns a URL into a `MAP`.")
-    public Map<String, Object> parse(final @Name("url") String value) {
+    public Map<String, Object> parse(
+            final @Name(value = "url", description = "The URL to extract metadata from.") String value) {
         if (value == null) return null;
         try {
             URI u = new URI(value);

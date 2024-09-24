@@ -38,9 +38,10 @@ public class Numbers {
     @UserFunction("apoc.number.format")
     @Description("Formats the given `INTEGER` or `FLOAT` using the given pattern and language to produce a `STRING`.")
     public String format(
-            final @Name("number") Object value,
-            @Name(value = "pattern", defaultValue = "") String pattern,
-            @Name(value = "language", defaultValue = "") String lang) {
+            final @Name(value = "number", description = "The number to format.") Object value,
+            @Name(value = "pattern", defaultValue = "", description = "The pattern to format the number in.")
+                    String pattern,
+            @Name(value = "language", defaultValue = "", description = "An ISO-compliant language tag.") String lang) {
         Number number = validateNumberParam(value);
         if (number == null) return null;
         DecimalFormat format = buildFormatter(pattern, lang);
@@ -51,9 +52,10 @@ public class Numbers {
     @UserFunction("apoc.number.parseInt")
     @Description("Parses the given `STRING` using the given pattern and language to produce a `INTEGER`.")
     public Long parseInt(
-            final @Name("text") String text,
-            @Name(value = "pattern", defaultValue = "") String pattern,
-            @Name(value = "language", defaultValue = "") String lang) {
+            final @Name(value = "text", description = "The string to parse an integer from.") String text,
+            @Name(value = "pattern", defaultValue = "", description = "The pattern the given string is in.")
+                    String pattern,
+            @Name(value = "language", defaultValue = "", description = "An ISO-compliant language tag.") String lang) {
         Number res = parseNumber(text, pattern, lang);
         return res == null ? null : res.longValue();
     }
@@ -75,9 +77,10 @@ public class Numbers {
     @UserFunction("apoc.number.parseFloat")
     @Description("Parses the given `STRING` using the given pattern and language to produce a `FLOAT`.")
     public Double parseFloat(
-            final @Name("text") String text,
-            @Name(value = "pattern", defaultValue = "") String pattern,
-            @Name(value = "language", defaultValue = "") String lang) {
+            final @Name(value = "text", description = "The string to parse a float from.") String text,
+            @Name(value = "pattern", defaultValue = "", description = "The pattern the given string is in.")
+                    String pattern,
+            @Name(value = "language", defaultValue = "", description = "An ISO-compliant language tag.") String lang) {
         Number res = parseNumber(text, pattern, lang);
         return res == null ? null : res.doubleValue();
     }

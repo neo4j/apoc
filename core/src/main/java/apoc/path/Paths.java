@@ -38,7 +38,12 @@ public class Paths {
     @UserFunction("apoc.path.create")
     @Description("Returns a `PATH` from the given start `NODE` and `LIST<RELATIONSHIP>`.")
     public Path create(
-            @Name("startNode") Node startNode, @Name(value = "rels", defaultValue = "[]") List<Relationship> rels) {
+            @Name(value = "startNode", description = "The starting node of the new path.") Node startNode,
+            @Name(
+                            value = "rels",
+                            defaultValue = "[]",
+                            description = "The list of relationships to create the path from.")
+                    List<Relationship> rels) {
         if (startNode == null) return null;
         PathImpl.Builder builder = new PathImpl.Builder(startNode);
         if (rels != null) {
@@ -54,9 +59,10 @@ public class Paths {
     @UserFunction("apoc.path.slice")
     @Description("Returns a new `PATH` of the given length, taken from the given `PATH` at the given offset.")
     public Path slice(
-            @Name("path") Path path,
-            @Name(value = "offset", defaultValue = "0") long offset,
-            @Name(value = "length", defaultValue = "-1") long length) {
+            @Name(value = "path", description = "The path to be sliced.") Path path,
+            @Name(value = "offset", defaultValue = "0", description = "The offset to begin the new path from.")
+                    long offset,
+            @Name(value = "length", defaultValue = "-1", description = "The length of the new path.") long length) {
         if (path == null) return null;
         if (offset < 0) offset = 0;
         if (length == -1) length = path.length() - offset;
@@ -79,7 +85,9 @@ public class Paths {
 
     @UserFunction("apoc.path.combine")
     @Description("Combines the two given `PATH` values into one `PATH`.")
-    public Path combine(@Name("path1") Path first, @Name("path2") Path second) {
+    public Path combine(
+            @Name(value = "path1", description = "The first path to combine with the second path.") Path first,
+            @Name(value = "path2", description = "The second path to combine with the first path.") Path second) {
         if (first == null) return second;
         if (second == null) return first;
 
@@ -95,7 +103,9 @@ public class Paths {
 
     @UserFunction("apoc.path.elements")
     @Description("Converts the given `PATH` into a `LIST<NODE | RELATIONSHIP>`.")
-    public List<Object> elements(@Name("path") Path path) {
+    public List<Object> elements(
+            @Name(value = "path", description = "The path to be converted into a list of nodes and relationships.")
+                    Path path) {
         if (path == null) return null;
         return Iterables.asList((Iterable) path);
     }
