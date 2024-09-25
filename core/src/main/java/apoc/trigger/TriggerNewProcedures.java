@@ -87,11 +87,17 @@ public class TriggerNewProcedures {
     @Description(
             "Eventually adds a trigger for a given database which is invoked when a successful transaction occurs.")
     public Stream<TriggerInfo> install(
-            @Name("databaseName") String databaseName,
-            @Name("name") String name,
-            @Name("statement") String statement,
-            @Name(value = "selector") Map<String, Object> selector,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "databaseName", description = "The name of the database to add the trigger to.")
+                    String databaseName,
+            @Name(value = "name", description = "The name of the trigger to add.") String name,
+            @Name(value = "statement", description = "The query to run when triggered.") String statement,
+            @Name(
+                            value = "selector",
+                            description =
+                                    "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }")
+                    Map<String, Object> selector,
+            @Name(value = "config", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> config) {
         checkInSystemWriter();
         checkTargetDatabase(databaseName);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
@@ -107,7 +113,10 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.drop", mode = Mode.WRITE)
     @Description("Eventually removes the given trigger.")
-    public Stream<TriggerInfo> drop(@Name("databaseName") String databaseName, @Name("name") String name) {
+    public Stream<TriggerInfo> drop(
+            @Name(value = "databaseName", description = "The name of the database to drop the trigger from.")
+                    String databaseName,
+            @Name(value = "name", description = "The name of the trigger to drop.") String name) {
         checkInSystemWriter();
 
         return withUpdatingTransaction(
@@ -119,7 +128,9 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.dropAll", mode = Mode.WRITE)
     @Description("Eventually removes all triggers from the given database.")
-    public Stream<TriggerInfo> dropAll(@Name("databaseName") String databaseName) {
+    public Stream<TriggerInfo> dropAll(
+            @Name(value = "databaseName", description = "The name of the database to drop the triggers from.")
+                    String databaseName) {
         checkInSystemWriter();
 
         return withUpdatingTransaction(
@@ -132,7 +143,10 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.stop", mode = Mode.WRITE)
     @Description("Eventually stops the given trigger.")
-    public Stream<TriggerInfo> stop(@Name("databaseName") String databaseName, @Name("name") String name) {
+    public Stream<TriggerInfo> stop(
+            @Name(value = "databaseName", description = "The name of the database the trigger is on.")
+                    String databaseName,
+            @Name(value = "name", description = "The name of the trigger to drop.") String name) {
         checkInSystemWriter();
 
         return withUpdatingTransaction(databaseName, tx -> {
@@ -146,7 +160,10 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.start", mode = Mode.WRITE)
     @Description("Eventually restarts the given paused trigger.")
-    public Stream<TriggerInfo> start(@Name("databaseName") String databaseName, @Name("name") String name) {
+    public Stream<TriggerInfo> start(
+            @Name(value = "databaseName", description = "The name of the database the trigger is on.")
+                    String databaseName,
+            @Name(value = "name", description = "The name of the trigger to resume.") String name) {
         checkInSystemWriter();
 
         return withUpdatingTransaction(databaseName, tx -> {
@@ -160,7 +177,9 @@ public class TriggerNewProcedures {
     @Admin
     @Procedure(name = "apoc.trigger.show", mode = Mode.READ)
     @Description("Lists all eventually installed triggers for a database.")
-    public Stream<TriggerInfo> show(@Name("databaseName") String databaseName) {
+    public Stream<TriggerInfo> show(
+            @Name(value = "databaseName", description = "The name of the database to show triggers on.")
+                    String databaseName) {
         checkInSystem();
 
         return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx);

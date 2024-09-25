@@ -19,11 +19,14 @@
 package apoc.result;
 
 import org.neo4j.graphdb.Path;
+import org.neo4j.procedure.Description;
 
 public class DistancePathResult implements Comparable<DistancePathResult> {
 
+    @Description("The sorted path result.")
     public final Path path;
 
+    @Description("The distance between the nodes.")
     public final double distance;
 
     public DistancePathResult(Path path, double distance) {

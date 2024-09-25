@@ -25,13 +25,13 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Collectors.groupingBy;
 
-import apoc.result.NodeResult;
 import apoc.util.Util;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
@@ -61,9 +61,17 @@ public class ParallelNodeSearch {
             "Returns a reduced representation of the `NODE` values found after a parallel search over multiple indexes.\n"
                     + "The reduced `NODE` values representation includes: node id, node labels, and the searched properties.")
     public Stream<NodeReducedResult> multiSearchAll(
-            @Name("labelPropertyMap") final Object labelProperties,
-            @Name("operator") final String operator,
-            @Name("value") final Object value)
+            @Name(
+                            value = "labelPropertyMap",
+                            description =
+                                    "A map that pairs labels with lists of properties. This can also be represented as a JSON string.")
+                    final Object labelProperties,
+            @Name(
+                            value = "operator",
+                            description =
+                                    "The search operator, can be one of: [\"exact\", \"starts with\", \"ends with\", \"contains\", \"<\", \">\", \"=\", \"<>\", \"<=\", \">=\", \"=~\"].")
+                    final String operator,
+            @Name(value = "value", description = "The search value.") final Object value)
             throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value).flatMap(QueryWorker::queryForData);
     }
@@ -80,9 +88,17 @@ public class ParallelNodeSearch {
             "Returns a reduced representation of the distinct `NODE` values found after a parallel search over multiple indexes.\n"
                     + "The reduced `NODE` values representation includes: node id, node labels, and the searched properties.")
     public Stream<NodeReducedResult> multiSearch(
-            @Name("labelPropertyMap") final Object labelProperties,
-            @Name("operator") final String operator,
-            @Name("value") final String value)
+            @Name(
+                            value = "labelPropertyMap",
+                            description =
+                                    "A map that pairs labels with lists of properties. This can also be represented as a JSON string.")
+                    final Object labelProperties,
+            @Name(
+                            value = "operator",
+                            description =
+                                    "The search operator, can be one of: [\"exact\", \"starts with\", \"ends with\", \"contains\", \"<\", \">\", \"=\", \"<>\", \"<=\", \">=\", \"=~\"].")
+                    final String operator,
+            @Name(value = "value", description = "The search value.") final String value)
             throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value)
                 .flatMap(QueryWorker::queryForData)
@@ -99,9 +115,17 @@ public class ParallelNodeSearch {
             "Returns a reduced representation of the `NODE` values found after a parallel search over multiple indexes.\n"
                     + "The reduced `NODE` values representation includes: node id, node labels, and the searched properties.")
     public Stream<NodeReducedResult> multiSearchOld(
-            @Name("labelPropertyMap") final Object labelProperties,
-            @Name("operator") final String operator,
-            @Name("value") final String value)
+            @Name(
+                            value = "labelPropertyMap",
+                            description =
+                                    "A map that pairs labels with lists of properties. This can also be represented as a JSON string.")
+                    final Object labelProperties,
+            @Name(
+                            value = "operator",
+                            description =
+                                    "The search operator, can be one of: [\"exact\", \"starts with\", \"ends with\", \"contains\", \"<\", \">\", \"=\", \"<>\", \"<=\", \">=\", \"=~\"].")
+                    final String operator,
+            @Name(value = "value", description = "The search value.") final String value)
             throws Exception {
         return createWorkersFromValidInput(labelProperties, operator, value)
                 .flatMap(QueryWorker::queryForData)
@@ -116,31 +140,49 @@ public class ParallelNodeSearch {
     @NotThreadSafe
     @Procedure("apoc.search.nodeAll")
     @Description("Returns all the `NODE` values found after a parallel search over multiple indexes.")
-    public Stream<NodeResult> multiSearchNodeAll(
-            @Name("labelPropertyMap") final Object labelProperties,
-            @Name("operator") final String operator,
-            @Name("value") final String value)
+    public Stream<SearchNodeResult> multiSearchNodeAll(
+            @Name(
+                            value = "labelPropertyMap",
+                            description =
+                                    "A map that pairs labels with lists of properties. This can also be represented as a JSON string.")
+                    final Object labelProperties,
+            @Name(
+                            value = "operator",
+                            description =
+                                    "The search operator, can be one of: [\"exact\", \"starts with\", \"ends with\", \"contains\", \"<\", \">\", \"=\", \"<>\", \"<=\", \">=\", \"=~\"].")
+                    final String operator,
+            @Name(value = "value", description = "The search value.") final String value)
             throws Exception {
         final var ids = createWorkersFromValidInput(labelProperties, operator, value)
                 .flatMapToLong(w -> w.queryForNodeId().mapToLong(i -> i))
                 .toArray();
         // It's not safe to access a transaction from multiple threads so this part needs to be sequential
-        return Arrays.stream(ids).mapToObj(id -> new NodeResult(tx.getNodeById(id)));
+        return Arrays.stream(ids).mapToObj(id -> new SearchNodeResult(tx.getNodeById(id)));
     }
+
+    public record SearchNodeResult(@Description("The found node.") Node node) {}
 
     @NotThreadSafe
     @Procedure("apoc.search.node")
     @Description("Returns all the distinct `NODE` values found after a parallel search over multiple indexes.")
-    public Stream<NodeResult> multiSearchNode(
-            @Name("labelPropertyMap") final Object labelProperties,
-            @Name("operator") final String operator,
-            @Name("value") final String value)
+    public Stream<SearchNodeResult> multiSearchNode(
+            @Name(
+                            value = "labelPropertyMap",
+                            description =
+                                    "A map that pairs labels with lists of properties. This can also be represented as a JSON string.")
+                    final Object labelProperties,
+            @Name(
+                            value = "operator",
+                            description =
+                                    "The search operator, can be one of: [\"exact\", \"starts with\", \"ends with\", \"contains\", \"<\", \">\", \"=\", \"<>\", \"<=\", \">=\", \"=~\"].")
+                    final String operator,
+            @Name(value = "value", description = "The search value.") final String value)
             throws Exception {
         final var ids = createWorkersFromValidInput(labelProperties, operator, value)
                 .flatMapToLong(w -> w.queryForNodeId().mapToLong(i -> i))
                 .toArray();
         // It's not safe to access a transaction from multiple threads so this part needs to be sequential
-        return Arrays.stream(ids).boxed().distinct().map(id -> new NodeResult(tx.getNodeById(id)));
+        return Arrays.stream(ids).boxed().distinct().map(id -> new SearchNodeResult(tx.getNodeById(id)));
     }
 
     private Stream<QueryWorker> createWorkersFromValidInput(
@@ -225,8 +267,13 @@ public class ParallelNodeSearch {
     }
 
     public static class NodeReducedResult {
+        @Description("The id of the found node.")
         public final long id;
+
+        @Description("The labels of the found node.")
         public final List<String> labels;
+
+        @Description("The matched values of the found node.")
         public final Map<String, Object> values;
 
         public NodeReducedResult(long id, List<String> labels, Map<String, Object> val) {

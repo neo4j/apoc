@@ -23,10 +23,6 @@ import java.io.PrintWriter;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-/**
- * @author mh
- * @since 22.05.16
- */
 public class ProgressReporter implements Reporter {
     private final SizeCounter sizeCounter;
     private final PrintWriter out;
@@ -44,7 +40,7 @@ public class ProgressReporter implements Reporter {
         this.out = out;
         this.time = start;
         this.progressInfo = progressInfo;
-        this.batchSize = progressInfo.batchSize;
+        this.batchSize = progressInfo.getBatchSize();
     }
 
     public ProgressReporter withConsumer(Consumer<ProgressInfo> consumer) {
@@ -92,8 +88,8 @@ public class ProgressReporter implements Reporter {
 
     public void updateRunningBatch(ProgressInfo progressInfo) {
         lastBatch = Math.max(totalEntities / batchSize, lastBatch);
-        progressInfo.batches = lastBatch;
-        this.progressInfo.rows = totalEntities;
+        progressInfo.setBatches(lastBatch);
+        this.progressInfo.setRows(totalEntities);
         this.progressInfo.updateTime(start);
     }
 

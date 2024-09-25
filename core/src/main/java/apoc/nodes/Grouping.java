@@ -60,9 +60,16 @@ public class Grouping {
     public Pools pools;
 
     public static class GroupResult {
+        @Description("A list of grouped nodes represented as virtual nodes.")
         public List<Node> nodes;
+
+        @Description("A list of grouped relationships represented as virtual relationships.")
         public List<Relationship> relationships;
+
+        @Description("The grouping node.")
         public Node node;
+
+        @Description("The grouping relationship.")
         public Relationship relationship;
 
         public GroupResult(Node node, Relationship relationship) {
@@ -89,11 +96,36 @@ public class Grouping {
     @Description("Allows for the aggregation of `NODE` values based on the given properties.\n"
             + "This procedure returns virtual `NODE` values.")
     public Stream<GroupResult> group(
-            @Name("labels") List<String> labelNames,
-            @Name("groupByProperties") List<String> groupByProperties,
-            @Name(value = "aggregations", defaultValue = "[{`*`:\"count\"},{`*`:\"count\"}]")
+            @Name(
+                            value = "labels",
+                            description =
+                                    "The list of node labels to aggregate over. Use `['*']` to indicate all node labels should be looked at.")
+                    List<String> labelNames,
+            @Name(value = "groupByProperties", description = "The property keys to group the nodes by.")
+                    List<String> groupByProperties,
+            @Name(
+                            value = "aggregations",
+                            defaultValue = "[{`*`:\"count\"},{`*`:\"count\"}]",
+                            description =
+                                    "The first map specifies the node properties to aggregate with their corresponding aggregation functions, while the second map specifies the relationship properties for aggregation.")
                     List<Map<String, Object>> aggregations,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        includeRels :: STRING | LIST<STRING>
+                        excludeRels :: STRING | LIST<STRING>,
+                        orphans = true :: BOOLEAN,
+                        selfRels = true :: BOOLEAN,
+                        limitNodes = -1 :: INTEGER,
+                        limitRels = -1 :: INTEGER,
+                        relsPerNode = -1 :: INTEGER,
+                        filter :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
 
         Set<String> labels = new HashSet<>(labelNames);
         if (labels.remove("*"))

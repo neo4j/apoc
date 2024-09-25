@@ -21,7 +21,7 @@ package apoc.cypher;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import apoc.Pools;
-import apoc.result.MapResult;
+import apoc.result.CypherStatementMapResult;
 import apoc.util.Util;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -64,10 +64,11 @@ public class Timeboxed {
     @NotThreadSafe
     @Procedure("apoc.cypher.runTimeboxed")
     @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
-    public Stream<MapResult> runTimeboxed(
-            @Name("statement") String cypher,
-            @Name("params") Map<String, Object> params,
-            @Name("timeout") long timeout) {
+    public Stream<CypherStatementMapResult> runTimeboxed(
+            @Name(value = "statement", description = "The Cypher statement to run.") String cypher,
+            @Name(value = "params", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> params,
+            @Name(value = "timeout", description = "The maximum time the statement can run for.") long timeout) {
 
         final BlockingQueue<Map<String, Object>> queue = new ArrayBlockingQueue<>(100);
         final AtomicReference<Transaction> txAtomic = new AtomicReference<>();
@@ -145,7 +146,7 @@ public class Timeboxed {
             }
         };
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(queueConsumer, Spliterator.ORDERED), false)
-                .map(MapResult::new);
+                .map(CypherStatementMapResult::new);
     }
 
     private void offerToQueue(BlockingQueue<Map<String, Object>> queue, Map<String, Object> map, long timeout) {

@@ -27,7 +27,7 @@ import apoc.export.util.ExportFormat;
 import apoc.export.util.ExportUtils;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.ProgressReporter;
-import apoc.result.ProgressInfo;
+import apoc.result.ExportProgressInfo;
 import apoc.util.Util;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,7 +74,26 @@ public class ExportCSV {
     @NotThreadSafe
     @Procedure("apoc.export.csv.all")
     @Description("Exports the full database to the provided CSV file.")
-    public Stream<ProgressInfo> all(@Name("file") String fileName, @Name("config") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> all(
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            differentiateNulls = false :: BOOLEAN,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCsv(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config, ExportFormat.CSV));
     }
@@ -82,11 +101,28 @@ public class ExportCSV {
     @NotThreadSafe
     @Procedure("apoc.export.csv.data")
     @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided CSV file.")
-    public Stream<ProgressInfo> data(
-            @Name("nodes") List<Node> nodes,
-            @Name("rels") List<Relationship> rels,
-            @Name("file") String fileName,
-            @Name("config") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> data(
+            @Name(value = "nodes", description = "A list of nodes to export.") List<Node> nodes,
+            @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            differentiateNulls = false :: BOOLEAN,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config, ExportFormat.CSV);
         preventBulkImport(exportConfig);
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -96,10 +132,27 @@ public class ExportCSV {
     @NotThreadSafe
     @Procedure("apoc.export.csv.graph")
     @Description("Exports the given graph to the provided CSV file.")
-    public Stream<ProgressInfo> graph(
-            @Name("graph") Map<String, Object> graph,
-            @Name("file") String fileName,
-            @Name("config") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> graph(
+            @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            differentiateNulls = false :: BOOLEAN,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
         String source = String.format("graph: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -113,8 +166,27 @@ public class ExportCSV {
     @NotThreadSafe
     @Procedure("apoc.export.csv.query")
     @Description("Exports the results from running the given Cypher query to the provided CSV file.")
-    public Stream<ProgressInfo> query(
-            @Name("query") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> query(
+            @Name(value = "query", description = "The query used to collect the data for export.") String query,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None':: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            differentiateNulls = false :: BOOLEAN,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config, ExportFormat.CSV);
         preventBulkImport(exportConfig);
         Map<String, Object> params = config == null
@@ -133,11 +205,11 @@ public class ExportCSV {
         }
     }
 
-    private Stream<ProgressInfo> exportCsv(
+    private Stream<ExportProgressInfo> exportCsv(
             @Name("file") String fileName, String source, Object data, ExportConfig exportConfig) {
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "csv";
-        ProgressInfo progressInfo = new ProgressInfo(fileName, source, format);
+        ExportProgressInfo progressInfo = new ExportProgressInfo(fileName, source, format);
         progressInfo.batchSize = exportConfig.getBatchSize();
         ProgressReporter reporter = new ProgressReporter(null, null, progressInfo);
         CsvFormat exporter = new CsvFormat(db, (InternalTransaction) tx);
@@ -158,7 +230,7 @@ public class ExportCSV {
                             dump(data, exportConfig, reporterWithConsumer, cypherFileManager, exporter));
         } else {
             dump(data, exportConfig, reporter, cypherFileManager, exporter);
-            return reporter.stream();
+            return Stream.of((ExportProgressInfo) reporter.getTotal());
         }
     }
 

@@ -19,12 +19,14 @@
 package apoc.result;
 
 import org.neo4j.graphdb.Node;
+import org.neo4j.procedure.Description;
 
 /**
  * @author mh
  * @since 26.02.16
  */
 public class NodeResult {
+    @Description("A node.")
     public final Node node;
 
     public NodeResult(Node node) {

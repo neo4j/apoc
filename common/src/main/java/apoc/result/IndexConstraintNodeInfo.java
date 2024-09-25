@@ -19,30 +19,41 @@
 package apoc.result;
 
 import java.util.List;
+import org.neo4j.procedure.Description;
 
 /**
  * Created by alberto.delazzari on 04/07/17.
  */
 public class IndexConstraintNodeInfo {
 
+    @Description("A generated name for the index or constraint.")
     public final String name;
 
+    @Description("The label associated with the constraint or index.")
     public final Object label;
 
+    @Description("The property keys associated with the constraint or index.")
     public final List<String> properties;
 
+    @Description("The status of the constraint or index.")
     public final String status;
 
+    @Description("The type of the index or constraint.")
     public final String type;
 
+    @Description("If a failure has occurred.")
     public final String failure;
 
+    @Description("The percentage of the constraint or index population. ")
     public final double populationProgress;
 
+    @Description("The number of entries in the given constraint or index.")
     public final long size;
 
+    @Description("A ratio between 0.0 and 1.0, representing how many unique values were seen from the sampling.")
     public final double valuesSelectivity;
 
+    @Description("A descriptor of the constraint or index.")
     public final String userDescription;
 
     /**

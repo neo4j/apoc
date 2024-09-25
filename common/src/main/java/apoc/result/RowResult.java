@@ -19,12 +19,10 @@
 package apoc.result;
 
 import java.util.Map;
+import org.neo4j.procedure.Description;
 
-/**
- * @author mh
- * @since 26.02.16
- */
 public class RowResult {
+    @Description("The result of the validation.")
     public final Map<String, Object> row;
 
     public RowResult(Map<String, Object> row) {

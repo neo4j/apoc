@@ -390,7 +390,20 @@ public class Geocode {
             "Returns the geographic location (latitude, longitude, and description) of the given address using a geocoding service (default: OpenStreetMap).\n"
                     + "This procedure returns at most one result.")
     public Stream<GeoCodeResult> geocodeOnce(
-            @Name("location") String address, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "location", description = "The location to search for.") String address,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            provider = 'osm' :: STRING,
+                            url :: STRING,
+                            reverseUrl: :: STRING,
+                            key :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
         return geocode(address, 1L, false, config);
     }
 
@@ -398,10 +411,28 @@ public class Geocode {
     @Description(
             "Returns the geographic location (latitude, longitude, and description) of the given address using a geocoding service (default: OpenStreetMap).")
     public Stream<GeoCodeResult> geocode(
-            @Name("location") String address,
-            @Name(value = "maxResults", defaultValue = "100") long maxResults,
-            @Name(value = "quotaException", defaultValue = "false") boolean quotaException,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "location", description = "The location to search for.") String address,
+            @Name(value = "maxResults", defaultValue = "100", description = "The maximum number of returned results.")
+                    long maxResults,
+            @Name(
+                            value = "quotaException",
+                            defaultValue = "false",
+                            description =
+                                    "Whether or not to throw an exception when the maximum request quota is reached.")
+                    boolean quotaException,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            provider = 'osm' :: STRING,
+                            url :: STRING,
+                            reverseUrl: :: STRING,
+                            key :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (address == null || address.isEmpty()) return Stream.empty();
         else {
             try {
@@ -422,10 +453,27 @@ public class Geocode {
             "Returns a textual address from the given geographic location (latitude, longitude) using a geocoding service (default: OpenStreetMap).\n"
                     + "This procedure returns at most one result.")
     public Stream<GeoCodeResult> reverseGeocode(
-            @Name("latitude") double latitude,
-            @Name("longitude") double longitude,
-            @Name(value = "quotaException", defaultValue = "false") boolean quotaException,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "latitude", description = "The latitude of the location.") double latitude,
+            @Name(value = "longitude", description = "The longitude of the location.") double longitude,
+            @Name(
+                            value = "quotaException",
+                            defaultValue = "false",
+                            description =
+                                    "Whether or not to throw an exception when the maximum request quota is reached.")
+                    boolean quotaException,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            provider = 'osm' :: STRING,
+                            url :: STRING,
+                            reverseUrl: :: STRING,
+                            key :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
         try {
             return getSupplier(config).reverseGeocode(latitude, longitude, urlAccessChecker);
         } catch (IllegalStateException re) {
@@ -435,10 +483,19 @@ public class Geocode {
     }
 
     public static class GeoCodeResult {
+        @Description("A detailed map of information on the found location.")
         public final Map<String, Object> location;
+
+        @Description("A map of returned data from the given provider.")
         public final Map<String, Object> data;
+
+        @Description("The latitude of the found location.")
         public final Double latitude;
+
+        @Description("The longitude of the found location.")
         public final Double longitude;
+
+        @Description("A description of the found location.")
         public final String description;
 
         public GeoCodeResult(Double latitude, Double longitude, String description, Map<String, Object> data) {

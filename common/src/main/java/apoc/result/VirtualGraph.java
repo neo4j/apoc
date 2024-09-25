@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.procedure.Description;
 
 /**
  * @author mh
@@ -33,6 +34,7 @@ import org.neo4j.graphdb.Relationship;
  */
 public class VirtualGraph {
 
+    @Description("The resulting graph.")
     public final Map<String, Object> graph;
 
     public VirtualGraph(

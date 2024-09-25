@@ -37,8 +37,13 @@ import org.neo4j.procedure.*;
 public class Neo4jLogStream {
 
     public static class FileEntry implements Comparable<FileEntry> {
+        @Description("The line number.")
         public final long lineNo;
+
+        @Description("The content of the line.")
         public final String line;
+
+        @Description("The path to the log file.")
         public final String path;
 
         public FileEntry(long lineNumber, String data, String path) {
@@ -57,7 +62,9 @@ public class Neo4jLogStream {
     @Description("Returns the file contents from the given log, optionally returning only the last n lines.\n"
             + "This procedure requires users to have an admin role.")
     public Stream<FileEntry> stream(
-            @Name("path") String logName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "path", description = "The name of the log file to read.") String logName,
+            @Name(value = "config", defaultValue = "{}", description = "{ last :: INTEGER }")
+                    Map<String, Object> config) {
 
         File logDir = FileUtils.getLogDirectory();
 

@@ -18,33 +18,34 @@
  */
 package apoc.refactor;
 
-import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Description;
 
-/**
- * @author mh
- * @since 25.03.16
- */
-public class NodeRefactorResult {
+public class RefactorRelationshipResult {
     @Description("The internal id of the original entity.")
     public long input;
 
     @Description("The copied entity.")
-    public Node output;
+    public Relationship output;
 
     @Description("Any error that occurred during the copy process.")
     public String error;
 
-    public NodeRefactorResult(Long id) {
+    public RefactorRelationshipResult(Long id) {
         this.input = id;
     }
 
-    public NodeRefactorResult withError(Exception e) {
+    public RefactorRelationshipResult withError(Exception e) {
         this.error = e.getMessage();
         return this;
     }
 
-    public NodeRefactorResult withOther(Node rel) {
+    public RefactorRelationshipResult withError(String message) {
+        this.error = message;
+        return this;
+    }
+
+    public RefactorRelationshipResult withOther(Relationship rel) {
         this.output = rel;
         return this;
     }

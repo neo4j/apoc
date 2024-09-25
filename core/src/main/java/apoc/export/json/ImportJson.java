@@ -21,7 +21,7 @@ package apoc.export.json;
 import apoc.Pools;
 import apoc.export.util.CountingReader;
 import apoc.export.util.ProgressReporter;
-import apoc.result.ProgressInfo;
+import apoc.result.ImportProgressInfo;
 import apoc.util.FileUtils;
 import apoc.util.JsonUtil;
 import apoc.util.Util;
@@ -52,10 +52,30 @@ public class ImportJson {
 
     @Procedure(value = "apoc.import.json", mode = Mode.WRITE)
     @Description("Imports a graph from the provided JSON file.")
-    public Stream<ProgressInfo> all(
-            @Name("urlOrBinaryFile") Object urlOrBinaryFile,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        ProgressInfo result = Util.inThread(pools, () -> {
+    public Stream<ImportProgressInfo> all(
+            @Name(
+                            value = "urlOrBinaryFile",
+                            description = "The name of the file or binary data to import the data from.")
+                    Object urlOrBinaryFile,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        unwindBatchSize = 5000 :: INTEGER,
+                        txBatchSize = 5000 :: INTEGER,
+                        importIdName = "neo4jImportId" :: STRING,
+                        nodePropertyMappings = {} :: MAP,
+                        relPropertyMappings = {} :: MAP,
+                        compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"],
+                        cleanup = false :: BOOLEAN,
+                        nodePropFilter = {} :: MAP,
+                        relPropFilter = {} :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
+        ImportProgressInfo result = Util.inThread(pools, () -> {
             ImportJsonConfig importJsonConfig = new ImportJsonConfig(config);
             String file = null;
             String source = "binary";
@@ -63,7 +83,7 @@ public class ImportJson {
                 file = (String) urlOrBinaryFile;
                 source = "file";
             }
-            ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "json"));
+            ProgressReporter reporter = new ProgressReporter(null, null, new ImportProgressInfo(file, source, "json"));
 
             try (final CountingReader reader = FileUtils.readerFor(
                             urlOrBinaryFile, importJsonConfig.getCompressionAlgo(), urlAccessChecker);
@@ -75,7 +95,7 @@ public class ImportJson {
                 }
             }
 
-            return reporter.getTotal();
+            return (ImportProgressInfo) reporter.getTotal();
         });
         return Stream.of(result);
     }

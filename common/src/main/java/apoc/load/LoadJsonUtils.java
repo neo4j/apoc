@@ -18,7 +18,7 @@
  */
 package apoc.load;
 
-import apoc.result.MapResult;
+import apoc.result.LoadDataMapResult;
 import apoc.util.JsonUtil;
 import apoc.util.Util;
 import java.util.Collections;
@@ -31,7 +31,7 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.TerminationGuard;
 
 public class LoadJsonUtils {
-    public static Stream<MapResult> loadJsonStream(
+    public static Stream<LoadDataMapResult> loadJsonStream(
             @Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary,
             @Name("headers") Map<String, Object> headers,
             @Name("payload") String payload,
@@ -52,7 +52,7 @@ public class LoadJsonUtils {
                 terminationGuard.check();
             }
             if (value instanceof Map) {
-                return Stream.of(new MapResult((Map) value));
+                return Stream.of(new LoadDataMapResult((Map) value));
             }
             if (value instanceof List) {
                 if (((List) value).isEmpty()) return Stream.empty();
@@ -61,13 +61,13 @@ public class LoadJsonUtils {
                         if (terminationGuard != null) {
                             terminationGuard.check();
                         }
-                        return new MapResult((Map) v);
+                        return new LoadDataMapResult((Map) v);
                     });
-                return Stream.of(new MapResult(Collections.singletonMap("result", value)));
+                return Stream.of(new LoadDataMapResult(Collections.singletonMap("result", value)));
             }
             if (!failOnError)
                 throw new RuntimeException("Incompatible Type " + (value == null ? "null" : value.getClass()));
-            else return Stream.of(new MapResult(Collections.emptyMap()));
+            else return Stream.of(new LoadDataMapResult(Collections.emptyMap()));
         });
     }
 }

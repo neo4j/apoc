@@ -65,10 +65,40 @@ public class DegreeDistribution {
         }
 
         public static class Result {
+            @Description("The type of the relationship.")
             public String type;
+
+            @Description("The direction of the relationship.")
             public String direction;
+
+            @Description("The total observed relationships.")
             public long total;
-            public long p50, p75, p90, p95, p99, p999, max, min;
+
+            @Description("The 50th percentile grouping.")
+            public long p50;
+
+            @Description("The 75th percentile grouping.")
+            public long p75;
+
+            @Description("The 90th percentile grouping.")
+            public long p90;
+
+            @Description("The 95th percentile grouping.")
+            public long p95;
+
+            @Description("The 99th percentile grouping.")
+            public long p99;
+
+            @Description("The 99.9th percentile grouping.")
+            public long p999;
+
+            @Description("The max value.")
+            public long max;
+
+            @Description("The min value.")
+            public long min;
+
+            @Description("The mean value.")
             public double mean;
         }
 
@@ -117,7 +147,13 @@ public class DegreeDistribution {
     @Procedure("apoc.stats.degrees")
     @Description(
             "Returns the percentile groupings of the degrees on the `NODE` values connected by the given `RELATIONSHIP` types.")
-    public Stream<DegreeStats.Result> degrees(@Name(value = "relTypes", defaultValue = "") String types) {
+    public Stream<DegreeStats.Result> degrees(
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to calculate the percentile grouping over. If this is empty or omitted, all relationships are used.")
+                    String types) {
         List<DegreeStats> stats = prepareStats(types);
 
         MultiThreadedGlobalGraphOperations.forAllNodes(

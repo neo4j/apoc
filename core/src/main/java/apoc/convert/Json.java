@@ -22,7 +22,6 @@ import static apoc.util.Util.labelStrings;
 import static apoc.util.Util.map;
 
 import apoc.meta.Types;
-import apoc.result.MapResult;
 import apoc.util.JsonUtil;
 import apoc.util.Util;
 import java.io.IOException;
@@ -126,7 +125,10 @@ public class Json {
 
     @Procedure(name = "apoc.convert.setJsonProperty", mode = Mode.WRITE)
     @Description("Serializes the given JSON object and sets it as a property on the given `NODE`.")
-    public void setJsonProperty(@Name("node") Node node, @Name("key") String key, @Name("value") Object value) {
+    public void setJsonProperty(
+            @Name(value = "node", description = "The node to set the JSON property on.") Node node,
+            @Name(value = "key", description = "The name of the property to set.") String key,
+            @Name(value = "value", description = "The property to serialize as a JSON object.") Object value) {
         try {
             node.setProperty(key, JsonUtil.OBJECT_MAPPER.writeValueAsString(value));
         } catch (IOException e) {
@@ -213,14 +215,30 @@ public class Json {
         return JsonUtil.parse(value, path, List.class, pathOptions);
     }
 
+    public record ToTreeMapResult(@Description("The resulting tree.") Map<String, Object> value) {
+        public static final apoc.result.MapResult EMPTY = new apoc.result.MapResult(Collections.emptyMap());
+
+        public static apoc.result.MapResult empty() {
+            return EMPTY;
+        }
+    }
+
     @Procedure(value = "apoc.convert.toTree", deprecatedBy = "apoc.paths.toJsonTree")
     @Description(
             "Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
-    public Stream<MapResult> toTree(
-            @Name("paths") List<Path> paths,
-            @Name(value = "lowerCaseRels", defaultValue = "true") boolean lowerCaseRels,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        if (paths == null || paths.isEmpty()) return Stream.of(new MapResult(Collections.emptyMap()));
+    public Stream<ToTreeMapResult> toTree(
+            @Name(value = "paths", description = "A list of paths to convert into a tree.") List<Path> paths,
+            @Name(
+                            value = "lowerCaseRels",
+                            defaultValue = "true",
+                            description = "Whether or not to convert relationship types to lower case.")
+                    boolean lowerCaseRels,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description = "{ nodes = {} :: MAP, rels = {} :: MAP, sortPaths = true :: BOOLEAN }")
+                    Map<String, Object> config) {
+        if (paths == null || paths.isEmpty()) return Stream.of(new ToTreeMapResult(Collections.emptyMap()));
         ConvertConfig conf = new ConvertConfig(config);
         Map<String, List<String>> nodes = conf.getNodes();
         Map<String, List<String>> rels = conf.getRels();
@@ -266,17 +284,25 @@ public class Json {
                 .distinct()
                 .map(n -> maps.remove(n.getId()))
                 .map(m -> m == null ? Collections.<String, Object>emptyMap() : m)
-                .map(MapResult::new);
+                .map(ToTreeMapResult::new);
     }
 
     @Procedure("apoc.paths.toJsonTree")
     @Description(
             "Creates a stream of nested documents representing the graph as a tree by traversing outgoing relationships.")
-    public Stream<MapResult> pathsToTree(
-            @Name("paths") List<Path> paths,
-            @Name(value = "lowerCaseRels", defaultValue = "true") boolean lowerCaseRels,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
-        if (paths == null || paths.isEmpty()) return Stream.of(new MapResult(Collections.emptyMap()));
+    public Stream<ToTreeMapResult> pathsToTree(
+            @Name(value = "paths", description = "A list of paths to convert into a tree.") List<Path> paths,
+            @Name(
+                            value = "lowerCaseRels",
+                            defaultValue = "true",
+                            description = "Whether or not to convert relationship types to lower case.")
+                    boolean lowerCaseRels,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description = "{ nodes = {} :: MAP, rels = {} :: MAP, sortPaths = true :: BOOLEAN }")
+                    Map<String, Object> config) {
+        if (paths == null || paths.isEmpty()) return Stream.of(new ToTreeMapResult(Collections.emptyMap()));
         ConvertConfig conf = new ConvertConfig(config);
         Map<String, List<String>> nodes = conf.getNodes();
         Map<String, List<String>> rels = conf.getRels();
@@ -341,7 +367,7 @@ public class Json {
         });
 
         var result =
-                nodesToKeepInResult.stream().map(nodeId -> tree.get(nodeId)).map(MapResult::new);
+                nodesToKeepInResult.stream().map(nodeId -> tree.get(nodeId)).map(ToTreeMapResult::new);
         return result;
     }
 

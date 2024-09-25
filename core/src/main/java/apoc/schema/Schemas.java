@@ -87,9 +87,20 @@ public class Schemas {
     @Description("Drops all other existing indexes and constraints when `dropExisting` is `true` (default is `true`).\n"
             + "Asserts at the end of the operation that the given indexes and unique constraints are there.")
     public Stream<AssertSchemaResult> schemaAssert(
-            @Name("indexes") Map<String, List<Object>> indexes,
-            @Name("constraints") Map<String, List<Object>> constraints,
-            @Name(value = "dropExisting", defaultValue = "true") boolean dropExisting) {
+            @Name(
+                            value = "indexes",
+                            description = "A map that pairs labels with lists of properties to create indexes from.")
+                    Map<String, List<Object>> indexes,
+            @Name(
+                            value = "constraints",
+                            description =
+                                    "A map that pairs labels with lists of properties to create constraints from.")
+                    Map<String, List<Object>> constraints,
+            @Name(
+                            value = "dropExisting",
+                            defaultValue = "true",
+                            description = "Whether or not to drop all other existing indexes and constraints.")
+                    boolean dropExisting) {
         return Stream.concat(
                 assertIndexes(indexes, dropExisting).stream(), assertConstraints(constraints, dropExisting).stream());
     }
@@ -99,7 +110,19 @@ public class Schemas {
     @Description("Returns all indexes and constraints information for all `NODE` labels in the database.\n"
             + "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> nodes(
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        labels :: LIST<STRING>,
+                        excludeLabels :: LIST<STRING>,
+                        relationships :: LIST<STRING>,
+                        excludeRelationships :: LIST<STRING>
+                    }
+                    """)
+                    Map<String, Object> config) {
         return indexesAndConstraintsForNode(config);
     }
 
@@ -108,7 +131,19 @@ public class Schemas {
     @Description("Returns the indexes and constraints information for all the relationship types in the database.\n"
             + "It is possible to define a set of relationship types to include or exclude in the config parameters.")
     public Stream<IndexConstraintRelationshipInfo> relationships(
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        labels :: LIST<STRING>,
+                        excludeLabels :: LIST<STRING>,
+                        relationships :: LIST<STRING>,
+                        excludeRelationships :: LIST<STRING>
+                    }
+                    """)
+                    Map<String, Object> config) {
         return indexesAndConstraintsForRelationships(config);
     }
 

@@ -23,7 +23,6 @@ import static apoc.util.Util.containsValueEquals;
 import static apoc.util.Util.toAnyValues;
 import static java.util.Arrays.asList;
 
-import apoc.result.ListResult;
 import apoc.util.Util;
 import java.lang.reflect.Array;
 import java.text.Collator;
@@ -102,12 +101,16 @@ public class Coll {
                 .collect(Collectors.toList());
     }
 
+    public record ZipToRowsListResult(@Description("A zipped pair.") List<Object> value) {}
+
     @Procedure("apoc.coll.zipToRows")
     @Description("Returns the two `LIST<ANY>` values zipped together, with one row per zipped pair.")
-    public Stream<ListResult> zipToRows(@Name("list1") List<Object> list1, @Name("list2") List<Object> list2) {
+    public Stream<ZipToRowsListResult> zipToRows(
+            @Name(value = "list1", description = "The list to zip together with `list2`.") List<Object> list1,
+            @Name(value = "list2", description = "The list to zip together with `list1`.") List<Object> list2) {
         if (list1.isEmpty()) return Stream.empty();
         ListIterator<Object> it = list2.listIterator();
-        return list1.stream().map((e) -> new ListResult(asList(e, it.hasNext() ? it.next() : null)));
+        return list1.stream().map((e) -> new ZipToRowsListResult(asList(e, it.hasNext() ? it.next() : null)));
     }
 
     @UserFunction("apoc.coll.zip")
@@ -197,9 +200,14 @@ public class Coll {
     @Procedure("apoc.coll.elements")
     @Description("Deconstructs a `LIST<ANY>` into identifiers indicating their specific type.")
     public Stream<ElementsResult> elements(
-            @Name("coll") List<Object> list,
-            @Name(value = "limit", defaultValue = "-1") long limit,
-            @Name(value = "offset", defaultValue = "0") long offset) {
+            @Name(value = "coll", description = "A list of values to deconstruct.") List<Object> list,
+            @Name(
+                            value = "limit",
+                            defaultValue = "-1",
+                            description = "The maximum size of elements to deconstruct from the given list.")
+                    long limit,
+            @Name(value = "offset", defaultValue = "0", description = "The offset to start deconstructing from.")
+                    long offset) {
         int elements = (limit < 0 ? list.size() : Math.min((int) (offset + limit), list.size())) - (int) offset;
         if (elements > ElementsResult.MAX_ELEMENTS) elements = ElementsResult.MAX_ELEMENTS;
         ElementsResult result = new ElementsResult();
@@ -210,17 +218,309 @@ public class Coll {
     }
 
     public static class ElementsResult {
-        public Object _1, _2, _3, _4, _5, _6, _7, _8, _9, _10;
-        public String _1s, _2s, _3s, _4s, _5s, _6s, _7s, _8s, _9s, _10s;
-        public Long _1i, _2i, _3i, _4i, _5i, _6i, _7i, _8i, _9i, _10i;
-        public Double _1f, _2f, _3f, _4f, _5f, _6f, _7f, _8f, _9f, _10f;
-        public Boolean _1b, _2b, _3b, _4b, _5b, _6b, _7b, _8b, _9b, _10b;
-        public List<Object> _1l, _2l, _3l, _4l, _5l, _6l, _7l, _8l, _9l, _10l;
-        public Map<String, Object> _1m, _2m, _3m, _4m, _5m, _6m, _7m, _8m, _9m, _10m;
-        public Node _1n, _2n, _3n, _4n, _5n, _6n, _7n, _8n, _9n, _10n;
-        public Relationship _1r, _2r, _3r, _4r, _5r, _6r, _7r, _8r, _9r, _10r;
-        public Path _1p, _2p, _3p, _4p, _5p, _6p, _7p, _8p, _9p, _10p;
+        @Description("The value of the first item.")
+        public Object _1;
+
+        @Description("The value of the second item.")
+        public Object _2;
+
+        @Description("The value of the third item.")
+        public Object _3;
+
+        @Description("The value of the fourth item.")
+        public Object _4;
+
+        @Description("The value of the fifth item.")
+        public Object _5;
+
+        @Description("The value of the sixth item.")
+        public Object _6;
+
+        @Description("The value of the seventh item.")
+        public Object _7;
+
+        @Description("The value of the eighth item.")
+        public Object _8;
+
+        @Description("The value of the ninth item.")
+        public Object _9;
+
+        @Description("The value of the tenth item.")
+        public Object _10;
+
+        @Description("The value of the first item, if it is a string value.")
+        public String _1s;
+
+        @Description("The value of the second item, if it is a string value.")
+        public String _2s;
+
+        @Description("The value of the third item, if it is a string value.")
+        public String _3s;
+
+        @Description("The value of the fourth item, if it is a string value.")
+        public String _4s;
+
+        @Description("The value of the fifth item, if it is a string value.")
+        public String _5s;
+
+        @Description("The value of the sixth item, if it is a string value.")
+        public String _6s;
+
+        @Description("The value of the seventh item, if it is a string value.")
+        public String _7s;
+
+        @Description("The value of the eighth item, if it is a string value.")
+        public String _8s;
+
+        @Description("The value of the ninth item, if it is a string value.")
+        public String _9s;
+
+        @Description("The value of the tenth item, if it is a string value.")
+        public String _10s;
+
+        @Description("The value of the first item, if it is an integer value.")
+        public Long _1i;
+
+        @Description("The value of the second item, if it is an integer value.")
+        public Long _2i;
+
+        @Description("The value of the third item, if it is an integer value.")
+        public Long _3i;
+
+        @Description("The value of the fourth item, if it is an integer value.")
+        public Long _4i;
+
+        @Description("The value of the fifth item, if it is an integer value.")
+        public Long _5i;
+
+        @Description("The value of the sixth item, if it is an integer value.")
+        public Long _6i;
+
+        @Description("The value of the seventh item, if it is an integer value.")
+        public Long _7i;
+
+        @Description("The value of the eighth item, if it is an integer value.")
+        public Long _8i;
+
+        @Description("The value of the ninth item, if it is an integer value.")
+        public Long _9i;
+
+        @Description("The value of the tenth item, if it is an integer value.")
+        public Long _10i;
+
+        @Description("The value of the first item, if it is a float value.")
+        public Double _1f;
+
+        @Description("The value of the second item, if it is a float value.")
+        public Double _2f;
+
+        @Description("The value of the third item, if it is a float value.")
+        public Double _3f;
+
+        @Description("The value of the fourth item, if it is a float value.")
+        public Double _4f;
+
+        @Description("The value of the fifth item, if it is a float value.")
+        public Double _5f;
+
+        @Description("The value of the sixth item, if it is a float value.")
+        public Double _6f;
+
+        @Description("The value of the seventh item, if it is a float value.")
+        public Double _7f;
+
+        @Description("The value of the eighth item, if it is a float value.")
+        public Double _8f;
+
+        @Description("The value of the ninth item, if it is a float value.")
+        public Double _9f;
+
+        @Description("The value of the tenth item, if it is a float value.")
+        public Double _10f;
+
+        @Description("The value of the first item, if it is a boolean value.")
+        public Boolean _1b;
+
+        @Description("The value of the second item, if it is a boolean value.")
+        public Boolean _2b;
+
+        @Description("The value of the third item, if it is a boolean value.")
+        public Boolean _3b;
+
+        @Description("The value of the fourth item, if it is a boolean value.")
+        public Boolean _4b;
+
+        @Description("The value of the fifth item, if it is a boolean value.")
+        public Boolean _5b;
+
+        @Description("The value of the sixth item, if it is a boolean value.")
+        public Boolean _6b;
+
+        @Description("The value of the seventh item, if it is a boolean value.")
+        public Boolean _7b;
+
+        @Description("The value of the eighth item, if it is a boolean value.")
+        public Boolean _8b;
+
+        @Description("The value of the ninth item, if it is a boolean value.")
+        public Boolean _9b;
+
+        @Description("The value of the tenth item, if it is a boolean value.")
+        public Boolean _10b;
+
+        @Description("The value of the first item, if it is a list value.")
+        public List<Object> _1l;
+
+        @Description("The value of the second item, if it is a list value.")
+        public List<Object> _2l;
+
+        @Description("The value of the third item, if it is a list value.")
+        public List<Object> _3l;
+
+        @Description("The value of the fourth item, if it is a list value.")
+        public List<Object> _4l;
+
+        @Description("The value of the fifth item, if it is a list value.")
+        public List<Object> _5l;
+
+        @Description("The value of the sixth item, if it is a list value.")
+        public List<Object> _6l;
+
+        @Description("The value of the seventh item, if it is a list value.")
+        public List<Object> _7l;
+
+        @Description("The value of the eighth item, if it is a list value.")
+        public List<Object> _8l;
+
+        @Description("The value of the ninth item, if it is a list value.")
+        public List<Object> _9l;
+
+        @Description("The value of the tenth item, if it is a list value.")
+        public List<Object> _10l;
+
+        @Description("The value of the first item, if it is a map value.")
+        public Map<String, Object> _1m;
+
+        @Description("The value of the second item, if it is a map value.")
+        public Map<String, Object> _2m;
+
+        @Description("The value of the third item, if it is a map value.")
+        public Map<String, Object> _3m;
+
+        @Description("The value of the fourth item, if it is a map value.")
+        public Map<String, Object> _4m;
+
+        @Description("The value of the fifth item, if it is a map value.")
+        public Map<String, Object> _5m;
+
+        @Description("The value of the sixth item, if it is a map value.")
+        public Map<String, Object> _6m;
+
+        @Description("The value of the seventh item, if it is a map value.")
+        public Map<String, Object> _7m;
+
+        @Description("The value of the eighth item, if it is a map value.")
+        public Map<String, Object> _8m;
+
+        @Description("The value of the ninth item, if it is a map value.")
+        public Map<String, Object> _9m;
+
+        @Description("The value of the tenth item, if it is a map value.")
+        public Map<String, Object> _10m;
+
+        @Description("The value of the first item, if it is a node value.")
+        public Node _1n;
+
+        @Description("The value of the second item, if it is a node value.")
+        public Node _2n;
+
+        @Description("The value of the third item, if it is a node value.")
+        public Node _3n;
+
+        @Description("The value of the fourth item, if it is a node value.")
+        public Node _4n;
+
+        @Description("The value of the fifth item, if it is a node value.")
+        public Node _5n;
+
+        @Description("The value of the sixth item, if it is a node value.")
+        public Node _6n;
+
+        @Description("The value of the seventh item, if it is a node value.")
+        public Node _7n;
+
+        @Description("The value of the eighth item, if it is a node value.")
+        public Node _8n;
+
+        @Description("The value of the ninth item, if it is a node value.")
+        public Node _9n;
+
+        @Description("The value of the tenth item, if it is a node value.")
+        public Node _10n;
+
+        @Description("The value of the first item, if it is a relationship value.")
+        public Relationship _1r;
+
+        @Description("The value of the second item, if it is a relationship value.")
+        public Relationship _2r;
+
+        @Description("The value of the third item, if it is a relationship value.")
+        public Relationship _3r;
+
+        @Description("The value of the fourth item, if it is a relationship value.")
+        public Relationship _4r;
+
+        @Description("The value of the fifth item, if it is a relationship value.")
+        public Relationship _5r;
+
+        @Description("The value of the sixth item, if it is a relationship value.")
+        public Relationship _6r;
+
+        @Description("The value of the seventh item, if it is a relationship value.")
+        public Relationship _7r;
+
+        @Description("The value of the eighth item, if it is a relationship value.")
+        public Relationship _8r;
+
+        @Description("The value of the ninth item, if it is a relationship value.")
+        public Relationship _9r;
+
+        @Description("The value of the tenth item, if it is a relationship value.")
+        public Relationship _10r;
+
+        @Description("The value of the first item, if it is a path value.")
+        public Path _1p;
+
+        @Description("The value of the second item, if it is a path value.")
+        public Path _2p;
+
+        @Description("The value of the third item, if it is a path value.")
+        public Path _3p;
+
+        @Description("The value of the fourth item, if it is a path value.")
+        public Path _4p;
+
+        @Description("The value of the fifth item, if it is a path value.")
+        public Path _5p;
+
+        @Description("The value of the sixth item, if it is a path value.")
+        public Path _6p;
+
+        @Description("The value of the seventh item, if it is a path value.")
+        public Path _7p;
+
+        @Description("The value of the eighth item, if it is a path value.")
+        public Path _8p;
+
+        @Description("The value of the ninth item, if it is a path value.")
+        public Path _9p;
+
+        @Description("The value of the tenth item, if it is a path value.")
+        public Path _10p;
+
+        @Description("The number of deconstructed elements.")
         public long elements;
+
         static final int MAX_ELEMENTS = 10;
 
         void add(Object o) {
@@ -470,12 +770,16 @@ public class Coll {
         }
     }
 
+    public record PartitionListResult(@Description("The partitioned list.") List<Object> value) {}
+
     @Procedure("apoc.coll.partition")
     @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n"
             + "The final `LIST<ANY>` may be smaller than the given batch size.")
-    public Stream<ListResult> partition(@Name("coll") List<Object> list, @Name("batchSize") long batchSize) {
+    public Stream<PartitionListResult> partition(
+            @Name(value = "coll", description = "The list to partition into smaller sublists.") List<Object> list,
+            @Name(value = "batchSize", description = "The max size of each partitioned sublist.") long batchSize) {
         if (list == null || list.isEmpty()) return Stream.empty();
-        return partitionList(list, (int) batchSize).map(ListResult::new);
+        return partitionList(list, (int) batchSize).map(PartitionListResult::new);
     }
 
     @UserFunction("apoc.coll.partition")
@@ -488,10 +792,14 @@ public class Coll {
         return partitionList(list, (int) batchSize).collect(Collectors.toList());
     }
 
+    public record SplitListResult(@Description("The split list.") List<Object> value) {}
+
     @Procedure("apoc.coll.split")
     @Description("Splits a collection by the given value.\n"
             + "The value itself will not be part of the resulting `LIST<ANY>` values.")
-    public Stream<ListResult> split(@Name("coll") List<Object> list, @Name("value") Object value) {
+    public Stream<SplitListResult> split(
+            @Name(value = "coll", description = "The list to split into parts.") List<Object> list,
+            @Name(value = "value", description = "The value to split the given list by.") Object value) {
         if (list == null || list.isEmpty()) return Stream.empty();
         List<Object> l = new ArrayList<>(list);
         List<List<Object>> result = new ArrayList<>(10);
@@ -503,7 +811,7 @@ public class Coll {
             idx = Util.indexOf(l, value);
         }
         if (!l.isEmpty()) result.add(l);
-        return result.stream().map(ListResult::new);
+        return result.stream().map(SplitListResult::new);
     }
 
     private Stream<List<Object>> partitionList(@Name("values") List list, @Name("batchSize") int batchSize) {
@@ -1247,9 +1555,14 @@ public class Coll {
         return result;
     }
 
+    public record PairWithOffsetListResult(@Description("The created pair.") List<Object> value) {}
+
     @Procedure("apoc.coll.pairWithOffset")
     @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
-    public Stream<ListResult> pairWithOffset(@Name("coll") List<Object> values, @Name("offset") long offset) {
-        return pairWithOffsetFn(values, offset).stream().map(ListResult::new);
+    public Stream<PairWithOffsetListResult> pairWithOffset(
+            @Name(value = "coll", description = "The list to create pairs from.") List<Object> values,
+            @Name(value = "offset", description = "The offset to make each pair with from the given list.")
+                    long offset) {
+        return pairWithOffsetFn(values, offset).stream().map(PairWithOffsetListResult::new);
     }
 }

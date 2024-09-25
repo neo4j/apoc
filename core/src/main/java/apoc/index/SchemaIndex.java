@@ -18,7 +18,6 @@
  */
 package apoc.index;
 
-import apoc.result.ListResult;
 import apoc.util.QueueBasedSpliterator;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
@@ -79,22 +78,32 @@ public class SchemaIndex {
     @Context
     public TerminationGuard terminationGuard;
 
+    public record SchemaListResult(
+            @Description("The list of distinct values for the given property.") List<Object> value) {}
+
     @NotThreadSafe
     @Procedure("apoc.schema.properties.distinct")
     @Description("Returns all distinct `NODE` property values for the given key.")
-    public Stream<ListResult> distinct(@Name("label") String label, @Name("key") String key) {
+    public Stream<SchemaListResult> distinct(
+            @Name(value = "label", description = "The node label to find distinct properties on.") String label,
+            @Name(value = "key", description = "The name of the property to find distinct values of.") String key) {
         List<Object> values = distinctCount(label, key)
                 .map(propertyValueCount -> propertyValueCount.value)
                 .collect(Collectors.toList());
-        return Stream.of(new ListResult(values));
+        return Stream.of(new SchemaListResult(values));
     }
 
     @NotThreadSafe
     @Procedure("apoc.schema.properties.distinctCount")
     @Description("Returns all distinct property values and counts for the given key.")
     public Stream<PropertyValueCount> distinctCount(
-            @Name(value = "label", defaultValue = "") String labelName,
-            @Name(value = "key", defaultValue = "") String keyName) {
+            @Name(value = "label", defaultValue = "", description = "The node label to count distinct properties on.")
+                    String labelName,
+            @Name(
+                            value = "key",
+                            defaultValue = "",
+                            description = "The name of the property to count distinct values of.")
+                    String keyName) {
 
         BlockingQueue<PropertyValueCount> queue = new LinkedBlockingDeque<>(100);
         Iterable<IndexDefinition> indexDefinitions =
@@ -268,9 +277,16 @@ public class SchemaIndex {
     }
 
     public static class PropertyValueCount {
+        @Description("The label of the node.")
         public String label;
+
+        @Description("The name of the property key.")
         public String key;
+
+        @Description("The distinct value.")
         public Object value;
+
+        @Description("The number of occurrences of the value.")
         public long count;
 
         public PropertyValueCount(String label, String key, Object value, long count) {

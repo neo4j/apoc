@@ -19,20 +19,26 @@
 package apoc.result;
 
 import java.util.List;
+import org.neo4j.procedure.Description;
 
 /**
  * Created by alberto.delazzari on 04/07/17.
  */
 public class IndexConstraintRelationshipInfo {
 
+    @Description("A generated name for the index or constraint.")
     public final String name;
 
+    @Description("The type of the index or constraint.")
     public final String type;
 
+    @Description("The property keys associated with the constraint or index.")
     public final List<String> properties;
 
+    @Description("The status of the constraint or index.")
     public final String status;
 
+    @Description("The relationship type associated with the constraint or index.")
     public final Object relationshipType;
 
     public IndexConstraintRelationshipInfo(

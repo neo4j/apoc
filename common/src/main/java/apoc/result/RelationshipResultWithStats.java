@@ -20,8 +20,10 @@ package apoc.result;
 
 import java.util.Map;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.procedure.Description;
 
-public class RelationshipResultWithStats extends RelationshipResult {
+public class RelationshipResultWithStats extends UpdatedRelationshipResult {
+    @Description("The returned query statistics.")
     public final Map<String, Object> stats;
 
     public RelationshipResultWithStats(Relationship relationship, Map<String, Object> stats) {

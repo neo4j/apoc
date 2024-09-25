@@ -34,9 +34,16 @@ public class Regression {
 
     // Result class
     public static class Output {
+        @Description("The coefficient of determination.")
         public double r2;
+
+        @Description("The average of the x values.")
         public double avgX;
+
+        @Description("The average of the y values.")
         public double avgY;
+
+        @Description("The calculated slope.")
         public double slope;
 
         public Output(double r2, double avgX, double avgY, double slope) {
@@ -50,7 +57,10 @@ public class Regression {
     @Procedure(name = "apoc.math.regr", mode = Mode.READ)
     @Description(
             "Returns the coefficient of determination (R-squared) for the values of propertyY and propertyX in the given label.")
-    public Stream<Output> regr(@Name("label") String label, @Name("propertyY") String y, @Name("propertyX") String x) {
+    public Stream<Output> regr(
+            @Name(value = "label", description = "The label of the nodes to perform the regression on.") String label,
+            @Name(value = "propertyY", description = "The name of the y property.") String y,
+            @Name(value = "propertyX", description = "The name of the x property.") String x) {
 
         SimpleRegression regr = new SimpleRegression();
         double regrAvgX = 0;

@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.*;
+import org.neo4j.procedure.Description;
 
 public class Tables4LabelsProfile {
     Map<OrderedLabels, PropertyContainerProfile> labelMap;
@@ -37,12 +38,25 @@ public class Tables4LabelsProfile {
      * DAO class that the stored procedure returns
      */
     public class NodeTypePropertiesEntry {
+        @Description("The type of the node.")
         public String nodeType;
+
+        @Description("The labels on the node.")
         public List<String> nodeLabels;
+
+        @Description("The name of the property.")
         public String propertyName;
+
+        @Description("The types this property has.")
         public List<String> propertyTypes;
+
+        @Description("Whether or not this property exists on all nodes of the given type.")
         public boolean mandatory;
+
+        @Description("The number of times this property was observed.")
         public long propertyObservations;
+
+        @Description("The number of times the label was seen.")
         public long totalObservations;
 
         public NodeTypePropertiesEntry(
@@ -64,13 +78,28 @@ public class Tables4LabelsProfile {
     }
 
     public class RelTypePropertiesEntry {
+        @Description("The type of the relationship.")
         public String relType;
+
+        @Description("The labels belonging to the start node.")
         public List<String> sourceNodeLabels;
+
+        @Description("The labels belonging to the end node.")
         public List<String> targetNodeLabels;
+
+        @Description("The name of the property.")
         public String propertyName;
+
+        @Description("The types this property has.")
         public List<String> propertyTypes;
+
+        @Description("Whether or not this property exists on all nodes of the given type.")
         public boolean mandatory;
+
+        @Description("The number of times this property was observed.")
         public long propertyObservations;
+
+        @Description("The number of times the label was seen.")
         public long totalObservations;
 
         public RelTypePropertiesEntry(

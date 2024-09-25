@@ -73,10 +73,15 @@ public class Trigger {
     @Description("Adds a trigger to the given Cypher statement.\n"
             + "The selector for this procedure is {phase:'before/after/rollback/afterAsync'}.")
     public Stream<TriggerInfo> add(
-            @Name("name") String name,
-            @Name("statement") String statement,
-            @Name(value = "selector") Map<String, Object> selector,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "name", description = "The name of the trigger to add.") String name,
+            @Name(value = "statement", description = "The query to run when triggered.") String statement,
+            @Name(
+                            value = "selector",
+                            description =
+                                    "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }")
+                    Map<String, Object> selector,
+            @Name(value = "config", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> config) {
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -101,7 +106,8 @@ public class Trigger {
     @Deprecated
     @Procedure(name = "apoc.trigger.remove", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.drop")
     @Description("Removes the given trigger.")
-    public Stream<TriggerInfo> remove(@Name("name") String name) {
+    public Stream<TriggerInfo> remove(
+            @Name(value = "name", description = "The name of the trigger to drop.") String name) {
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -152,7 +158,8 @@ public class Trigger {
     @Deprecated
     @Procedure(name = "apoc.trigger.pause", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.stop")
     @Description("Pauses the given trigger.")
-    public Stream<TriggerInfo> pause(@Name("name") String name) {
+    public Stream<TriggerInfo> pause(
+            @Name(value = "name", description = "The name of the trigger to pause.") String name) {
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -171,7 +178,8 @@ public class Trigger {
     @Deprecated
     @Procedure(name = "apoc.trigger.resume", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.start")
     @Description("Resumes the given paused trigger.")
-    public Stream<TriggerInfo> resume(@Name("name") String name) {
+    public Stream<TriggerInfo> resume(
+            @Name(value = "name", description = "The name of the trigger to resume.") String name) {
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 

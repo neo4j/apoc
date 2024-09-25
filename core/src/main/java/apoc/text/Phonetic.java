@@ -44,7 +44,11 @@ public class Phonetic {
 
     @Procedure("apoc.text.phoneticDelta")
     @Description("Returns the US_ENGLISH soundex character difference between the two given `STRING` values.")
-    public Stream<PhoneticResult> phoneticDelta(final @Name("text1") String text1, final @Name("text2") String text2) {
+    public Stream<PhoneticResult> phoneticDelta(
+            final @Name(value = "text1", description = "The first string to be compared against the second.") String
+                            text1,
+            final @Name(value = "text2", description = "The second string to be compared against the first.") String
+                            text2) {
         try {
             return Stream.of(new PhoneticResult(
                     US_ENGLISH.soundex(text1), US_ENGLISH.soundex(text2), US_ENGLISH.difference(text1, text2)));
@@ -67,7 +71,13 @@ public class Phonetic {
     }
 
     public static class PhoneticResult {
-        public final String phonetic1, phonetic2;
+        @Description("The phonetic representation of the first string.")
+        public final String phonetic1;
+
+        @Description("The phonetic representation of the second string.")
+        public final String phonetic2;
+
+        @Description("The soundex character difference between the two given strings.")
         public final long delta;
 
         public PhoneticResult(String phonetic1, String phonetic2, Number delta) {

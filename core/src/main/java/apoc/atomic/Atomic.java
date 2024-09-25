@@ -52,10 +52,16 @@ public class Atomic {
     @Description("Sets the given property to the sum of itself and the given `INTEGER` or `FLOAT` value.\n"
             + "The procedure then sets the property to the returned sum.")
     public Stream<AtomicResults> add(
-            @Name("container") Object container,
-            @Name("propertyName") String property,
-            @Name("number") Number number,
-            @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
+            @Name(
+                            value = "container",
+                            description =
+                                    "The node or relationship that contains the property to which the value will be added.")
+                    Object container,
+            @Name(value = "propertyName", description = "The name of the property whose value will be added to.")
+                    String property,
+            @Name(value = "number", description = "The number to add.") Number number,
+            @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
+                    Long retryAttempts) {
         checkIsEntity(container);
         final Number[] newValue = new Number[1];
         final Number[] oldValue = new Number[1];
@@ -82,10 +88,18 @@ public class Atomic {
     @Description("Sets the property of a value to itself minus the given `INTEGER` or `FLOAT` value.\n"
             + "The procedure then sets the property to the returned sum.")
     public Stream<AtomicResults> subtract(
-            @Name("container") Object container,
-            @Name("propertyName") String property,
-            @Name("number") Number number,
-            @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
+            @Name(
+                            value = "container",
+                            description =
+                                    "The node or relationship that contains the property from which the value will be subtracted.")
+                    Object container,
+            @Name(
+                            value = "propertyName",
+                            description = "The name of the property from which the value will be subtracted.")
+                    String property,
+            @Name(value = "number", description = "The number to subtract.") Number number,
+            @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
+                    Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Number[] newValue = new Number[1];
@@ -112,10 +126,15 @@ public class Atomic {
     @Description("Sets the given property to the concatenation of itself and the `STRING` value.\n"
             + "The procedure then sets the property to the returned `STRING`.")
     public Stream<AtomicResults> concat(
-            @Name("container") Object container,
-            @Name("propertyName") String property,
-            @Name("string") String string,
-            @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
+            @Name(
+                            value = "container",
+                            description =
+                                    "The node or relationship that contains the property to which the value will be concatenated.")
+                    Object container,
+            @Name(value = "propertyName", description = "The name of the property to be concatenated.") String property,
+            @Name(value = "string", description = "The string value to concatenate with the property.") String string,
+            @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
+                    Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final String[] newValue = new String[1];
@@ -143,11 +162,16 @@ public class Atomic {
     @Description("Inserts a value at position into the `LIST<ANY>` value of a property.\n"
             + "The procedure then sets the result back on the property.")
     public Stream<AtomicResults> insert(
-            @Name("container") Object container,
-            @Name("propertyName") String property,
-            @Name("position") Long position,
-            @Name("value") Object value,
-            @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
+            @Name(value = "container", description = "The node or relationship that has a property containing a list.")
+                    Object container,
+            @Name(
+                            value = "propertyName",
+                            description = "The name of the property into which the value will be inserted.")
+                    String property,
+            @Name(value = "position", description = "The position in the list to insert the item into.") Long position,
+            @Name(value = "value", description = "The value to insert.") Object value,
+            @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
+                    Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
@@ -189,10 +213,15 @@ public class Atomic {
     @Description("Removes the element at position from the `LIST<ANY>` value of a property.\n"
             + "The procedure then sets the property to the resulting `LIST<ANY>` value.")
     public Stream<AtomicResults> remove(
-            @Name("container") Object container,
-            @Name("propertyName") String property,
-            @Name("position") Long position,
-            @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
+            @Name(value = "container", description = "The node or relationship that has a property containing a list.")
+                    Object container,
+            @Name(
+                            value = "propertyName",
+                            description = "The name of the property from which the value will be removed.")
+                    String property,
+            @Name(value = "position", description = "The position in the list to remove the item from.") Long position,
+            @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
+                    Long retryAttempts) {
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
@@ -236,10 +265,13 @@ public class Atomic {
     @Procedure(name = "apoc.atomic.update", mode = Mode.WRITE)
     @Description("Updates the value of a property with a Cypher operation.")
     public Stream<AtomicResults> update(
-            @Name("container") Object nodeOrRelationship,
-            @Name("propertyName") String property,
-            @Name("operation") String operation,
-            @Name(value = "retryAttempts", defaultValue = "5") Long retryAttempts) {
+            @Name(value = "container", description = "The node or relationship with the property to be updated.")
+                    Object nodeOrRelationship,
+            @Name(value = "propertyName", description = "The name of the property to be updated.") String property,
+            @Name(value = "operation", description = "The operation to perform to update the property.")
+                    String operation,
+            @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
+                    Long retryAttempts) {
         checkIsEntity(nodeOrRelationship);
         Entity entity = Util.rebind(tx, (Entity) nodeOrRelationship);
         final Object[] oldValue = new Object[1];
@@ -297,9 +329,16 @@ public class Atomic {
     }
 
     public class AtomicResults {
+        @Description("The updated node or relationship.")
         public Object container;
+
+        @Description("The name of the updated property.")
         public String property;
+
+        @Description("The original value on the property.")
         public Object oldValue;
+
+        @Description("The new value on the property.")
         public Object newValue;
 
         public AtomicResults(Object container, String property, Object oldValue, Object newValue) {

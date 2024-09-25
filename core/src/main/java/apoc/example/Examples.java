@@ -18,7 +18,6 @@
  */
 package apoc.example;
 
-import apoc.result.ProgressInfo;
 import apoc.util.Util;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.QueryStatistics;
@@ -30,26 +29,73 @@ import org.neo4j.procedure.Mode;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 
-/**
- * @author mh
- * @since 24.05.16
- */
 public class Examples {
 
     @Context
     public Transaction tx;
 
+    public static class ExamplesProgressInfo {
+        @Description("The name of the file containing the movies example.")
+        public final String file;
+
+        @Description("Where the examples were sourced from.")
+        public String source;
+
+        @Description("The format the movies file was in.")
+        public final String format;
+
+        @Description("The number of nodes imported.")
+        public long nodes;
+
+        @Description("The number of relationships imported.")
+        public long relationships;
+
+        @Description("The number of properties imported.")
+        public long properties;
+
+        @Description("The duration of the import.")
+        public long time;
+
+        @Description("The number of rows returned.")
+        public long rows;
+
+        @Description("The size of the batches the import was run in.")
+        public long batchSize = -1;
+
+        @Description("The number of batches the import was run in.")
+        public long batches;
+
+        @Description("Whether the import ran successfully.")
+        public boolean done;
+
+        @Description("The data returned by the import.")
+        public Object data;
+
+        public ExamplesProgressInfo(long nodes, long relationships, long properties, long time) {
+            this.file = "movies.cypher";
+            this.source = "example movie database from themoviedb.org";
+            this.format = "cypher";
+            this.nodes = nodes;
+            this.relationships = relationships;
+            this.properties = properties;
+            this.time = time;
+            this.done = true;
+        }
+    }
+
     @NotThreadSafe
     @Procedure(name = "apoc.example.movies", mode = Mode.WRITE)
     @Description("Seeds the database with the Neo4j movie dataset.")
-    public Stream<ProgressInfo> movies() {
+    public Stream<ExamplesProgressInfo> movies() {
         long start = System.currentTimeMillis();
         String file = "movies.cypher";
         Result result = tx.execute(Util.readResourceFile(file));
         QueryStatistics stats = result.getQueryStatistics();
-        ProgressInfo progress = new ProgressInfo(file, "example movie database from themoviedb.org", "cypher")
-                .update(stats.getNodesCreated(), stats.getRelationshipsCreated(), stats.getPropertiesSet())
-                .done(start);
+        ExamplesProgressInfo progress = new ExamplesProgressInfo(
+                stats.getNodesCreated(),
+                stats.getRelationshipsCreated(),
+                stats.getPropertiesSet(),
+                System.currentTimeMillis() - start);
         result.close();
         return Stream.of(progress);
     }

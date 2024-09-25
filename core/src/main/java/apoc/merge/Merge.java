@@ -21,10 +21,10 @@ package apoc.merge;
 import static java.util.Collections.emptyMap;
 
 import apoc.cypher.Cypher;
-import apoc.result.NodeResult;
 import apoc.result.NodeResultWithStats;
-import apoc.result.RelationshipResult;
 import apoc.result.RelationshipResultWithStats;
+import apoc.result.UpdatedNodeResult;
+import apoc.result.UpdatedRelationshipResult;
 import apoc.util.Util;
 import java.util.List;
 import java.util.Map;
@@ -43,33 +43,63 @@ public class Merge {
 
     @Procedure(value = "apoc.merge.node.eager", mode = Mode.WRITE, eager = true)
     @Description("Merges the given `NODE` values with the given dynamic labels eagerly.")
-    public Stream<NodeResult> nodesEager(
-            @Name("labels") List<String> labelNames,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps", defaultValue = "{}") Map<String, Object> onCreateProps,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+    public Stream<UpdatedNodeResult> nodesEager(
+            @Name(value = "labels", description = "The list of labels used for the generated MERGE statement.")
+                    List<String> labelNames,
+            @Name(value = "identProps", description = "Properties on the node that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(
+                            value = "onCreateProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is matched.")
+                    Map<String, Object> onMatchProps) {
         return nodes(labelNames, identProps, onCreateProps, onMatchProps);
     }
 
     @Procedure(value = "apoc.merge.node", mode = Mode.WRITE)
     @Description("Merges the given `NODE` values with the given dynamic labels.")
-    public Stream<NodeResult> nodes(
-            @Name("labels") List<String> labelNames,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps", defaultValue = "{}") Map<String, Object> onCreateProps,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+    public Stream<UpdatedNodeResult> nodes(
+            @Name(value = "labels", description = "The list of labels used for the generated MERGE statement.")
+                    List<String> labelNames,
+            @Name(value = "identProps", description = "Properties on the node that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(
+                            value = "onCreateProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is matched.")
+                    Map<String, Object> onMatchProps) {
         final Result nodeResult = getNodeResult(labelNames, identProps, onCreateProps, onMatchProps);
-        return nodeResult.columnAs("n").stream().map(node -> new NodeResult((Node) node));
+        return nodeResult.columnAs("n").stream().map(node -> new UpdatedNodeResult((Node) node));
     }
 
     @Procedure(value = "apoc.merge.nodeWithStats.eager", mode = Mode.WRITE, eager = true)
     @Description(
             "Merges the given `NODE` values with the given dynamic labels eagerly. Provides queryStatistics in the result.")
     public Stream<NodeResultWithStats> nodeWithStatsEager(
-            @Name("labels") List<String> labelNames,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps", defaultValue = "{}") Map<String, Object> onCreateProps,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+            @Name(value = "labels", description = "The list of labels used for the generated MERGE statement.")
+                    List<String> labelNames,
+            @Name(value = "identProps", description = "Properties on the node that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(
+                            value = "onCreateProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is matched.")
+                    Map<String, Object> onMatchProps) {
         return nodeWithStats(labelNames, identProps, onCreateProps, onMatchProps);
     }
 
@@ -77,10 +107,20 @@ public class Merge {
     @Description(
             "Merges the given `NODE` values with the given dynamic labels. Provides queryStatistics in the result.")
     public Stream<NodeResultWithStats> nodeWithStats(
-            @Name("labels") List<String> labelNames,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps", defaultValue = "{}") Map<String, Object> onCreateProps,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+            @Name(value = "labels", description = "The list of labels used for the generated MERGE statement.")
+                    List<String> labelNames,
+            @Name(value = "identProps", description = "Properties on the node that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(
+                            value = "onCreateProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a node is matched.")
+                    Map<String, Object> onMatchProps) {
         final Result nodeResult = getNodeResult(labelNames, identProps, onCreateProps, onMatchProps);
         return nodeResult.columnAs("n").stream()
                 .map(node -> new NodeResultWithStats((Node) node, Cypher.toMap(nodeResult.getQueryStatistics())));
@@ -118,27 +158,39 @@ public class Merge {
 
     @Procedure(value = "apoc.merge.relationship", mode = Mode.WRITE)
     @Description("Merges the given `RELATIONSHIP` values with the given dynamic types/properties.")
-    public Stream<RelationshipResult> relationship(
-            @Name("startNode") Node startNode,
-            @Name("relType") String relType,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps") Map<String, Object> onCreateProps,
-            @Name("endNode") Node endNode,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+    public Stream<UpdatedRelationshipResult> relationship(
+            @Name(value = "startNode", description = "The start node of the relationship.") Node startNode,
+            @Name(value = "relType", description = "The type of the relationship.") String relType,
+            @Name(value = "identProps", description = "Properties on the relationship that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(value = "onCreateProps", description = "Properties that are merged when a relationship is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(value = "endNode", description = "The end node of the relationship.") Node endNode,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a relationship is matched.")
+                    Map<String, Object> onMatchProps) {
         final Result execute = getRelResult(startNode, relType, identProps, onCreateProps, endNode, onMatchProps);
-        return execute.columnAs("r").stream().map(rel -> new RelationshipResult((Relationship) rel));
+        return execute.columnAs("r").stream().map(rel -> new UpdatedRelationshipResult((Relationship) rel));
     }
 
     @Procedure(value = "apoc.merge.relationshipWithStats", mode = Mode.WRITE)
     @Description(
             "Merges the given `RELATIONSHIP` values with the given dynamic types/properties. Provides queryStatistics in the result.")
     public Stream<RelationshipResultWithStats> relationshipWithStats(
-            @Name("startNode") Node startNode,
-            @Name("relType") String relType,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps") Map<String, Object> onCreateProps,
-            @Name("endNode") Node endNode,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+            @Name(value = "startNode", description = "The start node of the relationship.") Node startNode,
+            @Name(value = "relType", description = "The type of the relationship.") String relType,
+            @Name(value = "identProps", description = "Properties on the relationship that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(value = "onCreateProps", description = "Properties that are merged when a relationship is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(value = "endNode", description = "The end node of the relationship.") Node endNode,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a relationship is matched.")
+                    Map<String, Object> onMatchProps) {
         final Result relResult = getRelResult(startNode, relType, identProps, onCreateProps, endNode, onMatchProps);
         return relResult.columnAs("r").stream()
                 .map(rel -> new RelationshipResultWithStats(
@@ -180,13 +232,19 @@ public class Merge {
 
     @Procedure(value = "apoc.merge.relationship.eager", mode = Mode.WRITE, eager = true)
     @Description("Merges the given `RELATIONSHIP` values with the given dynamic types/properties eagerly.")
-    public Stream<RelationshipResult> relationshipEager(
-            @Name("startNode") Node startNode,
-            @Name("relType") String relType,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps") Map<String, Object> onCreateProps,
-            @Name(value = "endNode") Node endNode,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+    public Stream<UpdatedRelationshipResult> relationshipEager(
+            @Name(value = "startNode", description = "The start node of the relationship.") Node startNode,
+            @Name(value = "relType", description = "The type of the relationship.") String relType,
+            @Name(value = "identProps", description = "Properties on the relationship that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(value = "onCreateProps", description = "Properties that are merged when a relationship is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(value = "endNode", description = "The end node of the relationship.") Node endNode,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a relationship is matched.")
+                    Map<String, Object> onMatchProps) {
         return relationship(startNode, relType, identProps, onCreateProps, endNode, onMatchProps);
     }
 
@@ -194,12 +252,18 @@ public class Merge {
     @Description(
             "Merges the given `RELATIONSHIP` values with the given dynamic types/properties eagerly. Provides queryStatistics in the result.")
     public Stream<RelationshipResultWithStats> relationshipWithStatsEager(
-            @Name("startNode") Node startNode,
-            @Name("relType") String relType,
-            @Name("identProps") Map<String, Object> identProps,
-            @Name(value = "onCreateProps") Map<String, Object> onCreateProps,
-            @Name("endNode") Node endNode,
-            @Name(value = "onMatchProps", defaultValue = "{}") Map<String, Object> onMatchProps) {
+            @Name(value = "startNode", description = "The start node of the relationship.") Node startNode,
+            @Name(value = "relType", description = "The type of the relationship.") String relType,
+            @Name(value = "identProps", description = "Properties on the relationship that are always merged.")
+                    Map<String, Object> identProps,
+            @Name(value = "onCreateProps", description = "Properties that are merged when a relationship is created.")
+                    Map<String, Object> onCreateProps,
+            @Name(value = "endNode", description = "The end node of the relationship.") Node endNode,
+            @Name(
+                            value = "onMatchProps",
+                            defaultValue = "{}",
+                            description = "Properties that are merged when a relationship is matched.")
+                    Map<String, Object> onMatchProps) {
         return relationshipWithStats(startNode, relType, identProps, onCreateProps, endNode, onMatchProps);
     }
 

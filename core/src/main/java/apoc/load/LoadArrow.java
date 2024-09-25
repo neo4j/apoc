@@ -18,7 +18,7 @@
  */
 package apoc.load;
 
-import apoc.result.MapResult;
+import apoc.result.LoadDataMapResult;
 import apoc.util.FileUtils;
 import apoc.util.JsonUtil;
 import apoc.util.Util;
@@ -60,7 +60,7 @@ public class LoadArrow {
     @Context
     public URLAccessChecker urlAccessChecker;
 
-    private static class ArrowSpliterator extends Spliterators.AbstractSpliterator<MapResult> {
+    private static class ArrowSpliterator extends Spliterators.AbstractSpliterator<LoadDataMapResult> {
 
         private final ArrowReader reader;
         private final VectorSchemaRoot schemaRoot;
@@ -75,7 +75,7 @@ public class LoadArrow {
         }
 
         @Override
-        public synchronized boolean tryAdvance(Consumer<? super MapResult> action) {
+        public synchronized boolean tryAdvance(Consumer<? super LoadDataMapResult> action) {
             try {
                 if (counter.get() >= schemaRoot.getRowCount()) {
                     if (reader.loadNextBatch()) {
@@ -90,7 +90,7 @@ public class LoadArrow {
                                 (map, fieldVector) -> map.put(fieldVector.getName(), read(fieldVector, counter.get())),
                                 HashMap::putAll); // please look at https://bugs.openjdk.java.net/browse/JDK-8148463
                 counter.incrementAndGet();
-                action.accept(new MapResult(row));
+                action.accept(new LoadDataMapResult(row));
                 return true;
             } catch (Exception e) {
                 return false;
@@ -100,8 +100,10 @@ public class LoadArrow {
 
     @Procedure(name = "apoc.load.arrow.stream")
     @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow byte array.")
-    public Stream<MapResult> stream(
-            @Name("source") byte[] source, @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
+    public Stream<LoadDataMapResult> stream(
+            @Name(value = "source", description = "The data to load.") byte[] source,
+            @Name(value = "config", defaultValue = "{}", description = "This value is never used.")
+                    Map<String, Object> config)
             throws IOException {
         RootAllocator allocator = new RootAllocator();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(source);
@@ -118,8 +120,10 @@ public class LoadArrow {
 
     @Procedure(name = "apoc.load.arrow")
     @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.")
-    public Stream<MapResult> file(
-            @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
+    public Stream<LoadDataMapResult> file(
+            @Name(value = "file", description = "The name of the file to import data from.") String fileName,
+            @Name(value = "config", defaultValue = "{}", description = "This value is never used.")
+                    Map<String, Object> config)
             throws IOException, URISyntaxException, URLAccessValidationError {
         final SeekableByteChannel channel = FileUtils.inputStreamFor(fileName, null, null, null, urlAccessChecker)
                 .asChannel();

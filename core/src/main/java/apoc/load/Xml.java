@@ -27,8 +27,7 @@ import static apoc.util.Util.getStreamConnection;
 import apoc.ApocConfig;
 import apoc.export.util.CountingInputStream;
 import apoc.generate.config.InvalidConfigException;
-import apoc.result.MapResult;
-import apoc.result.NodeResult;
+import apoc.result.LoadDataMapResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
 import apoc.util.FileUtils;
@@ -114,11 +113,31 @@ public class Xml {
 
     @Procedure("apoc.load.xml")
     @Description("Loads a single nested `MAP` from an XML URL (e.g. web-API).")
-    public Stream<MapResult> xml(
-            @Name("urlOrBinary") Object urlOrBinary,
-            @Name(value = "path", defaultValue = "/") String path,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config,
-            @Name(value = "simple", defaultValue = "false") boolean simpleMode)
+    public Stream<LoadDataMapResult> xml(
+            @Name(value = "urlOrBinary", description = "The name of the file or binary data to import the data from.")
+                    Object urlOrBinary,
+            @Name(
+                            value = "path",
+                            defaultValue = "/",
+                            description = "An xPath expression to select nodes from the given XML document.")
+                    String path,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnError = true :: BOOLEAN,
+                        headers = {} :: MAP,
+                        compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"]
+                    }
+                    """)
+                    Map<String, Object> config,
+            @Name(
+                            value = "simple",
+                            defaultValue = "false",
+                            description = "Whether or not to parse the given XML in simple mode.")
+                    boolean simpleMode)
             throws Exception {
         return xmlXpathToMapResult(urlOrBinary, simpleMode, path, config);
     }
@@ -149,7 +168,7 @@ public class Xml {
                 .orElse(null);
     }
 
-    private Stream<MapResult> xmlXpathToMapResult(
+    private Stream<LoadDataMapResult> xmlXpathToMapResult(
             Object urlOrBinary, boolean simpleMode, String path, Map<String, Object> config) throws Exception {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);
@@ -163,14 +182,14 @@ public class Xml {
                     urlAccessChecker);
             return parse(is, simpleMode, path, failOnError);
         } catch (Exception e) {
-            if (!failOnError) return Stream.of(new MapResult(Collections.emptyMap()));
+            if (!failOnError) return Stream.of(new LoadDataMapResult(Collections.emptyMap()));
             else throw e;
         }
     }
 
-    private Stream<MapResult> parse(InputStream data, boolean simpleMode, String path, boolean failOnError)
+    private Stream<LoadDataMapResult> parse(InputStream data, boolean simpleMode, String path, boolean failOnError)
             throws Exception {
-        List<MapResult> result = new ArrayList<>();
+        List<LoadDataMapResult> result = new ArrayList<>();
         try {
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
@@ -193,14 +212,14 @@ public class Xml {
 
                 handleNode(stack, nodeList.item(i), simpleMode);
                 for (int index = 0; index < stack.size(); index++) {
-                    result.add(new MapResult(stack.pollFirst()));
+                    result.add(new LoadDataMapResult(stack.pollFirst()));
                 }
             }
         } catch (FileNotFoundException e) {
-            if (!failOnError) return Stream.of(new MapResult(Collections.emptyMap()));
+            if (!failOnError) return Stream.of(new LoadDataMapResult(Collections.emptyMap()));
             else throw e;
         } catch (Exception e) {
-            if (!failOnError) return Stream.of(new MapResult(Collections.emptyMap()));
+            if (!failOnError) return Stream.of(new LoadDataMapResult(Collections.emptyMap()));
             else if (e instanceof SAXParseException && e.getMessage().contains("DOCTYPE is disallowed"))
                 throw generateXmlDoctypeException();
             else throw e;
@@ -521,11 +540,28 @@ public class Xml {
         }
     }
 
+    public record ImportNodeResult(@Description("An imported node.") org.neo4j.graphdb.Node node) {}
+
     @Procedure(mode = Mode.WRITE, value = "apoc.import.xml")
     @Description("Imports a graph from the provided XML file.")
-    public Stream<NodeResult> importToGraph(
-            @Name("urlOrBinary") Object urlOrBinary,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config)
+    public Stream<ImportNodeResult> importToGraph(
+            @Name(value = "urlOrBinary", description = "The name of the file or binary data to import the data from.")
+                    Object urlOrBinary,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        connectCharacters = false :: BOOLEAN,
+                        filterLeadingWhitespace = false :: BOOLEAN,
+                        delimiter = " " :: STRING,
+                        label :: STRING,
+                        relType :: STRING,
+                        charactersForTag :: MAP
+                    }
+                    """)
+                    Map<String, Object> config)
             throws IOException, XMLStreamException, URISyntaxException, URLAccessValidationError {
         XmlImportConfig importConfig = new XmlImportConfig(config);
         // TODO: make labels, reltypes and magic properties configurable
@@ -608,7 +644,7 @@ public class Xml {
         if (!state.isEmpty()) {
             throw new IllegalStateException("non empty parents, this indicates a bug");
         }
-        return Stream.of(new NodeResult(root));
+        return Stream.of(new ImportNodeResult(root));
     }
 
     private void createCharactersNode(String currentWord, ImportState state, XmlImportConfig importConfig) {

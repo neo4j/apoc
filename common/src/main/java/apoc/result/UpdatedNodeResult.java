@@ -18,20 +18,24 @@
  */
 package apoc.result;
 
-import java.util.List;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.procedure.Description;
 
-public class GraphResult {
-    @Description("Nodes representing the meta data.")
-    public final List<Node> nodes;
+public class UpdatedNodeResult {
+    @Description("The updated node.")
+    public final Node node;
 
-    @Description("Relationships representing the meta data.")
-    public final List<Relationship> relationships;
+    public UpdatedNodeResult(Node node) {
+        this.node = node;
+    }
 
-    public GraphResult(List<Node> nodes, List<Relationship> relationships) {
-        this.nodes = nodes;
-        this.relationships = relationships;
+    @Override
+    public boolean equals(Object o) {
+        return this == o || o != null && getClass() == o.getClass() && node.equals(((UpdatedNodeResult) o).node);
+    }
+
+    @Override
+    public int hashCode() {
+        return node.hashCode();
     }
 }

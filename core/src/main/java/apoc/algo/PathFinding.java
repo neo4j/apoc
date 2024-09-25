@@ -47,12 +47,19 @@ public class PathFinding {
     @Description(
             "Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.")
     public Stream<WeightedPathResult> aStar(
-            @Name("startNode") Node startNode,
-            @Name("endNode") Node endNode,
-            @Name("relTypesAndDirections") String relTypesAndDirs,
-            @Name("weightPropertyName") String weightPropertyName,
-            @Name("latPropertyName") String latPropertyName,
-            @Name("lonPropertyName") String lonPropertyName) {
+            @Name(value = "startNode", description = "The node to start the search from.") Node startNode,
+            @Name(value = "endNode", description = "The node to end the search on.") Node endNode,
+            @Name(
+                            value = "relTypesAndDirections",
+                            description =
+                                    "The relationship types to restrict the algorithm to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String relTypesAndDirs,
+            @Name(value = "weightPropertyName", description = "The name of the property to use as the weight.")
+                    String weightPropertyName,
+            @Name(value = "latPropertyName", description = "The name of the property to use as the latitude.")
+                    String latPropertyName,
+            @Name(value = "lonPropertyName", description = "The name of the property to use as the longitude.")
+                    String lonPropertyName) {
 
         PathFinder<WeightedPath> algo = GraphAlgoFactory.aStar(
                 new BasicEvaluationContext(tx, db),
@@ -67,10 +74,18 @@ public class PathFinding {
             "Runs the A* search algorithm to find the optimal path between two `NODE` values, using the given `RELATIONSHIP` property name for the cost function.\n"
                     + "This procedure looks for weight, latitude and longitude properties in the config.")
     public Stream<WeightedPathResult> aStarConfig(
-            @Name("startNode") Node startNode,
-            @Name("endNode") Node endNode,
-            @Name("relTypesAndDirections") String relTypesAndDirs,
-            @Name("config") Map<String, Object> config) {
+            @Name(value = "startNode", description = "The node to start the search from.") Node startNode,
+            @Name(value = "endNode", description = "The node to end the search on.") Node endNode,
+            @Name(
+                            value = "relTypesAndDirections",
+                            description =
+                                    "The relationship types to restrict the algorithm to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String relTypesAndDirs,
+            @Name(
+                            value = "config",
+                            description =
+                                    "{ weight = 'distance' :: STRING, default = Double.MAX_VALUE :: FLOAT, y = 'latitude' :: STRING, x = 'longitude' :: STRING, pointPropName :: STRING }")
+                    Map<String, Object> config) {
 
         config = config == null ? Collections.emptyMap() : config;
         String relationshipCostPropertyKey =
@@ -96,12 +111,26 @@ public class PathFinding {
     @Procedure("apoc.algo.dijkstra")
     @Description("Runs Dijkstra's algorithm using the given `RELATIONSHIP` property as the cost function.")
     public Stream<WeightedPathResult> dijkstra(
-            @Name("startNode") Node startNode,
-            @Name("endNode") Node endNode,
-            @Name("relTypesAndDirections") String relTypesAndDirs,
-            @Name("weightPropertyName") String weightPropertyName,
-            @Name(value = "defaultWeight", defaultValue = "NaN") double defaultWeight,
-            @Name(value = "numberOfWantedPaths", defaultValue = "1") long numberOfWantedPaths) {
+            @Name(value = "startNode", description = "The node to start the search from.") Node startNode,
+            @Name(value = "endNode", description = "The node to end the search on.") Node endNode,
+            @Name(
+                            value = "relTypesAndDirections",
+                            description =
+                                    "The relationship types to restrict the algorithm to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String relTypesAndDirs,
+            @Name(value = "weightPropertyName", description = "The name of the property to use as the weight.")
+                    String weightPropertyName,
+            @Name(
+                            value = "defaultWeight",
+                            defaultValue = "NaN",
+                            description =
+                                    "The `defaultWeight` is used when no specific weight is provided for the given relationship or node. The default value for defaultWeight is NaN.")
+                    double defaultWeight,
+            @Name(
+                            value = "numberOfWantedPaths",
+                            defaultValue = "1",
+                            description = "The number of wanted paths to return.")
+                    long numberOfWantedPaths) {
 
         PathFinder<WeightedPath> algo = GraphAlgoFactory.dijkstra(
                 buildPathExpander(relTypesAndDirs),
@@ -116,10 +145,15 @@ public class PathFinding {
             "Runs a search algorithm to find all of the simple paths between the given `RELATIONSHIP` values, up to a max depth described by `maxNodes`.\n"
                     + "The returned paths will not contain loops.")
     public Stream<PathResult> allSimplePaths(
-            @Name("startNode") Node startNode,
-            @Name("endNode") Node endNode,
-            @Name("relTypesAndDirections") String relTypesAndDirs,
-            @Name("maxNodes") long maxNodes) {
+            @Name(value = "startNode", description = "The node to start the search from.") Node startNode,
+            @Name(value = "endNode", description = "The node to end the search on.") Node endNode,
+            @Name(
+                            value = "relTypesAndDirections",
+                            description =
+                                    "The relationship types to restrict the algorithm to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String relTypesAndDirs,
+            @Name(value = "maxNodes", description = "The max depth (in terms of nodes) the algorithm will explore.")
+                    long maxNodes) {
 
         PathFinder<Path> algo = GraphAlgoFactory.allSimplePaths(
                 new BasicEvaluationContext(tx, db), buildPathExpander(relTypesAndDirs), (int) maxNodes);

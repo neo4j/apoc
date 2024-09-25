@@ -25,7 +25,6 @@ import static org.neo4j.token.api.TokenConstants.ANY_RELATIONSHIP_TYPE;
 
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.result.GraphResult;
-import apoc.result.MapResult;
 import apoc.result.VirtualGraph;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
@@ -103,19 +102,50 @@ public class Meta {
      * Represents the result of a metadata operation.
      */
     public static class MetaResult {
+        @Description("The label or type name.")
         public String label;
+
+        @Description("The property name.")
         public String property;
+
+        @Description("The count of seen values.")
         public long count;
+
+        @Description("If all seen values are unique.")
         public boolean unique;
+
+        @Description("If an index exists for this property.")
         public boolean index;
+
+        @Description("If an existence constraint exists for this property.")
         public boolean existence;
+
+        @Description("The type represented by this row.")
         public String type;
+
+        @Description(
+                "Indicates whether the property is an array. If the type column is \"RELATIONSHIP,\" this will be true if there is at least one node with two outgoing relationships of the type specified by the label or property column.")
         public boolean array;
+
+        @Description("This is always null.")
         public List<Object> sample;
+
+        @Description(
+                "The ratio (rounded down) of the count of outgoing relationships for a specific label and relationship type relative to the total count of those patterns.")
         public long left; // 0,1,
+
+        @Description(
+                "The ratio (rounded down) of the count of incoming relationships for a specific label and relationship type relative to the total count of those patterns.")
         public long right; // 0,1,many
+
+        @Description("The labels of connect nodes.")
         public List<String> other = new ArrayList<>();
+
+        @Description(
+                "For uniqueness constraints, this field shows other labels present on nodes that also contain the uniqueness constraint.")
         public List<String> otherLabels = new ArrayList<>();
+
+        @Description("Whether this refers to a node or a relationship.")
         public String elementType;
     }
 
@@ -228,14 +258,31 @@ public class Meta {
      * It includes counts for labels, relationship types, property keys, nodes, relationships, and various maps for stats.
      */
     public static class MetaStats {
+        @Description("The total number of distinct node labels.")
         public final long labelCount;
+
+        @Description("The total number of distinct relationship types.")
         public final long relTypeCount;
+
+        @Description("The count of property keys.")
         public final long propertyKeyCount;
+
+        @Description("The total number of nodes.")
         public final long nodeCount;
+
+        @Description("The total number of relationships.")
         public final long relCount;
+
+        @Description("A map of labels to their count.")
         public final Map<String, Long> labels;
+
+        @Description("A map of relationship types per start or end node label.")
         public final Map<String, Long> relTypes;
+
+        @Description("A map of relationship types to their count.")
         public final Map<String, Long> relTypesCount;
+
+        @Description("A map containing all the given return fields from this procedure.")
         public final Map<String, Object> stats;
 
         /**
@@ -446,8 +493,13 @@ public class Meta {
     @Procedure("apoc.meta.data.of")
     @Description("Examines the given sub-graph and returns a table of metadata.")
     public Stream<MetaResult> dataOf(
-            @Name(value = "graph") Object graph,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "graph", description = "The graph to extract metadata from.") Object graph,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "Number of nodes to sample, setting sample to `-1` will remove sampling; { sample = 1000 :: INTEGER }")
+                    Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         final SubGraph subGraph;
         if (graph instanceof String) {
@@ -476,16 +528,30 @@ public class Meta {
     @NotThreadSafe
     @Procedure("apoc.meta.data")
     @Description("Examines the full graph and returns a table of metadata.")
-    public Stream<MetaResult> data(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<MetaResult> data(
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "Number of nodes to sample, setting sample to `-1` will remove sampling; { sample = 1000 :: INTEGER }")
+                    Map<String, Object> config) {
         SampleMetaConfig metaConfig = new SampleMetaConfig(config);
         return collectMetaData(DatabaseSubGraph.optimizedForCount(transaction, kernelTx), metaConfig).values().stream()
                 .flatMap(x -> x.values().stream());
     }
 
+    public record MetaMapResult(@Description("Meta information represented as a map.") Map<String, Object> value) {}
+
     @NotThreadSafe
     @Procedure("apoc.meta.schema")
     @Description("Examines the given sub-graph and returns metadata as a `MAP`.")
-    public Stream<MapResult> schema(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<MetaMapResult> schema(
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "Number of nodes to sample, setting sample to `-1` will remove sampling; { sample = 1000 :: INTEGER }")
+                    Map<String, Object> config) {
         MetaStats metaStats = collectStats();
         SampleMetaConfig metaConfig = new SampleMetaConfig(config);
         Map<MetadataKey, Map<String, MetaItem>> metaData =
@@ -506,7 +572,7 @@ public class Meta {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         }
         nodes.putAll(relationships);
-        return Stream.of(new MapResult(nodes));
+        return Stream.of(new MetaMapResult(nodes));
     }
 
     /**
@@ -519,7 +585,21 @@ public class Meta {
     @Description(
             "Examines the full graph and returns a table of metadata with information about the `NODE` values therein.")
     public Stream<Tables4LabelsProfile.NodeTypePropertiesEntry> nodeTypeProperties(
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            includeLabels = [] :: LIST<STRING>,
+                            includeRels = [] :: LIST<STRING>,
+                            excludeLabels = [] :: LIST<STRING>,
+                            excludeRels = [] :: LIST<STRING>,
+                            sample = 1000 :: INTEGER,
+                            maxRels = 100 :: INTEGER
+                    }
+                    """)
+                    Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         try {
             return collectTables4LabelsProfile(metaConfig).asNodeStream();
@@ -539,7 +619,21 @@ public class Meta {
     @Description(
             "Examines the full graph and returns a table of metadata with information about the `RELATIONSHIP` values therein.")
     public Stream<Tables4LabelsProfile.RelTypePropertiesEntry> relTypeProperties(
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            includeLabels = [] :: LIST<STRING>,
+                            includeRels = [] :: LIST<STRING>,
+                            excludeLabels = [] :: LIST<STRING>,
+                            excludeRels = [] :: LIST<STRING>,
+                            sample = 1000 :: INTEGER,
+                            maxRels = 100 :: INTEGER
+                    }
+                    """)
+                    Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         try {
             return collectTables4LabelsProfile(metaConfig).asRelStream();
@@ -1013,7 +1107,13 @@ public class Meta {
     @NotThreadSafe
     @Procedure("apoc.meta.graph")
     @Description("Examines the full graph and returns a meta-graph.")
-    public Stream<GraphResult> graph(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<GraphResult> graph(
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "The number of nodes whose relationships are checked to remove false positives and the number of relationships to read per sampled node. A value of -1 will read all; { sample = 1 :: INTEGER, maxRels = -1 :: INTEGER }")
+                    Map<String, Object> config) {
         SampleMetaConfig metaConfig = new SampleMetaConfig(config, false);
         return metaGraph(DatabaseSubGraph.optimizedForCount(transaction, kernelTx), null, null, true, metaConfig);
     }
@@ -1022,8 +1122,14 @@ public class Meta {
     @Procedure("apoc.meta.graph.of")
     @Description("Examines the given sub-graph and returns a meta-graph.")
     public Stream<GraphResult> graphOf(
-            @Name(value = "graph", defaultValue = "{}") Object graph,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "graph", defaultValue = "{}", description = "The graph to extract metadata from.")
+                    Object graph,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "The number of nodes whose relationships are checked to remove false positives and the number of relationships to read per sampled node. A value of -1 will read all; { sample = 1 :: INTEGER, maxRels = -1 :: INTEGER, addRelationshipsBetweenNodes = true :: BOOLEAN }")
+                    Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config, false);
         final SubGraph subGraph;
         if (graph instanceof String) {
@@ -1198,7 +1304,8 @@ public class Meta {
     @Description("Examines the full graph and returns a meta-graph.\n"
             + "Unlike `apoc.meta.graph`, this procedure does not filter away non-existing paths.")
     public Stream<GraphResult> graphSample(
-            @Name(value = "config", defaultValue = "{}") @Deprecated Map<String, Object> config) {
+            @Name(value = "config", defaultValue = "{}", description = "Empty map (deprecated).") @Deprecated
+                    Map<String, Object> config) {
         return metaGraph(
                 DatabaseSubGraph.optimizedForCount(transaction, kernelTx),
                 null,
@@ -1210,7 +1317,20 @@ public class Meta {
     @NotThreadSafe
     @Procedure("apoc.meta.subGraph")
     @Description("Examines the given sub-graph and returns a meta-graph.")
-    public Stream<GraphResult> subGraph(@Name("config") Map<String, Object> config) {
+    public Stream<GraphResult> subGraph(
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+            {
+                excludeLabels :: LIST<STRING>,
+                includeLabels :: LIST<STRING>,
+                includeRels :: LIST<STRING>,
+                maxRels = -1 :: INTEGER,
+                sample = 1 :: INTEGER
+            }
+            """)
+                    Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config, false);
         return filterResultStream(
                 metaConfig.getExcludeLabels(),

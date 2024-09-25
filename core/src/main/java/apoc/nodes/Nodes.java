@@ -27,13 +27,10 @@ import apoc.Pools;
 import apoc.create.Create;
 import apoc.refactor.util.PropertiesManager;
 import apoc.refactor.util.RefactorConfig;
-import apoc.result.LongResult;
 import apoc.result.NodeResult;
-import apoc.result.PathResult;
 import apoc.result.RelationshipResult;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualPath;
-import apoc.result.VirtualPathResult;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.ArrayList;
@@ -95,11 +92,31 @@ public class Nodes {
     @Context
     public Pools pools;
 
+    public static class CyclesPathResult {
+        @Description("A path containing a found cycle.")
+        public Path path;
+
+        public CyclesPathResult(Path path) {
+            this.path = path;
+        }
+    }
+
     @Procedure("apoc.nodes.cycles")
     @Description("Detects all `PATH` cycles in the given `LIST<NODE>`.\n"
             + "This procedure can be limited on `RELATIONSHIP` values as well.")
-    public Stream<PathResult> cycles(
-            @Name("nodes") List<Node> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<CyclesPathResult> cycles(
+            @Name(value = "nodes", description = "The list of nodes to check for path cycles.") List<Node> nodes,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        maxDepth :: INTEGER,
+                        relTypes = [] :: LIST<STRING>
+                    }
+                    """)
+                    Map<String, Object> config) {
         NodesConfig conf = new NodesConfig(config);
         final List<String> types = conf.getRelTypes();
         Stream<Path> paths = nodes.stream().flatMap(start -> {
@@ -146,15 +163,16 @@ public class Nodes {
                         return Stream.of(virtualPath);
                     });
         });
-        return paths.map(PathResult::new);
+        return paths.map(CyclesPathResult::new);
     }
 
     @Procedure(name = "apoc.nodes.link", mode = Mode.WRITE)
     @Description("Creates a linked list of the given `NODE` values connected by the given `RELATIONSHIP` type.")
     public void link(
-            @Name("nodes") List<Node> nodes,
-            @Name("type") String type,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "nodes", description = "The list of nodes to be linked.") List<Node> nodes,
+            @Name(value = "type", description = "The relationship type name to link the nodes with.") String type,
+            @Name(value = "config", defaultValue = "{}", description = "{ avoidDuplicates = false :: BOOLEAN }")
+                    Map<String, Object> config) {
         RefactorConfig conf = new RefactorConfig(config);
         Iterator<Node> it = nodes.iterator();
         if (it.hasNext()) {
@@ -174,13 +192,27 @@ public class Nodes {
 
     @Procedure("apoc.nodes.get")
     @Description("Returns all `NODE` values with the given ids.")
-    public Stream<NodeResult> get(@Name("nodes") Object ids) {
+    public Stream<NodeResult> get(
+            @Name(
+                            value = "nodes",
+                            description =
+                                    "The nodes to be returned. Nodes can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
+                    Object ids) {
         return Util.nodeStream((InternalTransaction) tx, ids).map(NodeResult::new);
     }
 
+    public record DeletionLongResult(@Description("The number of deleted nodes.") Long value) {}
+
     @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE)
     @Description("Deletes all `NODE` values with the given ids.")
-    public Stream<LongResult> delete(@Name("nodes") Object ids, @Name("batchSize") long batchSize) {
+    public Stream<DeletionLongResult> delete(
+            @Name(
+                            value = "nodes",
+                            description =
+                                    "The nodes to be deleted. Nodes can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
+                    Object ids,
+            @Name(value = "batchSize", description = "The number of node values to delete in a single batch.")
+                    long batchSize) {
         Iterator<Node> it = Util.nodeStream((InternalTransaction) tx, ids).iterator();
         long count = 0;
         while (it.hasNext()) {
@@ -192,12 +224,17 @@ public class Nodes {
                 return batch.size();
             });
         }
-        return Stream.of(new LongResult(count));
+        return Stream.of(new DeletionLongResult(count));
     }
 
     @Procedure("apoc.nodes.rels")
     @Description("Returns all `RELATIONSHIP` values with the given ids.")
-    public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
+    public Stream<RelationshipResult> rels(
+            @Name(
+                            value = "rels",
+                            description =
+                                    "The relationships to be returned. Relationships can be of type `STRING` (elementId()), `INTEGER` (id()), `RELATIONSHIP`, or `LIST<STRING | INTEGER | RELATIONSHIP>")
+                    Object ids) {
         return Util.relsStream((InternalTransaction) tx, ids).map(RelationshipResult::new);
     }
 
@@ -284,23 +321,47 @@ public class Nodes {
         }
     }
 
+    public record CollapsedVirtualPathResult(
+            @Description("The recently collapsed virtual node.") Node from,
+            @Description("A relationship connected to the collapsed node.") Relationship rel,
+            @Description("A node connected to the other end of the relationship.") Node to) {}
+
     @Procedure("apoc.nodes.collapse")
     @Description(
             "Merges `NODE` values together in the given `LIST<NODE>`.\n"
                     + "The `NODE` values are then combined to become one `NODE`, with all labels of the previous `NODE` values attached to it, and all `RELATIONSHIP` values pointing to it.")
-    public Stream<VirtualPathResult> collapse(
-            @Name("nodes") List<Node> nodes, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<CollapsedVirtualPathResult> collapse(
+            @Name(value = "nodes", description = "The list of node values to merge.") List<Node> nodes,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        mergeRels :: BOOLEAN,
+                        selfRef :: BOOLEAN,
+                        produceSelfRef = true :: BOOLEAN,
+                        preserveExistingSelfRels = true :: BOOLEAN,
+                        countMerge = true :: BOOLEAN,
+                        collapsedLabel :: BOOLEAN,
+                        singleElementAsArray = false :: BOOLEAN,
+                        avoidDuplicates = false :: BOOLEAN,
+                        relationshipSelectionStrategy = "incoming" :: ["incoming", "outgoing", "merge"]
+                        properties :: ["overwrite", "discard", "combine"]
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
-        if (nodes.size() == 1) return Stream.of(new VirtualPathResult(nodes.get(0), null, null));
+        if (nodes.size() == 1) return Stream.of(new CollapsedVirtualPathResult(nodes.get(0), null, null));
         Set<Node> nodeSet = new LinkedHashSet<>(nodes);
         RefactorConfig conf = new RefactorConfig(config);
         VirtualNode first = createVirtualNode(nodeSet, conf);
         if (first.getRelationships().iterator().hasNext()) {
             return StreamSupport.stream(first.getRelationships().spliterator(), false)
-                    .map(relationship -> new VirtualPathResult(
+                    .map(relationship -> new CollapsedVirtualPathResult(
                             relationship.getStartNode(), relationship, relationship.getEndNode()));
         } else {
-            return Stream.of(new VirtualPathResult(first, null, null));
+            return Stream.of(new CollapsedVirtualPathResult(first, null, null));
         }
     }
 
