@@ -18,9 +18,12 @@
  */
 package apoc.result;
 
+import org.neo4j.procedure.Description;
+
 public class ByteArrayResult {
     public static final ByteArrayResult NULL = new ByteArrayResult(null);
 
+    @Description("The data as a bytearray.")
     public final byte[] value;
 
     public ByteArrayResult(byte[] value) {

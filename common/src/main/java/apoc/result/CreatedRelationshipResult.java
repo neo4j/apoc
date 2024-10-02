@@ -16,35 +16,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package apoc.refactor;
+package apoc.result;
 
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.procedure.Description;
 
-/**
- * @author mh
- * @since 25.03.16
- */
-public class RelationshipRefactorResult {
-    public long input;
-    public Relationship output;
-    public String error;
+public class CreatedRelationshipResult {
+    @Description("The created relationship.")
+    public final Relationship rel;
 
-    public RelationshipRefactorResult(Long id) {
-        this.input = id;
-    }
-
-    public RelationshipRefactorResult withError(Exception e) {
-        this.error = e.getMessage();
-        return this;
-    }
-
-    public RelationshipRefactorResult withError(String message) {
-        this.error = message;
-        return this;
-    }
-
-    public RelationshipRefactorResult withOther(Relationship rel) {
-        this.output = rel;
-        return this;
+    public CreatedRelationshipResult(Relationship rel) {
+        this.rel = rel;
     }
 }

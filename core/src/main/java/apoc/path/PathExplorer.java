@@ -21,9 +21,6 @@ package apoc.path;
 import static apoc.path.PathExplorer.NodeFilter.*;
 
 import apoc.algo.Cover;
-import apoc.result.GraphResult;
-import apoc.result.NodeResult;
-import apoc.result.PathResult;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.*;
@@ -49,16 +46,33 @@ public class PathExplorer {
     @Context
     public Transaction tx;
 
+    public static class ExpandedPathResult {
+        @Description("The expanded path.")
+        public Path path;
+
+        public ExpandedPathResult(Path path) {
+            this.path = path;
+        }
+    }
+
     @NotThreadSafe
     @Procedure("apoc.path.expand")
     @Description(
             "Returns `PATH` values expanded from the start `NODE` following the given `RELATIONSHIP` types from min-depth to max-depth.")
-    public Stream<PathResult> explorePath(
-            @Name("startNode") Object start,
-            @Name("relFilter") String pathFilter,
-            @Name("labelFilter") String labelFilter,
-            @Name("minDepth") long minLevel,
-            @Name("maxDepth") long maxLevel) {
+    public Stream<ExpandedPathResult> explorePath(
+            @Name(
+                            value = "startNode",
+                            description =
+                                    "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
+                    Object start,
+            @Name(value = "relFilter", description = "An allow list of types allowed on the returned relationships.")
+                    String pathFilter,
+            @Name(value = "labelFilter", description = "An allow list of labels allowed on the returned nodes.")
+                    String labelFilter,
+            @Name(value = "minDepth", description = "The minimum number of hops allowed in the returned paths.")
+                    long minLevel,
+            @Name(value = "maxDepth", description = "The maximum number of hops allowed in the returned paths.")
+                    long maxLevel) {
         List<Node> nodes = Util.nodeList((InternalTransaction) tx, start);
         return explorePathPrivate(
                         nodes,
@@ -73,24 +87,78 @@ public class PathExplorer {
                         null,
                         null,
                         true)
-                .map(PathResult::new);
+                .map(ExpandedPathResult::new);
     }
 
     @NotThreadSafe
     @Procedure("apoc.path.expandConfig")
     @Description(
             "Returns `PATH` values expanded from the start `NODE` with the given `RELATIONSHIP` types from min-depth to max-depth.")
-    public Stream<PathResult> expandConfig(
-            @Name("startNode") Object start, @Name("config") Map<String, Object> config) {
-        return expandConfigPrivate(start, config).map(PathResult::new);
+    public Stream<ExpandedPathResult> expandConfig(
+            @Name(
+                            value = "startNode",
+                            description =
+                                    "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>.")
+                    Object start,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                        minLevel = -1 :: INTEGER,
+                        maxLevel = -1 :: INTEGER,
+                        relationshipFilter :: STRING,
+                        labelFilter :: STRING,
+                        beginSequenceAtStart = true :: BOOLEAN,
+                        uniqueness = "RELATIONSHIP_PATH" :: STRING,
+                        bfs = true :: BOOLEAN,
+                        filterStartNode = false :: BOOLEAN,
+                        limit = -1 :: INTEGER,
+                        optional = false :: BOOLEAN,
+                        endNodes :: LIST<NODES>,
+                        terminatorNodes:: LIST<NODES>,
+                        allowlistNodes:: LIST<NODES>,
+                        denylistNodes:: LIST<NODES>
+                    }
+                    """)
+                    Map<String, Object> config) {
+        return expandConfigPrivate(start, config).map(ExpandedPathResult::new);
     }
+
+    public record SubgraphNodeResult(@Description("Nodes part of the returned subgraph.") Node node) {}
 
     @NotThreadSafe
     @Procedure("apoc.path.subgraphNodes")
     @Description(
             "Returns the `NODE` values in the sub-graph reachable from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
-    public Stream<NodeResult> subgraphNodes(
-            @Name("startNode") Object start, @Name("config") Map<String, Object> config) {
+    public Stream<SubgraphNodeResult> subgraphNodes(
+            @Name(
+                            value = "startNode",
+                            description =
+                                    "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
+                    Object start,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                        minLevel = -1 :: INTEGER,
+                        maxLevel = -1 :: INTEGER,
+                        relationshipFilter :: STRING,
+                        labelFilter :: STRING,
+                        beginSequenceAtStart = true :: BOOLEAN,
+                        uniqueness = "RELATIONSHIP_PATH" :: STRING,
+                        bfs = true :: BOOLEAN,
+                        filterStartNode = false :: BOOLEAN,
+                        limit = -1 :: INTEGER,
+                        optional = false :: BOOLEAN,
+                        endNodes :: LIST<NODES>,
+                        terminatorNodes:: LIST<NODES>,
+                        allowlistNodes:: LIST<NODES>,
+                        denylistNodes:: LIST<NODES>
+                    }
+                    """)
+                    Map<String, Object> config) {
         Map<String, Object> configMap = new HashMap<>(config);
         configMap.put("uniqueness", "NODE_GLOBAL");
 
@@ -101,15 +169,45 @@ public class PathExplorer {
         }
 
         return expandConfigPrivate(start, configMap)
-                .map(path -> path == null ? new NodeResult(null) : new NodeResult(path.endNode()));
+                .map(path -> path == null ? new SubgraphNodeResult(null) : new SubgraphNodeResult(path.endNode()));
     }
+
+    public record SubgraphGraphResult(
+            @Description("Nodes part of the returned subgraph.") List<Node> nodes,
+            @Description("Relationships part of the returned subgraph.") List<Relationship> relationships) {}
 
     @NotThreadSafe
     @Procedure("apoc.path.subgraphAll")
     @Description(
             "Returns the sub-graph reachable from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
-    public Stream<GraphResult> subgraphAll(
-            @Name("startNode") Object start, @Name("config") Map<String, Object> config) {
+    public Stream<SubgraphGraphResult> subgraphAll(
+            @Name(
+                            value = "startNode",
+                            description =
+                                    "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>.")
+                    Object start,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                        minLevel = -1 :: INTEGER,
+                        maxLevel = -1 :: INTEGER,
+                        relationshipFilter :: STRING,
+                        labelFilter :: STRING,
+                        beginSequenceAtStart = true :: BOOLEAN,
+                        uniqueness = "RELATIONSHIP_PATH" :: STRING,
+                        bfs = true :: BOOLEAN,
+                        filterStartNode = false :: BOOLEAN,
+                        limit = -1 :: INTEGER,
+                        optional = false :: BOOLEAN,
+                        endNodes :: LIST<NODES>,
+                        terminatorNodes:: LIST<NODES>,
+                        allowlistNodes:: LIST<NODES>,
+                        denylistNodes:: LIST<NODES>
+                    }
+                    """)
+                    Map<String, Object> config) {
         Map<String, Object> configMap = new HashMap<>(config);
         configMap.remove("optional"); // not needed, will return empty collections anyway if no results
         configMap.put("uniqueness", "NODE_GLOBAL");
@@ -124,15 +222,50 @@ public class PathExplorer {
                 expandConfigPrivate(start, configMap).map(Path::endNode).collect(Collectors.toList());
         List<Relationship> subgraphRels = Cover.coverNodes(subgraphNodes).collect(Collectors.toList());
 
-        return Stream.of(new GraphResult(subgraphNodes, subgraphRels));
+        return Stream.of(new SubgraphGraphResult(subgraphNodes, subgraphRels));
+    }
+
+    public static class SpanningPathResult {
+        @Description("A spanning tree path.")
+        public Path path;
+
+        public SpanningPathResult(Path path) {
+            this.path = path;
+        }
     }
 
     @NotThreadSafe
     @Procedure("apoc.path.spanningTree")
     @Description(
             "Returns spanning tree `PATH` values expanded from the start `NODE` following the given `RELATIONSHIP` types to max-depth.")
-    public Stream<PathResult> spanningTree(
-            @Name("startNode") Object start, @Name("config") Map<String, Object> config) {
+    public Stream<SpanningPathResult> spanningTree(
+            @Name(
+                            value = "startNode",
+                            description =
+                                    "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>.")
+                    Object start,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                        minLevel = -1 :: INTEGER,
+                        maxLevel = -1 :: INTEGER,
+                        relationshipFilter :: STRING,
+                        labelFilter :: STRING,
+                        beginSequenceAtStart = true :: BOOLEAN,
+                        uniqueness = "RELATIONSHIP_PATH" :: STRING,
+                        bfs = true :: BOOLEAN,
+                        filterStartNode = false :: BOOLEAN,
+                        limit = -1 :: INTEGER,
+                        optional = false :: BOOLEAN,
+                        endNodes :: LIST<NODES>,
+                        terminatorNodes:: LIST<NODES>,
+                        allowlistNodes:: LIST<NODES>,
+                        denylistNodes:: LIST<NODES>
+                    }
+                    """)
+                    Map<String, Object> config) {
         Map<String, Object> configMap = new HashMap<>(config);
         configMap.put("uniqueness", "NODE_GLOBAL");
 
@@ -142,7 +275,7 @@ public class PathExplorer {
             throw new IllegalArgumentException("minLevel can only be 0 or 1 in spanningTree()");
         }
 
-        return expandConfigPrivate(start, configMap).map(PathResult::new);
+        return expandConfigPrivate(start, configMap).map(SpanningPathResult::new);
     }
 
     private Uniqueness getUniqueness(String uniqueness) {

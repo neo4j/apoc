@@ -19,12 +19,14 @@
 package apoc.result;
 
 import org.neo4j.graphdb.Path;
+import org.neo4j.procedure.Description;
 
 /**
  * @author mh
  * @since 11.04.16
  */
 public class PathResult {
+    @Description("The path result.")
     public Path path;
 
     public PathResult(Path path) {

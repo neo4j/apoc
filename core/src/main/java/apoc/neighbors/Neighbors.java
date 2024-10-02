@@ -22,10 +22,6 @@ import static apoc.path.RelationshipTypeAndDirections.parse;
 import static apoc.util.Util.getNodeElementId;
 import static apoc.util.Util.getNodeId;
 
-import apoc.result.ListResult;
-import apoc.result.LongResult;
-import apoc.result.NodeListResult;
-import apoc.result.NodeResult;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -60,14 +56,22 @@ public class Neighbors {
         return node.getRelationships(typesAndDirection.getRight(), typesAndDirection.getLeft());
     }
 
+    public record NeighborNodeResult(@Description("A neighboring node.") Node node) {}
+
     @Procedure("apoc.neighbors.tohop")
     @Description(
             "Returns all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance.\n"
                     + "`NODE` values are returned individually for each row.")
-    public Stream<NodeResult> neighbors(
-            @Name("node") Node node,
-            @Name(value = "relTypes", defaultValue = "") String types,
-            @Name(value = "distance", defaultValue = "1") Long distance) {
+    public Stream<NeighborNodeResult> neighbors(
+            @Name(value = "node", description = "The starting node for the algorithm.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "A list of relationship types to follow. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types,
+            @Name(value = "distance", defaultValue = "1", description = "The max number of hops to take.")
+                    Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();
 
@@ -138,16 +142,25 @@ public class Neighbors {
         seen.removeLong(startNodeId);
 
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(seen.iterator(), Spliterator.SORTED), false)
-                .map(x -> new NodeResult(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, x))));
+                .map(x -> new NeighborNodeResult(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, x))));
     }
+
+    public record NeighborLongResult(
+            @Description("The total count of neighboring nodes within the given hop distance.") Long value) {}
 
     @Procedure("apoc.neighbors.tohop.count")
     @Description(
             "Returns the count of all `NODE` values connected by the given `RELATIONSHIP` values in the pattern within the specified distance.")
-    public Stream<LongResult> neighborsCount(
-            @Name("node") Node node,
-            @Name(value = "relTypes", defaultValue = "") String types,
-            @Name(value = "distance", defaultValue = "1") Long distance) {
+    public Stream<NeighborLongResult> neighborsCount(
+            @Name(value = "node", description = "The starting node for the algorithm.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "A list of relationship types to follow. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types,
+            @Name(value = "distance", defaultValue = "1", description = "The max number of hops to take.")
+                    Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();
 
@@ -216,16 +229,31 @@ public class Neighbors {
         // remove starting node
         seen.removeLong(startNodeId);
 
-        return Stream.of(new LongResult(seen.getLongCardinality()));
+        return Stream.of(new NeighborLongResult(seen.getLongCardinality()));
+    }
+
+    public static class NeighbouringNodeListResult {
+        @Description("A list of neighboring nodes at a distinct hop distance.")
+        public final List<Node> nodes;
+
+        public NeighbouringNodeListResult(List<Node> value) {
+            this.nodes = value;
+        }
     }
 
     @Procedure("apoc.neighbors.byhop")
     @Description(
             "Returns all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance. Returns `LIST<NODE>` values, where each `PATH` of `NODE` values represents one row of the `LIST<NODE>` values.")
-    public Stream<NodeListResult> neighborsByHop(
-            @Name("node") Node node,
-            @Name(value = "relTypes", defaultValue = "") String types,
-            @Name(value = "distance", defaultValue = "1") Long distance) {
+    public Stream<NeighbouringNodeListResult> neighborsByHop(
+            @Name(value = "node", description = "The starting node for the algorithm.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "A list of relationship types to follow. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types,
+            @Name(value = "distance", defaultValue = "1", description = "The max number of hops to take.")
+                    Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();
 
@@ -267,19 +295,28 @@ public class Neighbors {
         }
 
         return Arrays.stream(seen)
-                .map(x -> new NodeListResult(StreamSupport.stream(
+                .map(x -> new NeighbouringNodeListResult(StreamSupport.stream(
                                 Spliterators.spliteratorUnknownSize(x.iterator(), Spliterator.SORTED), false)
                         .map(y -> tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, y)))
                         .collect(Collectors.toList())));
     }
 
+    public record NeighborListResult(
+            @Description("A list of neighbor counts for each distinct hop distance.") List<Object> value) {}
+
     @Procedure("apoc.neighbors.byhop.count")
     @Description(
             "Returns the count of all `NODE` values connected by the given `RELATIONSHIP` types within the specified distance.")
-    public Stream<ListResult> neighborsByHopCount(
-            @Name("node") Node node,
-            @Name(value = "relTypes", defaultValue = "") String types,
-            @Name(value = "distance", defaultValue = "1") Long distance) {
+    public Stream<NeighborListResult> neighborsByHopCount(
+            @Name(value = "node", description = "The starting node for the algorithm.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "A list of relationship types to follow. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types,
+            @Name(value = "distance", defaultValue = "1", description = "The max number of hops to take.")
+                    Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();
 
@@ -325,15 +362,22 @@ public class Neighbors {
             counts.add(seen[i].getLongCardinality());
         }
 
-        return Stream.of(new ListResult(counts));
+        return Stream.of(new NeighborListResult(counts));
     }
+
+    public record NeighboringNodeResult(@Description("A neighboring node.") Node node) {}
 
     @Procedure("apoc.neighbors.athop")
     @Description("Returns all `NODE` values connected by the given `RELATIONSHIP` types at the specified distance.")
-    public Stream<NodeResult> neighborsAtHop(
-            @Name("node") Node node,
-            @Name(value = "relTypes", defaultValue = "") String types,
-            @Name(value = "distance", defaultValue = "1") Long distance) {
+    public Stream<NeighboringNodeResult> neighborsAtHop(
+            @Name(value = "node", description = "The starting node for the algorithm.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "A list of relationship types to follow. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types,
+            @Name(value = "distance", defaultValue = "1", description = "The number of hops to take.") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();
 
@@ -378,16 +422,25 @@ public class Neighbors {
                         Spliterators.spliteratorUnknownSize(
                                 seen[distance.intValue() - 1].iterator(), Spliterator.SORTED),
                         false)
-                .map(y -> new NodeResult(tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, y))));
+                .map(y -> new NeighboringNodeResult(
+                        tx.getNodeByElementId(getNodeElementId((InternalTransaction) tx, y))));
     }
+
+    public record NeighboursLongResult(
+            @Description("The total count of neighboring nodes at the given hop distance.") Long value) {}
 
     @Procedure("apoc.neighbors.athop.count")
     @Description(
             "Returns the count of all `NODE` values connected by the given `RELATIONSHIP` types at the specified distance.")
-    public Stream<LongResult> neighborsAtHopCount(
-            @Name("node") Node node,
-            @Name(value = "relTypes", defaultValue = "") String types,
-            @Name(value = "distance", defaultValue = "1") Long distance) {
+    public Stream<NeighboursLongResult> neighborsAtHopCount(
+            @Name(value = "node", description = "The starting node for the algorithm.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "A list of relationship types to follow. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types,
+            @Name(value = "distance", defaultValue = "1", description = "The number of hops to take.") Long distance) {
         if (distance < 1) return Stream.empty();
         if (types == null || types.isEmpty()) return Stream.empty();
 
@@ -428,6 +481,6 @@ public class Neighbors {
             }
         }
 
-        return Stream.of(new LongResult(seen[distance.intValue() - 1].getLongCardinality()));
+        return Stream.of(new NeighboursLongResult(seen[distance.intValue() - 1].getLongCardinality()));
     }
 }

@@ -27,7 +27,8 @@ import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportUtils;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.ProgressReporter;
-import apoc.result.ProgressInfo;
+import apoc.result.ExportProgressInfo;
+import apoc.result.ImportProgressInfo;
 import apoc.util.FileUtils;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
@@ -78,9 +79,27 @@ public class ExportGraphML {
 
     @Procedure(name = "apoc.import.graphml", mode = Mode.WRITE)
     @Description("Imports a graph from the provided GraphML file.")
-    public Stream<ProgressInfo> file(
-            @Name("urlOrBinaryFile") Object urlOrBinaryFile, @Name("config") Map<String, Object> config) {
-        ProgressInfo result = Util.inThread(pools, () -> {
+    public Stream<ImportProgressInfo> file(
+            @Name(
+                            value = "urlOrBinaryFile",
+                            description = "The name of the file or binary data to import the data from.")
+                    Object urlOrBinaryFile,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                        readLabels = false :: BOOLEAN,
+                        defaultRelationshipType = "RELATED" :: STRING,
+                        storeNodeIds = false :: BOOLEAN,
+                        batchSize = 20000 :: INTEGER,
+                        compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"],
+                        source = {} :: MAP,
+                        target = {} :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
+        ImportProgressInfo result = Util.inThread(pools, () -> {
             ExportConfig exportConfig = new ExportConfig(config);
             String file = null;
             String source = "binary";
@@ -88,7 +107,8 @@ public class ExportGraphML {
                 file = (String) urlOrBinaryFile;
                 source = "file";
             }
-            ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(file, source, "graphml"));
+            ProgressReporter reporter =
+                    new ProgressReporter(null, null, new ImportProgressInfo(file, source, "graphml"));
             XmlGraphMLReader graphMLReader = new XmlGraphMLReader(db)
                     .reporter(reporter)
                     .batchSize(exportConfig.getBatchSize())
@@ -104,7 +124,7 @@ public class ExportGraphML {
                 graphMLReader.parseXML(reader, terminationGuard);
             }
 
-            return reporter.getTotal();
+            return (ImportProgressInfo) reporter.getTotal();
         });
         return Stream.of(result);
     }
@@ -112,7 +132,25 @@ public class ExportGraphML {
     @NotThreadSafe
     @Procedure("apoc.export.graphml.all")
     @Description("Exports the full database to the provided GraphML file.")
-    public Stream<ProgressInfo> all(@Name("file") String fileName, @Name("config") Map<String, Object> config)
+    public Stream<ExportProgressInfo> all(
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config)
             throws Exception {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
@@ -121,11 +159,27 @@ public class ExportGraphML {
 
     @Procedure("apoc.export.graphml.data")
     @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided GraphML file.")
-    public Stream<ProgressInfo> data(
-            @Name("nodes") List<Node> nodes,
-            @Name("rels") List<Relationship> rels,
-            @Name("file") String fileName,
-            @Name("config") Map<String, Object> config)
+    public Stream<ExportProgressInfo> data(
+            @Name(value = "nodes", description = "A list of nodes to export.") List<Node> nodes,
+            @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config)
             throws Exception {
 
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -134,10 +188,26 @@ public class ExportGraphML {
 
     @Procedure("apoc.export.graphml.graph")
     @Description("Exports the given graph to the provided GraphML file.")
-    public Stream<ProgressInfo> graph(
-            @Name("graph") Map<String, Object> graph,
-            @Name("file") String fileName,
-            @Name("config") Map<String, Object> config)
+    public Stream<ExportProgressInfo> graph(
+            @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config)
             throws Exception {
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
@@ -150,8 +220,26 @@ public class ExportGraphML {
     @Procedure("apoc.export.graphml.query")
     @Description(
             "Exports the given `NODE` and `RELATIONSHIP` values from the Cypher statement to the provided GraphML file.")
-    public Stream<ProgressInfo> query(
-            @Name("statement") String query, @Name("file") String fileName, @Name("config") Map<String, Object> config)
+    public Stream<ExportProgressInfo> query(
+            @Name(value = "statement", description = "The query used to collect the data for export.") String query,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config)
             throws Exception {
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(query);
@@ -162,11 +250,11 @@ public class ExportGraphML {
         return exportGraphML(fileName, source, graph, c);
     }
 
-    private Stream<ProgressInfo> exportGraphML(
+    private Stream<ExportProgressInfo> exportGraphML(
             @Name("file") String fileName, String source, SubGraph graph, ExportConfig exportConfig) throws Exception {
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "graphml";
-        ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(fileName, source, format));
+        ProgressReporter reporter = new ProgressReporter(null, null, new ExportProgressInfo(fileName, source, format));
         XmlGraphMLWriter exporter = new XmlGraphMLWriter();
         ExportFileManager cypherFileManager = FileManagerFactory.createFileManager(fileName, false, exportConfig);
         final PrintWriter graphMl = cypherFileManager.getPrintWriter(format);
@@ -189,7 +277,7 @@ public class ExportGraphML {
         } else {
             exporter.write(graph, graphMl, reporter, exportConfig);
             closeWriter(graphMl);
-            return reporter.stream();
+            return Stream.of((ExportProgressInfo) reporter.getTotal());
         }
     }
 

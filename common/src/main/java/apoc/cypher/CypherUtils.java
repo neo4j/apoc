@@ -22,7 +22,7 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 
-import apoc.result.MapResult;
+import apoc.result.CypherStatementMapResult;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -31,11 +31,11 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Name;
 
 public class CypherUtils {
-    public static Stream<MapResult> runCypherQuery(
+    public static Stream<CypherStatementMapResult> runCypherQuery(
             Transaction tx, @Name("cypher") String statement, @Name("params") Map<String, Object> params) {
         if (params == null) params = Collections.emptyMap();
         return tx.execute(withParamMapping(statement, params.keySet()), params).stream()
-                .map(MapResult::new);
+                .map(CypherStatementMapResult::new);
     }
 
     public static String withParamMapping(String fragment, Collection<String> keys) {

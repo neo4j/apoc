@@ -18,11 +18,10 @@
  */
 package apoc.result;
 
-/**
- * @author mh
- * @since 26.02.16
- */
+import org.neo4j.procedure.Description;
+
 public class ObjectResult {
+    @Description("Data loaded from the given file.")
     public final Object value;
 
     public ObjectResult(Object value) {

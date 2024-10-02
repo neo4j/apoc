@@ -32,7 +32,10 @@ public class Lock {
     @NotThreadSafe
     @Procedure(name = "apoc.lock.all", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given `NODE` and `RELATIONSHIP` values.")
-    public void all(@Name("nodes") List<Node> nodes, @Name("rels") List<Relationship> rels) {
+    public void all(
+            @Name(value = "nodes", description = "The list of nodes to acquire a write lock on.") List<Node> nodes,
+            @Name(value = "rels", description = "The list of relationships to acquire a write lock on.")
+                    List<Relationship> rels) {
         for (Node node : nodes) {
             tx.acquireWriteLock(node);
         }
@@ -44,7 +47,8 @@ public class Lock {
     @NotThreadSafe
     @Procedure(name = "apoc.lock.nodes", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given `NODE` values.")
-    public void nodes(@Name("nodes") List<Node> nodes) {
+    public void nodes(
+            @Name(value = "nodes", description = "The list of nodes to acquire a write lock on.") List<Node> nodes) {
         for (Node node : nodes) {
             tx.acquireWriteLock(node);
         }
@@ -53,7 +57,8 @@ public class Lock {
     @NotThreadSafe
     @Procedure(name = "apoc.lock.read.nodes", mode = Mode.READ)
     @Description("Acquires a read lock on the given `NODE` values.")
-    public void readLockOnNodes(@Name("nodes") List<Node> nodes) {
+    public void readLockOnNodes(
+            @Name(value = "nodes", description = "The list of nodes to acquire a read lock on.") List<Node> nodes) {
         for (Node node : nodes) {
             tx.acquireReadLock(node);
         }
@@ -62,7 +67,9 @@ public class Lock {
     @NotThreadSafe
     @Procedure(name = "apoc.lock.rels", mode = Mode.WRITE)
     @Description("Acquires a write lock on the given `RELATIONSHIP` values.")
-    public void rels(@Name("rels") List<Relationship> rels) {
+    public void rels(
+            @Name(value = "rels", description = "The list of relationships to acquire a write lock on.")
+                    List<Relationship> rels) {
         for (Relationship rel : rels) {
             tx.acquireWriteLock(rel);
         }
@@ -71,7 +78,9 @@ public class Lock {
     @NotThreadSafe
     @Procedure(name = "apoc.lock.read.rels", mode = Mode.READ)
     @Description("Acquires a read lock on the given `RELATIONSHIP` values.")
-    public void readLocksOnRels(@Name("rels") List<Relationship> rels) {
+    public void readLocksOnRels(
+            @Name(value = "rels", description = "The list of relationships to acquire a read lock on.")
+                    List<Relationship> rels) {
         for (Relationship rel : rels) {
             tx.acquireReadLock(rel);
         }

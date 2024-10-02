@@ -19,12 +19,14 @@
 package apoc.result;
 
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.procedure.Description;
 
 /**
  * @author mh
  * @since 26.02.16
  */
 public class RelationshipResult {
+    @Description("A relationship.")
     public final Relationship rel;
 
     public RelationshipResult(Relationship rel) {

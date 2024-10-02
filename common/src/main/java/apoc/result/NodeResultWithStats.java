@@ -20,8 +20,10 @@ package apoc.result;
 
 import java.util.Map;
 import org.neo4j.graphdb.Node;
+import org.neo4j.procedure.Description;
 
-public class NodeResultWithStats extends NodeResult {
+public class NodeResultWithStats extends UpdatedNodeResult {
+    @Description("The returned query statistics.")
     public final Map<String, Object> stats;
 
     public NodeResultWithStats(Node node, Map<String, Object> stats) {

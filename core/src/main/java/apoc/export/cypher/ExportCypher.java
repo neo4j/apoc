@@ -23,7 +23,7 @@ import apoc.Pools;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.ProgressReporter;
-import apoc.result.ProgressInfo;
+import apoc.result.DataProgressInfo;
 import apoc.util.QueueBasedSpliterator;
 import apoc.util.QueueUtil;
 import apoc.util.Util;
@@ -76,8 +76,28 @@ public class ExportCypher {
     @Description(
             "Exports the full database (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> all(
-            @Name(value = "file", defaultValue = "") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "file",
+                            defaultValue = "",
+                            description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), false);
@@ -88,10 +108,30 @@ public class ExportCypher {
     @Description(
             "Exports the given `NODE` and `RELATIONSHIP` values (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> data(
-            @Name("nodes") List<Node> nodes,
-            @Name("rels") List<Relationship> rels,
-            @Name(value = "file", defaultValue = "") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "nodes", description = "A list of nodes to export.") List<Node> nodes,
+            @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
+            @Name(
+                            value = "file",
+                            defaultValue = "",
+                            description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
         return exportCypher(
@@ -103,9 +143,26 @@ public class ExportCypher {
     @Description(
             "Exports the given graph (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> graph(
-            @Name("graph") Map<String, Object> graph,
-            @Name(value = "file", defaultValue = "") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
@@ -120,9 +177,29 @@ public class ExportCypher {
     @Description(
             "Exports the `NODE` and `RELATIONSHIP` values from the given Cypher query (incl. indexes) as Cypher statements to the provided file (default: Cypher Shell).")
     public Stream<DataProgressInfo> query(
-            @Name("statement") String query,
-            @Name(value = "file", defaultValue = "") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "statement", description = "The query used to collect the data for export.") String query,
+            @Name(
+                            value = "file",
+                            defaultValue = "",
+                            description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(query);
@@ -138,8 +215,28 @@ public class ExportCypher {
     @Procedure("apoc.export.cypher.schema")
     @Description("Exports all schema indexes and constraints to Cypher statements.")
     public Stream<DataProgressInfo> schema(
-            @Name(value = "file", defaultValue = "") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(
+                            value = "file",
+                            defaultValue = "",
+                            description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), true);
@@ -149,7 +246,7 @@ public class ExportCypher {
             @Name("file") String fileName, String source, SubGraph graph, ExportConfig c, boolean onlySchema) {
         apocConfig.checkWriteAllowed(c, fileName);
 
-        ProgressInfo progressInfo = new ProgressInfo(fileName, source, "cypher");
+        DataProgressInfo progressInfo = new DataProgressInfo(fileName, source, "cypher");
         progressInfo.batchSize = c.getBatchSize();
         ProgressReporter reporter = new ProgressReporter(null, null, progressInfo);
         boolean separatedFiles = !onlySchema && c.separateFiles();
@@ -160,9 +257,9 @@ public class ExportCypher {
             final BlockingQueue<DataProgressInfo> queue = new ArrayBlockingQueue<>(1000);
             ProgressReporter reporterWithConsumer = reporter.withConsumer((pi) -> QueueUtil.put(
                     queue,
-                    pi == ProgressInfo.EMPTY
+                    pi == DataProgressInfo.EMPTY
                             ? DataProgressInfo.EMPTY
-                            : new DataProgressInfo(pi).enrich(cypherFileManager),
+                            : new DataProgressInfo((DataProgressInfo) pi).enrich(cypherFileManager),
                     timeout));
             Util.inTxFuture(
                     null,
@@ -180,7 +277,7 @@ public class ExportCypher {
             return StreamSupport.stream(spliterator, false);
         } else {
             doExport(graph, c, onlySchema, reporter, cypherFileManager);
-            return reporter.stream().map(DataProgressInfo::new).map((dpi) -> dpi.enrich(cypherFileManager));
+            return reporter.stream().map(pi -> (DataProgressInfo) pi).map((dpi) -> dpi.enrich(cypherFileManager));
         }
     }
 
@@ -194,47 +291,5 @@ public class ExportCypher {
 
         if (onlySchema) exporter.exportOnlySchema(cypherFileManager, reporter, c);
         else exporter.export(c, reporter, cypherFileManager);
-    }
-
-    public static class DataProgressInfo {
-        public final String file;
-        public final long batches;
-        public String source;
-        public final String format;
-        public long nodes;
-        public long relationships;
-        public long properties;
-        public long time;
-        public long rows;
-        public long batchSize;
-        public Object cypherStatements;
-        public Object nodeStatements;
-        public Object relationshipStatements;
-        public Object schemaStatements;
-        public Object cleanupStatements;
-
-        public DataProgressInfo(ProgressInfo pi) {
-            this.file = pi.file;
-            this.format = pi.format;
-            this.source = pi.source;
-            this.nodes = pi.nodes;
-            this.relationships = pi.relationships;
-            this.properties = pi.properties;
-            this.time = pi.time;
-            this.rows = pi.rows;
-            this.batchSize = pi.batchSize;
-            this.batches = pi.batches;
-        }
-
-        public DataProgressInfo enrich(ExportFileManager fileInfo) {
-            cypherStatements = fileInfo.drain("cypher");
-            nodeStatements = fileInfo.drain("nodes");
-            relationshipStatements = fileInfo.drain("relationships");
-            schemaStatements = fileInfo.drain("schema");
-            cleanupStatements = fileInfo.drain("cleanup");
-            return this;
-        }
-
-        public static final DataProgressInfo EMPTY = new DataProgressInfo(ProgressInfo.EMPTY);
     }
 }

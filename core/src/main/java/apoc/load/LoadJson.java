@@ -21,7 +21,7 @@ package apoc.load;
 import static apoc.load.LoadJsonUtils.loadJsonStream;
 import static apoc.util.CompressionConfig.COMPRESSION;
 
-import apoc.result.MapResult;
+import apoc.result.LoadDataMapResult;
 import apoc.result.ObjectResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
@@ -48,9 +48,24 @@ public class LoadJson {
     @Procedure("apoc.load.jsonArray")
     @Description("Loads array from a JSON URL (e.g. web-API) to then import the given JSON file as a stream of values.")
     public Stream<ObjectResult> jsonArray(
-            @Name("url") String url,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "url", description = "The path to the JSON file.") String url,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description = "A JSON path expression used to extract a certain part from the list.")
+                    String path,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnError = true :: BOOLEAN,
+                        pathOptions :: LIST<STRING>,
+                        compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2"", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"]
+                    }
+                    """)
+                    Map<String, Object> config) {
         return JsonUtil.loadJson(
                         url, null, null, path, true, (List<String>) config.get("pathOptions"), urlAccessChecker)
                 .flatMap((value) -> {
@@ -66,10 +81,28 @@ public class LoadJson {
     @Procedure("apoc.load.json")
     @Description("Imports JSON file as a stream of values if the given JSON file is a `LIST<ANY>`.\n"
             + "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
-    public Stream<MapResult> json(
-            @Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<LoadDataMapResult> json(
+            @Name(
+                            value = "urlOrKeyOrBinary",
+                            description = "The name of the file or binary data to import the data from.")
+                    Object urlOrKeyOrBinary,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description = "A JSON path expression used to extract a certain part from the list.")
+                    String path,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnError = true :: BOOLEAN,
+                        pathOptions :: LIST<STRING>,
+                        compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"]
+                    }
+                    """)
+                    Map<String, Object> config) {
         return jsonParams(urlOrKeyOrBinary, null, null, path, config);
     }
 
@@ -78,12 +111,32 @@ public class LoadJson {
     @Description(
             "Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is a `LIST<ANY>`.\n"
                     + "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
-    public Stream<MapResult> jsonParams(
-            @Name("urlOrKeyOrBinary") Object urlOrKeyOrBinary,
-            @Name("headers") Map<String, Object> headers,
-            @Name("payload") String payload,
-            @Name(value = "path", defaultValue = "") String path,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<LoadDataMapResult> jsonParams(
+            @Name(
+                            value = "urlOrKeyOrBinary",
+                            description = "The name of the file or binary data to import the data from.")
+                    Object urlOrKeyOrBinary,
+            @Name(value = "headers", description = "Headers to be used when connecting to the given URL.")
+                    Map<String, Object> headers,
+            @Name(value = "payload", description = "The payload to send when connecting to the given URL.")
+                    String payload,
+            @Name(
+                            value = "path",
+                            defaultValue = "",
+                            description = "A JSON path expression used to extract a certain part from the list.")
+                    String path,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnError = true :: BOOLEAN,
+                        pathOptions :: LIST<STRING>,
+                        compression = ""NONE"" :: [""NONE"", ""BYTES"", ""GZIP"", ""BZIP2"", ""DEFLATE"", ""BLOCK_LZ4"", ""FRAMED_SNAPPY”]
+                    }
+                    """)
+                    Map<String, Object> config) {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);
         String compressionAlgo = (String) config.getOrDefault(COMPRESSION, CompressionAlgo.NONE.name());

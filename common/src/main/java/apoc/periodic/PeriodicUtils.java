@@ -45,6 +45,7 @@ import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
+import org.neo4j.procedure.Description;
 import org.neo4j.procedure.TerminationGuard;
 
 public class PeriodicUtils {
@@ -52,10 +53,19 @@ public class PeriodicUtils {
     private PeriodicUtils() {}
 
     public static class JobInfo {
+        @Description("The name of the job.")
         public final String name;
+
+        @Description("The delay on the job.")
         public long delay;
+
+        @Description("The rate of the job.")
         public long rate;
+
+        @Description("If the job has completed.")
         public boolean done;
+
+        @Description("If the job has been cancelled.")
         public boolean cancelled;
 
         public JobInfo(String name) {

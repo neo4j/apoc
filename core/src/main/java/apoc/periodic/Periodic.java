@@ -82,7 +82,25 @@ public class Periodic {
     @Procedure(name = "apoc.periodic.truncate", mode = Mode.SCHEMA)
     @Description(
             "Removes all entities (and optionally indexes and constraints) from the database using the `apoc.periodic.iterate` procedure.")
-    public void truncate(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public void truncate(
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+            {
+                dropSchema = true :: BOOLEAN,
+                batchSize = 10000 :: INTEGER,
+                parallel = false :: BOOLEAN,
+                retries = 0 :: INTEGER,
+                batchMode = "BATCH" :: STRING,
+                params = {} :: MAP,
+                concurrency :: INTEGER,
+                failedParams = -1 :: INTEGER,
+                planner = "DEFAULT" :: ["DEFAULT", "COST", "IDP", "DP"]
+            }
+            """)
+                    Map<String, Object> config) {
 
         iterate("MATCH ()-[r]->() RETURN id(r) as id", "MATCH ()-[r]->() WHERE id(r) = id DELETE r", config);
         iterate("MATCH (n) RETURN id(n) as id", "MATCH (n) WHERE id(n) = id DELETE n", config);
@@ -103,8 +121,9 @@ public class Periodic {
     @Procedure(name = "apoc.periodic.commit", mode = Mode.WRITE)
     @Description("Runs the given statement in separate batched transactions.")
     public Stream<RundownResult> commit(
-            @Name("statement") String statement,
-            @Name(value = "params", defaultValue = "{}") Map<String, Object> parameters) {
+            @Name(value = "statement", description = "The Cypher statement to run.") String statement,
+            @Name(value = "params", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> parameters) {
         validateQuery(statement);
         Map<String, Object> params = parameters == null ? Collections.emptyMap() : parameters;
         long total = 0, executions = 0, updates = 0;
@@ -163,14 +182,31 @@ public class Periodic {
     }
 
     public static class RundownResult {
+        @Description("The total number of updates.")
         public final long updates;
+
+        @Description("The total number of executions.")
         public final long executions;
+
+        @Description("The total time taken in nanoseconds.")
         public final long runtime;
+
+        @Description("The number of run batches.")
         public final long batches;
+
+        @Description("The number of failed batches.")
         public final long failedBatches;
+
+        @Description("Errors returned from the failed batches.")
         public final Map<String, Long> batchErrors;
+
+        @Description("The number of failed commits.")
         public final long failedCommits;
+
+        @Description("Errors returned from the failed commits.")
         public final Map<String, Long> commitErrors;
+
+        @Description("If the job was terminated.")
         public final boolean wasTerminated;
 
         public RundownResult(
@@ -205,7 +241,7 @@ public class Periodic {
 
     @Procedure("apoc.periodic.cancel")
     @Description("Cancels the given background job.")
-    public Stream<JobInfo> cancel(@Name("name") String name) {
+    public Stream<JobInfo> cancel(@Name(value = "name", description = "The name of the job to cancel.") String name) {
         JobInfo info = new JobInfo(name);
         Future future = pools.getJobList().remove(info);
         if (future != null) {
@@ -218,9 +254,10 @@ public class Periodic {
     @Procedure(name = "apoc.periodic.submit", mode = Mode.WRITE)
     @Description("Creates a background job which runs the given Cypher statement once.")
     public Stream<JobInfo> submit(
-            @Name("name") String name,
-            @Name("statement") String statement,
-            @Name(value = "params", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "name", description = "The name of the job.") String name,
+            @Name(value = "statement", description = "The Cypher statement to run.") String statement,
+            @Name(value = "params", defaultValue = "{}", description = "{ params = {} :: MAP }")
+                    Map<String, Object> config) {
         validateQuery(statement);
         return submitProc(name, statement, config, db, log, pools);
     }
@@ -228,10 +265,11 @@ public class Periodic {
     @Procedure(name = "apoc.periodic.repeat", mode = Mode.WRITE)
     @Description("Runs a repeatedly called background job.\n" + "To stop this procedure, use `apoc.periodic.cancel`.")
     public Stream<JobInfo> repeat(
-            @Name("name") String name,
-            @Name("statement") String statement,
-            @Name("rate") long rate,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "name", description = "The name of the job.") String name,
+            @Name(value = "statement", description = "The Cypher statement to run.") String statement,
+            @Name(value = "rate", description = "The delay in seconds to wait between each job execution.") long rate,
+            @Name(value = "config", defaultValue = "{}", description = "{ params = {} :: MAP }")
+                    Map<String, Object> config) {
         validateQuery(statement);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
         JobInfo info = schedule(
@@ -258,7 +296,14 @@ public class Periodic {
     @Procedure(name = "apoc.periodic.countdown", mode = Mode.WRITE)
     @Description("Runs a repeatedly called background statement until it returns 0.")
     public Stream<JobInfo> countdown(
-            @Name("name") String name, @Name("statement") String statement, @Name("delay") long delay) {
+            @Name(value = "name", description = "The name of the job.") String name,
+            @Name(
+                            value = "statement",
+                            description =
+                                    "The Cypher statement to run, returning a count on each run indicating the remaining iterations.")
+                    String statement,
+            @Name(value = "delay", description = "The delay in seconds to wait between each job execution.")
+                    long delay) {
         validateQuery(statement);
         JobInfo info = submitJob(name, new Countdown(name, statement, delay, log), log, pools);
         info.delay = delay;
@@ -289,9 +334,28 @@ public class Periodic {
     @Description("Runs the second statement for each item returned by the first statement.\n"
             + "This procedure returns the number of batches and the total number of processed rows.")
     public Stream<BatchAndTotalResult> iterate(
-            @Name("cypherIterate") String cypherIterate,
-            @Name("cypherAction") String cypherAction,
-            @Name("config") Map<String, Object> config) {
+            @Name(value = "cypherIterate", description = "The first Cypher statement to be run.") String cypherIterate,
+            @Name(
+                            value = "cypherAction",
+                            description =
+                                    "The Cypher statement to run for each item returned by the initial Cypher statement.")
+                    String cypherAction,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+                    {
+                        batchSize = 10000 :: INTEGER,
+                        parallel = false :: BOOLEAN,
+                        retries = 0 :: INTEGER,
+                        batchMode = "BATCH" :: STRING,
+                        params = {} :: MAP,
+                        concurrency :: INTEGER,
+                        failedParams = -1 :: INTEGER,
+                        planner = "DEFAULT" :: ["DEFAULT", "COST", "IDP", "DP"]
+                    }
+                    """)
+                    Map<String, Object> config) {
         validateQuery(cypherIterate);
 
         long batchSize = Util.toLong(config.getOrDefault("batchSize", 10000));

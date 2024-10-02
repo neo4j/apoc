@@ -94,7 +94,8 @@ public class Utils {
     @Procedure("apoc.util.sleep")
     @Description(
             "Causes the currently running Cypher to sleep for the given duration of milliseconds (the transaction termination is honored).")
-    public void sleep(@Name("duration") long duration) throws InterruptedException {
+    public void sleep(@Name(value = "duration", description = "The milliseconds to sleep.") long duration)
+            throws InterruptedException {
         long started = System.currentTimeMillis();
         while (System.currentTimeMillis() - started < duration) {
             try {
@@ -109,9 +110,12 @@ public class Utils {
     @Procedure("apoc.util.validate")
     @Description("If the given predicate is true an exception is thrown.")
     public void validate(
-            @Name("predicate") boolean predicate,
-            @Name("message") String message,
-            @Name("params") List<Object> params) {
+            @Name(value = "predicate", description = "The predicate to check against.") boolean predicate,
+            @Name(
+                            value = "message",
+                            description = "The error message to throw if the given predicate evaluates to true.")
+                    String message,
+            @Name(value = "params", description = "The parameters for the given error message.") List<Object> params) {
         if (predicate) {
             if (params != null && !params.isEmpty())
                 message = String.format(message, params.toArray(new Object[params.size()]));

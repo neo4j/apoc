@@ -49,10 +49,12 @@ public class Graphs {
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the given data.")
     public Stream<VirtualGraph> fromData(
-            @Name("nodes") List<Node> nodes,
-            @Name("rels") List<Relationship> relationships,
-            @Name("name") String name,
-            @Name("props") Map<String, Object> properties) {
+            @Name(value = "nodes", description = "The nodes to include in the resulting graph.") List<Node> nodes,
+            @Name(value = "rels", description = "The relationship to include in the resulting graph.")
+                    List<Relationship> relationships,
+            @Name(value = "name", description = "The name of the resulting graph.") String name,
+            @Name(value = "props", description = "The properties to include in the resulting graph.")
+                    Map<String, Object> properties) {
         return Stream.of(new VirtualGraph(name, nodes, relationships, properties));
     }
 
@@ -60,7 +62,14 @@ public class Graphs {
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the given data.")
     public Stream<VirtualGraph> from(
-            @Name("data") Object data, @Name("name") String name, @Name("props") Map<String, Object> properties) {
+            @Name(
+                            value = "data",
+                            description =
+                                    "An object to extract nodes and relationships from. It can be of type; NODE | RELATIONSHIP | PATH | LIST<ANY>.")
+                    Object data,
+            @Name(value = "name", description = "The name of the resulting graph.") String name,
+            @Name(value = "props", description = "The properties to be present in the resulting graph.")
+                    Map<String, Object> properties) {
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(10000);
         extract(data, nodes, rels);
@@ -71,7 +80,10 @@ public class Graphs {
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given `PATH`.")
     public Stream<VirtualGraph> fromPath(
-            @Name("path") Path paths, @Name("name") String name, @Name("props") Map<String, Object> properties) {
+            @Name(value = "path", description = "A path to extract the nodes and relationships from.") Path paths,
+            @Name(value = "name", description = "The name to give the resulting graph.") String name,
+            @Name(value = "props", description = "The properties to include in the resulting graph.")
+                    Map<String, Object> properties) {
         return Stream.of(new VirtualGraph(name, paths.nodes(), paths.relationships(), properties));
     }
 
@@ -79,7 +91,11 @@ public class Graphs {
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given `PATH` values.")
     public Stream<VirtualGraph> fromPaths(
-            @Name("paths") List<Path> paths, @Name("name") String name, @Name("props") Map<String, Object> properties) {
+            @Name(value = "paths", description = "A list of paths to extract nodes and relationships from.")
+                    List<Path> paths,
+            @Name(value = "name", description = "The name of the resulting graph.") String name,
+            @Name(value = "props", description = "The properties to include in the resulting graph.")
+                    Map<String, Object> properties) {
         List<Node> nodes = new ArrayList<>(1000);
         List<Relationship> rels = new ArrayList<>(1000);
         for (Path path : paths) {
@@ -92,7 +108,10 @@ public class Graphs {
     @Procedure("apoc.graph.fromDB")
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given database.")
-    public Stream<VirtualGraph> fromDB(@Name("name") String name, @Name("props") Map<String, Object> properties) {
+    public Stream<VirtualGraph> fromDB(
+            @Name(value = "name", description = "The name of the resulting graph.") String name,
+            @Name(value = "props", description = "The properties to be present in the resulting graph.")
+                    Map<String, Object> properties) {
         return Stream.of(new VirtualGraph(name, tx.getAllNodes(), tx.getAllRelationships(), properties));
     }
 
@@ -101,10 +120,12 @@ public class Graphs {
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given Cypher statement.")
     public Stream<VirtualGraph> fromCypher(
-            @Name("statement") String statement,
-            @Name("params") Map<String, Object> params,
-            @Name("name") String name,
-            @Name("props") Map<String, Object> properties) {
+            @Name(value = "statement", description = "The Cypher statement to create the graph from.") String statement,
+            @Name(value = "params", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> params,
+            @Name(value = "name", description = "The name of the resulting graph.") String name,
+            @Name(value = "props", description = "The properties to include in the resulting graph.")
+                    Map<String, Object> properties) {
         params = params == null ? Collections.emptyMap() : params;
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(1000);
@@ -124,7 +145,23 @@ public class Graphs {
     @Description(
             "Generates a virtual sub-graph by extracting all of the `NODE` and `RELATIONSHIP` values from the data returned by the given JSON file.")
     public Stream<VirtualGraph> fromDocument(
-            @Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "json", description = "A JSON object to generate a graph from.") Object document,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            write = false :: BOOLEAN,
+                            labelField = 'type' :: STRING.
+                            idField = 'id' :: STRING,
+                            generateID = true :: BOOLEAN,
+                            defaultLabel = '' :: STRING,
+                            skipValidation = false :: BOOLEAN,
+                            mappings = {} :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         DocumentToGraph documentToGraph = new DocumentToGraph(tx, new GraphsConfig(config));
         return Stream.of(documentToGraph.create(document));
     }
@@ -132,7 +169,23 @@ public class Graphs {
     @Procedure(name = "apoc.graph.validateDocument", mode = Mode.READ)
     @Description("Validates the JSON file and returns the result of the validation.")
     public Stream<RowResult> validateDocument(
-            @Name("json") Object document, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "json", description = "The JSON object to validate.") Object document,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            write = false :: BOOLEAN,
+                            labelField = 'type' :: STRING.
+                            idField = 'id' :: STRING,
+                            generateID = true :: BOOLEAN,
+                            defaultLabel = '' :: STRING,
+                            skipValidation = false :: BOOLEAN,
+                            mappings = {} :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         GraphsConfig graphConfig = new GraphsConfig(config);
         DocumentToGraph documentToGraph = new DocumentToGraph(tx, graphConfig);
         Map<Long, List<String>> dups = documentToGraph.validateDocument(document);

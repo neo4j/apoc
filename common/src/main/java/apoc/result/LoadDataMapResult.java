@@ -18,20 +18,21 @@
  */
 package apoc.result;
 
-import java.util.List;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Relationship;
+import java.util.Collections;
+import java.util.Map;
 import org.neo4j.procedure.Description;
 
-public class GraphResult {
-    @Description("Nodes representing the meta data.")
-    public final List<Node> nodes;
+public class LoadDataMapResult {
+    public static final LoadDataMapResult EMPTY = new LoadDataMapResult(Collections.emptyMap());
 
-    @Description("Relationships representing the meta data.")
-    public final List<Relationship> relationships;
+    @Description("A map of data loaded from the given file.")
+    public final Map<String, Object> value;
 
-    public GraphResult(List<Node> nodes, List<Relationship> relationships) {
-        this.nodes = nodes;
-        this.relationships = relationships;
+    public static LoadDataMapResult empty() {
+        return EMPTY;
+    }
+
+    public LoadDataMapResult(Map<String, Object> value) {
+        this.value = value;
     }
 }

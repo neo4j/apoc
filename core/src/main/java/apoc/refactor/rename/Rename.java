@@ -79,9 +79,14 @@ public class Rename {
             "Renames the given label from `oldLabel` to `newLabel` for all `NODE` values.\n"
                     + "If a `LIST<NODE>` is provided, the renaming is applied to the `NODE` values within this `LIST<NODE>` only.")
     public Stream<BatchAndTotalResultWithInfo> label(
-            @Name("oldLabel") String oldLabel,
-            @Name("newLabel") String newLabel,
-            @Name(value = "nodes", defaultValue = "[]") List<Node> nodes) {
+            @Name(value = "oldLabel", description = "The label to rename.") String oldLabel,
+            @Name(value = "newLabel", description = "The new name to give the label.") String newLabel,
+            @Name(
+                            value = "nodes",
+                            defaultValue = "[]",
+                            description =
+                                    "The nodes to apply the new name to. If this list is empty, all nodes with the old label will be renamed.")
+                    List<Node> nodes) {
         nodes = nodes.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
         oldLabel = Util.sanitize(oldLabel);
         newLabel = Util.sanitize(newLabel);
@@ -103,10 +108,28 @@ public class Rename {
             "Renames all `RELATIONSHIP` values with type `oldType` to `newType`.\n"
                     + "If a `LIST<RELATIONSHIP>` is provided, the renaming is applied to the `RELATIONSHIP` values within this `LIST<RELATIONSHIP>` only.")
     public Stream<BatchAndTotalResultWithInfo> type(
-            @Name("oldType") String oldType,
-            @Name("newType") String newType,
-            @Name(value = "rels", defaultValue = "[]") List<Relationship> rels,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "oldType", description = "The type to rename.") String oldType,
+            @Name(value = "newType", description = "The new type for the relationship.") String newType,
+            @Name(
+                            value = "rels",
+                            defaultValue = "[]",
+                            description =
+                                    "The relationships to apply the new name to. If this list is empty, all relationships with the old type will be renamed.")
+                    List<Relationship> rels,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        batchSize = 100000 :: INTEGER,
+                        concurrency :: INTEGER,
+                        retries = 0 :: INTEGER,
+                        parallel = true :: BOOLEAN,
+                        batchMode = "BATCH" :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
         rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
         newType = Util.sanitize(newType);
         oldType = Util.sanitize(oldType);
@@ -157,10 +180,28 @@ public class Rename {
             "Renames the given property from `oldName` to `newName` for all `NODE` values.\n"
                     + "If a `LIST<NODE>` is provided, the renaming is applied to the `NODE` values within this `LIST<NODE>` only.")
     public Stream<BatchAndTotalResultWithInfo> nodeProperty(
-            @Name("oldName") String oldName,
-            @Name("newName") String newName,
-            @Name(value = "nodes", defaultValue = "[]") List<Node> nodes,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "oldName", description = "The property to rename.") String oldName,
+            @Name(value = "newName", description = "The new name to give the property.") String newName,
+            @Name(
+                            value = "nodes",
+                            defaultValue = "[]",
+                            description =
+                                    "The nodes to apply the new name to. If this list is empty, all nodes with the old property name will be renamed.")
+                    List<Node> nodes,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        batchSize = 100000 :: INTEGER,
+                        concurrency :: INTEGER,
+                        retries = 0 :: INTEGER,
+                        parallel = true :: BOOLEAN,
+                        batchMode = "BATCH" :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
         nodes = nodes.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
         oldName = Util.sanitize(oldName);
         newName = Util.sanitize(newName);
@@ -183,10 +224,28 @@ public class Rename {
             "Renames the given property from `oldName` to `newName` for all `RELATIONSHIP` values.\n"
                     + "If a `LIST<RELATIONSHIP>` is provided, the renaming is applied to the `RELATIONSHIP` values within this `LIST<RELATIONSHIP>` only.")
     public Stream<BatchAndTotalResultWithInfo> typeProperty(
-            @Name("oldName") String oldName,
-            @Name("newName") String newName,
-            @Name(value = "rels", defaultValue = "[]") List<Relationship> rels,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "oldName", description = "The property to rename.") String oldName,
+            @Name(value = "newName", description = "The new name to give the property.") String newName,
+            @Name(
+                            value = "rels",
+                            defaultValue = "[]",
+                            description =
+                                    "The relationships to apply the new name to. If this list is empty, all relationships with the old properties name will be renamed.")
+                    List<Relationship> rels,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        batchSize = 100000 :: INTEGER,
+                        concurrency :: INTEGER,
+                        retries = 0 :: INTEGER,
+                        parallel = true :: BOOLEAN,
+                        batchMode = "BATCH" :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
         rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
         newName = Util.sanitize(newName);
         oldName = Util.sanitize(oldName);
@@ -265,17 +324,56 @@ public class Rename {
     }
 
     public class BatchAndTotalResultWithInfo {
+        @Description("The number of batches the operation was run in.")
         public long batches;
+
+        @Description("The total number of renamings performed.")
         public long total;
+
+        @Description("The time taken to complete the operation.")
         public long timeTaken;
+
+        @Description("The total number of committed operations.")
         public long committedOperations;
+
+        @Description("The total number of failed operations.")
         public long failedOperations;
+
+        @Description("The total number of failed batches.")
         public long failedBatches;
+
+        @Description("The total number of retries.")
         public long retries;
+
+        @Description("The collected error messages.")
         public Map<String, Long> errorMessages;
+
+        @Description(
+                """
+                {
+                     total :: INTEGER,
+                     failed :: INTEGER,
+                     committed :: INTEGER,
+                     errors :: MAP
+                }
+                """)
         public Map<String, Object> batch;
+
+        @Description(
+                """
+                {
+                     total :: INTEGER,
+                     failed :: INTEGER,
+                     committed :: INTEGER,
+                     errors :: MAP
+                }
+                """)
         public Map<String, Object> operations;
+
+        @Description("Constraints associated with the given label or type.")
         public List<String> constraints;
+
+        @Description("Indexes associated with the given label or type.")
         public List<String> indexes;
 
         public BatchAndTotalResultWithInfo(

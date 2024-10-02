@@ -24,13 +24,17 @@ import org.neo4j.graphalgo.PathFinder;
 import org.neo4j.graphalgo.WeightedPath;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
+import org.neo4j.procedure.Description;
 
 /**
  * @author mh
  * @since 12.05.16
  */
 public class WeightedPathResult { // TODO: derive from PathResult when access to derived properties is fixed for yield
+    @Description("The path result.")
     public Path path;
+
+    @Description("The weight of the given path.")
     public double weight;
 
     public WeightedPathResult(WeightedPath weightedPath) {

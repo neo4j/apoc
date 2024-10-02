@@ -20,7 +20,7 @@ package apoc.export.arrow;
 
 import apoc.convert.Json;
 import apoc.export.util.ProgressReporter;
-import apoc.result.ProgressInfo;
+import apoc.result.ExportProgressInfo;
 import apoc.util.FileUtils;
 import apoc.util.Util;
 import java.io.IOException;
@@ -43,14 +43,14 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.TerminationGuard;
 
-public interface ExportArrowFileStrategy<IN> extends ExportArrowStrategy<IN, Stream<ProgressInfo>> {
+public interface ExportArrowFileStrategy<IN> extends ExportArrowStrategy<IN, Stream<ExportProgressInfo>> {
 
     Iterator<Map<String, Object>> toIterator(ProgressReporter reporter, IN data);
 
-    default Stream<ProgressInfo> export(IN data, ArrowConfig config) {
+    default Stream<ExportProgressInfo> export(IN data, ArrowConfig config) {
         final OutputStream out = FileUtils.getOutputStream(getFileName());
-        ProgressInfo progressInfo = new ProgressInfo(getFileName(), getSource(data), "arrow");
-        progressInfo.batchSize = config.getBatchSize();
+        ExportProgressInfo progressInfo = new ExportProgressInfo(getFileName(), getSource(data), "arrow");
+        progressInfo.setBatchSize(config.getBatchSize());
         ProgressReporter reporter = new ProgressReporter(null, null, progressInfo);
         int batchCount = 0;
         List<Map<String, Object>> rows = new ArrayList<>(config.getBatchSize());

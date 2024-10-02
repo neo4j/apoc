@@ -18,7 +18,6 @@
  */
 package apoc.algo;
 
-import apoc.result.RelationshipResult;
 import apoc.util.Util;
 import java.util.Collection;
 import java.util.HashSet;
@@ -41,11 +40,15 @@ public class Cover {
     @Context
     public Transaction tx;
 
+    public record AlgoCoverRelationshipResult(
+            @Description("The relationships connected to the given nodes.") Relationship rel) {}
+
     @Procedure("apoc.algo.cover")
     @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")
-    public Stream<RelationshipResult> cover(@Name("nodes") Object nodes) {
+    public Stream<AlgoCoverRelationshipResult> cover(
+            @Name(value = "nodes", description = "The nodes to look for connected relationships on.") Object nodes) {
         Set<Node> nodeSet = Util.nodeStream((InternalTransaction) tx, nodes).collect(Collectors.toSet());
-        return coverNodes(nodeSet).map(RelationshipResult::new);
+        return coverNodes(nodeSet).map(AlgoCoverRelationshipResult::new);
     }
 
     // non-parallelized utility method for use by other procedures

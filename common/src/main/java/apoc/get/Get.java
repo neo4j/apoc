@@ -18,8 +18,11 @@
  */
 package apoc.get;
 
+import apoc.result.CreatedNodeResult;
 import apoc.result.NodeResult;
 import apoc.result.RelationshipResult;
+import apoc.result.UpdatedNodeResult;
+import apoc.result.UpdatedRelationshipResult;
 import apoc.util.Util;
 import java.util.stream.Stream;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
@@ -37,7 +40,19 @@ public class Get {
         return Util.nodeStream(tx, ids).map(NodeResult::new);
     }
 
+    public Stream<UpdatedNodeResult> updatedNodes(@Name("nodes") Object ids) {
+        return Util.nodeStream(tx, ids).map(UpdatedNodeResult::new);
+    }
+
+    public Stream<CreatedNodeResult> createdNodes(@Name("nodes") Object ids) {
+        return Util.nodeStream(tx, ids).map(CreatedNodeResult::new);
+    }
+
     public Stream<RelationshipResult> rels(@Name("rels") Object ids) {
         return Util.relsStream(tx, ids).map(RelationshipResult::new);
+    }
+
+    public Stream<UpdatedRelationshipResult> updatesRels(@Name("rels") Object ids) {
+        return Util.relsStream(tx, ids).map(UpdatedRelationshipResult::new);
     }
 }

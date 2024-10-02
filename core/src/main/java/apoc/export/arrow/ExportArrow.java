@@ -21,7 +21,7 @@ package apoc.export.arrow;
 import apoc.Pools;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.result.ByteArrayResult;
-import apoc.result.ProgressInfo;
+import apoc.result.ExportProgressInfo;
 import apoc.result.VirtualGraph;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,7 +62,9 @@ public class ExportArrow {
     @NotThreadSafe
     @Procedure("apoc.export.arrow.stream.all")
     @Description("Exports the full database as an arrow byte array.")
-    public Stream<ByteArrayResult> all(@Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ByteArrayResult> all(
+            @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
+                    Map<String, Object> config) {
         return new ExportArrowService(db, pools, terminationGuard, logger)
                 .stream(new DatabaseSubGraph(tx), new ArrowConfig(config));
     }
@@ -71,7 +73,9 @@ public class ExportArrow {
     @Procedure("apoc.export.arrow.stream.graph")
     @Description("Exports the given graph as an arrow byte array.")
     public Stream<ByteArrayResult> graph(
-            @Name("graph") Object graph, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "graph", description = "The graph to export.") Object graph,
+            @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
+                    Map<String, Object> config) {
         final SubGraph subGraph;
         if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;
@@ -94,7 +98,9 @@ public class ExportArrow {
     @Procedure("apoc.export.arrow.stream.query")
     @Description("Exports the given Cypher query as an arrow byte array.")
     public Stream<ByteArrayResult> query(
-            @Name("query") String query, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+            @Name(value = "query", description = "The query used to collect the data for export.") String query,
+            @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
+                    Map<String, Object> config) {
         Map<String, Object> params = config == null
                 ? Collections.emptyMap()
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
@@ -105,8 +111,10 @@ public class ExportArrow {
     @NotThreadSafe
     @Procedure("apoc.export.arrow.all")
     @Description("Exports the full database as an arrow file.")
-    public Stream<ProgressInfo> all(
-            @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> all(
+            @Name(value = "file", description = "The name of the file to export the data to.") String fileName,
+            @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
+                    Map<String, Object> config) {
         return new ExportArrowService(db, pools, terminationGuard, logger)
                 .file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config));
     }
@@ -114,10 +122,11 @@ public class ExportArrow {
     @NotThreadSafe
     @Procedure("apoc.export.arrow.graph")
     @Description("Exports the given graph as an arrow file.")
-    public Stream<ProgressInfo> graph(
-            @Name("file") String fileName,
-            @Name("graph") Object graph,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> graph(
+            @Name(value = "file", description = "The name of the file to export the data to.") String fileName,
+            @Name(value = "graph", description = "The graph to export.") Object graph,
+            @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
+                    Map<String, Object> config) {
         final SubGraph subGraph;
         if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;
@@ -140,10 +149,12 @@ public class ExportArrow {
     @NotThreadSafe
     @Procedure("apoc.export.arrow.query")
     @Description("Exports the results from the given Cypher query as an arrow file.")
-    public Stream<ProgressInfo> query(
-            @Name("file") String fileName,
-            @Name("query") String query,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> query(
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(value = "query", description = "The query to use to collect the data for export.") String query,
+            @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
+                    Map<String, Object> config) {
         Map<String, Object> params = config == null
                 ? Collections.emptyMap()
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());

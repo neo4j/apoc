@@ -26,7 +26,7 @@ import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportUtils;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.ProgressReporter;
-import apoc.result.ProgressInfo;
+import apoc.result.ExportProgressInfo;
 import apoc.util.Util;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,8 +66,26 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.all")
     @Description("Exports the full database to the provided JSON file.")
-    public Stream<ProgressInfo> all(
-            @Name("file") String fileName, @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> all(
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportJson(fileName, source, new DatabaseSubGraph(tx), config);
@@ -76,11 +94,28 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.data")
     @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided JSON file.")
-    public Stream<ProgressInfo> data(
-            @Name("nodes") List<Node> nodes,
-            @Name("rels") List<Relationship> rels,
-            @Name("file") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> data(
+            @Name(value = "nodes", description = "A list of nodes to export.") List<Node> nodes,
+            @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         // initialize empty lists if nodes or rels are null
         nodes = nodes == null ? Collections.emptyList() : nodes;
         rels = rels == null ? Collections.emptyList() : rels;
@@ -92,10 +127,27 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.graph")
     @Description("Exports the given graph to the provided JSON file.")
-    public Stream<ProgressInfo> graph(
-            @Name("graph") Map<String, Object> graph,
-            @Name("file") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> graph(
+            @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
@@ -106,10 +158,27 @@ public class ExportJson {
     @NotThreadSafe
     @Procedure("apoc.export.json.query")
     @Description("Exports the results from the Cypher statement to the provided JSON file.")
-    public Stream<ProgressInfo> query(
-            @Name("statement") String query,
-            @Name("file") String fileName,
-            @Name(value = "config", defaultValue = "{}") Map<String, Object> config) {
+    public Stream<ExportProgressInfo> query(
+            @Name(value = "statement", description = "The query used to collect the data for export.") String query,
+            @Name(value = "file", description = "The name of the file to which the data will be exported.")
+                    String fileName,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                            stream = false :: BOOLEAN,
+                            batchSize = 20000 :: INTEGER,
+                            bulkImport = true :: BOOLEAN,
+                            timeoutSeconds = 100 :: INTEGER,
+                            compression = 'None' :: STRING,
+                            charset = 'UTF_8' :: STRING,
+                            sampling = false :: BOOLEAN,
+                            samplingConfig :: MAP
+                    }
+                    """)
+                    Map<String, Object> config) {
         Map<String, Object> params = config == null
                 ? Collections.emptyMap()
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
@@ -118,11 +187,12 @@ public class ExportJson {
         return exportJson(fileName, source, result, config);
     }
 
-    private Stream<ProgressInfo> exportJson(String fileName, String source, Object data, Map<String, Object> config) {
+    private Stream<ExportProgressInfo> exportJson(
+            String fileName, String source, Object data, Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config);
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "json";
-        ProgressReporter reporter = new ProgressReporter(null, null, new ProgressInfo(fileName, source, format));
+        ProgressReporter reporter = new ProgressReporter(null, null, new ExportProgressInfo(fileName, source, format));
         JsonFormat exporter = new JsonFormat(db, getJsonFormat(config));
         ExportFileManager cypherFileManager = FileManagerFactory.createFileManager(fileName, false, exportConfig);
         if (exportConfig.streamStatements()) {
@@ -138,7 +208,7 @@ public class ExportJson {
                             dump(data, exportConfig, reporterWithConsumer, exporter, cypherFileManager));
         } else {
             dump(data, exportConfig, reporter, exporter, cypherFileManager);
-            return reporter.stream();
+            return Stream.of((ExportProgressInfo) reporter.getTotal());
         }
     }
 

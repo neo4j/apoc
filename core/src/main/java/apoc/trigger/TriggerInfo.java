@@ -24,13 +24,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.neo4j.graphdb.Node;
+import org.neo4j.procedure.Description;
 
 public class TriggerInfo {
+    @Description("The name of the trigger.")
     public String name;
+
+    @Description("The query belonging to the trigger.")
     public String query;
+
+    @Description("{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }")
     public Map<String, Object> selector;
+
+    @Description("The parameters for the given Cypher statement.")
     public Map<String, Object> params;
+
+    @Description("Whether or not the trigger was installed.")
     public boolean installed = false;
+
+    @Description("Whether or not the trigger was paused.")
     public boolean paused = false;
 
     public TriggerInfo(String name) {

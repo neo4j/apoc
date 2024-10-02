@@ -28,36 +28,69 @@ import apoc.agg.Median;
 import apoc.agg.Percentiles;
 import apoc.agg.Product;
 import apoc.agg.Statistics;
+import apoc.algo.Cover;
+import apoc.algo.PathFinding;
+import apoc.atomic.Atomic;
 import apoc.bitwise.BitwiseOperations;
 import apoc.coll.Coll;
 import apoc.convert.Convert;
 import apoc.convert.Json;
 import apoc.create.Create;
+import apoc.cypher.Cypher;
 import apoc.cypher.CypherFunctions;
+import apoc.cypher.Timeboxed;
 import apoc.data.url.ExtractURL;
 import apoc.date.Date;
 import apoc.diff.Diff;
+import apoc.example.Examples;
+import apoc.export.arrow.ExportArrow;
 import apoc.export.csv.ExportCSV;
+import apoc.export.csv.ImportCsv;
+import apoc.export.cypher.ExportCypher;
+import apoc.export.graphml.ExportGraphML;
+import apoc.export.json.ExportJson;
+import apoc.export.json.ImportJson;
 import apoc.graph.Graphs;
 import apoc.hashing.Fingerprinting;
+import apoc.help.Help;
+import apoc.index.SchemaIndex;
 import apoc.label.Label;
+import apoc.load.LoadArrow;
+import apoc.load.LoadJson;
 import apoc.load.Xml;
+import apoc.lock.Lock;
+import apoc.log.Neo4jLogStream;
 import apoc.map.Maps;
 import apoc.math.Maths;
+import apoc.math.Regression;
+import apoc.merge.Merge;
 import apoc.meta.Meta;
+import apoc.neighbors.Neighbors;
+import apoc.nodes.Grouping;
 import apoc.nodes.Nodes;
 import apoc.number.ArabicRoman;
 import apoc.number.Numbers;
 import apoc.number.exact.Exact;
+import apoc.path.PathExplorer;
 import apoc.path.Paths;
+import apoc.periodic.Periodic;
+import apoc.refactor.GraphRefactoring;
+import apoc.refactor.rename.Rename;
 import apoc.schema.Schemas;
 import apoc.scoring.Scoring;
+import apoc.search.ParallelNodeSearch;
+import apoc.spatial.Distance;
+import apoc.spatial.Geocode;
+import apoc.stats.DegreeDistribution;
 import apoc.temporal.TemporalProcedures;
 import apoc.text.Phonetic;
 import apoc.text.Strings;
+import apoc.trigger.Trigger;
+import apoc.trigger.TriggerNewProcedures;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.version.Version;
+import apoc.warmup.Warmup;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.Map;
@@ -80,40 +113,73 @@ public class ArgumentDescriptionsTest {
         TestUtil.registerProcedure(
                 db,
                 ArabicRoman.class,
+                Atomic.class,
                 BitwiseOperations.class,
                 Coll.class,
                 CollAggregation.class,
                 Convert.class,
+                Cover.class,
                 Create.class,
+                Cypher.class,
                 CypherFunctions.class,
                 Date.class,
+                DegreeDistribution.class,
                 Diff.class,
+                Distance.class,
                 Exact.class,
+                Examples.class,
+                ExportArrow.class,
                 ExportCSV.class,
+                ExportJson.class,
+                ExportGraphML.class,
+                ExportCypher.class,
                 ExtractURL.class,
                 Fingerprinting.class,
+                Geocode.class,
                 Graph.class,
+                GraphRefactoring.class,
                 Graphs.class,
+                Grouping.class,
+                Help.class,
+                ImportCsv.class,
+                ImportJson.class,
                 Json.class,
                 Label.class,
+                LoadArrow.class,
+                LoadJson.class,
+                Lock.class,
                 Maps.class,
                 Maths.class,
                 MaxAndMinItems.class,
                 Median.class,
+                Merge.class,
                 Meta.class,
+                Neighbors.class,
+                Neo4jLogStream.class,
                 Nodes.class,
                 Numbers.class,
+                ParallelNodeSearch.class,
+                PathExplorer.class,
+                PathFinding.class,
                 Paths.class,
                 Percentiles.class,
+                Periodic.class,
                 Phonetic.class,
                 Product.class,
+                Rename.class,
+                Regression.class,
+                SchemaIndex.class,
                 Schemas.class,
                 Scoring.class,
                 Statistics.class,
                 Strings.class,
                 TemporalProcedures.class,
+                Timeboxed.class,
+                Trigger.class,
+                TriggerNewProcedures.class,
                 Utils.class,
                 Version.class,
+                Warmup.class,
                 Xml.class);
     }
 
@@ -139,6 +205,29 @@ public class ArgumentDescriptionsTest {
         final var json = new ObjectMapper();
         final var expected =
                 json.reader().readTree(ArgumentDescriptionsTest.class.getResourceAsStream("/functions.json"));
+        final var actual = json.valueToTree(result);
+        // Uncomment to print out how the file should look :)
+        // System.out.println("Actual:\n" + json.writer().withDefaultPrettyPrinter().writeValueAsString(actual));
+        for (int i = 0; i < expected.size(); ++i) assertThat(expected.get(i)).isEqualTo(actual.get(i));
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    public void procedureArgumentDescriptionsTest() throws IOException {
+        final var query =
+                """
+                  SHOW PROCEDURES YIELD
+                  name, description, signature, argumentDescription,
+                  returnDescription, isDeprecated, deprecatedBy
+                  WHERE name STARTS WITH 'apoc'
+                  RETURN *
+                """;
+        final var result =
+                db.executeTransactionally(query, Map.of(), r -> r.stream().toList());
+
+        final var json = new ObjectMapper();
+        final var expected =
+                json.reader().readTree(ArgumentDescriptionsTest.class.getResourceAsStream("/procedures.json"));
         final var actual = json.valueToTree(result);
         // Uncomment to print out how the file should look :)
         // System.out.println("Actual:\n" + json.writer().withDefaultPrettyPrinter().writeValueAsString(actual));
