@@ -115,6 +115,51 @@ public class ExportCsvTest {
             ,,,,,,,,"3","4","NEXT_DELIVERY","","",""
             ,,,,,,,,"8","9","REL","0"," ",""
             """;
+    private static final String EXPECTED_ALL_ALWAYS_USER =
+            """
+            ":ID","name","age:long",":LABEL"
+            "1","bar","42","User"
+            "2","","12","User"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_USER1 =
+            """
+            ":ID","name","age:long","male:boolean","kids",":LABEL"
+            "0","foo","42","true","[""a"",""b"",""c""]","User1;User"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_ADDRESS =
+            """
+            ":ID","name","street",":LABEL"
+            "4","Bar Sport","","Address"
+            "5","","via Benni","Address"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_ADDRESS1 =
+            """
+            ":ID","street","name","city",":LABEL"
+            "3","Via Garibaldi, 7","Andrea","Milano","Address1;Address"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_ESCAPING =
+            """
+            ":ID","age:long","name",":LABEL"
+            "6","1","I am ""groot"", and more ","ESCAPING"
+            "7","2"," ","ESCAPING"
+            "8","3","","ESCAPING"
+            "9","4","","ESCAPING"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_KNOWS =
+            """
+            ":START_ID",":END_ID",":TYPE"
+            "0","1","KNOWS"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_NEXT_DELIVERY =
+            """
+            ":START_ID",":END_ID",":TYPE"
+            "3","4","NEXT_DELIVERY"
+            """;
+    private static final String EXPECTED_ALL_ALWAYS_REL =
+            """
+            ":START_ID",":END_ID",":TYPE","value2","value1","id:long"
+            "8","9","REL",""," ","0"
+            """;
 
     private static final String EXP_SAMPLE =
             """
@@ -155,6 +200,26 @@ public class ExportCsvTest {
             ,,,,,,,,3,4,NEXT_DELIVERY,,,
             ,,,,,,,,8,9,REL,0, ,
             """;
+
+    private static final String EXPECTED_ALL_NONE_USER1 =
+            """
+            :ID,name,age:long,male:boolean,kids,:LABEL
+            0,foo,42,true,["a","b","c"],User1;User
+            """;
+    private static final String EXPECTED_ALL_NONE_ADDRESS1 =
+            """
+            :ID,street,name,city,:LABEL
+            3,Via Garibaldi, 7,Andrea,Milano,Address1;Address
+            """;
+    private static final String EXPECTED_ALL_NONE_ESCAPING =
+            """
+            :ID,age:long,name,:LABEL
+            6,1,I am "groot", and more ,ESCAPING
+            7,2, ,ESCAPING
+            8,3,,ESCAPING
+            9,4,,ESCAPING
+            """;
+
     private static final String EXPECTED_ALL_IF_NEEDED_RELS =
             """
             ,,,,,,,,0,1,KNOWS,,,
@@ -177,6 +242,52 @@ public class ExportCsvTest {
             ,,,,,,,,0,1,KNOWS,,,
             ,,,,,,,,3,4,NEXT_DELIVERY,,,
             ,,,,,,,,8,9,REL,0, ,
+            """;
+
+    private static final String EXPECTED_ALL_IF_NEEDED_USER =
+            """
+            :ID,name,age:long,:LABEL
+            1,bar,42,User
+            2,,12,User
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_USER1 =
+            """
+            :ID,name,age:long,male:boolean,kids,:LABEL
+            0,foo,42,true,"[""a"",""b"",""c""]",User1;User
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_ADDRESS =
+            """
+            :ID,name,street,:LABEL
+            4,Bar Sport,,Address
+            5,,via Benni,Address
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_ADDRESS1 =
+            """
+            :ID,street,name,city,:LABEL
+            3,"Via Garibaldi, 7",Andrea,Milano,Address1;Address
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_ESCAPING =
+            """
+            :ID,age:long,name,:LABEL
+            6,1,"I am ""groot"", and more ",ESCAPING
+            7,2, ,ESCAPING
+            8,3,,ESCAPING
+            9,4,,ESCAPING
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_KNOWS =
+            """
+            :START_ID,:END_ID,:TYPE
+            0,1,KNOWS
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_NEXT_DELIVERY =
+            """
+            :START_ID,:END_ID,:TYPE
+            3,4,NEXT_DELIVERY
+            """;
+    private static final String EXPECTED_ALL_IF_NEEDED_REL =
+            """
+            :START_ID,:END_ID,:TYPE,value2,value1,id:long
+            8,9,REL,, ,0
             """;
     private static final String EXPECTED_QUERY_DIFFERENTIATE_NULLS_NONE =
             """
@@ -273,6 +384,33 @@ public class ExportCsvTest {
                     9,:ESCAPING,4,,,,,,,,,,,
                     """
                     + EXPECTED_ALL_IF_NEEDED_RELS;
+
+    private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_USER =
+            """
+            :ID,name,age:long,:LABEL
+            1,bar,42,User
+            2,,12,User
+            """;
+    private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_ADDRESS =
+            """
+            :ID,name,street,:LABEL
+            4,Bar Sport,,Address
+            5,,via Benni,Address
+            """;
+    private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_ESCAPING =
+            """
+            :ID,age:long,name,:LABEL
+            6,1,"I am ""groot"", and more ",ESCAPING
+            7,2, ,ESCAPING
+            8,3,"",ESCAPING
+            9,4,,ESCAPING
+            """;
+    private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_REL =
+            """
+            :START_ID,:END_ID,:TYPE,value2,value1,id:long
+            8,9,REL,"", ,0
+            """;
+
     private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_ALWAYS =
             """
             "_id","_labels","age","city","kids","male","name","street","_start","_end","_type","id","value1","value2"
@@ -362,6 +500,155 @@ public class ExportCsvTest {
                 map("file", fileName, "config", map("compression", compressionAlgo.name())),
                 (r) -> assertResults(fileName, r, "database"));
         assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName, UTF_8, compressionAlgo));
+    }
+
+    @Test
+    public void testConsistentQuotingAlways() {
+        // All in one file
+        String fileName1 = "allOneFileAlways.csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: false})",
+                map("file", fileName1),
+                (r) -> assertResults(fileName1, r, "database"));
+        assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName1));
+
+        // In separate files
+        String fileNameStart = "allBulkImportAlways";
+        String fileName2 = fileNameStart + ".csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: true})",
+                map("file", fileName2),
+                (r) -> assertResults(fileName2, r, "database"));
+        assertEquals(EXPECTED_ALL_ALWAYS_USER, readFile(fileNameStart + ".nodes.User.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_USER1, readFile(fileNameStart + ".nodes.User1.User.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_ADDRESS, readFile(fileNameStart + ".nodes.Address.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_ADDRESS1, readFile(fileNameStart + ".nodes.Address1.Address.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_ESCAPING, readFile(fileNameStart + ".nodes.ESCAPING.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_KNOWS, readFile(fileNameStart + ".relationships.KNOWS.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_NEXT_DELIVERY, readFile(fileNameStart + ".relationships.NEXT_DELIVERY.csv"));
+        assertEquals(EXPECTED_ALL_ALWAYS_REL, readFile(fileNameStart + ".relationships.REL.csv"));
+
+        // Streaming
+        TestUtil.testCall(db, "CALL apoc.export.csv.all(null,{stream: true})", (r) -> {
+            String data = (String) r.get("data");
+            assertEquals(EXPECTED_ALL_ALWAYS, data);
+        });
+    }
+
+    @Test
+    public void testConsistentQuotingIfNeeded() {
+        // All in one file
+        String fileName1 = "allOneFileIfNeeded.csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'ifNeeded'})",
+                map("file", fileName1),
+                (r) -> assertResults(fileName1, r, "database"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED, readFile(fileName1));
+
+        // In separate files
+        String fileNameStart = "allBulkImportIfNeeded";
+        String fileName2 = fileNameStart + ".csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: true, quotes: 'ifNeeded'})",
+                map("file", fileName2),
+                (r) -> assertResults(fileName2, r, "database"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_USER, readFile(fileNameStart + ".nodes.User.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_USER1, readFile(fileNameStart + ".nodes.User1.User.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_ADDRESS, readFile(fileNameStart + ".nodes.Address.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_ADDRESS1, readFile(fileNameStart + ".nodes.Address1.Address.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_ESCAPING, readFile(fileNameStart + ".nodes.ESCAPING.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_KNOWS, readFile(fileNameStart + ".relationships.KNOWS.csv"));
+        assertEquals(
+                EXPECTED_ALL_IF_NEEDED_NEXT_DELIVERY, readFile(fileNameStart + ".relationships.NEXT_DELIVERY.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_REL, readFile(fileNameStart + ".relationships.REL.csv"));
+
+        // Streaming
+        TestUtil.testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'ifNeeded'})", (r) -> {
+            String data = (String) r.get("data");
+            assertEquals(EXPECTED_ALL_IF_NEEDED, data);
+        });
+    }
+
+    @Test
+    public void testConsistentQuotingIfNeededDifferentiateNulls() {
+        // All in one file
+        String fileName1 = "allOneFileIfNeeded.csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'ifNeeded', differentiateNulls: true})",
+                map("file", fileName1),
+                (r) -> assertResults(fileName1, r, "database"));
+        assertEquals(EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED, readFile(fileName1));
+
+        // In separate files
+        String fileNameStart = "allBulkImportIfNeeded";
+        String fileName2 = fileNameStart + ".csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: true, quotes: 'ifNeeded', differentiateNulls: true})",
+                map("file", fileName2),
+                (r) -> assertResults(fileName2, r, "database"));
+        assertEquals(EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_USER, readFile(fileNameStart + ".nodes.User.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_USER1, readFile(fileNameStart + ".nodes.User1.User.csv"));
+        assertEquals(
+                EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_ADDRESS, readFile(fileNameStart + ".nodes.Address.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_ADDRESS1, readFile(fileNameStart + ".nodes.Address1.Address.csv"));
+        assertEquals(
+                EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_ESCAPING, readFile(fileNameStart + ".nodes.ESCAPING.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_KNOWS, readFile(fileNameStart + ".relationships.KNOWS.csv"));
+        assertEquals(
+                EXPECTED_ALL_IF_NEEDED_NEXT_DELIVERY, readFile(fileNameStart + ".relationships.NEXT_DELIVERY.csv"));
+        assertEquals(
+                EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_REL, readFile(fileNameStart + ".relationships.REL.csv"));
+
+        // Streaming
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all(null,{stream: true, quotes: 'ifNeeded', differentiateNulls: true})",
+                (r) -> {
+                    String data = (String) r.get("data");
+                    assertEquals(EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED, data);
+                });
+    }
+
+    @Test
+    public void testConsistentQuotingNone() {
+        // All in one file
+        String fileName1 = "allOneFileNone.csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'none'})",
+                map("file", fileName1),
+                (r) -> assertResults(fileName1, r, "database"));
+        assertEquals(EXPECTED_ALL_NONE, readFile(fileName1));
+
+        // In separate files
+        String fileNameStart = "allBulkImportIfNone";
+        String fileName2 = fileNameStart + ".csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: true, quotes: 'none'})",
+                map("file", fileName2),
+                (r) -> assertResults(fileName2, r, "database"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_USER, readFile(fileNameStart + ".nodes.User.csv"));
+        assertEquals(EXPECTED_ALL_NONE_USER1, readFile(fileNameStart + ".nodes.User1.User.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_ADDRESS, readFile(fileNameStart + ".nodes.Address.csv"));
+        assertEquals(EXPECTED_ALL_NONE_ADDRESS1, readFile(fileNameStart + ".nodes.Address1.Address.csv"));
+        assertEquals(EXPECTED_ALL_NONE_ESCAPING, readFile(fileNameStart + ".nodes.ESCAPING.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_KNOWS, readFile(fileNameStart + ".relationships.KNOWS.csv"));
+        assertEquals(
+                EXPECTED_ALL_IF_NEEDED_NEXT_DELIVERY, readFile(fileNameStart + ".relationships.NEXT_DELIVERY.csv"));
+        assertEquals(EXPECTED_ALL_IF_NEEDED_REL, readFile(fileNameStart + ".relationships.REL.csv"));
+
+        // Streaming
+        TestUtil.testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'none'})", (r) -> {
+            String data = (String) r.get("data");
+            assertEquals(EXPECTED_ALL_NONE, data);
+        });
     }
 
     @Test
