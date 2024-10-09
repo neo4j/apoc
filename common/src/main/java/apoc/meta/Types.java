@@ -41,6 +41,8 @@ import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.values.storable.DurationValue;
 
 public enum Types {
+    LONG,
+    DOUBLE,
     INTEGER,
     FLOAT,
     STRING,
