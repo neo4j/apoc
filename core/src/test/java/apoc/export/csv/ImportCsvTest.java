@@ -303,7 +303,14 @@ public class ImportCsvTest {
                             """
                                     :START_ID(node_code),:END_ID(node_code),:TYPE
                                     806^04^150\\\\^123456,2,FRIENDS_WITH
-                                    """))
+                                    """),
+                    new AbstractMap.SimpleEntry<>(
+                            "withDifferentTypes",
+                            """
+                            id:ID|name:STRING|age:double|chipID:long|:LABEL
+                            1|Maja|0.5|1236|Cat
+                            2|Pelle|0.5|1345|Cat
+                            """))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
 
     @Before
@@ -312,7 +319,7 @@ public class ImportCsvTest {
             CsvTestUtil.saveCsvFile(entry.getKey(), entry.getValue());
         }
 
-        TestUtil.registerProcedure(db, ImportCsv.class);
+        TestUtil.registerProcedure(db, ImportCsv.class, ExportCSV.class);
 
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
@@ -993,5 +1000,116 @@ public class ImportCsvTest {
 
         long id = TestUtil.<Long>singleResultFirstColumn(db, "MATCH (n:Person) RETURN n.id AS id ORDER BY id");
         Assert.assertEquals(1L, id);
+    }
+
+    @Test
+    public void testDifferentDataTypes() {
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
+                map(
+                        "file",
+                        "file:/withDifferentTypes.csv",
+                        "config",
+                        map("delimiter", '|', "ignoreDuplicateNodes", true)),
+                (r) -> {
+                    assertEquals(2L, r.get("nodes"));
+                    assertEquals(0L, r.get("relationships"));
+                });
+
+        TestUtil.testResult(
+                db, "MATCH (n:Cat) RETURN n.name AS name, n.age AS age, n.chipID AS chipID ORDER BY name", (res) -> {
+                    Map<String, Object> r = res.next();
+                    assertEquals("Maja", r.get("name"));
+                    assertEquals(0.5, r.get("age"));
+                    assertEquals(1236L, r.get("chipID"));
+                    r = res.next();
+                    assertEquals("Pelle", r.get("name"));
+                    assertEquals(0.5, r.get("age"));
+                    assertEquals(1345L, r.get("chipID"));
+                });
+
+        db.executeTransactionally("MATCH (n:Cat) DETACH DELETE n");
+    }
+
+    @Test
+    public void testRoundTripWithTypes() {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+
+        db.executeTransactionally(
+                """
+        CREATE (:Cat {
+                        name: 'Maja',
+                        age: 0.5,
+                        chipID: 1236,
+                        location: point({latitude: 13.1, longitude: 33.46789}),
+                        isFluffy: true,
+                        born: date('2024-05-10')
+                        })
+        CREATE (:Cat {
+                        name: 'Pelle',
+                        age: 0.5,
+                        chipID: 1345,
+                        location: point({latitude: 13.1, longitude: 33.46789}),
+                        isFluffy: false,
+                        born: date('2024-05-10')
+                        })
+        """);
+
+        // In separate files
+        String fileNameStart = "exportedData";
+        String fileName = fileNameStart + ".csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.export.csv.all($file,{bulkImport: true})",
+                map("file", fileName),
+                (r) -> assertEquals(fileName, r.get("file")));
+
+        // REMOVE DATA
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.csv([{fileName: $file, labels: ['Cat']}], [], $config)",
+                map("file", fileNameStart + ".nodes.Cat.csv", "config", map("ignoreDuplicateNodes", true)),
+                (r) -> {
+                    assertEquals(2L, r.get("nodes"));
+                    assertEquals(0L, r.get("relationships"));
+                });
+
+        TestUtil.testResult(
+                db,
+                """
+                    MATCH (n:Cat)
+                    RETURN n.name AS name,
+                            n.age AS age,
+                            n.chipID AS chipID,
+                            n.isFluffy AS isFluffy,
+                            n.friends AS friends,
+                            n.location AS location,
+                            n.born AS born
+                    ORDER BY name
+                """,
+                (res) -> {
+                    Map<String, Object> r = res.next();
+                    assertEquals("Maja", r.get("name"));
+                    assertEquals(0.5, r.get("age"));
+                    assertEquals(1236L, r.get("chipID"));
+                    assertEquals(true, r.get("isFluffy"));
+                    assertEquals(
+                            Values.pointValue(CoordinateReferenceSystem.WGS_84, 33.46789D, 13.1D), r.get("location"));
+                    assertEquals(LocalDate.of(2024, 5, 10), r.get("born"));
+
+                    r = res.next();
+                    assertEquals("Pelle", r.get("name"));
+                    assertEquals(0.5, r.get("age"));
+                    assertEquals(1345L, r.get("chipID"));
+                    assertEquals(false, r.get("isFluffy"));
+                    assertEquals(
+                            Values.pointValue(CoordinateReferenceSystem.WGS_84, 33.46789D, 13.1D), r.get("location"));
+                    assertEquals(LocalDate.of(2024, 5, 10), r.get("born"));
+                });
+
+        db.executeTransactionally("MATCH (n:Cat) DETACH DELETE n");
     }
 }
