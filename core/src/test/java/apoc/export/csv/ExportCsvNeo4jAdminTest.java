@@ -369,7 +369,7 @@ public class ExportCsvNeo4jAdminTest {
         Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof RuntimeException);
         assertEquals(
-                "You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph",
+                "You can use the `bulkImport` only with apoc.export.csv.all and apoc.export.csv.graph",
                 except.getMessage());
     }
 

@@ -203,7 +203,7 @@ public class ExportCSV {
     private void preventBulkImport(ExportConfig config) {
         if (config.isBulkImport()) {
             throw new RuntimeException(
-                    "You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph");
+                    "You can use the `bulkImport` only with apoc.export.csv.all and apoc.export.csv.graph");
         }
     }
 
