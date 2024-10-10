@@ -42,7 +42,6 @@ import java.util.RandomAccess;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -54,6 +53,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -824,12 +824,12 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.contains")
-    @Description("Returns whether or not the given value exists in the given collection (using a HashSet).")
+    @Description("Returns whether or not the given value exists in the given collection.")
     public boolean contains(
             @Name(value = "coll", description = "The list to search for the given value.") List<Object> coll,
             @Name(value = "value", description = "The value in the list to check for the existence of.") Object value) {
         if (coll == null || coll.isEmpty()) return false;
-        return new HashSet<>(coll).contains(value);
+        return Util.containsValueEquals(coll, value);
     }
 
     @UserFunction("apoc.coll.set")
@@ -906,7 +906,7 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.containsAll")
-    @Description("Returns whether or not all of the given values exist in the given collection (using a HashSet).")
+    @Description("Returns whether or not all of the given values exist in the given collection.")
     public boolean containsAll(
             @Name(value = "coll1", description = "The list to search for the given values in.") List<Object> coll,
             @Name(value = "coll2", description = "The list of values in the given list to check for the existence of.")
@@ -948,7 +948,7 @@ public class Coll {
 
     @UserFunction("apoc.coll.isEqualCollection")
     @Description(
-            "Returns true if the two collections contain the same elements with the same cardinality in any order (using a HashMap).")
+            "Returns true if the two collections contain the same elements with the same cardinality in any order.")
     public boolean isEqualCollection(
             @Name(value = "coll", description = "The list of values to compare against `list2` and check for equality.")
                     List<Object> first,
@@ -958,12 +958,7 @@ public class Coll {
                     List<Object> second) {
         if (first == null && second == null) return true;
         if (first == null || second == null || first.size() != second.size()) return false;
-
-        Map<Object, Long> map1 =
-                first.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        Map<Object, Long> map2 =
-                second.stream().collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        return map1.equals(map2);
+        return new HashSet<>(frequencies(second)).containsAll(frequencies(first));
     }
 
     @UserFunction("apoc.coll.toSet")
@@ -1072,8 +1067,11 @@ public class Coll {
                     List<Object> second) {
         if (first == null) return second;
         if (second == null) return first;
-        Set<Object> set = new HashSet<>(first);
-        set.addAll(second);
+
+        Set<Object> set = Util.toAnyValuesSet(first);
+        for (Object item : second) {
+            set.add(ValueUtils.of(item));
+        }
         return new SetBackedList(set);
     }
 
@@ -1095,9 +1093,12 @@ public class Coll {
             @Name(value = "list2", description = "The list of values to be removed from `list1`.")
                     List<Object> second) {
         if (first == null) return null;
-        Set<Object> set = new HashSet<>(first);
-        if (second != null) set.removeAll(second);
-        return new SetBackedList(set);
+        if (second == null) return first;
+
+        var set1 = Util.toAnyValuesSet(first);
+        var set2 = Util.toAnyValuesSet(second);
+        set1.removeAll(set2);
+        return new SetBackedList(set1);
     }
 
     @UserFunction("apoc.coll.intersection")
@@ -1114,8 +1115,8 @@ public class Coll {
                                     "The list of values to compare against `list1` and form an intersection from.")
                     List<Object> second) {
         if (first == null || second == null) return Collections.emptyList();
-        Set<Object> set = new HashSet<>(first);
-        set.retainAll(second);
+        Set<Object> set = Util.toAnyValuesSet(first);
+        set.retainAll(Util.toAnyValuesSet(second));
         return new SetBackedList(set);
     }
 
@@ -1132,10 +1133,11 @@ public class Coll {
                     List<Object> second) {
         if (first == null) return second;
         if (second == null) return first;
-        Set<Object> intersection = new HashSet<>(first);
-        intersection.retainAll(second);
-        Set<Object> set = new HashSet<>(first);
-        set.addAll(second);
+        Set<Object> intersection = Util.toAnyValuesSet(first);
+        Set<Object> secondSet = Util.toAnyValuesSet(second);
+        Set<Object> set = new HashSet<>(intersection);
+        intersection.retainAll(secondSet);
+        set.addAll(secondSet);
         set.removeAll(intersection);
         return new SetBackedList(set);
     }
@@ -1224,7 +1226,17 @@ public class Coll {
             return false;
         }
 
-        Set<Object> set = new HashSet<>(coll);
+        var set = new HashSet<>(Math.max((int) (coll.size() / .75f) + 1, 16));
+        boolean hasntAdded;
+        for (Object item : coll) {
+            // Use the ValueUtil.of version, as arrays and lists in Cypher may differ, but are considered the *same*.
+            hasntAdded = set.add(ValueUtils.of(item));
+            // If the item has already been added, then return true as it is a duplicate
+            if (!hasntAdded) {
+                return true;
+            }
+        }
+
         return set.size() < coll.size();
     }
 
@@ -1236,12 +1248,14 @@ public class Coll {
             return Collections.emptyList();
         }
 
-        Set<Object> set = new HashSet<>(coll.size());
+        var set = new HashSet<>(Math.max((int) (coll.size() / .75f) + 1, 16));
         Set<Object> duplicates = new LinkedHashSet<>();
-
-        for (Object obj : coll) {
-            if (!set.add(obj)) {
-                duplicates.add(obj);
+        for (Object item : coll) {
+            // Use the ValueUtil.of version, as arrays and lists in Cypher may differ, but are considered the *same*.
+            AnyValue normalizedItem = ValueUtils.of(item);
+            // If the item has already been added, then add as it is a duplicate
+            if (!set.add(normalizedItem)) {
+                duplicates.add(normalizedItem);
             }
         }
 
@@ -1263,11 +1277,7 @@ public class Coll {
         List<Map<String, Object>> resultList = new ArrayList<>();
 
         for (Object obj : coll) {
-            MutableInt counter = duplicates.get(obj);
-            if (counter == null) {
-                counter = new MutableInt();
-                duplicates.put(obj, counter);
-            }
+            MutableInt counter = duplicates.computeIfAbsent(ValueUtils.of(obj), k -> new MutableInt());
             counter.increment();
         }
 
@@ -1276,7 +1286,7 @@ public class Coll {
             if (count > 1) {
                 Map<String, Object> entry = new LinkedHashMap<>(2);
                 entry.put("item", o);
-                entry.put("count", Long.valueOf(count));
+                entry.put("count", (long) count);
                 resultList.add(entry);
             }
         });
@@ -1288,7 +1298,7 @@ public class Coll {
     @Description("Returns a `LIST<ANY>` of frequencies of the items in the collection, keyed by `item` and `count`.")
     public List<Map<String, Object>> frequencies(
             @Name(value = "coll", description = "The list to return items and their count from.") List<Object> coll) {
-        if (coll == null || coll.size() == 0) {
+        if (coll == null || coll.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -1297,11 +1307,7 @@ public class Coll {
         List<Map<String, Object>> resultList = new ArrayList<>();
 
         for (Object obj : coll) {
-            MutableInt counter = counts.get(obj);
-            if (counter == null) {
-                counter = new MutableInt();
-                counts.put(obj, counter);
-            }
+            MutableInt counter = counts.computeIfAbsent(ValueUtils.of(obj), k -> new MutableInt());
             counter.increment();
         }
 
@@ -1309,7 +1315,7 @@ public class Coll {
             int count = intCounter.intValue();
             Map<String, Object> entry = new LinkedHashMap<>(2);
             entry.put("item", o);
-            entry.put("count", Long.valueOf(count));
+            entry.put("count", (long) count);
             resultList.add(entry);
         });
 
@@ -1322,7 +1328,7 @@ public class Coll {
             @Name(value = "coll", description = "The list to return items and their count from.") List<Object> coll) {
         if (coll == null) return Collections.emptyMap();
         return frequencies(coll).stream()
-                .collect(Collectors.toMap(t -> t.get("item").toString(), v -> v.get("count")));
+                .collect(Collectors.toMap(t -> Util.toPrettyPrint(t.get("item")), v -> v.get("count")));
     }
 
     @UserFunction("apoc.coll.occurrences")
@@ -1338,7 +1344,7 @@ public class Coll {
         long occurrences = 0;
 
         for (Object obj : coll) {
-            if (item.equals(obj)) {
+            if (Util.valueEquals(item, obj)) {
                 occurrences++;
             }
         }
@@ -1481,9 +1487,19 @@ public class Coll {
     @UserFunction("apoc.coll.different")
     @Description("Returns true if all the values in the given `LIST<ANY>` are unique.")
     public boolean different(
-            @Name(value = "coll", description = "The list to check for duplicates.") List<Object> values) {
-        if (values == null) return false;
-        return new HashSet(values).size() == values.size();
+            @Name(value = "coll", description = "The list to check for duplicates.") List<Object> coll) {
+        if (coll == null) return false;
+        var set = new HashSet<>(Math.max((int) (coll.size() / .75f) + 1, 16));
+        boolean hasntAdded;
+        for (Object item : coll) {
+            // Use the ValueUtil.of version, as arrays and lists in Cypher may differ, but are considered the *same*.
+            hasntAdded = set.add(ValueUtils.of(item));
+            // If the item has already been added, then return true as it is a duplicate
+            if (!hasntAdded) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @UserFunction("apoc.coll.dropDuplicateNeighbors")
@@ -1496,7 +1512,7 @@ public class Coll {
 
         Object last = null;
         for (Object element : list) {
-            if (element == null && last != null || element != null && !element.equals(last)) {
+            if (element == null && last != null || element != null && !Util.valueEquals(element, last)) {
                 newList.add(element);
                 last = element;
             }
