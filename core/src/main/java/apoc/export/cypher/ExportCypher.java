@@ -89,7 +89,7 @@ public class ExportCypher {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
@@ -123,7 +123,7 @@ public class ExportCypher {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
@@ -154,7 +154,7 @@ public class ExportCypher {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
@@ -191,7 +191,7 @@ public class ExportCypher {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
@@ -228,7 +228,7 @@ public class ExportCypher {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,

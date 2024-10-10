@@ -51,45 +51,46 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 public class ExportCsvNeo4jAdminTest {
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_TYPES_NODE = String.format(
-            ":ID;born_2D:point;born_3D:point;localtime:localtime;time:time;dateTime:datetime;localDateTime:localdatetime;date:date;duration:duration;:LABEL%n");
+            "\":ID\";\"born_2D:point\";\"born_3D:point\";\"localtime:localtime\";\"time:time\";\"dateTime:datetime\";\"localDateTime:localdatetime\";\"date:date\";\"duration:duration\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_TYPES_NODE = String.format(
-            "6;\"{\"\"crs\"\":\"\"cartesian\"\",\"\"x\"\":2.3,\"\"y\"\":4.5,\"\"z\"\":null}\";\"{\"\"crs\"\":\"\"wgs-84-3d\"\",\"\"latitude\"\":12.78,\"\"longitude\"\":56.7,\"\"height\"\":100.0}\";12:50:35.556;12:50:35.556+01:00;2018-10-30T12:50:35.556+01:00;2018-10-30T19:32:24;2018-10-30;P5M1DT12H;Types%n");
+            "\"6\";\"{\"\"crs\"\":\"\"cartesian\"\",\"\"x\"\":2.3,\"\"y\"\":4.5,\"\"z\"\":null}\";\"{\"\"crs\"\":\"\"wgs-84-3d\"\",\"\"latitude\"\":12.78,\"\"longitude\"\":56.7,\"\"height\"\":100.0}\";\"12:50:35.556\";\"12:50:35.556+01:00\";\"2018-10-30T12:50:35.556+01:00\";\"2018-10-30T19:32:24\";\"2018-10-30\";\"P5M1DT12H\";\"Types\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_ADDRESS =
-            String.format(":ID;name;street;:LABEL%n");
+            String.format("\":ID\";\"name\";\"street\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_ADDRESS1 =
-            String.format(":ID;street;name;city;:LABEL%n");
+            String.format("\":ID\";\"street\";\"name\";\"city\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_USER =
-            String.format(":ID;name;age:long;:LABEL%n");
+            String.format("\":ID\";\"name\";\"age:long\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_USER1 =
-            String.format(":ID;name;age:long;male:boolean;kids;:LABEL%n");
+            String.format("\":ID\";\"name\";\"age:long\";\"male:boolean\";\"kids\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_RELATIONSHIP_KNOWS =
-            String.format(":START_ID;:END_ID;:TYPE%n");
+            String.format("\":START_ID\";\":END_ID\";\":TYPE\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_RELATIONSHIP_NEXT_DELIVERY =
-            String.format(":START_ID;:END_ID;:TYPE%n");
+            String.format("\":START_ID\";\":END_ID\";\":TYPE\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_ADDRESS =
-            String.format("4;Bar Sport;;Address%n" + "5;;via Benni;Address%n");
+            String.format("\"4\";\"Bar Sport\";\"\";\"Address\"%n" + "\"5\";\"\";\"via Benni\";\"Address\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_ADDRESS1 =
-            String.format("3;Via Garibaldi, 7;Andrea;Milano;\"Address1;Address\"%n");
+            String.format("\"3\";\"Via Garibaldi, 7\";\"Andrea\";\"Milano\";\"Address1;Address\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_USER =
-            String.format("1;bar;42;User%n" + "2;;12;User%n");
+            String.format("\"1\";\"bar\";\"42\";\"User\"%n" + "\"2\";\"\";\"12\";\"User\"%n");
 
-    private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_USER1 =
-            String.format("0;\"foo \"\"the\"\" bar\";42;true;\"[\"\"a\"\",\"\"b\"\",\"\"c\"\"]\";\"User1;User\"%n");
+    private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_USER1 = String.format(
+            "\"0\";\"foo \"\"the\"\" bar\";\"42\";\"true\";\"[\"\"a\"\",\"\"b\"\",\"\"c\"\"]\";\"User1;User\"%n");
 
-    private static final String EXPECTED_NEO4J_ADMIN_IMPORT_RELATIONSHIP_KNOWS = String.format("0;1;KNOWS%n");
+    private static final String EXPECTED_NEO4J_ADMIN_IMPORT_RELATIONSHIP_KNOWS =
+            String.format("\"0\";\"1\";\"KNOWS\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_RELATIONSHIP_NEXT_DELIVERY =
-            String.format("3;4;NEXT_DELIVERY%n");
+            String.format("\"3\";\"4\";\"NEXT_DELIVERY\"%n");
 
     private static final String GZIP_EXT = ".foo";
 
@@ -368,7 +369,7 @@ public class ExportCsvNeo4jAdminTest {
         Throwable except = ExceptionUtils.getRootCause(e);
         assertTrue(except instanceof RuntimeException);
         assertEquals(
-                "You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph",
+                "You can use the `bulkImport` only with apoc.export.csv.all and apoc.export.csv.graph",
                 except.getMessage());
     }
 
@@ -412,11 +413,13 @@ public class ExportCsvNeo4jAdminTest {
 
                     String file = dir.getParent() + File.separator;
                     String expectedNodesLarus = String.format(
-                            ":ID,id:long,name,:LABEL%n" + "%s,1,Andrea,User;Larus%n", map.get("sourceId"));
+                            "\":ID\",\"id:long\",\"name\",\":LABEL\"%n" + "\"%s\",\"1\",\"Andrea\",\"User;Larus\"%n",
+                            map.get("sourceId"));
                     String expectedNodesNeo4j = String.format(
-                            ":ID,id:long,name,:LABEL%n" + "%s,2,Michael,User;Neo4j%n", map.get("targetId"));
+                            "\":ID\",\"id:long\",\"name\",\":LABEL\"%n" + "\"%s\",\"2\",\"Michael\",\"User;Neo4j\"%n",
+                            map.get("targetId"));
                     String expectedRelsNeo4j = String.format(
-                            ":START_ID,:END_ID,:TYPE,id:long%n" + "%s,%s,KNOWS,10%n",
+                            "\":START_ID\",\":END_ID\",\":TYPE\",\"id:long\"%n" + "\"%s\",\"%s\",\"KNOWS\",\"10\"%n",
                             map.get("sourceId"), map.get("targetId"));
 
                     assertFileEquals(file, expectedNodesLarus, fileName + ".nodes.User.Larus.csv");

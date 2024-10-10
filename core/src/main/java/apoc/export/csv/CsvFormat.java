@@ -227,7 +227,8 @@ public class CsvFormat {
                                     String prop = s.split(":")[0];
                                     return prop.isEmpty()
                                             ? String.valueOf(getNodeId(tx, n.getElementId()))
-                                            : FormatUtils.toString(n.getProperty(prop, ""));
+                                            : FormatUtils.toString(
+                                                    n.getProperty(prop, null), config.shouldDifferentiateNulls());
                                 })
                                 .collect(Collectors.toList());
                     })
@@ -316,12 +317,12 @@ public class CsvFormat {
             if (config.isSeparateHeader()) {
                 try (PrintWriter pwHeader = writer.getPrintWriter("header." + name)) {
                     CSVWriter csvWriterHeader = getCsvWriter(pwHeader, config);
-                    csvWriterHeader.writeNext(headerNode.toArray(new String[headerNode.size()]), false);
+                    csvWriterHeader.writeNext(headerNode.toArray(new String[headerNode.size()]), applyQuotesToAll);
                 }
             } else {
-                csvWriter.writeNext(headerNode.toArray(new String[headerNode.size()]), false);
+                csvWriter.writeNext(headerNode.toArray(new String[headerNode.size()]), applyQuotesToAll);
             }
-            rows.forEach(row -> csvWriter.writeNext(row.toArray(new String[row.size()]), false));
+            rows.forEach(row -> csvWriter.writeNext(row.toArray(new String[row.size()]), applyQuotesToAll));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
