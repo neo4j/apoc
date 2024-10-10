@@ -1362,4 +1362,247 @@ public class CollTest {
             assertFalse(result.hasNext());
         });
     }
+
+    // Tests for issues with different types of lists/arrays
+    @Test
+    public void testApocCollOccurrences() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                    MATCH (n:Test)
+                    WITH n LIMIT 1
+                    RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.occurrences(collection, [true, false, true]) AS value
+                """;
+        testResult(db, query, result -> assertEquals(2L, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollContains() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                 MATCH (n:Test)
+                WITH n LIMIT 1
+                 RETURN n.someArray} + [] + 1 as collection
+                RETURN apoc.coll.contains(collection, [true, false, true]) AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollContainsDuplicates() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                 MATCH (n:Test)
+                WITH n LIMIT 1
+                 RETURN n.someArray} + [] + 1 + [[true, false, true]] as collection
+                RETURN apoc.coll.containsDuplicates(collection) AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollDifferent() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                 MATCH (n:Test)
+                WITH n LIMIT 1
+                 RETURN n.someArray} + [] + 1 + [[true, false, true]] as collection
+                RETURN apoc.coll.different(collection) AS value
+                """;
+        testResult(db, query, result -> assertEquals(false, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollDropDuplicateNeighbors() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN size(apoc.coll.dropDuplicateNeighbors(collection)) AS value
+                """;
+        testResult(db, query, result -> assertEquals(1L, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollDuplicates() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.duplicates(collection) = [[true, false, true]] AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollDuplicatesWithCount() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.duplicatesWithCount(collection) AS value
+                """;
+        testResult(db, query, result -> {
+            List<Map<String, Object>> value =
+                    (List<Map<String, Object>>) result.next().get("value");
+            assertEquals(1, value.size());
+            Map<String, Object> duplicateValue = value.get(0);
+            assertEquals(2L, duplicateValue.get("count"));
+            assertArrayEquals(new boolean[] {true, false, true}, (boolean[]) duplicateValue.get("item"));
+        });
+    }
+
+    @Test
+    public void testApocCollFrequencies() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.frequencies(collection) AS value
+                """;
+        testResult(db, query, result -> {
+            List<Map<String, Object>> value =
+                    (List<Map<String, Object>>) result.next().get("value");
+            assertEquals(1, value.size());
+            Map<String, Object> duplicateValue = value.get(0);
+            assertEquals(2L, duplicateValue.get("count"));
+            assertArrayEquals(new boolean[] {true, false, true}, (boolean[]) duplicateValue.get("item"));
+        });
+    }
+
+    @Test
+    public void testApocCollFrequenciesAsMap() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                    MATCH (n:Test)
+                    WITH n LIMIT 1
+                    RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.frequenciesAsMap(collection) AS value
+                """;
+        testResult(
+                db,
+                query,
+                result -> assertEquals(
+                        Map.of("[true, false, true]", 2L), result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollIsEqualCollection() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, false]] as collection
+                RETURN apoc.coll.isEqualCollection(collection, [[true, false, true], [true, false, false]]) AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollIsEqualSubtract() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, false]] as collection
+                RETURN apoc.coll.subtract(collection, [[true, false, true], [true, false, false]]) AS value
+                """;
+        testResult(db, query, result -> assertEquals(List.of(), result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollIsEqualContainsAll() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, false]] as collection
+                RETURN apoc.coll.containsAll(collection, [[true, false, true], [true, false, false]]) AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollIsEqualToSet() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.toSet(collection) = [[true, false, true]] AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollUnion() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, true]] as collection
+                RETURN apoc.coll.union(collection, [[true, false, true]]) = [[true, false, true]] AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollIntersection() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, false]] as collection
+                RETURN apoc.coll.intersection(collection, [[true, false, true]]) = [[true, false, true]] AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
+
+    @Test
+    public void testApocCollDisjunction() {
+        db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
+        String query =
+                """
+                WITH COLLECT {
+                MATCH (n:Test)
+                WITH n LIMIT 1
+                RETURN n.someArray} + [[true, false, false]] as collection
+                RETURN apoc.coll.disjunction(collection, [[true, false, true]]) = [[true, false, false]] AS value
+                """;
+        testResult(db, query, result -> assertEquals(true, result.next().get("value")));
+    }
 }
