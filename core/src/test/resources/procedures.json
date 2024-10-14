@@ -2394,7 +2394,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        quotes = 'always' :: ['always', 'none', 'ifNeeded'],\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -2482,7 +2482,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        quotes = 'always' :: ['always', 'none', 'ifNeeded'],\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -2565,7 +2565,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        quotes = 'always' :: ['always', 'none', 'ifNeeded'],\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -2648,7 +2648,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None':: STRING,\n        charset = 'UTF_8' :: STRING,\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None':: STRING,\n        charset = 'UTF_8' :: STRING,\n        quotes = 'always' :: ['always', 'none', 'ifNeeded'],\n        differentiateNulls = false :: BOOLEAN,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -2742,7 +2742,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -2847,7 +2847,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -2946,7 +2946,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3046,7 +3046,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3141,7 +3141,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3220,7 +3220,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -3308,7 +3308,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -3391,7 +3391,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -3474,7 +3474,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "type" : "MAP"
   } ]
@@ -3552,7 +3552,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3641,7 +3641,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3725,7 +3725,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3809,7 +3809,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = true :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"

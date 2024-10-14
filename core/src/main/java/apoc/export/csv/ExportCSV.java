@@ -84,10 +84,11 @@ public class ExportCSV {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
+                            quotes = 'always' :: ['always', 'none', 'ifNeeded'],
                             differentiateNulls = false :: BOOLEAN,
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
@@ -113,10 +114,10 @@ public class ExportCSV {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
+                            quotes = 'always' :: ['always', 'none', 'ifNeeded'],
                             differentiateNulls = false :: BOOLEAN,
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
@@ -143,10 +144,11 @@ public class ExportCSV {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
+                            bulkImport = false :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None' :: STRING,
                             charset = 'UTF_8' :: STRING,
+                            quotes = 'always' :: ['always', 'none', 'ifNeeded'],
                             differentiateNulls = false :: BOOLEAN,
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
@@ -177,10 +179,10 @@ public class ExportCSV {
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
-                            bulkImport = true :: BOOLEAN,
                             timeoutSeconds = 100 :: INTEGER,
                             compression = 'None':: STRING,
                             charset = 'UTF_8' :: STRING,
+                            quotes = 'always' :: ['always', 'none', 'ifNeeded'],
                             differentiateNulls = false :: BOOLEAN,
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
@@ -201,7 +203,7 @@ public class ExportCSV {
     private void preventBulkImport(ExportConfig config) {
         if (config.isBulkImport()) {
             throw new RuntimeException(
-                    "You can use the `bulkImport` only with apoc.export.all and apoc.export.csv.graph");
+                    "You can use the `bulkImport` only with apoc.export.csv.all and apoc.export.csv.graph");
         }
     }
 
