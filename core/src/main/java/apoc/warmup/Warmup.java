@@ -31,6 +31,8 @@ import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.*;
@@ -81,6 +83,7 @@ public class Warmup {
 
     @NotThreadSafe
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Procedure(
             name = "apoc.warmup.run",
             deprecatedBy =

@@ -2924,13 +2924,13 @@
     ]
   },
   {
-    "isDeprecated": false,
+    "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.map.setEntry(map :: MAP, key :: STRING, value :: ANY) :: MAP",
     "name": "apoc.map.setEntry",
     "description": "Adds or updates the given entry in the `MAP`.",
     "returnDescription": "MAP",
-    "deprecatedBy": null,
+    "deprecatedBy": "apoc.map.setKey",
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [
@@ -5241,13 +5241,13 @@
     ]
   },
   {
-    "isDeprecated": false,
+    "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.text.levenshteinDistance(text1 :: STRING, text2 :: STRING) :: INTEGER",
     "name": "apoc.text.levenshteinDistance",
     "description": "Compares the given `STRING` values using the Levenshtein distance algorithm.",
     "returnDescription": "INTEGER",
-    "deprecatedBy": null,
+    "deprecatedBy": "apoc.text.distance",
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [
@@ -5418,13 +5418,13 @@
     ]
   },
   {
-    "isDeprecated": false,
+    "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.text.regreplace(text :: STRING, regex :: STRING, replacement :: STRING) :: STRING",
     "name": "apoc.text.regreplace",
     "description": "Finds and replaces all matches found by the given regular expression with the given replacement.",
     "returnDescription": "STRING",
-    "deprecatedBy": null,
+    "deprecatedBy": "apoc.text.replace",
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [

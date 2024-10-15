@@ -49,6 +49,8 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.util.Text;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -98,7 +100,9 @@ public class LoadArrow {
         }
     }
 
-    @Procedure(name = "apoc.load.arrow.stream")
+    @Procedure(name = "apoc.load.arrow.stream", deprecatedBy = "This procedure is being moved to APOC Extended.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow byte array.")
     public Stream<LoadDataMapResult> stream(
             @Name(value = "source", description = "The data to load.") byte[] source,
@@ -118,7 +122,9 @@ public class LoadArrow {
                 });
     }
 
-    @Procedure(name = "apoc.load.arrow")
+    @Procedure(name = "apoc.load.arrow", deprecatedBy = "This procedure is being moved to APOC Extended.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.")
     public Stream<LoadDataMapResult> file(
             @Name(value = "file", description = "The name of the file to import data from.") String fileName,

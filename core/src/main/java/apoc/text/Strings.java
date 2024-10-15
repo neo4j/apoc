@@ -54,6 +54,8 @@ import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -150,7 +152,9 @@ public class Strings {
         return result;
     }
 
-    @UserFunction("apoc.text.regreplace")
+    @UserFunction(name = "apoc.text.regreplace", deprecatedBy = "apoc.text.replace")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Finds and replaces all matches found by the given regular expression with the given replacement.")
     public String regreplace(
             final @Name(value = "text", description = "The string to be modified.") String text,
@@ -312,7 +316,9 @@ public class Strings {
         return levenshteinDistance(text1, text2);
     }
 
-    @UserFunction("apoc.text.levenshteinDistance")
+    @UserFunction(name = "apoc.text.levenshteinDistance", deprecatedBy = "apoc.text.distance")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Compares the given `STRING` values using the Levenshtein distance algorithm.")
     public Long levenshteinDistance(
             final @Name(value = "text1", description = "The first string to be compared against the second.") String

@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -107,7 +109,9 @@ public class LoadJson {
     }
 
     @SuppressWarnings("unchecked")
-    @Procedure("apoc.load.jsonParams")
+    @Procedure(name = "apoc.load.jsonParams", deprecatedBy = "This procedure is being moved to APOC Extended.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description(
             "Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is a `LIST<ANY>`.\n"
                     + "If the given JSON file is a `MAP`, this procedure imports a single value instead.")

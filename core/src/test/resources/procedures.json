@@ -2007,7 +2007,7 @@
   "deprecatedBy" : null,
   "argumentDescription" : [ ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.export.arrow.all(file :: STRING, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
   "name" : "apoc.export.arrow.all",
   "description" : "Exports the full database as an arrow file.",
@@ -2072,7 +2072,7 @@
     "isDeprecated" : false,
     "type" : "ANY"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "file",
     "description" : "The name of the file to export the data to.",
@@ -2086,7 +2086,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.export.arrow.graph(file :: STRING, graph :: ANY, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
   "name" : "apoc.export.arrow.graph",
   "description" : "Exports the given graph as an arrow file.",
@@ -2151,7 +2151,7 @@
     "isDeprecated" : false,
     "type" : "ANY"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "file",
     "description" : "The name of the file to export the data to.",
@@ -2170,7 +2170,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.export.arrow.query(file :: STRING, query :: STRING, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
   "name" : "apoc.export.arrow.query",
   "description" : "Exports the results from the given Cypher query as an arrow file.",
@@ -2235,7 +2235,7 @@
     "isDeprecated" : false,
     "type" : "ANY"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "file",
     "description" : "The name of the file to which the data will be exported.",
@@ -2254,7 +2254,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.export.arrow.stream.all(config = {} :: MAP) :: (value :: BYTEARRAY)",
   "name" : "apoc.export.arrow.stream.all",
   "description" : "Exports the full database as an arrow byte array.",
@@ -2264,7 +2264,7 @@
     "isDeprecated" : false,
     "type" : "BYTEARRAY"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "config",
     "description" : "{ batchSize = 2000 :: INTEGER }",
@@ -2273,7 +2273,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.export.arrow.stream.graph(graph :: ANY, config = {} :: MAP) :: (value :: BYTEARRAY)",
   "name" : "apoc.export.arrow.stream.graph",
   "description" : "Exports the given graph as an arrow byte array.",
@@ -2283,7 +2283,7 @@
     "isDeprecated" : false,
     "type" : "BYTEARRAY"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "graph",
     "description" : "The graph to export.",
@@ -2297,7 +2297,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.export.arrow.stream.query(query :: STRING, config = {} :: MAP) :: (value :: BYTEARRAY)",
   "name" : "apoc.export.arrow.stream.query",
   "description" : "Exports the given Cypher query as an arrow byte array.",
@@ -2307,7 +2307,7 @@
     "isDeprecated" : false,
     "type" : "BYTEARRAY"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "query",
     "description" : "The query used to collect the data for export.",
@@ -4353,7 +4353,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.load.arrow(file :: STRING, config = {} :: MAP) :: (value :: MAP)",
   "name" : "apoc.load.arrow",
   "description" : "Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.",
@@ -4363,7 +4363,7 @@
     "isDeprecated" : false,
     "type" : "MAP"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "file",
     "description" : "The name of the file to import data from.",
@@ -4377,7 +4377,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.load.arrow.stream(source :: BYTEARRAY, config = {} :: MAP) :: (value :: MAP)",
   "name" : "apoc.load.arrow.stream",
   "description" : "Imports `NODE` and `RELATIONSHIP` values from the provided arrow byte array.",
@@ -4387,7 +4387,7 @@
     "isDeprecated" : false,
     "type" : "MAP"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "source",
     "description" : "The data to load.",
@@ -4461,7 +4461,7 @@
     "type" : "MAP"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.load.jsonParams(urlOrKeyOrBinary :: ANY, headers :: MAP, payload :: STRING, path =  :: STRING, config = {} :: MAP) :: (value :: MAP)",
   "name" : "apoc.load.jsonParams",
   "description" : "Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is a `LIST<ANY>`.\nIf the given JSON file is a `MAP`, this procedure imports a single value instead.",
@@ -4471,7 +4471,7 @@
     "isDeprecated" : false,
     "type" : "MAP"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "urlOrKeyOrBinary",
     "description" : "The name of the file or binary data to import the data from.",
@@ -4607,7 +4607,7 @@
     "type" : "LIST<RELATIONSHIP>"
   } ]
 }, {
-  "isDeprecated" : false,
+  "isDeprecated" : true,
   "signature" : "apoc.log.stream(path :: STRING, config = {} :: MAP) :: (lineNo :: INTEGER, line :: STRING, path :: STRING)",
   "name" : "apoc.log.stream",
   "description" : "Returns the file contents from the given log, optionally returning only the last n lines.\nThis procedure requires users to have an admin role.",
@@ -4627,7 +4627,7 @@
     "isDeprecated" : false,
     "type" : "STRING"
   } ],
-  "deprecatedBy" : null,
+  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "path",
     "description" : "The name of the log file to read.",

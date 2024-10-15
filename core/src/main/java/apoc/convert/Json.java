@@ -33,6 +33,8 @@ import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.*;
 
 public class Json {
@@ -224,6 +226,7 @@ public class Json {
     }
 
     @Procedure(value = "apoc.convert.toTree", deprecatedBy = "apoc.paths.toJsonTree")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description(
             "Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.")
     public Stream<ToTreeMapResult> toTree(

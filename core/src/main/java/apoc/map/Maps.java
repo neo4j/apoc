@@ -26,6 +26,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -237,7 +239,9 @@ public class Maps {
         return Util.merge(map, Util.map(key, value));
     }
 
-    @UserFunction("apoc.map.setEntry")
+    @UserFunction(name = "apoc.map.setEntry", deprecatedBy = "apoc.map.setKey")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Adds or updates the given entry in the `MAP`.")
     public Map<String, Object> setEntry(
             @Name(value = "map", description = "The map to be updated.") Map<String, Object> map,
