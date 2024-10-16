@@ -121,6 +121,8 @@ import org.neo4j.procedure.TerminationGuard;
 import org.neo4j.values.AnyValue;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
 import org.neo4j.values.storable.PointValue;
+import org.neo4j.values.storable.TextValue;
+import org.neo4j.values.storable.Value;
 import org.neo4j.values.storable.Values;
 
 /**
@@ -1260,6 +1262,27 @@ public class Util {
 
     public static <T> List<AnyValue> toAnyValues(List<T> list) {
         return list.stream().map(ValueUtils::of).collect(Collectors.toList());
+    }
+
+    public static <T> HashSet<Object> toAnyValuesSet(List<T> list) {
+        var set = new HashSet<>(Math.max((int) (list.size() / .75f) + 1, 16));
+        for (Object item : list) {
+            // Use the ValueUtil.of version, as arrays and lists in Cypher may differ, but are considered the *same*.
+            set.add(ValueUtils.of(item));
+        }
+        return set;
+    }
+
+    public static String toPrettyPrint(Object anyValue) {
+        // Text values pretty print adds quotations, which is not generally
+        // how APOC wants to print them.
+        if (anyValue instanceof TextValue textValue) {
+            return textValue.stringValue();
+        } else if (anyValue instanceof Value value) {
+            return value.prettyPrint();
+        } else {
+            return anyValue.toString();
+        }
     }
 
     public static int indexOf(List<Object> list, Object value) {
