@@ -26,6 +26,8 @@ import apoc.util.Util;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Admin;
 import org.neo4j.procedure.Context;
@@ -69,6 +71,7 @@ public class Trigger {
 
     @Admin
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Procedure(name = "apoc.trigger.add", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.install")
     @Description("Adds a trigger to the given Cypher statement.\n"
             + "The selector for this procedure is {phase:'before/after/rollback/afterAsync'}.")
@@ -104,6 +107,7 @@ public class Trigger {
 
     @Admin
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Procedure(name = "apoc.trigger.remove", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.drop")
     @Description("Removes the given trigger.")
     public Stream<TriggerInfo> remove(
@@ -126,6 +130,7 @@ public class Trigger {
 
     @Admin
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Procedure(name = "apoc.trigger.removeAll", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.dropAll")
     @Description("Removes all previously added triggers.")
     public Stream<TriggerInfo> removeAll() {
@@ -156,6 +161,7 @@ public class Trigger {
 
     @Admin
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Procedure(name = "apoc.trigger.pause", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.stop")
     @Description("Pauses the given trigger.")
     public Stream<TriggerInfo> pause(
@@ -176,6 +182,7 @@ public class Trigger {
 
     @Admin
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Procedure(name = "apoc.trigger.resume", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.start")
     @Description("Resumes the given paused trigger.")
     public Stream<TriggerInfo> resume(

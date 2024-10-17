@@ -28,6 +28,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.*;
 
 /**
@@ -58,7 +60,12 @@ public class Neo4jLogStream {
     }
 
     @Admin
-    @Procedure(name = "apoc.log.stream", mode = Mode.DBMS)
+    @Procedure(
+            name = "apoc.log.stream",
+            mode = Mode.DBMS,
+            deprecatedBy = "This procedure is being moved to APOC Extended.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Returns the file contents from the given log, optionally returning only the last n lines.\n"
             + "This procedure requires users to have an admin role.")
     public Stream<FileEntry> stream(

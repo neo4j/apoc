@@ -32,6 +32,8 @@ import java.util.UUID;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.*;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.*;
 
@@ -353,6 +355,7 @@ public class Create {
 
     @UserFunction(name = "apoc.create.uuid", deprecatedBy = "Neo4j randomUUID() function")
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Returns a UUID.")
     public String uuid() {
         return UUID.randomUUID().toString();
@@ -394,6 +397,7 @@ public class Create {
             deprecatedBy =
                     "Neo4j's randomUUID() function can be used as a replacement, for example: `UNWIND range(0,$count) AS row RETURN row, randomUUID() AS uuid`")
     @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Returns a stream of UUIDs.")
     public Stream<UUIDResult> uuids(
             @Name(value = "count", description = "The number of UUID values to generate.") long count) {
