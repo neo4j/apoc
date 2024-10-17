@@ -110,8 +110,10 @@ public class Mapping {
                 return DateValue.parse(value).asObjectCopy();
             case DURATION:
                 return DurationValue.parse(value);
+            case LONG:
             case INTEGER:
                 return Util.toLong(value);
+            case DOUBLE:
             case FLOAT:
                 return Util.toDouble(value);
             case BOOLEAN:
