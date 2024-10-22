@@ -279,9 +279,11 @@ public class PeriodicTest {
 
     @Test
     public void testTerminateCommit() {
-        PeriodicTestUtils.testTerminatePeriodicQuery(
+        PeriodicTestUtils.testTerminateWithCommand(
                 db,
-                "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)', {})");
+                "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)', {})",
+                "UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)"
+        );
     }
 
     @Test
@@ -350,15 +352,18 @@ public class PeriodicTest {
 
     @Test
     public void testTerminateIterate() {
-        PeriodicTestUtils.testTerminatePeriodicQuery(
+        PeriodicTestUtils.testTerminateWithCommand(
                 db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})");
-        PeriodicTestUtils.testTerminatePeriodicQuery(
+                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})",
+                "UNWIND range(0,1000) as id RETURN id");
+        PeriodicTestUtils.testTerminateWithCommand(
                 db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})");
-        PeriodicTestUtils.testTerminatePeriodicQuery(
+                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})",
+                "UNWIND range(0,1000) as id RETURN id");
+        PeriodicTestUtils.testTerminateWithCommand(
                 db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})");
+                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})",
+                "UNWIND range(0,1000) as id RETURN id");
     }
 
     @Test

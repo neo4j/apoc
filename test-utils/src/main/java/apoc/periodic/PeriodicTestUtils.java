@@ -59,11 +59,6 @@ public class PeriodicTestUtils {
         return numberOfKilledTransactions > 0;
     }
 
-    public static void testTerminatePeriodicQuery(DbmsRule db, String periodicQuery) {
-        killPeriodicQueryAsync(db);
-        checkPeriodicTerminated(db, periodicQuery);
-    }
-
     public static void testTerminateWithCommand(DbmsRule db, String periodicQuery, String iterateQuery) {
         long timeBefore = System.currentTimeMillis();
         TransactionTestUtil.terminateTransactionAsync(db, 10L, iterateQuery);
