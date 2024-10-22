@@ -282,8 +282,7 @@ public class PeriodicTest {
         PeriodicTestUtils.testTerminateWithCommand(
                 db,
                 "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)', {})",
-                "UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)"
-        );
+                "UNWIND range(0,1000) as id WITH id CREATE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)");
     }
 
     @Test
