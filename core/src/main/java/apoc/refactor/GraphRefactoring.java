@@ -260,7 +260,7 @@ public class GraphRefactoring {
         final var resultStream = new ArrayList<NodeRefactorResult>();
 
         final var standinMap = asNodePairs(config.get("standinNodes"));
-        final var skipProperties = asStringSet(config.get("skipProperties"));
+        final var skipProps = asStringSet(config.get("skipProperties"));
         final var createNodesInInnerTx =
                 Boolean.TRUE.equals(config.getOrDefault("createNodesInNewTransactions", false));
 
@@ -273,9 +273,8 @@ public class GraphRefactoring {
             final var result = new NodeRefactorResult(oldNode.getId());
             try {
                 final Node newNode;
-                if (createNodesInInnerTx)
-                    newNode = withTransactionAndRebind(db, tx, innerTx -> cloneNode(innerTx, oldNode, skipProperties));
-                else newNode = cloneNode(tx, oldNode, skipProperties);
+                if (!createNodesInInnerTx) newNode = cloneNode(tx, oldNode, skipProps);
+                else newNode = withTransactionAndRebind(db, tx, innerTx -> cloneNode(innerTx, oldNode, skipProps));
                 resultStream.add(result.withOther(newNode));
                 newNodeByOldNode.put(oldNode, newNode);
             } catch (Exception e) {
@@ -300,7 +299,7 @@ public class GraphRefactoring {
             Node oldEnd = rel.getEndNode();
             Node newEnd = standinMap.getOrDefault(oldEnd, newNodeByOldNode.get(oldEnd));
 
-            if (newStart != null && newEnd != null) cloneRel(rel, newStart, newEnd, skipProperties);
+            if (newStart != null && newEnd != null) cloneRel(rel, newStart, newEnd, skipProps);
         }
 
         return resultStream.stream();
@@ -309,9 +308,14 @@ public class GraphRefactoring {
     private static Node cloneNode(final Transaction tx, final Node node, final Set<String> skipProps) {
         final var newNode =
                 tx.createNode(stream(node.getLabels().spliterator(), false).toArray(Label[]::new));
-        node.getAllProperties().forEach((k, v) -> {
-            if (skipProps.isEmpty() || !skipProps.contains(k)) newNode.setProperty(k, v);
-        });
+        try {
+            node.getAllProperties().forEach((k, v) -> {
+                if (skipProps.isEmpty() || !skipProps.contains(k)) newNode.setProperty(k, v);
+            });
+        } catch (Exception e) {
+            newNode.delete();
+            throw e;
+        }
         return newNode;
     }
 
