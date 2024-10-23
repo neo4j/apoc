@@ -19,6 +19,8 @@
 package apoc.refactor;
 
 import static apoc.util.MapUtil.map;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -31,6 +33,8 @@ import apoc.path.PathExplorer;
 import apoc.util.TestUtil;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -77,26 +81,55 @@ public class CloneSubgraphTest {
         db.shutdown();
     }
 
-    @Test
-    public void testCloneSubgraph_From_RootA_With_Empty_Rels_Should_Clone_All_Relationships_Between_Nodes() {
-        TestUtil.testCall(
-                db,
-                "MATCH (rootA:Root{name:'A'})" + "CALL apoc.path.subgraphAll(rootA, {}) YIELD nodes, relationships "
-                        + "WITH nodes[1..] as nodes, relationships, [rel in relationships | startNode(rel).name + ' ' + type(rel) + ' ' + endNode(rel).name] as relNames "
-                        + "CALL apoc.refactor.cloneSubgraph(nodes, []) YIELD input, output, error "
-                        + "WITH relNames, collect(output) as clones, collect(output.name) as cloneNames "
-                        + "CALL apoc.algo.cover(clones) YIELD rel "
-                        + "WITH relNames, cloneNames, [rel in collect(rel) | startNode(rel).name + ' ' + type(rel) + ' ' + endNode(rel).name] as cloneRelNames "
-                        + // was seeing odd incorrect behavior with yielded relTypesCount from apoc.meta.stats()
-                        "WITH cloneNames, cloneRelNames, apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified "
-                        + "RETURN cloneNames, cloneRelNames, clonedRelsVerified",
-                (row) -> {
-                    assertTrue(((List<String>) row.get("cloneNames"))
-                            .containsAll(List.of(
+    private static final String cloneWithEmptyRels =
+            """
+                MATCH (rootA:Root{name:'A'})
+                CALL apoc.path.subgraphAll(rootA, {}) YIELD nodes, relationships
+                WITH
+                  nodes[1..] as nodes,
+                  relationships,
+                  [rel in relationships | startNode(rel).name + ' ' + type(rel) + ' ' + endNode(rel).name] as relNames
+                CALL apoc.refactor.cloneSubgraph(nodes, [], {createNodesInNewTransactions: $newTx}) YIELD input, output, error
+                WITH
+                  relNames,
+                  collect(output) as clones,
+                  collect(output.name) as cloneNames
+                CALL apoc.algo.cover(clones) YIELD rel
+                WITH
+                  relNames,
+                  cloneNames,
+                  [rel in collect(rel) | startNode(rel).name + ' ' + type(rel) + ' ' + endNode(rel).name] as cloneRelNames
+                WITH
+                  cloneNames,
+                  cloneRelNames,
+                  apoc.coll.containsAll(relNames, cloneRelNames) as clonedRelsVerified
+                RETURN
+                  cloneNames,
+                  cloneRelNames,
+                  clonedRelsVerified
+                """;
+
+    private static final String cloneWithEmptyRelsMeta =
+            """
+            CALL apoc.meta.stats() YIELD nodeCount, relCount, labels, relTypes as relTypesMap
+            CALL db.relationshipTypes() YIELD relationshipType
+            WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl
+            RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount
+            """;
+
+    private void cloneWithEmptyRelsTest(boolean newTx, boolean commit) {
+        try (final var tx = db.beginTx();
+                final var res = tx.execute(cloneWithEmptyRels, Map.of("newTx", newTx))) {
+            assertThat(res.stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("cloneNames", n -> assertThat(n)
+                            .asInstanceOf(list(String.class))
+                            .containsExactlyInAnyOrder(
                                     "node1", "node2", "node3", "node4", "node5", "node8", "node9", "node10", "node6",
-                                    "node7")));
-                    assertTrue(((List<String>) row.get("cloneRelNames"))
-                            .containsAll(List.of(
+                                    "node7"))
+                    .hasEntrySatisfying("cloneRelNames", n -> assertThat(n)
+                            .asInstanceOf(list(String.class))
+                            .containsExactlyInAnyOrder(
                                     "node1 LINK node5",
                                     "node1 LINK node2",
                                     "node2 LINK node3",
@@ -105,22 +138,69 @@ public class CloneSubgraphTest {
                                     "node7 LINK node6",
                                     "node5 LINK node8",
                                     "node5 LINK node9",
-                                    "node9 DIFFERENT_LINK node10")));
-                    assertTrue((Boolean) row.get("clonedRelsVerified"));
-                });
+                                    "node9 DIFFERENT_LINK node10"))
+                    .containsEntry("clonedRelsVerified", true);
 
-        TestUtil.testCall(
-                db,
-                "CALL apoc.meta.stats() YIELD nodeCount, relCount, labels, relTypes as relTypesMap "
-                        + "CALL db.relationshipTypes() YIELD relationshipType "
-                        + "WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl "
-                        + "RETURN nodeCount, relCount, labels, apoc.map.fromPairs(relationshipTypesColl) as relTypesCount ",
-                (row) -> {
-                    assertEquals(row.get("nodeCount"), 24L); // original was 14, 10 nodes cloned
-                    assertEquals(row.get("relCount"), 20L); // original was 11, 9 relationships cloned
-                    assertEquals(row.get("labels"), map("Root", 2L, "Oddball", 2L, "Node", 22L));
-                    assertEquals(row.get("relTypesCount"), map("LINK", 18L, "DIFFERENT_LINK", 2L));
-                });
+            if (commit) tx.commit();
+            else tx.rollback();
+        }
+    }
+
+    @Test
+    public void testCloneSubgraph_From_RootA_With_Empty_Rels_Should_Clone_All_Relationships_Between_Nodes_NewTx() {
+        cloneWithEmptyRelsTest(true, true);
+        try (final var tx = db.beginTx();
+                final var res = tx.execute(cloneWithEmptyRelsMeta)) {
+            assertThat(res.stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("nodeCount", 24L)
+                    .containsEntry("relCount", 20L)
+                    .containsEntry("labels", map("Root", 2L, "Oddball", 2L, "Node", 22L))
+                    .containsEntry("relTypesCount", map("LINK", 18L, "DIFFERENT_LINK", 2L));
+        }
+    }
+
+    @Test
+    public void
+            testCloneSubgraph_From_RootA_With_Empty_Rels_Should_Clone_All_Relationships_Between_Nodes_NewTx_Rollback() {
+        cloneWithEmptyRelsTest(true, false);
+        try (final var tx = db.beginTx();
+                final var res = tx.execute(cloneWithEmptyRelsMeta)) {
+            assertThat(res.stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("nodeCount", 24L) // Committed in inner tx
+                    .containsEntry("relCount", 11L) // Rolled back, not created (weird, but behaves as before)
+                    .containsEntry("labels", map("Root", 2L, "Oddball", 2L, "Node", 22L))
+                    .containsEntry("relTypesCount", map("LINK", 10L, "DIFFERENT_LINK", 1L));
+        }
+    }
+
+    @Test
+    public void testCloneSubgraph_From_RootA_With_Empty_Rels_Should_Clone_All_Relationships_Between_Nodes() {
+        cloneWithEmptyRelsTest(false, true);
+        try (final var tx = db.beginTx();
+                final var res = tx.execute(cloneWithEmptyRelsMeta)) {
+            assertThat(res.stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("nodeCount", 24L)
+                    .containsEntry("relCount", 20L)
+                    .containsEntry("labels", map("Root", 2L, "Oddball", 2L, "Node", 22L))
+                    .containsEntry("relTypesCount", map("LINK", 18L, "DIFFERENT_LINK", 2L));
+        }
+    }
+
+    @Test
+    public void testCloneSubgraph_From_RootA_With_Empty_Rels_Should_Clone_All_Relationships_Between_Nodes_Rollback() {
+        cloneWithEmptyRelsTest(false, false);
+        try (final var tx = db.beginTx();
+                final var res = tx.execute(cloneWithEmptyRelsMeta)) {
+            assertThat(res.stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("nodeCount", 14L) // Rolled back
+                    .containsEntry("relCount", 11L) // Rolled back
+                    .containsEntry("labels", map("Root", 2L, "Oddball", 1L, "Node", 12L))
+                    .containsEntry("relTypesCount", map("LINK", 10L, "DIFFERENT_LINK", 1L));
+        }
     }
 
     @Test

@@ -22,6 +22,7 @@ import static apoc.refactor.util.PropertiesManager.mergeProperties;
 import static apoc.refactor.util.RefactorConfig.RelationshipSelectionStrategy.MERGE;
 import static apoc.refactor.util.RefactorUtil.*;
 import static apoc.util.Util.withTransactionAndRebind;
+import static java.util.stream.StreamSupport.stream;
 
 import apoc.Pools;
 import apoc.algo.Cover;
@@ -35,7 +36,6 @@ import java.util.concurrent.Future;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
@@ -248,93 +248,106 @@ public class GraphRefactoring {
                                     """
                     {
                         standinNodes :: LIST<LIST<NODE>>,
-                        skipProperties :: LIST<STRING>
+                        skipProperties :: LIST<STRING>,
+                        createNodesInNewTransactions = false :: BOOLEAN
                     }
                     """)
                     Map<String, Object> config) {
 
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
 
-        // empty or missing rels list means get all rels between nodes
-        if (rels == null || rels.isEmpty()) {
-            rels = Cover.coverNodes(nodes).collect(Collectors.toList());
-        }
+        final var newNodeByOldNode = new HashMap<Node, Node>(nodes.size());
+        final var resultStream = new ArrayList<NodeRefactorResult>();
 
-        Map<Node, Node> copyMap = new HashMap<>(nodes.size());
-        List<NodeRefactorResult> resultStream = new ArrayList<>();
-
-        Map<Node, Node> standinMap =
-                generateStandinMap((List<List<Node>>) config.getOrDefault("standinNodes", Collections.emptyList()));
-        List<String> skipProperties = (List<String>) config.getOrDefault("skipProperties", Collections.emptyList());
+        final var standinMap = asNodePairs(config.get("standinNodes"));
+        final var skipProperties = asStringSet(config.get("skipProperties"));
+        final var createNodesInInnerTx =
+                Boolean.TRUE.equals(config.getOrDefault("createNodesInNewTransactions", false));
 
         // clone nodes and populate copy map
-        for (Node node : nodes) {
-            if (node == null || standinMap.containsKey(node)) continue;
-            // standinNodes will NOT be cloned
+        for (final var oldNode : nodes) {
 
-            NodeRefactorResult result = new NodeRefactorResult(node.getId());
+            // standinNodes will NOT be cloned
+            if (oldNode == null || standinMap.containsKey(oldNode)) continue;
+
+            final var result = new NodeRefactorResult(oldNode.getId());
             try {
-                Node copy = withTransactionAndRebind(db, tx, transaction -> {
-                    Node copyTemp = transaction.createNode();
-                    Map<String, Object> properties = node.getAllProperties();
-                    if (skipProperties != null && !skipProperties.isEmpty()) {
-                        for (String skip : skipProperties) properties.remove(skip);
-                    }
-                    copyProperties(properties, copyTemp);
-                    copyLabels(node, copyTemp);
-                    return copyTemp;
-                });
-                resultStream.add(result.withOther(copy));
-                copyMap.put(node, copy);
+                final Node newNode;
+                if (createNodesInInnerTx)
+                    newNode = withTransactionAndRebind(db, tx, innerTx -> cloneNode(innerTx, oldNode, skipProperties));
+                else newNode = cloneNode(tx, oldNode, skipProperties);
+                resultStream.add(result.withOther(newNode));
+                newNodeByOldNode.put(oldNode, newNode);
             } catch (Exception e) {
                 resultStream.add(result.withError(e));
             }
         }
 
+        final Iterator<Relationship> relsIterator;
+        // empty or missing rels list means get all rels between nodes
+        if (rels == null || rels.isEmpty())
+            relsIterator = Cover.coverNodes(nodes).iterator();
+        else relsIterator = rels.iterator();
+
         // clone relationships, will be between cloned nodes and/or standins
-        for (Relationship rel : rels) {
+        while (relsIterator.hasNext()) {
+            final var rel = relsIterator.next();
             if (rel == null) continue;
 
             Node oldStart = rel.getStartNode();
-            Node newStart = standinMap.getOrDefault(oldStart, copyMap.get(oldStart));
+            Node newStart = standinMap.getOrDefault(oldStart, newNodeByOldNode.get(oldStart));
 
             Node oldEnd = rel.getEndNode();
-            Node newEnd = standinMap.getOrDefault(oldEnd, copyMap.get(oldEnd));
+            Node newEnd = standinMap.getOrDefault(oldEnd, newNodeByOldNode.get(oldEnd));
 
-            if (newStart != null && newEnd != null) {
-                Relationship newrel = newStart.createRelationshipTo(newEnd, rel.getType());
-                Map<String, Object> properties = rel.getAllProperties();
-                if (skipProperties != null && !skipProperties.isEmpty()) {
-                    for (String skip : skipProperties) properties.remove(skip);
-                }
-                copyProperties(properties, newrel);
-            }
+            if (newStart != null && newEnd != null) cloneRel(rel, newStart, newEnd, skipProperties);
         }
 
         return resultStream.stream();
     }
 
-    private Map<Node, Node> generateStandinMap(List<List<Node>> standins) {
-        Map<Node, Node> standinMap = standins.isEmpty() ? Collections.emptyMap() : new HashMap<>(standins.size());
+    private static Node cloneNode(final Transaction tx, final Node node, final Set<String> skipProps) {
+        final var newNode =
+                tx.createNode(stream(node.getLabels().spliterator(), false).toArray(Label[]::new));
+        node.getAllProperties().forEach((k, v) -> {
+            if (skipProps.isEmpty() || !skipProps.contains(k)) newNode.setProperty(k, v);
+        });
+        return newNode;
+    }
 
-        for (List<Node> pairing : standins) {
-            if (pairing == null) continue;
+    private static void cloneRel(Relationship base, Node from, Node to, final Set<String> skipProps) {
+        final var rel = from.createRelationshipTo(to, base.getType());
+        rel.getAllProperties().forEach((k, v) -> {
+            if (skipProps.isEmpty() || !skipProps.contains(k)) rel.setProperty(k, v);
+        });
+    }
 
-            if (pairing.size() != 2) {
-                throw new IllegalArgumentException("'standinNodes' must be a list of node pairs");
-            }
-
-            Node from = pairing.get(0);
-            Node to = pairing.get(1);
-
-            if (from == null || to == null) {
-                throw new IllegalArgumentException("'standinNodes' must be a list of node pairs");
-            }
-
-            standinMap.put(from, to);
+    private Map<Node, Node> asNodePairs(Object o) {
+        if (o == null) return Collections.emptyMap();
+        else if (o instanceof List<?> list) {
+            return list.stream()
+                    .filter(Objects::nonNull)
+                    .map(GraphRefactoring::castNodePair)
+                    .collect(Collectors.toUnmodifiableMap(l -> l.get(0), l -> l.get(1)));
+        } else {
+            throw new IllegalArgumentException("Expected a list of node pairs but got " + o);
         }
+    }
 
-        return standinMap;
+    private static Set<String> asStringSet(Object o) {
+        if (o == null) return Collections.emptySet();
+        else if (o instanceof Collection<?> c && c.stream().allMatch(i -> i instanceof String)) {
+            return c.stream().map(Object::toString).collect(Collectors.toSet());
+        } else throw new IllegalArgumentException("Expected a list of string parameter keys but got " + o);
+    }
+
+    private static List<Node> castNodePair(Object o) {
+        if (o instanceof List<?> l && l.size() == 2 && l.get(0) instanceof Node && l.get(1) instanceof Node) {
+            //noinspection unchecked
+            return (List<Node>) l;
+        } else {
+            throw new IllegalArgumentException("Expected pair of nodes but got " + o);
+        }
     }
 
     public record MergedNodeResult(@Description("The merged node.") Node node) {}
@@ -375,7 +388,7 @@ public class GraphRefactoring {
 
         final Node first = nodes.get(0);
         final List<String> existingSelfRelIds = conf.isPreservingExistingSelfRels()
-                ? StreamSupport.stream(first.getRelationships().spliterator(), false)
+                ? stream(first.getRelationships().spliterator(), false)
                         .filter(Util::isSelfRel)
                         .map(Entity::getElementId)
                         .collect(Collectors.toList())
@@ -637,11 +650,11 @@ public class GraphRefactoring {
             return Stream.empty();
         }
 
-        BiFunction<Node, Direction, Relationship> filterRel = (node, direction) -> StreamSupport.stream(
-                        node.getRelationships(direction).spliterator(), false)
-                .filter(rels::contains)
-                .findFirst()
-                .orElse(null);
+        BiFunction<Node, Direction, Relationship> filterRel =
+                (node, direction) -> stream(node.getRelationships(direction).spliterator(), false)
+                        .filter(rels::contains)
+                        .findFirst()
+                        .orElse(null);
 
         nodesToRemove.forEach(node -> {
             Relationship relationshipIn = filterRel.apply(node, Direction.INCOMING);
@@ -695,14 +708,12 @@ public class GraphRefactoring {
     }
 
     private boolean isUniqueConstraintDefinedFor(String label, String key) {
-        return StreamSupport.stream(
-                        tx.schema().getConstraints(Label.label(label)).spliterator(), false)
+        return stream(tx.schema().getConstraints(Label.label(label)).spliterator(), false)
                 .anyMatch(c -> {
                     if (!c.isConstraintType(ConstraintType.UNIQUENESS)) {
                         return false;
                     }
-                    return StreamSupport.stream(c.getPropertyKeys().spliterator(), false)
-                            .allMatch(k -> k.equals(key));
+                    return stream(c.getPropertyKeys().spliterator(), false).allMatch(k -> k.equals(key));
                 });
     }
 
