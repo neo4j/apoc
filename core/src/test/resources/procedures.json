@@ -6477,7 +6477,7 @@
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.refactor.cloneSubgraph(nodes :: LIST<NODE>, rels = [] :: LIST<RELATIONSHIP>, config = {} :: MAP) :: (input :: INTEGER, output :: NODE, error :: STRING)",
+  "signature" : "apoc.refactor.cloneSubgraph(nodes :: LIST<NODE>, rels = [] :: LIST<RELATIONSHIP>, config = {} :: MAP) :: (input :: INTEGER, output :: NODE, error :: STRING, createNodesInNewTransactions = false :: BOOLEAN)",
   "name" : "apoc.refactor.cloneSubgraph",
   "description" : "Clones the given `NODE` values with their labels and properties (optionally skipping any properties in the `skipProperties` `LIST<STRING>` via the config `MAP`), and clones the given `RELATIONSHIP` values.\nIf no `RELATIONSHIP` values are provided, all existing `RELATIONSHIP` values between the given `NODE` values will be cloned.",
   "returnDescription" : [ {
