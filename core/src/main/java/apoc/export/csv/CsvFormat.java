@@ -32,8 +32,8 @@ import apoc.export.cypher.ExportFileManager;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.FormatUtils;
 import apoc.export.util.MetaInformation;
+import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.Reporter;
-import apoc.result.ProgressInfo;
 import com.opencsv.CSVWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -49,6 +49,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.neo4j.cypher.export.DatabaseSubGraph;
+import org.neo4j.cypher.export.ExportData;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -57,7 +59,6 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.security.AuthorizationViolationException;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 
@@ -67,74 +68,74 @@ import org.neo4j.kernel.impl.coreapi.InternalTransaction;
  */
 public class CsvFormat {
     private final GraphDatabaseService db;
-    private final InternalTransaction tx;
-    private boolean applyQuotesToAll = true;
+    private final ExportConfig config;
+    private final boolean applyQuotesToAll;
 
     private static final String[] NODE_HEADER_FIXED_COLUMNS = {"_id:id", "_labels:label"};
     private static final String[] REL_HEADER_FIXED_COLUMNS = {"_start:id", "_end:id", "_type:label"};
 
-    public CsvFormat(GraphDatabaseService db, InternalTransaction tx) {
+    public CsvFormat(GraphDatabaseService db, ExportConfig exportConfig) {
         this.db = db;
-        this.tx = tx;
+        this.config = exportConfig;
+        this.applyQuotesToAll = !ExportConfig.NO_QUOTES.equals(exportConfig.isQuotes())
+                && !ExportConfig.IF_NEEDED_QUOTES.equals(exportConfig.isQuotes());
     }
 
-    public void dump(SubGraph graph, ExportFileManager writer, Reporter reporter, ExportConfig config) {
-        try (Transaction tx = db.beginTx()) {
-            if (config.isBulkImport()) {
-                writeAllBulkImport(graph, reporter, config, writer);
-            } else {
-                try (PrintWriter printWriter = writer.getPrintWriter("csv")) {
-                    CSVWriter out = getCsvWriter(printWriter, config);
-                    writeAll(graph, reporter, config, out);
-                }
+    public void dump(
+            InternalTransaction threadBoundTx,
+            ExportData data,
+            ExportFileManager writer,
+            Reporter reporter,
+            boolean needsRebind) {
+        if (data instanceof ExportData.Database) {
+            dump(threadBoundTx, new DatabaseSubGraph(threadBoundTx), writer, reporter);
+        } else if (data instanceof ExportData.NodesAndRels e) {
+            dump(
+                    threadBoundTx,
+                    new NodesAndRelsSubGraph(threadBoundTx, e.nodes(), e.rels(), needsRebind),
+                    writer,
+                    reporter);
+        } else if (data instanceof ExportData.Query e) {
+            dump(threadBoundTx, e, writer, reporter);
+        }
+    }
+
+    private void dump(InternalTransaction threadBoundTx, SubGraph graph, ExportFileManager writer, Reporter reporter) {
+        if (config.isBulkImport()) {
+            writeAllBulkImport(threadBoundTx, graph, reporter, writer);
+        } else {
+            try (PrintWriter printWriter = writer.getPrintWriter("csv")) {
+                CSVWriter out = getCsvWriter(printWriter);
+                writeAll(threadBoundTx, graph, reporter, out);
             }
-            tx.commit();
-            reporter.done();
         }
+        reporter.done();
     }
 
-    private CSVWriter getCsvWriter(Writer writer, ExportConfig config) {
-        CSVWriter out;
-        switch (config.isQuotes()) {
-            case ExportConfig.NO_QUOTES:
-                out = new CustomCSVWriter(
-                        writer,
-                        config.getDelimChar(),
-                        '\0', // quote char
-                        '\0', // escape char
-                        CSVWriter.DEFAULT_LINE_END,
-                        config.shouldDifferentiateNulls());
-                applyQuotesToAll = false;
-                break;
-            case ExportConfig.IF_NEEDED_QUOTES:
-                out = new CustomCSVWriter(
-                        writer,
-                        config.getDelimChar(),
-                        ExportConfig.QUOTECHAR,
-                        CSVWriter.DEFAULT_ESCAPE_CHARACTER,
-                        CSVWriter.DEFAULT_LINE_END,
-                        config.shouldDifferentiateNulls());
-                applyQuotesToAll = false;
-                break;
-            case ExportConfig.ALWAYS_QUOTES:
-            default:
-                out = new CustomCSVWriter(
-                        writer,
-                        config.getDelimChar(),
-                        ExportConfig.QUOTECHAR,
-                        CSVWriter.DEFAULT_ESCAPE_CHARACTER,
-                        CSVWriter.DEFAULT_LINE_END,
-                        config.shouldDifferentiateNulls());
-                applyQuotesToAll = true;
-                break;
-        }
-        return out;
+    private CSVWriter getCsvWriter(Writer writer) {
+        return switch (config.isQuotes()) {
+            case ExportConfig.NO_QUOTES -> new CustomCSVWriter(
+                    writer,
+                    config.getDelimChar(),
+                    '\0', // quote char
+                    '\0', // escape char
+                    CSVWriter.DEFAULT_LINE_END,
+                    config.shouldDifferentiateNulls());
+            default -> new CustomCSVWriter(
+                    writer,
+                    config.getDelimChar(),
+                    ExportConfig.QUOTECHAR,
+                    CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                    CSVWriter.DEFAULT_LINE_END,
+                    config.shouldDifferentiateNulls());
+        };
     }
 
-    public ProgressInfo dump(Result result, ExportFileManager writer, Reporter reporter, ExportConfig config) {
-        try (Transaction tx = db.beginTx();
-                PrintWriter printWriter = writer.getPrintWriter("csv")) {
-            CSVWriter out = getCsvWriter(printWriter, config);
+    private void dump(
+            InternalTransaction threadBoundTx, ExportData.Query query, ExportFileManager writer, Reporter reporter) {
+        try (final var result = threadBoundTx.execute(query.cypher(), query.params());
+                final var printWriter = writer.getPrintWriter("csv")) {
+            CSVWriter out = getCsvWriter(printWriter);
             String[] header = writeResultHeader(result, out);
 
             String[] data = new String[header.length];
@@ -152,9 +153,7 @@ public class CsvFormat {
                 reporter.nextRow();
                 return true;
             });
-            tx.commit();
             reporter.done();
-            return reporter.getTotal();
         } catch (AuthorizationViolationException e) {
             throw new RuntimeException(INVALID_QUERY_MODE_ERROR);
         }
@@ -168,17 +167,18 @@ public class CsvFormat {
         return header;
     }
 
-    public void writeAll(SubGraph graph, Reporter reporter, ExportConfig config, CSVWriter out) {
-        Map<String, Class> nodePropTypes = collectPropTypesForNodes(graph, db, config);
-        Map<String, Class> relPropTypes = collectPropTypesForRelationships(graph, db, config);
-        List<String> nodeHeader = generateHeader(nodePropTypes, config.useTypes(), NODE_HEADER_FIXED_COLUMNS);
-        List<String> relHeader = generateHeader(relPropTypes, config.useTypes(), REL_HEADER_FIXED_COLUMNS);
-        List<String> header = new ArrayList<>(nodeHeader);
+    public void writeAll(InternalTransaction threadBoundTx, SubGraph graph, Reporter reporter, CSVWriter out) {
+        final var nodePropTypes = collectPropTypesForNodes(graph, db, config);
+        final var relPropTypes = collectPropTypesForRelationships(graph, db, config);
+        final var nodeHeader = generateHeader(nodePropTypes, config.useTypes(), NODE_HEADER_FIXED_COLUMNS);
+        final var relHeader = generateHeader(relPropTypes, config.useTypes(), REL_HEADER_FIXED_COLUMNS);
+        final var header = new ArrayList<>(nodeHeader);
         header.addAll(relHeader);
-        out.writeNext(header.toArray(new String[header.size()]), applyQuotesToAll);
+        out.writeNext(header.toArray(String[]::new), applyQuotesToAll);
         int cols = header.size();
 
         writeNodes(
+                threadBoundTx,
                 graph,
                 out,
                 reporter,
@@ -187,6 +187,7 @@ public class CsvFormat {
                 config.getBatchSize(),
                 config.shouldDifferentiateNulls());
         writeRels(
+                threadBoundTx,
                 graph,
                 out,
                 reporter,
@@ -197,36 +198,37 @@ public class CsvFormat {
                 config.shouldDifferentiateNulls());
     }
 
-    private void writeAllBulkImport(SubGraph graph, Reporter reporter, ExportConfig config, ExportFileManager writer) {
+    private void writeAllBulkImport(
+            InternalTransaction threadBoundTx, SubGraph graph, Reporter reporter, ExportFileManager writer) {
         Map<Iterable<Label>, List<Node>> objectNodes = StreamSupport.stream(
                         graph.getNodes().spliterator(), false)
                 .collect(Collectors.groupingBy(Node::getLabels));
         Map<RelationshipType, List<Relationship>> objectRels = StreamSupport.stream(
                         graph.getRelationships().spliterator(), false)
                 .collect(Collectors.groupingBy(Relationship::getType));
-        writeNodesBulkImport(reporter, config, writer, objectNodes);
-        writeRelsBulkImport(reporter, config, writer, objectRels);
+        writeNodesBulkImport(threadBoundTx, reporter, writer, objectNodes);
+        writeRelsBulkImport(threadBoundTx, reporter, writer, objectRels);
     }
 
     private void writeNodesBulkImport(
+            InternalTransaction threadBoundTransaction,
             Reporter reporter,
-            ExportConfig config,
             ExportFileManager writer,
             Map<Iterable<Label>, List<Node>> objectNode) {
-        objectNode.entrySet().forEach(entrySet -> {
-            Set<String> headerNode = generateHeaderNodeBulkImport(entrySet);
+        objectNode.forEach((labels, nodes) -> {
+            Set<String> headerNode = generateHeaderNodeBulkImport(nodes);
 
-            List<List<String>> rows = entrySet.getValue().stream()
+            List<List<String>> rows = nodes.stream()
                     .map(n -> {
                         reporter.update(1, 0, n.getAllProperties().size());
                         return headerNode.stream()
                                 .map(s -> {
                                     if (s.equals(":LABEL")) {
-                                        return joinLabels(entrySet.getKey(), config.getArrayDelim());
+                                        return joinLabels(labels, config.getArrayDelim());
                                     }
                                     String prop = s.split(":")[0];
                                     return prop.isEmpty()
-                                            ? String.valueOf(getNodeId(tx, n.getElementId()))
+                                            ? String.valueOf(getNodeId(threadBoundTransaction, n.getElementId()))
                                             : FormatUtils.toString(
                                                     n.getProperty(prop, null), config.shouldDifferentiateNulls());
                                 })
@@ -234,14 +236,14 @@ public class CsvFormat {
                     })
                     .collect(Collectors.toList());
 
-            String type = joinLabels(entrySet.getKey(), ".");
+            String type = joinLabels(labels, ".");
             writeRow(config, writer, headerNode, rows, "nodes." + type);
         });
     }
 
     private void writeRelsBulkImport(
+            InternalTransaction threadBoundTx,
             Reporter reporter,
-            ExportConfig config,
             ExportFileManager writer,
             Map<RelationshipType, List<Relationship>> objectRel) {
         objectRel.entrySet().forEach(entrySet -> {
@@ -251,21 +253,17 @@ public class CsvFormat {
                     .map(r -> {
                         reporter.update(0, 1, r.getAllProperties().size());
                         return headerRel.stream()
-                                .map(s -> {
-                                    switch (s) {
-                                        case ":START_ID":
-                                            return String.valueOf(getNodeId(
-                                                    tx, r.getStartNode().getElementId()));
-                                        case ":END_ID":
-                                            return String.valueOf(
-                                                    getNodeId(tx, r.getEndNode().getElementId()));
-                                        case ":TYPE":
-                                            return entrySet.getKey().name();
-                                        default:
-                                            String prop = s.split(":")[0];
-                                            return prop.isEmpty()
-                                                    ? String.valueOf(getRelationshipId(tx, r.getElementId()))
-                                                    : FormatUtils.toString(r.getProperty(prop, ""));
+                                .map(s -> switch (s) {
+                                    case ":START_ID" -> String.valueOf(getNodeId(
+                                            threadBoundTx, r.getStartNode().getElementId()));
+                                    case ":END_ID" -> String.valueOf(getNodeId(
+                                            threadBoundTx, r.getEndNode().getElementId()));
+                                    case ":TYPE" -> entrySet.getKey().name();
+                                    default -> {
+                                        String prop = s.split(":")[0];
+                                        yield prop.isEmpty()
+                                                ? String.valueOf(getRelationshipId(threadBoundTx, r.getElementId()))
+                                                : FormatUtils.toString(r.getProperty(prop, ""));
                                     }
                                 })
                                 .collect(Collectors.toList());
@@ -280,11 +278,11 @@ public class CsvFormat {
         });
     }
 
-    private Set<String> generateHeaderNodeBulkImport(Map.Entry<Iterable<Label>, List<Node>> entrySet) {
+    private static Set<String> generateHeaderNodeBulkImport(final List<Node> nodes) {
         Set<String> headerNode = new LinkedHashSet<>();
         headerNode.add(":ID");
         Map<String, Class> keyTypes = new LinkedHashMap<>();
-        entrySet.getValue().forEach(node -> updateKeyTypes(keyTypes, node));
+        nodes.forEach(node -> updateKeyTypes(keyTypes, node));
         final LinkedHashSet<String> otherFields = keyTypes.entrySet().stream()
                 .map(stringClassEntry -> formatHeader(stringClassEntry))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
@@ -313,16 +311,16 @@ public class CsvFormat {
             List<List<String>> rows,
             String name) {
         try (PrintWriter pw = writer.getPrintWriter(name);
-                CSVWriter csvWriter = getCsvWriter(pw, config)) {
+                CSVWriter csvWriter = getCsvWriter(pw)) {
             if (config.isSeparateHeader()) {
                 try (PrintWriter pwHeader = writer.getPrintWriter("header." + name)) {
-                    CSVWriter csvWriterHeader = getCsvWriter(pwHeader, config);
-                    csvWriterHeader.writeNext(headerNode.toArray(new String[headerNode.size()]), applyQuotesToAll);
+                    CSVWriter csvWriterHeader = getCsvWriter(pwHeader);
+                    csvWriterHeader.writeNext(headerNode.toArray(String[]::new), applyQuotesToAll);
                 }
             } else {
-                csvWriter.writeNext(headerNode.toArray(new String[headerNode.size()]), applyQuotesToAll);
+                csvWriter.writeNext(headerNode.toArray(String[]::new), applyQuotesToAll);
             }
-            rows.forEach(row -> csvWriter.writeNext(row.toArray(new String[row.size()]), applyQuotesToAll));
+            rows.forEach(row -> csvWriter.writeNext(row.toArray(String[]::new), applyQuotesToAll));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -343,11 +341,12 @@ public class CsvFormat {
                             : entry.getKey() + ":" + type;
                 })
                 .sorted()
-                .collect(Collectors.toList()));
+                .toList());
         return result;
     }
 
     private void writeNodes(
+            InternalTransaction threadBoundTx,
             SubGraph graph,
             CSVWriter out,
             Reporter reporter,
@@ -358,7 +357,7 @@ public class CsvFormat {
         String[] row = new String[cols];
         int nodes = 0;
         for (Node node : graph.getNodes()) {
-            row[0] = String.valueOf(getNodeId(tx, node.getElementId()));
+            row[0] = String.valueOf(getNodeId(threadBoundTx, node.getElementId()));
             row[1] = getLabelsString(node);
             collectProps(header, node, reporter, row, 2, keepNulls);
             out.writeNext(row, applyQuotesToAll);
@@ -389,6 +388,7 @@ public class CsvFormat {
     }
 
     private void writeRels(
+            InternalTransaction threadBoundTx,
             SubGraph graph,
             CSVWriter out,
             Reporter reporter,
@@ -400,8 +400,10 @@ public class CsvFormat {
         String[] row = new String[cols];
         int rels = 0;
         for (Relationship rel : graph.getRelationships()) {
-            row[offset] = String.valueOf(getNodeId(tx, rel.getStartNode().getElementId()));
-            row[offset + 1] = String.valueOf(getNodeId(tx, rel.getEndNode().getElementId()));
+            row[offset] =
+                    String.valueOf(getNodeId(threadBoundTx, rel.getStartNode().getElementId()));
+            row[offset + 1] =
+                    String.valueOf(getNodeId(threadBoundTx, rel.getEndNode().getElementId()));
             row[offset + 2] = rel.getType().name();
             collectProps(relHeader, rel, reporter, row, 3 + offset, keepNull);
             out.writeNext(row, applyQuotesToAll);

@@ -25,10 +25,11 @@ import apoc.util.QueueUtil;
 import apoc.util.Util;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.TerminationGuard;
 
 public class ExportUtils {
@@ -42,7 +43,7 @@ public class ExportUtils {
             ExportConfig exportConfig,
             ProgressReporter reporter,
             ExportFileManager cypherFileManager,
-            Consumer<ProgressReporter> dump) {
+            BiConsumer<Transaction, ProgressReporter> dump) {
         long timeout = exportConfig.getTimeoutSeconds();
         final ArrayBlockingQueue<ExportProgressInfo> queue = new ArrayBlockingQueue<>(1000);
         ProgressReporter reporterWithConsumer = reporter.withConsumer((pi) -> QueueUtil.put(
@@ -56,8 +57,8 @@ public class ExportUtils {
                 null,
                 executorService,
                 db,
-                tx -> {
-                    dump.accept(reporterWithConsumer);
+                threadBoundTx -> {
+                    dump.accept(threadBoundTx, reporterWithConsumer);
                     return true;
                 },
                 0,

@@ -204,7 +204,7 @@ public class ExportJson {
                     exportConfig,
                     reporter,
                     cypherFileManager,
-                    (reporterWithConsumer) ->
+                    (threadBoundTx, reporterWithConsumer) ->
                             dump(data, exportConfig, reporterWithConsumer, exporter, cypherFileManager));
         } else {
             dump(data, exportConfig, reporter, exporter, cypherFileManager);
