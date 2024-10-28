@@ -20,11 +20,14 @@ package apoc.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_KEY;
+import static org.neo4j.graphdb.schema.ConstraintType.NODE_LABEL_EXISTENCE;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_PROPERTY_EXISTENCE;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_PROPERTY_TYPE;
 import static org.neo4j.graphdb.schema.ConstraintType.RELATIONSHIP_KEY;
 import static org.neo4j.graphdb.schema.ConstraintType.RELATIONSHIP_PROPERTY_EXISTENCE;
 import static org.neo4j.graphdb.schema.ConstraintType.RELATIONSHIP_PROPERTY_TYPE;
+import static org.neo4j.graphdb.schema.ConstraintType.RELATIONSHIP_SOURCE_LABEL;
+import static org.neo4j.graphdb.schema.ConstraintType.RELATIONSHIP_TARGET_LABEL;
 import static org.neo4j.graphdb.schema.ConstraintType.RELATIONSHIP_UNIQUENESS;
 import static org.neo4j.graphdb.schema.ConstraintType.UNIQUENESS;
 import static org.neo4j.graphdb.schema.IndexType.FULLTEXT;
@@ -60,7 +63,10 @@ public class UtilTest {
                         RELATIONSHIP_KEY,
                         RELATIONSHIP_UNIQUENESS,
                         RELATIONSHIP_PROPERTY_TYPE,
-                        NODE_PROPERTY_TYPE));
+                        NODE_PROPERTY_TYPE,
+                        RELATIONSHIP_SOURCE_LABEL,
+                        RELATIONSHIP_TARGET_LABEL,
+                        NODE_LABEL_EXISTENCE));
     }
 
     @Test
