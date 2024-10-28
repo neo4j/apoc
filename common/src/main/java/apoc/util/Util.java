@@ -1185,11 +1185,17 @@ public class Util {
 
     public static ConstraintCategory getConstraintCategory(ConstraintType type) {
         return switch (type) {
-            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS, NODE_PROPERTY_TYPE -> ConstraintCategory.NODE;
+            case NODE_KEY,
+                    NODE_PROPERTY_EXISTENCE,
+                    UNIQUENESS,
+                    NODE_PROPERTY_TYPE,
+                    NODE_LABEL_EXISTENCE -> ConstraintCategory.NODE;
             case RELATIONSHIP_KEY,
                     RELATIONSHIP_UNIQUENESS,
                     RELATIONSHIP_PROPERTY_EXISTENCE,
-                    RELATIONSHIP_PROPERTY_TYPE -> ConstraintCategory.RELATIONSHIP;
+                    RELATIONSHIP_PROPERTY_TYPE,
+                    RELATIONSHIP_SOURCE_LABEL,
+                    RELATIONSHIP_TARGET_LABEL -> ConstraintCategory.RELATIONSHIP;
             default -> throw new IllegalStateException("Constraint with a type not supported by apoc");
         };
     }
@@ -1198,13 +1204,15 @@ public class Util {
         if (descriptor.isNodeUniquenessConstraint()
                 || descriptor.isNodePropertyExistenceConstraint()
                 || descriptor.isNodeKeyConstraint()
-                || descriptor.isNodePropertyTypeConstraint()) {
+                || descriptor.isNodePropertyTypeConstraint()
+                || descriptor.isNodeLabelExistenceConstraint()) {
             return ConstraintCategory.NODE;
         }
         if (descriptor.isRelationshipKeyConstraint()
                 || descriptor.isRelationshipPropertyExistenceConstraint()
                 || descriptor.isRelationshipUniquenessConstraint()
-                || descriptor.isRelationshipPropertyTypeConstraint()) {
+                || descriptor.isRelationshipPropertyTypeConstraint()
+                || descriptor.isRelationshipEndpointLabelConstraint()) {
             return ConstraintCategory.RELATIONSHIP;
         }
         return ConstraintCategory.NODE;
