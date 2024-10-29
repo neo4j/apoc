@@ -6510,7 +6510,7 @@
     "type" : "LIST<RELATIONSHIP>"
   }, {
     "name" : "config",
-    "description" : "{\n    standinNodes :: LIST<LIST<NODE>>,\n    skipProperties :: LIST<STRING>\n}\n",
+    "description" : "{\n    standinNodes :: LIST<LIST<NODE>>,\n    skipProperties :: LIST<STRING>,\n    createNodesInNewTransactions = false :: BOOLEAN\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"

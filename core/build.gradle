@@ -68,6 +68,7 @@ dependencies {
     testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
+    testImplementation 'org.assertj:assertj-core:3.26.3'
 
     configurations.all {
         exclude group: 'org.slf4j', module: 'slf4j-nop'

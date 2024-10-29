@@ -24,13 +24,11 @@ import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.isSelfRel;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,7 +54,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -333,27 +330,31 @@ public class GraphRefactoringTest {
                 db,
                 "MATCH p=(f:One)-->(b:Two)-->(c:Three)-->(d:Four)-->(e:Five) WITH p, [b,d] as list CALL apoc.refactor.deleteAndReconnect(p, list, {properties: 'combine', relationshipSelectionStrategy: 'merge'}) YIELD nodes, relationships RETURN nodes, relationships",
                 (row) -> {
-                    List<Node> nodes = (List<Node>) row.get("nodes");
-                    assertEquals(3, nodes.size());
-                    Node node1 = nodes.get(0);
-                    assertEquals(singletonList(label("One")), node1.getLabels());
-                    Node node2 = nodes.get(1);
-                    assertEquals(singletonList(label("Three")), node2.getLabels());
-                    Node node3 = nodes.get(2);
-                    assertEquals(singletonList(label("Five")), node3.getLabels());
-                    List<Relationship> rels = (List<Relationship>) row.get("relationships");
-                    assertEquals(2, rels.size());
-                    Relationship rel1 = rels.get(0);
-                    assertEquals("ALPHA_BETA", rel1.getType().name());
-                    assertEquals("f", rel1.getProperty("e"));
-                    assertThat(Arrays.asList((String[]) rel1.getProperty("a")), containsInAnyOrder("b", "d"));
-                    assertEquals("h", rel1.getProperty("g"));
-                    Relationship rel2 = rels.get(1);
-                    assertEquals("GAMMA_DELTA", rel2.getType().name());
-                    assertThat(Arrays.asList((String[]) rel2.getProperty("aa")), containsInAnyOrder("one", "bb"));
-                    assertEquals("ff", rel2.getProperty("ee"));
-                    assertEquals("dd", rel2.getProperty("cc"));
-                    assertNotNull(row.get("nodes"));
+                    assertThat(row.get("nodes"))
+                            .asInstanceOf(list(Node.class))
+                            .satisfiesExactly(
+                                    n -> assertThat(n.getLabels()).containsExactly(label("One")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Three")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Five")));
+                    assertThat(row.get("relationships"))
+                            .asInstanceOf(list(Relationship.class))
+                            .satisfiesExactly(
+                                    rel -> {
+                                        assertThat(rel.getType().name()).isEqualTo("ALPHA_BETA");
+                                        assertThat(rel.getAllProperties())
+                                                .containsEntry("e", "f")
+                                                .containsEntry("g", "h")
+                                                .hasEntrySatisfying("a", v -> assertThat((String[]) v)
+                                                        .containsExactlyInAnyOrder("b", "d"));
+                                    },
+                                    rel -> {
+                                        assertThat(rel.getType().name()).isEqualTo("GAMMA_DELTA");
+                                        assertThat(rel.getAllProperties())
+                                                .containsEntry("ee", "ff")
+                                                .containsEntry("cc", "dd")
+                                                .hasEntrySatisfying("aa", v -> assertThat((String[]) v)
+                                                        .containsExactlyInAnyOrder("one", "bb"));
+                                    });
                 });
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(3L, row.get("result")));
@@ -370,27 +371,29 @@ public class GraphRefactoringTest {
                 db,
                 "MATCH p=(f:One)-->(b:Two)-->(c:Three)-->(d:Four)-->(e:Five) WITH p, [b,d] as list CALL apoc.refactor.deleteAndReconnect(p, list, {properties: 'override', relationshipSelectionStrategy: 'merge'}) YIELD nodes, relationships RETURN nodes, relationships",
                 (row) -> {
-                    List<Node> nodes = (List<Node>) row.get("nodes");
-                    assertEquals(3, nodes.size());
-                    Node node1 = nodes.get(0);
-                    assertEquals(singletonList(label("One")), node1.getLabels());
-                    Node node2 = nodes.get(1);
-                    assertEquals(singletonList(label("Three")), node2.getLabels());
-                    Node node3 = nodes.get(2);
-                    assertEquals(singletonList(label("Five")), node3.getLabels());
-                    List<Relationship> rels = (List<Relationship>) row.get("relationships");
-                    assertEquals(2, rels.size());
-                    Relationship rel1 = rels.get(0);
-                    assertEquals("ALPHA_BETA", rel1.getType().name());
-                    assertEquals("f", rel1.getProperty("e"));
-                    assertEquals("d", rel1.getProperty("a"));
-                    assertEquals("h", rel1.getProperty("g"));
-                    Relationship rel2 = rels.get(1);
-                    assertEquals("GAMMA_DELTA", rel2.getType().name());
-                    assertEquals("bb", rel2.getProperty("aa"));
-                    assertEquals("dd", rel2.getProperty("cc"));
-                    assertEquals("ff", rel2.getProperty("ee"));
-                    assertNotNull(row.get("nodes"));
+                    assertThat(row.get("nodes"))
+                            .asInstanceOf(list(Node.class))
+                            .satisfiesExactly(
+                                    n -> assertThat(n.getLabels()).containsExactly(label("One")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Three")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Five")));
+                    assertThat(row.get("relationships"))
+                            .asInstanceOf(list(Relationship.class))
+                            .satisfiesExactly(
+                                    rel -> {
+                                        assertThat(rel.getType().name()).isEqualTo("ALPHA_BETA");
+                                        assertThat(rel.getAllProperties())
+                                                .containsEntry("e", "f")
+                                                .containsEntry("a", "d")
+                                                .containsEntry("g", "h");
+                                    },
+                                    rel -> {
+                                        assertThat(rel.getType().name()).isEqualTo("GAMMA_DELTA");
+                                        assertThat(rel.getAllProperties())
+                                                .containsEntry("aa", "bb")
+                                                .containsEntry("cc", "dd")
+                                                .containsEntry("ee", "ff");
+                                    });
                 });
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(3L, row.get("result")));
@@ -675,11 +678,7 @@ public class GraphRefactoringTest {
         testResult(
                 db,
                 "MATCH (n) CALL apoc.refactor.normalizeAsBoolean(n,'prop',['Y','Yes'],['NO']) WITH n ORDER BY n.id RETURN n.prop AS prop",
-                (r) -> {
-                    List<Boolean> result = new ArrayList<>();
-                    while (r.hasNext()) result.add((Boolean) r.next().get("prop"));
-                    assertThat(result, equalTo(Arrays.asList(true, true, false, null)));
-                });
+                (rows) -> assertThat(rows.stream()).map(r -> r.get("prop")).containsExactly(true, true, false, null));
     }
 
     private void categorizeWithDirection(Direction direction) {
@@ -701,28 +700,20 @@ public class GraphRefactoringTest {
                 map("direction", outgoing, "label", label, "targetKey", targetKey));
 
         String traversePattern = (outgoing ? "" : "<") + "-[:IS_A]-" + (outgoing ? ">" : "");
-        {
-            List<String> cats = db.executeTransactionally(
-                    "MATCH (n) WITH n ORDER BY n.id MATCH (n)" + traversePattern
-                            + "(cat:Letter) RETURN collect(cat.name) AS cats",
-                    emptyMap(),
-                    innerResult -> Iterators.single(innerResult.columnAs("cats")));
-            assertThat(cats, equalTo(asList("A", "A", "C", "B", "C")));
+        try (final var tx = db.beginTx();
+                final var res = tx.execute("MATCH (n) WITH n ORDER BY n.id MATCH (n)" + traversePattern
+                        + "(cat:Letter) RETURN collect(cat.name) AS cats")) {
+            assertThat(res.stream()).containsExactly(Map.of("cats", List.of("A", "A", "C", "B", "C")));
         }
 
-        {
-            List<String> cats = db.executeTransactionally(
-                    "MATCH (n) WITH n ORDER BY n.id MATCH (n)" + traversePattern
-                            + "(cat:Letter) RETURN collect(cat.k) AS cats",
-                    emptyMap(),
-                    innerResult -> Iterators.single(innerResult.columnAs("cats")));
-            assertThat(cats, equalTo(asList("a", "a", "c", "b", "c")));
+        try (final var tx = db.beginTx();
+                final var res = tx.execute("MATCH (n) WITH n ORDER BY n.id MATCH (n)" + traversePattern
+                        + "(cat:Letter) RETURN collect(cat.k) AS cats")) {
+            assertThat(res.stream()).containsExactly(Map.of("cats", List.of("a", "a", "c", "b", "c")));
         }
 
-        testCall(
-                db,
-                "MATCH (n) WHERE n.prop IS NOT NULL RETURN count(n) AS count",
-                (r) -> assertThat(((Number) r.get("count")).longValue(), equalTo(0L)));
+        testCall(db, "MATCH (n) WHERE n.prop IS NOT NULL RETURN count(n) AS count", (r) -> assertThat(r)
+                .isEqualTo(Map.of("count", 0L)));
         db.executeTransactionally("DROP CONSTRAINT constraint");
     }
 
@@ -1272,7 +1263,7 @@ public class GraphRefactoringTest {
         final long countries = TestUtil.singleResultFirstColumn(db, "MATCH (c:Country) RETURN count(c) AS countries");
         assertEquals(2, countries);
         final List<String> countryNames = TestUtil.firstColumn(db, "MATCH (c:Country) RETURN c.name");
-        assertThat(countryNames, Matchers.containsInAnyOrder("IT", "DE"));
+        assertThat(countryNames).containsExactlyInAnyOrder("IT", "DE");
 
         final long relsCount = TestUtil.singleResultFirstColumn(
                 db, "MATCH p = (c:Company)-[:OPERATES_IN]->(cc:Country) RETURN count(p) AS relsCount");
@@ -1304,7 +1295,7 @@ public class GraphRefactoringTest {
         final long countries = TestUtil.singleResultFirstColumn(db, "MATCH (c:Country) RETURN count(c) AS countries");
         assertEquals(2, countries);
         final List<String> countryNames = TestUtil.firstColumn(db, "MATCH (c:Country) RETURN c.name");
-        assertThat(countryNames, Matchers.containsInAnyOrder("IT", "DE"));
+        assertThat(countryNames).containsExactlyInAnyOrder("IT", "DE");
 
         final long relsCount = TestUtil.singleResultFirstColumn(
                 db,
@@ -1621,10 +1612,9 @@ public class GraphRefactoringTest {
                 "match (a:One),(b:Two),(c:Three) with [a,b,c] as nodes CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true}) yield node return node",
                 (r) -> {
                     Node node = (Node) r.get("node");
-                    List<String> relNodeList = node.getRelationships().stream()
+                    assertThat(node.getRelationships().stream())
                             .map(i -> i.getType().name())
-                            .collect(Collectors.toList());
-                    assertThat(relNodeList, Matchers.containsInAnyOrder("ASD", "QWE", "ZXC", "TEST_REL1", "TEST_REL2"));
+                            .containsExactlyInAnyOrder("ASD", "QWE", "ZXC", "TEST_REL1", "TEST_REL2");
 
                     final Relationship relTestRel1 = node.getRelationships(RelationshipType.withName("TEST_REL1"))
                             .iterator()
@@ -1737,9 +1727,9 @@ public class GraphRefactoringTest {
     }
 
     private void issue2797Common(String extractQuery) {
-        db.executeTransactionally(("CREATE CONSTRAINT unique_book FOR (book:MyBook) REQUIRE book.name IS UNIQUE"));
-
-        db.executeTransactionally(("CREATE (n:MyBook {name: 1})"));
+        db.executeTransactionally("CREATE CONSTRAINT unique_book FOR (book:MyBook) REQUIRE book.name IS UNIQUE");
+        db.executeTransactionally("CREATE (n:MyBook {name: 1})");
+        db.executeTransactionally("CALL db.awaitIndexes()");
 
         testCall(db, extractQuery, r -> {
             final String actualError = (String) r.get("error");
@@ -1747,10 +1737,10 @@ public class GraphRefactoringTest {
             assertNull(r.get("output"));
         });
 
-        testCall(db, "MATCH (n:MyBook) RETURN properties(n) AS props", r -> {
-            final Map<String, Long> expected = Map.of("name", 1L);
-            assertEquals(expected, r.get("props"));
-        });
+        try (final var tx = db.beginTx();
+                final var res = tx.execute("MATCH (n:MyBook) RETURN properties(n) AS props")) {
+            assertThat(res.stream()).containsExactly(Map.of("props", Map.of("name", 1L)));
+        }
 
         testCall(db, "MATCH (n:MyBook) RETURN count(n) as count", r -> {
             assertEquals(1L, r.get("count"));
