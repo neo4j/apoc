@@ -104,7 +104,7 @@ public class Warmup {
 
         List<PagedFile> pagedFiles = pageCache.listExistingMappings();
 
-        Map<String, PageResult> records = pagedFiles.parallelStream()
+        Map<String, PageResult> records = pagedFiles.stream()
                 .filter(pF -> {
                     String name = pF.path().toFile().getName();
                     if (isSchema(pF.path().toFile()) && !loadIndexes) return false;
