@@ -103,7 +103,8 @@ subprojects {
                 'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.26.0-enterprise-debian',
                 'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.26.0-debian',
                 'coreDir': 'core',
-                'testDockerBundle': project.hasProperty("testDockerBundle") ? true : false
+                'testDockerBundle': project.hasProperty("testDockerBundle") ? true : false,
+                'org.neo4j.io.pagecache.tracing.cursor.DefaultPageCursorTracer.CHECK_REPORTED_COUNTERS': 'true' // Extra assertions in kernel
 
         maxHeapSize = "5G"
         forkEvery = 50
