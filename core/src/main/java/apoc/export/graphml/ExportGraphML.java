@@ -267,7 +267,7 @@ public class ExportGraphML {
                     exportConfig,
                     reporter,
                     cypherFileManager,
-                    (reporterWithConsumer) -> {
+                    (threadBoundTx, reporterWithConsumer) -> {
                         try {
                             exporter.write(graph, graphMl, reporterWithConsumer, exportConfig);
                         } catch (Exception e) {

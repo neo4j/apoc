@@ -53,14 +53,21 @@ public class NodesAndRelsSubGraph implements SubGraph {
     private final Set<String> types = new HashSet<>(20);
 
     public NodesAndRelsSubGraph(Transaction tx, Collection<Node> nodes, Collection<Relationship> rels) {
+        this(tx, nodes, rels, false);
+    }
+
+    public NodesAndRelsSubGraph(Transaction tx, Collection<Node> nodes, Collection<Relationship> rels, boolean rebind) {
         this.tx = tx;
         this.nodes = new ArrayList<>(nodes.size());
         for (Node node : nodes) {
+            if (rebind) node = Util.rebind(tx, node);
             for (Label label : node.getLabels()) labels.add(label.name());
             this.nodes.add(node);
         }
-        this.rels = new HashSet<>(rels);
+        this.rels = new HashSet<>(rels.size());
         for (Relationship rel : rels) {
+            if (rebind) rel = Util.rebind(tx, rel);
+            this.rels.add(rel);
             this.types.add(rel.getType().name());
         }
     }
