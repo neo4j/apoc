@@ -20,8 +20,12 @@ package apoc.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.neo4j.kernel.api.QueryLanguage.CYPHER_25;
+import static org.neo4j.kernel.api.QueryLanguage.CYPHER_5;
 
 import com.google.testing.compile.CompilationRule;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementVisitor;
@@ -29,6 +33,7 @@ import javax.lang.model.element.TypeElement;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.procedure.UserFunction;
 
 public class UserFunctionSignatureVisitorTest {
@@ -36,7 +41,7 @@ public class UserFunctionSignatureVisitorTest {
     @Rule
     public CompilationRule compilationRule = new CompilationRule();
 
-    ElementVisitor<String, Void> visitor;
+    ElementVisitor<Map<String, List<QueryLanguage>>, Void> visitor;
 
     TypeElement typeElement;
 
@@ -50,36 +55,36 @@ public class UserFunctionSignatureVisitorTest {
     public void gets_the_annotated_name_of_the_procedure() {
         Element method = findMemberByName(typeElement, "myFunction");
 
-        String result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visit(method);
 
-        assertThat(result).isEqualTo("my.func");
+        assertThat(result).isEqualTo(Map.of("my.func", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @Test
     public void gets_the_annotated_value_of_the_procedure() {
         Element method = findMemberByName(typeElement, "myFunction2");
 
-        String result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visit(method);
 
-        assertThat(result).isEqualTo("my.func2");
+        assertThat(result).isEqualTo(Map.of("my.func2", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @Test
     public void gets_the_annotated_name_over_value() {
         Element method = findMemberByName(typeElement, "myFunction3");
 
-        String result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visit(method);
 
-        assertThat(result).isEqualTo("my.func3");
+        assertThat(result).isEqualTo(Map.of("my.func3", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @Test
     public void gets_the_default_name_of_the_procedure() {
         Element method = findMemberByName(typeElement, "myDefaultNamedFunction");
 
-        String result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visit(method);
 
-        assertThat(result).isEqualTo("apoc.processor.myDefaultNamedFunction");
+        assertThat(result).isEqualTo(Map.of("apoc.processor.myDefaultNamedFunction", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @UserFunction(name = "my.func")

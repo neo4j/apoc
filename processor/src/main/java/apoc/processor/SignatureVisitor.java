@@ -18,6 +18,9 @@
  */
 package apoc.processor;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
@@ -25,11 +28,13 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleElementVisitor9;
 import javax.tools.Diagnostic;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserAggregationFunction;
 import org.neo4j.procedure.UserFunction;
 
-public class SignatureVisitor extends SimpleElementVisitor9<String, Void> {
+public class SignatureVisitor extends SimpleElementVisitor9<Map<String, List<QueryLanguage>>, Void> {
 
     private final Elements elementUtils;
 
@@ -42,13 +47,15 @@ public class SignatureVisitor extends SimpleElementVisitor9<String, Void> {
     }
 
     @Override
-    public String visitExecutable(ExecutableElement method, Void unused) {
-        return getAnnotationName(method)
-                .orElse(String.format("%s.%s", elementUtils.getPackageOf(method), method.getSimpleName()));
+    public Map<String, List<QueryLanguage>> visitExecutable(ExecutableElement method, Void unused) {
+        return Map.of(
+                getAnnotationName(method)
+                        .orElse(String.format("%s.%s", elementUtils.getPackageOf(method), method.getSimpleName())),
+                getCypherScopes(method));
     }
 
     @Override
-    public String visitUnknown(Element e, Void unused) {
+    public Map<String, List<QueryLanguage>> visitUnknown(Element e, Void unused) {
         messager.printMessage(Diagnostic.Kind.ERROR, "unexpected .....");
         return super.visitUnknown(e, unused);
     }
@@ -57,6 +64,17 @@ public class SignatureVisitor extends SimpleElementVisitor9<String, Void> {
         return getProcedureName(method)
                 .or(() -> getUserFunctionName(method))
                 .or(() -> getUserAggregationFunctionName(method));
+    }
+
+    private List<QueryLanguage> getCypherScopes(ExecutableElement method) {
+        return Optional.ofNullable(method.getAnnotation(QueryLanguageScope.class))
+                .map(annotation -> {
+                    QueryLanguage[] scope = annotation.scope();
+                    return scope.length > 0
+                            ? Arrays.asList(scope)
+                            : List.of(QueryLanguage.CYPHER_5, QueryLanguage.CYPHER_25);
+                })
+                .orElse(List.of(QueryLanguage.CYPHER_5, QueryLanguage.CYPHER_25));
     }
 
     private Optional<String> getProcedureName(ExecutableElement method) {

@@ -156,22 +156,56 @@ public class StartupTest {
     }
 
     @Test
-    public void compare_with_sources() {
+    public void compare_with_sources_cypher5() {
         try {
-            Neo4jContainerExtension neo4jContainer =
-                    createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
+            Neo4jContainerExtension neo4jContainer = createDB(
+                            version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                    .withNeo4jConfig("internal.dbms.cypher.enable_experimental_versions", "true");
             neo4jContainer.start();
 
             try (Session session = neo4jContainer.getSession()) {
                 final List<String> functionNames = session.run(
-                                "CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'function' RETURN name")
+                                "CYPHER 5 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'function' RETURN name")
                         .list(record -> record.get("name").asString());
                 final List<String> procedureNames = session.run(
-                                "CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
+                                "CYPHER 5 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
                         .list(record -> record.get("name").asString());
 
-                assertEquals(sorted(ApocSignatures.PROCEDURES), procedureNames);
-                assertEquals(sorted(ApocSignatures.FUNCTIONS), functionNames);
+                assertEquals(sorted(ApocSignatures.PROCEDURES_CYPHER_5), procedureNames);
+                assertEquals(sorted(ApocSignatures.FUNCTIONS_CYPHER_5), functionNames);
+            }
+
+            neo4jContainer.close();
+        } catch (Exception ex) {
+            if (TestContainerUtil.isDockerImageAvailable(ex)) {
+                ex.printStackTrace();
+                fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+            } else {
+                fail("The docker image " + dockerImageForNeo4j(version)
+                        + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
+                        + ex);
+            }
+        }
+    }
+
+    @Test
+    public void compare_with_sources_cypher25() {
+        try {
+            Neo4jContainerExtension neo4jContainer = createDB(
+                            version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                    .withNeo4jConfig("internal.dbms.cypher.enable_experimental_versions", "true");
+            neo4jContainer.start();
+
+            try (Session session = neo4jContainer.getSession()) {
+                final List<String> functionNames = session.run(
+                                "CYPHER 25 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'function' RETURN name")
+                        .list(record -> record.get("name").asString());
+                final List<String> procedureNames = session.run(
+                                "CYPHER 25 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
+                        .list(record -> record.get("name").asString());
+
+                assertEquals(sorted(ApocSignatures.PROCEDURES_CYPHER_25), procedureNames);
+                assertEquals(sorted(ApocSignatures.FUNCTIONS_CYPHER_25), functionNames);
             }
 
             neo4jContainer.close();

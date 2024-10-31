@@ -41,11 +41,20 @@ public class ExtensionClassWriter {
         this.filer = filer;
     }
 
-    public void write(List<String> procedureSignatures, List<String> userFunctionSignatures) {
+    public void write(
+            List<String> procedureSignaturesCypher5,
+            List<String> userFunctionSignaturesCypher5,
+            List<String> procedureSignaturesCypher25,
+            List<String> userFunctionSignaturesCypher25) {
 
         try {
             String suffix = isExtendedProject() ? "Extended" : "";
-            final TypeSpec typeSpec = defineClass(procedureSignatures, userFunctionSignatures, suffix);
+            final TypeSpec typeSpec = defineClass(
+                    procedureSignaturesCypher5,
+                    userFunctionSignaturesCypher5,
+                    procedureSignaturesCypher25,
+                    userFunctionSignaturesCypher25,
+                    suffix);
 
             JavaFile.builder("apoc", typeSpec).build().writeTo(filer);
         } catch (IOException e) {
@@ -62,11 +71,18 @@ public class ExtensionClassWriter {
         return projectPath.contains("extended/build/generated");
     }
 
-    private TypeSpec defineClass(List<String> procedureSignatures, List<String> userFunctionSignatures, String suffix) {
+    private TypeSpec defineClass(
+            List<String> procedureSignaturesCypher5,
+            List<String> userFunctionSignaturesCypher5,
+            List<String> procedureSignaturesCypher25,
+            List<String> userFunctionSignaturesCypher25,
+            String suffix) {
         return TypeSpec.classBuilder("ApocSignatures" + suffix)
                 .addModifiers(Modifier.PUBLIC)
-                .addField(signatureListField("PROCEDURES", procedureSignatures))
-                .addField(signatureListField("FUNCTIONS", userFunctionSignatures))
+                .addField(signatureListField("PROCEDURES_CYPHER_5", procedureSignaturesCypher5))
+                .addField(signatureListField("FUNCTIONS_CYPHER_5", userFunctionSignaturesCypher5))
+                .addField(signatureListField("PROCEDURES_CYPHER_25", procedureSignaturesCypher25))
+                .addField(signatureListField("FUNCTIONS_CYPHER_25", userFunctionSignaturesCypher25))
                 .build();
     }
 

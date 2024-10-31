@@ -38,57 +38,93 @@ public class ApocProcessorTest {
     public void generates_signatures() {
         assert_()
                 .about(javaSource())
-                .that(JavaFileObjects.forSourceLines(
-                        "my.ApocProcedure",
-                        "package my;\n" + "\n"
-                                + "import org.neo4j.procedure.Description;\n"
-                                + "import org.neo4j.procedure.Name;\n"
-                                + "import org.neo4j.procedure.Procedure;\n"
-                                + "import org.neo4j.procedure.UserFunction;\n"
-                                + "\n"
-                                + "import java.util.List;\n"
-                                + "import java.util.stream.Stream;\n"
-                                + "\n"
-                                + ""
-                                + "class ApocProcedure {\n"
-                                + "\n"
-                                + "    @Procedure(name = \"apoc.nodes\")\n"
-                                + "    @Description(\"apoc.nodes(node|id|[ids]) - quickly returns all nodes with these id's\")\n"
-                                + "    public Stream<NodeResult> nodes(@Name(\"nodes\") Object ids) {\n"
-                                + "        return Stream.empty();\n"
-                                + "    }\n"
-                                + "\n"
-                                + "    "
-                                + "@UserFunction\n"
-                                + "    public String join(@Name(\"words\") List<String> words, @Name(\"separator\") String separator) {\n"
-                                + "        return String.join(separator, words);\n"
-                                + "    }\n"
-                                + "    \n"
-                                + "    @UserFunction(name = \"apoc.sum\")\n"
-                                + "    public int sum(@Name(\"a\") int a, @Name(\"b\") int b) {\n"
-                                + "        return a + b;\n"
-                                + "    }\n"
-                                + "}\n"
-                                + "\n"
-                                + "class NodeResult {\n"
-                                + "    \n"
-                                + "}"))
+                .that(
+                        JavaFileObjects.forSourceLines(
+                                "my.ApocProcedure",
+                                """
+                                package my;
+
+                                import org.neo4j.kernel.api.QueryLanguage;
+                                import org.neo4j.kernel.api.procedure.QueryLanguageScope;
+                                import org.neo4j.procedure.Description;
+                                import org.neo4j.procedure.Name;
+                                import org.neo4j.procedure.Procedure;
+                                import org.neo4j.procedure.UserFunction;
+
+                                import java.util.List;
+                                import java.util.stream.Stream;
+
+                                class ApocProcedure {
+
+                                    @Procedure(name = "apoc.nodes")
+                                    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+                                    @Description("Quickly returns all nodes with these id's")
+                                    public Stream<NodeResult> nodesCypher5(@Name("nodes") Object ids) {
+                                        return Stream.empty();
+                                    }
+
+                                    @Procedure(name = "apoc.nodes")
+                                    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+                                    @Description("apoc.nodes(node|id|[ids]) - quickly returns all nodes with these id's")
+                                    public Stream<NodeResult> nodesCypher25(@Name("nodes") Object ids) {
+                                        return Stream.empty();
+                                    }
+
+                                    @Procedure(name = "apoc.oldNodes")
+                                    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+                                    @Description("apoc.nodes(node|id|[ids]) - quickly returns all nodes with these id's")
+                                    public Stream<NodeResult> oldNodes(@Name("nodes") Object ids) {
+                                        return Stream.empty();
+                                    }
+
+                                    @Procedure(name = "apoc.newNodes")
+                                    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+                                    @Description("apoc.nodes(node|id|[ids]) - quickly returns all nodes with these id's")
+                                    public Stream<NodeResult> newNodes(@Name("nodes") Object ids) {
+                                        return Stream.empty();
+                                    }
+
+                                    @UserFunction(name = "my.join")
+                                    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+                                    public String joinCypher5(@Name("words") List<String> words, @Name("separator") String separator) {
+                                        return String.join(separator, words);
+                                    }
+
+                                    @UserFunction(name = "my.join")
+                                    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+                                    public String joinCypher25(@Name("words") List<String> words, @Name("separator") String separator) {
+                                        return String.join(separator, words);
+                                    }
+
+                                    @UserFunction(name = "apoc.sum")
+                                    public int sum(@Name("a") int a, @Name("b") int b) {
+                                        return a + b;
+                                    }
+                                }
+
+                                class NodeResult {}
+                                """))
                 .processedWith(apocProcessor)
                 .compilesWithoutError()
                 .and()
-                .generatesSources(JavaFileObjects.forSourceLines(
-                        "apoc.ApocSignatures",
-                        "package apoc;\n" + "\n"
-                                + "import java.lang.String;\n"
-                                + "import java.util.List;\n"
-                                + "\n"
-                                + "public class ApocSignatures {\n"
-                                + "  public static final List<String> PROCEDURES = List.of(\"apoc.nodes\");\n"
-                                + "  ;\n"
-                                + "\n"
-                                + "  public static final List<String> FUNCTIONS = List.of(\"my.join\",\n"
-                                + "          \"apoc.sum\");\n"
-                                + "  ;\n"
-                                + "}"));
+                .generatesSources(
+                        JavaFileObjects.forSourceLines(
+                                "apoc.ApocSignatures",
+                                """
+                                package apoc;
+
+                                import java.lang.String;
+                                import java.util.List;
+
+                                public class ApocSignatures {
+                                  public static final List<String> PROCEDURES_CYPHER_5 = List.of("apoc.nodes", "apoc.oldNodes");
+
+                                  public static final List<String> FUNCTIONS_CYPHER_5 = List.of("my.join", "apoc.sum");
+
+                                  public static final List<String> PROCEDURES_CYPHER_25 = List.of("apoc.nodes", "apoc.newNodes");
+
+                                  public static final List<String> FUNCTIONS_CYPHER_25 = List.of("my.join", "apoc.sum");
+                                }
+                                """));
     }
 }
