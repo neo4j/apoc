@@ -189,8 +189,9 @@ public class CypherInitializer implements AvailabilityListener {
                     tx.commit();
                 } catch (Exception e) {
                     userLog.error(
-                            "Failed to cleanup apoc triggers during database drop of %s: %s".formatted(dbName, e), e);
-                    throw e;
+                            "Failed to cleanup apoc triggers during database drop of %s, please run `apoc.trigger.dropAll` manually to cleanup: %s"
+                                    .formatted(dbName, e),
+                            e);
                 }
             }
         }
