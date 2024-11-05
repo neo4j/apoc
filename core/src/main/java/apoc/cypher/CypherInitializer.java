@@ -29,15 +29,14 @@ import apoc.util.collection.Iterators;
 import apoc.version.Version;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.event.DatabaseEventContext;
 import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.kernel.availability.AvailabilityListener;
@@ -174,11 +173,27 @@ public class CypherInitializer implements AvailabilityListener {
 
         @Override
         public void databaseDrop(DatabaseEventContext eventContext) {
-
-            forEachSystemLabel((tx, label) -> {
-                tx.findNodes(label, database.name(), eventContext.getDatabaseName())
-                        .forEachRemaining(Node::delete);
-            });
+            final var dbName = eventContext.getDatabaseName();
+            if (!Objects.equals(dbName, db.databaseName())) {
+                if (!db.isAvailable()) {
+                    userLog.warn(
+                            "Database %s not available, skipping apoc trigger cleanup of database %s.",
+                            db.databaseName(), dbName);
+                    return;
+                }
+                try (final var tx = db.beginTx()) {
+                    for (Label label : SystemLabels.values()) {
+                        tx.findNodes(label, database.name(), eventContext.getDatabaseName())
+                                .forEachRemaining(Node::delete);
+                    }
+                    tx.commit();
+                } catch (Exception e) {
+                    userLog.error(
+                            "Failed to cleanup apoc triggers during database drop of %s, please run `apoc.trigger.dropAll` manually to cleanup: %s"
+                                    .formatted(dbName, e),
+                            e);
+                }
+            }
         }
 
         @Override
@@ -192,14 +207,5 @@ public class CypherInitializer implements AvailabilityListener {
 
         @Override
         public void databaseCreate(DatabaseEventContext eventContext) {}
-    }
-
-    private void forEachSystemLabel(BiConsumer<Transaction, Label> consumer) {
-        try (Transaction tx = db.beginTx()) {
-            for (Label label : SystemLabels.values()) {
-                consumer.accept(tx, label);
-            }
-            tx.commit();
-        }
     }
 }
