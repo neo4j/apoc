@@ -20,6 +20,7 @@ package apoc.processor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -27,6 +28,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
+import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserAggregationFunction;
 import org.neo4j.procedure.UserFunction;
@@ -34,9 +36,9 @@ import org.neo4j.procedure.UserFunction;
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class ApocProcessor extends AbstractProcessor {
 
-    private List<String> procedureSignatures;
+    private List<Map<String, List<QueryLanguage>>> procedureSignatures;
 
-    private List<String> userFunctionSignatures;
+    private List<Map<String, List<QueryLanguage>>> userFunctionSignatures;
 
     private SignatureVisitor signatureVisitor;
 
@@ -60,22 +62,52 @@ public class ApocProcessor extends AbstractProcessor {
 
         annotations.forEach(annotation -> extractSignature(annotation, roundEnv));
 
+        List<String> procedureSignaturesCypher5 = new ArrayList<>();
+        List<String> userFunctionSignaturesCypher5 = new ArrayList<>();
+        List<String> procedureSignaturesCypher25 = new ArrayList<>();
+        List<String> userFunctionSignaturesCypher25 = new ArrayList<>();
+
+        separateKeysByQueryLanguage(procedureSignatures, procedureSignaturesCypher5, procedureSignaturesCypher25);
+        separateKeysByQueryLanguage(
+                userFunctionSignatures, userFunctionSignaturesCypher5, userFunctionSignaturesCypher25);
+
         if (roundEnv.processingOver()) {
-            extensionClassWriter.write(procedureSignatures, userFunctionSignatures);
+            extensionClassWriter.write(
+                    procedureSignaturesCypher5,
+                    userFunctionSignaturesCypher5,
+                    procedureSignaturesCypher25,
+                    userFunctionSignaturesCypher25);
         }
         return false;
     }
 
     private void extractSignature(TypeElement annotation, RoundEnvironment roundEnv) {
-        List<String> signatures = accumulator(annotation);
+        List<Map<String, List<QueryLanguage>>> signatures = accumulator(annotation);
         roundEnv.getElementsAnnotatedWith(annotation)
                 .forEach(annotatedElement -> signatures.add(signatureVisitor.visit(annotatedElement)));
     }
 
-    private List<String> accumulator(TypeElement annotation) {
+    private List<Map<String, List<QueryLanguage>>> accumulator(TypeElement annotation) {
         if (annotation.getQualifiedName().contentEquals(Procedure.class.getName())) {
             return procedureSignatures;
         }
         return userFunctionSignatures;
+    }
+
+    public static void separateKeysByQueryLanguage(
+            List<Map<String, List<QueryLanguage>>> list, List<String> c5Keys, List<String> c6Keys) {
+        for (Map<String, List<QueryLanguage>> map : list) {
+            for (Map.Entry<String, List<QueryLanguage>> entry : map.entrySet()) {
+                String key = entry.getKey();
+                List<QueryLanguage> values = entry.getValue();
+
+                if (values.contains(QueryLanguage.CYPHER_5)) {
+                    c5Keys.add(key);
+                }
+                if (values.contains(QueryLanguage.CYPHER_25)) {
+                    c6Keys.add(key);
+                }
+            }
+        }
     }
 }

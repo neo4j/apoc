@@ -63,7 +63,9 @@ import org.neo4j.internal.kernel.api.exceptions.LabelNotFoundKernelException;
 import org.neo4j.internal.kernel.api.exceptions.schema.IndexNotFoundKernelException;
 import org.neo4j.internal.schema.IndexDescriptor;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.Statement;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -107,6 +109,29 @@ public class Schemas {
 
     @NotThreadSafe
     @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns all indexes and constraints information for all `NODE` labels in the database.\n"
+            + "It is possible to define a set of labels to include or exclude in the config parameters.")
+    public Stream<IndexConstraintNodeInfo> schemaNodesCypher5(
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        labels :: LIST<STRING>,
+                        excludeLabels :: LIST<STRING>,
+                        relationships :: LIST<STRING>,
+                        excludeRelationships :: LIST<STRING>
+                    }
+                    """)
+                    Map<String, Object> config) {
+        return indexesAndConstraintsForNode(config, false);
+    }
+
+    @NotThreadSafe
+    @Procedure(name = "apoc.schema.nodes", mode = Mode.SCHEMA)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns all indexes and constraints information for all `NODE` labels in the database.\n"
             + "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> nodes(
@@ -123,11 +148,34 @@ public class Schemas {
                     }
                     """)
                     Map<String, Object> config) {
-        return indexesAndConstraintsForNode(config);
+        return indexesAndConstraintsForNode(config, true);
     }
 
     @NotThreadSafe
     @Procedure(name = "apoc.schema.relationships", mode = Mode.SCHEMA)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the indexes and constraints information for all the relationship types in the database.\n"
+            + "It is possible to define a set of relationship types to include or exclude in the config parameters.")
+    public Stream<IndexConstraintRelationshipInfo> schemaRelationshipsCypher5(
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        labels :: LIST<STRING>,
+                        excludeLabels :: LIST<STRING>,
+                        relationships :: LIST<STRING>,
+                        excludeRelationships :: LIST<STRING>
+                    }
+                    """)
+                    Map<String, Object> config) {
+        return indexesAndConstraintsForRelationships(config, false);
+    }
+
+    @NotThreadSafe
+    @Procedure(name = "apoc.schema.relationships", mode = Mode.SCHEMA)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the indexes and constraints information for all the relationship types in the database.\n"
             + "It is possible to define a set of relationship types to include or exclude in the config parameters.")
     public Stream<IndexConstraintRelationshipInfo> relationships(
@@ -144,7 +192,7 @@ public class Schemas {
                     }
                     """)
                     Map<String, Object> config) {
-        return indexesAndConstraintsForRelationships(config);
+        return indexesAndConstraintsForRelationships(config, true);
     }
 
     @NotThreadSafe
@@ -429,7 +477,8 @@ public class Schemas {
      *
      * @return
      */
-    private Stream<IndexConstraintNodeInfo> indexesAndConstraintsForNode(Map<String, Object> config) {
+    private Stream<IndexConstraintNodeInfo> indexesAndConstraintsForNode(
+            Map<String, Object> config, Boolean useStoredName) {
         Schema schema = tx.schema();
 
         SchemaConfig schemaConfig = new SchemaConfig(config);
@@ -490,12 +539,14 @@ public class Schemas {
 
             Stream<IndexConstraintNodeInfo> constraintNodeInfoStream = StreamSupport.stream(
                             constraintsIterator.spliterator(), false)
-                    .map(constraintDescriptor -> nodeInfoFromConstraintDefinition(constraintDescriptor, tokenRead))
+                    .map(constraintDescriptor ->
+                            nodeInfoFromConstraintDefinition(constraintDescriptor, tokenRead, useStoredName))
                     .sorted(Comparator.comparing(i -> i.label.toString()));
 
             Stream<IndexConstraintNodeInfo> indexNodeInfoStream = StreamSupport.stream(
                             indexesIterator.spliterator(), false)
-                    .map(indexDescriptor -> this.nodeInfoFromIndexDefinition(indexDescriptor, schemaRead, tokenRead))
+                    .map(indexDescriptor ->
+                            this.nodeInfoFromIndexDefinition(indexDescriptor, schemaRead, tokenRead, useStoredName))
                     .sorted(Comparator.comparing(i -> i.label.toString()));
 
             return Stream.of(constraintNodeInfoStream, indexNodeInfoStream).flatMap(e -> e);
@@ -514,7 +565,8 @@ public class Schemas {
      *
      * @return
      */
-    private Stream<IndexConstraintRelationshipInfo> indexesAndConstraintsForRelationships(Map<String, Object> config) {
+    private Stream<IndexConstraintRelationshipInfo> indexesAndConstraintsForRelationships(
+            Map<String, Object> config, Boolean useStoredName) {
         Schema schema = tx.schema();
 
         SchemaConfig schemaConfig = new SchemaConfig(config);
@@ -570,11 +622,11 @@ public class Schemas {
 
             Stream<IndexConstraintRelationshipInfo> constraintRelationshipInfoStream = StreamSupport.stream(
                             constraintsIterator.spliterator(), false)
-                    .map(this::relationshipInfoFromConstraintDefinition);
+                    .map(c -> relationshipInfoFromConstraintDefinition(c, useStoredName));
 
             Stream<IndexConstraintRelationshipInfo> indexRelationshipInfoStream = StreamSupport.stream(
                             indexesIterator.spliterator(), false)
-                    .map(index -> relationshipInfoFromIndexDescription(index, tokenRead, schemaRead));
+                    .map(index -> relationshipInfoFromIndexDescription(index, tokenRead, schemaRead, useStoredName));
 
             return Stream.of(constraintRelationshipInfoStream, indexRelationshipInfoStream)
                     .flatMap(e -> e);
@@ -589,12 +641,14 @@ public class Schemas {
      * @return
      */
     private IndexConstraintNodeInfo nodeInfoFromConstraintDefinition(
-            ConstraintDefinition constraintDefinition, TokenNameLookup tokens) {
+            ConstraintDefinition constraintDefinition, TokenNameLookup tokens, Boolean useStoredName) {
         String labelName = constraintDefinition.getLabel().name();
         List<String> properties = Iterables.asList(constraintDefinition.getPropertyKeys());
         return new IndexConstraintNodeInfo(
                 // Pretty print for index name
-                String.format(":%s(%s)", labelName, StringUtils.join(properties, ",")),
+                useStoredName
+                        ? constraintDefinition.getName()
+                        : String.format(":%s(%s)", labelName, StringUtils.join(properties, ",")),
                 labelName,
                 properties,
                 StringUtils.EMPTY,
@@ -617,7 +671,7 @@ public class Schemas {
      * @return
      */
     private IndexConstraintNodeInfo nodeInfoFromIndexDefinition(
-            IndexDescriptor indexDescriptor, SchemaRead schemaRead, TokenNameLookup tokens) {
+            IndexDescriptor indexDescriptor, SchemaRead schemaRead, TokenNameLookup tokens, Boolean useStoredName) {
         int[] labelIds = indexDescriptor.schema().getEntityTokenIds();
         int length = labelIds.length;
         final Object labelName;
@@ -640,7 +694,7 @@ public class Schemas {
         final String userDescription = indexDescriptor.userDescription(tokens);
         try {
             return new IndexConstraintNodeInfo(
-                    schemaInfoName,
+                    useStoredName ? indexDescriptor.getName() : schemaInfoName,
                     labelName,
                     properties,
                     schemaRead.indexGetState(indexDescriptor).toString(),
@@ -668,7 +722,7 @@ public class Schemas {
     }
 
     private IndexConstraintRelationshipInfo relationshipInfoFromIndexDescription(
-            IndexDescriptor indexDescriptor, TokenNameLookup tokens, SchemaRead schemaRead) {
+            IndexDescriptor indexDescriptor, TokenNameLookup tokens, SchemaRead schemaRead, Boolean useStoredName) {
         int[] relIds = indexDescriptor.schema().getEntityTokenIds();
         int length = relIds.length;
         // to handle LOOKUP indexes
@@ -687,7 +741,7 @@ public class Schemas {
                 .collect(Collectors.toList());
 
         // Pretty print for index name
-        final String name = getSchemaInfoName(relName, properties);
+        final String name = useStoredName ? indexDescriptor.getName() : getSchemaInfoName(relName, properties);
         final String schemaType = getIndexType(indexDescriptor);
 
         String indexStatus;
@@ -707,9 +761,11 @@ public class Schemas {
      * @return
      */
     private IndexConstraintRelationshipInfo relationshipInfoFromConstraintDefinition(
-            ConstraintDefinition constraintDefinition) {
+            ConstraintDefinition constraintDefinition, Boolean useStoredName) {
         return new IndexConstraintRelationshipInfo(
-                String.format("CONSTRAINT %s", constraintDefinition.toString()),
+                useStoredName
+                        ? constraintDefinition.getName()
+                        : String.format("CONSTRAINT %s", constraintDefinition.toString()),
                 constraintDefinition.getConstraintType().name(),
                 Iterables.asList(constraintDefinition.getPropertyKeys()),
                 "",

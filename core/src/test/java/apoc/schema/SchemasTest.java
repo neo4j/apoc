@@ -47,6 +47,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -69,7 +70,8 @@ public class SchemasTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     private static void accept(Result result) {
         Map<String, Object> r = result.next();
@@ -859,6 +861,91 @@ public class SchemasTest {
             assertEquals("SINCE", r.get("relationshipType"));
             assertEquals("year", ((List<String>) r.get("properties")).get(0));
             assertTrue(!result.hasNext());
+        });
+    }
+
+    @Test
+    public void testCypher5Vs25RelNaming() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT gemTest FOR ()-[for:FOR]-() REQUIRE for.year IS UNIQUE");
+        db.executeTransactionally("CREATE LOOKUP INDEX rel_type_lookup_index FOR ()-[r]-() ON EACH type(r)");
+        awaitIndexesOnline();
+
+        var cypher5Names = List.of(
+                "CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE",
+                "CONSTRAINT FOR ()-[for:FOR]-() REQUIRE for.year IS UNIQUE",
+                ":FOR(year)",
+                ":SINCE(year)",
+                ":<any-types>()");
+
+        var cypher25Names = List.of("gemTest", "gemTest", "rel_type_lookup_index");
+
+        testResult(db, "CYPHER 5 CALL apoc.schema.relationships({})", result -> {
+            List<String> producedNames = new ArrayList<>();
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                producedNames.add((String) r.get("name"));
+            }
+
+            assertTrue(producedNames.containsAll(cypher5Names));
+            assertEquals(5, producedNames.size());
+        });
+
+        testResult(db, "CYPHER 25 CALL apoc.schema.relationships({})", result -> {
+            List<String> producedNames = new ArrayList<>();
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                producedNames.add((String) r.get("name"));
+            }
+
+            assertTrue(producedNames.containsAll(cypher25Names));
+            assertEquals(
+                    2,
+                    producedNames.stream()
+                            .filter(c -> c.startsWith("constraint_"))
+                            .toList()
+                            .size());
+            assertEquals(5, producedNames.size());
+        });
+    }
+
+    @Test
+    public void testCypher5Vs25NodeNaming() {
+        db.executeTransactionally("CREATE CONSTRAINT FOR (book:Book) REQUIRE book.isbn IS UNIQUE");
+        db.executeTransactionally("CREATE CONSTRAINT gemTest FOR (library:Library) REQUIRE library.name IS UNIQUE");
+        db.executeTransactionally("CREATE LOOKUP INDEX node_label_lookup_index FOR (n) ON EACH labels(n)");
+        awaitIndexesOnline();
+
+        var cypher5Names = List.of(":Book(isbn)", ":Library(name)", ":Book(isbn)", ":Library(name)", ":<any-labels>()");
+
+        var cypher25Names = List.of("gemTest", "gemTest", "node_label_lookup_index");
+
+        testResult(db, "CYPHER 5 CALL apoc.schema.nodes({})", result -> {
+            List<String> producedNames = new ArrayList<>();
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                producedNames.add((String) r.get("name"));
+            }
+
+            assertTrue(producedNames.containsAll(cypher5Names));
+            assertEquals(5, producedNames.size());
+        });
+
+        testResult(db, "CYPHER 25 CALL apoc.schema.nodes({})", result -> {
+            List<String> producedNames = new ArrayList<>();
+            while (result.hasNext()) {
+                Map<String, Object> r = result.next();
+                producedNames.add((String) r.get("name"));
+            }
+
+            assertTrue(producedNames.containsAll(cypher25Names));
+            assertEquals(
+                    2,
+                    producedNames.stream()
+                            .filter(c -> c.startsWith("constraint_"))
+                            .toList()
+                            .size());
+            assertEquals(5, producedNames.size());
         });
     }
 
