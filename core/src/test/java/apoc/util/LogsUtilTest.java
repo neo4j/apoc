@@ -21,20 +21,21 @@ package apoc.util;
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
+import org.neo4j.configuration.Config;
 
 public class LogsUtilTest {
 
     @Test
     public void shouldRedactPasswords() {
-        String sanitized =
-                LogsUtil.sanitizeQuery("CREATE USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED");
+        String sanitized = LogsUtil.sanitizeQuery(
+                Config.defaults(), "CREATE USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED");
         assertEquals(sanitized, "CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
     }
 
     @Test
     public void shouldReturnInputIfInvalidQuery() {
         String invalidQuery = "MATCH USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED";
-        String sanitized = LogsUtil.sanitizeQuery(invalidQuery);
+        String sanitized = LogsUtil.sanitizeQuery(Config.defaults(), invalidQuery);
 
         assertEquals(sanitized, invalidQuery);
     }
@@ -42,6 +43,7 @@ public class LogsUtilTest {
     @Test
     public void whitespaceDeprecationSucceedsSanitization() {
         String sanitized = LogsUtil.sanitizeQuery(
+                Config.defaults(),
                 "CREATE USER dum\u0085my IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED");
         assertEquals(sanitized, "CREATE USER `dum\u0085my` IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
     }

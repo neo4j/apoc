@@ -23,7 +23,6 @@ import static apoc.SystemPropertyKeys.database;
 import apoc.ApocConfig;
 import apoc.SystemLabels;
 import apoc.util.LogsUtil;
-import apoc.util.QueryUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
 import apoc.version.Version;
@@ -34,6 +33,7 @@ import java.util.TreeMap;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
+import org.neo4j.configuration.Config;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -105,21 +105,18 @@ public class CypherInitializer implements AvailabilityListener {
                         Configuration config = dependencyResolver
                                 .resolveDependency(ApocConfig.class)
                                 .getConfig();
-                        for (String query : collectInitializers(config)) {
-                            if (QueryUtil.isValidQuery(query)) {
-                                String sanitizedQuery = LogsUtil.sanitizeQuery(query);
-                                try {
-                                    // we need to apply a retry strategy here since in systemdb we potentially conflict
-                                    // with
-                                    // creating constraints which could cause our query to fail with a transient error.
-                                    Util.retryInTx(
-                                            userLog, db, tx -> Iterators.count(tx.execute(query)), 0, 5, retries -> {});
-                                    userLog.info("successfully initialized: " + sanitizedQuery);
-                                } catch (Exception e) {
-                                    userLog.error("error upon initialization, running: " + sanitizedQuery, e);
-                                }
-                            } else {
-                                userLog.error("error upon initialization, invalid query: " + query);
+                        for (final var query : collectInitializers(config)) {
+                            final var sanitizedQuery =
+                                    LogsUtil.sanitizeQuery(dependencyResolver.resolveDependency(Config.class), query);
+                            try {
+                                // we need to apply a retry strategy here since in systemdb we potentially conflict
+                                // with
+                                // creating constraints which could cause our query to fail with a transient error.
+                                Util.retryInTx(
+                                        userLog, db, tx -> Iterators.count(tx.execute(query)), 0, 5, retries -> {});
+                                userLog.info("successfully initialized: " + sanitizedQuery);
+                            } catch (Exception e) {
+                                userLog.error("error upon initialization, running: " + sanitizedQuery, e);
                             }
                         }
                     } catch (Exception e) {
