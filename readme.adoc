@@ -305,6 +305,7 @@ With gradle - ./gradlew test
 Or as normal, click the play button on the test you would like to run.
 // end::tests[]
 // tag::codestyle[]
+
 === Applying Code-style
 
 ----
