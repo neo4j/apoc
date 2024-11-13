@@ -127,7 +127,7 @@ You can see the procedure's signature in the output of `CALL apoc.help("name")`
 CALL apoc.help("dijkstra")
 ----
 
-The signature is always `name : : TYPE`, so in this case:
+The signature is always `name +::+ TYPE`, so in this case:
 
 ----
 apoc.algo.dijkstra
