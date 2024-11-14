@@ -103,19 +103,14 @@ public class NodesAndRelsSubGraph implements SubGraph {
 
     private <T> ArrayList<T> getDefinitions(
             BiFunction<Schema, Label, Iterable<T>> nodeFunction,
-            BiFunction<Schema, RelationshipType, Iterable<T>> relFunction
-    ) {
+            BiFunction<Schema, RelationshipType, Iterable<T>> relFunction) {
         Schema schema = tx.schema();
         ArrayList<T> definitions = new ArrayList<>(labels.size() * 2);
         for (String label : labels) {
-            Iterables.addAll(definitions,
-                    nodeFunction.apply(schema, Label.label(label))
-            );
+            Iterables.addAll(definitions, nodeFunction.apply(schema, Label.label(label)));
         }
         for (String type : types) {
-            Iterables.addAll(definitions,
-                    relFunction.apply(schema, RelationshipType.withName(type))
-            );
+            Iterables.addAll(definitions, relFunction.apply(schema, RelationshipType.withName(type)));
         }
         return definitions;
     }
