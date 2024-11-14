@@ -1037,38 +1037,108 @@ public class ExportCypherTest {
     @Test
     public void shouldExportFulltextIndexForRelationship() {
         // given
-        db.executeTransactionally("CREATE (s:TempNode)-[:REL{rel_value: 'the rel value'}]->(e:TempNode2)");
-        db.executeTransactionally(
-                "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.rel_value]");
+        createFullTextRelIndex();
         String query = "MATCH (t:TempNode)-[r:REL{rel_value: 'the rel value'}]->(e:TempNode2) return t,r";
         Map<String, Object> config = map("awaitForIndexes", 3000);
-        String expected = String.format(":begin%n"
-                + "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.`rel_value`];%n"
-                + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
-                + ":commit%n"
-                + "CALL db.awaitIndexes(3000);%n"
-                + ":begin%n"
-                + "UNWIND [{_id:3, properties:{}}] AS row%n"
-                + "CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;%n"
-                + ":commit%n"
-                + ":begin%n"
-                + "UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:\"the rel value\"}}] AS row%n"
-                + "MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})%n"
-                + "MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})%n"
-                + "CREATE (start)-[r:REL]->(end) SET r += row.properties;%n"
-                + ":commit%n"
-                + ":begin%n"
-                + "MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;%n"
-                + ":commit%n"
-                + ":begin%n"
-                + "DROP CONSTRAINT UNIQUE_IMPORT_NAME;%n"
-                + ":commit%n");
 
         // when
         TestUtil.testCall(db, exportQuery, map("query", query, "file", null, "config", config), (r) -> {
             // then
-            assertEquals(expected, r.get("cypherStatements"));
+            assertEquals(EXPECTED_TEMPNODE, r.get("cypherStatements"));
         });
+    }
+
+    @Test
+    public void shouldExportDataWithFulltextIndexForRelationship() {
+        createFullTextRelIndex();
+        Map<String, Object> config = map("awaitForIndexes", 3000);
+        TestUtil.testCall(
+                db,
+                """
+                MATCH (start:TempNode)-[rel:REL]->(end:TempNode2)
+                CALL apoc.export.cypher.data([start], [rel], null, $config)
+                YIELD nodes, relationships, properties, cypherStatements, schemaStatements RETURN *""",
+                map("config", config),
+                (r) -> {
+                    // then
+                    assertEquals(EXPECTED_TEMPNODE, r.get("cypherStatements"));
+                });
+    }
+
+    @Test
+    public void shouldExportGraphWithFulltextIndexForRelationship() {
+        createFullTextRelIndex();
+        Map<String, Object> config = map("awaitForIndexes", 3000);
+        TestUtil.testCall(
+                db,
+                """
+                MATCH (start:TempNode)-[rel:REL]->(end:TempNode2)
+                WITH {nodes: [start], relationships: [rel]} AS graph
+                CALL apoc.export.cypher.graph(graph, null, $config)
+                YIELD nodes, relationships, properties, cypherStatements, schemaStatements RETURN *""",
+                map("config", config),
+                (r) -> {
+                    // then
+                    assertEquals(EXPECTED_TEMPNODE, r.get("cypherStatements"));
+                });
+    }
+
+    @Test
+    public void shouldExportGraphWithFulltextIndexes() {
+        createFullTextNodeAndRelIndex();
+
+        TestUtil.testCall(
+                db,
+                """
+                MATCH (start:TempNode)-[rel:REL]->(end:TempNode2)
+                WITH {nodes: [start, end], relationships: [rel]} AS graph
+                CALL apoc.export.cypher.graph(graph, null, $config)
+                YIELD nodes, relationships, properties, cypherStatements, schemaStatements RETURN *""",
+                Map.of("config", Map.of("awaitForIndexes", 3000)),
+                (r) -> assertEquals(EXPECTED_TEMPNODE_AND_REL, r.get("cypherStatements")));
+    }
+
+    @Test
+    public void shouldExportDataWithFulltextIndexes() {
+        createFullTextNodeAndRelIndex();
+
+        TestUtil.testCall(
+                db,
+                """
+                MATCH (start:TempNode)-[rel:REL]->(end:TempNode2)
+                CALL apoc.export.cypher.data([start, end], [rel], null, $config)
+                YIELD nodes, relationships, properties, cypherStatements, schemaStatements RETURN *""",
+                Map.of("config", Map.of("awaitForIndexes", 3000)),
+                (r) -> assertEquals(EXPECTED_TEMPNODE_AND_REL, r.get("cypherStatements")));
+    }
+
+    @Test
+    public void shouldExportQueryWithFulltextIndexes() {
+        createFullTextNodeAndRelIndex();
+
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map(
+                        "query",
+                        "MATCH (start:TempNode)-[rel:REL]->(end:TempNode2) RETURN start, rel, end",
+                        "file",
+                        null,
+                        "config",
+                        Map.of("awaitForIndexes", 3000)),
+                (r) -> assertEquals(EXPECTED_TEMPNODE_AND_REL, r.get("cypherStatements")));
+    }
+
+    private void createFullTextRelIndex() {
+        db.executeTransactionally("CREATE (s:TempNode)-[:REL{rel_value: 'the rel value'}]->(e:TempNode2)");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.rel_value]");
+    }
+
+    private void createFullTextNodeAndRelIndex() {
+        createFullTextRelIndex();
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode) ON EACH [n.rel_value]");
     }
 
     @Test
@@ -1237,6 +1307,100 @@ public class ExportCypherTest {
                 map("ifNotExists", true, "saveIndexNames", true));
 
         db.executeTransactionally("DROP INDEX rel_index_name");
+    }
+
+    @Test
+    public void shouldSaveCorrectlyRelRangeIndexe() {
+        db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
+
+        // check that `apoc.export.cypher.data`, `apoc.export.cypher.graph` and `apoc.export.cypher.query`
+        // return consistent results
+        Map<String, Object> config = Map.of("format", "neo4j-shell");
+        assertExportWithRangeIndex(
+                EXPECTED_SCHEMA_WITH_RELS_OPTIMIZED,
+                exportQuery,
+                map(
+                        "query",
+                        "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN start, rel, end",
+                        "file",
+                        null,
+                        "config",
+                        config));
+
+        assertExportWithRangeIndex(
+                EXPECTED_SCHEMA_WITH_RELS_OPTIMIZED,
+                """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([start, end], [rel], null, $config)
+                YIELD cypherStatements RETURN *
+                """,
+                map("config", config));
+        assertExportWithRangeIndex(
+                EXPECTED_SCHEMA_WITH_RELS_OPTIMIZED,
+                """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([start, end], [rel], null, $config)
+                YIELD cypherStatements RETURN *""",
+                map("config", config));
+
+        db.executeTransactionally("DROP INDEX rel_index_name");
+    }
+
+    @Test
+    public void shouldSaveCorrectlyRelRangeIndexWithName() {
+        db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
+
+        // check that `apoc.export.cypher.data`, `apoc.export.cypher.graph` and `apoc.export.cypher.query`
+        // return consistent results
+        Map<String, Object> config = Map.of("format", "neo4j-shell", "saveIndexNames", true);
+        assertExportWithRangeIndex(
+                EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED,
+                exportQuery,
+                map(
+                        "query",
+                        "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN start, rel, end",
+                        "file",
+                        null,
+                        "config",
+                        config));
+        assertExportWithRangeIndex(
+                EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED,
+                """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([start, end], [rel], null, $config)
+                YIELD cypherStatements RETURN *
+                """,
+                map("config", config));
+        assertExportWithRangeIndex(
+                EXPECTED_SCHEMA_WITH_RELS_AND_NAME_OPTIMIZED,
+                """
+                MATCH (start:Foo)-[rel:KNOWS]->(end:Bar)
+                CALL apoc.export.cypher.data([start, end], [rel], null, $config)
+                YIELD cypherStatements RETURN *""",
+                map("config", config));
+
+        db.executeTransactionally("DROP INDEX rel_index_name");
+    }
+
+    private void assertExportWithRangeIndex(String expectedSchema, String query, Map<String, Object> params) {
+        String expectedNodesAndRels =
+                """
+                BEGIN
+                UNWIND [{_id:0, properties:{born:date('2018-10-31'), name:"foo"}}] AS row
+                CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:Foo;
+                UNWIND [{name:"bar", properties:{age:42}}] AS row
+                CREATE (n:Bar{name: row.name}) SET n += row.properties;
+                COMMIT
+                BEGIN
+                UNWIND [{start: {_id:0}, end: {name:"bar"}, properties:{since:2016}}] AS row
+                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
+                MATCH (end:Bar{name: row.end.name})
+                CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
+                COMMIT
+                """;
+        String expected = expectedSchema + expectedNodesAndRels + EXPECTED_CLEAN_UP;
+
+        TestUtil.testCall(db, query, params, r -> assertEquals(expected, r.get("cypherStatements")));
     }
 
     @Test
@@ -1618,6 +1782,58 @@ public class ExportCypherTest {
     }
 
     public static class ExportCypherResults {
+        static final String EXPECTED_TEMPNODE_AND_REL =
+                """
+                :begin
+                CREATE FULLTEXT INDEX MyCoolNodeFulltextIndex FOR (n:TempNode) ON EACH [n.`rel_value`];
+                CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.`rel_value`];
+                CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;
+                :commit
+                CALL db.awaitIndexes(3000);
+                :begin
+                UNWIND [{_id:3, properties:{}}] AS row
+                CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;
+                UNWIND [{_id:4, properties:{}}] AS row
+                CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode2;
+                :commit
+                :begin
+                UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:"the rel value"}}] AS row
+                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
+                MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
+                CREATE (start)-[r:REL]->(end) SET r += row.properties;
+                :commit
+                :begin
+                MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;
+                :commit
+                :begin
+                DROP CONSTRAINT UNIQUE_IMPORT_NAME;
+                :commit
+                """;
+        static final String EXPECTED_TEMPNODE =
+                """
+                :begin
+                CREATE FULLTEXT INDEX MyCoolRelFulltextIndex FOR ()-[rel:REL]-() ON EACH [rel.`rel_value`];
+                CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;
+                :commit
+                CALL db.awaitIndexes(3000);
+                :begin
+                UNWIND [{_id:3, properties:{}}] AS row
+                CREATE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) SET n += row.properties SET n:TempNode;
+                :commit
+                :begin
+                UNWIND [{start: {_id:3}, end: {_id:4}, properties:{rel_value:"the rel value"}}] AS row
+                MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
+                MATCH (end:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.end._id})
+                CREATE (start)-[r:REL]->(end) SET r += row.properties;
+                :commit
+                :begin
+                MATCH (n:`UNIQUE IMPORT LABEL`)  WITH n LIMIT 20000 REMOVE n:`UNIQUE IMPORT LABEL` REMOVE n.`UNIQUE IMPORT ID`;
+                :commit
+                :begin
+                DROP CONSTRAINT UNIQUE_IMPORT_NAME;
+                :commit
+                """;
+
         static final String EXPECTED_ISOLATED_NODE =
                 "CREATE (:Bar:`UNIQUE IMPORT LABEL` {age:12, `UNIQUE IMPORT ID`:2});\n";
         static final String EXPECTED_BAR_END_NODE = "CREATE (:Bar {age:42, name:\"bar\"});%n";
@@ -1627,11 +1843,14 @@ public class ExportCypherTest {
         public static final String EXPECTED_NODES =
                 String.format(EXPECTED_BEGIN_AND_FOO + EXPECTED_BAR_END_NODE + EXPECTED_ISOLATED_NODE + "COMMIT%n");
 
-        private static final String EXPECTED_NODES_MERGE = String.format("BEGIN%n"
-                + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}) SET n.name=\"foo\", n.born=date('2018-10-31'), n:Foo;%n"
-                + "MERGE (n:Bar{name:\"bar\"}) SET n.age=42;%n"
-                + "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:2}) SET n.age=12, n:Bar;%n"
-                + "COMMIT%n");
+        private static final String EXPECTED_NODES_MERGE =
+                """
+                BEGIN
+                MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}) SET n.name="foo", n.born=date('2018-10-31'), n:Foo;
+                MERGE (n:Bar{name:"bar"}) SET n.age=42;
+                MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:2}) SET n.age=12, n:Bar;
+                COMMIT
+                """;
 
         public static final String EXPECTED_NODES_MERGE_ON_CREATE_SET =
                 EXPECTED_NODES_MERGE.replaceAll(" SET ", " ON CREATE SET ");
@@ -2109,7 +2328,9 @@ public class ExportCypherTest {
                 "CREATE CONSTRAINT SingleExists FOR (node:Label2) REQUIRE (node.prop) IS NOT NULL;",
                 "CREATE CONSTRAINT SingleExistsRel FOR ()-[rel:TYPE2]-() REQUIRE (rel.prop) IS NOT NULL;",
                 "CREATE CONSTRAINT SingleNodeKey FOR (node:Label3) REQUIRE (node.prop) IS NODE KEY;",
-                "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;");
+                "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;",
+                "CREATE CONSTRAINT KnowsConsNotNull FOR ()-[rel:KNOWS]-() REQUIRE (rel.foo) IS NOT NULL;",
+                "CREATE CONSTRAINT KnowsConsUnique FOR ()-[rel:KNOWS]-() REQUIRE (rel.two) IS UNIQUE;");
 
         public static final String EXPECTED_NEO4J_SHELL_WITH_COMPOUND_CONSTRAINT =
                 String.format("COMMIT%n" + "SCHEMA AWAIT%n"
@@ -2118,7 +2339,7 @@ public class ExportCypherTest {
                         + "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n"
                         + "COMMIT%n"
                         + "BEGIN%n"
-                        + "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n"
+                        + "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{foo:1}}] AS row%n"
                         + "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n"
                         + "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n"
                         + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n"
@@ -2130,7 +2351,7 @@ public class ExportCypherTest {
         public static final String EXPECTED_PLAIN_FORMAT_WITH_COMPOUND_CONSTRAINT = String.format(
                 "UNWIND [{surname:\"Snow\", name:\"John\", properties:{}}, {surname:\"Jackson\", name:\"Matt\", properties:{}}, {surname:\"White\", name:\"Jenny\", properties:{}}, {surname:\"Brown\", name:\"Susan\", properties:{}}, {surname:\"Taylor\", name:\"Tom\", properties:{}}] AS row%n"
                         + "CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;%n"
-                        + "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{}}] AS row%n"
+                        + "UNWIND [{start: {name:\"John\", surname:\"Snow\"}, end: {name:\"Matt\", surname:\"Jackson\"}, properties:{foo:1}}] AS row%n"
                         + "MATCH (start:Person{surname: row.start.surname, name: row.start.name})%n"
                         + "MATCH (end:Person{surname: row.end.surname, name: row.end.name})%n"
                         + "CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;%n");
