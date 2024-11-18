@@ -33,7 +33,7 @@ import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserAggregationFunction;
 import org.neo4j.procedure.UserFunction;
 
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
+@SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class ApocProcessor extends AbstractProcessor {
 
     private List<Map<String, List<QueryLanguage>>> procedureSignatures;
