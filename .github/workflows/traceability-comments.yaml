@@ -5,6 +5,8 @@ on:
     branches:
       - dev
     types:
+      - labeled
+      - unlabeled
       - opened
       - edited
       - reopened
