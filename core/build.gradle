@@ -158,7 +158,7 @@ publishing {
     }
 }
 
-task copyRuntimeLibs(type: Copy) {
+tasks.register('copyRuntimeLibs', Copy) {
     into "lib"
     from configurations.testRuntimeClasspath
 }

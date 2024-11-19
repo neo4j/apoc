@@ -56,7 +56,7 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.2.0'
     testImplementation group: 'pl.pragmatists', name: 'JUnitParams', version: '1.1.1'
 
-    configurations.all {
+    configurations.configureEach {
         exclude group: 'org.slf4j', module: 'slf4j-nop'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
         exclude group: 'org.ow2.asm', module: 'asm'
@@ -64,12 +64,13 @@ dependencies {
 }
 
 
-task testJar(type: Jar, dependsOn: testClasses) {
+tasks.register('testJar', Jar) {
+    dependsOn testClasses
     archiveClassifier = 'tests'
     from sourceSets.test.output
 }
 
-task copyRuntimeLibs(type: Copy) {
+tasks.register('copyRuntimeLibs', Copy) {
     into "lib"
     from configurations.testRuntimeClasspath
 }
