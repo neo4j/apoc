@@ -20,13 +20,7 @@ package apoc.help;
 
 import static apoc.util.Util.map;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.QueryLanguage;
@@ -41,23 +35,6 @@ public class Help {
 
     @Context
     public Transaction tx;
-
-    private static final Set<String> extended = new HashSet<>();
-
-    public Help() {
-        try (InputStream stream = getClass().getClassLoader().getResourceAsStream("extended.txt")) {
-            if (stream != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                String name;
-                while ((name = reader.readLine()) != null) {
-                    extended.add(name);
-                }
-            }
-        } catch (IOException e) {
-            // Failed to load extended file
-            throw new RuntimeException("Failed to load extended file with error: " + e.getMessage());
-        }
-    }
 
     @NotThreadSafe
     @Procedure("apoc.help")
@@ -103,7 +80,21 @@ public class Help {
         Stream<Map<String, Object>> functionsResults = tx.execute(functionsQuery, params).stream();
 
         return Stream.of(proceduresResults, functionsResults)
-                .flatMap(results ->
-                        results.map(row -> new HelpResult(row, !extended.contains((String) row.get("name")))));
+                .flatMap(results -> results.map(row -> new HelpResult(
+                        row,
+                        existsInCore(
+                                (String) row.get("name"),
+                                version5,
+                                row.get("type").equals("function")))));
+    }
+
+    private boolean existsInCore(String name, boolean version5, boolean function) {
+        if (version5) {
+            if (function) return HelpUtil.coreFunctionsV5.contains(name);
+            else return HelpUtil.coreProceduresV5.contains(name);
+        } else {
+            if (function) return HelpUtil.coreFunctionsV25.contains(name);
+            else return HelpUtil.coreProcedures25.contains(name);
+        }
     }
 }
