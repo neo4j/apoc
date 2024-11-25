@@ -42,11 +42,21 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import java.nio.channels.Channels;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobContainerClientBuilder;
+import com.azure.storage.blob.specialized.BlockBlobClient;
+import com.google.cloud.WriteChannel;
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.security.URLAccessChecker;
@@ -285,7 +295,12 @@ public class FileUtils {
             switch (protocol) {
                 case s3 -> outputStream = S3UploadUtils.writeFile(fileName);
                 case hdfs -> outputStream = HDFSUtils.writeFile(fileName);
+                // Google cloud
+                case gs -> outputStream = writeGoogleCloudFile(fileName);
+                // Azure Storage: or handle in default case, using an http(s)://azureUrl
+                case azb -> outputStream = writeAzbFile(fileName);
                 default -> {
+                    // Azure Storage: alternatively to azb protocol, handle writeAzbFile() here, recognizing the azure url somehow
                     final File file = isImportUsingNeo4jConfig()
                             ? resolvePath(fileName).toFile()
                             : new File(getFileUrl(fileName));
@@ -293,6 +308,82 @@ public class FileUtils {
                 }
             }
             return new BufferedOutputStream(compressionAlgo.getOutputStream(outputStream));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * @param fileName can be e.g. `azb://myStorageAccount/myContainer/myDirectory/`
+     */
+    private static OutputStream writeAzbFile(String fileName) {
+
+        // test values used with mcr.microsoft.com/azure-storage/azurite test container
+        // change these values with the actual ones by parsing the filename
+        var accountName = "devstoreaccount1";
+        var accountKey = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==";
+        var blobEndpoint = fileName.replace("azb://", "http://");
+        var connectionString = "DefaultEndpointsProtocol=http;AccountName=%s;AccountKey=%s;BlobEndpoint=%s;"
+                .formatted(accountName, accountKey, blobEndpoint);
+        // -- end test values 
+        
+        BlobContainerClient containerClient = new BlobContainerClientBuilder()
+                .connectionString(connectionString)
+                // change these values with the actual ones
+                .containerName("test-container")
+                .buildClient();
+        if (!containerClient.exists()) {
+            containerClient.create();
+        }
+
+        BlockBlobClient blobClient = containerClient.getBlobClient("test_all.arrow").getBlockBlobClient();
+
+        return blobClient.getBlobOutputStream();
+    }
+
+    record ParsedGcsUrl(String bucketName, String objectName) {}
+
+    public static ParsedGcsUrl parseGsUrl(String gsUrl) {
+        String path = gsUrl.substring(5); // Remove "gs://"
+        int slashIndex = path.indexOf('/');
+        if (slashIndex < 0) {
+            throw new IllegalArgumentException("Invalid gs:// URL, must contain a bucket and object: " + gsUrl);
+        }
+
+        String bucketName = path.substring(0, slashIndex);
+        String objectName = path.substring(slashIndex + 1);
+        return new ParsedGcsUrl(bucketName, objectName);
+    }
+
+    /**
+     * @param fileName can be e.g. `gs://myBucket/myDirectory/`
+     */
+    private static OutputStream writeGoogleCloudFile(String fileName) {
+        try {
+            // get bucketName and objectName from url
+            ParsedGcsUrl parsedUrl = parseGsUrl(fileName);
+            
+            /* todo - this Storage storage is just for testing purpose, 
+              it should be something like this instead:
+                URL url = new URL(fileName);
+                Storage storage = new GCStorageURLConnection(url).getStorage(url.toURI());
+                Initialize the Storage client
+             */
+            Storage storage = StorageOptions.newBuilder()
+                    // todo - for testing purpose
+                    .setHost("http://localhost:4443")
+                    // todo - mocked, change with actual projectID
+                    .setProjectId("test-project")
+                    .build()
+                    .getService();
+    
+            // Create the BlobInfo object
+            BlobId blobId = BlobId.of(parsedUrl.bucketName, parsedUrl.objectName);
+    
+            Blob blob = storage.get(blobId);
+            WriteChannel writeChannel = storage.writer(blob);
+    
+            return Channels.newOutputStream(writeChannel);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

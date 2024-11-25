@@ -17,6 +17,8 @@ javadoc {
 }
 
 dependencies {
+    implementation 'com.azure:azure-storage-blob:12.22.0'
+    
     apt project(':processor')
     apt group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
 
