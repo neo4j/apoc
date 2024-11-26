@@ -147,6 +147,10 @@ public class ArrowTest {
         return result.<String>columnAs("file").next();
     }
 
+    private Long extractBatches(Result result) {
+        return result.<Long>columnAs("batches").next();
+    }
+
     private <T> T readValue(String json, Class<T> clazz) {
         if (json == null) return null;
         try {
@@ -375,6 +379,27 @@ public class ArrowTest {
             return null;
         });
 
+        db.executeTransactionally("MATCH (n:ArrowNode) DELETE n");
+    }
+
+    @Test
+    public void testArrowCorrectBatchCount() {
+        // given - when
+        db.executeTransactionally("UNWIND range(0, 10000 - 1) AS id CREATE (:ArrowNode{id:id})");
+
+        Long batchesOdd = db.executeTransactionally(
+                "CALL apoc.export.arrow.query('batchCount_test.arrow', 'MATCH (n:ArrowNode) RETURN n.id AS id', {batchSize: 3}) YIELD batches",
+                Map.of(),
+                this::extractBatches);
+
+        Long batchesEven = db.executeTransactionally(
+                "CALL apoc.export.arrow.query('batchCount_test.arrow', 'MATCH (n:ArrowNode) RETURN n.id AS id', {batchSize: 2}) YIELD batches",
+                Map.of(),
+                this::extractBatches);
+
+        // then
+        assertEquals(3334, batchesOdd.longValue());
+        assertEquals(5000, batchesEven.longValue());
         db.executeTransactionally("MATCH (n:ArrowNode) DELETE n");
     }
 
