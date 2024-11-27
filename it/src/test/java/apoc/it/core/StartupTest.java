@@ -204,6 +204,8 @@ public class StartupTest {
                                 "CYPHER 25 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
                         .list(record -> record.get("name").asString());
 
+                // If this starts failing, take a look at HelpUtil.java, you may need to add
+                // newly added functions/procedures there!
                 assertEquals(sorted(ApocSignatures.PROCEDURES_CYPHER_25), procedureNames);
                 assertEquals(sorted(ApocSignatures.FUNCTIONS_CYPHER_25), functionNames);
             }
