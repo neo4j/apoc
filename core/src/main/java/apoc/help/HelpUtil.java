@@ -1,10 +1,10 @@
 package apoc.help;
 
-import java.util.List;
+import java.util.Set;
 
 public class HelpUtil {
     // Please update here on the addition of any new procedures or functions!
-    public static final List<String> coreProceduresV5 = List.of(
+    public static final Set<String> coreProceduresV5 = Set.of(
             "apoc.periodic.truncate",
             "apoc.periodic.list",
             "apoc.periodic.commit",
@@ -199,7 +199,7 @@ public class HelpUtil {
             "apoc.neighbors.athop.count");
     ;
 
-    public static final List<String> coreFunctionsV5 = List.of(
+    public static final Set<String> coreFunctionsV5 = Set.of(
             "apoc.temporal.format",
             "apoc.temporal.formatDuration",
             "apoc.temporal.toZonedTemporal",
@@ -448,7 +448,7 @@ public class HelpUtil {
             "apoc.agg.slice");
     ;
 
-    public static final List<String> coreProcedures25 = List.of(
+    public static final Set<String> coreProceduresV25 = Set.of(
             "apoc.periodic.truncate",
             "apoc.periodic.list",
             "apoc.periodic.commit",
@@ -625,7 +625,7 @@ public class HelpUtil {
             "apoc.neighbors.athop.count");
     ;
 
-    public static final List<String> coreFunctionsV25 = List.of(
+    public static final Set<String> coreFunctionsV25 = Set.of(
             "apoc.temporal.format",
             "apoc.temporal.formatDuration",
             "apoc.temporal.toZonedTemporal",

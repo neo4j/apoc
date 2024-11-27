@@ -94,7 +94,7 @@ public class Help {
             else return HelpUtil.coreProceduresV5.contains(name);
         } else {
             if (function) return HelpUtil.coreFunctionsV25.contains(name);
-            else return HelpUtil.coreProcedures25.contains(name);
+            else return HelpUtil.coreProceduresV25.contains(name);
         }
     }
 }
