@@ -95,7 +95,7 @@ public class ProgressReporter implements Reporter {
 
     @Override
     public void done() {
-        if (totalEntities / batchSize == lastBatch) lastBatch++;
+        if (totalEntities % batchSize != 0) lastBatch++;
         updateRunningBatch(progressInfo);
         progressInfo.done(start);
         if (consumer != null) {
