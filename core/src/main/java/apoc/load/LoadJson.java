@@ -118,7 +118,8 @@ public class LoadJson {
     public Stream<LoadDataMapResult> jsonParams(
             @Name(
                             value = "urlOrKeyOrBinary",
-                            description = "The name of the file or binary data to import the data from. Note that a URL needs to be properly encoded to conform with the URI standard.")
+                            description = "The name of the file or binary data to import the data from. " +
+                                          "Note that a URL needs to be properly encoded to conform with the URI standard.")
                     Object urlOrKeyOrBinary,
             @Name(value = "headers", description = "Headers to be used when connecting to the given URL.")
                     Map<String, Object> headers,
