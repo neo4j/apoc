@@ -112,9 +112,8 @@ public class LoadJson {
     @Procedure(name = "apoc.load.jsonParams", deprecatedBy = "This procedure is being moved to APOC Extended.")
     @Deprecated
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
-    @Description(
-            "Loads a JSON document from a URL (e.g. web-API) as a stream of values if the given JSON document is a `LIST<ANY>`.\n"
-                    + "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
+    @Description("Loads a JSON document from a URL (e.g. web-API) as a stream of values if the given JSON document is a `LIST<ANY>`.\n"
+            + "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
     public Stream<LoadDataMapResult> jsonParams(
             @Name(
                             value = "urlOrKeyOrBinary",
