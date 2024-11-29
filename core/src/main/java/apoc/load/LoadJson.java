@@ -113,12 +113,13 @@ public class LoadJson {
     @Deprecated
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description(
-            "Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is a `LIST<ANY>`.\n"
+            "Loads a JSON document from a URL (e.g. web-API) as a stream of values if the given JSON document is a `LIST<ANY>`.\n"
                     + "If the given JSON file is a `MAP`, this procedure imports a single value instead.")
     public Stream<LoadDataMapResult> jsonParams(
             @Name(
                             value = "urlOrKeyOrBinary",
-                            description = "The name of the file or binary data to import the data from.")
+                            description = "The name of the file or binary data to import the data from. "
+                                    + "Note that a URL needs to be properly encoded to conform with the URI standard.")
                     Object urlOrKeyOrBinary,
             @Name(value = "headers", description = "Headers to be used when connecting to the given URL.")
                     Map<String, Object> headers,
@@ -127,7 +128,10 @@ public class LoadJson {
             @Name(
                             value = "path",
                             defaultValue = "",
-                            description = "A JSON path expression used to extract a certain part from the list.")
+                            description =
+                                    "A JSON path expression used to extract specific subparts of the JSON document "
+                                            + "(extracted by a link:https://en.wikipedia.org/wiki/JSONPath[JSONPath] expression). "
+                                            + "The default is: ``.")
                     String path,
             @Name(
                             value = "config",

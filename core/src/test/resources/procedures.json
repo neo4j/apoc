@@ -4464,7 +4464,7 @@
   "isDeprecated" : true,
   "signature" : "apoc.load.jsonParams(urlOrKeyOrBinary :: ANY, headers :: MAP, payload :: STRING, path =  :: STRING, config = {} :: MAP) :: (value :: MAP)",
   "name" : "apoc.load.jsonParams",
-  "description" : "Loads parameters from a JSON URL (e.g. web-API) as a stream of values if the given JSON file is a `LIST<ANY>`.\nIf the given JSON file is a `MAP`, this procedure imports a single value instead.",
+  "description" : "Loads a JSON document from a URL (e.g. web-API) as a stream of values if the given JSON document is a `LIST<ANY>`.\nIf the given JSON file is a `MAP`, this procedure imports a single value instead.",
   "returnDescription" : [ {
     "name" : "value",
     "description" : "A map of data loaded from the given file.",
@@ -4474,7 +4474,7 @@
   "deprecatedBy" : "This procedure is being moved to APOC Extended.",
   "argumentDescription" : [ {
     "name" : "urlOrKeyOrBinary",
-    "description" : "The name of the file or binary data to import the data from.",
+    "description" : "The name of the file or binary data to import the data from. Note that a URL needs to be properly encoded to conform with the URI standard.",
     "isDeprecated" : false,
     "type" : "ANY"
   }, {
@@ -4489,7 +4489,7 @@
     "type" : "STRING"
   }, {
     "name" : "path",
-    "description" : "A JSON path expression used to extract a certain part from the list.",
+    "description" : "A JSON path expression used to extract specific subparts of the JSON document (extracted by a link:https://en.wikipedia.org/wiki/JSONPath[JSONPath] expression). The default is: ``.",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value=, type=STRING}",
     "type" : "STRING"
