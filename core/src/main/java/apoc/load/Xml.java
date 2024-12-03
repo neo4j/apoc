@@ -26,7 +26,6 @@ import static apoc.util.Util.getStreamConnection;
 
 import apoc.ApocConfig;
 import apoc.export.util.CountingInputStream;
-import apoc.generate.config.InvalidConfigException;
 import apoc.result.LoadDataMapResult;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
@@ -454,7 +453,7 @@ public class Xml {
             }
 
             if (config.containsKey("createNextWordRelationships")) {
-                throw new InvalidConfigException(
+                throw new RuntimeException(
                         "usage of `createNextWordRelationships` is no longer allowed. Use `{relType:'NEXT_WORD', label:'XmlWord'}` instead.");
             }
         }

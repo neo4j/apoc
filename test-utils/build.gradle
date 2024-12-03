@@ -46,7 +46,6 @@ dependencies {
     api group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion
     api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion
 
-    implementation project(":common")
     implementation group: 'org.neo4j', name: 'neo4j-common', version: neo4jVersionEffective, classifier: "tests"
     implementation group: 'org.neo4j', name: 'neo4j-kernel', version: neo4jVersionEffective, classifier: "tests"
     implementation group: 'org.neo4j', name: 'neo4j-io', version: neo4jVersionEffective, classifier: "tests"

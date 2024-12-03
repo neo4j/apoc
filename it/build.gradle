@@ -5,10 +5,8 @@ test {
 }
 
 dependencies {
-    testImplementation project(':common')
     testImplementation project(':core')
     testImplementation project(':test-utils')
-    testImplementation project(':common').sourceSets.test.output
     testImplementation project(':core').sourceSets.test.output
 
     testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'

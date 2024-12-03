@@ -8,7 +8,6 @@ repositories {
 }
 
 dependencies {
-    jmh project(':common')
     jmh project(':core')
     jmh "com.neo4j:neo4j-enterprise:$neo4jVersionEffective"
     jmh "org.neo4j:neo4j:$neo4jVersionEffective"

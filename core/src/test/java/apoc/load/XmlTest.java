@@ -37,7 +37,7 @@ import apoc.util.TestUtil;
 import apoc.util.TransactionTestUtil;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
-import apoc.xml.XmlTestUtils;
+import apoc.util.xml.XmlTestUtils;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import java.io.File;

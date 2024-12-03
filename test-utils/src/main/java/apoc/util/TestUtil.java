@@ -21,8 +21,6 @@ package apoc.util;
 import static org.junit.Assert.*;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
-import apoc.util.collection.Iterables;
-import apoc.util.collection.Iterators;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
@@ -128,7 +126,7 @@ public class TestUtil {
     }
 
     public static long count(GraphDatabaseService db, String cypher, Map<String, Object> params) {
-        return db.executeTransactionally(cypher, params, result -> Iterators.count(result));
+        return db.executeTransactionally(cypher, params, result -> TestUtilIterators.count(result));
     }
 
     public static long count(GraphDatabaseService db, String cypher) {
@@ -268,7 +266,7 @@ public class TestUtil {
     }
 
     private static <T> ResourceIterator<T> iteratorSingleColumn(Result result) {
-        return result.columnAs(Iterables.single(result.columns()));
+        return result.columnAs(TestUtilIterables.single(result.columns()));
     }
 
     public static <T> T singleResultFirstColumn(GraphDatabaseService db, String cypher) {
@@ -277,12 +275,12 @@ public class TestUtil {
 
     public static <T> T singleResultFirstColumn(GraphDatabaseService db, String cypher, Map<String, Object> params) {
         return db.executeTransactionally(
-                cypher, params, result -> Iterators.singleOrNull(iteratorSingleColumn(result)));
+                cypher, params, result -> TestUtilIterators.singleOrNull(iteratorSingleColumn(result)));
     }
 
     public static <T> List<T> firstColumn(GraphDatabaseService db, String cypher) {
         return db.executeTransactionally(
-                cypher, Collections.emptyMap(), result -> Iterators.asList(iteratorSingleColumn(result)));
+                cypher, Collections.emptyMap(), result -> TestUtilIterators.asList(iteratorSingleColumn(result)));
     }
 
     public static void waitDbsAvailable(GraphDatabaseService... dbs) {

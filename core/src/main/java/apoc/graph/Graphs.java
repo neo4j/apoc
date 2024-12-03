@@ -21,8 +21,6 @@ package apoc.graph;
 import static apoc.graph.GraphsUtils.extract;
 
 import apoc.cypher.CypherUtils;
-import apoc.graph.document.builder.DocumentToGraph;
-import apoc.graph.util.GraphsConfig;
 import apoc.result.RowResult;
 import apoc.result.VirtualGraph;
 import apoc.util.Util;
