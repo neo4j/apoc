@@ -172,6 +172,8 @@ public class CsvFormat {
         final var relPropTypes = collectPropTypesForRelationships(graph, db, config);
         final var nodeHeader = generateHeader(nodePropTypes, config.useTypes(), NODE_HEADER_FIXED_COLUMNS);
         final var relHeader = generateHeader(relPropTypes, config.useTypes(), REL_HEADER_FIXED_COLUMNS);
+        final var nodePropNames = nodePropTypes.keySet().stream().sorted().toList();
+        final var relPropNames = relPropTypes.keySet().stream().sorted().toList();
         final var header = new ArrayList<>(nodeHeader);
         header.addAll(relHeader);
         out.writeNext(header.toArray(String[]::new), applyQuotesToAll);
@@ -182,7 +184,7 @@ public class CsvFormat {
                 graph,
                 out,
                 reporter,
-                nodeHeader.subList(NODE_HEADER_FIXED_COLUMNS.length, nodeHeader.size()),
+                nodePropNames,
                 cols,
                 config.getBatchSize(),
                 config.shouldDifferentiateNulls());
@@ -191,7 +193,7 @@ public class CsvFormat {
                 graph,
                 out,
                 reporter,
-                relHeader.subList(REL_HEADER_FIXED_COLUMNS.length, relHeader.size()),
+                relPropNames,
                 cols,
                 nodeHeader.size(),
                 config.getBatchSize(),
@@ -350,7 +352,7 @@ public class CsvFormat {
             SubGraph graph,
             CSVWriter out,
             Reporter reporter,
-            List<String> header,
+            List<String> nodePropTypes,
             int cols,
             int batchSize,
             boolean keepNulls) {
@@ -359,7 +361,7 @@ public class CsvFormat {
         for (Node node : graph.getNodes()) {
             row[0] = String.valueOf(getNodeId(threadBoundTx, node.getElementId()));
             row[1] = getLabelsString(node);
-            collectProps(header, node, reporter, row, 2, keepNulls);
+            collectProps(nodePropTypes, node, reporter, row, 2, keepNulls);
             out.writeNext(row, applyQuotesToAll);
             nodes++;
             if (batchSize == -1 || nodes % batchSize == 0) {
@@ -392,7 +394,7 @@ public class CsvFormat {
             SubGraph graph,
             CSVWriter out,
             Reporter reporter,
-            List<String> relHeader,
+            List<String> relPropNames,
             int cols,
             int offset,
             int batchSize,
@@ -405,7 +407,7 @@ public class CsvFormat {
             row[offset + 1] =
                     String.valueOf(getNodeId(threadBoundTx, rel.getEndNode().getElementId()));
             row[offset + 2] = rel.getType().name();
-            collectProps(relHeader, rel, reporter, row, 3 + offset, keepNull);
+            collectProps(relPropNames, rel, reporter, row, 3 + offset, keepNull);
             out.writeNext(row, applyQuotesToAll);
             rels++;
             if (batchSize == -1 || rels % batchSize == 0) {

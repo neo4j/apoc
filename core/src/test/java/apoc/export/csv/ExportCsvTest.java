@@ -491,6 +491,36 @@ public class ExportCsvTest {
     }
 
     @Test
+    public void textExportWithTypes() {
+        db.executeTransactionally(
+                "CREATE (n:TestNode) SET n = {valFloat:toFloat(123), name:'NodeName', valInt:5, dateVal: date('2024-11-01')};");
+        TestUtil.testCall(
+                db,
+                """
+                            CALL apoc.graph.fromCypher("MATCH (n:TestNode) RETURN n", {}, 'TestNode.csv',{}) YIELD graph
+                            CALL apoc.export.csv.graph(graph, null, {stream:true, useTypes:true}) YIELD properties, rows, data
+                            return properties, rows, data;
+                            """,
+                (r) -> {
+                    String data = (String) r.get("data");
+                    // FLOAT value
+                    assertTrue(data.contains("valFloat:float"));
+                    assertTrue(data.contains("123.0"));
+                    // INT value
+                    assertTrue(data.contains("valInt:int"));
+                    assertTrue(data.contains("5"));
+                    // STRING value and unknown types to csv export
+                    assertTrue(data.contains("name"));
+                    assertTrue(data.contains("NodeName"));
+                    assertTrue(data.contains("dateVal"));
+                    assertTrue(data.contains("2024-11-01"));
+                });
+
+        final String deleteQuery = "MATCH (n:TestNode) DETACH DELETE n";
+        db.executeTransactionally(deleteQuery);
+    }
+
+    @Test
     public void testExportAllCsvCompressed() {
         final CompressionAlgo compressionAlgo = DEFLATE;
         String fileName = "all.csv.zz";

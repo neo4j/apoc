@@ -133,8 +133,9 @@ public class MetaInformation {
             case NULL:
                 return null;
             case INTEGER:
-            case FLOAT:
                 return "integer".equals(name) || !isAllowed ? "int" : name;
+            case FLOAT:
+                return !isAllowed ? "float" : name;
             default:
                 return isAllowed ? name : "string"; // We manage all other data types as strings
         }
