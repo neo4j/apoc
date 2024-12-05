@@ -21,6 +21,7 @@ package apoc.path;
 import static apoc.util.Util.labelStrings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import apoc.util.MapUtil;
@@ -694,6 +695,22 @@ public class ExpandPathTest {
 
                     assertFalse(iterator.hasNext());
                 });
+    }
+
+    @Test
+    public void testShouldFailOnInvalidUniqueness() {
+        String statement =
+                """
+                                MATCH (k:Person {name:'Keanu Reeves'})
+                                CALL apoc.path.expandConfig(k, {uniqueness: 'NODE_GLOBALS'})
+                                YIELD path
+                                RETURN path
+                        """;
+
+        RuntimeException e = assertThrows(RuntimeException.class, () -> TestUtil.testCall(db, statement, (res) -> {}));
+        String expectedMessage =
+                "Failed to invoke procedure `apoc.path.expandConfig`: Caused by: java.lang.RuntimeException: Invalid uniqueness: 'NODE_GLOBALS'. Must be one of: NODE_GLOBAL, NODE_PATH, NODE_RECENT, NODE_LEVEL, RELATIONSHIP_GLOBAL, RELATIONSHIP_PATH, RELATIONSHIP_RECENT, RELATIONSHIP_LEVEL, NONE.";
+        assertEquals(expectedMessage, e.getMessage());
     }
 
     private void specialCharAssertions(Result result) {

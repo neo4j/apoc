@@ -282,7 +282,13 @@ public class PathExplorer {
         for (Uniqueness u : Uniqueness.values()) {
             if (u.name().equalsIgnoreCase(uniqueness)) return u;
         }
-        return UNIQUENESS;
+        throw new RuntimeException("Invalid uniqueness: '" + uniqueness + "'. Must be one of: "
+                + String.join(
+                        ", ",
+                        java.util.Arrays.stream(Uniqueness.values())
+                                .map(Enum::name)
+                                .toArray(String[]::new))
+                + ".");
     }
 
     private Stream<Path> expandConfigPrivate(@Name("start") Object start, @Name("config") Map<String, Object> config) {
