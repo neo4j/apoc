@@ -19,12 +19,13 @@
 package apoc.processor;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.SimpleElementVisitor9;
 import javax.tools.Diagnostic;
@@ -34,72 +35,64 @@ import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserAggregationFunction;
 import org.neo4j.procedure.UserFunction;
 
-public class SignatureVisitor extends SimpleElementVisitor9<Map<String, List<QueryLanguage>>, Void> {
+public class SignatureVisitor extends SimpleElementVisitor9<SignatureVisitor.Signature, Void> {
 
     private final Elements elementUtils;
 
     private final Messager messager;
 
     public SignatureVisitor(Elements elementUtils, Messager messager) {
-
         this.elementUtils = elementUtils;
         this.messager = messager;
     }
 
     @Override
-    public Map<String, List<QueryLanguage>> visitExecutable(ExecutableElement method, Void unused) {
-        return Map.of(
-                getAnnotationName(method)
-                        .orElse(String.format("%s.%s", elementUtils.getPackageOf(method), method.getSimpleName())),
-                getCypherScopes(method));
+    public Signature visitExecutable(ExecutableElement method, Void unused) {
+        final var isProcedure = method.getAnnotation(Procedure.class) != null;
+        final var className =
+                ((TypeElement) method.getEnclosingElement()).getQualifiedName().toString();
+        final var name = getProcedureName(method)
+                .or(() -> getUserFunctionName(method))
+                .or(() -> getUserAggregationFunctionName(method))
+                .orElse("%s.%s".formatted(elementUtils.getPackageOf(method), method.getSimpleName()));
+        return new Signature(name, isProcedure, cypherScopes(method), className);
     }
 
     @Override
-    public Map<String, List<QueryLanguage>> visitUnknown(Element e, Void unused) {
+    public Signature visitUnknown(Element e, Void unused) {
         messager.printMessage(Diagnostic.Kind.ERROR, "unexpected .....");
         return super.visitUnknown(e, unused);
     }
 
-    private Optional<String> getAnnotationName(ExecutableElement method) {
-        return getProcedureName(method)
-                .or(() -> getUserFunctionName(method))
-                .or(() -> getUserAggregationFunctionName(method));
-    }
-
-    private List<QueryLanguage> getCypherScopes(ExecutableElement method) {
-        return Optional.ofNullable(method.getAnnotation(QueryLanguageScope.class))
-                .map(annotation -> {
-                    QueryLanguage[] scope = annotation.scope();
-                    return scope.length > 0
-                            ? Arrays.asList(scope)
-                            : List.of(QueryLanguage.CYPHER_5, QueryLanguage.CYPHER_25);
-                })
-                .orElse(List.of(QueryLanguage.CYPHER_5, QueryLanguage.CYPHER_25));
+    private Set<QueryLanguage> cypherScopes(ExecutableElement method) {
+        final var annotation = method.getAnnotation(QueryLanguageScope.class);
+        if (annotation != null && annotation.scope().length > 0) {
+            return EnumSet.copyOf(Arrays.asList(annotation.scope()));
+        } else {
+            return QueryLanguage.ALL;
+        }
     }
 
     private Optional<String> getProcedureName(ExecutableElement method) {
         return Optional.ofNullable(method.getAnnotation(Procedure.class))
-                .map((annotation) -> pickFirstNonBlank(annotation.name(), annotation.value()))
-                .flatMap(this::blankToEmpty);
+                .flatMap((annotation) -> pickFirstNonBlank(annotation.name(), annotation.value()));
     }
 
     private Optional<String> getUserFunctionName(ExecutableElement method) {
         return Optional.ofNullable(method.getAnnotation(UserFunction.class))
-                .map((annotation) -> pickFirstNonBlank(annotation.name(), annotation.value()))
-                .flatMap(this::blankToEmpty);
+                .flatMap((annotation) -> pickFirstNonBlank(annotation.name(), annotation.value()));
     }
 
     private Optional<String> getUserAggregationFunctionName(ExecutableElement method) {
         return Optional.ofNullable(method.getAnnotation(UserAggregationFunction.class))
-                .map((annotation) -> pickFirstNonBlank(annotation.name(), annotation.value()))
-                .flatMap(this::blankToEmpty);
+                .flatMap((annotation) -> pickFirstNonBlank(annotation.name(), annotation.value()));
     }
 
-    private Optional<String> blankToEmpty(String s) {
-        return s.isBlank() ? Optional.empty() : Optional.of(s);
+    private Optional<String> pickFirstNonBlank(String name, String value) {
+        if (!name.isBlank()) return Optional.of(name);
+        else if (!value.isBlank()) return Optional.of(value);
+        else return Optional.empty();
     }
 
-    private String pickFirstNonBlank(String name, String value) {
-        return name.isBlank() ? value : name;
-    }
+    public record Signature(String name, boolean isProcedure, Set<QueryLanguage> scope, String className) {}
 }

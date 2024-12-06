@@ -20,12 +20,9 @@ package apoc.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.neo4j.kernel.api.QueryLanguage.CYPHER_25;
-import static org.neo4j.kernel.api.QueryLanguage.CYPHER_5;
 
+import apoc.processor.SignatureVisitor.Signature;
 import com.google.testing.compile.CompilationRule;
-import java.util.List;
-import java.util.Map;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementVisitor;
@@ -37,11 +34,12 @@ import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.procedure.Procedure;
 
 public class ProcedureSignatureVisitorTest {
+    private final String className = getClass().getCanonicalName();
 
     @Rule
     public CompilationRule compilationRule = new CompilationRule();
 
-    ElementVisitor<Map<String, List<QueryLanguage>>, Void> visitor;
+    ElementVisitor<SignatureVisitor.Signature, Void> visitor;
 
     TypeElement typeElement;
 
@@ -54,37 +52,26 @@ public class ProcedureSignatureVisitorTest {
     @Test
     public void gets_the_annotated_name_of_the_procedure() {
         Element method = findMemberByName(typeElement, "myProcedure");
-
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
-
-        assertThat(result).isEqualTo(Map.of("my.proc", List.of(CYPHER_5, CYPHER_25)));
+        assertThat(visitor.visit(method)).isEqualTo(new Signature("my.proc", true, QueryLanguage.ALL, className));
     }
 
     @Test
     public void gets_the_annotated_value_of_the_procedure() {
         Element method = findMemberByName(typeElement, "myProcedure2");
-
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
-
-        assertThat(result).isEqualTo(Map.of("my.proc2", List.of(CYPHER_5, CYPHER_25)));
+        assertThat(visitor.visit(method)).isEqualTo(new Signature("my.proc2", true, QueryLanguage.ALL, className));
     }
 
     @Test
     public void gets_the_annotated_name_over_value() {
         Element method = findMemberByName(typeElement, "myProcedure3");
-
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
-
-        assertThat(result).isEqualTo(Map.of("my.proc3", List.of(CYPHER_5, CYPHER_25)));
+        assertThat(visitor.visit(method)).isEqualTo(new Signature("my.proc3", true, QueryLanguage.ALL, className));
     }
 
     @Test
     public void gets_the_default_name_of_the_procedure() {
         Element method = findMemberByName(typeElement, "myDefaultNamedProcedure");
-
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
-
-        assertThat(result).isEqualTo(Map.of("apoc.processor.myDefaultNamedProcedure", List.of(CYPHER_5, CYPHER_25)));
+        assertThat(visitor.visit(method))
+                .isEqualTo(new Signature("apoc.processor.myDefaultNamedProcedure", true, QueryLanguage.ALL, className));
     }
 
     @Procedure(name = "my.proc")
