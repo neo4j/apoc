@@ -1962,6 +1962,42 @@ public class GraphRefactoringTest {
         }
     }
 
+    @Test
+    public void mergeNodesWithConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT foo_uniq FOR ()-[r:MY_REL]-() REQUIRE r.foo IS UNIQUE");
+        db.executeTransactionally(
+                """
+                   CREATE
+                       (n1 {name: "n1"})-[r1:MY_REL {foo: "a"}]->(n2 {name: "n2"}),
+                       (n3 {name: "n3"})-[r2:MY_REL {foo: "b"}]->(n4 {name: "n4"})""");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        db.executeTransactionally(
+                """
+                   MATCH (n1 {name: "n1"}), (n3 {name: "n3"})
+                   CALL apoc.refactor.mergeNodes([n1, n3], {properties: 'discard'}) YIELD node
+                   FINISH""");
+
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.name,
+                      CASE WHEN r.foo IS NULL THEN 'null' ELSE r.foo END AS `r.foo`,
+                      CASE WHEN b.name IS NULL THEN 'null' ELSE b.name END AS `b.name`
+                    ORDER BY `a.name`, `r.foo`, `b.name`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.name", "n1", "r.foo", "a", "b.name", "n2"),
+                            Map.of("a.name", "n1", "r.foo", "b", "b.name", "n4"),
+                            Map.of("a.name", "n2", "r.foo", "null", "b.name", "null"),
+                            Map.of("a.name", "n4", "r.foo", "null", "b.name", "null"));
+            tx.commit();
+        }
+    }
+
     private void issue2797Common(String extractQuery) {
         db.executeTransactionally("CREATE CONSTRAINT unique_book FOR (book:MyBook) REQUIRE book.name IS UNIQUE");
         db.executeTransactionally("CREATE (n:MyBook {name: 1})");

@@ -913,37 +913,21 @@ public class GraphRefactoring {
 
     private void copyRelationships(Node source, Node target, boolean delete, boolean createNewSelfRel) {
         for (Relationship rel : source.getRelationships()) {
-            copyRelationship(rel, source, target, createNewSelfRel);
-            if (delete) rel.delete();
-        }
-    }
+            final var type = rel.getType();
+            var startNode = rel.getStartNode();
+            if (startNode.getElementId().equals(source.getElementId())) startNode = target;
+            var endNode = rel.getEndNode();
+            if (endNode.getElementId().equals(source.getElementId())) endNode = target;
 
-    private Node copyLabels(Node source, Node target) {
-        for (Label label : source.getLabels()) {
-            if (!target.hasLabel(label)) {
-                target.addLabel(label);
+            final var properties = rel.getAllProperties();
+
+            // Delete first to avoid breaking constraints.
+            if (delete) rel.delete();
+
+            if (createNewSelfRel || !startNode.getElementId().equals(endNode.getElementId())) {
+                final var newRel = startNode.createRelationshipTo(endNode, type);
+                properties.forEach(newRel::setProperty);
             }
         }
-        return target;
-    }
-
-    private void copyRelationship(Relationship rel, Node source, Node target, boolean createNewSelfRelf) {
-        Node startNode = rel.getStartNode();
-        Node endNode = rel.getEndNode();
-
-        if (startNode.getElementId().equals(endNode.getElementId()) && !createNewSelfRelf) {
-            return;
-        }
-
-        if (startNode.getElementId().equals(source.getElementId())) {
-            startNode = target;
-        }
-
-        if (endNode.getElementId().equals(source.getElementId())) {
-            endNode = target;
-        }
-
-        Relationship newrel = startNode.createRelationshipTo(endNode, rel.getType());
-        copyProperties(rel, newrel);
     }
 }
