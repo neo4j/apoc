@@ -1807,6 +1807,79 @@ public class GraphRefactoringTest {
         }
     }
 
+    @Test
+    public void invertWithConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'})");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute("MATCH ()-[r:R]->() CALL apoc.refactor.invert(r) YIELD error RETURN error").stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("error", null);
+            tx.commit();
+        }
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "B", "r.id", "R", "b.id", "A"));
+            tx.commit();
+        }
+    }
+
+    @Test
+    public void invertErrorHandling() {
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'})");
+
+        final var invertQuery =
+                "MATCH ()-[r:R]->() DELETE r WITH r CALL apoc.refactor.invert(r, $conf) YIELD error RETURN error";
+        try (final var tx = db.beginTx()) {
+            final var params = Map.<String, Object>of("conf", Map.of("failOnErrors", true));
+            assertThatThrownBy(() -> tx.execute(invertQuery, params).resultAsString())
+                    .hasMessageContaining(
+                            "Failed to invoke procedure `apoc.refactor.invert`: Caused by: org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException")
+                    .hasRootCauseExactlyInstanceOf(
+                            org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException.class);
+            tx.rollback();
+        }
+
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "R", "b.id", "B"),
+                            Map.of("a.id", "B", "r.id", "null", "b.id", "null"));
+            tx.commit();
+        }
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute(invertQuery, Map.of("conf", Map.of())).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("error", e -> assertThat(e).asString().contains("EntityNotFoundException"));
+            tx.rollback();
+        }
+    }
+
     private void issue2797Common(String extractQuery) {
         db.executeTransactionally("CREATE CONSTRAINT unique_book FOR (book:MyBook) REQUIRE book.name IS UNIQUE");
         db.executeTransactionally("CREATE (n:MyBook {name: 1})");
