@@ -132,10 +132,21 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
             });
 
             AvailabilityGuard availabilityGuard = dependencies.availabilityGuard();
+            // APOC core has a listener that is not also a service, so this is registered here.
             for (ApocGlobalComponents c : apocGlobalComponents) {
                 for (AvailabilityListener listener : c.getListeners(db, dependencies)) {
                     registeredListeners.add(listener);
                     availabilityGuard.addListener(listener);
+                }
+            }
+
+            // For APOC extended, the Cypher Procedures listener is both a service and a listener
+            // To stop needing to keep a Map containing it as an object, which stops it being 
+            // cleaned up, we check for all APOC services which are also listeners and register them here
+            for (Object service : services.values()) {
+                if (service instanceof AvailabilityListener serviceWithAvailabilityListener) {
+                    registeredListeners.add(serviceWithAvailabilityListener);
+                    availabilityGuard.addListener(serviceWithAvailabilityListener);
                 }
             }
         }
