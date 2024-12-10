@@ -570,16 +570,44 @@ public class GraphRefactoring {
     @Description("Redirects the given `RELATIONSHIP` to the given start `NODE`.")
     public Stream<RefactorRelationshipResult> from(
             @Name(value = "rel", description = "The relationship to redirect.") Relationship rel,
-            @Name(value = "newNode", description = "The node to redirect the given relationship to.") Node newNode) {
+            @Name(value = "newNode", description = "The node to redirect the given relationship to.") Node newNode,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnErrors = false :: BOOLEAN
+                    }
+                    """)
+                    Map<String, Object> config) {
+        if (config == null) config = Map.of();
         if (rel == null || newNode == null) return Stream.empty();
-        RefactorRelationshipResult result = new RefactorRelationshipResult(rel.getId());
+
+        final var result = new RefactorRelationshipResult(rel.getId());
+        final var failOnErrors = Boolean.TRUE.equals(config.getOrDefault("failOnErrors", false));
+
         try {
-            Relationship newRel = newNode.createRelationshipTo(rel.getEndNode(), rel.getType());
-            copyProperties(rel, newRel);
+            final var type = rel.getType();
+            final var properties = rel.getAllProperties();
+            final var endNode = rel.getEndNode();
+
+            // Delete before setting properties to not break constraints.
             rel.delete();
+
+            final var newRel = newNode.createRelationshipTo(endNode, type);
+            properties.forEach(newRel::setProperty);
+
             return Stream.of(result.withOther(newRel));
         } catch (Exception e) {
-            return Stream.of(result.withError(e));
+            if (failOnErrors) {
+                throw e;
+            } else {
+                // Note! We might now have half applied the changes, not sure why we would want to do this instead of
+                // just failing.
+                // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
+                return Stream.of(result.withError(e));
+            }
         }
     }
 
