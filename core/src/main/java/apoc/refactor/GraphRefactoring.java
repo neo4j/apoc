@@ -510,8 +510,8 @@ public class GraphRefactoring {
             if (failOnErrors) {
                 throw e;
             } else {
-                // Note! We might now have half applied the changes, not sure why we would want to do this instead of
-                // just failing.
+                // Note! We might now have half applied the changes,
+                // not sure why we would ever want to do this instead of just failing.
                 // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
                 return Stream.of(result.withError(e));
             }
@@ -555,8 +555,8 @@ public class GraphRefactoring {
             if (failOnErrors) {
                 throw e;
             } else {
-                // Note! We might now have half applied the changes, not sure why we would want to do this instead of
-                // just failing.
+                // Note! We might now have half applied the changes,
+                // not sure why we would ever want to do this instead of just failing.
                 // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
                 return Stream.of(result.withError(e));
             }
@@ -603,8 +603,8 @@ public class GraphRefactoring {
             if (failOnErrors) {
                 throw e;
             } else {
-                // Note! We might now have half applied the changes, not sure why we would want to do this instead of
-                // just failing.
+                // Note! We might now have half applied the changes,
+                // not sure why we would ever want to do this instead of just failing.
                 // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
                 return Stream.of(result.withError(e));
             }
