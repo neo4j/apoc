@@ -91,22 +91,33 @@ import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.version.Version;
 import apoc.warmup.Warmup;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.function.Function;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 public class ArgumentDescriptionsTest {
+    private final ObjectMapper json = new ObjectMapper();
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"));
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"))
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     @Before
     public void setUp() {
@@ -189,49 +200,136 @@ public class ArgumentDescriptionsTest {
     }
 
     @Test
-    public void functionArgumentDescriptionsTest() throws IOException {
+    public void functionArgumentDescriptionsDefaultVersion() throws IOException {
+        assertResultAsJsonEquals(
+                CypherVersion.Default,
+                showFunctions(null),
+                "/functions/cypher%s/functions.json".formatted(CypherVersion.Default),
+                "/functions/common/functions.json");
+    }
+
+    // Convert to ParametrizedTest with EnumSource in junit 5
+    @Test
+    public void functionArgumentDescriptions() throws IOException {
+        for (final var version : CypherVersion.values()) {
+            assertResultAsJsonEquals(
+                    version,
+                    showFunctions(version),
+                    "/functions/cypher%s/functions.json".formatted(version),
+                    "/functions/common/functions.json");
+        }
+    }
+
+    @Test
+    public void procedureArgumentDescriptionsDefaultVersion() throws IOException {
+        assertResultAsJsonEquals(
+                CypherVersion.Default,
+                showProcedures(null),
+                "/procedures/cypher%s/procedures.json".formatted(CypherVersion.Default),
+                "/procedures/common/procedures.json");
+    }
+
+    // Convert to ParametrizedTest with EnumSource in junit 5
+    @Test
+    public void procedureArgumentDescriptions() throws IOException {
+        for (final var version : CypherVersion.values()) {
+            assertResultAsJsonEquals(
+                    version,
+                    showProcedures(version),
+                    "/procedures/cypher%s/procedures.json".formatted(version),
+                    "/procedures/common/procedures.json");
+        }
+    }
+
+    private JsonNode showProcedures(CypherVersion version) {
+        final var opts = version != null ? "CYPHER " + version : "";
         final var query =
                 """
+                  CYPHER %s
+                  SHOW PROCEDURES YIELD
+                  name, description, signature, argumentDescription,
+                  returnDescription, isDeprecated, deprecatedBy
+                  WHERE name STARTS WITH 'apoc'
+                  RETURN *
+                  ORDER BY name
+                """
+                        .formatted(opts);
+        final var result =
+                db.executeTransactionally(query, Map.of(), r -> r.stream().toList());
+        return json.valueToTree(result);
+    }
+
+    private JsonNode showFunctions(CypherVersion version) {
+        final var opts = version != null ? "CYPHER " + version : "";
+        final var query =
+                """
+                  CYPHER %s
                   SHOW FUNCTIONS YIELD
                   name, category, description, signature, isBuiltIn,
                   argumentDescription, returnDescription, aggregating,
                   isDeprecated, deprecatedBy
                   WHERE name STARTS WITH 'apoc'
                   RETURN *
-                """;
+                  ORDER BY name
+                """
+                        .formatted(opts);
         final var result =
                 db.executeTransactionally(query, Map.of(), r -> r.stream().toList());
-
-        final var json = new ObjectMapper();
-        final var expected =
-                json.reader().readTree(ArgumentDescriptionsTest.class.getResourceAsStream("/functions.json"));
-        final var actual = json.valueToTree(result);
-        // Uncomment to print out how the file should look :)
-        // System.out.println("Actual:\n" + json.writer().withDefaultPrettyPrinter().writeValueAsString(actual));
-        for (int i = 0; i < expected.size(); ++i) assertThat(expected.get(i)).isEqualTo(actual.get(i));
-        assertThat(actual).isEqualTo(expected);
+        return json.valueToTree(result);
     }
 
-    @Test
-    public void procedureArgumentDescriptionsTest() throws IOException {
-        final var query =
-                """
-                  SHOW PROCEDURES YIELD
-                  name, description, signature, argumentDescription,
-                  returnDescription, isDeprecated, deprecatedBy
-                  WHERE name STARTS WITH 'apoc'
-                  RETURN *
-                """;
-        final var result =
-                db.executeTransactionally(query, Map.of(), r -> r.stream().toList());
+    private void assertResultAsJsonEquals(
+            CypherVersion version, JsonNode actual, String expectedPath, String commonPath) throws IOException {
+        final var expected = expected(commonPath, expectedPath);
 
-        final var json = new ObjectMapper();
-        final var expected =
-                json.reader().readTree(ArgumentDescriptionsTest.class.getResourceAsStream("/procedures.json"));
-        final var actual = json.valueToTree(result);
-        // Uncomment to print out how the file should look :)
-        // System.out.println("Actual:\n" + json.writer().withDefaultPrettyPrinter().writeValueAsString(actual));
-        for (int i = 0; i < expected.size(); ++i) assertThat(expected.get(i)).isEqualTo(actual.get(i));
-        assertThat(actual).isEqualTo(expected);
+        // Use the generate method to print how the files should look
+        // For example generate(version, this::showProcedures);
+
+        for (int i = 0; i < expected.size() && i < actual.size(); ++i) {
+            assertThat(actual.get(i)).describedAs("CYPHER %s", version).isEqualTo(expected.get(i));
+        }
+        assertThat(actual).describedAs("CYPHER %s".formatted(version)).isEqualTo(expected);
+    }
+
+    private ArrayNode expected(String commonPath, String specificPath) throws IOException {
+        final var common = json.reader().readTree(getClass().getResourceAsStream(commonPath));
+        final var specific = json.reader().readTree(getClass().getResourceAsStream(specificPath));
+
+        final var result = new ArrayList<JsonNode>(common.size() + specific.size());
+        for (final var node : common) result.add(node);
+        for (final var node : specific) result.add(node);
+        result.sort(Comparator.comparing(n -> n.path("name").asText()));
+        return json.createArrayNode().addAll(result);
+    }
+
+    private void generate(CypherVersion version, Function<CypherVersion, JsonNode> show)
+            throws JsonProcessingException {
+        final var specific = new HashSet<JsonNode>();
+        for (final var node : show.apply(version)) specific.add(node);
+
+        final var common = new HashSet<>(specific);
+
+        for (final var v : CypherVersion.values()) {
+            if (v == version) continue;
+            final var nodes = new HashSet<JsonNode>();
+            for (final var node : show.apply(v)) nodes.add(node);
+            common.retainAll(nodes);
+        }
+
+        specific.removeAll(common);
+        final var specificSorted = new ArrayList<>(specific);
+        specificSorted.sort(Comparator.comparing(n -> n.path("name").asText()));
+        final var specificJson = json.createArrayNode().addAll(specificSorted);
+
+        final var commonSorted = new ArrayList<>(common);
+        commonSorted.sort(Comparator.comparing(n -> n.path("name").asText()));
+        final var commonJson = json.createArrayNode().addAll(commonSorted);
+
+        final var writer = json.writer().withDefaultPrettyPrinter();
+        System.out.println("common:");
+        System.out.println(writer.writeValueAsString(commonJson));
+        System.out.println();
+        System.out.println("cypher %s specific:".formatted(version.versionName));
+        System.out.println(writer.writeValueAsString(specificJson));
     }
 }
