@@ -25,6 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import apoc.ApocConfig;
+import apoc.util.FileUtils;
 import apoc.util.Util;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -85,7 +86,7 @@ public class UtilIT {
 
         // when
         String page = IOUtils.toString(
-                Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
+                FileUtils.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
 
         // then
         assertTrue(page.contains("<title>Google</title>"));
@@ -101,7 +102,7 @@ public class UtilIT {
         when(mockChecker.checkURL(new URL("http://127.168.0.1"))).thenThrow(new URLAccessValidationError("no"));
 
         IOException e = Assert.assertThrows(
-                IOException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
+                IOException.class, () -> FileUtils.openInputStream(url.toString(), null, null, null, mockChecker));
         TestCase.assertTrue(e.getMessage().contains("no"));
     }
 
@@ -115,7 +116,7 @@ public class UtilIT {
 
         // when
         String page = IOUtils.toString(
-                Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
+                FileUtils.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
 
         // then
         assertTrue(page.contains("<title>Google</title>"));
@@ -150,7 +151,7 @@ public class UtilIT {
 
         URL finalUrl = url;
         IOException e = Assert.assertThrows(
-                IOException.class, () -> Util.openInputStream(finalUrl.toString(), null, null, null, mockChecker));
+                IOException.class, () -> FileUtils.openInputStream(finalUrl.toString(), null, null, null, mockChecker));
 
         TestCase.assertTrue(e.getMessage().contains("Redirect limit exceeded"));
 
@@ -171,7 +172,7 @@ public class UtilIT {
 
         // when
         RuntimeException e = Assert.assertThrows(
-                RuntimeException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
+                RuntimeException.class, () -> FileUtils.openInputStream(url.toString(), null, null, null, mockChecker));
 
         assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
     }

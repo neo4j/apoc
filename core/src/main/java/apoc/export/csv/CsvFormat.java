@@ -28,6 +28,7 @@ import static apoc.util.Util.getNodeId;
 import static apoc.util.Util.getRelationshipId;
 import static apoc.util.Util.joinLabels;
 
+import apoc.cypher.export.DatabaseSubGraph;
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.FormatUtils;
@@ -49,7 +50,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.ExportData;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.Entity;

@@ -21,7 +21,7 @@ package apoc.export.cypher;
 import static apoc.util.FileUtils.getOutputStream;
 
 import apoc.export.util.ExportConfig;
-import apoc.util.Util;
+import apoc.util.FileUtils;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -142,7 +142,7 @@ public class FileManagerFactory {
         public synchronized Object drain(String type) {
             StringWriter writer = writers.get(type);
             if (writer != null) {
-                return Util.getStringOrCompressedData(writer, config);
+                return FileUtils.getStringOrCompressedData(writer, config);
             } else return null;
         }
 

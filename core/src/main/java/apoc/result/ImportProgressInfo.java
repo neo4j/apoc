@@ -19,7 +19,7 @@
 package apoc.result;
 
 import apoc.export.util.ExportConfig;
-import apoc.util.Util;
+import apoc.util.FileUtils;
 import java.io.StringWriter;
 import org.neo4j.procedure.Description;
 
@@ -110,7 +110,7 @@ public class ImportProgressInfo implements ProgressInfo {
 
     public ImportProgressInfo drain(StringWriter writer, ExportConfig config) {
         if (writer != null) {
-            this.data = Util.getStringOrCompressedData(writer, config);
+            this.data = FileUtils.getStringOrCompressedData(writer, config);
         }
         return this;
     }

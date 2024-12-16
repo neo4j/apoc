@@ -18,7 +18,7 @@
  */
 package apoc.result;
 
-import apoc.util.CollectionUtils;
+import apoc.util.Util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -131,7 +131,7 @@ public class VirtualPath implements Path {
 
     private void requireConnected(Relationship relationship) {
         final List<Node> previousNodes = getPreviousNodes();
-        boolean isRelConnectedToPrevious = CollectionUtils.containsAny(previousNodes, relationship.getNodes());
+        boolean isRelConnectedToPrevious = Util.containsAny(previousNodes, relationship.getNodes());
         if (!isRelConnectedToPrevious) {
             throw new IllegalArgumentException("Relationship is not part of current path.");
         }

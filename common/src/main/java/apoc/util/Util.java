@@ -19,34 +19,24 @@
 package apoc.util;
 
 import static apoc.ApocConfig.apocConfig;
-import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 import static apoc.util.DateFormatUtil.getOrCreate;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static org.eclipse.jetty.util.URIUtil.encodePath;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
-import apoc.ApocConfig;
 import apoc.Pools;
 import apoc.convert.ConvertUtils;
-import apoc.export.util.CountingInputStream;
-import apoc.export.util.ExportConfig;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.collection.Iterators;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.time.format.DateTimeFormatter;
 import java.util.AbstractMap;
@@ -84,9 +74,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.lang.model.SourceVersion;
-import org.apache.commons.compress.archivers.ArchiveEntry;
-import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.configuration.Config;
@@ -108,8 +95,6 @@ import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
-import org.neo4j.graphdb.security.URLAccessChecker;
-import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.util.ValueUtils;
@@ -337,27 +322,6 @@ public class Util {
         }
     }
 
-    public static URLConnection openUrlConnection(URL src, Map<String, Object> headers) throws IOException {
-        URLConnection con = src.openConnection();
-        con.setRequestProperty("User-Agent", "APOC Procedures for Neo4j");
-        if (con instanceof HttpURLConnection) {
-            HttpURLConnection http = (HttpURLConnection) con;
-            http.setInstanceFollowRedirects(false);
-            if (headers != null) {
-                Object method = headers.get("method");
-                if (method != null) {
-                    http.setRequestMethod(method.toString());
-                    http.setChunkedStreamingMode(1024 * 1024);
-                }
-                headers.forEach((k, v) -> con.setRequestProperty(k, v == null ? "" : v.toString()));
-            }
-        }
-
-        con.setConnectTimeout(apocConfig().getInt("apoc.http.timeout.connect", 10_000));
-        con.setReadTimeout(apocConfig().getInt("apoc.http.timeout.read", 60_000));
-        return con;
-    }
-
     public static boolean isRedirect(HttpURLConnection con) throws IOException {
         int responseCode = con.getResponseCode();
         boolean isRedirectCode =
@@ -372,109 +336,6 @@ public class Util {
             }
         }
         return isRedirectCode;
-    }
-
-    private static void writePayload(URLConnection con, String payload) throws IOException {
-        if (payload == null) return;
-        con.setDoOutput(true);
-        BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(con.getOutputStream(), "UTF-8"));
-        writer.write(payload);
-        writer.close();
-    }
-
-    private static String handleRedirect(URLConnection con, String url) throws IOException {
-        if (!(con instanceof HttpURLConnection)) return url;
-        if (!isRedirect(((HttpURLConnection) con))) return url;
-        return con.getHeaderField("Location");
-    }
-
-    public static CountingInputStream openInputStream(
-            Object input,
-            Map<String, Object> headers,
-            String payload,
-            String compressionAlgo,
-            URLAccessChecker urlAccessChecker)
-            throws IOException, URISyntaxException, URLAccessValidationError {
-        if (input instanceof String) {
-            String urlAddress = (String) input;
-            final ArchiveType archiveType = ArchiveType.from(urlAddress);
-            if (archiveType.isArchive()) {
-                return getStreamCompressedFile(urlAddress, headers, payload, archiveType, urlAccessChecker);
-            }
-
-            StreamConnection sc = getStreamConnection(urlAddress, headers, payload, urlAccessChecker);
-            return sc.toCountingInputStream(compressionAlgo);
-        } else if (input instanceof byte[]) {
-            return FileUtils.getInputStreamFromBinary((byte[]) input, compressionAlgo);
-        } else {
-            throw new RuntimeException(ERROR_BYTES_OR_STRING);
-        }
-    }
-
-    private static CountingInputStream getStreamCompressedFile(
-            String urlAddress,
-            Map<String, Object> headers,
-            String payload,
-            ArchiveType archiveType,
-            URLAccessChecker urlAccessChecker)
-            throws IOException, URISyntaxException, URLAccessValidationError {
-        StreamConnection sc;
-        InputStream stream;
-        String[] tokens = urlAddress.split("!");
-        urlAddress = tokens[0];
-        String zipFileName;
-        if (tokens.length == 2) {
-            zipFileName = tokens[1];
-            sc = getStreamConnection(urlAddress, headers, payload, urlAccessChecker);
-            stream = getFileStreamIntoCompressedFile(sc.getInputStream(), zipFileName, archiveType);
-            stream = toLimitedIStream(stream, sc.getLength());
-        } else throw new IllegalArgumentException("filename can't be null or empty");
-
-        return new CountingInputStream(stream, sc.getLength());
-    }
-
-    public static StreamConnection getStreamConnection(
-            String urlAddress, Map<String, Object> headers, String payload, URLAccessChecker urlAccessChecker)
-            throws IOException, URISyntaxException, URLAccessValidationError {
-        return FileUtils.getStreamConnection(
-                FileUtils.from(urlAddress), urlAddress, headers, payload, urlAccessChecker);
-    }
-
-    private static InputStream getFileStreamIntoCompressedFile(InputStream is, String fileName, ArchiveType archiveType)
-            throws IOException {
-        try (ArchiveInputStream archive = archiveType.getInputStream(is)) {
-            ArchiveEntry archiveEntry;
-
-            while ((archiveEntry = archive.getNextEntry()) != null) {
-                if (!archiveEntry.isDirectory() && archiveEntry.getName().equals(fileName)) {
-                    return new ByteArrayInputStream(IOUtils.toByteArray(archive));
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public static StreamConnection readHttpInputStream(
-            String urlAddress,
-            Map<String, Object> headers,
-            String payload,
-            int redirectLimit,
-            URLAccessChecker urlAccessChecker)
-            throws IOException {
-        URL url = ApocConfig.apocConfig().checkAllowedUrlAndPinToIP(urlAddress, urlAccessChecker);
-        URLConnection con = openUrlConnection(url, headers);
-        writePayload(con, payload);
-        String newUrl = handleRedirect(con, urlAddress);
-        if (newUrl != null && !urlAddress.equals(newUrl)) {
-            con.getInputStream().close();
-            if (redirectLimit == 0) {
-                throw new IOException("Redirect limit exceeded");
-            }
-            return readHttpInputStream(newUrl, headers, payload, --redirectLimit, urlAccessChecker);
-        }
-
-        return new StreamConnection.UrlStreamConnection(con);
     }
 
     public static boolean toBoolean(Object value) {
@@ -1158,20 +1019,6 @@ public class Util {
         return firstMap.getOrDefault(key, secondMap.get(key));
     }
 
-    public static Object getStringOrCompressedData(StringWriter writer, ExportConfig config) {
-        try {
-            final String compression = config.getCompressionAlgo();
-            final String writerString = writer.toString();
-            Object data = compression.equals(CompressionAlgo.NONE.name())
-                    ? writerString
-                    : CompressionAlgo.valueOf(compression).compress(writerString, config.getCharset());
-            writer.getBuffer().setLength(0);
-            return data;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static <T extends Entity> T withTransactionAndRebind(
             GraphDatabaseService db, Transaction transaction, Function<Transaction, T> action) {
         T result = retryInTx(NullLog.getInstance(), db, action, 0, 0, r -> {});
@@ -1360,5 +1207,52 @@ public class Util {
             }
         }
         return result;
+    }
+
+    /**
+     * Null-safe check if the specified collection is empty.
+     *
+     * @param coll  the collection to check, may be null
+     * @return true if empty or null
+     */
+    public static boolean isEmpty(Collection<?> coll) {
+        return coll == null || coll.isEmpty();
+    }
+
+    /**
+     * Null-safe check if the specified collection is not empty.
+     *
+     * @param coll  the collection to check, may be null
+     * @return true if non-null and non-empty
+     */
+    public static boolean isNotEmpty(Collection<?> coll) {
+        return !isEmpty(coll);
+    }
+
+    /**
+     * Returns <code>true</code> iff at least one element is in both collections.
+     *
+     * @param <T> the type of object to lookup in <code>coll1</code>.
+     * @param coll1  the first collection, must not be null
+     * @param coll2  the second collection, must not be null
+     * @return <code>true</code> iff the intersection of the collections is non-empty
+     */
+    public static <T> boolean containsAny(Collection<?> coll1, T... coll2) {
+        if (coll1.size() < coll2.length) {
+            for (Object aColl1 : coll1) {
+                for (T t : coll2) {
+                    if (t.equals(aColl1)) {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            for (Object aColl2 : coll2) {
+                if (coll1.contains(aColl2)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
