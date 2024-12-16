@@ -38,6 +38,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -624,9 +626,46 @@ public class GraphRefactoring {
             @Description("The remaining nodes.") List<Node> nodes,
             @Description("The new connecting relationships.") List<Relationship> relationships) {}
 
+    @Procedure(
+            name = "apoc.refactor.deleteAndReconnect",
+            mode = Mode.WRITE,
+            deprecatedBy =
+                    "Deprecated for removal without a direct replacement, use plain Cypher or create a custom procedure.")
+    @Description(
+            """
+            Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.
+            Note, undefined behaviour for paths that visits the same node multiple times.
+            Note, nodes that are not connected in the same direction as the path will not be reconnected, for example `MATCH p=(:A)-->(b:B)<--(:C) CALL apoc.refactor.deleteAndReconnect(p, [b]) ...` will not reconnect the :A and :C nodes.""")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+    public Stream<RefactorGraphResult> deleteAndReconnectCypher25(
+            @Name(
+                            value = "path",
+                            description =
+                                    "The path containing the nodes to delete and the remaining nodes to reconnect.")
+                    Path path,
+            @Name(value = "nodes", description = "The nodes to delete.") List<Node> nodesToRemove,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+            {
+                relationshipSelectionStrategy = "incoming" :: ["incoming", "outgoing", "merge"]
+                properties :: ["overwrite", "discard", "combine"]
+            }
+            """)
+                    Map<String, Object> config) {
+        return deleteAndReconnectCypher5(path, nodesToRemove, config);
+    }
+
     @Procedure(name = "apoc.refactor.deleteAndReconnect", mode = Mode.WRITE)
-    @Description("Removes the given `NODE` values from the `PATH` and reconnects the remaining `NODE` values.")
-    public Stream<RefactorGraphResult> deleteAndReconnect(
+    @Description(
+            """
+            Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.
+            Note, undefined behaviour for paths that visits the same node multiple times.
+            Note, nodes that are not connected in the same direction as the path will not be reconnected, for example `MATCH p=(:A)-->(b:B)<--(:C) CALL apoc.refactor.deleteAndReconnect(p, [b]) ...` will not reconnect the :A and :C nodes.""")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Stream<RefactorGraphResult> deleteAndReconnectCypher5(
             @Name(
                             value = "path",
                             description =

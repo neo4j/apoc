@@ -6586,7 +6586,7 @@
   "isDeprecated" : false,
   "signature" : "apoc.refactor.deleteAndReconnect(path :: PATH, nodes :: LIST<NODE>, config = {} :: MAP) :: (nodes :: LIST<NODE>, relationships :: LIST<RELATIONSHIP>)",
   "name" : "apoc.refactor.deleteAndReconnect",
-  "description" : "Removes the given `NODE` values from the `PATH` and reconnects the remaining `NODE` values.",
+  "description" : "Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.\nNote, undefined behaviour for paths that visits the same node multiple times.\nNote, nodes that are not connected in the same direction as the path will not be reconnected, for example `MATCH p=(:A)-->(b:B)<--(:C) CALL apoc.refactor.deleteAndReconnect(p, [b]) ...` will not reconnect the :A and :C nodes.",
   "returnDescription" : [ {
     "name" : "nodes",
     "description" : "The remaining nodes.",
