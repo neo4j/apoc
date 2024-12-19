@@ -141,13 +141,14 @@ public class ExportGraphML {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
+                            format = 'cypher-shell' :: STRING,
                             timeoutSeconds = 100 :: INTEGER,
-                            compression = 'None' :: STRING,
+                            compression = 'NONE' :: ['NONE', 'BYTES', 'GZIP', 'BZIP2', 'DEFLATE', 'BLOCK_LZ4', 'FRAMED_SNAPPY'],
                             charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            source :: MAP,
+                            target :: MAP,
+                            useTypes :: BOOLEAN,
+                            caption :: LIST<STRING>
                     }
                     """)
                     Map<String, Object> config)
@@ -170,13 +171,14 @@ public class ExportGraphML {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
+                            format = 'cypher-shell' :: STRING,
                             timeoutSeconds = 100 :: INTEGER,
-                            compression = 'None' :: STRING,
+                            compression = 'NONE' :: ['NONE', 'BYTES', 'GZIP', 'BZIP2', 'DEFLATE', 'BLOCK_LZ4', 'FRAMED_SNAPPY'],
                             charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            source :: MAP,
+                            target :: MAP,
+                            useTypes :: BOOLEAN,
+                            caption :: LIST<STRING>
                     }
                     """)
                     Map<String, Object> config)
@@ -198,13 +200,14 @@ public class ExportGraphML {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
+                            format = 'cypher-shell' :: STRING,
                             timeoutSeconds = 100 :: INTEGER,
-                            compression = 'None' :: STRING,
+                            compression = 'NONE' :: ['NONE', 'BYTES', 'GZIP', 'BZIP2', 'DEFLATE', 'BLOCK_LZ4', 'FRAMED_SNAPPY'],
                             charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            source :: MAP,
+                            target :: MAP,
+                            useTypes :: BOOLEAN,
+                            caption :: LIST<STRING>
                     }
                     """)
                     Map<String, Object> config)
@@ -230,13 +233,15 @@ public class ExportGraphML {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
+                            format = 'cypher-shell' :: STRING,
                             timeoutSeconds = 100 :: INTEGER,
-                            compression = 'None' :: STRING,
+                            compression = 'NONE' :: ['NONE', 'BYTES', 'GZIP', 'BZIP2', 'DEFLATE', 'BLOCK_LZ4', 'FRAMED_SNAPPY'],
                             charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            source :: MAP,
+                            target :: MAP,
+                            useTypes :: BOOLEAN,
+                            caption :: LIST<STRING>,
+                            nodesOfRelationships = false :: BOOLEAN
                     }
                     """)
                     Map<String, Object> config)
