@@ -657,9 +657,20 @@ public class Schemas {
                 0,
                 0,
                 0,
-                ktx.schemaRead()
-                        .constraintGetForName(constraintDefinition.getName())
-                        .userDescription(tokens));
+                nodeConstraintCypher5Compatibility(
+                        ktx.schemaRead()
+                                .constraintGetForName(constraintDefinition.getName())
+                                .userDescription(tokens),
+                        useStoredName));
+    }
+
+    private String nodeConstraintCypher5Compatibility(String userDescription, Boolean useStoredName) {
+        if (useStoredName) {
+            return userDescription;
+        } else {
+            // Revert to old description on Cypher 5 for backwards compatibility.
+            return userDescription.replace("'NODE PROPERTY UNIQUENESS'", "'UNIQUENESS'");
+        }
     }
 
     /**
