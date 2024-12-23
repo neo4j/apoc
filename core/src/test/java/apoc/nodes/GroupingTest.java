@@ -21,6 +21,7 @@ package apoc.nodes;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.map;
 import static org.junit.Assert.*;
+import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
@@ -35,6 +36,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.values.storable.DurationValue;
 
 /**
  * @author mh
@@ -43,11 +45,11 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 public class GroupingTest {
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    public DbmsRule db = new ImpermanentDbmsRule().withSetting(procedure_unrestricted, List.of("apoc*"));
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, Grouping.class);
+        TestUtil.registerProcedure(db, Grouping.class, Nodes.class);
     }
 
     @After
@@ -157,6 +159,170 @@ public class GroupingTest {
         db.executeTransactionally("CREATE (u:User {gender:'male'})");
         TestUtil.testCallCount(db, "CALL apoc.nodes.group(['User'],['gender'],null,{orphans:false})", 0);
         TestUtil.testCallCount(db, "CALL apoc.nodes.group(['User'],['gender'],null,{orphans:true})", 1);
+    }
+
+    @Test
+    public void testGroupWithDatetimes() {
+        db.executeTransactionally(
+                """
+                UNWIND range(1, 1000) AS minutes
+                CREATE (f:Foo {
+                    created_at: datetime({ year: 2019, month: 3, day: 23 }) - duration({minutes: minutes})
+                })
+                SET f.created_at_hour = datetime.truncate('hour', f.created_at)
+                """);
+        TestUtil.testCallCount(
+                db,
+                "CALL apoc.nodes.group(['Foo'], ['created_at_hour'], [{ created_at: 'min' }]) YIELD node\n"
+                        + "RETURN node",
+                17);
+
+        // Delete nodes
+        db.executeTransactionally("MATCH (n:Foo) DELETE n");
+    }
+
+    public static class TestObject {
+        final String testValues; // Values to be inserted as nodes
+        final String expectedMin; // Expected minimum value
+        final String expectedMax; // Expected maximum value
+
+        public TestObject(String testValues, String expectedMin, String expectedMax) {
+            this.testValues = testValues;
+            this.expectedMin = expectedMin;
+            this.expectedMax = expectedMax;
+        }
+    }
+
+    @Test
+    public void testGroupWithVariousProperties() {
+        List<TestObject> testObjects = List.of(
+                new TestObject("42, 99, 12, 34", "12", "99"),
+                new TestObject("\"alpha\", \"beta\", \"zeta\"", "\"alpha\"", "\"zeta\""),
+                new TestObject("true, false, true", "false", "true"),
+                new TestObject(
+                        "datetime({ year: 2022, month: 1, day: 1 }), datetime({ year: 2021, month: 1, day: 1 }), datetime({ year: 2023, month: 1, day: 1 })",
+                        "datetime({ year: 2021, month: 1, day: 1 })",
+                        "datetime({ year: 2023, month: 1, day: 1 })"),
+                new TestObject(
+                        "localdatetime({ year: 2022, month: 1, day: 1 }), localdatetime({ year: 2021, month: 1, day: 1 }), localdatetime({ year: 2023, month: 1, day: 1 })",
+                        "localdatetime({ year: 2021, month: 1, day: 1 })",
+                        "localdatetime({ year: 2023, month: 1, day: 1 })"),
+                new TestObject(
+                        "localtime({hour: 10, minute: 30, second: 1}), localtime({hour: 4, minute: 23, second: 3}), localtime({hour: 6, minute: 33, second: 15})",
+                        "localtime({hour: 4, minute: 23, second: 3})",
+                        "localtime({hour: 10, minute: 30, second: 1})"),
+                new TestObject(
+                        "time({hour: 10, minute: 30, second: 1}), time({hour: 4, minute: 23, second: 3}), time({hour: 6, minute: 33, second: 15})",
+                        "time({hour: 4, minute: 23, second: 3})",
+                        "time({hour: 10, minute: 30, second: 1})"),
+                new TestObject(
+                        "date({ year: 2022, month: 1, day: 1 }), date({ year: 2021, month: 1, day: 1 }), date({ year: 2023, month: 1, day: 1 })",
+                        "date({ year: 2021, month: 1, day: 1 })",
+                        "date({ year: 2023, month: 1, day: 1 })"),
+                new TestObject(
+                        "duration('P11DT16H12M'), duration('P1DT16H12M'), duration('P1DT20H12M')",
+                        "duration('P1DT16H12M')",
+                        "duration('P11DT16H12M')"),
+                new TestObject("[1, 0, 3], [1, 2, 3]", "[1, 0, 3]", "[1, 2, 3]"),
+                // Mixed values
+                new TestObject("1, [1, 2, 3], false", "[1, 2, 3]", "1"),
+                new TestObject("1, [1, 2, 3], null", "[1, 2, 3]", "1"),
+                new TestObject("duration('P11DT16H12M'), \"alpha\", false", "duration('P11DT16H12M')", "false"),
+                new TestObject(
+                        "date({ year: 2022, month: 1, day: 1 }), localtime({hour: 10, minute: 30, second: 1}), datetime({ year: 2022, month: 1, day: 1 })",
+                        "datetime({ year: 2022, month: 1, day: 1 })",
+                        "localtime({hour: 10, minute: 30, second: 1})"));
+
+        for (TestObject testObject : testObjects) {
+            runTestForProperty(testObject);
+        }
+    }
+
+    private void runTestForProperty(TestObject testObject) {
+        String testValues = testObject.testValues;
+        String expectedMin = testObject.expectedMin;
+        String expectedMax = testObject.expectedMax;
+
+        // Create nodes in the database
+        db.executeTransactionally(String.format(
+                """
+            UNWIND [%s] AS value
+            CREATE (n:Test { testValue: value, groupKey: 1 })
+            """,
+                testValues));
+
+        // Test for minimum value
+        TestUtil.testCall(
+                db,
+                String.format(
+                        """
+            CALL apoc.nodes.group(['Test'], ['groupKey'], [{ testValue: 'min' }]) YIELD node
+            WITH apoc.any.property(node, 'min_testValue') AS result
+            RETURN result = %s AS value, result
+            """,
+                        expectedMin),
+                (row) -> assertTrue(
+                        "Testing: " + testValues + "; expected: " + expectedMin + "; but got: " + row.get("result"),
+                        (Boolean) row.get("value")));
+
+        // Test for maximum value
+        TestUtil.testCall(
+                db,
+                String.format(
+                        """
+            CALL apoc.nodes.group(['Test'], ['groupKey'], [{ testValue: 'max' }]) YIELD node
+            WITH apoc.any.property(node, 'max_testValue') AS result
+            RETURN result = %s AS value, result
+            """,
+                        expectedMax),
+                (row) -> assertTrue(
+                        "Testing: " + testValues + "; expected: " + expectedMax + "; but got: " + row.get("result"),
+                        (Boolean) row.get("value")));
+
+        // Delete nodes
+        db.executeTransactionally("MATCH (n:Test) DELETE n");
+    }
+
+    @Test
+    public void testSumAndAvg() {
+        // Create nodes in the database
+        db.executeTransactionally(
+                """
+            UNWIND [
+                [duration('P11DT16H12M'), 1, 3],
+                [duration('P1DT16H12M'), 2, duration('P1DT16H12M')],
+                [duration('P3DT20H12M'), 3, 4]] AS value
+            CREATE (n:Test { durationValue: value[0], intValue: value[1], mixedValue: value[2], groupKey: 1 })
+            """);
+
+        // Test for sum value
+        TestUtil.testCall(
+                db,
+                """
+            CALL apoc.nodes.group(['Test'], ['groupKey'], [{ durationValue: 'sum', intValue: 'sum' }]) YIELD node
+            WITH apoc.any.property(node, 'sum_durationValue') AS sum_durationValue, apoc.any.property(node, 'sum_intValue') AS sum_intValue
+            RETURN sum_durationValue, sum_intValue
+            """,
+                (row) -> {
+                    assertEquals(DurationValue.duration(0, 15, 189360, 0), row.get("sum_durationValue"));
+                    assertEquals(6L, row.get("sum_intValue"));
+                });
+
+        // Test for avg value
+        TestUtil.testCall(
+                db,
+                """
+            CALL apoc.nodes.group(['Test'], ['groupKey'], [{ durationValue: 'avg', intValue: 'avg' }]) YIELD node
+            WITH apoc.any.property(node, 'avg_durationValue') AS avg_durationValue, apoc.any.property(node, 'avg_intValue') AS avg_intValue
+            RETURN avg_durationValue, avg_intValue
+            """,
+                (row) -> {
+                    assertEquals(DurationValue.duration(0, 5, 126240, 0), row.get("avg_durationValue"));
+                    assertEquals(2.0, row.get("avg_intValue"));
+                });
+
+        // Delete nodes
+        db.executeTransactionally("MATCH (n:Test) DELETE n");
     }
 
     @Test
