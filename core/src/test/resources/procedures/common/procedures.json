@@ -1772,7 +1772,7 @@
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.cypher.runTimeboxed(statement :: STRING, params :: MAP, timeout :: INTEGER) :: (value :: MAP)",
+  "signature" : "apoc.cypher.runTimeboxed(statement :: STRING, params :: MAP, timeout :: INTEGER, config = {} :: MAP) :: (value :: MAP)",
   "name" : "apoc.cypher.runTimeboxed",
   "description" : "Terminates a Cypher statement if it has not finished before the set timeout (ms).",
   "returnDescription" : [ {
@@ -1797,7 +1797,14 @@
     "description" : "The maximum time the statement can run for.",
     "isDeprecated" : false,
     "type" : "INTEGER"
-  } ]
+  },
+  {
+    "name" : "config",
+    "description" : "{ failOnError = false :: BOOLEAN, appendStatusRow = false :: BOOLEAN }",
+    "isDeprecated" : false,
+    "default" : "DefaultParameterValue{value={}, type=MAP}",
+    "type" : "MAP"
+  }]
 }, {
   "isDeprecated" : false,
   "signature" : "apoc.cypher.runWrite(statement :: STRING, params :: MAP) :: (value :: MAP)",

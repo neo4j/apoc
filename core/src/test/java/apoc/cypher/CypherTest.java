@@ -24,7 +24,6 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testFail;
 import static apoc.util.TestUtil.testResult;
-import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static apoc.util.TransactionTestUtil.checkTransactionTimeReasonable;
 import static apoc.util.TransactionTestUtil.lastTransactionChecks;
 import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
@@ -38,6 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import apoc.text.Strings;
@@ -54,6 +54,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import junit.framework.TestCase;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -217,16 +219,110 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithTermination() {
-        final String query =
-                "CALL apoc.cypher.runTimeboxed('UNWIND range(0, 10) AS id CALL apoc.util.sleep(2000) RETURN 0', null, 20000)";
-        checkTerminationGuard(db, query);
+    public void testRunTimeboxedWithInvalidQuerySyntax() {
+        final String query = "CALL apoc.cypher.runTimeboxed('RETUN 0', null, 20000, {failOnError: true})";
+        QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
+        Throwable except = ExceptionUtils.getRootCause(e);
+        TestCase.assertTrue(except instanceof RuntimeException);
+        TestCase.assertTrue(except.getMessage().contains("Invalid input 'RETUN'"));
+    }
+
+    @Test
+    public void testRunTimeboxedWithInvalidQueries() {
+        final String query = "CALL apoc.cypher.runTimeboxed('RETURN 1/0', null, 20000, {failOnError: true})";
+        QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
+        Throwable except = ExceptionUtils.getRootCause(e);
+        TestCase.assertTrue(except instanceof RuntimeException);
+        TestCase.assertTrue(except.getMessage().contains("The inner query errored with: / by zero"));
+    }
+
+    @Test
+    public void testRunTimeboxedWithSuccessStatus() {
+        // this query throws an error because 1/0
+        final String innerQuery = "RETURN 1 AS a";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+
+        // check that the query returns nothing and terminate before `timeout`
+        long timeout = 50000L;
+        testResult(db, query, Map.of("innerQuery", innerQuery, "timeout", timeout), r -> {
+            assertTrue(r.hasNext());
+            Map<String, Object> innerResult = r.next();
+            Map<String, Object> value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(1L, value.get("a"));
+
+            assertTrue(r.hasNext());
+            innerResult = r.next();
+            value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(true, value.get("wasSuccessful"));
+        });
+    }
+
+    @Test
+    public void testRunTimeboxedWithErrorReported() {
+        // this query throws an error because 1/0
+        final String innerQuery = "RETURN 1/0 AS a";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+
+        // check that the query returns nothing and terminate before `timeout`
+        long timeout = 50000L;
+        testResult(db, query, Map.of("innerQuery", innerQuery, "timeout", timeout), r -> {
+            assertTrue(r.hasNext());
+            Map<String, Object> innerResult = r.next();
+            Map<String, Object> value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(true, value.get("failedWithError"));
+            assertEquals("/ by zero", value.get("error"));
+        });
+    }
+
+    @Test
+    public void testRunTimeboxedWithErrorReportedAfterSomeSuccesses() {
+        // this query throws an error because 1/0
+        final String innerQuery = "UNWIND [1, 1, 0] AS i RETURN 1/i AS a";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+
+        // check that the query returns nothing and terminate before `timeout`
+        long timeout = 50000L;
+        testResult(db, query, Map.of("innerQuery", innerQuery, "timeout", timeout), r -> {
+            assertTrue(r.hasNext());
+            Map<String, Object> innerResult = r.next();
+            Map<String, Object> value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(1L, value.get("a"));
+
+            assertTrue(r.hasNext());
+            innerResult = r.next();
+            value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(1L, value.get("a"));
+
+            assertTrue(r.hasNext());
+            innerResult = r.next();
+            value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(true, value.get("failedWithError"));
+            assertEquals("/ by zero", value.get("error"));
+        });
+    }
+
+    @Test
+    public void testRunTimeboxedWithTerminationReported() {
+        final String innerQuery = "CALL apoc.util.sleep(10999) RETURN 0";
+        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+
+        // check that the query returns the status row that it was terminated
+        long timeout = 500L;
+        testResult(db, query, Map.of("innerQuery", innerQuery, "timeout", timeout), r -> {
+            assertTrue(r.hasNext());
+            Map<String, Object> innerResult = r.next();
+            Map<String, Object> value = (Map<String, Object>) innerResult.get("value");
+            assertEquals(false, value.get("wasSuccessful"));
+            assertEquals(true, value.get("wasTerminated"));
+            assertEquals(false, value.get("failedWithError"));
+            assertNull(value.get("error"));
+        });
     }
 
     @Test
     public void testRunTimeboxedWithTerminationInnerTransaction1() {
-        // this query throws an error because of ` AS 'a'`
-        final String innerQuery = "CALL apoc.util.sleep(1000) RETURN 1 AS 'a'";
+        // this query throws an error because 1/0
+        final String innerQuery = "RETURN 1/0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout)";
 
         long timeBefore = System.currentTimeMillis();
