@@ -232,8 +232,10 @@ public class Create {
     public Node virtualFromNodeFunction(
             @Name(value = "node", description = "The node to generate a virtual node from.") Node node,
             @Name(value = "propertyNames", description = "The properties to copy to the virtual node.")
-                    List<String> propertyNames) {
-        return new VirtualNode(node, propertyNames);
+                    List<String> propertyNames,
+            @Name(value = "config", defaultValue = "{}", description = "{ wrapNodeIds = false :: BOOLEAN }")
+                    Map<String, Object> config) {
+        return new VirtualNode(node, propertyNames, Util.toBoolean(config.get("wrapNodeIds")));
     }
 
     @Procedure("apoc.create.vNodes")

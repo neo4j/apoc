@@ -409,6 +409,25 @@ public class CreateTest {
                     Node node = (Node) row.get("node");
 
                     assertTrue(node.hasLabel(label("Person")));
+                    assertTrue(node.getId() < 0);
+                    assertEquals("Vincent", node.getProperty("name"));
+                    assertNull(node.getProperty("born"));
+                });
+    }
+
+    @Test
+    public void testVirtualFromNodeFunctionWithWrapping() {
+        testCall(
+                db,
+                """
+                        CREATE (n:Person{name:'Vincent', born: 1974} )
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { wrapNodeIds : true }) AS node
+                        """,
+                (row) -> {
+                    Node node = (Node) row.get("node");
+
+                    assertTrue(node.hasLabel(label("Person")));
+                    assertTrue(node.getId() >= 0);
                     assertEquals("Vincent", node.getProperty("name"));
                     assertNull(node.getProperty("born"));
                 });
