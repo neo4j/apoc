@@ -323,7 +323,7 @@ public class GraphRefactoring {
 
     private static void cloneRel(Relationship base, Node from, Node to, final Set<String> skipProps) {
         final var rel = from.createRelationshipTo(to, base.getType());
-        rel.getAllProperties().forEach((k, v) -> {
+        base.getAllProperties().forEach((k, v) -> {
             if (skipProps.isEmpty() || !skipProps.contains(k)) rel.setProperty(k, v);
         });
     }

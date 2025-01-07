@@ -467,6 +467,36 @@ public class CloneSubgraphTest {
     }
 
     @Test
+    public void testCloneSubgraph_With_Properties_On_Relationships_Preserved() {
+        try (final var tx = db.beginTx();
+                final var clean = tx.execute("MATCH (n) DETACH DELETE n");
+                final var create = tx.execute("CREATE (:A)-[:R{id:\"ID1\"}]->(:B)");
+                final var clone = tx.execute(
+                        """
+                MATCH (n)-[r:R]->(oldB:B)
+                WITH oldB, COLLECT(DISTINCT n) AS nodes
+                CREATE (newB:B)
+
+                WITH oldB, newB, nodes
+                MATCH (m)-[r]-(n) WHERE n IN nodes
+
+                WITH oldB, newB, nodes, COLLECT(DISTINCT r) AS rels
+                MATCH (s) WHERE NOT s:B
+
+                WITH oldB, newB, nodes, rels, COLLECT(DISTINCT [s, s]) + [[oldB, newB]] AS standinNodes
+                CALL apoc.refactor.cloneSubgraph(nodes, rels, {standinNodes:standinNodes})
+                YIELD input, output
+                MATCH (old) WHERE ID(old) = input
+                CREATE (output)-[r:importedFrom{created_on:datetime()}]->(old)
+
+                RETURN output
+                """);
+                final var res = tx.execute("MATCH (n)-[r]->(m) RETURN r.id AS id"); ) {
+            assertThat(res.stream()).containsExactlyInAnyOrder(Map.of("id", "ID1"), Map.of("id", "ID1"));
+        }
+    }
+
+    @Test
     public void
             testCloneSubgraph_With_Standins_For_RootA_And_Oddball_Should_Have_RootB_And_Use_Node_12_In_Place_Of_Oddball() {
         TestUtil.testCall(
