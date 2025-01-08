@@ -70,7 +70,8 @@ public class Timeboxed {
             @Name(value = "statement", description = "The Cypher statement to run.") String cypher,
             @Name(value = "params", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> params,
-            @Name(value = "timeout", description = "The maximum time the statement can run for.") long timeout,
+            @Name(value = "timeout", description = "The maximum time, in milliseconds, the statement can run for.")
+                    long timeout,
             @Name(
                             value = "config",
                             defaultValue = "{}",
@@ -82,11 +83,6 @@ public class Timeboxed {
 
         boolean failOnError = toBoolean(config.get("failOnError"));
         boolean appendStatusRow = toBoolean(config.get("appendStatusRow"));
-
-        // Check the query is valid before trying to run it
-        if (failOnError) {
-            Util.validateQuery(db, cypher);
-        }
 
         // run query to be timeboxed in a separate thread to enable proper tx termination
         // if we'd run this in current thread, a tx.terminate would kill the transaction the procedure call uses itself.

@@ -1794,7 +1794,7 @@
     "type" : "MAP"
   }, {
     "name" : "timeout",
-    "description" : "The maximum time the statement can run for.",
+    "description" : "The maximum time, in milliseconds, the statement can run for.",
     "isDeprecated" : false,
     "type" : "INTEGER"
   },
