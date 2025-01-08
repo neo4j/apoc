@@ -141,7 +141,7 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
             }
 
             // For APOC extended, the Cypher Procedures listener is both a service and a listener
-            // To stop needing to keep a Map containing it as an object, which stops it being 
+            // To stop needing to keep a Map containing it as an object, which stops it being
             // cleaned up, we check for all APOC services which are also listeners and register them here
             for (Object service : services.values()) {
                 if (service instanceof AvailabilityListener serviceWithAvailabilityListener) {
