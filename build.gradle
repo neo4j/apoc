@@ -170,7 +170,7 @@ apply from: "licenses-source-header.gradle"
 
 ext {
     publicDir = "${project.rootDir}"
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.01.0-SNAPSHOT"
+    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.01.0"
     testContainersVersion = '1.20.2'
     apacheArrowVersion = '15.0.0'
 }
