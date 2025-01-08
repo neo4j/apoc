@@ -51,6 +51,7 @@ public class ApocConfigTest {
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.get(GraphDatabaseSettings.allow_file_urls)).thenReturn(false);
         when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         apocConfigFile =
                 new File(getClass().getClassLoader().getResource("apoc.conf").toURI());

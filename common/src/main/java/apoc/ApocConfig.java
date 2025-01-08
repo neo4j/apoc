@@ -23,6 +23,7 @@ import static java.lang.String.format;
 import static org.neo4j.configuration.BootloaderSettings.lib_directory;
 import static org.neo4j.configuration.BootloaderSettings.run_directory;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
+import static org.neo4j.configuration.GraphDatabaseSettings.configuration_directory;
 import static org.neo4j.configuration.GraphDatabaseSettings.data_directory;
 import static org.neo4j.configuration.GraphDatabaseSettings.load_csv_file_url_root;
 import static org.neo4j.configuration.GraphDatabaseSettings.logs_directory;
@@ -188,30 +189,32 @@ public class ApocConfig extends LifecycleAdapter {
     }
 
     protected String determineNeo4jConfFolder() {
-        String defaultPath = neo4jConfig
-                .get(neo4j_home)
-                .resolve(Config.DEFAULT_CONFIG_DIR_NAME)
-                .toString();
-        String command = System.getProperty(SUN_JAVA_COMMAND);
-        if (command == null) {
-            log.warn(
-                    "system property %s is not set, assuming %s as conf dir. This might cause `apoc.conf` not getting loaded.",
-                    SUN_JAVA_COMMAND, defaultPath);
-            return defaultPath;
-        } else {
-            final String neo4jConfFolder = Stream.of(command.split("--"))
-                    .map(String::trim)
-                    .filter(s -> s.startsWith(CONFIG_DIR))
-                    .map(s -> s.substring(CONFIG_DIR.length()))
-                    .findFirst()
-                    .orElse(defaultPath);
-            if (defaultPath.equals(neo4jConfFolder)) {
-                log.info("cannot determine conf folder from sys property %s, assuming %s", command, defaultPath);
-            } else {
-                log.info("from system properties: NEO4J_CONF=%s", neo4jConfFolder);
-            }
-            return neo4jConfFolder;
-        }
+        return neo4jConfig.get(configuration_directory).resolve(Config.DEFAULT_CONFIG_DIR_NAME).toString();
+//        String defaultPath =neo4jConfig.get(configuration_directory).toString(); //resolve(Config.DEFAULT_CONFIG_DIR_NAME).toString();
+//                neo4jConfig
+//                .get(neo4j_home)
+//                .resolve(Config.DEFAULT_CONFIG_DIR_NAME)
+//                .toString();
+//        String command = System.getProperty(SUN_JAVA_COMMAND);
+//        if (command == null) {
+//            log.warn(
+//                    "system property %s is not set, assuming %s as conf dir. This might cause `apoc.conf` not getting loaded.",
+//                    SUN_JAVA_COMMAND, defaultPath);
+//            return defaultPath;
+//        } else {
+//            final String neo4jConfFolder = Stream.of(command.split("--"))
+//                    .map(String::trim)
+//                    .filter(s -> s.startsWith(CONFIG_DIR))
+//                    .map(s -> s.substring(CONFIG_DIR.length()))
+//                    .findFirst()
+//                    .orElse(defaultPath);
+//            if (defaultPath.equals(neo4jConfFolder)) {
+//                log.info("cannot determine conf folder from sys property %s, assuming %s", command, defaultPath);
+//            } else {
+//                log.info("from system properties: NEO4J_CONF=%s", neo4jConfFolder);
+//            }
+//            return neo4jConfFolder;
+//        }
     }
 
     /**

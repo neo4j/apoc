@@ -75,14 +75,16 @@ public class ApocConfigCommandExpansionTest {
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.get(GraphDatabaseSettings.allow_file_urls)).thenReturn(false);
         when(neo4jConfig.expandCommands()).thenReturn(true);
-        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+//        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         apocConfigCommandExpansionFile = new File(getClass()
                 .getClassLoader()
-                .getResource("apoc-config-command-expansion/apoc.conf")
+                .getResource("apoc.conf")
                 .toURI());
         Files.setPosixFilePermissions(
                 apocConfigCommandExpansionFile.toPath(), permittedFilePermissionsForCommandExpansion);
+
+        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of(apocConfigCommandExpansionFile.getParent()));
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
@@ -93,6 +95,8 @@ public class ApocConfigCommandExpansionTest {
     @After
     public void cleanup() {
         System.clearProperty(SUN_JAVA_COMMAND);
+        System.clearProperty(APOC_MAX_DECOMPRESSION_RATIO);
+        System.clearProperty("command.expansion");
     }
 
     private void setApocConfigFilePermissions(Set<PosixFilePermission> forbidden) throws Exception {
@@ -101,16 +105,16 @@ public class ApocConfigCommandExpansionTest {
                 Sets.union(permittedFilePermissionsForCommandExpansion, forbidden));
     }
 
-    private void setApocConfigSystemProperty() {
-        System.setProperty(
-                SUN_JAVA_COMMAND,
-                "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir="
-                        + apocConfigCommandExpansionFile.getParent());
-    }
+//    private void setApocConfigSystemProperty() {
+//        System.setProperty(
+//                SUN_JAVA_COMMAND,
+//                "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir="
+//                        + apocConfigCommandExpansionFile.getParent());
+//    }
 
     @Test
     public void testApocConfWithExpandCommands() {
-        setApocConfigSystemProperty();
+//        setApocConfigSystemProperty();
         apocConfig.init();
 
         assertEquals("expanded value", apocConfig.getConfig().getString("command.expansion"));
@@ -120,7 +124,7 @@ public class ApocConfigCommandExpansionTest {
     public void testApocConfWithInvalidExpandCommands() throws Exception {
         String invalidExpandLine = "command.expansion.3=$(fakeCommand 3 + 3)";
         addLineToApocConfig(invalidExpandLine);
-        setApocConfigSystemProperty();
+//        setApocConfigSystemProperty();
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage =
@@ -134,7 +138,7 @@ public class ApocConfigCommandExpansionTest {
     public void testApocConfWithWrongFilePermissions() throws Exception {
         for (PosixFilePermission filePermission : forbiddenFilePermissionsForCommandExpansion) {
             setApocConfigFilePermissions(Set.of(filePermission));
-            setApocConfigSystemProperty();
+//            setApocConfigSystemProperty();
 
             RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
             String expectedMessage = "does not have the correct file permissions to evaluate commands.";
@@ -152,14 +156,16 @@ public class ApocConfigCommandExpansionTest {
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.expandCommands()).thenReturn(false);
-        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+//        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+//        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of(apocConfigCommandExpansionFile.getParent()));
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
         ApocConfig apocConfig =
                 new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
 
-        setApocConfigSystemProperty();
+//        setApocConfigSystemProperty();
 
         RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
         String expectedMessage =
@@ -177,6 +183,8 @@ public class ApocConfigCommandExpansionTest {
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.expandCommands()).thenReturn(false);
         when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+//        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
+        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of(apocConfigCommandExpansionFile.getParent()));
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
