@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: [ "dev", "5.26" ]
   pull_request:
-    branches: [ "dev" ]
+    branches: [ "dev", "5.26" ]
 
 env:
   CODEARTIFACT_DOWNLOAD_URL: ${{ secrets.CODEARTIFACT_DOWNLOAD_URL }}
@@ -36,7 +36,7 @@ jobs:
         run: |
           neo4j_version_base=$(grep -e ".*neo4jVersionOverride.* : .*" build.gradle  | cut -d ':' -f 2 | tr -d \'\" | tr -d ' ')
           echo "neo4j_version_base=$neo4j_version_base"
-          NEO4J_VERSION_CI=`aws codeartifact list-package-versions --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --repository ci-live --format maven --namespace org.neo4j --package neo4j --sort-by PUBLISHED_TIME --max-items 1 --query "versions[?starts_with(version,'$neo4j_version_base')] | [0].version" --output text | head -n 1`
+          NEO4J_VERSION_CI=`aws --no-cli-pager codeartifact list-package-versions --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }}  --repository ci-live --format maven --namespace org.neo4j --package neo4j --sort-by PUBLISHED_TIME --status Published --query "versions[?starts_with(version, '$neo4j_version_base')].version | [0]" --output json | sed 's/"//g'`
           echo "NEO4J_VERSION_CI=$NEO4J_VERSION_CI" >> "$GITHUB_ENV"
           echo "Found NEO4j_VERSION_CI=$NEO4J_VERSION_CI"
           
@@ -98,7 +98,7 @@ jobs:
         run: |
           neo4j_version_base=$(grep -e ".*neo4jVersionOverride.* : .*" build.gradle  | cut -d ':' -f 2 | tr -d \'\" | tr -d ' ')
           echo "neo4j_version_base=$neo4j_version_base"
-          NEO4J_VERSION_CI=`aws codeartifact list-package-versions --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }} --repository ci-live --format maven --namespace org.neo4j --package neo4j --sort-by PUBLISHED_TIME --max-items 1 --query "versions[?starts_with(version,'$neo4j_version_base')] | [0].version" --output text | head -n 1`
+          NEO4J_VERSION_CI=`aws --no-cli-pager codeartifact list-package-versions --domain build-service-live --domain-owner ${{ secrets.AWS_ACCOUNT_ID }}  --repository ci-live --format maven --namespace org.neo4j --package neo4j --sort-by PUBLISHED_TIME --status Published --query "versions[?starts_with(version, '$neo4j_version_base')].version | [0]" --output json | sed 's/"//g'`
           echo "NEO4J_VERSION_CI=$NEO4J_VERSION_CI" >> "$GITHUB_ENV"
           echo "Found NEO4j_VERSION_CI=$NEO4J_VERSION_CI"
 
