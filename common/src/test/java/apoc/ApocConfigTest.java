@@ -18,7 +18,6 @@
  */
 package apoc;
 
-import static apoc.ApocConfig.SUN_JAVA_COMMAND;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -50,11 +49,11 @@ public class ApocConfigTest {
         when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
         when(neo4jConfig.get(any())).thenReturn(null);
         when(neo4jConfig.get(GraphDatabaseSettings.allow_file_urls)).thenReturn(false);
-        when(neo4jConfig.get(GraphDatabaseSettings.neo4j_home)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
-        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory)).thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0"));
 
         apocConfigFile =
                 new File(getClass().getClassLoader().getResource("apoc.conf").toURI());
+        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory))
+                .thenReturn(Path.of(apocConfigFile.getParent()));
 
         GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
         DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
@@ -62,42 +61,15 @@ public class ApocConfigTest {
                 new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
     }
 
-    private void setApocConfigSystemProperty() {
-        System.setProperty(
-                SUN_JAVA_COMMAND,
-                "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir="
-                        + apocConfigFile.getParent());
-    }
-
     @Test
     public void testDetermineNeo4jConfFolderDefault() {
-        System.setProperty(SUN_JAVA_COMMAND, "");
-        assertEquals("C:/neo4j/neo4j-enterprise-5.x.0/conf", apocConfig.determineNeo4jConfFolder());
-    }
-
-    @Test
-    public void testDetermineNeo4jConfFolder() {
-        System.setProperty(
-                SUN_JAVA_COMMAND,
-                "com.neo4j.server.enterprise.CommercialEntryPoint --home-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02 --config-dir=/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02/conf");
-
-        assertEquals("/home/stefan/neo4j-enterprise-4.0.0-alpha09mr02/conf", apocConfig.determineNeo4jConfFolder());
+        assertEquals(apocConfigFile.getParent(), apocConfig.determineNeo4jConfFolder());
     }
 
     @Test
     public void testApocConfFileBeingLoaded() {
-        setApocConfigSystemProperty();
         apocConfig.init();
 
         assertEquals("bar", apocConfig.getConfig().getString("foo"));
-    }
-
-    @Test
-    public void testDetermineNeo4jConfFolderWithWhitespaces() {
-        System.setProperty(
-                SUN_JAVA_COMMAND,
-                "com.neo4j.server.enterprise.CommercialEntryPoint --config-dir=/home/stefan/neo4j enterprise-4.0.0-alpha09mr02/conf --home-dir=/home/stefan/neo4j enterprise-4.0.0-alpha09mr02");
-
-        assertEquals("/home/stefan/neo4j enterprise-4.0.0-alpha09mr02/conf", apocConfig.determineNeo4jConfFolder());
     }
 }
