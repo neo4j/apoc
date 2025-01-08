@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - dev
+      - "5.26"
     types:
       - labeled
       - unlabeled
