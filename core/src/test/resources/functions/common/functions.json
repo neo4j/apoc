@@ -1643,7 +1643,7 @@
 }, {
   "isDeprecated" : false,
   "aggregating" : false,
-  "signature" : "apoc.create.virtual.fromNode(node :: NODE, propertyNames :: LIST<STRING>) :: NODE",
+  "signature" : "apoc.create.virtual.fromNode(node :: NODE, propertyNames :: LIST<STRING>, config = {} :: MAP) :: NODE",
   "name" : "apoc.create.virtual.fromNode",
   "description" : "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.",
   "returnDescription" : "NODE",
@@ -1660,6 +1660,12 @@
     "description" : "The properties to copy to the virtual node.",
     "isDeprecated" : false,
     "type" : "LIST<STRING>"
+  }, {
+    "name" : "config",
+    "description" : "{ wrapNodeIds = false :: BOOLEAN }",
+    "isDeprecated" : false,
+    "default" : "DefaultParameterValue{value={}, type=MAP}",
+    "type" : "MAP"
   } ]
 }, {
   "isDeprecated" : false,
