@@ -1,17 +1,19 @@
-name: traceability
+name: traceability-comments
 
 on:
   pull_request:
     branches:
       - dev
     types:
+      - labeled
+      - unlabeled
       - opened
       - edited
       - reopened
       - synchronize
 
 jobs:
-  traceability:
+  traceability-comments:
     runs-on: ubuntu-latest
     steps:
       - uses: neo4j/github-action-traceability@v2
