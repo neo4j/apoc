@@ -1,16 +1,34 @@
 [
     {
+        "neo4j": "5.26.1",
+        "neo4jVersion": "5.26.1",
+        "apoc": "5.26.1",
+        "version": "5.26.1",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.1",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.1",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.1/apoc-5.26.1-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.1/apoc-5.26.1-core.jar",
+        "sha1": "b9a7f23481912ff89fa1ca60373fc7e374d55fdd",
+        "sha256": "31cdfc153a928088c3d1272efbd0b4b42e6bfe91153a85eb3e01a663f41c3006",
+        "md5": "d2a634bc9ce80783854cf15fc12887d3",
+        "config": {
+            "+:dbms.security.procedures.unrestricted": [
+                "apoc.*"
+            ]
+        }
+    },
+    {
         "neo4j": "5.26.0",
         "neo4jVersion": "5.26.0",
-        "apoc": "5.26.0",
-        "version": "5.26.0",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.0",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.0",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.0/apoc-5.26.0-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.0/apoc-5.26.0-core.jar",
-        "sha1": "2a4085163e75a9e459b768fd0dee92d704a054a6",
-        "sha256": "9d0c07576f9bcbbb895118240ad674fb8b16ea2157abc183a7338acafa385db8",
-        "md5": "39f3b83cc0241c8012f7f3674ceb7402",
+        "apoc": "5.26.1",
+        "version": "5.26.1",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.1",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.1",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.1/apoc-5.26.1-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.1/apoc-5.26.1-core.jar",
+        "sha1": "b9a7f23481912ff89fa1ca60373fc7e374d55fdd",
+        "sha256": "31cdfc153a928088c3d1272efbd0b4b42e6bfe91153a85eb3e01a663f41c3006",
+        "md5": "d2a634bc9ce80783854cf15fc12887d3",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
