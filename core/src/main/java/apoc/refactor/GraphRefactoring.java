@@ -916,7 +916,7 @@ public class GraphRefactoring {
             var startNode = rel.getStartNode();
             var endNode = rel.getEndNode();
 
-            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId()))  {
+            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId())) {
                 if (delete) rel.delete();
             } else {
                 if (startNode.getElementId().equals(source.getElementId())) startNode = target;
