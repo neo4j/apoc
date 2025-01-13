@@ -916,19 +916,21 @@ public class GraphRefactoring {
             var startNode = rel.getStartNode();
             var endNode = rel.getEndNode();
 
-            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId())) continue;
+            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId()))  {
+                if (delete) rel.delete();
+            } else {
+                if (startNode.getElementId().equals(source.getElementId())) startNode = target;
+                if (endNode.getElementId().equals(source.getElementId())) endNode = target;
 
-            if (startNode.getElementId().equals(source.getElementId())) startNode = target;
-            if (endNode.getElementId().equals(source.getElementId())) endNode = target;
+                final var type = rel.getType();
+                final var properties = rel.getAllProperties();
 
-            final var type = rel.getType();
-            final var properties = rel.getAllProperties();
+                // Delete first to avoid breaking constraints.
+                if (delete) rel.delete();
 
-            // Delete first to avoid breaking constraints.
-            if (delete) rel.delete();
-
-            final var newRel = startNode.createRelationshipTo(endNode, type);
-            properties.forEach(newRel::setProperty);
+                final var newRel = startNode.createRelationshipTo(endNode, type);
+                properties.forEach(newRel::setProperty);
+            }
         }
     }
 }
