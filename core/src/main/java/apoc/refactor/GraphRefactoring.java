@@ -913,21 +913,22 @@ public class GraphRefactoring {
 
     private void copyRelationships(Node source, Node target, boolean delete, boolean createNewSelfRel) {
         for (Relationship rel : source.getRelationships()) {
-            final var type = rel.getType();
             var startNode = rel.getStartNode();
-            if (startNode.getElementId().equals(source.getElementId())) startNode = target;
             var endNode = rel.getEndNode();
+
+            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId())) continue;
+
+            if (startNode.getElementId().equals(source.getElementId())) startNode = target;
             if (endNode.getElementId().equals(source.getElementId())) endNode = target;
 
+            final var type = rel.getType();
             final var properties = rel.getAllProperties();
 
             // Delete first to avoid breaking constraints.
             if (delete) rel.delete();
 
-            if (createNewSelfRel || !startNode.getElementId().equals(endNode.getElementId())) {
-                final var newRel = startNode.createRelationshipTo(endNode, type);
-                properties.forEach(newRel::setProperty);
-            }
+            final var newRel = startNode.createRelationshipTo(endNode, type);
+            properties.forEach(newRel::setProperty);
         }
     }
 }

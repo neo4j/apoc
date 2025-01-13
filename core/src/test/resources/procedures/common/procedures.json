@@ -6138,7 +6138,7 @@
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.refactor.from(rel :: RELATIONSHIP, newNode :: NODE) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
+  "signature" : "apoc.refactor.from(rel :: RELATIONSHIP, newNode :: NODE, config = {} :: MAP) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
   "name" : "apoc.refactor.from",
   "description" : "Redirects the given `RELATIONSHIP` to the given start `NODE`.",
   "returnDescription" : [ {
@@ -6168,10 +6168,16 @@
     "description" : "The node to redirect the given relationship to.",
     "isDeprecated" : false,
     "type" : "NODE"
+  }, {
+    "name" : "config",
+    "description" : "{\n    failOnErrors = false :: BOOLEAN\n}\n",
+    "isDeprecated" : false,
+    "default" : "DefaultParameterValue{value={}, type=MAP}",
+    "type" : "MAP"
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.refactor.invert(rel :: RELATIONSHIP) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
+  "signature" : "apoc.refactor.invert(rel :: RELATIONSHIP, config = {} :: MAP) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
   "name" : "apoc.refactor.invert",
   "description" : "Inverts the direction of the given `RELATIONSHIP`.",
   "returnDescription" : [ {
@@ -6196,6 +6202,12 @@
     "description" : "The relationship to reverse.",
     "isDeprecated" : false,
     "type" : "RELATIONSHIP"
+  }, {
+    "name" : "config",
+    "description" : "{\n    failOnErrors = false :: BOOLEAN\n}\n",
+    "isDeprecated" : false,
+    "default" : "DefaultParameterValue{value={}, type=MAP}",
+    "type" : "MAP"
   } ]
 }, {
   "isDeprecated" : false,
@@ -6662,7 +6674,7 @@
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.refactor.to(rel :: RELATIONSHIP, endNode :: NODE) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
+  "signature" : "apoc.refactor.to(rel :: RELATIONSHIP, endNode :: NODE, config = {} :: MAP) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
   "name" : "apoc.refactor.to",
   "description" : "Redirects the given `RELATIONSHIP` to the given end `NODE`.",
   "returnDescription" : [ {
@@ -6692,6 +6704,12 @@
     "description" : "The new end node the relationship should point to.",
     "isDeprecated" : false,
     "type" : "NODE"
+  }, {
+    "name" : "config",
+    "description" : "{\n    failOnErrors = false :: BOOLEAN\n}\n",
+    "isDeprecated" : false,
+    "default" : "DefaultParameterValue{value={}, type=MAP}",
+    "type" : "MAP"
   } ]
 }, {
   "isDeprecated" : false,
