@@ -173,8 +173,8 @@ public class ApocConfig extends LifecycleAdapter {
     @Override
     public void init() {
         log.debug("called init");
-        // grab NEO4J_CONF from environment. If not set, calculate it from sun.java.command system property or Neo4j
-        // default
+        // Grab NEO4J_CONF from environment.
+        // If not set get it from database internal setting: "server.directories.configuration"
         String neo4jConfFolder = System.getenv().getOrDefault("NEO4J_CONF", determineNeo4jConfFolder());
         System.setProperty("NEO4J_CONF", neo4jConfFolder);
         log.info("system property NEO4J_CONF set to %s", neo4jConfFolder);
