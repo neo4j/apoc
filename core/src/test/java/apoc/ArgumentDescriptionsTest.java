@@ -20,6 +20,7 @@ package apoc;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
 
 import apoc.agg.CollAggregation;
 import apoc.agg.Graph;
@@ -329,7 +330,10 @@ public class ArgumentDescriptionsTest {
         System.out.println("common:");
         System.out.println(writer.writeValueAsString(commonJson));
         System.out.println();
+        System.out.println("=".repeat(80));
+        System.out.println();
         System.out.println("cypher %s specific:".formatted(version.versionName));
         System.out.println(writer.writeValueAsString(specificJson));
+        fail("Remove call to generate");
     }
 }

@@ -28,6 +28,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -54,6 +55,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -1724,6 +1726,276 @@ public class GraphRefactoringTest {
     @Test
     public void issue2797WithCloneSubgraph() {
         issue2797Common(CLONE_SUBGRAPH_QUERY);
+    }
+
+    @Test
+    public void refactorToWithConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+
+        try (final var tx = db.beginTx()) {
+            final var refactorToQuery =
+                    "MATCH (a:A)-[r:R]->(), (c:C) CALL apoc.refactor.to(r, c) YIELD error RETURN error";
+            assertThat(tx.execute(refactorToQuery).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("error", null);
+            tx.commit();
+        }
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "R", "b.id", "C"),
+                            Map.of("a.id", "B", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "C", "r.id", "null", "b.id", "null"));
+            tx.commit();
+        }
+    }
+
+    @Test
+    public void refactorToWithErrorHandling() {
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
+
+        final var refactorQuery =
+                """
+                   MATCH (a:A)-[r:R]->(), (c:C)
+                   DELETE r WITH r, c
+                   CALL apoc.refactor.to(r, c, $conf) YIELD error
+                   RETURN error""";
+        try (final var tx = db.beginTx()) {
+            final var params = Map.<String, Object>of("conf", Map.of("failOnErrors", true));
+            assertThatThrownBy(() -> tx.execute(refactorQuery, params).resultAsString())
+                    .hasMessageContaining(
+                            "Failed to invoke procedure `apoc.refactor.to`: Caused by: org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException");
+            tx.rollback();
+        }
+
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "R", "b.id", "B"),
+                            Map.of("a.id", "B", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "C", "r.id", "null", "b.id", "null"));
+            tx.commit();
+        }
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute(refactorQuery, Map.of("conf", Map.of())).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("error", e -> assertThat(e).asString().contains("EntityNotFoundException"));
+            tx.rollback();
+        }
+    }
+
+    @Test
+    public void refactorFromWithConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx
+                            .execute(
+                                    "MATCH (a:A)-[r:R]->(), (c:C) CALL apoc.refactor.from(r, c) YIELD error RETURN error")
+                            .stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("error", null);
+            tx.commit();
+        }
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "B", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "C", "r.id", "R", "b.id", "B"));
+            tx.commit();
+        }
+    }
+
+    @Test
+    public void refactorFromWithErrorHandling() {
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
+
+        final var refactorQuery =
+                """
+                   MATCH (a:A)-[r:R]->(), (c:C)
+                   DELETE r WITH r, c
+                   CALL apoc.refactor.from(r, c, $conf) YIELD error
+                   RETURN error""";
+        try (final var tx = db.beginTx()) {
+            final var params = Map.<String, Object>of("conf", Map.of("failOnErrors", true));
+            assertThatThrownBy(() -> tx.execute(refactorQuery, params).resultAsString())
+                    .hasMessageContaining(
+                            "Failed to invoke procedure `apoc.refactor.from`: Caused by: org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException")
+                    .hasRootCauseExactlyInstanceOf(
+                            org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException.class);
+            tx.rollback();
+        }
+
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "R", "b.id", "B"),
+                            Map.of("a.id", "B", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "C", "r.id", "null", "b.id", "null"));
+            tx.commit();
+        }
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute(refactorQuery, Map.of("conf", Map.of())).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("error", e -> assertThat(e).asString().contains("EntityNotFoundException"));
+            tx.rollback();
+        }
+    }
+
+    @Test
+    public void invertWithConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'})");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute("MATCH ()-[r:R]->() CALL apoc.refactor.invert(r) YIELD error RETURN error").stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .containsEntry("error", null);
+            tx.commit();
+        }
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "null", "b.id", "null"),
+                            Map.of("a.id", "B", "r.id", "R", "b.id", "A"));
+            tx.commit();
+        }
+    }
+
+    @Test
+    public void invertErrorHandling() {
+        db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'})");
+
+        final var invertQuery =
+                "MATCH ()-[r:R]->() DELETE r WITH r CALL apoc.refactor.invert(r, $conf) YIELD error RETURN error";
+        try (final var tx = db.beginTx()) {
+            final var params = Map.<String, Object>of("conf", Map.of("failOnErrors", true));
+            assertThatThrownBy(() -> tx.execute(invertQuery, params).resultAsString())
+                    .hasMessageContaining(
+                            "Failed to invoke procedure `apoc.refactor.invert`: Caused by: org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException")
+                    .hasRootCauseExactlyInstanceOf(
+                            org.neo4j.internal.kernel.api.exceptions.EntityNotFoundException.class);
+            tx.rollback();
+        }
+
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.id,
+                      CASE WHEN r.id IS NULL THEN 'null' ELSE r.id END AS `r.id`,
+                      CASE WHEN b.id IS NULL THEN 'null' ELSE b.id END AS `b.id`
+                    ORDER BY `a.id`, `r.id`, `b.id`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.id", "A", "r.id", "R", "b.id", "B"),
+                            Map.of("a.id", "B", "r.id", "null", "b.id", "null"));
+            tx.commit();
+        }
+
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute(invertQuery, Map.of("conf", Map.of())).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("error", e -> assertThat(e).asString().contains("EntityNotFoundException"));
+            tx.rollback();
+        }
+    }
+
+    @Test
+    public void mergeNodesWithConstraints() {
+        db.executeTransactionally("CREATE CONSTRAINT foo_uniq FOR ()-[r:MY_REL]-() REQUIRE r.foo IS UNIQUE");
+        db.executeTransactionally(
+                """
+                   CREATE
+                       (n1 {name: "n1"})-[r1:MY_REL {foo: "a"}]->(n2 {name: "n2"}),
+                       (n3 {name: "n3"})-[r2:MY_REL {foo: "b"}]->(n4 {name: "n4"})""");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        db.executeTransactionally(
+                """
+                   MATCH (n1 {name: "n1"}), (n3 {name: "n3"})
+                   CALL apoc.refactor.mergeNodes([n1, n3], {properties: 'discard'}) YIELD node
+                   FINISH""");
+
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (a)
+                    OPTIONAL MATCH (a)-[r]->(b)
+                    RETURN
+                      a.name,
+                      CASE WHEN r.foo IS NULL THEN 'null' ELSE r.foo END AS `r.foo`,
+                      CASE WHEN b.name IS NULL THEN 'null' ELSE b.name END AS `b.name`
+                    ORDER BY `a.name`, `r.foo`, `b.name`
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .containsExactly(
+                            Map.of("a.name", "n1", "r.foo", "a", "b.name", "n2"),
+                            Map.of("a.name", "n1", "r.foo", "b", "b.name", "n4"),
+                            Map.of("a.name", "n2", "r.foo", "null", "b.name", "null"),
+                            Map.of("a.name", "n4", "r.foo", "null", "b.name", "null"));
+            tx.commit();
+        }
     }
 
     private void issue2797Common(String extractQuery) {

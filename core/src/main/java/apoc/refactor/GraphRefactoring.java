@@ -477,32 +477,89 @@ public class GraphRefactoring {
     @Description("Redirects the given `RELATIONSHIP` to the given end `NODE`.")
     public Stream<UpdatedRelationshipResult> to(
             @Name(value = "rel", description = "The relationship to redirect.") Relationship rel,
-            @Name(value = "endNode", description = "The new end node the relationship should point to.") Node newNode) {
+            @Name(value = "endNode", description = "The new end node the relationship should point to.") Node newNode,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                {
+                    failOnErrors = false :: BOOLEAN
+                }
+                """)
+                    Map<String, Object> config) {
+        if (config == null) config = Map.of();
         if (rel == null || newNode == null) return Stream.empty();
-        UpdatedRelationshipResult result = new UpdatedRelationshipResult(rel.getId());
+
+        final var failOnErrors = Boolean.TRUE.equals(config.getOrDefault("failOnErrors", false));
+        final var result = new UpdatedRelationshipResult(rel.getId());
+
         try {
-            Relationship newRel = rel.getStartNode().createRelationshipTo(newNode, rel.getType());
-            copyProperties(rel, newRel);
+            final var type = rel.getType();
+            final var properties = rel.getAllProperties();
+            final var startNode = rel.getStartNode();
+
+            // Delete first to not break constraints.
             rel.delete();
+
+            final var newRel = startNode.createRelationshipTo(newNode, type);
+            properties.forEach(newRel::setProperty);
+
             return Stream.of(result.withOther(newRel));
         } catch (Exception e) {
-            return Stream.of(result.withError(e));
+            if (failOnErrors) {
+                throw e;
+            } else {
+                // Note! We might now have half applied the changes,
+                // not sure why we would ever want to do this instead of just failing.
+                // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
+                return Stream.of(result.withError(e));
+            }
         }
     }
 
     @Procedure(name = "apoc.refactor.invert", mode = Mode.WRITE, eager = true)
     @Description("Inverts the direction of the given `RELATIONSHIP`.")
     public Stream<RefactorRelationshipResult> invert(
-            @Name(value = "rel", description = "The relationship to reverse.") Relationship rel) {
+            @Name(value = "rel", description = "The relationship to reverse.") Relationship rel,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnErrors = false :: BOOLEAN
+                    }
+                    """)
+                    Map<String, Object> config) {
+        if (config == null) config = Map.of();
         if (rel == null) return Stream.empty();
-        RefactorRelationshipResult result = new RefactorRelationshipResult(rel.getId());
+
+        final var failOnErrors = Boolean.TRUE.equals(config.getOrDefault("failOnErrors", false));
+        final var result = new RefactorRelationshipResult(rel.getId());
+
         try {
-            Relationship newRel = rel.getEndNode().createRelationshipTo(rel.getStartNode(), rel.getType());
-            copyProperties(rel, newRel);
+            final var type = rel.getType();
+            final var properties = rel.getAllProperties();
+            final var startNode = rel.getStartNode();
+            final var endNode = rel.getEndNode();
+
+            // Delete first to not break constraints.
             rel.delete();
+
+            final var newRel = endNode.createRelationshipTo(startNode, type);
+            properties.forEach(newRel::setProperty);
+
             return Stream.of(result.withOther(newRel));
         } catch (Exception e) {
-            return Stream.of(result.withError(e));
+            if (failOnErrors) {
+                throw e;
+            } else {
+                // Note! We might now have half applied the changes,
+                // not sure why we would ever want to do this instead of just failing.
+                // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
+                return Stream.of(result.withError(e));
+            }
         }
     }
 
@@ -513,16 +570,44 @@ public class GraphRefactoring {
     @Description("Redirects the given `RELATIONSHIP` to the given start `NODE`.")
     public Stream<RefactorRelationshipResult> from(
             @Name(value = "rel", description = "The relationship to redirect.") Relationship rel,
-            @Name(value = "newNode", description = "The node to redirect the given relationship to.") Node newNode) {
+            @Name(value = "newNode", description = "The node to redirect the given relationship to.") Node newNode,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        failOnErrors = false :: BOOLEAN
+                    }
+                    """)
+                    Map<String, Object> config) {
+        if (config == null) config = Map.of();
         if (rel == null || newNode == null) return Stream.empty();
-        RefactorRelationshipResult result = new RefactorRelationshipResult(rel.getId());
+
+        final var result = new RefactorRelationshipResult(rel.getId());
+        final var failOnErrors = Boolean.TRUE.equals(config.getOrDefault("failOnErrors", false));
+
         try {
-            Relationship newRel = newNode.createRelationshipTo(rel.getEndNode(), rel.getType());
-            copyProperties(rel, newRel);
+            final var type = rel.getType();
+            final var properties = rel.getAllProperties();
+            final var endNode = rel.getEndNode();
+
+            // Delete before setting properties to not break constraints.
             rel.delete();
+
+            final var newRel = newNode.createRelationshipTo(endNode, type);
+            properties.forEach(newRel::setProperty);
+
             return Stream.of(result.withOther(newRel));
         } catch (Exception e) {
-            return Stream.of(result.withError(e));
+            if (failOnErrors) {
+                throw e;
+            } else {
+                // Note! We might now have half applied the changes,
+                // not sure why we would ever want to do this instead of just failing.
+                // I guess it's up to the user to explicitly rollback at this point ¯\_(ツ)_/¯.
+                return Stream.of(result.withError(e));
+            }
         }
     }
 
@@ -828,37 +913,24 @@ public class GraphRefactoring {
 
     private void copyRelationships(Node source, Node target, boolean delete, boolean createNewSelfRel) {
         for (Relationship rel : source.getRelationships()) {
-            copyRelationship(rel, source, target, createNewSelfRel);
-            if (delete) rel.delete();
-        }
-    }
+            var startNode = rel.getStartNode();
+            var endNode = rel.getEndNode();
 
-    private Node copyLabels(Node source, Node target) {
-        for (Label label : source.getLabels()) {
-            if (!target.hasLabel(label)) {
-                target.addLabel(label);
+            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId())) {
+                if (delete) rel.delete();
+            } else {
+                if (startNode.getElementId().equals(source.getElementId())) startNode = target;
+                if (endNode.getElementId().equals(source.getElementId())) endNode = target;
+
+                final var type = rel.getType();
+                final var properties = rel.getAllProperties();
+
+                // Delete first to avoid breaking constraints.
+                if (delete) rel.delete();
+
+                final var newRel = startNode.createRelationshipTo(endNode, type);
+                properties.forEach(newRel::setProperty);
             }
         }
-        return target;
-    }
-
-    private void copyRelationship(Relationship rel, Node source, Node target, boolean createNewSelfRelf) {
-        Node startNode = rel.getStartNode();
-        Node endNode = rel.getEndNode();
-
-        if (startNode.getElementId().equals(endNode.getElementId()) && !createNewSelfRelf) {
-            return;
-        }
-
-        if (startNode.getElementId().equals(source.getElementId())) {
-            startNode = target;
-        }
-
-        if (endNode.getElementId().equals(source.getElementId())) {
-            endNode = target;
-        }
-
-        Relationship newrel = startNode.createRelationshipTo(endNode, rel.getType());
-        copyProperties(rel, newrel);
     }
 }
