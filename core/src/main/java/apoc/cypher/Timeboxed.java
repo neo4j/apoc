@@ -35,6 +35,8 @@ import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -65,6 +67,20 @@ public class Timeboxed {
 
     @NotThreadSafe
     @Procedure("apoc.cypher.runTimeboxed")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
+    public Stream<CypherStatementMapResult> runTimeboxedCypher5(
+            @Name(value = "statement", description = "The Cypher statement to run.") String cypher,
+            @Name(value = "params", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> params,
+            @Name(value = "timeout", description = "The maximum time, in milliseconds, the statement can run for.")
+                    long timeout) {
+        return runTimeboxed(cypher, params, timeout, new HashMap<>());
+    }
+
+    @NotThreadSafe
+    @Procedure("apoc.cypher.runTimeboxed")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
     public Stream<CypherStatementMapResult> runTimeboxed(
             @Name(value = "statement", description = "The Cypher statement to run.") String cypher,

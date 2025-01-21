@@ -61,6 +61,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -80,6 +81,7 @@ public class CypherTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.allow_file_urls, true)
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     new File("src/test/resources").toPath().toAbsolutePath());
@@ -220,7 +222,7 @@ public class CypherTest {
 
     @Test
     public void testRunTimeboxedWithInvalidQuerySyntax() {
-        final String query = "CALL apoc.cypher.runTimeboxed('RETUN 0', null, 20000, {failOnError: true})";
+        final String query = "CYPHER 25 CALL apoc.cypher.runTimeboxed('RETUN 0', null, 20000, {failOnError: true})";
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
         TestCase.assertTrue(except instanceof RuntimeException);
@@ -229,7 +231,7 @@ public class CypherTest {
 
     @Test
     public void testRunTimeboxedWithInvalidQueries() {
-        final String query = "CALL apoc.cypher.runTimeboxed('RETURN 1/0', null, 20000, {failOnError: true})";
+        final String query = "CYPHER 25 CALL apoc.cypher.runTimeboxed('RETURN 1/0', null, 20000, {failOnError: true})";
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
         TestCase.assertTrue(except instanceof RuntimeException);
@@ -240,7 +242,8 @@ public class CypherTest {
     public void testRunTimeboxedWithSuccessStatus() {
         // this query throws an error because 1/0
         final String innerQuery = "RETURN 1 AS a";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+        final String query =
+                "CYPHER 25 CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
 
         // check that the query returns nothing and terminate before `timeout`
         long timeout = 50000L;
@@ -261,7 +264,8 @@ public class CypherTest {
     public void testRunTimeboxedWithErrorReported() {
         // this query throws an error because 1/0
         final String innerQuery = "RETURN 1/0 AS a";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+        final String query =
+                "CYPHER 25 CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
 
         // check that the query returns nothing and terminate before `timeout`
         long timeout = 50000L;
@@ -278,7 +282,8 @@ public class CypherTest {
     public void testRunTimeboxedWithErrorReportedAfterSomeSuccesses() {
         // this query throws an error because 1/0
         final String innerQuery = "UNWIND [1, 1, 0] AS i RETURN 1/i AS a";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+        final String query =
+                "CYPHER 25 CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
 
         // check that the query returns nothing and terminate before `timeout`
         long timeout = 50000L;
@@ -304,7 +309,8 @@ public class CypherTest {
     @Test
     public void testRunTimeboxedWithTerminationReported() {
         final String innerQuery = "CALL apoc.util.sleep(10999) RETURN 0";
-        final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
+        final String query =
+                "CYPHER 25 CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
 
         // check that the query returns the status row that it was terminated
         long timeout = 500L;
