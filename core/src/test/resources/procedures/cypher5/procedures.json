@@ -1,936 +1,1181 @@
-[ {
-  "isDeprecated" : true,
-  "signature" : "apoc.convert.toTree(paths :: LIST<PATH>, lowerCaseRels = true :: BOOLEAN, config = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.convert.toTree",
-  "description" : "Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The resulting tree.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : "apoc.paths.toJsonTree",
-  "argumentDescription" : [ {
-    "name" : "paths",
-    "description" : "A list of paths to convert into a tree.",
-    "isDeprecated" : false,
-    "type" : "LIST<PATH>"
-  }, {
-    "name" : "lowerCaseRels",
-    "description" : "Whether or not to convert relationship types to lower case.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=true, type=BOOLEAN}",
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "config",
-    "description" : "{ nodes = {} :: MAP, rels = {} :: MAP, sortPaths = true :: BOOLEAN }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.create.uuids(count :: INTEGER) :: (row :: INTEGER, uuid :: STRING)",
-  "name" : "apoc.create.uuids",
-  "description" : "Returns a stream of UUIDs.",
-  "returnDescription" : [ {
-    "name" : "row",
-    "description" : "The row number of the generated UUID.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "uuid",
-    "description" : "The generated UUID value.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ],
-  "deprecatedBy" : "Neo4j's randomUUID() function can be used as a replacement, for example: `UNWIND range(0,$count) AS row RETURN row, randomUUID() AS uuid`",
-  "argumentDescription" : [ {
-    "name" : "count",
-    "description" : "The number of UUID values to generate.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.export.arrow.all(file :: STRING, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
-  "name" : "apoc.export.arrow.all",
-  "description" : "Exports the full database as an arrow file.",
-  "returnDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to which the data was exported.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "source",
-    "description" : "A summary of the exported data.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "format",
-    "description" : "The format the file is exported in.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "nodes",
-    "description" : "The number of exported nodes.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relationships",
-    "description" : "The number of exported relationships.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "properties",
-    "description" : "The number of exported properties.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "time",
-    "description" : "The duration of the export.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "rows",
-    "description" : "The number of rows returned.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "batchSize",
-    "description" : "The size of the batches the export was run in.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "batches",
-    "description" : "The number of batches the export was run in.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "done",
-    "description" : "Whether the export ran successfully.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "data",
-    "description" : "The data returned by the export.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to export the data to.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "config",
-    "description" : "{ batchSize = 2000 :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.export.arrow.graph(file :: STRING, graph :: ANY, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
-  "name" : "apoc.export.arrow.graph",
-  "description" : "Exports the given graph as an arrow file.",
-  "returnDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to which the data was exported.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "source",
-    "description" : "A summary of the exported data.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "format",
-    "description" : "The format the file is exported in.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "nodes",
-    "description" : "The number of exported nodes.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relationships",
-    "description" : "The number of exported relationships.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "properties",
-    "description" : "The number of exported properties.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "time",
-    "description" : "The duration of the export.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "rows",
-    "description" : "The number of rows returned.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "batchSize",
-    "description" : "The size of the batches the export was run in.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "batches",
-    "description" : "The number of batches the export was run in.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "done",
-    "description" : "Whether the export ran successfully.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "data",
-    "description" : "The data returned by the export.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to export the data to.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "graph",
-    "description" : "The graph to export.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  }, {
-    "name" : "config",
-    "description" : "{ batchSize = 2000 :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.export.arrow.query(file :: STRING, query :: STRING, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
-  "name" : "apoc.export.arrow.query",
-  "description" : "Exports the results from the given Cypher query as an arrow file.",
-  "returnDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to which the data was exported.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "source",
-    "description" : "A summary of the exported data.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "format",
-    "description" : "The format the file is exported in.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "nodes",
-    "description" : "The number of exported nodes.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relationships",
-    "description" : "The number of exported relationships.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "properties",
-    "description" : "The number of exported properties.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "time",
-    "description" : "The duration of the export.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "rows",
-    "description" : "The number of rows returned.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "batchSize",
-    "description" : "The size of the batches the export was run in.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "batches",
-    "description" : "The number of batches the export was run in.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "done",
-    "description" : "Whether the export ran successfully.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "data",
-    "description" : "The data returned by the export.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to which the data will be exported.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "query",
-    "description" : "The query to use to collect the data for export.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "config",
-    "description" : "{ batchSize = 2000 :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.export.arrow.stream.all(config = {} :: MAP) :: (value :: BYTEARRAY)",
-  "name" : "apoc.export.arrow.stream.all",
-  "description" : "Exports the full database as an arrow byte array.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The data as a bytearray.",
-    "isDeprecated" : false,
-    "type" : "BYTEARRAY"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "config",
-    "description" : "{ batchSize = 2000 :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.export.arrow.stream.graph(graph :: ANY, config = {} :: MAP) :: (value :: BYTEARRAY)",
-  "name" : "apoc.export.arrow.stream.graph",
-  "description" : "Exports the given graph as an arrow byte array.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The data as a bytearray.",
-    "isDeprecated" : false,
-    "type" : "BYTEARRAY"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "graph",
-    "description" : "The graph to export.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  }, {
-    "name" : "config",
-    "description" : "{ batchSize = 2000 :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.export.arrow.stream.query(query :: STRING, config = {} :: MAP) :: (value :: BYTEARRAY)",
-  "name" : "apoc.export.arrow.stream.query",
-  "description" : "Exports the given Cypher query as an arrow byte array.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The data as a bytearray.",
-    "isDeprecated" : false,
-    "type" : "BYTEARRAY"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "query",
-    "description" : "The query used to collect the data for export.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "config",
-    "description" : "{ batchSize = 2000 :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.load.arrow(file :: STRING, config = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.load.arrow",
-  "description" : "Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "A map of data loaded from the given file.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "file",
-    "description" : "The name of the file to import data from.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "config",
-    "description" : "This value is never used.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.load.arrow.stream(source :: BYTEARRAY, config = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.load.arrow.stream",
-  "description" : "Imports `NODE` and `RELATIONSHIP` values from the provided arrow byte array.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "A map of data loaded from the given file.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "source",
-    "description" : "The data to load.",
-    "isDeprecated" : false,
-    "type" : "BYTEARRAY"
-  }, {
-    "name" : "config",
-    "description" : "This value is never used.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.load.jsonParams(urlOrKeyOrBinary :: ANY, headers :: MAP, payload :: STRING, path =  :: STRING, config = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.load.jsonParams",
-  "description" : "Loads a JSON document from a URL (e.g. web-API) as a stream of values if the given JSON document is a `LIST<ANY>`.\nIf the given JSON file is a `MAP`, this procedure imports a single value instead.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "A map of data loaded from the given file.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "urlOrKeyOrBinary",
-    "description" : "The name of the file or binary data to import the data from. Note that a URL needs to be properly encoded to conform with the URI standard.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  }, {
-    "name" : "headers",
-    "description" : "Headers to be used when connecting to the given URL.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "payload",
-    "description" : "The payload to send when connecting to the given URL.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "path",
-    "description" : "A JSON path expression used to extract specific subparts of the JSON document (extracted by a link:https://en.wikipedia.org/wiki/JSONPath[JSONPath] expression). The default is: ``.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=, type=STRING}",
-    "type" : "STRING"
-  }, {
-    "name" : "config",
-    "description" : "{\n    failOnError = true :: BOOLEAN,\n    pathOptions :: LIST<STRING>,\n    compression = \"\"NONE\"\" :: [\"\"NONE\"\", \"\"BYTES\"\", \"\"GZIP\"\", \"\"BZIP2\"\", \"\"DEFLATE\"\", \"\"BLOCK_LZ4\"\", \"\"FRAMED_SNAPPY”]\n}\n",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.log.stream(path :: STRING, config = {} :: MAP) :: (lineNo :: INTEGER, line :: STRING, path :: STRING)",
-  "name" : "apoc.log.stream",
-  "description" : "Returns the file contents from the given log, optionally returning only the last n lines.\nThis procedure requires users to have an admin role.",
-  "returnDescription" : [ {
-    "name" : "lineNo",
-    "description" : "The line number.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "line",
-    "description" : "The content of the line.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "path",
-    "description" : "The path to the log file.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ],
-  "deprecatedBy" : "This procedure is being moved to APOC Extended.",
-  "argumentDescription" : [ {
-    "name" : "path",
-    "description" : "The name of the log file to read.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "config",
-    "description" : "{ last :: INTEGER }",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-    "isDeprecated" : false,
-    "signature" : "apoc.refactor.deleteAndReconnect(path :: PATH, nodes :: LIST<NODE>, config = {} :: MAP) :: (nodes :: LIST<NODE>, relationships :: LIST<RELATIONSHIP>)",
-    "name" : "apoc.refactor.deleteAndReconnect",
-    "description" : "Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.\nNote, undefined behaviour for paths that visits the same node multiple times.\nNote, nodes that are not connected in the same direction as the path will not be reconnected, for example `MATCH p=(:A)-->(b:B)<--(:C) CALL apoc.refactor.deleteAndReconnect(p, [b]) ...` will not reconnect the :A and :C nodes.",
-    "returnDescription" : [ {
-      "name" : "nodes",
-      "description" : "The remaining nodes.",
-      "isDeprecated" : false,
-      "type" : "LIST<NODE>"
-    }, {
-      "name" : "relationships",
-      "description" : "The new connecting relationships.",
-      "isDeprecated" : false,
-      "type" : "LIST<RELATIONSHIP>"
-    } ],
-    "deprecatedBy" : null,
-    "argumentDescription" : [ {
-      "name" : "path",
-      "description" : "The path containing the nodes to delete and the remaining nodes to reconnect.",
-      "isDeprecated" : false,
-      "type" : "PATH"
-    }, {
-      "name" : "nodes",
-      "description" : "The nodes to delete.",
-      "isDeprecated" : false,
-      "type" : "LIST<NODE>"
-    }, {
-      "name" : "config",
-      "description" : "{\n    relationshipSelectionStrategy = \"incoming\" :: [\"incoming\", \"outgoing\", \"merge\"]\n    properties :: [\"overwrite\", \"discard\", \"combine\"]\n}\n",
-      "isDeprecated" : false,
-      "default" : "DefaultParameterValue{value={}, type=MAP}",
-      "type" : "MAP"
-    } ]
-  }, {
-  "isDeprecated" : true,
-  "signature" : "apoc.trigger.add(name :: STRING, statement :: STRING, selector :: MAP, config = {} :: MAP) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
-  "name" : "apoc.trigger.add",
-  "description" : "Adds a trigger to the given Cypher statement.\nThe selector for this procedure is {phase:'before/after/rollback/afterAsync'}.",
-  "returnDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "query",
-    "description" : "The query belonging to the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "selector",
-    "description" : "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "installed",
-    "description" : "Whether or not the trigger was installed.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "paused",
-    "description" : "Whether or not the trigger was paused.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  } ],
-  "deprecatedBy" : "apoc.trigger.install",
-  "argumentDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger to add.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "statement",
-    "description" : "The query to run when triggered.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "selector",
-    "description" : "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "config",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.trigger.pause(name :: STRING) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
-  "name" : "apoc.trigger.pause",
-  "description" : "Pauses the given trigger.",
-  "returnDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "query",
-    "description" : "The query belonging to the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "selector",
-    "description" : "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "installed",
-    "description" : "Whether or not the trigger was installed.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "paused",
-    "description" : "Whether or not the trigger was paused.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  } ],
-  "deprecatedBy" : "apoc.trigger.stop",
-  "argumentDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger to pause.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.trigger.remove(name :: STRING) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
-  "name" : "apoc.trigger.remove",
-  "description" : "Removes the given trigger.",
-  "returnDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "query",
-    "description" : "The query belonging to the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "selector",
-    "description" : "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "installed",
-    "description" : "Whether or not the trigger was installed.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "paused",
-    "description" : "Whether or not the trigger was paused.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  } ],
-  "deprecatedBy" : "apoc.trigger.drop",
-  "argumentDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger to drop.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.trigger.removeAll() :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
-  "name" : "apoc.trigger.removeAll",
-  "description" : "Removes all previously added triggers.",
-  "returnDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "query",
-    "description" : "The query belonging to the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "selector",
-    "description" : "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "installed",
-    "description" : "Whether or not the trigger was installed.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "paused",
-    "description" : "Whether or not the trigger was paused.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  } ],
-  "deprecatedBy" : "apoc.trigger.dropAll",
-  "argumentDescription" : [ ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.trigger.resume(name :: STRING) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
-  "name" : "apoc.trigger.resume",
-  "description" : "Resumes the given paused trigger.",
-  "returnDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "query",
-    "description" : "The query belonging to the trigger.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "selector",
-    "description" : "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "installed",
-    "description" : "Whether or not the trigger was installed.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "paused",
-    "description" : "Whether or not the trigger was paused.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  } ],
-  "deprecatedBy" : "apoc.trigger.start",
-  "argumentDescription" : [ {
-    "name" : "name",
-    "description" : "The name of the trigger to resume.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "signature" : "apoc.warmup.run(loadProperties = false :: BOOLEAN, loadDynamicProperties = false :: BOOLEAN, loadIndexes = false :: BOOLEAN) :: (pageSize :: INTEGER, totalTime :: INTEGER, transactionWasTerminated :: BOOLEAN, nodesPerPage :: INTEGER, nodesTotal :: INTEGER, nodePages :: INTEGER, nodesTime :: INTEGER, relsPerPage :: INTEGER, relsTotal :: INTEGER, relPages :: INTEGER, relsTime :: INTEGER, relGroupsPerPage :: INTEGER, relGroupsTotal :: INTEGER, relGroupPages :: INTEGER, relGroupsTime :: INTEGER, propertiesLoaded :: BOOLEAN, dynamicPropertiesLoaded :: BOOLEAN, propsPerPage :: INTEGER, propRecordsTotal :: INTEGER, propPages :: INTEGER, propsTime :: INTEGER, stringPropsPerPage :: INTEGER, stringPropRecordsTotal :: INTEGER, stringPropPages :: INTEGER, stringPropsTime :: INTEGER, arrayPropsPerPage :: INTEGER, arrayPropRecordsTotal :: INTEGER, arrayPropPages :: INTEGER, arrayPropsTime :: INTEGER, indexesLoaded :: BOOLEAN, indexPages :: INTEGER, indexTime :: INTEGER)",
-  "name" : "apoc.warmup.run",
-  "description" : "Loads all `NODE` and `RELATIONSHIP` values in the database into memory.",
-  "returnDescription" : [ {
-    "name" : "pageSize",
-    "description" : "pageSize :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "totalTime",
-    "description" : "totalTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "transactionWasTerminated",
-    "description" : "transactionWasTerminated :: BOOLEAN",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "nodesPerPage",
-    "description" : "nodesPerPage :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "nodesTotal",
-    "description" : "nodesTotal :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "nodePages",
-    "description" : "nodePages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "nodesTime",
-    "description" : "nodesTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relsPerPage",
-    "description" : "relsPerPage :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relsTotal",
-    "description" : "relsTotal :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relPages",
-    "description" : "relPages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relsTime",
-    "description" : "relsTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relGroupsPerPage",
-    "description" : "relGroupsPerPage :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relGroupsTotal",
-    "description" : "relGroupsTotal :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relGroupPages",
-    "description" : "relGroupPages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "relGroupsTime",
-    "description" : "relGroupsTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "propertiesLoaded",
-    "description" : "propertiesLoaded :: BOOLEAN",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "dynamicPropertiesLoaded",
-    "description" : "dynamicPropertiesLoaded :: BOOLEAN",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "propsPerPage",
-    "description" : "propsPerPage :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "propRecordsTotal",
-    "description" : "propRecordsTotal :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "propPages",
-    "description" : "propPages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "propsTime",
-    "description" : "propsTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "stringPropsPerPage",
-    "description" : "stringPropsPerPage :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "stringPropRecordsTotal",
-    "description" : "stringPropRecordsTotal :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "stringPropPages",
-    "description" : "stringPropPages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "stringPropsTime",
-    "description" : "stringPropsTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "arrayPropsPerPage",
-    "description" : "arrayPropsPerPage :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "arrayPropRecordsTotal",
-    "description" : "arrayPropRecordsTotal :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "arrayPropPages",
-    "description" : "arrayPropPages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "arrayPropsTime",
-    "description" : "arrayPropsTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "indexesLoaded",
-    "description" : "indexesLoaded :: BOOLEAN",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "indexPages",
-    "description" : "indexPages :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  }, {
-    "name" : "indexTime",
-    "description" : "indexTime :: INTEGER",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  } ],
-  "deprecatedBy" : "Firstly, the procedure duplicates functionality of page cache warm up which is a part of the DBMS. Secondly, the API of this procedure is very specific to Record storage engine.",
-  "argumentDescription" : [ {
-    "name" : "loadProperties",
-    "description" : "loadProperties = false :: BOOLEAN",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=false, type=BOOLEAN}",
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "loadDynamicProperties",
-    "description" : "loadDynamicProperties = false :: BOOLEAN",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=false, type=BOOLEAN}",
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "loadIndexes",
-    "description" : "loadIndexes = false :: BOOLEAN",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=false, type=BOOLEAN}",
-    "type" : "BOOLEAN"
-  } ]
-} ]
+[
+  {
+    "isDeprecated": true,
+    "signature": "apoc.convert.toTree(paths :: LIST<PATH>, lowerCaseRels = true :: BOOLEAN, config = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.convert.toTree",
+    "description": "Returns a stream of `MAP` values, representing the given `PATH` values as a tree with at least one root.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The resulting tree.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": "apoc.paths.toJsonTree",
+    "argumentDescription": [
+      {
+        "name": "paths",
+        "description": "A list of paths to convert into a tree.",
+        "isDeprecated": false,
+        "type": "LIST<PATH>"
+      },
+      {
+        "name": "lowerCaseRels",
+        "description": "Whether or not to convert relationship types to lower case.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=true, type=BOOLEAN}",
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "config",
+        "description": "{ nodes = {} :: MAP, rels = {} :: MAP, sortPaths = true :: BOOLEAN }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.create.uuids(count :: INTEGER) :: (row :: INTEGER, uuid :: STRING)",
+    "name": "apoc.create.uuids",
+    "description": "Returns a stream of UUIDs.",
+    "returnDescription": [
+      {
+        "name": "row",
+        "description": "The row number of the generated UUID.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "uuid",
+        "description": "The generated UUID value.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ],
+    "deprecatedBy": "Neo4j's randomUUID() function can be used as a replacement, for example: `UNWIND range(0,$count) AS row RETURN row, randomUUID() AS uuid`",
+    "argumentDescription": [
+      {
+        "name": "count",
+        "description": "The number of UUID values to generate.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.cypher.runTimeboxed(statement :: STRING, params :: MAP, timeout :: INTEGER) :: (value :: MAP)",
+    "name": "apoc.cypher.runTimeboxed",
+    "description": "Terminates a Cypher statement if it has not finished before the set timeout (ms).",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The result returned from the Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "statement",
+        "description": "The Cypher statement to run.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "timeout",
+        "description": "The maximum time, in milliseconds, the statement can run for.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.export.arrow.all(file :: STRING, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
+    "name": "apoc.export.arrow.all",
+    "description": "Exports the full database as an arrow file.",
+    "returnDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to which the data was exported.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "source",
+        "description": "A summary of the exported data.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "format",
+        "description": "The format the file is exported in.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "nodes",
+        "description": "The number of exported nodes.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relationships",
+        "description": "The number of exported relationships.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "properties",
+        "description": "The number of exported properties.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "time",
+        "description": "The duration of the export.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "rows",
+        "description": "The number of rows returned.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "batchSize",
+        "description": "The size of the batches the export was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "batches",
+        "description": "The number of batches the export was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "done",
+        "description": "Whether the export ran successfully.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "data",
+        "description": "The data returned by the export.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to export the data to.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "{ batchSize = 2000 :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.export.arrow.graph(file :: STRING, graph :: ANY, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
+    "name": "apoc.export.arrow.graph",
+    "description": "Exports the given graph as an arrow file.",
+    "returnDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to which the data was exported.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "source",
+        "description": "A summary of the exported data.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "format",
+        "description": "The format the file is exported in.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "nodes",
+        "description": "The number of exported nodes.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relationships",
+        "description": "The number of exported relationships.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "properties",
+        "description": "The number of exported properties.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "time",
+        "description": "The duration of the export.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "rows",
+        "description": "The number of rows returned.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "batchSize",
+        "description": "The size of the batches the export was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "batches",
+        "description": "The number of batches the export was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "done",
+        "description": "Whether the export ran successfully.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "data",
+        "description": "The data returned by the export.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to export the data to.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "graph",
+        "description": "The graph to export.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "config",
+        "description": "{ batchSize = 2000 :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.export.arrow.query(file :: STRING, query :: STRING, config = {} :: MAP) :: (file :: STRING, source :: STRING, format :: STRING, nodes :: INTEGER, relationships :: INTEGER, properties :: INTEGER, time :: INTEGER, rows :: INTEGER, batchSize :: INTEGER, batches :: INTEGER, done :: BOOLEAN, data :: ANY)",
+    "name": "apoc.export.arrow.query",
+    "description": "Exports the results from the given Cypher query as an arrow file.",
+    "returnDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to which the data was exported.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "source",
+        "description": "A summary of the exported data.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "format",
+        "description": "The format the file is exported in.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "nodes",
+        "description": "The number of exported nodes.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relationships",
+        "description": "The number of exported relationships.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "properties",
+        "description": "The number of exported properties.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "time",
+        "description": "The duration of the export.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "rows",
+        "description": "The number of rows returned.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "batchSize",
+        "description": "The size of the batches the export was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "batches",
+        "description": "The number of batches the export was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "done",
+        "description": "Whether the export ran successfully.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "data",
+        "description": "The data returned by the export.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to which the data will be exported.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "query",
+        "description": "The query to use to collect the data for export.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "{ batchSize = 2000 :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.export.arrow.stream.all(config = {} :: MAP) :: (value :: BYTEARRAY)",
+    "name": "apoc.export.arrow.stream.all",
+    "description": "Exports the full database as an arrow byte array.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The data as a bytearray.",
+        "isDeprecated": false,
+        "type": "BYTEARRAY"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "config",
+        "description": "{ batchSize = 2000 :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.export.arrow.stream.graph(graph :: ANY, config = {} :: MAP) :: (value :: BYTEARRAY)",
+    "name": "apoc.export.arrow.stream.graph",
+    "description": "Exports the given graph as an arrow byte array.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The data as a bytearray.",
+        "isDeprecated": false,
+        "type": "BYTEARRAY"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "graph",
+        "description": "The graph to export.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "config",
+        "description": "{ batchSize = 2000 :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.export.arrow.stream.query(query :: STRING, config = {} :: MAP) :: (value :: BYTEARRAY)",
+    "name": "apoc.export.arrow.stream.query",
+    "description": "Exports the given Cypher query as an arrow byte array.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The data as a bytearray.",
+        "isDeprecated": false,
+        "type": "BYTEARRAY"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "query",
+        "description": "The query used to collect the data for export.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "{ batchSize = 2000 :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.load.arrow(file :: STRING, config = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.load.arrow",
+    "description": "Imports `NODE` and `RELATIONSHIP` values from the provided arrow file.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "A map of data loaded from the given file.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "file",
+        "description": "The name of the file to import data from.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "This value is never used.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.load.arrow.stream(source :: BYTEARRAY, config = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.load.arrow.stream",
+    "description": "Imports `NODE` and `RELATIONSHIP` values from the provided arrow byte array.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "A map of data loaded from the given file.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "source",
+        "description": "The data to load.",
+        "isDeprecated": false,
+        "type": "BYTEARRAY"
+      },
+      {
+        "name": "config",
+        "description": "This value is never used.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.load.jsonParams(urlOrKeyOrBinary :: ANY, headers :: MAP, payload :: STRING, path =  :: STRING, config = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.load.jsonParams",
+    "description": "Loads a JSON document from a URL (e.g. web-API) as a stream of values if the given JSON document is a `LIST<ANY>`.\nIf the given JSON file is a `MAP`, this procedure imports a single value instead.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "A map of data loaded from the given file.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "urlOrKeyOrBinary",
+        "description": "The name of the file or binary data to import the data from. Note that a URL needs to be properly encoded to conform with the URI standard.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "headers",
+        "description": "Headers to be used when connecting to the given URL.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "payload",
+        "description": "The payload to send when connecting to the given URL.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "path",
+        "description": "A JSON path expression used to extract specific subparts of the JSON document (extracted by a link:https://en.wikipedia.org/wiki/JSONPath[JSONPath] expression). The default is: ``.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "{\n    failOnError = true :: BOOLEAN,\n    pathOptions :: LIST<STRING>,\n    compression = \"\"NONE\"\" :: [\"\"NONE\"\", \"\"BYTES\"\", \"\"GZIP\"\", \"\"BZIP2\"\", \"\"DEFLATE\"\", \"\"BLOCK_LZ4\"\", \"\"FRAMED_SNAPPY”]\n}\n",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.log.stream(path :: STRING, config = {} :: MAP) :: (lineNo :: INTEGER, line :: STRING, path :: STRING)",
+    "name": "apoc.log.stream",
+    "description": "Returns the file contents from the given log, optionally returning only the last n lines.\nThis procedure requires users to have an admin role.",
+    "returnDescription": [
+      {
+        "name": "lineNo",
+        "description": "The line number.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "line",
+        "description": "The content of the line.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "path",
+        "description": "The path to the log file.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ],
+    "deprecatedBy": "This procedure is being moved to APOC Extended.",
+    "argumentDescription": [
+      {
+        "name": "path",
+        "description": "The name of the log file to read.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "{ last :: INTEGER }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.refactor.deleteAndReconnect(path :: PATH, nodes :: LIST<NODE>, config = {} :: MAP) :: (nodes :: LIST<NODE>, relationships :: LIST<RELATIONSHIP>)",
+    "name": "apoc.refactor.deleteAndReconnect",
+    "description": "Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.\nNote, undefined behaviour for paths that visits the same node multiple times.\nNote, nodes that are not connected in the same direction as the path will not be reconnected, for example `MATCH p=(:A)-->(b:B)<--(:C) CALL apoc.refactor.deleteAndReconnect(p, [b]) ...` will not reconnect the :A and :C nodes.",
+    "returnDescription": [
+      {
+        "name": "nodes",
+        "description": "The remaining nodes.",
+        "isDeprecated": false,
+        "type": "LIST<NODE>"
+      },
+      {
+        "name": "relationships",
+        "description": "The new connecting relationships.",
+        "isDeprecated": false,
+        "type": "LIST<RELATIONSHIP>"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "path",
+        "description": "The path containing the nodes to delete and the remaining nodes to reconnect.",
+        "isDeprecated": false,
+        "type": "PATH"
+      },
+      {
+        "name": "nodes",
+        "description": "The nodes to delete.",
+        "isDeprecated": false,
+        "type": "LIST<NODE>"
+      },
+      {
+        "name": "config",
+        "description": "{\n    relationshipSelectionStrategy = \"incoming\" :: [\"incoming\", \"outgoing\", \"merge\"]\n    properties :: [\"overwrite\", \"discard\", \"combine\"]\n}\n",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.trigger.add(name :: STRING, statement :: STRING, selector :: MAP, config = {} :: MAP) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
+    "name": "apoc.trigger.add",
+    "description": "Adds a trigger to the given Cypher statement.\nThe selector for this procedure is {phase:'before/after/rollback/afterAsync'}.",
+    "returnDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "query",
+        "description": "The query belonging to the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "selector",
+        "description": "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "installed",
+        "description": "Whether or not the trigger was installed.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "paused",
+        "description": "Whether or not the trigger was paused.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      }
+    ],
+    "deprecatedBy": "apoc.trigger.install",
+    "argumentDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger to add.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "statement",
+        "description": "The query to run when triggered.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "selector",
+        "description": "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "config",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.trigger.pause(name :: STRING) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
+    "name": "apoc.trigger.pause",
+    "description": "Pauses the given trigger.",
+    "returnDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "query",
+        "description": "The query belonging to the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "selector",
+        "description": "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "installed",
+        "description": "Whether or not the trigger was installed.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "paused",
+        "description": "Whether or not the trigger was paused.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      }
+    ],
+    "deprecatedBy": "apoc.trigger.stop",
+    "argumentDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger to pause.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.trigger.remove(name :: STRING) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
+    "name": "apoc.trigger.remove",
+    "description": "Removes the given trigger.",
+    "returnDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "query",
+        "description": "The query belonging to the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "selector",
+        "description": "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "installed",
+        "description": "Whether or not the trigger was installed.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "paused",
+        "description": "Whether or not the trigger was paused.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      }
+    ],
+    "deprecatedBy": "apoc.trigger.drop",
+    "argumentDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger to drop.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.trigger.removeAll() :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
+    "name": "apoc.trigger.removeAll",
+    "description": "Removes all previously added triggers.",
+    "returnDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "query",
+        "description": "The query belonging to the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "selector",
+        "description": "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "installed",
+        "description": "Whether or not the trigger was installed.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "paused",
+        "description": "Whether or not the trigger was paused.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      }
+    ],
+    "deprecatedBy": "apoc.trigger.dropAll",
+    "argumentDescription": []
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.trigger.resume(name :: STRING) :: (name :: STRING, query :: STRING, selector :: MAP, params :: MAP, installed :: BOOLEAN, paused :: BOOLEAN)",
+    "name": "apoc.trigger.resume",
+    "description": "Resumes the given paused trigger.",
+    "returnDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "query",
+        "description": "The query belonging to the trigger.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "selector",
+        "description": "{ phase = \"before\" :: [\"before\", \"rollback\", \"after\", \"afterAsync\"] }",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "installed",
+        "description": "Whether or not the trigger was installed.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "paused",
+        "description": "Whether or not the trigger was paused.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      }
+    ],
+    "deprecatedBy": "apoc.trigger.start",
+    "argumentDescription": [
+      {
+        "name": "name",
+        "description": "The name of the trigger to resume.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "signature": "apoc.warmup.run(loadProperties = false :: BOOLEAN, loadDynamicProperties = false :: BOOLEAN, loadIndexes = false :: BOOLEAN) :: (pageSize :: INTEGER, totalTime :: INTEGER, transactionWasTerminated :: BOOLEAN, nodesPerPage :: INTEGER, nodesTotal :: INTEGER, nodePages :: INTEGER, nodesTime :: INTEGER, relsPerPage :: INTEGER, relsTotal :: INTEGER, relPages :: INTEGER, relsTime :: INTEGER, relGroupsPerPage :: INTEGER, relGroupsTotal :: INTEGER, relGroupPages :: INTEGER, relGroupsTime :: INTEGER, propertiesLoaded :: BOOLEAN, dynamicPropertiesLoaded :: BOOLEAN, propsPerPage :: INTEGER, propRecordsTotal :: INTEGER, propPages :: INTEGER, propsTime :: INTEGER, stringPropsPerPage :: INTEGER, stringPropRecordsTotal :: INTEGER, stringPropPages :: INTEGER, stringPropsTime :: INTEGER, arrayPropsPerPage :: INTEGER, arrayPropRecordsTotal :: INTEGER, arrayPropPages :: INTEGER, arrayPropsTime :: INTEGER, indexesLoaded :: BOOLEAN, indexPages :: INTEGER, indexTime :: INTEGER)",
+    "name": "apoc.warmup.run",
+    "description": "Loads all `NODE` and `RELATIONSHIP` values in the database into memory.",
+    "returnDescription": [
+      {
+        "name": "pageSize",
+        "description": "pageSize :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "totalTime",
+        "description": "totalTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "transactionWasTerminated",
+        "description": "transactionWasTerminated :: BOOLEAN",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "nodesPerPage",
+        "description": "nodesPerPage :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "nodesTotal",
+        "description": "nodesTotal :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "nodePages",
+        "description": "nodePages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "nodesTime",
+        "description": "nodesTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relsPerPage",
+        "description": "relsPerPage :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relsTotal",
+        "description": "relsTotal :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relPages",
+        "description": "relPages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relsTime",
+        "description": "relsTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relGroupsPerPage",
+        "description": "relGroupsPerPage :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relGroupsTotal",
+        "description": "relGroupsTotal :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relGroupPages",
+        "description": "relGroupPages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "relGroupsTime",
+        "description": "relGroupsTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "propertiesLoaded",
+        "description": "propertiesLoaded :: BOOLEAN",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "dynamicPropertiesLoaded",
+        "description": "dynamicPropertiesLoaded :: BOOLEAN",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "propsPerPage",
+        "description": "propsPerPage :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "propRecordsTotal",
+        "description": "propRecordsTotal :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "propPages",
+        "description": "propPages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "propsTime",
+        "description": "propsTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "stringPropsPerPage",
+        "description": "stringPropsPerPage :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "stringPropRecordsTotal",
+        "description": "stringPropRecordsTotal :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "stringPropPages",
+        "description": "stringPropPages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "stringPropsTime",
+        "description": "stringPropsTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "arrayPropsPerPage",
+        "description": "arrayPropsPerPage :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "arrayPropRecordsTotal",
+        "description": "arrayPropRecordsTotal :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "arrayPropPages",
+        "description": "arrayPropPages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "arrayPropsTime",
+        "description": "arrayPropsTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "indexesLoaded",
+        "description": "indexesLoaded :: BOOLEAN",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "indexPages",
+        "description": "indexPages :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "indexTime",
+        "description": "indexTime :: INTEGER",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ],
+    "deprecatedBy": "Firstly, the procedure duplicates functionality of page cache warm up which is a part of the DBMS. Secondly, the API of this procedure is very specific to Record storage engine.",
+    "argumentDescription": [
+      {
+        "name": "loadProperties",
+        "description": "loadProperties = false :: BOOLEAN",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=false, type=BOOLEAN}",
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "loadDynamicProperties",
+        "description": "loadDynamicProperties = false :: BOOLEAN",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=false, type=BOOLEAN}",
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "loadIndexes",
+        "description": "loadIndexes = false :: BOOLEAN",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=false, type=BOOLEAN}",
+        "type": "BOOLEAN"
+      }
+    ]
+  }
+]

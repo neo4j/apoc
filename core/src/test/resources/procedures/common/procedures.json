@@ -1772,34 +1772,6 @@
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.cypher.runTimeboxed(statement :: STRING, params :: MAP, timeout :: INTEGER) :: (value :: MAP)",
-  "name" : "apoc.cypher.runTimeboxed",
-  "description" : "Terminates a Cypher statement if it has not finished before the set timeout (ms).",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The result returned from the Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : null,
-  "argumentDescription" : [ {
-    "name" : "statement",
-    "description" : "The Cypher statement to run.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "timeout",
-    "description" : "The maximum time the statement can run for.",
-    "isDeprecated" : false,
-    "type" : "INTEGER"
-  } ]
-}, {
-  "isDeprecated" : false,
   "signature" : "apoc.cypher.runWrite(statement :: STRING, params :: MAP) :: (value :: MAP)",
   "name" : "apoc.cypher.runWrite",
   "description" : "Alias for `apoc.cypher.doIt`.",

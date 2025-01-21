@@ -18,6 +18,7 @@
  */
 package apoc.cypher;
 
+import static apoc.util.Util.toBoolean;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import apoc.Pools;
@@ -30,9 +31,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -63,15 +67,38 @@ public class Timeboxed {
 
     @NotThreadSafe
     @Procedure("apoc.cypher.runTimeboxed")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
+    public Stream<CypherStatementMapResult> runTimeboxedCypher5(
+            @Name(value = "statement", description = "The Cypher statement to run.") String cypher,
+            @Name(value = "params", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> params,
+            @Name(value = "timeout", description = "The maximum time, in milliseconds, the statement can run for.")
+                    long timeout) {
+        return runTimeboxed(cypher, params, timeout, new HashMap<>());
+    }
+
+    @NotThreadSafe
+    @Procedure("apoc.cypher.runTimeboxed")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Terminates a Cypher statement if it has not finished before the set timeout (ms).")
     public Stream<CypherStatementMapResult> runTimeboxed(
             @Name(value = "statement", description = "The Cypher statement to run.") String cypher,
             @Name(value = "params", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> params,
-            @Name(value = "timeout", description = "The maximum time the statement can run for.") long timeout) {
+            @Name(value = "timeout", description = "The maximum time, in milliseconds, the statement can run for.")
+                    long timeout,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description = "{ failOnError = false :: BOOLEAN, appendStatusRow = false :: BOOLEAN }")
+                    Map<String, Object> config) {
 
         final BlockingQueue<Map<String, Object>> queue = new ArrayBlockingQueue<>(100);
         final AtomicReference<Transaction> txAtomic = new AtomicReference<>();
+
+        boolean failOnError = toBoolean(config.get("failOnError"));
+        boolean appendStatusRow = toBoolean(config.get("appendStatusRow"));
 
         // run query to be timeboxed in a separate thread to enable proper tx termination
         // if we'd run this in current thread, a tx.terminate would kill the transaction the procedure call uses itself.
@@ -89,9 +116,22 @@ public class Timeboxed {
                     final Map<String, Object> map = result.next();
                     offerToQueue(queue, map, timeout);
                 }
+                if (appendStatusRow) {
+                    Map<String, Object> map = statusMap(true, false, null);
+                    offerToQueue(queue, map, timeout);
+                }
                 innerTx.commit();
             } catch (TransactionTerminatedException e) {
                 log.warn("query " + cypher + " has been terminated");
+                if (appendStatusRow || failOnError) {
+                    Map<String, Object> map = statusMap(false, true, null);
+                    offerToQueue(queue, map, timeout);
+                }
+            } catch (QueryExecutionException e) {
+                if (appendStatusRow || failOnError) {
+                    Map<String, Object> map = statusMap(false, false, e.getMessage());
+                    offerToQueue(queue, map, timeout);
+                }
             } finally {
                 offerToQueue(queue, POISON, timeout);
                 txAtomic.set(null);
@@ -107,6 +147,10 @@ public class Timeboxed {
                                 log.debug(
                                         "tx is null, either the other transaction finished gracefully or has not yet been start.");
                             } else {
+                                if (appendStatusRow || failOnError) {
+                                    Map<String, Object> map = statusMap(false, true, null);
+                                    offerToQueue(queue, map, timeout);
+                                }
                                 tx.terminate();
                                 offerToQueue(queue, POISON, timeout);
                                 log.warn("terminating transaction, putting POISON onto queue");
@@ -128,8 +172,26 @@ public class Timeboxed {
                     try {
                         nextElement = queue.poll(timeout, MILLISECONDS);
                         if (nextElement == null) {
-                            log.warn("couldn't grab queue element, aborting - this should never happen");
-                            hasFinished = true;
+                            // Wait a little bit longer and try again, waiting exactly the timeout means that
+                            // there might be a slight timing issue with termination vs. setting the queue as terminated
+                            nextElement = queue.poll(100, MILLISECONDS);
+                            // If it is still null, then accept and move on
+                            if (nextElement == null) {
+                                log.warn("Empty queue, aborting.");
+                                if (failOnError) {
+                                    throw new RuntimeException("The query has been terminated.");
+                                }
+                                hasFinished = true;
+                            }
+                        }
+
+                        if (failOnError && nextElement.get("wasSuccessful").equals(Boolean.FALSE)) {
+                            if (nextElement.get("failedWithError").equals(Boolean.TRUE)) {
+                                throw new RuntimeException("The inner query errored with: " + nextElement.get("error"));
+                            }
+                            if (nextElement.get("wasTerminated").equals(Boolean.TRUE)) {
+                                throw new RuntimeException("The query has been terminated.");
+                            }
                         } else {
                             hasFinished = POISON.equals(nextElement);
                         }
@@ -145,8 +207,18 @@ public class Timeboxed {
                 return nextElement;
             }
         };
+
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(queueConsumer, Spliterator.ORDERED), false)
                 .map(CypherStatementMapResult::new);
+    }
+
+    private Map<String, Object> statusMap(boolean successful, boolean terminated, String errorMessage) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("wasSuccessful", successful ? Boolean.TRUE : Boolean.FALSE);
+        map.put("wasTerminated", terminated ? Boolean.TRUE : Boolean.FALSE);
+        map.put("failedWithError", errorMessage == null ? Boolean.FALSE : Boolean.TRUE);
+        map.put("error", errorMessage);
+        return map;
     }
 
     private void offerToQueue(BlockingQueue<Map<String, Object>> queue, Map<String, Object> map, long timeout) {
