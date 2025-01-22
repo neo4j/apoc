@@ -21,7 +21,6 @@ package apoc.nodes;
 import static java.util.Collections.*;
 
 import apoc.Pools;
-import apoc.convert.ConvertUtils;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.Util;
@@ -47,6 +46,8 @@ import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.PointValue;
+import org.neo4j.values.storable.Value;
+import org.neo4j.values.storable.Values;
 
 /**
  * @author mh
@@ -377,9 +378,9 @@ public class Grouping {
                     double[] values = (double[]) v;
                     entry.setValue(values[1] == 0 ? 0 : values[0] / values[1]);
                 }
-                if (k.matches("^avg_.+") && v instanceof DurationValue) {
+                if (k.matches("^avg_.+") && v instanceof DurationValue duration) {
                     Long count = ((Number) pc.getProperty(k + "_count", 0)).longValue();
-                    entry.setValue(divDurationValue((DurationValue) v, count));
+                    entry.setValue(divDurationValue(duration, count));
                 }
                 if (k.matches("^collect_.+") && v instanceof Collection) {
                     entry.setValue(((Collection) v).toArray());
@@ -423,10 +424,10 @@ public class Grouping {
                                 pc.setProperty(key, ((Number) pc.getProperty(key, 0)).longValue() + 1);
                                 break;
                             case "sum":
-                                if (value instanceof DurationValue) {
+                                if (value instanceof DurationValue duration) {
                                     DurationValue dv =
                                             (DurationValue) pc.getProperty(key, DurationValue.duration(0, 0, 0, 0));
-                                    pc.setProperty(key, ((DurationValue) value).add(dv));
+                                    pc.setProperty(key, (duration).add(dv));
                                 } else if (value instanceof Number) {
                                     pc.setProperty(
                                             key,
@@ -469,8 +470,14 @@ public class Grouping {
             return value;
         }
 
+        Value valueA = Values.unsafeOf(prop, true);
+        Value valueB = Values.unsafeOf(value, true);
+
+        if (valueA == null) valueA = Values.NO_VALUE;
+        if (valueB == null) valueB = Values.NO_VALUE;
+
         if (isComparableTypes(prop, value)) {
-            return compareValues(prop, value) ? prop : value;
+            return compareValues(valueA, valueB) ? prop : value;
         }
 
         return returnMinOfDifferentValues(prop, value);
@@ -483,8 +490,14 @@ public class Grouping {
             return value;
         }
 
+        Value valueA = Values.unsafeOf(prop, true);
+        Value valueB = Values.unsafeOf(value, true);
+
+        if (valueA == null) valueA = Values.NO_VALUE;
+        if (valueB == null) valueB = Values.NO_VALUE;
+
         if (isComparableTypes(prop, value)) {
-            return compareValues(prop, value) ? value : prop;
+            return compareValues(valueA, valueB) ? value : prop;
         }
 
         return returnMaxOfDifferentValues(prop, value);
@@ -496,7 +509,6 @@ public class Grouping {
                 || (prop instanceof LocalDate && value instanceof LocalDate)
                 || (prop instanceof OffsetTime && value instanceof OffsetTime)
                 || (prop instanceof LocalTime && value instanceof LocalTime)
-                || (prop instanceof DurationValue && value instanceof DurationValue)
                 || (prop instanceof String && value instanceof String)
                 || (prop instanceof Boolean && value instanceof Boolean)
                 || (prop instanceof Number && value instanceof Number)
@@ -505,71 +517,11 @@ public class Grouping {
                 || (prop instanceof PointValue && value instanceof PointValue);
     }
 
-    private boolean compareValues(Object prop, Object value) {
-        if (prop instanceof ZonedDateTime pZonedDateTime) {
-            return ((ZonedDateTime) value).isAfter(pZonedDateTime);
-        } else if (prop instanceof LocalDateTime pLocalDateTime) {
-            return ((LocalDateTime) value).isAfter(pLocalDateTime);
-        } else if (prop instanceof LocalDate pLocalDate) {
-            return ((LocalDate) value).isAfter(pLocalDate);
-        } else if (prop instanceof OffsetTime pOffsetTime) {
-            return ((OffsetTime) value).isAfter(pOffsetTime);
-        } else if (prop instanceof LocalTime pLocalTime) {
-            return ((LocalTime) value).isAfter(pLocalTime);
-        } else if (prop instanceof DurationValue pDurationValue) {
-            return pDurationValue.compareTo((DurationValue) value) < 0;
-        } else if (prop instanceof String pString) {
-            return pString.compareTo((String) value) < 0;
-        } else if (prop instanceof Boolean pBool) {
-            return !pBool; // Return `false` if `prop` is `false`
-        } else if (prop instanceof Number pNumber) {
-            return pNumber.doubleValue() < Util.toDouble(value);
-        } else if ((prop instanceof Collection || prop.getClass().isArray())
-                && (value instanceof Collection || value.getClass().isArray())) {
-            return compareCollections(ConvertUtils.convertToList(prop), ConvertUtils.convertToList(value));
-        } else if (prop instanceof PointValue pPoint && value instanceof PointValue vPoint) {
-            return pPoint.compareTo(vPoint) < 0;
-        }
-        return false; // Default fallback (shouldn't reach here for comparable types)
-    }
-
-    private boolean compareCollections(Collection<?> col1, Collection<?> col2) {
-        Iterator<?> it1 = col1.iterator();
-        Iterator<?> it2 = col2.iterator();
-
-        while (it1.hasNext() && it2.hasNext()) {
-            Object elem1 = it1.next();
-            Object elem2 = it2.next();
-
-            // Compare elements recursively
-            int comparison = compareElements(elem1, elem2);
-            if (comparison != 0) {
-                return comparison < 0; // Return true if col1 < col2
-            }
-        }
-
-        // If one collection runs out of elements, it is smaller
-        return col1.size() < col2.size();
-    }
-
-    private int compareElements(Object elem1, Object elem2) {
-        if (elem1 == null && elem2 == null) {
-            return 0;
-        }
-        if (elem1 == null) {
-            return -1;
-        }
-        if (elem2 == null) {
-            return 1;
-        }
-
-        if (elem1 instanceof Comparable && elem2 instanceof Comparable) {
-            // Cast to Comparable and compare
-            return ((Comparable<Object>) elem1).compareTo(elem2);
-        }
-
-        // If elements are not directly comparable, use orderOfType
-        return Integer.compare(orderOfType(elem1), orderOfType(elem2));
+    private boolean compareValues(Value a, Value b) {
+        return switch (Values.COMPARATOR.ternaryCompare(a, b)) {
+            case UNDEFINED, EQUAL, SMALLER_THAN -> true;
+            case GREATER_THAN -> false;
+        };
     }
 
     private Object returnMinOfDifferentValues(Object prop, Object value) {

@@ -219,10 +219,6 @@ public class GroupingTest {
                         "date({ year: 2022, month: 1, day: 1 }), date({ year: 2021, month: 1, day: 1 }), date({ year: 2023, month: 1, day: 1 })",
                         "date({ year: 2021, month: 1, day: 1 })",
                         "date({ year: 2023, month: 1, day: 1 })"),
-                new TestObject(
-                        "duration('P11DT16H12M'), duration('P1DT16H12M'), duration('P1DT20H12M')",
-                        "duration('P1DT16H12M')",
-                        "duration('P11DT16H12M')"),
                 new TestObject("[1, 0, 3], [1, 2, 3]", "[1, 0, 3]", "[1, 2, 3]"),
                 // Mixed values
                 new TestObject("1, [1, 2, 3], false", "[1, 2, 3]", "1"),
