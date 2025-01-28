@@ -20,6 +20,7 @@ package apoc.export.json;
 
 import apoc.ApocConfig;
 import apoc.Pools;
+import apoc.cypher.export.DatabaseSubGraph;
 import apoc.export.cypher.ExportFileManager;
 import apoc.export.cypher.FileManagerFactory;
 import apoc.export.util.ExportConfig;
@@ -33,7 +34,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;

@@ -1,5 +1,5 @@
 :readme:
-:branch: 2025.01.0
+:branch: 2025.01
 :docs: https://neo4j.com/docs/apoc/current
 :apoc-release: 2025.01.0
 :neo4j-version: 2025.01.0

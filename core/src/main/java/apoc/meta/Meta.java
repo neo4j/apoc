@@ -23,6 +23,8 @@ import static java.lang.String.format;
 import static org.neo4j.token.api.TokenConstants.ANY_LABEL;
 import static org.neo4j.token.api.TokenConstants.ANY_RELATIONSHIP_TYPE;
 
+import apoc.cypher.export.CypherResultSubGraph;
+import apoc.cypher.export.DatabaseSubGraph;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.result.GraphResult;
 import apoc.result.VirtualGraph;
@@ -52,8 +54,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.tuple.Pair;
-import org.neo4j.cypher.export.CypherResultSubGraph;
-import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Entity;

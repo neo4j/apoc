@@ -19,6 +19,7 @@
 package apoc.export.arrow;
 
 import apoc.Pools;
+import apoc.cypher.export.DatabaseSubGraph;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.result.ByteArrayResult;
 import apoc.result.ExportProgressInfo;
@@ -27,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;

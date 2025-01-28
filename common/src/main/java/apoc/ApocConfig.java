@@ -18,7 +18,6 @@
  */
 package apoc;
 
-import static apoc.util.FileUtils.isFile;
 import static java.lang.String.format;
 import static org.neo4j.configuration.BootloaderSettings.lib_directory;
 import static org.neo4j.configuration.BootloaderSettings.run_directory;
@@ -33,9 +32,14 @@ import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_roo
 import static org.neo4j.internal.helpers.ProcessUtils.executeCommandWithOutput;
 
 import apoc.export.util.ExportConfig;
+import apoc.util.FileUtils;
+import apoc.util.SupportedProtocols;
+import apoc.util.Util;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -311,6 +315,40 @@ public class ApocConfig extends LifecycleAdapter {
             if (exportConfig == null || (fileName != null && !fileName.isEmpty()) || !exportConfig.streamStatements()) {
                 throw new RuntimeException(EXPORT_TO_FILE_ERROR);
             }
+        }
+    }
+
+    public static boolean isFile(String fileName) {
+        return from(fileName) == SupportedProtocols.file;
+    }
+
+    public static SupportedProtocols from(URL url) {
+        return FileUtils.of(url.getProtocol());
+    }
+
+    public static SupportedProtocols from(String source) {
+        try {
+            final URL url = new URL(source);
+            return from(url);
+        } catch (MalformedURLException e) {
+            if (!e.getMessage().contains("no protocol")) {
+                try {
+                    // in case new URL(source) throw e.g. unknown protocol: hdfs, because of missing jar,
+                    // we retrieve the related enum and throw the associated MissingDependencyException(..)
+                    // otherwise we return unknown protocol: yyyyy
+                    return SupportedProtocols.valueOf(new URI(source).getScheme());
+                } catch (Exception ignored) {
+                }
+
+                // in case a Windows user write an url like `C:/User/...`
+                if (e.getMessage().contains("unknown protocol") && Util.isWindows()) {
+                    throw new RuntimeException(e.getMessage()
+                            + "\n Please note that for Windows absolute paths they have to be explicit by prepending `file:` or supplied without the drive, "
+                            + "\n e.g. `file:C:/my/path/file` or `/my/path/file`, instead of `C:/my/path/file`");
+                }
+                throw new RuntimeException(e);
+            }
+            return SupportedProtocols.file;
         }
     }
 

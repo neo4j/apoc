@@ -22,7 +22,6 @@ import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.FileUtils.getInputStreamFromBinary;
 import static apoc.util.Util.ERROR_BYTES_OR_STRING;
-import static apoc.util.Util.getStreamConnection;
 
 import apoc.ApocConfig;
 import apoc.export.util.CountingInputStream;
@@ -234,7 +233,7 @@ public class Xml {
         if (urlOrBinary instanceof String) {
             String url = (String) urlOrBinary;
             url = FileUtils.changeFileUrlIfImportDirectoryConstrained(url, urlAccessChecker);
-            StreamConnection streamConnection = getStreamConnection(url, null, null, urlAccessChecker);
+            StreamConnection streamConnection = FileUtils.getStreamConnection(url, null, null, urlAccessChecker);
             inputStream = toLimitedIStream(streamConnection.getInputStream(), streamConnection.getLength());
         } else if (urlOrBinary instanceof byte[]) {
             inputStream = toLimitedIStream(

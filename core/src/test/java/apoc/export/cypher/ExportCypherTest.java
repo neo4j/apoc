@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
+import apoc.cypher.export.DatabaseSubGraph;
 import apoc.export.util.ExportConfig;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
@@ -56,7 +57,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;

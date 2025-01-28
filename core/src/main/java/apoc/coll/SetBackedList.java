@@ -18,7 +18,12 @@
  */
 package apoc.coll;
 
-import java.util.*;
+import java.util.AbstractSequentialList;
+import java.util.Iterator;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Spliterator;
 
 /**
  * @author mh

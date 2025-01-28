@@ -20,7 +20,6 @@ package org.neo4j.cypher.export;
 
 import static java.util.stream.Collectors.toMap;
 
-import apoc.util.CollectionUtils;
 import apoc.util.collection.Iterables;
 import java.util.Collection;
 import java.util.Iterator;
@@ -59,7 +58,7 @@ public interface SubGraph {
 
     default Map<String, Integer> relTypesInUse(TokenRead ops, Collection<String> relTypeNames) {
         Stream<RelationshipType> stream = Iterables.stream(this.getAllRelationshipTypesInUse());
-        if (CollectionUtils.isNotEmpty(relTypeNames)) {
+        if (isNotEmpty(relTypeNames)) {
             stream = stream.filter(rel -> relTypeNames.contains(rel.name()));
         }
         return stream.map(RelationshipType::name).collect(toMap(t -> t, ops::relationshipType));
@@ -67,7 +66,7 @@ public interface SubGraph {
 
     default Map<String, Integer> labelsInUse(TokenRead ops, Collection<String> labelNames) {
         Stream<Label> stream = Iterables.stream(this.getAllLabelsInUse());
-        if (CollectionUtils.isNotEmpty(labelNames)) {
+        if (isNotEmpty(labelNames)) {
             stream = stream.filter(rel -> labelNames.contains(rel.name()));
         }
         return stream.map(Label::name).collect(toMap(t -> t, ops::nodeLabel));
@@ -115,4 +114,24 @@ public interface SubGraph {
     }
 
     long countsForNode(Label label);
+
+    /**
+     * Null-safe check if the specified collection is empty.
+     *
+     * @param coll  the collection to check, may be null
+     * @return true if empty or null
+     */
+    private static boolean isEmpty(Collection<?> coll) {
+        return coll == null || coll.isEmpty();
+    }
+
+    /**
+     * Null-safe check if the specified collection is not empty.
+     *
+     * @param coll  the collection to check, may be null
+     * @return true if non-null and non-empty
+     */
+    private static boolean isNotEmpty(Collection<?> coll) {
+        return !isEmpty(coll);
+    }
 }
