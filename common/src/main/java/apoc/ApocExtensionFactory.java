@@ -168,6 +168,14 @@ public class ApocExtensionFactory extends ExtensionFactory<ApocExtensionFactory.
             registeredListeners.clear();
         }
 
+        @Override
+        public void shutdown() throws Exception {
+            String databaseName = db.databaseName();
+            services.values().forEach(lifecycle -> dependencies
+                    .registerComponentLifecycle()
+                    .cleanUpResolver(databaseName, lifecycle.getClass()));
+        }
+
         public Collection<AvailabilityListener> getRegisteredListeners() {
             return registeredListeners;
         }
