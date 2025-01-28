@@ -61,9 +61,23 @@ public class RegisterComponentFactory extends ExtensionFactory<RegisterComponent
 
         private final Map<Class, Map<String, Object>> resolvers = new ConcurrentHashMap<>();
 
-        public void addResolver(String databaseNamme, Class clazz, Object instance) {
+        public void addResolver(String databaseName, Class clazz, Object instance) {
             Map<String, Object> classInstanceMap = resolvers.computeIfAbsent(clazz, s -> new ConcurrentHashMap<>());
-            classInstanceMap.put(databaseNamme, instance);
+            classInstanceMap.put(databaseName, instance);
+        }
+
+        public void cleanUpResolver(String databaseName, Class clazz) {
+            Map<String, Object> innerMap = resolvers.get(clazz);
+
+            if (innerMap != null) {
+                // Remove the database to instance value
+                innerMap.remove(databaseName);
+
+                // If the inner map is now empty, remove the key from the outer map
+                if (innerMap.isEmpty()) {
+                    resolvers.remove(clazz);
+                }
+            }
         }
 
         @SuppressWarnings("unused") // used from extended
