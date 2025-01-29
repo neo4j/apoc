@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.common.DependencyResolver;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.Neo4jDatabaseManagementServiceBuilder;
 import org.neo4j.dbms.systemgraph.TopologyGraphDbmsModel.HostedOnMode;
@@ -153,6 +154,15 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
 
     private void create() {
         databaseBuilder = newFactory();
+
+        // Allow experimental versions of Cypher and set Cypher Default Version
+        globalConfig.put(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
+        String cypherVersionEnv = System.getenv()
+                .getOrDefault("CYPHER_VERSION", GraphDatabaseInternalSettings.CypherVersion.Cypher25.name());
+        GraphDatabaseInternalSettings.CypherVersion cypherVersion =
+                GraphDatabaseInternalSettings.CypherVersion.valueOf(cypherVersionEnv);
+        globalConfig.put(GraphDatabaseInternalSettings.default_cypher_version, cypherVersion);
+
         databaseBuilder.setConfig(globalConfig);
     }
 
