@@ -38,6 +38,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -70,6 +71,9 @@ public class Rename {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     /**
      * Rename the Label of a node by creating a new one and deleting the old.

@@ -23,19 +23,24 @@ import static java.lang.String.join;
 import static java.util.stream.Collectors.toList;
 
 import apoc.result.CypherStatementMapResult;
+import apoc.util.Util;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Name;
 
 public class CypherUtils {
     public static Stream<CypherStatementMapResult> runCypherQuery(
-            Transaction tx, @Name("cypher") String statement, @Name("params") Map<String, Object> params) {
+            Transaction tx,
+            @Name("cypher") String statement,
+            @Name("params") Map<String, Object> params,
+            ProcedureCallContext procedureCallContext) {
         if (params == null) params = Collections.emptyMap();
-        return tx.execute(withParamMapping(statement, params.keySet()), params).stream()
-                .map(CypherStatementMapResult::new);
+        String query = Util.prefixQueryWithCheck(procedureCallContext, withParamMapping(statement, params.keySet()));
+        return tx.execute(query, params).stream().map(CypherStatementMapResult::new);
     }
 
     public static String withParamMapping(String fragment, Collection<String> keys) {

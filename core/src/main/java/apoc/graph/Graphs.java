@@ -34,6 +34,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.*;
 
 /**
@@ -44,6 +45,9 @@ public class Graphs {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @Procedure("apoc.graph.fromData")
     @Description(
@@ -130,7 +134,12 @@ public class Graphs {
         Set<Node> nodes = new HashSet<>(1000);
         Set<Relationship> rels = new HashSet<>(1000);
         Map<String, Object> props = new HashMap<>(properties);
-        tx.execute(CypherUtils.withParamMapping(statement, params.keySet()), params).stream()
+        tx
+                .execute(
+                        Util.prefixQueryWithCheck(
+                                procedureCallContext, CypherUtils.withParamMapping(statement, params.keySet())),
+                        params)
+                .stream()
                 .forEach(row -> {
                     row.forEach((k, v) -> {
                         if (!extract(v, nodes, rels)) {

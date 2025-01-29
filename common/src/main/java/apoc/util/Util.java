@@ -110,6 +110,7 @@ import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.internal.schema.ConstraintDescriptor;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
@@ -1361,6 +1362,113 @@ public class Util {
             }
         }
         return result;
+    }
+
+    /**
+     * A helper function to give the Pre-parser text that can be appended to a query to force it to be
+     * of a certain Cypher Version
+     * @param procedureCallContext the injectable context from the procedure framework
+     * @return Cypher Pre-parser for Cypher Version setting
+     */
+    public static String getCypherVersionPrefix(ProcedureCallContext procedureCallContext) {
+        return procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5)
+                ? "CYPHER 5 "
+                : "CYPHER 25 ";
+    }
+
+    public static String getCypherVersionString(ProcedureCallContext procedureCallContext) {
+        return procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5) ? "5" : "25";
+    }
+
+    private static final Pattern CYPHER_VERSION_PATTERN =
+            Pattern.compile("^(CYPHER)(?:\\s+(\\d+))?", Pattern.CASE_INSENSITIVE);
+    public static final Pattern PLANNER_PATTERN =
+            Pattern.compile("\\bplanner\\s*=\\s*[^\\s]*", Pattern.CASE_INSENSITIVE);
+    public static final Pattern RUNTIME_PATTERN = Pattern.compile("\\bruntime\\s*=", Pattern.CASE_INSENSITIVE);
+    public static final String CYPHER_RUNTIME_SLOTTED = " runtime=slotted ";
+
+    public static String prefixQueryWithCheck(ProcedureCallContext procedureCallContext, String query) {
+        return prefixQueryWithCheck(getCypherVersionString(procedureCallContext), query);
+    }
+
+    /**
+     * A helper function to prefix a query with a Cypher Version; if it is not already prefixed.
+     * @param cypherVersion a string of the version number
+     * @return The prefixed query
+     */
+    public static String prefixQueryWithCheck(String cypherVersion, String query) {
+        List<String> cypherPrefix = extractCypherPrefix(query, cypherVersion);
+        if (Objects.equals(cypherPrefix.getFirst(), "")) {
+            return cypherPrefix.get(1) + " " + query;
+        }
+        return query.replaceFirst("(?i)" + cypherPrefix.getFirst(), cypherPrefix.get(1) + " ");
+    }
+
+    // Extract the Cypher prefix, add version if missing
+    // This will return a list of 2 items, the first being what was extracted (empty string if nothing)
+    // The second being what the prefix should be.
+    public static List<String> extractCypherPrefix(String input, String cypherVersion) {
+        String cypherVersionPrefix = "CYPHER " + cypherVersion;
+        Matcher matcher = CYPHER_VERSION_PATTERN.matcher(input);
+        if (matcher.find()) {
+            String cypher = matcher.group(1); // Always "CYPHER"
+            String version = matcher.group(2); // Optional version
+            return List.of(
+                    version != null ? cypher + " " + version : cypher,
+                    version != null ? cypher + " " + version : cypherVersionPrefix);
+        }
+        return List.of("", cypherVersionPrefix); // No prefix was found
+    }
+
+    /**
+     * A helper function prefix a query with a Cypher Version, it will not check if the query is already prefixed or not.
+     * To do that call: prefixQueryWithCheck
+     * @param procedureCallContext the injectable context from the procedure framework
+     * @return The prefixed query
+     */
+    public static String prefixQuery(ProcedureCallContext procedureCallContext, String query) {
+        return procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5)
+                ? "CYPHER 5 "
+                : "CYPHER 25 " + query;
+    }
+
+    public static String prefixQuery(String cypherVersion, String query) {
+        return "CYPHER " + cypherVersion + " " + query;
+    }
+
+    public static String slottedRuntime(String cypherIterate, String cypherVersion) {
+        if (RUNTIME_PATTERN.matcher(cypherIterate).find()) {
+            return cypherIterate;
+        }
+
+        return prependQueryOption(cypherIterate, CYPHER_RUNTIME_SLOTTED, cypherVersion);
+    }
+
+    public enum Planner {
+        DEFAULT,
+        COST,
+        IDP,
+        DP
+    }
+
+    public static String applyPlanner(String query, Planner planner, String cypherVersion) {
+        if (planner.equals(Planner.DEFAULT)) {
+            return Util.prefixQueryWithCheck(cypherVersion, query);
+        }
+        Matcher matcher = PLANNER_PATTERN.matcher(query);
+        String cypherPlanner = String.format(" planner=%s ", planner.name().toLowerCase());
+        if (matcher.find()) {
+            return Util.prefixQueryWithCheck(cypherVersion, matcher.replaceFirst(cypherPlanner));
+        }
+        return prependQueryOption(query, cypherPlanner, cypherVersion);
+    }
+
+    private static String prependQueryOption(String query, String cypherOption, String cypherVersion) {
+        List<String> cypherPrefix = Util.extractCypherPrefix(query, cypherVersion);
+        if (Objects.equals(cypherPrefix.getFirst(), "")) {
+            return cypherPrefix.get(1) + cypherOption + query;
+        }
+        return query.replaceFirst("(?i)" + cypherPrefix.getFirst(), cypherPrefix.get(1) + cypherOption);
     }
 
     // Get the current supported query language versions, if this list changes

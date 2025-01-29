@@ -40,6 +40,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -62,6 +63,9 @@ public class ExportJson {
 
     @Context
     public TerminationGuard terminationGuard;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @NotThreadSafe
     @Procedure("apoc.export.json.all")
@@ -182,7 +186,7 @@ public class ExportJson {
         Map<String, Object> params = config == null
                 ? Collections.emptyMap()
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
-        Result result = tx.execute(query, params);
+        Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query), params);
         String source = String.format("statement: cols(%d)", result.columns().size());
         return exportJson(fileName, source, result, config);
     }

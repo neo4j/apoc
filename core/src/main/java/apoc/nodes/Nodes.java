@@ -67,6 +67,7 @@ import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.internal.kernel.api.TokenRead;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
@@ -91,6 +92,9 @@ public class Nodes {
 
     @Context
     public Pools pools;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     public static class CyclesPathResult {
         @Description("A path containing a found cycle.")
@@ -219,7 +223,9 @@ public class Nodes {
             final List<Node> batch = Util.take(it, (int) batchSize);
             count += Util.inTx(db, pools, (txInThread) -> {
                 txInThread
-                        .execute("FOREACH (n in $nodes | DETACH DELETE n)", map("nodes", batch))
+                        .execute(
+                                Util.prefixQuery(procedureCallContext, "FOREACH (n in $nodes | DETACH DELETE n)"),
+                                map("nodes", batch))
                         .close();
                 return batch.size();
             });
@@ -766,9 +772,11 @@ public class Nodes {
         if (object == null) return true;
         final String query;
         if (object instanceof Node) {
-            query = "MATCH (n) WHERE elementId(n) = $id RETURN COUNT(n) = 1 AS exists";
+            query = Util.prefixQuery(
+                    procedureCallContext, "MATCH (n) WHERE elementId(n) = $id RETURN COUNT(n) = 1 AS exists");
         } else if (object instanceof Relationship) {
-            query = "MATCH ()-[r]->() WHERE elementId(r) = $id RETURN COUNT(r) = 1 AS exists";
+            query = Util.prefixQuery(
+                    procedureCallContext, "MATCH ()-[r]->() WHERE elementId(r) = $id RETURN COUNT(r) = 1 AS exists");
         } else {
             throw new IllegalArgumentException(
                     "expected Node or Relationship but was " + object.getClass().getSimpleName());

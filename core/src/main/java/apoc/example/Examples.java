@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -33,6 +34,9 @@ public class Examples {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     public static class ExamplesProgressInfo {
         @Description("The name of the file containing the movies example.")
@@ -89,7 +93,7 @@ public class Examples {
     public Stream<ExamplesProgressInfo> movies() {
         long start = System.currentTimeMillis();
         String file = "movies.cypher";
-        Result result = tx.execute(Util.readResourceFile(file));
+        Result result = tx.execute(Util.prefixQuery(procedureCallContext, Util.readResourceFile(file)));
         QueryStatistics stats = result.getQueryStatistics();
         ExamplesProgressInfo progress = new ExamplesProgressInfo(
                 stats.getNodesCreated(),

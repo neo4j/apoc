@@ -34,12 +34,16 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.*;
 
 public class Merge {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @Procedure(value = "apoc.merge.node.eager", mode = Mode.WRITE, eager = true)
     @Description("Merges the given `NODE` values with the given dynamic labels eagerly.")
@@ -151,8 +155,10 @@ public class Merge {
                 Util.map("identProps", identProps, "onCreateProps", onCreateProps, "onMatchProps", onMatchProps);
         String identPropsString = buildIdentPropsString(identProps);
 
-        final String cypher = "MERGE (n" + labels + "{" + identPropsString
-                + "}) ON CREATE SET n += $onCreateProps ON MATCH SET n += $onMatchProps RETURN n";
+        final String cypher = Util.prefixQuery(
+                procedureCallContext,
+                "MERGE (n" + labels + "{" + identPropsString
+                        + "}) ON CREATE SET n += $onCreateProps ON MATCH SET n += $onMatchProps RETURN n");
         return tx.execute(cypher, params);
     }
 
@@ -227,7 +233,7 @@ public class Merge {
                 + Util.quote(relType) + "{" + identPropsString + "}]->(endNode) " + "ON CREATE SET r+= $onCreateProps "
                 + "ON MATCH SET r+= $onMatchProps "
                 + "RETURN r";
-        return tx.execute(cypher, params);
+        return tx.execute(Util.prefixQuery(procedureCallContext, cypher), params);
     }
 
     @Procedure(value = "apoc.merge.relationship.eager", mode = Mode.WRITE, eager = true)

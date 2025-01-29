@@ -53,6 +53,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -68,6 +69,9 @@ public class Coll {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @UserFunction("apoc.coll.stdev")
     @Description("Returns sample or population standard deviation with `isBiasCorrected` true or false respectively.")
@@ -177,8 +181,10 @@ public class Coll {
         if (list == null || list.isEmpty()) return null;
         if (list.size() == 1) return list.get(0);
 
+        var preparser = "CYPHER " + Util.getCypherVersionString(procedureCallContext) + " runtime=slotted ";
         try (Result result = tx.execute(
-                "cypher runtime=slotted return reduce(res=null, x in $list | CASE WHEN res IS NULL OR x<res THEN x ELSE res END) as value",
+                preparser
+                        + "return reduce(res=null, x in $list | CASE WHEN res IS NULL OR x<res THEN x ELSE res END) as value",
                 Collections.singletonMap("list", list))) {
             return result.next().get("value");
         }
@@ -190,8 +196,10 @@ public class Coll {
     public Object max(@Name(value = "values", description = "The list to find the maximum in.") List<Object> list) {
         if (list == null || list.isEmpty()) return null;
         if (list.size() == 1) return list.get(0);
+        var preparser = "CYPHER " + Util.getCypherVersionString(procedureCallContext) + " runtime=slotted ";
         try (Result result = tx.execute(
-                "cypher runtime=slotted return reduce(res=null, x in $list | CASE WHEN res IS NULL OR res<x THEN x ELSE res END) as value",
+                preparser
+                        + "RETURN reduce(res=null, x in $list | CASE WHEN res IS NULL OR res<x THEN x ELSE res END) AS value",
                 Collections.singletonMap("list", list))) {
             return result.next().get("value");
         }

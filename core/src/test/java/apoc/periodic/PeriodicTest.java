@@ -18,7 +18,6 @@
  */
 package apoc.periodic;
 
-import static apoc.periodic.Periodic.applyPlanner;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.lastTransactionChecks;
@@ -42,6 +41,7 @@ import apoc.refactor.GraphRefactoring;
 import apoc.schema.Schemas;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
+import apoc.util.Util;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import java.util.Collections;
@@ -238,42 +238,60 @@ public class PeriodicTest {
 
     @Test
     public void testApplyPlanner() {
-        assertEquals("RETURN 1", applyPlanner("RETURN 1", Periodic.Planner.DEFAULT));
+        assertEquals("CYPHER 5 RETURN 1", Util.applyPlanner("RETURN 1", Util.Planner.DEFAULT, "5"));
         assertEquals(
-                "cypher planner=cost MATCH (n:cypher) RETURN n",
-                applyPlanner("MATCH (n:cypher) RETURN n", Periodic.Planner.COST));
+                "CYPHER 5 planner=cost MATCH (n:cypher) RETURN n",
+                Util.applyPlanner("MATCH (n:cypher) RETURN n", Util.Planner.COST, "5"));
         assertEquals(
-                "cypher planner=idp MATCH (n:cypher) RETURN n",
-                applyPlanner("MATCH (n:cypher) RETURN n", Periodic.Planner.IDP));
+                "CYPHER 25 planner=cost  MATCH (n:cypher) RETURN n",
+                Util.applyPlanner("CYPHER 25 MATCH (n:cypher) RETURN n", Util.Planner.COST, "5"));
         assertEquals(
-                "cypher planner=dp  runtime=compiled MATCH (n) RETURN n",
-                applyPlanner("cypher runtime=compiled MATCH (n) RETURN n", Periodic.Planner.DP));
-        assertEquals("cypher planner=dp MATCH (n) RETURN n", applyPlanner("MATCH (n) RETURN n", Periodic.Planner.DP));
+                "CYPHER 5 planner=idp MATCH (n:cypher) RETURN n",
+                Util.applyPlanner("MATCH (n:cypher) RETURN n", Util.Planner.IDP, "5"));
         assertEquals(
-                "cypher planner=idp  expressionEngine=compiled MATCH (n) RETURN n",
-                applyPlanner("cypher expressionEngine=compiled MATCH (n) RETURN n", Periodic.Planner.IDP));
+                "CYPHER 25 planner=dp  runtime=compiled MATCH (n) RETURN n",
+                Util.applyPlanner("cypher runtime=compiled MATCH (n) RETURN n", Util.Planner.DP, "25"));
         assertEquals(
-                "cypher expressionEngine=compiled  planner=cost  MATCH (n) RETURN n",
-                applyPlanner("cypher expressionEngine=compiled planner=idp MATCH (n) RETURN n", Periodic.Planner.COST));
+                "CYPHER 5 planner=dp MATCH (n) RETURN n",
+                Util.applyPlanner("MATCH (n) RETURN n", Util.Planner.DP, "5"));
         assertEquals(
-                "cypher  planner=cost  MATCH (n) RETURN n",
-                applyPlanner("cypher planner=cost MATCH (n) RETURN n", Periodic.Planner.COST));
+                "CYPHER 25 planner=idp  expressionEngine=compiled MATCH (n) RETURN n",
+                Util.applyPlanner("cypher expressionEngine=compiled MATCH (n) RETURN n", Util.Planner.IDP, "25"));
+        assertEquals(
+                "CYPHER 5  expressionEngine=compiled  planner=cost  MATCH (n) RETURN n",
+                Util.applyPlanner(
+                        "cypher expressionEngine=compiled planner=idp MATCH (n) RETURN n", Util.Planner.COST, "5"));
+        assertEquals(
+                "CYPHER 5   planner=cost  MATCH (n) RETURN n",
+                Util.applyPlanner("cypher planner=cost MATCH (n) RETURN n", Util.Planner.COST, "5"));
     }
 
     @Test
     public void testSlottedRuntime() {
+        // Positive Tests
         assertEquals(
-                "cypher runtime=slotted MATCH (n:cypher) RETURN n",
-                Periodic.slottedRuntime("MATCH (n:cypher) RETURN n"));
-        assertTrue(Periodic.slottedRuntime("MATCH (n) RETURN n").contains("cypher runtime=slotted "));
-        assertFalse(Periodic.slottedRuntime(" cypher runtime=compiled MATCH (n) RETURN n")
-                .contains("cypher runtime=slotted "));
-        assertFalse(Periodic.slottedRuntime("cypher runtime=compiled MATCH (n) RETURN n")
-                .contains("cypher runtime=slotted cypher"));
-        assertTrue(Periodic.slottedRuntime(" MATCH (n) RETURN n").contains(" runtime=slotted "));
-        assertTrue(Periodic.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n")
-                .contains(" runtime=slotted "));
-        assertFalse(Periodic.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n")
+                "CYPHER 5 runtime=slotted MATCH (n:cypher) RETURN n",
+                Util.slottedRuntime("MATCH (n:cypher) RETURN n", "5"));
+        assertEquals("CYPHER 25 runtime=slotted MATCH (n) RETURN n", Util.slottedRuntime("MATCH (n) RETURN n", "25"));
+        assertEquals(
+                "CYPHER 5 runtime=slotted  MATCH (n) RETURN n",
+                Util.slottedRuntime("CYPHER 5 MATCH (n) RETURN n", "25"));
+        assertEquals("CYPHER 5 runtime=slotted  MATCH (n) RETURN n", Util.slottedRuntime(" MATCH (n) RETURN n", "5"));
+        assertEquals(
+                "CYPHER 5 runtime=slotted  expressionEngine=compiled MATCH (n) RETURN n",
+                Util.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n", "5"));
+        assertEquals(
+                "CYPHER 5 runtime=compiled expressionEngine=compiled MATCH (n) RETURN n",
+                Util.slottedRuntime("CYPHER 5 runtime=compiled expressionEngine=compiled MATCH (n) RETURN n", "5"));
+
+        // Negative tests
+        assertFalse(Util.slottedRuntime(" cypher runtime=compiled MATCH (n) RETURN n", "5")
+                .contains("runtime=slotted "));
+        assertFalse(Util.slottedRuntime("cypher runtime=compiled MATCH (n) RETURN n", "25")
+                .contains("runtime=slotted cypher"));
+        assertFalse(Util.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n", "5")
+                .contains(" runtime=slotted cypher"));
+        assertFalse(Util.slottedRuntime("cypher 25 expressionEngine=compiled MATCH (n) RETURN n", "5")
                 .contains(" runtime=slotted cypher"));
     }
 

@@ -33,7 +33,6 @@ import apoc.util.collection.Iterators;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
@@ -43,24 +42,13 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
 
 public class Periodic {
 
-    enum Planner {
-        DEFAULT,
-        COST,
-        IDP,
-        DP
-    }
-
-    public static final Pattern PLANNER_PATTERN =
-            Pattern.compile("\\bplanner\\s*=\\s*[^\\s]*", Pattern.CASE_INSENSITIVE);
-    public static final Pattern RUNTIME_PATTERN = Pattern.compile("\\bruntime\\s*=", Pattern.CASE_INSENSITIVE);
-    public static final Pattern CYPHER_PREFIX_PATTERN = Pattern.compile("^\\s*\\bcypher\\b", Pattern.CASE_INSENSITIVE);
-    public static final String CYPHER_RUNTIME_SLOTTED = " runtime=slotted ";
     static final Pattern LIMIT_PATTERN = Pattern.compile("\\slimit\\s", Pattern.CASE_INSENSITIVE);
 
     @Context
@@ -77,6 +65,9 @@ public class Periodic {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @Admin
     @Procedure(name = "apoc.periodic.truncate", mode = Mode.SCHEMA)
@@ -233,10 +224,13 @@ public class Periodic {
 
     private long executeNumericResultStatement(
             @Name("statement") String statement, @Name("params") Map<String, Object> parameters) {
-        return db.executeTransactionally(statement, parameters, result -> {
-            String column = Iterables.single(result.columns());
-            return result.columnAs(column).stream().mapToLong(o -> (long) o).sum();
-        });
+        return db.executeTransactionally(
+                Util.prefixQueryWithCheck(procedureCallContext, statement), parameters, result -> {
+                    String column = Iterables.single(result.columns());
+                    return result.columnAs(column).stream()
+                            .mapToLong(o -> (long) o)
+                            .sum();
+                });
     }
 
     @Procedure("apoc.periodic.cancel")
@@ -259,7 +253,8 @@ public class Periodic {
             @Name(value = "params", defaultValue = "{}", description = "{ params = {} :: MAP }")
                     Map<String, Object> config) {
         validateQuery(statement);
-        return submitProc(name, statement, config, db, log, pools);
+        var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
+        return submitProc(name, query, config, db, log, pools);
     }
 
     @Procedure(name = "apoc.periodic.repeat", mode = Mode.WRITE)
@@ -276,7 +271,8 @@ public class Periodic {
                 name,
                 () -> {
                     // `resultAsString` in order to consume result
-                    db.executeTransactionally(statement, params, Result::resultAsString);
+                    db.executeTransactionally(
+                            Util.prefixQueryWithCheck(procedureCallContext, statement), params, Result::resultAsString);
                 },
                 0,
                 rate);
@@ -305,7 +301,8 @@ public class Periodic {
             @Name(value = "delay", description = "The delay in seconds to wait between each job execution.")
                     long delay) {
         validateQuery(statement);
-        JobInfo info = submitJob(name, new Countdown(name, statement, delay, log), log, pools);
+        var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
+        JobInfo info = submitJob(name, new Countdown(name, query, delay, log), log, pools);
         info.delay = delay;
         return Stream.of(info);
     }
@@ -382,11 +379,14 @@ public class Periodic {
         BatchMode batchMode = BatchMode.fromConfig(config);
         Map<String, Object> params = (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
 
-        try (Result result = tx.execute(slottedRuntime(cypherIterate), params)) {
+        try (Result result = tx.execute(
+                Util.slottedRuntime(cypherIterate, Util.getCypherVersionString(procedureCallContext)), params)) {
             Pair<String, Boolean> prepared =
                     PeriodicUtils.prepareInnerStatement(cypherAction, batchMode, result.columns(), "_batch");
-            String innerStatement = applyPlanner(prepared.getLeft(), Planner.valueOf((String)
-                    config.getOrDefault("planner", Planner.DEFAULT.name())));
+            String innerStatement = Util.applyPlanner(
+                    prepared.getLeft(),
+                    Util.Planner.valueOf((String) config.getOrDefault("planner", Util.Planner.DEFAULT.name())),
+                    Util.getCypherVersionString(procedureCallContext));
             boolean iterateList = prepared.getRight();
             String periodicId = UUID.randomUUID().toString();
             if (log.isDebugEnabled()) {
@@ -416,34 +416,6 @@ public class Periodic {
                     failedParams,
                     periodicId);
         }
-    }
-
-    static String slottedRuntime(String cypherIterate) {
-        if (RUNTIME_PATTERN.matcher(cypherIterate).find()) {
-            return cypherIterate;
-        }
-
-        return prependQueryOption(cypherIterate, CYPHER_RUNTIME_SLOTTED);
-    }
-
-    public static String applyPlanner(String query, Planner planner) {
-        if (planner.equals(Planner.DEFAULT)) {
-            return query;
-        }
-        Matcher matcher = PLANNER_PATTERN.matcher(query);
-        String cypherPlanner = String.format(" planner=%s ", planner.name().toLowerCase());
-        if (matcher.find()) {
-            return matcher.replaceFirst(cypherPlanner);
-        }
-        return prependQueryOption(query, cypherPlanner);
-    }
-
-    private static String prependQueryOption(String query, String cypherOption) {
-        String cypherPrefix = "cypher";
-        String completePrefix = cypherPrefix + cypherOption;
-        return CYPHER_PREFIX_PATTERN.matcher(query).find()
-                ? query.replaceFirst("(?i)" + cypherPrefix, completePrefix)
-                : completePrefix + query;
     }
 
     private class Countdown implements Runnable {
