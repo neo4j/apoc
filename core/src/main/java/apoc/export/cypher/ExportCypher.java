@@ -43,6 +43,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -70,6 +71,9 @@ public class ExportCypher {
 
     @Context
     public Pools pools;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @NotThreadSafe
     @Procedure("apoc.export.cypher.all")
@@ -202,7 +206,7 @@ public class ExportCypher {
                     Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         ExportConfig c = new ExportConfig(config);
-        Result result = tx.execute(query);
+        Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query));
         SubGraph graph;
         graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween(), false);
         String source = String.format(

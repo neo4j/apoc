@@ -61,6 +61,7 @@ import org.neo4j.internal.kernel.api.SchemaRead;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.internal.kernel.api.exceptions.LabelNotFoundKernelException;
 import org.neo4j.internal.kernel.api.exceptions.schema.IndexNotFoundKernelException;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.internal.schema.IndexDescriptor;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.api.QueryLanguage;
@@ -84,6 +85,9 @@ public class Schemas {
     @Context
     public KernelTransaction ktx;
 
+    @Context
+    public ProcedureCallContext procedureCallContext;
+
     @NotThreadSafe
     @Procedure(name = "apoc.schema.assert", mode = Mode.SCHEMA)
     @Description("Drops all other existing indexes and constraints when `dropExisting` is `true` (default is `true`).\n"
@@ -104,7 +108,8 @@ public class Schemas {
                             description = "Whether or not to drop all other existing indexes and constraints.")
                     boolean dropExisting) {
         return Stream.concat(
-                assertIndexes(indexes, dropExisting).stream(), assertConstraints(constraints, dropExisting).stream());
+                assertIndexes(indexes, dropExisting, Util.getCypherVersionString(procedureCallContext)).stream(),
+                assertConstraints(constraints, dropExisting).stream());
     }
 
     @NotThreadSafe
@@ -306,7 +311,8 @@ public class Schemas {
         return new AssertSchemaResult(lbl, key).unique().created();
     }
 
-    public List<AssertSchemaResult> assertIndexes(Map<String, List<Object>> indexes0, boolean dropExisting)
+    public List<AssertSchemaResult> assertIndexes(
+            Map<String, List<Object>> indexes0, boolean dropExisting, String cypherVersion)
             throws IllegalArgumentException {
         Schema schema = tx.schema();
         Map<String, List<Object>> indexes = copyMapOfObjects(indexes0);
@@ -350,7 +356,7 @@ public class Schemas {
                 if (key instanceof String) {
                     result.add(createSinglePropertyIndex(schema, index.getKey(), (String) key));
                 } else if (key instanceof List) {
-                    result.add(createCompoundIndex(index.getKey(), (List<String>) key));
+                    result.add(createCompoundIndex(index.getKey(), (List<String>) key, cypherVersion));
                 }
             }
         }
@@ -376,12 +382,13 @@ public class Schemas {
         return new AssertSchemaResult(lbl, key).created();
     }
 
-    private AssertSchemaResult createCompoundIndex(String label, List<String> keys) {
+    private AssertSchemaResult createCompoundIndex(String label, List<String> keys, String cypherVersion) {
         List<String> backTickedKeys = new ArrayList<>();
         keys.forEach(key -> backTickedKeys.add(String.format("n.`%s`", Util.sanitize(key))));
 
         tx.execute(String.format(
-                        "CREATE INDEX FOR (n:`%s`) ON (%s)", Util.sanitize(label), String.join(",", backTickedKeys)))
+                        "CYPHER %s CREATE INDEX FOR (n:`%s`) ON (%s)",
+                        cypherVersion, Util.sanitize(label), String.join(",", backTickedKeys)))
                 .close();
         return new AssertSchemaResult(label, keys).created();
     }

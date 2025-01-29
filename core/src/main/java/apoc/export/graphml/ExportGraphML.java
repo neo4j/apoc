@@ -46,6 +46,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.security.URLAccessChecker;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -76,6 +77,9 @@ public class ExportGraphML {
 
     @Context
     public URLAccessChecker urlAccessChecker;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @Procedure(name = "apoc.import.graphml", mode = Mode.WRITE)
     @Description("Imports a graph from the provided GraphML file.")
@@ -247,7 +251,7 @@ public class ExportGraphML {
                     Map<String, Object> config)
             throws Exception {
         ExportConfig c = new ExportConfig(config);
-        Result result = tx.execute(query);
+        Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query));
         SubGraph graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween(), false);
         String source = String.format(
                 "statement: nodes(%d), rels(%d)",

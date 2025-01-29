@@ -39,6 +39,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -66,6 +67,9 @@ public class ExportCSV {
 
     @Context
     public Pools pools;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     public ExportCSV() {}
 
@@ -191,7 +195,7 @@ public class ExportCSV {
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
 
         final String source;
-        try (final var result = tx.execute(query, params)) {
+        try (final var result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query), params)) {
             source = String.format("statement: cols(%d)", result.columns().size());
         }
 

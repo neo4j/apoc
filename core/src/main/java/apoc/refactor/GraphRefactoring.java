@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.schema.ConstraintType;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
@@ -56,6 +57,9 @@ public class GraphRefactoring {
 
     @Context
     public Pools pools;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @Procedure(name = "apoc.refactor.extractNode", mode = Mode.WRITE)
     @Description("Expands the given `RELATIONSHIP` VALUES into intermediate `NODE` VALUES.\n"
@@ -716,6 +720,7 @@ public class GraphRefactoring {
             mode = Mode.WRITE,
             deprecatedBy =
                     "Deprecated for removal without a direct replacement, use plain Cypher or create a custom procedure.")
+    @Deprecated
     @Description(
             """
             Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.
@@ -828,7 +833,7 @@ public class GraphRefactoring {
                 rels.removeAll(List.of(relationshipIn, relationshipOut));
             }
 
-            tx.execute("WITH $node as n DETACH DELETE n", Map.of("node", node));
+            tx.execute(Util.prefixQuery(procedureCallContext, "WITH $node as n DETACH DELETE n"), Map.of("node", node));
             nodes.remove(node);
         });
 
@@ -870,7 +875,7 @@ public class GraphRefactoring {
                 Map<String, Object> params = new HashMap<>(2);
                 params.put("node", node);
                 params.put("value", value);
-                Result result = innerTx.execute(q, params);
+                Result result = innerTx.execute(Util.prefixQuery(procedureCallContext, q), params);
                 if (result.hasNext()) {
                     Node cat = (Node) result.next().get("cat");
                     for (String copiedKey : copiedKeys) {

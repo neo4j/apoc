@@ -30,6 +30,7 @@ import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.CollectionUtils;
 import apoc.util.MapUtil;
+import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import com.google.common.collect.Sets;
 import java.util.AbstractMap;
@@ -70,6 +71,7 @@ import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.TokenRead;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -97,6 +99,9 @@ public class Meta {
 
     @Context
     public Log log;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     /**
      * Represents the result of a metadata operation.
@@ -503,7 +508,7 @@ public class Meta {
         MetaConfig metaConfig = new MetaConfig(config);
         final SubGraph subGraph;
         if (graph instanceof String) {
-            Result result = tx.execute((String) graph);
+            Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, (String) graph));
             subGraph = CypherResultSubGraph.from(tx, result, metaConfig.isAddRelationshipsBetweenNodes());
         } else if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;
@@ -1133,7 +1138,8 @@ public class Meta {
         MetaConfig metaConfig = new MetaConfig(config, false);
         final SubGraph subGraph;
         if (graph instanceof String) {
-            Result result = tx.execute("CYPHER runtime=pipelined " + (String) graph);
+            Result result =
+                    tx.execute(Util.getCypherVersionPrefix(procedureCallContext) + " runtime=pipelined " + graph);
             subGraph = CypherResultSubGraph.from(tx, result, metaConfig.isAddRelationshipsBetweenNodes());
         } else if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;
