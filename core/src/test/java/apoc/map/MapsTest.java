@@ -217,7 +217,7 @@ public class MapsTest {
 
     @Test
     public void testSetEntry() {
-        TestUtil.testCall(db, "RETURN apoc.map.setEntry({a:1},'a',2) AS value", (r) -> {
+        TestUtil.testCall(db, "CYPHER 5 RETURN apoc.map.setEntry({a:1},'a',2) AS value", (r) -> {
             assertEquals(map("a", 2L), r.get("value"));
         });
     }

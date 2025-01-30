@@ -106,7 +106,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.test.rule.DbmsRule;
@@ -117,8 +116,7 @@ public class ArgumentDescriptionsTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"))
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"));
 
     @Before
     public void setUp() {
@@ -202,9 +200,11 @@ public class ArgumentDescriptionsTest {
 
     @Test
     public void functionArgumentDescriptionsDefaultVersion() throws IOException {
+        // TODO: When Cypher command for getting default is available use that here
+        // for now we just force this to use the preset default
         assertResultAsJsonEquals(
                 CypherVersion.Default,
-                showFunctions(null),
+                showFunctions(CypherVersion.Default),
                 "/functions/cypher%s/functions.json".formatted(CypherVersion.Default),
                 "/functions/common/functions.json");
     }
@@ -223,9 +223,11 @@ public class ArgumentDescriptionsTest {
 
     @Test
     public void procedureArgumentDescriptionsDefaultVersion() throws IOException {
+        // TODO: When Cypher command for getting default is available use that here
+        // for now we just force this to use the preset default
         assertResultAsJsonEquals(
                 CypherVersion.Default,
-                showProcedures(null),
+                showProcedures(CypherVersion.Default),
                 "/procedures/cypher%s/procedures.json".formatted(CypherVersion.Default),
                 "/procedures/common/procedures.json");
     }

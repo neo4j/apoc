@@ -55,8 +55,8 @@ public class HelpTest {
     }
 
     @Test
-    public void info() {
-        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "bitwise"), (row) -> {
+    public void infoCypher5() {
+        TestUtil.testCall(db, "CYPHER 5 CALL apoc.help($text)", map("text", "bitwise"), (row) -> {
             assertEquals("function", row.get("type"));
             assertEquals("apoc.bitwise.op", row.get("name"));
             assertTrue(((String) row.get("text")).contains("bitwise operation"));
@@ -64,27 +64,55 @@ public class HelpTest {
         });
         TestUtil.testCall(
                 db,
-                "CALL apoc.help($text)",
+                "CYPHER 5 CALL apoc.help($text)",
                 map("text", "operation+"),
                 (row) -> assertEquals("apoc.bitwise.op", row.get("name")));
-        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "toSet"), (row) -> {
+        TestUtil.testCall(db, "CYPHER 5 CALL apoc.help($text)", map("text", "toSet"), (row) -> {
             assertEquals("function", row.get("type"));
             assertEquals("apoc.coll.toSet", row.get("name"));
             assertTrue(((String) row.get("text")).contains("unique `LIST<ANY>`"));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
-        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "diff.nodes"), (row) -> {
+        TestUtil.testCall(db, "CYPHER 5 CALL apoc.help($text)", map("text", "diff.nodes"), (row) -> {
             assertEquals("function", row.get("type"));
             assertEquals("apoc.diff.nodes", row.get("name"));
             assertTrue(((String) row.get("text"))
                     .contains("Returns a `MAP` detailing the differences between the two given `NODE` values."));
             assertFalse(((Boolean) row.get("isDeprecated")));
         });
-        TestUtil.testCall(db, "CALL apoc.help($text)", map("text", "apoc.create.uuids"), (row) -> {
+        TestUtil.testCall(db, "CYPHER 5 CALL apoc.help($text)", map("text", "apoc.create.uuids"), (row) -> {
             assertEquals("procedure", row.get("type"));
             assertEquals("apoc.create.uuids", row.get("name"));
             assertTrue(((String) row.get("text")).contains("Returns a stream of UUIDs."));
             assertTrue(((Boolean) row.get("isDeprecated")));
+        });
+    }
+
+    @Test
+    public void infoCypher25() {
+        TestUtil.testCall(db, "CYPHER 25 CALL apoc.help($text)", map("text", "bitwise"), (row) -> {
+            assertEquals("function", row.get("type"));
+            assertEquals("apoc.bitwise.op", row.get("name"));
+            assertTrue(((String) row.get("text")).contains("bitwise operation"));
+            assertFalse(((Boolean) row.get("isDeprecated")));
+        });
+        TestUtil.testCall(
+                db,
+                "CYPHER 25 CALL apoc.help($text)",
+                map("text", "operation+"),
+                (row) -> assertEquals("apoc.bitwise.op", row.get("name")));
+        TestUtil.testCall(db, "CYPHER 25 CALL apoc.help($text)", map("text", "toSet"), (row) -> {
+            assertEquals("function", row.get("type"));
+            assertEquals("apoc.coll.toSet", row.get("name"));
+            assertTrue(((String) row.get("text")).contains("unique `LIST<ANY>`"));
+            assertFalse(((Boolean) row.get("isDeprecated")));
+        });
+        TestUtil.testCall(db, "CYPHER 25 CALL apoc.help($text)", map("text", "diff.nodes"), (row) -> {
+            assertEquals("function", row.get("type"));
+            assertEquals("apoc.diff.nodes", row.get("name"));
+            assertTrue(((String) row.get("text"))
+                    .contains("Returns a `MAP` detailing the differences between the two given `NODE` values."));
+            assertFalse(((Boolean) row.get("isDeprecated")));
         });
     }
 

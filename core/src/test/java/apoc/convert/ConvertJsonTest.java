@@ -448,6 +448,7 @@ public class ConvertJsonTest {
         testCall(
                 db,
                 """
+                        CYPHER 5
                         MATCH path = (k:Person {name:'Keanu Reeves'})-[*..5]-(x)
                         WITH collect(path) AS paths
                         CALL apoc.convert.toTree(paths)
@@ -486,6 +487,7 @@ public class ConvertJsonTest {
         testCall(
                 db,
                 """
+                        CYPHER 5
                         MATCH(root:TreeNode) WHERE root.name = "root"
                         MATCH path = (root)-[cl:CHILD*]->(c:TreeNode)
                         WITH path, [r IN relationships(path) | r.order] AS orders
@@ -507,9 +509,11 @@ public class ConvertJsonTest {
     public void testToTree() {
         testCall(
                 db,
-                "CREATE p1=(m:Movie {title:'M'})<-[:ACTED_IN {role:'R1'}]-(:Actor {name:'A1'}), "
-                        + " p2 = (m)<-[:ACTED_IN  {role:'R2'}]-(:Actor {name:'A2'}) WITH [p1,p2] as paths "
-                        + " CALL apoc.convert.toTree(paths) YIELD value RETURN value",
+                """
+                         CYPHER 5 CREATE p1=(m:Movie {title:'M'})<-[:ACTED_IN {role:'R1'}]-(:Actor {name:'A1'}),
+                         p2 = (m)<-[:ACTED_IN  {role:'R2'}]-(:Actor {name:'A2'}) WITH [p1,p2] as paths
+                         CALL apoc.convert.toTree(paths) YIELD value RETURN value
+                        """,
                 (row) -> {
                     Map root = (Map) row.get("value");
                     assertEquals("Movie", root.get("_type"));
@@ -526,9 +530,11 @@ public class ConvertJsonTest {
     public void testToTreeUpperCaseRels() {
         testCall(
                 db,
-                "CREATE p1=(m:Movie {title:'M'})<-[:ACTED_IN {role:'R1'}]-(:Actor {name:'A1'}), "
-                        + " p2 = (m)<-[:ACTED_IN  {role:'R2'}]-(:Actor {name:'A2'}) WITH [p1,p2] as paths "
-                        + " CALL apoc.convert.toTree(paths,false) YIELD value RETURN value",
+                """
+                        CYPHER 5
+                        CREATE p1=(m:Movie {title:'M'})<-[:ACTED_IN {role:'R1'}]-(:Actor {name:'A1'}),
+                        p2 = (m)<-[:ACTED_IN  {role:'R2'}]-(:Actor {name:'A2'}) WITH [p1,p2] as paths
+                        CALL apoc.convert.toTree(paths,false) YIELD value RETURN value""",
                 (row) -> {
                     Map root = (Map) row.get("value");
                     assertEquals("Movie", root.get("_type"));
@@ -543,7 +549,7 @@ public class ConvertJsonTest {
 
     @Test
     public void testTreeOfEmptyList() {
-        testCall(db, " CALL apoc.convert.toTree([]) YIELD value RETURN value", (row) -> {
+        testCall(db, "CYPHER 5 CALL apoc.convert.toTree([]) YIELD value RETURN value", (row) -> {
             Map root = (Map) row.get("value");
             assertTrue(root.isEmpty());
         });
@@ -561,6 +567,7 @@ public class ConvertJsonTest {
 
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -632,6 +639,7 @@ public class ConvertJsonTest {
 
         String call =
                 """
+                CYPHER 5
                 MATCH (parent:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd'})
                 WITH parent
                 OPTIONAL MATCH childFlagPath=(parent)-[:HAS]->(:Comm)<-[:Flag]-(:User)
@@ -747,6 +755,7 @@ public class ConvertJsonTest {
         statementForConfig(db);
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -778,6 +787,7 @@ public class ConvertJsonTest {
         statementForConfig(db);
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -809,6 +819,7 @@ public class ConvertJsonTest {
         statementForConfig(db);
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -840,6 +851,7 @@ public class ConvertJsonTest {
         statementForConfig(db);
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -871,6 +883,7 @@ public class ConvertJsonTest {
         statementForConfig(db);
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -898,6 +911,7 @@ public class ConvertJsonTest {
 
         String query =
                 """
+                CYPHER 5
                 MATCH p1 = (n:N {id:'n21'})-[e1]->(m1:N)
                 WITH  COLLECT(p1) as paths
                 CALL apoc.convert.toTree(paths, false)
@@ -933,6 +947,7 @@ public class ConvertJsonTest {
         statementForConfig(db);
         String call =
                 """
+                CYPHER 5
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps

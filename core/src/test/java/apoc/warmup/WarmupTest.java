@@ -29,18 +29,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 /**
- * @author Sascha Peukert
- * @since 06.05.16
+ * CYPHER 5 only; moved to extended for Cypher 25
  */
 public class WarmupTest {
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    public DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting(
+                    GraphDatabaseInternalSettings.default_cypher_version,
+                    GraphDatabaseInternalSettings.CypherVersion.Cypher5);
 
     @Before
     public void setUp() {

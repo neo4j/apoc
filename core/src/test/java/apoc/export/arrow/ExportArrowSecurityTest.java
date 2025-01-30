@@ -54,11 +54,15 @@ import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+/**
+ * CYPHER 5 only; moved to extended for Cypher 25
+ */
 @RunWith(Enclosed.class)
 public class ExportArrowSecurityTest {
     public static final File directory = new File("target/import");
@@ -84,7 +88,10 @@ public class ExportArrowSecurityTest {
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+                    directory.toPath().toAbsolutePath())
+            .withSetting(
+                    GraphDatabaseInternalSettings.default_cypher_version,
+                    GraphDatabaseInternalSettings.CypherVersion.Cypher5);
 
     @BeforeClass
     public static void setUp() {

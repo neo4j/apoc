@@ -79,6 +79,8 @@ public class SecurityTestUtil {
             Pair.of("xml", "($fileName, '', {}, false)"),
             Pair.of("arrow", "($fileName)"));
 
+    public static List<String> cypher5OnlyProcedures = List.of("apoc.load.arrow", "apoc.load.jsonParams");
+
     public static void assertPathTraversalError(
             GraphDatabaseService db, String query, Map<String, Object> params, Consumer<Map> exceptionConsumer) {
 

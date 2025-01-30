@@ -43,11 +43,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
+/**
+ * CYPHER 5 only; moved to extended for Cypher 25
+ */
 public class ArrowTest {
 
     private static File directory = new File("target/arrow import");
@@ -60,7 +64,10 @@ public class ArrowTest {
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+                    directory.toPath().toAbsolutePath())
+            .withSetting(
+                    GraphDatabaseInternalSettings.default_cypher_version,
+                    GraphDatabaseInternalSettings.CypherVersion.Cypher5);
 
     public static final List<Map<String, Object>> EXPECTED = List.of(
             new HashMap<>() {

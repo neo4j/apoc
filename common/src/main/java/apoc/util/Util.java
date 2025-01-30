@@ -111,6 +111,7 @@ import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.internal.schema.ConstraintDescriptor;
+import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
@@ -1360,5 +1361,12 @@ public class Util {
             }
         }
         return result;
+    }
+
+    // Get the current supported query language versions, if this list changes
+    // this function will error, on error please update!
+    public static List<String> getCypherVersions() {
+        assert QueryLanguage.ALL.size() == 2;
+        return List.of("5", "25");
     }
 }

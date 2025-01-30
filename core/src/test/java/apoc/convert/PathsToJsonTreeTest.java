@@ -703,6 +703,7 @@ public class PathsToJsonTreeTest {
 
         var query =
                 """
+                CYPHER 5
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.convert.toTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree
