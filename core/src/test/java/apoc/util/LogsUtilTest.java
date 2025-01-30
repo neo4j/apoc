@@ -22,20 +22,28 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 import org.neo4j.configuration.Config;
+import org.neo4j.cypher.internal.CypherVersion;
 
 public class LogsUtilTest {
 
     @Test
     public void shouldRedactPasswords() {
         String sanitized = LogsUtil.sanitizeQuery(
-                Config.defaults(), "CREATE USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED");
+                Config.defaults(), "CREATE USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED", CypherVersion.Cypher5);
+        assertEquals(sanitized, "CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
+    }
+
+    @Test
+    public void shouldSanitizeCypher25Query() {
+        String sanitized = LogsUtil.sanitizeQuery(
+                Config.defaults(), "RETURN CASE $x WHEN IN ['a', 'b'] THEN true ELSE false END AS res", CypherVersion.Cypher25);
         assertEquals(sanitized, "CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
     }
 
     @Test
     public void shouldReturnInputIfInvalidQuery() {
         String invalidQuery = "MATCH USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED";
-        String sanitized = LogsUtil.sanitizeQuery(Config.defaults(), invalidQuery);
+        String sanitized = LogsUtil.sanitizeQuery(Config.defaults(), invalidQuery, CypherVersion.Cypher5);
 
         assertEquals(sanitized, invalidQuery);
     }
@@ -44,7 +52,8 @@ public class LogsUtilTest {
     public void whitespaceDeprecationSucceedsSanitization() {
         String sanitized = LogsUtil.sanitizeQuery(
                 Config.defaults(),
-                "CREATE USER dum\u0085my IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED");
+                "CREATE USER dum\u0085my IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED",
+                CypherVersion.Cypher5);
         assertEquals(sanitized, "CREATE USER `dum\u0085my` IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
     }
 }
