@@ -78,7 +78,7 @@ public class TriggerClusterRoutingTest {
 
     @Test
     public void testTriggerAddAllowedOnlyInSysLeaderMember() {
-        final String addTrigger = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
+        final String addTrigger = "CYPHER 5 CALL apoc.trigger.add($name, 'RETURN 1', {})";
         String triggerName = randomTriggerName();
 
         succeedsInLeader(addTrigger, triggerName, DEFAULT_DATABASE_NAME);
@@ -87,8 +87,8 @@ public class TriggerClusterRoutingTest {
 
     @Test
     public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
-        final String addTrigger = "CALL apoc.trigger.add($name, 'RETURN 1', {})";
-        final String removeTrigger = "CALL apoc.trigger.remove($name)";
+        final String addTrigger = "CYPHER 5 CALL apoc.trigger.add($name, 'RETURN 1', {})";
+        final String removeTrigger = "CYPHER 5 CALL apoc.trigger.remove($name)";
         String triggerName = randomTriggerName();
 
         succeedsInLeader(addTrigger, triggerName, DEFAULT_DATABASE_NAME);

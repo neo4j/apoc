@@ -44,7 +44,7 @@ public class WarmupEnterpriseTest {
                 GraphDatabaseInternalSettings.include_versions_under_development.name(), "true",
                 GraphDatabaseSettings.db_format.name(), "block");
         withSession(conf, session -> {
-            assertThatThrownBy(() -> testCall(session, "CALL apoc.warmup.run()", (r) -> {}))
+            assertThatThrownBy(() -> testCall(session, "CYPHER 5 CALL apoc.warmup.run()", (r) -> {}))
                     .isExactlyInstanceOf(ClientException.class)
                     .hasMessageContaining(
                             "Failed to invoke procedure `apoc.warmup.run`: Caused by: java.lang.IllegalArgumentException: `apoc.warmup.run` is only supported on record storage databases");
@@ -57,7 +57,7 @@ public class WarmupEnterpriseTest {
                 GraphDatabaseInternalSettings.include_versions_under_development.name(), "true",
                 GraphDatabaseSettings.db_format.name(), "high_limit");
         withSession(conf, session -> {
-            testCall(session, "CALL apoc.warmup.run(true,true,true)", r -> {
+            testCall(session, "CYPHER 5 CALL apoc.warmup.run(true,true,true)", r -> {
                 assertEquals(true, r.get("indexesLoaded"));
                 assertNotEquals(0L, r.get("indexPages"));
             });
@@ -74,8 +74,8 @@ public class WarmupEnterpriseTest {
             }
             try (final var s =
                     d.session(SessionConfig.builder().withDatabase("blockdb").build())) {
-                assertThatThrownBy(() ->
-                                s.run("CALL apoc.warmup.run(true,true,true)").consume())
+                assertThatThrownBy(() -> s.run("CYPHER 5 CALL apoc.warmup.run(true,true,true)")
+                                .consume())
                         .isExactlyInstanceOf(ClientException.class)
                         .hasMessageContaining(
                                 "Failed to invoke procedure `apoc.warmup.run`: Caused by: java.lang.IllegalArgumentException: `apoc.warmup.run` is only supported on record storage databases");

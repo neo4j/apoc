@@ -124,16 +124,20 @@ public class RBACOnLoadTest {
                 "apoc.load.jsonArray($url)",
                 "apoc.load.jsonParams($url, null, null, null, {})",
                 "apoc.load.xml($url)",
-                "apoc.load.arrow($url)",
                 "apoc.import.csv([{fileName: $url, labels: ['Person']}], [], {})",
                 "apoc.import.graphml($url, {})",
                 "apoc.import.json($url)",
                 "apoc.import.xml($url)");
 
+        List<String> loadableAPOCProcsCypher5Only =
+                List.of("apoc.load.jsonParams($url, null, null, null, {})", "apoc.load.arrow($url)");
+
         for (String loadableAPOCProc : loadableAPOCProcs) {
+            var cypherVersion = loadableAPOCProcsCypher5Only.contains(loadableAPOCProc) ? "CYPHER 5 " : "";
             RuntimeException e = assertThrows(
                     RuntimeException.class,
-                    () -> testCall(testUserSession, "CALL " + loadableAPOCProc, Map.of("url", url), r -> {}));
+                    () -> testCall(
+                            testUserSession, cypherVersion + "CALL " + loadableAPOCProc, Map.of("url", url), r -> {}));
 
             Assertions.assertThat(e.getMessage()).contains("URLAccessValidationError");
             Assertions.assertThat(e.getMessage())
@@ -171,13 +175,21 @@ public class RBACOnLoadTest {
                 "apoc.import.json($url)",
                 "apoc.import.xml($url)");
 
+        List<String> loadableAPOCProcsCypher5Only =
+                List.of("apoc.load.jsonParams($url, null, null, null, {})", "apoc.load.arrow($url)");
+
         addRBACDenyAll("test");
 
         for (String url : urls) {
             for (String loadableAPOCProc : loadableAPOCProcs) {
+                var cypherVersion = loadableAPOCProcsCypher5Only.contains(loadableAPOCProc) ? "CYPHER 5 " : "";
                 RuntimeException e = assertThrows(
                         RuntimeException.class,
-                        () -> testCall(testUserSession, "CALL " + loadableAPOCProc, Map.of("url", url), r -> {}));
+                        () -> testCall(
+                                testUserSession,
+                                cypherVersion + "CALL " + loadableAPOCProc,
+                                Map.of("url", url),
+                                r -> {}));
 
                 Assertions.assertThat(e.getMessage()).contains("URLAccessValidationError");
             }
