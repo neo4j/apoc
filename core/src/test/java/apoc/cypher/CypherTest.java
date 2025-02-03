@@ -61,7 +61,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -81,7 +80,6 @@ public class CypherTest {
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.allow_file_urls, true)
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     new File("src/test/resources").toPath().toAbsolutePath());

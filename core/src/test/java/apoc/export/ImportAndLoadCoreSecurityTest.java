@@ -21,6 +21,7 @@ package apoc.export;
 import static apoc.export.SecurityTestUtil.ALLOWED_EXCEPTIONS;
 import static apoc.export.SecurityTestUtil.IMPORT_PROCEDURES;
 import static apoc.export.SecurityTestUtil.LOAD_PROCEDURES;
+import static apoc.export.SecurityTestUtil.cypher5OnlyProcedures;
 import static apoc.export.SecurityTestUtil.setImportFileApocConfigs;
 import static apoc.util.FileTestUtil.createTempFolder;
 import static apoc.util.FileUtils.ACCESS_OUTSIDE_DIR_ERROR;
@@ -89,7 +90,8 @@ public class ImportAndLoadCoreSecurityTest {
     private final String fileName;
 
     public ImportAndLoadCoreSecurityTest(String method, String methodArguments, String fileName) {
-        this.apocProcedure = "CALL " + method + methodArguments;
+        var cypherVersion = cypher5OnlyProcedures.contains(method) ? "CYPHER 5 " : "";
+        this.apocProcedure = cypherVersion + "CALL " + method + methodArguments;
         this.importMethod = method;
         this.fileName = fileName;
     }

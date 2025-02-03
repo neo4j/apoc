@@ -38,6 +38,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
@@ -49,8 +50,7 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 /**
- * @author mh
- * @since 20.09.16
+ * CYPHER 5 only; moved to extended for Cypher 25
  */
 public class TriggerTest {
 
@@ -60,7 +60,11 @@ public class TriggerTest {
             new ProvideSystemProperty(APOC_TRIGGER_ENABLED, String.valueOf(true));
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule().withSetting(procedure_unrestricted, List.of("apoc*"));
+    public DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting(procedure_unrestricted, List.of("apoc*"))
+            .withSetting(
+                    GraphDatabaseInternalSettings.default_cypher_version,
+                    GraphDatabaseInternalSettings.CypherVersion.Cypher5);
 
     private long start;
 

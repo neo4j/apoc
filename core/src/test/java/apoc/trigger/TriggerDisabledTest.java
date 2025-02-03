@@ -29,13 +29,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 /**
- * @author alexiudice
- * @since 14.07.18
+ * CYPHER 5 only; moved to extended for Cypher 25
  * <p>
  * Tests for fix of #845.
  * <p>
@@ -47,7 +47,10 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 public class TriggerDisabledTest {
 
     @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    public static DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting(
+                    GraphDatabaseInternalSettings.default_cypher_version,
+                    GraphDatabaseInternalSettings.CypherVersion.Cypher5);
 
     @BeforeClass
     public static void setUp() {

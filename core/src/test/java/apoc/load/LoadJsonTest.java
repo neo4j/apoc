@@ -119,7 +119,7 @@ public class LoadJsonTest {
     public void testLoadMultiJsonWithBinary() {
         testResult(
                 db,
-                "CALL apoc.load.jsonParams($url, null, null, null, $config)",
+                "CYPHER 5 CALL apoc.load.jsonParams($url, null, null, null, $config)",
                 map(
                         "url",
                         fileToBinary(
@@ -441,7 +441,7 @@ public class LoadJsonTest {
 
         testCall(
                 db,
-                "call apoc.load.jsonParams($url, $config, $payload)",
+                "CYPHER 5 CALL apoc.load.jsonParams($url, $config, $payload)",
                 map(
                         "payload",
                         "{\"query\":\"pagecache\",\"version\":\"3.5\"}",
@@ -471,7 +471,7 @@ public class LoadJsonTest {
 
         testCall(
                 db,
-                "call apoc.load.jsonParams($url, $config, $json)",
+                "CYPHER 5 CALL apoc.load.jsonParams($url, $config, $json)",
                 map(
                         "json",
                         "{\"query\":\"pagecache\",\"version\":\"3.5\"}",

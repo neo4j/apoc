@@ -157,7 +157,7 @@ public class StringsTest {
 
         testCall(
                 db,
-                "RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
+                "CYPHER 5 RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
                 map("text", text, "regex", regex, "replacement", replacement),
                 row -> assertEquals(expected, row.get("value")));
     }
@@ -169,17 +169,17 @@ public class StringsTest {
         String replacement = "";
         testCall(
                 db,
-                "RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
+                "CYPHER 5 RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
                 map("text", null, "regex", regex, "replacement", replacement),
                 row -> assertEquals(null, row.get("value")));
         testCall(
                 db,
-                "RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
+                "CYPHER 5 RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
                 map("text", text, "regex", null, "replacement", replacement),
                 row -> assertEquals(null, row.get("value")));
         testCall(
                 db,
-                "RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
+                "CYPHER 5 RETURN apoc.text.regreplace($text,$regex,$replacement) AS value",
                 map("text", text, "regex", regex, "replacement", null),
                 row -> assertEquals(null, row.get("value")));
     }
@@ -397,7 +397,7 @@ public class StringsTest {
     public void testDocReplace() {
         testCall(
                 db,
-                "RETURN apoc.text.regreplace('Hello World!', '[^a-zA-Z]', '')  AS value",
+                "CYPHER 5 RETURN apoc.text.regreplace('Hello World!', '[^a-zA-Z]', '')  AS value",
                 row -> assertEquals("HelloWorld", row.get("value")));
     }
 

@@ -47,7 +47,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -70,55 +69,7 @@ public class SchemasTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
-
-    private static void accept(Result result) {
-        Map<String, Object> r = result.next();
-
-        assertEquals(":Foo(bar)", r.get("name"));
-        assertEquals("ONLINE", r.get("status"));
-        assertEquals("Foo", r.get("label"));
-        assertEquals("RANGE", r.get("type"));
-        assertEquals("bar", ((List<String>) r.get("properties")).get(0));
-        assertEquals("NO FAILURE", r.get("failure"));
-        assertEquals(100d, r.get("populationProgress"));
-        assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat(r.get("userDescription").toString())
-                .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
-
-        assertTrue(!result.hasNext());
-    }
-
-    private static void accept2(Result result) {
-        Map<String, Object> r = result.next();
-
-        assertEquals(":Foo(bar)", r.get("name"));
-        assertEquals("ONLINE", r.get("status"));
-        assertEquals("Foo", r.get("label"));
-        assertEquals("RANGE", r.get("type"));
-        assertEquals("bar", ((List<String>) r.get("properties")).get(0));
-        assertEquals("NO FAILURE", r.get("failure"));
-        assertEquals(100d, r.get("populationProgress"));
-        assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat(r.get("userDescription").toString())
-                .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
-
-        r = result.next();
-
-        assertEquals(":Person(name)", r.get("name"));
-        assertEquals("ONLINE", r.get("status"));
-        assertEquals("Person", r.get("label"));
-        assertEquals("TEXT", r.get("type"));
-        assertEquals("name", ((List<String>) r.get("properties")).get(0));
-        assertEquals("NO FAILURE", r.get("failure"));
-        assertEquals(100d, r.get("populationProgress"));
-        assertEquals(1d, r.get("valuesSelectivity"));
-        Assertions.assertThat(r.get("userDescription").toString())
-                .contains("name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-2.0' )");
-
-        assertTrue(!result.hasNext());
-    }
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
 
     @Before
     public void setUp() {
@@ -366,36 +317,54 @@ public class SchemasTest {
     public void testIndexes() {
         db.executeTransactionally("CREATE RANGE INDEX index1 FOR (n:Foo) ON (n.bar)");
         awaitIndexesOnline();
-        testResult(db, "CALL apoc.schema.nodes()", (result) -> {
-            // Get the index info
-            Map<String, Object> r = result.next();
 
-            assertEquals(":Foo(bar)", r.get("name"));
-            assertEquals("ONLINE", r.get("status"));
-            assertEquals("Foo", r.get("label"));
-            assertEquals("RANGE", r.get("type"));
-            assertEquals("bar", ((List<String>) r.get("properties")).get(0));
-            assertEquals("NO FAILURE", r.get("failure"));
-            assertEquals(100d, r.get("populationProgress"));
-            assertEquals(1d, r.get("valuesSelectivity"));
-            Assertions.assertThat(r.get("userDescription").toString())
-                    .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(db, preparser + "CALL apoc.schema.nodes()", (result) -> {
+                // Get the index info
+                Map<String, Object> r = result.next();
 
-            assertFalse(result.hasNext());
-        });
+                assertEquals("ONLINE", r.get("status"));
+                assertEquals("Foo", r.get("label"));
+                assertEquals("RANGE", r.get("type"));
+                assertEquals("bar", ((List<String>) r.get("properties")).get(0));
+                assertEquals("NO FAILURE", r.get("failure"));
+                assertEquals(100d, r.get("populationProgress"));
+                assertEquals(1d, r.get("valuesSelectivity"));
+                Assertions.assertThat(r.get("userDescription").toString())
+                        .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Foo(bar)", r.get("name"));
+                } else {
+                    assertEquals("index1", r.get("name"));
+                }
+
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
     public void testRelIndex() {
         db.executeTransactionally("CREATE INDEX FOR ()-[r:KNOWS]-() ON (r.id, r.since)");
         awaitIndexesOnline();
-        testCall(db, "CALL apoc.schema.relationships()", row -> {
-            assertEquals(":KNOWS(id,since)", row.get("name"));
-            assertEquals("ONLINE", row.get("status"));
-            assertEquals("KNOWS", row.get("relationshipType"));
-            assertEquals("RANGE", row.get("type"));
-            assertEquals(List.of("id", "since"), row.get("properties"));
-        });
+
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testCall(db, preparser + "CALL apoc.schema.relationships()", row -> {
+                assertEquals("ONLINE", row.get("status"));
+                assertEquals("KNOWS", row.get("relationshipType"));
+                assertEquals("RANGE", row.get("type"));
+                assertEquals(List.of("id", "since"), row.get("properties"));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":KNOWS(id,since)", row.get("name"));
+                } else {
+                    assertTrue(row.get("name").toString().startsWith("index_"));
+                }
+            });
+        }
     }
 
     @Test
@@ -436,34 +405,47 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR (bar:Bar) REQUIRE bar.foo IS UNIQUE");
         awaitIndexesOnline();
 
-        testResult(db, CALL_SCHEMA_NODES_ORDERED, (result) -> {
-            Map<String, Object> r = result.next();
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(db, preparser + CALL_SCHEMA_NODES_ORDERED, (result) -> {
+                Map<String, Object> r = result.next();
 
-            assertionsBarFooUniqueCons(r);
+                assertEquals("Bar", r.get("label"));
+                assertEquals(List.of("foo"), r.get("properties"));
+                assertEquals("RANGE", r.get("type"));
+                assertEquals("ONLINE", r.get("status"));
+                final String expectedUserDescBarIdx =
+                        "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
+                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
 
-            assertEquals("RANGE", r.get("type"));
-            assertEquals("ONLINE", r.get("status"));
-            final String expectedUserDescBarIdx =
-                    "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
-            r = result.next();
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Bar(foo)", r.get("name"));
+                } else {
+                    assertTrue(r.get("name").toString().startsWith("constraint_"));
+                }
 
-            assertionsBarFooUniqueCons(r);
+                r = result.next();
 
-            assertEquals("UNIQUENESS", r.get("type"));
-            assertEquals("", r.get("status"));
-            final String expectedUserDescBarCons =
-                    "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                assertEquals("Bar", r.get("label"));
+                assertEquals(List.of("foo"), r.get("properties"));
+                assertEquals("UNIQUENESS", r.get("type"));
+                assertEquals("", r.get("status"));
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Bar(foo)", r.get("name"));
+                    final String expectedUserDescBarCons =
+                            "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
+                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
-            assertFalse(result.hasNext());
-        });
-    }
+                } else {
+                    assertTrue(r.get("name").toString().startsWith("constraint_"));
+                    final String expectedUserDescBarCons =
+                            "name='constraint_4791de3e', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
+                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                }
 
-    private static void assertionsBarFooUniqueCons(Map<String, Object> r) {
-        assertEquals(":Bar(foo)", r.get("name"));
-        assertEquals("Bar", r.get("label"));
-        assertEquals(List.of("foo"), r.get("properties"));
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -472,43 +454,59 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT bar_unique FOR (bar:Bar) REQUIRE bar.bar IS UNIQUE");
         awaitIndexesOnline();
 
-        testResult(db, CALL_SCHEMA_NODES_ORDERED, (result) -> {
-            Map<String, Object> r = result.next();
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(db, preparser + CALL_SCHEMA_NODES_ORDERED, (result) -> {
+                Map<String, Object> r = result.next();
 
-            assertionsBarUniqueCons(r);
-            assertEquals("RANGE", r.get("type"));
-            assertEquals("ONLINE", r.get("status"));
-            final String expectedUserDescBarIdx =
-                    "name='bar_unique', type='RANGE', schema=(:Bar {bar}), indexProvider='range-1.0', owningConstraint";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
+                assertEquals("Bar", r.get("label"));
+                assertEquals(List.of("bar"), r.get("properties"));
+                assertEquals("RANGE", r.get("type"));
+                assertEquals("ONLINE", r.get("status"));
 
-            r = result.next();
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Bar(bar)", r.get("name"));
+                } else {
+                    assertEquals("bar_unique", r.get("name"));
+                }
 
-            assertionsBarUniqueCons(r);
-            assertEquals("UNIQUENESS", r.get("type"));
-            assertEquals("", r.get("status"));
-            final String expectedUserDescBarCons =
-                    "name='bar_unique', type='UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                r = result.next();
 
-            r = result.next();
-            assertEquals("Foo", r.get("label"));
-            assertEquals("RANGE", r.get("type"));
-            assertEquals("foo", ((List<String>) r.get("properties")).get(0));
-            assertEquals("ONLINE", r.get("status"));
-            assertEquals(":Foo(foo)", r.get("name"));
-            final String expectedUserDescFoo =
-                    "name='foo_idx', type='RANGE', schema=(:Foo {foo}), indexProvider='range-1.0' )";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescFoo);
+                assertEquals("Bar", r.get("label"));
+                assertEquals(List.of("bar"), r.get("properties"));
+                assertEquals("UNIQUENESS", r.get("type"));
+                assertEquals("", r.get("status"));
 
-            assertFalse(result.hasNext());
-        });
-    }
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Bar(bar)", r.get("name"));
+                    final String expectedUserDescBarCons =
+                            "name='bar_unique', type='UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
+                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                } else {
+                    assertEquals("bar_unique", r.get("name"));
+                    final String expectedUserDescBarCons =
+                            "name='bar_unique', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
+                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                }
 
-    private static void assertionsBarUniqueCons(Map<String, Object> r) {
-        assertEquals("Bar", r.get("label"));
-        assertEquals(":Bar(bar)", r.get("name"));
-        assertEquals(List.of("bar"), r.get("properties"));
+                r = result.next();
+                assertEquals("Foo", r.get("label"));
+                assertEquals("RANGE", r.get("type"));
+                assertEquals("foo", ((List<String>) r.get("properties")).get(0));
+                assertEquals("ONLINE", r.get("status"));
+                final String expectedUserDescFoo =
+                        "name='foo_idx', type='RANGE', schema=(:Foo {foo}), indexProvider='range-1.0' )";
+                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescFoo);
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Foo(foo)", r.get("name"));
+                } else {
+                    assertEquals("foo_idx", r.get("name"));
+                }
+
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -765,10 +763,34 @@ public class SchemasTest {
         db.executeTransactionally("CREATE TEXT INDEX index3 FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE TEXT INDEX index4 FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
-        testResult(
-                db,
-                "CALL apoc.schema.nodes({labels:['Foo']})", // Get the index info
-                SchemasTest::accept);
+
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(
+                    db,
+                    preparser + "CALL apoc.schema.nodes({labels:['Foo']})", // Get the index info
+                    (result -> {
+                        Map<String, Object> r = result.next();
+
+                        assertEquals("ONLINE", r.get("status"));
+                        assertEquals("Foo", r.get("label"));
+                        assertEquals("RANGE", r.get("type"));
+                        assertEquals("bar", ((List<String>) r.get("properties")).get(0));
+                        assertEquals("NO FAILURE", r.get("failure"));
+                        assertEquals(100d, r.get("populationProgress"));
+                        assertEquals(1d, r.get("valuesSelectivity"));
+                        Assertions.assertThat(r.get("userDescription").toString())
+                                .contains(
+                                        "name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
+
+                        if (cypherVersion.equals("5")) {
+                            assertEquals(":Foo(bar)", r.get("name"));
+                        } else {
+                            assertEquals("index1", r.get("name"));
+                        }
+                        assertTrue(!result.hasNext());
+                    }));
+        }
     }
 
     private void awaitIndexesOnline() {
@@ -785,10 +807,54 @@ public class SchemasTest {
         db.executeTransactionally("CREATE TEXT INDEX index3 FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE TEXT INDEX index4 FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
-        testResult(
-                db,
-                "CALL apoc.schema.nodes({labels:['Foo', 'Person']})", // Get the index info
-                SchemasTest::accept2);
+
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(
+                    db,
+                    preparser + "CALL apoc.schema.nodes({labels:['Foo', 'Person']})", // Get the index info
+                    (result) -> {
+                        Map<String, Object> r = result.next();
+
+                        assertEquals("ONLINE", r.get("status"));
+                        assertEquals("Foo", r.get("label"));
+                        assertEquals("RANGE", r.get("type"));
+                        assertEquals("bar", ((List<String>) r.get("properties")).get(0));
+                        assertEquals("NO FAILURE", r.get("failure"));
+                        assertEquals(100d, r.get("populationProgress"));
+                        assertEquals(1d, r.get("valuesSelectivity"));
+                        Assertions.assertThat(r.get("userDescription").toString())
+                                .contains(
+                                        "name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
+
+                        if (cypherVersion.equals("5")) {
+                            assertEquals(":Foo(bar)", r.get("name"));
+                        } else {
+                            assertEquals("index1", r.get("name"));
+                        }
+
+                        r = result.next();
+
+                        assertEquals("ONLINE", r.get("status"));
+                        assertEquals("Person", r.get("label"));
+                        assertEquals("TEXT", r.get("type"));
+                        assertEquals("name", ((List<String>) r.get("properties")).get(0));
+                        assertEquals("NO FAILURE", r.get("failure"));
+                        assertEquals(100d, r.get("populationProgress"));
+                        assertEquals(1d, r.get("valuesSelectivity"));
+                        Assertions.assertThat(r.get("userDescription").toString())
+                                .contains(
+                                        "name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-2.0' )");
+
+                        if (cypherVersion.equals("5")) {
+                            assertEquals(":Person(name)", r.get("name"));
+                        } else {
+                            assertEquals("index3", r.get("name"));
+                        }
+
+                        assertTrue(!result.hasNext());
+                    });
+        }
     }
 
     @Test
@@ -847,21 +913,35 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         awaitIndexesOnline();
 
-        testResult(db, "CALL apoc.schema.relationships({})", result -> {
-            Map<String, Object> r = result.next();
-            assertEquals("CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE", r.get("name"));
-            assertEquals("RELATIONSHIP_UNIQUENESS", r.get("type"));
-            assertEquals("SINCE", r.get("relationshipType"));
-            assertEquals("year", ((List<String>) r.get("properties")).get(0));
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(db, preparser + "CALL apoc.schema.relationships({})", result -> {
+                Map<String, Object> r = result.next();
+                assertEquals("RELATIONSHIP_UNIQUENESS", r.get("type"));
+                assertEquals("SINCE", r.get("relationshipType"));
+                assertEquals("year", ((List<String>) r.get("properties")).get(0));
 
-            r = result.next();
+                if (cypherVersion.equals("5")) {
+                    assertEquals("CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE", r.get("name"));
+                } else {
+                    assertTrue(r.get("name").toString().startsWith("constraint_"));
+                }
 
-            assertEquals(":SINCE(year)", r.get("name"));
-            assertEquals("RANGE", r.get("type"));
-            assertEquals("SINCE", r.get("relationshipType"));
-            assertEquals("year", ((List<String>) r.get("properties")).get(0));
-            assertTrue(!result.hasNext());
-        });
+                r = result.next();
+
+                assertEquals("RANGE", r.get("type"));
+                assertEquals("SINCE", r.get("relationshipType"));
+                assertEquals("year", ((List<String>) r.get("properties")).get(0));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":SINCE(year)", r.get("name"));
+                } else {
+                    assertTrue(r.get("name").toString().startsWith("constraint_"));
+                }
+
+                assertTrue(!result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -982,21 +1062,26 @@ public class SchemasTest {
         relConstraints.add(
                 new IndexConstraintRelationshipInfo(":KNOW(how)", "RANGE", List.of("how"), "ONLINE", "KNOW"));
 
-        testResult(db, "CALL apoc.schema.relationships", result -> {
-            while (result.hasNext()) {
-                Map<String, Object> r = result.next();
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(db, "CALL apoc.schema.relationships", result -> {
+                while (result.hasNext()) {
+                    Map<String, Object> r = result.next();
 
-                assertEquals(
-                        1,
-                        relConstraints.stream()
-                                .filter(c -> c.name.equals(r.get("name"))
-                                        && c.properties.containsAll((List<String>) r.get("properties"))
-                                        && c.type.equals(r.get("type"))
-                                        && c.relationshipType.equals(r.get("relationshipType")))
-                                .toList()
-                                .size());
-            }
-        });
+                    assertEquals(
+                            1,
+                            relConstraints.stream()
+                                    .filter(c -> c.properties.containsAll((List<String>) r.get("properties"))
+                                            && c.type.equals(r.get("type"))
+                                            && c.relationshipType.equals(r.get("relationshipType"))
+                                            && (c.name.equals(r.get("name"))
+                                                    || r.get("name").toString().startsWith("index_")
+                                                    || r.get("name").toString().startsWith("constraint_")))
+                                    .toList()
+                                    .size());
+                }
+            });
+        }
     }
 
     @Test
@@ -1005,27 +1090,40 @@ public class SchemasTest {
         db.executeTransactionally("CREATE LOOKUP INDEX rel_type_lookup_index FOR ()-[r]-() ON EACH type(r)");
         awaitIndexesOnline();
 
-        testCall(db, "CALL apoc.schema.nodes()", (row) -> {
-            assertEquals(":" + TOKEN_LABEL + "()", row.get("name"));
-            assertEquals("ONLINE", row.get("status"));
-            assertEquals(TOKEN_LABEL, row.get("label"));
-            assertEquals("LOOKUP", row.get("type"));
-            assertTrue(((List) row.get("properties")).isEmpty());
-            assertEquals("NO FAILURE", row.get("failure"));
-            assertEquals(100d, row.get("populationProgress"));
-            assertEquals(1d, row.get("valuesSelectivity"));
-            final String expectedUserDesc =
-                    "name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0'";
-            Assertions.assertThat(row.get("userDescription").toString()).contains(expectedUserDesc);
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testCall(db, preparser + "CALL apoc.schema.nodes()", (row) -> {
+                assertEquals("ONLINE", row.get("status"));
+                assertEquals(TOKEN_LABEL, row.get("label"));
+                assertEquals("LOOKUP", row.get("type"));
+                assertTrue(((List) row.get("properties")).isEmpty());
+                assertEquals("NO FAILURE", row.get("failure"));
+                assertEquals(100d, row.get("populationProgress"));
+                assertEquals(1d, row.get("valuesSelectivity"));
+                final String expectedUserDesc =
+                        "name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0'";
+                Assertions.assertThat(row.get("userDescription").toString()).contains(expectedUserDesc);
 
-        testCall(db, "CALL apoc.schema.relationships()", (row) -> {
-            assertEquals(":" + TOKEN_REL_TYPE + "()", row.get("name"));
-            assertEquals("ONLINE", row.get("status"));
-            assertEquals("LOOKUP", row.get("type"));
-            assertEquals(TOKEN_REL_TYPE, row.get("relationshipType"));
-            assertTrue(((List) row.get("properties")).isEmpty());
-        });
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":" + TOKEN_LABEL + "()", row.get("name"));
+                } else {
+                    assertEquals("node_label_lookup_index", row.get("name"));
+                }
+            });
+
+            testCall(db, preparser + "CALL apoc.schema.relationships()", (row) -> {
+                assertEquals("ONLINE", row.get("status"));
+                assertEquals("LOOKUP", row.get("type"));
+                assertEquals(TOKEN_REL_TYPE, row.get("relationshipType"));
+                assertTrue(((List) row.get("properties")).isEmpty());
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":" + TOKEN_REL_TYPE + "()", row.get("name"));
+                } else {
+                    assertEquals("rel_type_lookup_index", row.get("name"));
+                }
+            });
+        }
     }
 
     private void dropSchema() {
@@ -1046,33 +1144,47 @@ public class SchemasTest {
                 "CREATE FULLTEXT INDEX fullIdxRel FOR ()-[r:TYPE_1|TYPE_2]->() ON EACH [r.alpha, r.beta]");
         awaitIndexesOnline();
 
-        testCall(db, "CALL apoc.schema.nodes()", (r) -> {
-            assertEquals(":[Blah, Moon],(weightProp,anotherProp)", r.get("name"));
-            assertEquals("ONLINE", r.get("status"));
-            assertEquals(List.of("Blah", "Moon"), r.get("label"));
-            assertEquals("FULLTEXT", r.get("type"));
-            assertEquals(List.of("weightProp", "anotherProp"), r.get("properties"));
-            assertEquals("NO FAILURE", r.get("failure"));
-            assertEquals(100d, r.get("populationProgress"));
-            assertEquals(1d, r.get("valuesSelectivity"));
-            final long indexId = db.executeTransactionally(
-                    "SHOW INDEXES YIELD id, name WHERE name = $indexName RETURN id",
-                    Map.of("indexName", idxName),
-                    res -> res.<Long>columnAs("id").next());
-            String expectedIndexDescription = String.format(
-                    "Index( id=%s, name='%s', type='FULLTEXT', "
-                            + "schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-1.0' )",
-                    indexId, idxName);
-            assertEquals(expectedIndexDescription, r.get("userDescription"));
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testCall(db, preparser + "CALL apoc.schema.nodes()", (r) -> {
+                assertEquals("ONLINE", r.get("status"));
+                assertEquals(List.of("Blah", "Moon"), r.get("label"));
+                assertEquals("FULLTEXT", r.get("type"));
+                assertEquals(List.of("weightProp", "anotherProp"), r.get("properties"));
+                assertEquals("NO FAILURE", r.get("failure"));
+                assertEquals(100d, r.get("populationProgress"));
+                assertEquals(1d, r.get("valuesSelectivity"));
+                final long indexId = db.executeTransactionally(
+                        "SHOW INDEXES YIELD id, name WHERE name = $indexName RETURN id",
+                        Map.of("indexName", idxName),
+                        res -> res.<Long>columnAs("id").next());
 
-        testCall(db, "CALL apoc.schema.relationships()", (r) -> {
-            assertEquals(":[TYPE_1, TYPE_2],(alpha,beta)", r.get("name"));
-            assertEquals("ONLINE", r.get("status"));
-            assertEquals(List.of("TYPE_1", "TYPE_2"), r.get("relationshipType"));
-            assertEquals(List.of("alpha", "beta"), r.get("properties"));
-            assertEquals("FULLTEXT", r.get("type"));
-        });
+                String expectedIndexDescription = String.format(
+                        "Index( id=%s, name='%s', type='FULLTEXT', "
+                                + "schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-1.0' )",
+                        indexId, idxName);
+                assertEquals(expectedIndexDescription, r.get("userDescription"));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":[Blah, Moon],(weightProp,anotherProp)", r.get("name"));
+                } else {
+                    assertEquals("fullIdxNode", r.get("name"));
+                }
+            });
+
+            testCall(db, preparser + "CALL apoc.schema.relationships()", (r) -> {
+                assertEquals("ONLINE", r.get("status"));
+                assertEquals(List.of("TYPE_1", "TYPE_2"), r.get("relationshipType"));
+                assertEquals(List.of("alpha", "beta"), r.get("properties"));
+                assertEquals("FULLTEXT", r.get("type"));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":[TYPE_1, TYPE_2],(alpha,beta)", r.get("name"));
+                } else {
+                    assertEquals("fullIdxRel", r.get("name"));
+                }
+            });
+        }
     }
 
     @Test
@@ -1154,22 +1266,31 @@ public class SchemasTest {
         db.executeTransactionally("CREATE INDEX failedIdx FOR (n:LabelTest) ON (n.prop)");
         Assert.assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
 
-        testCall(db, "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'", (r) -> {
-            assertEquals("FAILED", r.get("state"));
-        });
+        testCall(
+                db,
+                "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'",
+                (r) -> assertEquals("FAILED", r.get("state")));
 
-        // then
-        testCall(db, "CALL apoc.schema.nodes", r -> {
-            String actualFailure = (String) r.get("failure");
-            String expectedFailure =
-                    "Property value is too large to index, please see index documentation for limitations.";
-            assertThat(actualFailure, containsString(expectedFailure));
-            assertEquals(":LabelTest(prop)", r.get("name"));
-            assertEquals("FAILED", r.get("status"));
-            assertEquals("LabelTest", r.get("label"));
-            assertEquals("RANGE", r.get("type"));
-            assertEquals(List.of("prop"), r.get("properties"));
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testCall(db, preparser + "CALL apoc.schema.nodes", r -> {
+                String actualFailure = (String) r.get("failure");
+                String expectedFailure =
+                        "Property value is too large to index, please see index documentation for limitations.";
+                assertThat(actualFailure, containsString(expectedFailure));
+                assertEquals("FAILED", r.get("status"));
+                assertEquals("LabelTest", r.get("label"));
+                assertEquals("RANGE", r.get("type"));
+                assertEquals(List.of("prop"), r.get("properties"));
+
+                // Cypher 25 updated to using the real name of the index, and not creating one.
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":LabelTest(prop)", r.get("name"));
+                } else {
+                    assertEquals("failedIdx", r.get("name"));
+                }
+            });
+        }
     }
 
     @Test
@@ -1189,13 +1310,20 @@ public class SchemasTest {
             assertEquals("FAILED", r.get("state"));
         });
 
-        // then
-        testCall(db, "CALL apoc.schema.relationships", r -> {
-            assertEquals(":REL_TEST(prop)", r.get("name"));
-            assertEquals("FAILED", r.get("status"));
-            assertEquals("REL_TEST", r.get("relationshipType"));
-            assertEquals("RANGE", r.get("type"));
-            assertEquals(List.of("prop"), r.get("properties"));
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testCall(db, preparser + "CALL apoc.schema.relationships", r -> {
+                assertEquals("FAILED", r.get("status"));
+                assertEquals("REL_TEST", r.get("relationshipType"));
+                assertEquals("RANGE", r.get("type"));
+                assertEquals(List.of("prop"), r.get("properties"));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":REL_TEST(prop)", r.get("name"));
+                } else {
+                    assertEquals("failedIdx", r.get("name"));
+                }
+            });
+        }
     }
 }

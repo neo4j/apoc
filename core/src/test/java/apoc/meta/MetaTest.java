@@ -1569,7 +1569,7 @@ public class MetaTest {
         // Missing all properties to make everything non-mandatory.
         db.executeTransactionally("CREATE (:Foo { z: 1 });");
         assertTrue(testDBCallEquivalence(
-                db, "CALL apoc.meta.nodeTypeProperties()", "CALL db.schema.nodeTypeProperties()"));
+                db, "CALL apoc.meta.nodeTypeProperties()", "CYPHER 5 CALL db.schema.nodeTypeProperties()"));
     }
 
     @Test
@@ -1578,8 +1578,8 @@ public class MetaTest {
                 "CREATE (:Foo)-[:REL { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] }]->();");
         // Missing all properties to make everything non-mandatory.
         db.executeTransactionally("CREATE (:Foo)-[:REL { z: 1 }]->();");
-        assertTrue(
-                testDBCallEquivalence(db, "CALL apoc.meta.relTypeProperties()", "CALL db.schema.relTypeProperties()"));
+        assertTrue(testDBCallEquivalence(
+                db, "CALL apoc.meta.relTypeProperties()", "CYPHER 5 CALL db.schema.relTypeProperties()"));
     }
 
     @Test
@@ -1601,7 +1601,7 @@ public class MetaTest {
 
         db.executeTransactionally(q);
         assertTrue(testDBCallEquivalence(
-                db, "CALL apoc.meta.nodeTypeProperties()", "CALL db.schema.nodeTypeProperties()"));
+                db, "CALL apoc.meta.nodeTypeProperties()", "CYPHER 5 CALL db.schema.nodeTypeProperties()"));
     }
 
     @Test
@@ -1622,8 +1622,8 @@ public class MetaTest {
                 + "CREATE (b:Test)-[:REL{ randomProp: 'this property is here to make everything mandatory = false'}]->(b);";
 
         db.executeTransactionally(q);
-        assertTrue(
-                testDBCallEquivalence(db, "CALL apoc.meta.relTypeProperties()", "CALL db.schema.relTypeProperties()"));
+        assertTrue(testDBCallEquivalence(
+                db, "CALL apoc.meta.relTypeProperties()", "CYPHER 5 CALL db.schema.relTypeProperties()"));
     }
 
     @Test
