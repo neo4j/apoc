@@ -78,7 +78,7 @@ jobs:
       - uses: ./.github/actions/setup-jdk
       - uses: ./.github/actions/setup-gradle-cache
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3.28.8
         with:
           languages: java
       - name: Configure AWS CLI
@@ -105,4 +105,4 @@ jobs:
       - name: Compile
         run: ./gradlew --info -Pneo4jVersionOverride=$NEO4J_VERSION_CI compileJava compileTestJava
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3.28.8
