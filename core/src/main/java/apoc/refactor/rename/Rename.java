@@ -274,6 +274,7 @@ public class Rename {
         periodic.terminationGuard = this.terminationGuard;
         periodic.pools = this.pools;
         periodic.tx = this.tx;
+        periodic.procedureCallContext = this.procedureCallContext;
         return periodic;
     }
 

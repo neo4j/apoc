@@ -36,7 +36,9 @@ import static org.neo4j.configuration.SettingValueParsers.BOOL;
 import static org.neo4j.driver.Values.isoDuration;
 import static org.neo4j.graphdb.traversal.Evaluators.toDepth;
 
+import apoc.HelperProcedures;
 import apoc.graph.Graphs;
+import apoc.nodes.Nodes;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
@@ -58,6 +60,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
@@ -75,6 +78,7 @@ public class MetaTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"))
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                             .build(),
@@ -84,7 +88,7 @@ public class MetaTest {
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, Meta.class, Graphs.class);
+        TestUtil.registerProcedure(db, Meta.class, Graphs.class, Nodes.class, HelperProcedures.class);
     }
 
     @After
@@ -2342,5 +2346,30 @@ public class MetaTest {
         }
 
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocMetaDataOf() {
+        db.executeTransactionally("CREATE (:CYPHER_5 {prop: 1}), (:CYPHER_25 {prop: 1})");
+
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.meta.data.of('%s MATCH (n:$(apoc.cypherVersion())) RETURN n') YIELD label RETURN label",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+            testCall(db, query, r -> assertEquals(cypherVersion.result, r.get("label")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocMetaGraphOf() {
+        db.executeTransactionally("CREATE (:CYPHER_5), (:CYPHER_25)");
+
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.meta.graph.of('%s MATCH (n:$(apoc.cypherVersion())) RETURN n') YIELD nodes RETURN labels(nodes[0])[0] AS version",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+
+            testCall(db, query, r -> assertEquals(cypherVersion.result, r.get("version")));
+        }
     }
 }

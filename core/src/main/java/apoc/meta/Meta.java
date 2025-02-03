@@ -1137,9 +1137,9 @@ public class Meta {
                     Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config, false);
         final SubGraph subGraph;
-        if (graph instanceof String) {
-            Result result =
-                    tx.execute(Util.getCypherVersionPrefix(procedureCallContext) + " runtime=pipelined " + graph);
+        if (graph instanceof String query) {
+            Result result = tx.execute(
+                    Util.applyRuntime(query, "pipelined", Util.getCypherVersionString(procedureCallContext)));
             subGraph = CypherResultSubGraph.from(tx, result, metaConfig.isAddRelationshipsBetweenNodes());
         } else if (graph instanceof Map) {
             Map<String, Object> mGraph = (Map<String, Object>) graph;

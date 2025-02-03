@@ -1381,7 +1381,7 @@ public class Util {
     }
 
     private static final Pattern CYPHER_VERSION_PATTERN =
-            Pattern.compile("^(CYPHER)(?:\\s+(\\d+))?", Pattern.CASE_INSENSITIVE);
+            Pattern.compile("^\\s*\\b(CYPHER)(?:\\s+(\\d+))?", Pattern.CASE_INSENSITIVE);
     public static final Pattern PLANNER_PATTERN =
             Pattern.compile("\\bplanner\\s*=\\s*[^\\s]*", Pattern.CASE_INSENSITIVE);
     public static final Pattern RUNTIME_PATTERN = Pattern.compile("\\bruntime\\s*=", Pattern.CASE_INSENSITIVE);
@@ -1428,7 +1428,7 @@ public class Util {
      */
     public static String prefixQuery(ProcedureCallContext procedureCallContext, String query) {
         return procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5)
-                ? "CYPHER 5 "
+                ? "CYPHER 5 " + query
                 : "CYPHER 25 " + query;
     }
 
@@ -1461,6 +1461,15 @@ public class Util {
             return Util.prefixQueryWithCheck(cypherVersion, matcher.replaceFirst(cypherPlanner));
         }
         return prependQueryOption(query, cypherPlanner, cypherVersion);
+    }
+
+    public static String applyRuntime(String query, String runtime, String cypherVersion) {
+        Matcher matcher = RUNTIME_PATTERN.matcher(query);
+        String cypherRuntime = String.format(" runtime=%s ", runtime.toLowerCase());
+        if (matcher.find()) {
+            return Util.prefixQueryWithCheck(cypherVersion, matcher.replaceFirst(cypherRuntime));
+        }
+        return prependQueryOption(query, cypherRuntime, cypherVersion);
     }
 
     private static String prependQueryOption(String query, String cypherOption, String cypherVersion) {

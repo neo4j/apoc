@@ -195,7 +195,8 @@ public class ExportCSV {
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
 
         final String source;
-        try (final var result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query), params)) {
+        query = Util.prefixQueryWithCheck(procedureCallContext, query);
+        try (final var result = tx.execute(query, params)) {
             source = String.format("statement: cols(%d)", result.columns().size());
         }
 

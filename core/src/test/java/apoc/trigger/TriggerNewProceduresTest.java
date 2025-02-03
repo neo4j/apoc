@@ -29,6 +29,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestrict
 import static org.neo4j.internal.helpers.collection.MapUtil.map;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
+import apoc.HelperProcedures;
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
 import apoc.util.Util;
@@ -45,6 +46,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 import org.junit.rules.TemporaryFolder;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -83,6 +85,7 @@ public class TriggerNewProceduresTest {
         databaseManagementService = new TestDatabaseManagementServiceBuilder(
                         storeDir.getRoot().toPath())
                 .setConfig(procedure_unrestricted, List.of("apoc*"))
+                .setConfig(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
                 .build();
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
@@ -119,7 +122,7 @@ public class TriggerNewProceduresTest {
                 "CALL apoc.trigger.list",
                 row -> {
                     assertEquals("count-removals", row.get("name"));
-                    assertEquals(query, row.get("query"));
+                    assertTrue(row.get("query").toString().contains(query));
                     assertEquals(true, row.get("installed"));
                 },
                 TIMEOUT);
@@ -169,7 +172,7 @@ public class TriggerNewProceduresTest {
                 map("name", name, "query", queryOne),
                 r -> {
                     assertEquals(name, r.get("name"));
-                    assertEquals(queryOne, r.get("query"));
+                    assertTrue(r.get("query").toString().contains(queryOne));
                 });
 
         String queryTwo = "RETURN 999";
@@ -179,7 +182,7 @@ public class TriggerNewProceduresTest {
                 map("name", name, "query", queryTwo),
                 r -> {
                     assertEquals(name, r.get("name"));
-                    assertEquals(queryTwo, r.get("query"));
+                    assertTrue(r.get("query").toString().contains(queryTwo));
                 });
     }
 
@@ -221,14 +224,14 @@ public class TriggerNewProceduresTest {
                 "CALL apoc.trigger.list()",
                 (row) -> {
                     assertEquals("to-be-removed", row.get("name"));
-                    assertEquals("RETURN 1", row.get("query"));
+                    assertTrue(row.get("query").toString().contains("RETURN 1"));
                     assertEquals(true, row.get("installed"));
                 },
                 TIMEOUT);
 
         testCall(sysDb, "CALL apoc.trigger.drop('neo4j', 'to-be-removed')", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
-            assertEquals("RETURN 1", row.get("query"));
+            assertTrue(row.get("query").toString().contains("RETURN 1"));
             assertEquals(false, row.get("installed"));
         });
         testCallCountEventually(db, "CALL apoc.trigger.list()", 0, TIMEOUT);
@@ -249,11 +252,11 @@ public class TriggerNewProceduresTest {
         TestUtil.testResult(sysDb, "CALL apoc.trigger.dropAll('neo4j')", (res) -> {
             Map<String, Object> row = res.next();
             assertEquals("to-be-removed-1", row.get("name"));
-            assertEquals("RETURN 1", row.get("query"));
+            assertTrue(row.get("query").toString().contains("RETURN 1"));
             assertEquals(false, row.get("installed"));
             row = res.next();
             assertEquals("to-be-removed-2", row.get("name"));
-            assertEquals("RETURN 2", row.get("query"));
+            assertTrue(row.get("query").toString().contains("RETURN 2"));
             assertEquals(false, row.get("installed"));
             assertFalse(res.hasNext());
         });
@@ -713,10 +716,10 @@ public class TriggerNewProceduresTest {
                 res -> {
                     Map<String, Object> row = res.next();
                     assertEquals(name, row.get("name"));
-                    assertEquals(query, row.get("query"));
+                    assertTrue(row.get("query").toString().contains(query));
                     row = res.next();
                     assertEquals(name2, row.get("name"));
-                    assertEquals(query, row.get("query"));
+                    assertTrue(row.get("query").toString().contains(query));
                     assertFalse(res.hasNext());
                 });
     }
@@ -793,5 +796,33 @@ public class TriggerNewProceduresTest {
         sysDb.executeTransactionally(
                 "CALL apoc.trigger.install('neo4j', $name, 'return 1', {})",
                 map("name", UUID.randomUUID().toString()));
+    }
+
+    @Test
+    public void testCypherVersions() {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            String name = "cypher-versions-" + id;
+            String triggerQuery =
+                    "MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])";
+
+            var query = String.format(
+                    "%s CALL apoc.trigger.install('neo4j', $name, $query,{})", cypherVersion.outerVersion);
+            sysDb.executeTransactionally(
+                    query, map("name", name, "query", cypherVersion.innerVersion + " " + triggerQuery));
+
+            // Check the query got given the correct Cypher Version
+            testCallEventually(
+                    db,
+                    "CALL apoc.trigger.list() YIELD name, query, installed WHERE name = $name RETURN *",
+                    map("name", name),
+                    row -> {
+                        assertTrue(row.get("query").toString().contains(triggerQuery));
+                        assertTrue(row.get("query").toString().contains(cypherVersion.result.replace('_', ' ')));
+                        assertEquals(true, row.get("installed"));
+                    },
+                    5L);
+            id++;
+        }
     }
 }
