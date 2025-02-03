@@ -30,7 +30,6 @@ import org.neo4j.cypher.internal.config.CypherConfiguration;
 import org.neo4j.cypher.internal.parser.AstParserFactory$;
 import org.neo4j.cypher.internal.rewriting.rewriters.sensitiveLiteralReplacement;
 import org.neo4j.cypher.internal.util.OpenCypherExceptionFactory;
-import org.neo4j.cypher.internal.util.RecordingNotificationLogger;
 import scala.Option;
 
 public class LogsUtil {
@@ -41,7 +40,8 @@ public class LogsUtil {
                     ExpressionStringifier.Extension$.MODULE$.simple((ExpressionStringifier$.MODULE$.failingExtender()));
             final var stringifier = new DefaultExpressionStringifier(extension, false, false, false, false);
             final var prettifier = new Prettifier(stringifier, Prettifier.EmptyExtension$.MODULE$, true);
-            final var preParsed = new PreParser(CypherConfiguration.fromConfig(config)).preParse(query, defaultCypherVersion);
+            final var preParsed =
+                    new PreParser(CypherConfiguration.fromConfig(config)).preParse(query, defaultCypherVersion);
             final var statement = AstParserFactory$.MODULE$
                     .apply(preParsed.cypherVersion())
                     .apply(preParsed.statement(), exceptionFactory, Option.apply(null))

@@ -159,12 +159,12 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
         globalConfig.put(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
         // A test may set this for the entire file itself, so we shouldn't override that
-        if (!globalConfig.containsKey(GraphDatabaseInternalSettings.default_cypher_version)) {
-            String cypherVersionEnv = System.getenv()
-                    .getOrDefault("CYPHER_VERSION", GraphDatabaseInternalSettings.CypherVersion.Cypher5.name());
-            GraphDatabaseInternalSettings.CypherVersion cypherVersion =
-                    GraphDatabaseInternalSettings.CypherVersion.valueOf(cypherVersionEnv);
-            globalConfig.put(GraphDatabaseInternalSettings.default_cypher_version, cypherVersion);
+        if (!globalConfig.containsKey(GraphDatabaseSettings.default_language)) {
+            String cypherVersionEnv =
+                    System.getenv().getOrDefault("CYPHER_VERSION", GraphDatabaseSettings.CypherVersion.Cypher5.name());
+            GraphDatabaseSettings.CypherVersion cypherVersion =
+                    GraphDatabaseSettings.CypherVersion.valueOf(cypherVersionEnv);
+            globalConfig.put(GraphDatabaseSettings.default_language, cypherVersion);
         }
 
         databaseBuilder.setConfig(globalConfig);

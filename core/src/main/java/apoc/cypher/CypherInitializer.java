@@ -107,9 +107,10 @@ public class CypherInitializer implements AvailabilityListener {
                                 .resolveDependency(ApocConfig.class)
                                 .getConfig();
                         for (final var query : collectInitializers(config)) {
-                            final var defaultLanguage = CypherVersion.Default; // TODO Replace with db specific default when available
-                            final var sanitizedQuery =
-                                    LogsUtil.sanitizeQuery(dependencyResolver.resolveDependency(Config.class), query, defaultLanguage);
+                            final var defaultLanguage =
+                                    CypherVersion.Default; // TODO Replace with db specific default when available
+                            final var sanitizedQuery = LogsUtil.sanitizeQuery(
+                                    dependencyResolver.resolveDependency(Config.class), query, defaultLanguage);
                             try {
                                 // we need to apply a retry strategy here since in systemdb we potentially conflict
                                 // with
