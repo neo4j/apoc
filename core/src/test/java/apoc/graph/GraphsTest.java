@@ -19,6 +19,7 @@
 package apoc.graph;
 
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.testCall;
 import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
@@ -26,7 +27,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.neo4j.graphdb.Label.label;
 
+import apoc.HelperProcedures;
 import apoc.graph.util.GraphsConfig;
+import apoc.nodes.Nodes;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
@@ -51,6 +54,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.configuration.SettingImpl;
 import org.neo4j.configuration.SettingValueParsers;
 import org.neo4j.graphdb.Entity;
@@ -80,6 +85,8 @@ public class GraphsTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     SettingImpl.newBuilder("internal.dbms.debug.track_cursor_close", SettingValueParsers.BOOL, false)
                             .build(),
@@ -91,7 +98,7 @@ public class GraphsTest {
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, Graphs.class);
+        TestUtil.registerProcedure(db, Graphs.class, Nodes.class, HelperProcedures.class);
         db.executeTransactionally(
                 "CREATE (a:Actor {name:'Tom Hanks'})-[r:ACTED_IN {roles:'Forrest'}]->(m:Movie {title:'Forrest Gump'}) RETURN [a,m] as nodes, [r] as relationships",
                 Collections.emptyMap(),
@@ -1353,5 +1360,17 @@ public class GraphsTest {
                                     e.getEndNode().getLabels().iterator().next().name())));
                     assertEquals(1, relMap.get("(Tweet)-[USER]-(User)").size());
                 });
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocCsvQuery() {
+        db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
+
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.graph.fromCypher('%s MATCH (n:Test {prop: apoc.cypherVersion() }) RETURN n LIMIT 1', {}, 'gem', {}) YIELD graph RETURN apoc.any.property(graph.nodes[0], 'prop') AS version",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+            testCall(db, query, r -> assertEquals(cypherVersion.result, r.get("version")));
+        }
     }
 }

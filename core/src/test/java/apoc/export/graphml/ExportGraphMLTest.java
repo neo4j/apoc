@@ -24,6 +24,7 @@ import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.assertError;
+import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.neo4j.graphdb.Label.label;
 
+import apoc.HelperProcedures;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
@@ -59,6 +61,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -94,6 +97,7 @@ public class ExportGraphMLTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath());
@@ -1099,6 +1103,19 @@ public class ExportGraphMLTest {
                             (r) -> {}));
 
             assertError(e, INVALID_QUERY_MODE_ERROR, RuntimeException.class, "apoc.export.graphml.query");
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocGraphmlQuery() {
+        db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
+
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.export.graphml.query('%s MATCH (n:Test {prop: apoc.cypherVersion() }) RETURN n LIMIT 1', null, { stream:true }) YIELD data RETURN data",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+            testCall(
+                    db, query, r -> TestCase.assertTrue(r.get("data").toString().contains(cypherVersion.result)));
         }
     }
 }

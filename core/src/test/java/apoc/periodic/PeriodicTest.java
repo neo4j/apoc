@@ -36,6 +36,7 @@ import static org.junit.Assert.fail;
 import static org.neo4j.driver.internal.util.Iterables.count;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
+import apoc.HelperProcedures;
 import apoc.cypher.Cypher;
 import apoc.refactor.GraphRefactoring;
 import apoc.schema.Schemas;
@@ -59,6 +60,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.common.DependencyResolver;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -94,12 +96,20 @@ public class PeriodicTest {
     public static AssertableLogProvider logProvider = new AssertableLogProvider();
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule(logProvider);
+    public DbmsRule db = new ImpermanentDbmsRule(logProvider)
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     @Before
     public void initDb() {
         TestUtil.registerProcedure(
-                db, Periodic.class, Schemas.class, Cypher.class, Utils.class, MockLogger.class, GraphRefactoring.class);
+                db,
+                Periodic.class,
+                Schemas.class,
+                Cypher.class,
+                Utils.class,
+                MockLogger.class,
+                GraphRefactoring.class,
+                HelperProcedures.class);
         db.executeTransactionally(
                 "call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
@@ -346,7 +356,7 @@ public class PeriodicTest {
                     assertEquals(10L, row.get("failedBatches"));
 
                     String expectedPattern =
-                            "(?s)Invalid input.*\\\"UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\".*";
+                            "(?s)Invalid input.*\\\"CYPHER(?:\\s+(\\d+))? UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\".*";
 
                     String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
 
@@ -945,5 +955,90 @@ public class PeriodicTest {
                 QueryExecutionException.class,
                 () -> testCall(db, query, row -> fail("The test should fail but it didn't")));
         assertTrue(ExceptionUtils.getRootCause(e) instanceof org.neo4j.exceptions.SyntaxException);
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicCommit() {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.commit('%s CREATE (n:$(apoc.cypherVersion()) {id: %d}) RETURN 0 LIMIT 1')",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicCountdown() throws InterruptedException {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.countdown('test', '%s CREATE (n:$(apoc.cypherVersion()) {id: %d}) RETURN 0 LIMIT 1', 0)",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            Thread.sleep(2000); // Wait 3s to make sure the countdown has been called
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicIterate() {
+        db.executeTransactionally("CREATE (:CYPHER_5 {id: -1}), (:CYPHER_25 {id: -1})");
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.iterate('%s MATCH (p:$(apoc.cypherVersion())) RETURN p', 'SET p.id = %d', {})",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id: %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicRepeat() throws InterruptedException {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.repeat('test%d', '%s MERGE (n:$(apoc.cypherVersion()) {id: %d})', 1)",
+                    cypherVersion.outerVersion, id, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            Thread.sleep(3000); // Wait 3s to make sure the repeat has been called
+            db.executeTransactionally(String.format("CALL apoc.periodic.cancel('test%d')", id));
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicSubmit() throws InterruptedException {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.submit('test%d', '%s CREATE (n:$(apoc.cypherVersion()) {id: %d})')",
+                    cypherVersion.outerVersion, id, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            Thread.sleep(1000); // Wait 1s to make sure the submit has been called
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
     }
 }

@@ -21,6 +21,7 @@ package apoc.export.cypher;
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 
+import apoc.HelperProcedures;
 import apoc.cypher.Cypher;
 import apoc.graph.Graphs;
 import apoc.schema.Schemas;
@@ -36,7 +37,8 @@ public class ExportCypherTestUtils {
 
     public static void setUp(GraphDatabaseService db, TestName testName) {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-        TestUtil.registerProcedure(db, ExportCypher.class, Graphs.class, Schemas.class, Cypher.class);
+        TestUtil.registerProcedure(
+                db, ExportCypher.class, Graphs.class, Schemas.class, Cypher.class, HelperProcedures.class);
         if (testName.getMethodName().contains(ROUND_TRIP)) return;
         db.executeTransactionally("CREATE RANGE INDEX barIndex FOR (n:Bar) ON (n.first_name, n.last_name)");
         db.executeTransactionally("CREATE RANGE INDEX fooIndex FOR (n:Foo) ON (n.name)");
