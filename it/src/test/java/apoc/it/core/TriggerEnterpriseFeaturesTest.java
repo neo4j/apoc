@@ -312,11 +312,15 @@ public class TriggerEnterpriseFeaturesTest {
 
             try (Session neo4jUserSession = userDriver.session(forDatabase(DEFAULT_DATABASE_NAME))) {
                 failsWithNonAdminUser(
-                        neo4jUserSession, "apoc.trigger.add", "call apoc.trigger.add('abc', 'return 1', {})");
-                failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.remove", "call apoc.trigger.remove('abc')");
-                failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.removeAll", "call apoc.trigger.removeAll");
-                failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.pause", "call apoc.trigger.pause('abc')");
-                failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.resume", "call apoc.trigger.resume('abc')");
+                        neo4jUserSession, "apoc.trigger.add", "CYPHER 5 call apoc.trigger.add('abc', 'return 1', {})");
+                failsWithNonAdminUser(
+                        neo4jUserSession, "apoc.trigger.remove", "CYPHER 5 call apoc.trigger.remove('abc')");
+                failsWithNonAdminUser(
+                        neo4jUserSession, "apoc.trigger.removeAll", "CYPHER 5 call apoc.trigger.removeAll");
+                failsWithNonAdminUser(
+                        neo4jUserSession, "apoc.trigger.pause", "CYPHER 5 call apoc.trigger.pause('abc')");
+                failsWithNonAdminUser(
+                        neo4jUserSession, "apoc.trigger.resume", "CYPHER 5 call apoc.trigger.resume('abc')");
                 failsWithNonAdminUser(neo4jUserSession, "apoc.trigger.list", "call apoc.trigger.list");
             }
         }

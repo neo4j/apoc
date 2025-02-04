@@ -25,7 +25,6 @@ import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static org.eclipse.jetty.util.URIUtil.encodePath;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
-import apoc.ApocConfig;
 import apoc.Pools;
 import apoc.convert.ConvertUtils;
 import apoc.export.util.CountingInputStream;
@@ -90,6 +89,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.configuration.Config;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.connectors.BoltConnector;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Entity;
@@ -463,7 +463,7 @@ public class Util {
             int redirectLimit,
             URLAccessChecker urlAccessChecker)
             throws IOException {
-        URL url = ApocConfig.apocConfig().checkAllowedUrlAndPinToIP(urlAddress, urlAccessChecker);
+        URL url = apocConfig().checkAllowedUrlAndPinToIP(urlAddress, urlAccessChecker);
         URLConnection con = openUrlConnection(url, headers);
         writePayload(con, payload);
         String newUrl = handleRedirect(con, urlAddress);
@@ -1372,5 +1372,13 @@ public class Util {
                     case QueryLanguage.CYPHER_25 -> "25";
                 })
                 .toList();
+    }
+
+    public static String getCypherVersion(GraphDatabaseInternalSettings.CypherVersion version) {
+        return switch (version) {
+            case Default -> "default";
+            case Cypher5 -> "5";
+            case Cypher25 -> "25";
+        };
     }
 }

@@ -50,6 +50,7 @@ import org.assertj.core.description.LazyTextDescription;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.testcontainers.containers.ContainerFetchException;
@@ -105,16 +106,44 @@ public class TestContainerUtil {
         };
     }
 
+    public static Neo4jContainerExtension createDB(
+            Neo4jVersion version,
+            List<ApocPackage> apocPackages,
+            boolean withLogging,
+            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+        return switch (version) {
+            case ENTERPRISE -> createEnterpriseDB(apocPackages, withLogging, cypherVersion);
+            case COMMUNITY -> createCommunityDB(apocPackages, withLogging, cypherVersion);
+        };
+    }
+
     public static Neo4jContainerExtension createEnterpriseDB(List<ApocPackage> apocPackages, boolean withLogging) {
-        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE);
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, null);
+    }
+
+    public static Neo4jContainerExtension createEnterpriseDB(
+            List<ApocPackage> apocPackages,
+            boolean withLogging,
+            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, cypherVersion);
     }
 
     public static Neo4jContainerExtension createCommunityDB(List<ApocPackage> apocPackages, boolean withLogging) {
-        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY);
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY, null);
+    }
+
+    public static Neo4jContainerExtension createCommunityDB(
+            List<ApocPackage> apocPackages,
+            boolean withLogging,
+            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY, cypherVersion);
     }
 
     private static Neo4jContainerExtension createNeo4jContainer(
-            List<ApocPackage> apocPackages, boolean withLogging, Neo4jVersion version) {
+            List<ApocPackage> apocPackages,
+            boolean withLogging,
+            Neo4jVersion version,
+            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
         String dockerImage;
         if (version == Neo4jVersion.ENTERPRISE) {
             dockerImage = neo4jEnterpriseDockerImageVersion;
@@ -171,6 +200,13 @@ public class TestContainerUtil {
                     + "the docker container because only apoc core comes bundled in those");
         }
 
+        String cypherVersionSetting = cypherVersion == null
+                ? System.getenv()
+                        .getOrDefault(
+                                "CYPHER_VERSION",
+                                Util.getCypherVersion(GraphDatabaseInternalSettings.CypherVersion.Cypher5))
+                : Util.getCypherVersion(cypherVersion);
+
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
         Neo4jContainerExtension neo4jContainer = new Neo4jContainerExtension(dockerImage, logsDir)
                 .withAdminPassword(password)
@@ -183,6 +219,8 @@ public class TestContainerUtil {
                 .withNeo4jConfig("dbms.logs.http.enabled", "true")
                 .withNeo4jConfig("dbms.logs.debug.level", "DEBUG")
                 .withNeo4jConfig("dbms.routing.driver.logging.level", "DEBUG")
+                .withNeo4jConfig("internal.dbms.cypher.enable_experimental_versions", "true")
+                .withNeo4jConfig("internal.dbms.cypher.version", cypherVersionSetting)
                 // Additional kernel assertions
                 .withNeo4jConfig(
                         "server.jvm.additional",

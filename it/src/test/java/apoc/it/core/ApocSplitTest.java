@@ -18,10 +18,14 @@
  */
 package apoc.it.core;
 
+import static apoc.it.core.ApocVersionsTest.DEPRECATED_CORE_FUNCTIONS_5;
+import static apoc.it.core.ApocVersionsTest.DEPRECATED_CORE_PROCEDURES_5;
+
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestUtil;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -476,7 +480,7 @@ public class ApocSplitTest {
             "apoc.agg.slice");
 
     @Test
-    public void test() {
+    public void testCypher5() {
         Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(
                         List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
                 .withNeo4jConfig("dbms.transaction.timeout", "60s");
@@ -484,15 +488,47 @@ public class ApocSplitTest {
         neo4jContainer.start();
 
         Session session = neo4jContainer.getSession();
-        Set<String> procedureNames = session.run("SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc'").stream()
-                .map(s -> s.get("name").asString())
-                .collect(Collectors.toSet());
-        Set<String> functionNames = session.run("SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc'").stream()
-                .map(s -> s.get("name").asString())
-                .collect(Collectors.toSet());
+        Set<String> procedureNames =
+                session.run("CYPHER 5 SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc'").stream()
+                        .map(s -> s.get("name").asString())
+                        .collect(Collectors.toSet());
+        Set<String> functionNames =
+                session.run("CYPHER 5 SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc'").stream()
+                        .map(s -> s.get("name").asString())
+                        .collect(Collectors.toSet());
 
         Assert.assertEquals(CORE_PROCEDURES, procedureNames);
         Assert.assertEquals(CORE_FUNCTIONS, functionNames);
+        session.close();
+        neo4jContainer.close();
+    }
+
+    @Test
+    public void testCypher25() {
+        Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(
+                        List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
+                .withNeo4jConfig("dbms.transaction.timeout", "60s");
+
+        neo4jContainer.start();
+
+        Session session = neo4jContainer.getSession();
+        Set<String> procedureNames =
+                session.run("CYPHER 25 SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc'").stream()
+                        .map(s -> s.get("name").asString())
+                        .collect(Collectors.toSet());
+        Set<String> functionNames =
+                session.run("CYPHER 25 SHOW FUNCTIONS YIELD name WHERE name STARTS WITH 'apoc'").stream()
+                        .map(s -> s.get("name").asString())
+                        .collect(Collectors.toSet());
+
+        Set<String> proceduresCypher25 = new HashSet<>(CORE_PROCEDURES);
+        proceduresCypher25.removeAll(DEPRECATED_CORE_PROCEDURES_5);
+
+        Set<String> functionsCypher25 = new HashSet<>(CORE_FUNCTIONS);
+        functionsCypher25.removeAll(DEPRECATED_CORE_FUNCTIONS_5);
+
+        Assert.assertEquals(proceduresCypher25, procedureNames);
+        Assert.assertEquals(functionsCypher25, functionNames);
         session.close();
         neo4jContainer.close();
     }

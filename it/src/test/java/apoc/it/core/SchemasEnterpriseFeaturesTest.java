@@ -31,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 import apoc.result.AssertSchemaResult;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
+import apoc.util.Util;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -121,16 +122,25 @@ public class SchemasEnterpriseFeaturesTest {
             assertFalse(result.hasNext());
         });
 
-        session.readTransaction(tx -> {
-            List<Record> result =
-                    tx.run("SHOW CONSTRAINTS YIELD createStatement").list();
-            assertEquals(1, result.size());
-            Map<String, Object> firstResult = result.get(0).asMap();
-            assertThat((String) firstResult.get("createStatement"))
-                    .contains("CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS NODE KEY");
-            tx.commit();
-            return null;
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            session.readTransaction(tx -> {
+                List<Record> result = tx.run(preparser + "SHOW CONSTRAINTS YIELD createStatement")
+                        .list();
+                assertEquals(1, result.size());
+                Map<String, Object> firstResult = result.get(0).asMap();
+
+                if (cypherVersion.equals("5")) {
+                    assertThat((String) firstResult.get("createStatement"))
+                            .contains("CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS NODE KEY");
+                } else {
+                    assertThat((String) firstResult.get("createStatement"))
+                            .contains("CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS KEY");
+                }
+                tx.commit();
+                return null;
+            });
+        }
     }
 
     @Test
@@ -141,31 +151,40 @@ public class SchemasEnterpriseFeaturesTest {
             return null;
         });
 
-        testResult(session, CALL_SCHEMA_NODES_ORDERED, (result) -> {
-            Map<String, Object> r = result.next();
-            schemaNodeKeyAssertions(r);
-            assertEquals("", r.get("status"));
-            assertEquals("NODE_KEY", r.get("type"));
-            final String expectedUserDescConstraint =
-                    "name='node_key_movie', type='NODE KEY', schema=(:Movie {first, second}), ownedIndex";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(session, preparser + CALL_SCHEMA_NODES_ORDERED, (result) -> {
+                Map<String, Object> r = result.next();
+                assertEquals("Movie", r.get("label"));
+                assertEquals(List.of("first", "second"), r.get("properties"));
+                assertEquals("", r.get("status"));
+                assertEquals("NODE_KEY", r.get("type"));
+                final String expectedUserDescConstraint =
+                        "name='node_key_movie', type='NODE KEY', schema=(:Movie {first, second}), ownedIndex";
+                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Movie(first,second)", r.get("name"));
+                } else {
+                    assertEquals("node_key_movie", r.get("name"));
+                }
 
-            r = result.next();
-            schemaNodeKeyAssertions(r);
-            assertEquals("ONLINE", r.get("status"));
-            assertEquals("RANGE", r.get("type"));
-            final String expectedUserDescIdx =
-                    "name='node_key_movie', type='RANGE', schema=(:Movie {first, second}), indexProvider='range-1.0', owningConstraint";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescIdx);
+                r = result.next();
+                assertEquals("Movie", r.get("label"));
+                assertEquals(List.of("first", "second"), r.get("properties"));
+                assertEquals("ONLINE", r.get("status"));
+                assertEquals("RANGE", r.get("type"));
+                final String expectedUserDescIdx =
+                        "name='node_key_movie', type='RANGE', schema=(:Movie {first, second}), indexProvider='range-1.0', owningConstraint";
+                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescIdx);
 
-            assertFalse(result.hasNext());
-        });
-    }
-
-    private static void schemaNodeKeyAssertions(Map<String, Object> r) {
-        assertEquals("Movie", r.get("label"));
-        assertEquals(List.of("first", "second"), r.get("properties"));
-        assertEquals(":Movie(first,second)", r.get("name"));
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Movie(first,second)", r.get("name"));
+                } else {
+                    assertEquals("node_key_movie", r.get("name"));
+                }
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -176,19 +195,28 @@ public class SchemasEnterpriseFeaturesTest {
             return null;
         });
 
-        testResult(session, CALL_SCHEMA_NODES_ORDERED, (result) -> {
-            Map<String, Object> r = result.next();
-            assertEquals("Movie", r.get("label"));
-            assertEquals(List.of("first"), r.get("properties"));
-            assertEquals(":Movie(first)", r.get("name"));
-            assertEquals("", r.get("status"));
-            assertEquals("NODE_PROPERTY_TYPE", r.get("type"));
-            final String expectedUserDescConstraint =
-                    "name='node_prop_type_movie', type='NODE PROPERTY TYPE', schema=(:Movie {first}), propertyType=INTEGER";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
 
-            assertFalse(result.hasNext());
-        });
+            testResult(session, preparser + CALL_SCHEMA_NODES_ORDERED, (result) -> {
+                Map<String, Object> r = result.next();
+                assertEquals("Movie", r.get("label"));
+                assertEquals(List.of("first"), r.get("properties"));
+                assertEquals("", r.get("status"));
+                assertEquals("NODE_PROPERTY_TYPE", r.get("type"));
+                final String expectedUserDescConstraint =
+                        "name='node_prop_type_movie', type='NODE PROPERTY TYPE', schema=(:Movie {first}), propertyType=INTEGER";
+                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":Movie(first)", r.get("name"));
+                } else {
+                    assertEquals("node_prop_type_movie", r.get("name"));
+                }
+
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -392,20 +420,31 @@ public class SchemasEnterpriseFeaturesTest {
             assertFalse(result.hasNext());
         });
 
-        session.readTransaction(tx -> {
-            List<Record> result =
-                    tx.run("SHOW CONSTRAINTS YIELD createStatement").list();
-            assertEquals(2, result.size());
-            List<String> actualDescriptions = result.stream()
-                    .map(record -> (String) record.asMap().get("createStatement"))
-                    .collect(Collectors.toList());
-            List<String> expectedDescriptions = List.of(
-                    "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS NODE KEY",
-                    "FOR (n:`Foo`) REQUIRE (n.`bar`, n.`foo`) IS NODE KEY");
-            assertMatchesAll(expectedDescriptions, actualDescriptions);
-            tx.commit();
-            return null;
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            session.readTransaction(tx -> {
+                List<Record> result = tx.run(preparser + "SHOW CONSTRAINTS YIELD createStatement")
+                        .list();
+                assertEquals(2, result.size());
+                List<String> actualDescriptions = result.stream()
+                        .map(record -> (String) record.asMap().get("createStatement"))
+                        .collect(Collectors.toList());
+
+                List<String> expectedDescriptions;
+                if (cypherVersion.equals("5")) {
+                    expectedDescriptions = List.of(
+                            "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS NODE KEY",
+                            "FOR (n:`Foo`) REQUIRE (n.`bar`, n.`foo`) IS NODE KEY");
+                } else {
+                    expectedDescriptions = List.of(
+                            "FOR (n:`Foo`) REQUIRE (n.`foo`, n.`bar`) IS KEY",
+                            "FOR (n:`Foo`) REQUIRE (n.`bar`, n.`foo`) IS KEY");
+                }
+                assertMatchesAll(expectedDescriptions, actualDescriptions);
+                tx.commit();
+                return null;
+            });
+        }
     }
 
     @Test
@@ -425,20 +464,31 @@ public class SchemasEnterpriseFeaturesTest {
                     assertFalse(result.hasNext());
                 });
 
-        session.readTransaction(tx -> {
-            List<Record> result =
-                    tx.run("SHOW CONSTRAINTS YIELD createStatement").list();
-            assertEquals(2, result.size());
-            List<String> actualDescriptions = result.stream()
-                    .map(record -> (String) record.asMap().get("createStatement"))
-                    .collect(Collectors.toList());
-            List<String> expectedDescriptions = List.of(
-                    "FOR (n:`Galileo`) REQUIRE (n.`newton`, n.`tesla`) IS NODE KEY",
-                    "FOR (n:`Galileo`) REQUIRE (n.`curie`) IS UNIQUE");
-            assertMatchesAll(expectedDescriptions, actualDescriptions);
-            tx.commit();
-            return null;
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            session.readTransaction(tx -> {
+                List<Record> result = tx.run(preparser + "SHOW CONSTRAINTS YIELD createStatement")
+                        .list();
+                assertEquals(2, result.size());
+                List<String> actualDescriptions = result.stream()
+                        .map(record -> (String) record.asMap().get("createStatement"))
+                        .collect(Collectors.toList());
+
+                List<String> expectedDescriptions;
+                if (cypherVersion.equals("5")) {
+                    expectedDescriptions = List.of(
+                            "FOR (n:`Galileo`) REQUIRE (n.`newton`, n.`tesla`) IS NODE KEY",
+                            "FOR (n:`Galileo`) REQUIRE (n.`curie`) IS UNIQUE");
+                } else {
+                    expectedDescriptions = List.of(
+                            "FOR (n:`Galileo`) REQUIRE (n.`newton`, n.`tesla`) IS",
+                            "FOR (n:`Galileo`) REQUIRE (n.`curie`) IS UNIQUE");
+                }
+                assertMatchesAll(expectedDescriptions, actualDescriptions);
+                tx.commit();
+                return null;
+            });
+        }
     }
 
     @Test
@@ -472,16 +522,24 @@ public class SchemasEnterpriseFeaturesTest {
             assertFalse(result.hasNext());
         });
 
-        session.readTransaction(tx -> {
-            List<Record> result =
-                    tx.run("SHOW CONSTRAINTS YIELD createStatement").list();
-            assertEquals(1, result.size());
-            Map<String, Object> firstResult = result.get(0).asMap();
-            assertThat((String) firstResult.get("createStatement"))
-                    .contains("CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`baa`, n.`baz`) IS NODE KEY");
-            tx.commit();
-            return null;
-        });
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            session.readTransaction(tx -> {
+                List<Record> result = tx.run(preparser + "SHOW CONSTRAINTS YIELD createStatement")
+                        .list();
+                assertEquals(1, result.size());
+                Map<String, Object> firstResult = result.get(0).asMap();
+                if (cypherVersion.equals("5")) {
+                    assertThat((String) firstResult.get("createStatement"))
+                            .contains("CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`baa`, n.`baz`) IS NODE KEY");
+                } else {
+                    assertThat((String) firstResult.get("createStatement"))
+                            .contains("CREATE CONSTRAINT", "FOR (n:`Foo`) REQUIRE (n.`baa`, n.`baz`) IS KEY");
+                }
+                tx.commit();
+                return null;
+            });
+        }
     }
 
     @Test
@@ -618,25 +676,33 @@ public class SchemasEnterpriseFeaturesTest {
             tx.commit();
             return null;
         });
-        testResult(
-                session,
-                "CALL apoc.schema.nodes() YIELD name, label, properties, status, type, "
-                        + "failure, populationProgress, size, valuesSelectivity, userDescription "
-                        + "WHERE label <> '<any-labels>' "
-                        + "RETURN *",
-                (result) -> {
-                    // Get the index info
-                    Map<String, Object> r = result.next();
 
-                    assertEquals(":Foo(bar,foo)", r.get("name"));
-                    assertEquals("ONLINE", r.get("status"));
-                    assertEquals("Foo", r.get("label"));
-                    assertEquals("RANGE", r.get("type"));
-                    assertTrue(((List<String>) r.get("properties")).contains("bar"));
-                    assertTrue(((List<String>) r.get("properties")).contains("foo"));
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(
+                    session,
+                    preparser + "CALL apoc.schema.nodes() YIELD name, label, properties, status, type, "
+                            + "failure, populationProgress, size, valuesSelectivity, userDescription "
+                            + "WHERE label <> '<any-labels>' "
+                            + "RETURN *",
+                    (result) -> {
+                        // Get the index info
+                        Map<String, Object> r = result.next();
 
-                    assertTrue(!result.hasNext());
-                });
+                        assertEquals("ONLINE", r.get("status"));
+                        assertEquals("Foo", r.get("label"));
+                        assertEquals("RANGE", r.get("type"));
+                        assertTrue(((List<String>) r.get("properties")).contains("bar"));
+                        assertTrue(((List<String>) r.get("properties")).contains("foo"));
+                        if (cypherVersion.equals("5")) {
+                            assertEquals(":Foo(bar,foo)", r.get("name"));
+                        } else {
+                            assertTrue(r.get("name").toString().startsWith("index_"));
+                        }
+
+                        assertTrue(!result.hasNext());
+                    });
+        }
     }
 
     @Test
@@ -683,15 +749,25 @@ public class SchemasEnterpriseFeaturesTest {
             tx.commit();
             return null;
         });
-        testResult(session, "CALL apoc.schema.relationships()", (result) -> {
-            Map<String, Object> r = result.next();
-            assertEquals("CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
-            assertEquals("RELATIONSHIP_PROPERTY_EXISTENCE", r.get("type"));
-            assertEquals("LIKED", r.get("relationshipType"));
-            assertEquals(asList("day"), r.get("properties"));
-            assertEquals(StringUtils.EMPTY, r.get("status"));
-            assertFalse(result.hasNext());
-        });
+
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(session, preparser + "CALL apoc.schema.relationships()", (result) -> {
+                Map<String, Object> r = result.next();
+                assertEquals("RELATIONSHIP_PROPERTY_EXISTENCE", r.get("type"));
+                assertEquals("LIKED", r.get("relationshipType"));
+                assertEquals(asList("day"), r.get("properties"));
+                assertEquals(StringUtils.EMPTY, r.get("status"));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals("CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
+                } else {
+                    assertEquals("likedConstraint", r.get("name"));
+                }
+
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -702,27 +778,39 @@ public class SchemasEnterpriseFeaturesTest {
             tx.commit();
             return null;
         });
-        testResult(
-                session,
-                "CALL apoc.schema.relationships() YIELD name, type, properties, status, relationshipType "
-                        + "WHERE type <> '<any-types>' "
-                        + "RETURN *",
-                (result) -> {
-                    Map<String, Object> r = result.next();
-                    assertEquals("CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
-                    assertEquals("RELATIONSHIP_PROPERTY_EXISTENCE", r.get("type"));
-                    assertEquals("LIKED", r.get("relationshipType"));
-                    assertEquals(asList("day"), r.get("properties"));
-                    assertEquals(StringUtils.EMPTY, r.get("status"));
-                    assertFalse(result.hasNext());
-                });
-        testResult(session, "CALL apoc.schema.nodes()", (result) -> {
-            Map<String, Object> r = result.next();
-            assertEquals("Bar", r.get("label"));
-            assertEquals("NODE_PROPERTY_EXISTENCE", r.get("type"));
-            assertEquals(asList("foobar"), r.get("properties"));
-            assertFalse(result.hasNext());
-        });
+
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(
+                    session,
+                    preparser
+                            + "CALL apoc.schema.relationships() YIELD name, type, properties, status, relationshipType "
+                            + "WHERE type <> '<any-types>' "
+                            + "RETURN *",
+                    (result) -> {
+                        Map<String, Object> r = result.next();
+                        assertEquals("RELATIONSHIP_PROPERTY_EXISTENCE", r.get("type"));
+                        assertEquals("LIKED", r.get("relationshipType"));
+                        assertEquals(asList("day"), r.get("properties"));
+                        assertEquals(StringUtils.EMPTY, r.get("status"));
+
+                        if (cypherVersion.equals("5")) {
+                            assertEquals(
+                                    "CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
+                        } else {
+                            assertEquals("rel_cons", r.get("name"));
+                        }
+
+                        assertFalse(result.hasNext());
+                    });
+            testResult(session, preparser + "CALL apoc.schema.nodes()", (result) -> {
+                Map<String, Object> r = result.next();
+                assertEquals("Bar", r.get("label"));
+                assertEquals("NODE_PROPERTY_EXISTENCE", r.get("type"));
+                assertEquals(asList("foobar"), r.get("properties"));
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -755,24 +843,37 @@ public class SchemasEnterpriseFeaturesTest {
             return null;
         });
 
-        testResult(session, "CALL apoc.schema.relationships({})", result -> {
-            Map<String, Object> r = result.next();
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(session, preparser + "CALL apoc.schema.relationships({})", result -> {
+                Map<String, Object> r = result.next();
 
-            assertEquals(
-                    "CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE (knows.day,knows.year) IS RELATIONSHIP KEY",
-                    r.get("name"));
-            assertEquals("RELATIONSHIP_KEY", r.get("type"));
-            assertEquals("KNOWS", r.get("relationshipType"));
-            assertEquals(List.of("day", "year"), r.get("properties"));
+                assertEquals("RELATIONSHIP_KEY", r.get("type"));
+                assertEquals("KNOWS", r.get("relationshipType"));
+                assertEquals(List.of("day", "year"), r.get("properties"));
 
-            r = result.next();
+                if (cypherVersion.equals("5")) {
+                    assertEquals(
+                            "CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE (knows.day,knows.year) IS RELATIONSHIP KEY",
+                            r.get("name"));
+                } else {
+                    assertEquals("rel_con", r.get("name"));
+                }
 
-            assertEquals(":KNOWS(day,year)", r.get("name"));
-            assertEquals("RANGE", r.get("type"));
-            assertEquals("KNOWS", r.get("relationshipType"));
-            assertEquals(List.of("day", "year"), r.get("properties"));
-            assertFalse(result.hasNext());
-        });
+                r = result.next();
+
+                assertEquals("RANGE", r.get("type"));
+                assertEquals("KNOWS", r.get("relationshipType"));
+                assertEquals(List.of("day", "year"), r.get("properties"));
+
+                if (cypherVersion.equals("5")) {
+                    assertEquals(":KNOWS(day,year)", r.get("name"));
+                } else {
+                    assertEquals("rel_con", r.get("name"));
+                }
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
@@ -783,16 +884,24 @@ public class SchemasEnterpriseFeaturesTest {
             return null;
         });
 
-        testResult(session, "CALL apoc.schema.relationships({})", result -> {
-            Map<String, Object> r = result.next();
+        for (String cypherVersion : Util.getCypherVersions()) {
+            var preparser = "CYPHER " + cypherVersion + " ";
+            testResult(session, preparser + "CALL apoc.schema.relationships({})", result -> {
+                Map<String, Object> r = result.next();
 
-            assertEquals("CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER", r.get("name"));
-            assertEquals("RELATIONSHIP_PROPERTY_TYPE", r.get("type"));
-            assertEquals("KNOWS", r.get("relationshipType"));
-            assertEquals(List.of("day"), r.get("properties"));
+                assertEquals("RELATIONSHIP_PROPERTY_TYPE", r.get("type"));
+                assertEquals("KNOWS", r.get("relationshipType"));
+                assertEquals(List.of("day"), r.get("properties"));
 
-            assertFalse(result.hasNext());
-        });
+                if (cypherVersion.equals("5")) {
+                    assertEquals("CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER", r.get("name"));
+                } else {
+                    assertEquals("rel_con", r.get("name"));
+                }
+
+                assertFalse(result.hasNext());
+            });
+        }
     }
 
     @Test
