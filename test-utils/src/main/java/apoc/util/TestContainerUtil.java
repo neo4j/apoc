@@ -204,7 +204,7 @@ public class TestContainerUtil {
                 ? System.getenv()
                         .getOrDefault(
                                 "CYPHER_VERSION",
-                                Util.getCypherVersion(GraphDatabaseInternalSettings.CypherVersion.Cypher25))
+                                Util.getCypherVersion(GraphDatabaseInternalSettings.CypherVersion.Cypher5))
                 : Util.getCypherVersion(cypherVersion);
 
         System.out.println("neo4jDockerImageVersion = " + dockerImage);
