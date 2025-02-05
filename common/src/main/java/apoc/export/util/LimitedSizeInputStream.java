@@ -58,6 +58,13 @@ public class LimitedSizeInputStream extends InputStream {
         return i;
     }
 
+    @Override
+    public void close() throws IOException
+    {
+        stream.close();
+        super.close();
+    }
+
     private void incrementCounter(int size) throws IOException {
         // in some test cases, e.g. UtilIT.redirectShouldWorkWhenProtocolNotChangesWithUrlLocation,
         // the StreamConnection.getLength() returns `-1` because of content length not known,
