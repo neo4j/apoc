@@ -25,12 +25,18 @@ import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.neo4j.exceptions.ArithmeticException;
 import org.neo4j.graphdb.*;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -38,6 +44,10 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
+import org.neo4j.values.storable.DurationValue;
+import org.neo4j.values.storable.PointValue;
+import org.neo4j.values.storable.Value;
+import org.neo4j.values.storable.Values;
 
 /**
  * @author mh
@@ -368,12 +378,31 @@ public class Grouping {
                     double[] values = (double[]) v;
                     entry.setValue(values[1] == 0 ? 0 : values[0] / values[1]);
                 }
+                if (k.matches("^avg_.+") && v instanceof DurationValue duration) {
+                    Long count = ((Number) pc.getProperty(k + "_count", 0)).longValue();
+                    entry.setValue(divDurationValue(duration, count));
+                }
                 if (k.matches("^collect_.+") && v instanceof Collection) {
                     entry.setValue(((Collection) v).toArray());
                 }
             });
         }
         return pcs;
+    }
+
+    // This is copied from the monorepo (as there was no way to use it outside of Neo)
+    public DurationValue divDurationValue(DurationValue div, Long number) {
+        double divisor = number.doubleValue();
+
+        try {
+            return div.approximate(
+                    (double) div.get("months").longValue() / divisor,
+                    (double) div.get("days").longValue() / divisor,
+                    (double) div.get("seconds").longValue() / divisor,
+                    (double) div.get("nanoseconds").longValue() / divisor);
+        } catch (ArithmeticException | java.lang.ArithmeticException e) {
+            return div;
+        }
     }
 
     private void aggregate(Entity pc, Map<String, List<String>> aggregations, Map<String, Object> properties) {
@@ -395,28 +424,36 @@ public class Grouping {
                                 pc.setProperty(key, ((Number) pc.getProperty(key, 0)).longValue() + 1);
                                 break;
                             case "sum":
-                                pc.setProperty(
-                                        key, ((Number) pc.getProperty(key, 0)).doubleValue() + Util.toDouble(value));
+                                if (value instanceof DurationValue duration) {
+                                    DurationValue dv =
+                                            (DurationValue) pc.getProperty(key, DurationValue.duration(0, 0, 0, 0));
+                                    pc.setProperty(key, (duration).add(dv));
+                                } else if (value instanceof Number) {
+                                    pc.setProperty(
+                                            key,
+                                            ((Number) pc.getProperty(key, 0)).doubleValue() + Util.toDouble(value));
+                                }
                                 break;
                             case "min":
-                                pc.setProperty(
-                                        key,
-                                        Math.min(
-                                                ((Number) pc.getProperty(key, Double.MAX_VALUE)).doubleValue(),
-                                                Util.toDouble(value)));
+                                pc.setProperty(key, getMin(key, pc, value));
                                 break;
                             case "max":
-                                pc.setProperty(
-                                        key,
-                                        Math.max(
-                                                ((Number) pc.getProperty(key, Double.MIN_VALUE)).doubleValue(),
-                                                Util.toDouble(value)));
+                                pc.setProperty(key, getMax(key, pc, value));
                                 break;
                             case "avg": {
-                                double[] avg = (double[]) pc.getProperty(key, new double[2]);
-                                avg[0] += Util.toDouble(value);
-                                avg[1] += 1;
-                                pc.setProperty(key, avg);
+                                if (value instanceof Number) {
+                                    double[] avg = (double[]) pc.getProperty(key, new double[2]);
+                                    avg[0] += Util.toDouble(value);
+                                    avg[1] += 1;
+                                    pc.setProperty(key, avg);
+                                } else if (value instanceof DurationValue) {
+                                    DurationValue dv =
+                                            (DurationValue) pc.getProperty(key, DurationValue.duration(0, 0, 0, 0));
+                                    pc.setProperty(key, ((DurationValue) value).add(dv));
+                                    pc.setProperty(
+                                            key + "_count",
+                                            ((Number) pc.getProperty(key + "_count", 0)).longValue() + 1);
+                                }
                                 break;
                             }
                         }
@@ -424,6 +461,96 @@ public class Grouping {
                 }
             }
         });
+    }
+
+    private Object getMin(String key, Entity pc, Object value) {
+        Object prop = pc.getProperty(key);
+
+        if (prop == null) {
+            return value;
+        }
+
+        Value valueA = Values.unsafeOf(prop, true);
+        Value valueB = Values.unsafeOf(value, true);
+
+        if (valueA == null) valueA = Values.NO_VALUE;
+        if (valueB == null) valueB = Values.NO_VALUE;
+
+        if (isComparableTypes(prop, value)) {
+            return compareValues(valueA, valueB) ? prop : value;
+        }
+
+        return returnMinOfDifferentValues(prop, value);
+    }
+
+    private Object getMax(String key, Entity pc, Object value) {
+        Object prop = pc.getProperty(key);
+
+        if (prop == null) {
+            return value;
+        }
+
+        Value valueA = Values.unsafeOf(prop, true);
+        Value valueB = Values.unsafeOf(value, true);
+
+        if (valueA == null) valueA = Values.NO_VALUE;
+        if (valueB == null) valueB = Values.NO_VALUE;
+
+        if (isComparableTypes(prop, value)) {
+            return compareValues(valueA, valueB) ? value : prop;
+        }
+
+        return returnMaxOfDifferentValues(prop, value);
+    }
+
+    private boolean isComparableTypes(Object prop, Object value) {
+        return (prop instanceof ZonedDateTime && value instanceof ZonedDateTime)
+                || (prop instanceof LocalDateTime && value instanceof LocalDateTime)
+                || (prop instanceof LocalDate && value instanceof LocalDate)
+                || (prop instanceof OffsetTime && value instanceof OffsetTime)
+                || (prop instanceof LocalTime && value instanceof LocalTime)
+                || (prop instanceof String && value instanceof String)
+                || (prop instanceof Boolean && value instanceof Boolean)
+                || (prop instanceof Number && value instanceof Number)
+                || ((prop instanceof Collection || prop.getClass().isArray())
+                        && (value instanceof Collection || value.getClass().isArray()))
+                || (prop instanceof PointValue && value instanceof PointValue);
+    }
+
+    private boolean compareValues(Value a, Value b) {
+        return switch (Values.COMPARATOR.ternaryCompare(a, b)) {
+            case UNDEFINED, EQUAL, SMALLER_THAN -> true;
+            case GREATER_THAN -> false;
+        };
+    }
+
+    private Object returnMinOfDifferentValues(Object prop, Object value) {
+        return orderOfType(prop) < orderOfType(value) ? prop : value;
+    }
+
+    private Object returnMaxOfDifferentValues(Object prop, Object value) {
+        return orderOfType(prop) < orderOfType(value) ? value : prop;
+    }
+
+    private int orderOfType(Object value) {
+        if (value != null && value.getClass().isArray()) {
+            return 0;
+        }
+        return switch (value) {
+            case null -> 11;
+            case Collection ignored -> 0;
+            case PointValue ignored -> 1;
+            case ZonedDateTime ignored -> 2;
+            case LocalDateTime ignored -> 3;
+            case LocalDate ignored -> 4;
+            case OffsetTime ignored -> 5;
+            case LocalTime ignored -> 6;
+            case DurationValue ignored -> 7;
+            case String ignored -> 8;
+            case Boolean ignored -> 9;
+            case Number ignored -> 10;
+            default -> 12;
+        };
     }
 
     /**
