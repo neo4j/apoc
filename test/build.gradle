@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+application {
+    mainClass = 'apoc.Test'
+}
+
+dependencies {
+    implementation project(':common')
+    implementation project(':core')
+    implementation group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
+
+    //runtimeOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
+
+    //testImplementation platform('org.junit:junit-bom:5.10.0')
+    //testImplementation 'org.junit.jupiter:junit-jupiter'
+}
