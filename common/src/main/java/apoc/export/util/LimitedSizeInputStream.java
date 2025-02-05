@@ -59,8 +59,7 @@ public class LimitedSizeInputStream extends InputStream {
     }
 
     @Override
-    public void close() throws IOException
-    {
+    public void close() throws IOException {
         stream.close();
         super.close();
     }
