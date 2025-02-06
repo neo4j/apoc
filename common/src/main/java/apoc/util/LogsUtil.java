@@ -43,7 +43,7 @@ public class LogsUtil {
             final var preParsed =
                     new PreParser(CypherConfiguration.fromConfig(config)).preParse(query, defaultCypherVersion);
             final var statement = AstParserFactory$.MODULE$
-                    .apply(preParsed.cypherVersion())
+                    .apply(preParsed.resolvedLanguage())
                     .apply(preParsed.statement(), exceptionFactory, Option.apply(null))
                     .singleStatement();
             var rewriter = sensitiveLiteralReplacement.apply(statement)._1;
