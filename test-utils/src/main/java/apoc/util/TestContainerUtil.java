@@ -50,7 +50,7 @@ import org.assertj.core.description.LazyTextDescription;
 import org.gradle.tooling.BuildLauncher;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.testcontainers.containers.ContainerFetchException;
@@ -110,7 +110,7 @@ public class TestContainerUtil {
             Neo4jVersion version,
             List<ApocPackage> apocPackages,
             boolean withLogging,
-            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+            GraphDatabaseSettings.CypherVersion cypherVersion) {
         return switch (version) {
             case ENTERPRISE -> createEnterpriseDB(apocPackages, withLogging, cypherVersion);
             case COMMUNITY -> createCommunityDB(apocPackages, withLogging, cypherVersion);
@@ -122,9 +122,7 @@ public class TestContainerUtil {
     }
 
     public static Neo4jContainerExtension createEnterpriseDB(
-            List<ApocPackage> apocPackages,
-            boolean withLogging,
-            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+            List<ApocPackage> apocPackages, boolean withLogging, GraphDatabaseSettings.CypherVersion cypherVersion) {
         return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, cypherVersion);
     }
 
@@ -133,9 +131,7 @@ public class TestContainerUtil {
     }
 
     public static Neo4jContainerExtension createCommunityDB(
-            List<ApocPackage> apocPackages,
-            boolean withLogging,
-            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+            List<ApocPackage> apocPackages, boolean withLogging, GraphDatabaseSettings.CypherVersion cypherVersion) {
         return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY, cypherVersion);
     }
 
@@ -143,7 +139,7 @@ public class TestContainerUtil {
             List<ApocPackage> apocPackages,
             boolean withLogging,
             Neo4jVersion version,
-            GraphDatabaseInternalSettings.CypherVersion cypherVersion) {
+            GraphDatabaseSettings.CypherVersion cypherVersion) {
         String dockerImage;
         if (version == Neo4jVersion.ENTERPRISE) {
             dockerImage = neo4jEnterpriseDockerImageVersion;
@@ -203,8 +199,7 @@ public class TestContainerUtil {
         String cypherVersionSetting = cypherVersion == null
                 ? System.getenv()
                         .getOrDefault(
-                                "CYPHER_VERSION",
-                                Util.getCypherVersion(GraphDatabaseInternalSettings.CypherVersion.Cypher5))
+                                "CYPHER_VERSION", Util.getCypherVersion(GraphDatabaseSettings.CypherVersion.Cypher5))
                 : Util.getCypherVersion(cypherVersion);
 
         System.out.println("neo4jDockerImageVersion = " + dockerImage);

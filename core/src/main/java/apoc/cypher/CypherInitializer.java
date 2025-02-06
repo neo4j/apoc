@@ -34,6 +34,7 @@ import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
 import org.neo4j.configuration.Config;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Label;
@@ -107,10 +108,15 @@ public class CypherInitializer implements AvailabilityListener {
                                 .resolveDependency(ApocConfig.class)
                                 .getConfig();
                         for (final var query : collectInitializers(config)) {
+                            final var neo4jConfig = dependencyResolver.resolveDependency(Config.class);
+
+                            // TODO Replace with actual db specific default when it's available.
                             final var defaultLanguage =
-                                    CypherVersion.Default; // TODO Replace with db specific default when available
-                            final var sanitizedQuery = LogsUtil.sanitizeQuery(
-                                    dependencyResolver.resolveDependency(Config.class), query, defaultLanguage);
+                                    switch (neo4jConfig.get(GraphDatabaseSettings.default_language)) {
+                                        case Cypher5 -> CypherVersion.Cypher5;
+                                        case Cypher25 -> CypherVersion.Cypher25;
+                                    };
+                            final var sanitizedQuery = LogsUtil.sanitizeQuery(neo4jConfig, query, defaultLanguage);
                             try {
                                 // we need to apply a retry strategy here since in systemdb we potentially conflict
                                 // with
