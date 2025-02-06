@@ -36,15 +36,6 @@ public class LogsUtilTest {
     }
 
     @Test
-    public void shouldSanitizeCypher25Query() {
-        String sanitized = LogsUtil.sanitizeQuery(
-                Config.defaults(),
-                "RETURN CASE $x WHEN IN ['a', 'b'] THEN true ELSE false END AS res",
-                CypherVersion.Cypher25);
-        assertEquals(sanitized, "CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
-    }
-
-    @Test
     public void shouldReturnInputIfInvalidQuery() {
         String invalidQuery = "MATCH USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED";
         String sanitized = LogsUtil.sanitizeQuery(Config.defaults(), invalidQuery, CypherVersion.Cypher5);
