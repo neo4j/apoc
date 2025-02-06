@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.neo4j.common.DependencyResolver;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.dbms.api.Neo4jDatabaseManagementServiceBuilder;
 import org.neo4j.dbms.systemgraph.TopologyGraphDbmsModel.HostedOnMode;
@@ -159,12 +160,12 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
         globalConfig.put(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
         // A test may set this for the entire file itself, so we shouldn't override that
-        if (!globalConfig.containsKey(GraphDatabaseInternalSettings.default_cypher_version)) {
-            String cypherVersionEnv = System.getenv()
-                    .getOrDefault("CYPHER_VERSION", GraphDatabaseInternalSettings.CypherVersion.Cypher5.name());
-            GraphDatabaseInternalSettings.CypherVersion cypherVersion =
-                    GraphDatabaseInternalSettings.CypherVersion.valueOf(cypherVersionEnv);
-            globalConfig.put(GraphDatabaseInternalSettings.default_cypher_version, cypherVersion);
+        if (!globalConfig.containsKey(GraphDatabaseSettings.default_language)) {
+            String cypherVersionEnv =
+                    System.getenv().getOrDefault("CYPHER_VERSION", GraphDatabaseSettings.CypherVersion.Cypher5.name());
+            GraphDatabaseSettings.CypherVersion cypherVersion =
+                    GraphDatabaseSettings.CypherVersion.valueOf(cypherVersionEnv);
+            globalConfig.put(GraphDatabaseSettings.default_language, cypherVersion);
         }
 
         databaseBuilder.setConfig(globalConfig);

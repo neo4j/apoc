@@ -19,6 +19,7 @@
 package apoc.util;
 
 import org.neo4j.configuration.Config;
+import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.cypher.internal.PreParser;
 import org.neo4j.cypher.internal.ast.Statement;
 import org.neo4j.cypher.internal.ast.prettifier.DefaultExpressionStringifier;
@@ -29,21 +30,20 @@ import org.neo4j.cypher.internal.config.CypherConfiguration;
 import org.neo4j.cypher.internal.parser.AstParserFactory$;
 import org.neo4j.cypher.internal.rewriting.rewriters.sensitiveLiteralReplacement;
 import org.neo4j.cypher.internal.util.OpenCypherExceptionFactory;
-import org.neo4j.cypher.internal.util.RecordingNotificationLogger;
 import scala.Option;
 
 public class LogsUtil {
-    public static String sanitizeQuery(Config config, String query) {
+    public static String sanitizeQuery(Config config, String query, CypherVersion defaultCypherVersion) {
         try {
             final var exceptionFactory = new OpenCypherExceptionFactory(scala.Option.empty());
             final var extension =
                     ExpressionStringifier.Extension$.MODULE$.simple((ExpressionStringifier$.MODULE$.failingExtender()));
             final var stringifier = new DefaultExpressionStringifier(extension, false, false, false, false);
             final var prettifier = new Prettifier(stringifier, Prettifier.EmptyExtension$.MODULE$, true);
-            var notifications = new RecordingNotificationLogger();
-            final var preParsed = new PreParser(CypherConfiguration.fromConfig(config)).preParse(query, notifications);
+            final var preParsed =
+                    new PreParser(CypherConfiguration.fromConfig(config)).preParse(query, defaultCypherVersion);
             final var statement = AstParserFactory$.MODULE$
-                    .apply(preParsed.options().queryOptions().cypherVersion().actualVersion())
+                    .apply(preParsed.resolvedLanguage())
                     .apply(preParsed.statement(), exceptionFactory, Option.apply(null))
                     .singleStatement();
             var rewriter = sensitiveLiteralReplacement.apply(statement)._1;

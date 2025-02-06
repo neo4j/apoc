@@ -89,7 +89,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.configuration.Config;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.configuration.connectors.BoltConnector;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Entity;
@@ -1374,9 +1374,8 @@ public class Util {
                 .toList();
     }
 
-    public static String getCypherVersion(GraphDatabaseInternalSettings.CypherVersion version) {
+    public static String getCypherVersion(GraphDatabaseSettings.CypherVersion version) {
         return switch (version) {
-            case Default -> "default";
             case Cypher5 -> "5";
             case Cypher25 -> "25";
         };

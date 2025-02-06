@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
@@ -40,9 +39,7 @@ public class WarmupEnterpriseTest {
 
     @Test
     public void testWarmupIsntAllowedWithOtherStorageEngines() {
-        final var conf = Map.of(
-                GraphDatabaseInternalSettings.include_versions_under_development.name(), "true",
-                GraphDatabaseSettings.db_format.name(), "block");
+        final var conf = Map.of(GraphDatabaseSettings.db_format.name(), "block");
         withSession(conf, session -> {
             assertThatThrownBy(() -> testCall(session, "CYPHER 5 CALL apoc.warmup.run()", (r) -> {}))
                     .isExactlyInstanceOf(ClientException.class)
@@ -53,9 +50,7 @@ public class WarmupEnterpriseTest {
 
     @Test
     public void testWarmupOnEnterpriseStorageEngine() {
-        final var conf = Map.of(
-                GraphDatabaseInternalSettings.include_versions_under_development.name(), "true",
-                GraphDatabaseSettings.db_format.name(), "high_limit");
+        final var conf = Map.of(GraphDatabaseSettings.db_format.name(), "high_limit");
         withSession(conf, session -> {
             testCall(session, "CYPHER 5 CALL apoc.warmup.run(true,true,true)", r -> {
                 assertEquals(true, r.get("indexesLoaded"));
