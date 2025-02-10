@@ -20,6 +20,7 @@ package apoc.trigger;
 
 import static apoc.util.TestUtil.testCallEventually;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -38,7 +39,7 @@ public class TriggerTestUtil {
                 "CALL apoc.trigger.list() YIELD name, query, paused WHERE name = $name RETURN query, paused",
                 Map.of("name", name),
                 row -> {
-                    assertEquals(query, row.get("query"));
+                    assertTrue(row.get("query").toString().contains(query));
                     assertEquals(paused, row.get("paused"));
                 },
                 TIMEOUT);

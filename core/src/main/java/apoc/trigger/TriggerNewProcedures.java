@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.procedure.SystemProcedure;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Admin;
@@ -50,6 +51,9 @@ public class TriggerNewProcedures {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     private void checkInSystemWriter() {
         TriggerHandlerNewProcedures.checkEnabled();
@@ -102,10 +106,10 @@ public class TriggerNewProcedures {
         checkTargetDatabase(databaseName);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
 
+        var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
         return withUpdatingTransaction(
                 databaseName,
-                tx -> Stream.of(
-                        TriggerHandlerNewProcedures.install(databaseName, name, statement, selector, params, tx)));
+                tx -> Stream.of(TriggerHandlerNewProcedures.install(databaseName, name, query, selector, params, tx)));
     }
 
     // TODO - change with @SystemOnlyProcedure

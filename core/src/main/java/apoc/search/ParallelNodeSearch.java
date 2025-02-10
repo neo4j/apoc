@@ -34,6 +34,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -54,6 +55,9 @@ public class ParallelNodeSearch {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @NotThreadSafe
     @Procedure("apoc.search.nodeAllReduced")
@@ -209,10 +213,25 @@ public class ParallelNodeSearch {
             String label = e.getKey();
             Object properties = e.getValue();
             if (properties instanceof String) {
-                return Stream.of(new QueryWorker(api, label, (String) properties, operator, value, log));
+                return Stream.of(new QueryWorker(
+                        api,
+                        label,
+                        (String) properties,
+                        operator,
+                        value,
+                        log,
+                        Util.getCypherVersionString(procedureCallContext)));
             } else if (properties instanceof List) {
                 return ((List<String>) properties)
-                        .stream().map(prop -> new QueryWorker(api, label, prop, operator, value, log));
+                        .stream()
+                                .map(prop -> new QueryWorker(
+                                        api,
+                                        label,
+                                        prop,
+                                        operator,
+                                        value,
+                                        log,
+                                        Util.getCypherVersionString(procedureCallContext)));
             }
             throw new RuntimeException("Invalid type for properties " + properties + ": "
                     + (properties == null ? "null" : properties.getClass()));
@@ -224,21 +243,32 @@ public class ParallelNodeSearch {
         private String label, prop, operator;
         Object value;
         private Log log;
+        private String cypherVersion;
 
-        public QueryWorker(GraphDatabaseService db, String label, String prop, String operator, Object value, Log log) {
+        public QueryWorker(
+                GraphDatabaseService db,
+                String label,
+                String prop,
+                String operator,
+                Object value,
+                Log log,
+                String cypherVersion) {
             this.db = db;
             this.label = label;
             this.prop = prop;
             this.value = value;
             this.operator = operator;
             this.log = log;
+            this.cypherVersion = cypherVersion;
         }
 
         public Stream<NodeReducedResult> queryForData() {
             List<String> labels = singletonList(label);
-            String query = format(
-                    "match (n:`%s`) where n.`%s` %s $value return id(n) as id,  n.`%s` as value",
-                    label, prop, operator, prop);
+            String query = Util.prefixQuery(
+                    cypherVersion,
+                    format(
+                            "MATCH (n:`%s`) WHERE n.`%s` %s $value RETURN id(n) AS id,  n.`%s` AS value",
+                            label, prop, operator, prop));
             return queryForNode(
                     query,
                     (row) -> new NodeReducedResult((long) row.get("id"), labels, singletonMap(prop, row.get("value"))))
@@ -246,7 +276,9 @@ public class ParallelNodeSearch {
         }
 
         public Stream<Long> queryForNodeId() {
-            String query = format("match (n:`%s`) where n.`%s` %s $value return id(n) AS id", label, prop, operator);
+            String query = Util.prefixQuery(
+                    cypherVersion,
+                    format("MATCH (n:`%s`) WHERE n.`%s` %s $value RETURN id(n) AS id", label, prop, operator));
             return queryForNode(query, (row) -> (long) row.get("id")).stream();
         }
 

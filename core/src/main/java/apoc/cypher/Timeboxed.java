@@ -35,6 +35,7 @@ import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.logging.Log;
@@ -62,6 +63,9 @@ public class Timeboxed {
 
     @Context
     public TerminationGuard terminationGuard;
+
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     private static final Map<String, Object> POISON = Collections.singletonMap("__magic", "POISON");
 
@@ -105,7 +109,9 @@ public class Timeboxed {
         pools.getDefaultExecutorService().submit(() -> {
             try (Transaction innerTx = db.beginTx()) {
                 txAtomic.set(innerTx);
-                Result result = innerTx.execute(cypher, params == null ? Collections.EMPTY_MAP : params);
+                Result result = innerTx.execute(
+                        Util.prefixQueryWithCheck(procedureCallContext, cypher),
+                        params == null ? Collections.EMPTY_MAP : params);
                 while (result.hasNext()) {
                     if (Util.transactionIsTerminated(terminationGuard)) {
                         txAtomic.get().close();

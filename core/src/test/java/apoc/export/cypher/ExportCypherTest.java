@@ -22,6 +22,7 @@ import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.export.util.ExportFormat.*;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
 import static apoc.util.TestUtil.assertError;
+import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static apoc.util.Util.map;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
+import apoc.HelperProcedures;
 import apoc.export.util.ExportConfig;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
@@ -49,12 +51,14 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -98,6 +102,7 @@ public class ExportCypherTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                             .build(),
@@ -2415,6 +2420,22 @@ public class ExportCypherTest {
                     .replace(NEO4J_SHELL.commit(), CYPHER_SHELL.commit())
                     .replace(NEO4J_SHELL.schemaAwait(), EXPECTED_INDEXES_AWAIT)
                     .replace(NEO4J_SHELL.schemaAwait(), CYPHER_SHELL.schemaAwait());
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocCypherQuery() {
+        db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
+
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.export.cypher.query('%s MATCH (n:Test {prop: apoc.cypherVersion() }) RETURN n LIMIT 1', null, { stream:true }) YIELD cypherStatements RETURN cypherStatements",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+            testCall(
+                    db,
+                    query,
+                    r -> TestCase.assertTrue(
+                            r.get("cypherStatements").toString().contains(cypherVersion.result)));
         }
     }
 }

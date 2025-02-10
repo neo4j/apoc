@@ -29,6 +29,7 @@ import static apoc.util.CompressionAlgo.NONE;
 import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.assertError;
+import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import apoc.HelperProcedures;
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
@@ -48,11 +50,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -75,11 +79,12 @@ public class ExportJsonTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+                    directory.toPath().toAbsolutePath())
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     @Before
     public void setup() {
-        TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class);
+        TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class, HelperProcedures.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally(
@@ -753,5 +758,16 @@ public class ExportJsonTest {
 
     private void assertStreamEquals(String fileName, String actualText) {
         FileTestUtil.assertStreamEquals(directoryExpected, fileName, actualText);
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocJsonQuery() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.export.json.query('%s RETURN apoc.cypherVersion() AS version', null, { stream:true }) YIELD data RETURN data",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+            testCall(
+                    db, query, r -> TestCase.assertTrue(r.get("data").toString().contains(cypherVersion.result)));
+        }
     }
 }

@@ -20,11 +20,12 @@ package apoc.help;
 
 import static apoc.util.Util.map;
 
+import apoc.util.Util;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.QueryLanguage;
-import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -36,27 +37,15 @@ public class Help {
     @Context
     public Transaction tx;
 
-    @NotThreadSafe
-    @Procedure("apoc.help")
-    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
-    @Description(
-            "Returns descriptions of the available APOC procedures and functions. If a keyword is provided, it will return only those procedures and functions that have the keyword in their name.")
-    public Stream<HelpResult> infoCypher5(
-            @Name(value = "proc", description = "A keyword to filter the results by.") String name) {
-        return help(name, true);
-    }
+    @Context
+    public ProcedureCallContext procedureCallContext;
 
     @NotThreadSafe
     @Procedure("apoc.help")
-    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Returns descriptions of the available APOC procedures and functions. If a keyword is provided, it will return only those procedures and functions that have the keyword in their name.")
     public Stream<HelpResult> infoCypher25(
             @Name(value = "proc", description = "A keyword to filter the results by.") String name) {
-        return help(name, false);
-    }
-
-    private Stream<HelpResult> help(String name, Boolean version5) {
         boolean searchText = false;
         if (name != null) {
             name = name.trim();
@@ -65,16 +54,19 @@ public class Help {
                 searchText = true;
             }
         }
-        String CypherPreparser = version5 ? "CYPHER 5 " : "CYPHER 25 ";
         String filter =
                 " WHERE name starts with 'apoc.' " + " AND ($name IS NULL  OR toLower(name) CONTAINS toLower($name) "
                         + " OR ($desc IS NOT NULL AND toLower(description) CONTAINS toLower($desc))) ";
 
-        String proceduresQuery = CypherPreparser + "SHOW PROCEDURES yield name, description, signature, isDeprecated "
-                + filter + "RETURN 'procedure' as type, name, description, signature, isDeprecated ";
+        String proceduresQuery = Util.prefixQuery(
+                procedureCallContext,
+                "SHOW PROCEDURES yield name, description, signature, isDeprecated " + filter
+                        + "RETURN 'procedure' as type, name, description, signature, isDeprecated ");
 
-        String functionsQuery = CypherPreparser + "SHOW FUNCTIONS yield name, description, signature, isDeprecated "
-                + filter + "RETURN 'function' as type, name, description, signature, isDeprecated ";
+        String functionsQuery = Util.prefixQuery(
+                procedureCallContext,
+                "SHOW FUNCTIONS yield name, description, signature, isDeprecated " + filter
+                        + "RETURN 'function' as type, name, description, signature, isDeprecated ");
         Map<String, Object> params = map("name", name, "desc", searchText ? name : null);
         Stream<Map<String, Object>> proceduresResults = tx.execute(proceduresQuery, params).stream();
         Stream<Map<String, Object>> functionsResults = tx.execute(functionsQuery, params).stream();
@@ -84,7 +76,7 @@ public class Help {
                         row,
                         existsInCore(
                                 (String) row.get("name"),
-                                version5,
+                                procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5),
                                 row.get("type").equals("function")))));
     }
 

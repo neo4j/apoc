@@ -96,7 +96,7 @@ public class TriggerTest {
                 db, "CALL apoc.trigger.add('count-removals',$query,{}) YIELD name RETURN name", map("query", query), 1);
         TestUtil.testCall(db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("count-removals", row.get("name"));
-            assertEquals(query, row.get("query"));
+            assertTrue(row.get("query").toString().contains(query));
             assertEquals(true, row.get("installed"));
         });
     }
@@ -140,12 +140,12 @@ public class TriggerTest {
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed','RETURN 1',{}) YIELD name RETURN name", 1);
         TestUtil.testCall(db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
-            assertEquals("RETURN 1", row.get("query"));
+            assertTrue(row.get("query").toString().contains("RETURN 1"));
             assertEquals(true, row.get("installed"));
         });
         TestUtil.testCall(db, "CALL apoc.trigger.remove('to-be-removed')", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
-            assertEquals("RETURN 1", row.get("query"));
+            assertTrue(row.get("query").toString().contains("RETURN 1"));
             assertEquals(false, row.get("installed"));
         });
 
@@ -169,10 +169,11 @@ public class TriggerTest {
                     .toList();
             assertEquals(2, rows.size());
             assertEquals("to-be-removed-1", rows.get(0).get("name"));
-            assertEquals("RETURN 1", rows.get(0).get("query"));
+            assertTrue(rows.get(0).get("query").toString().contains("RETURN 1"));
+
             assertEquals(false, rows.get(0).get("installed"));
             assertEquals("to-be-removed-2", rows.get(1).get("name"));
-            assertEquals("RETURN 2", rows.get(1).get("query"));
+            assertTrue(rows.get(1).get("query").toString().contains("RETURN 2"));
             assertEquals(false, rows.get(1).get("installed"));
         });
         TestUtil.testCallCount(db, "CALL apoc.trigger.list()", 0);

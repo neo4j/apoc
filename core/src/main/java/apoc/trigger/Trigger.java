@@ -90,7 +90,8 @@ public class Trigger {
 
         Util.validateQuery(db, statement);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
-        Map<String, Object> removed = triggerHandler.add(name, statement, selector, params);
+        var query = Util.prefixQueryWithCheck("5", statement);
+        Map<String, Object> removed = triggerHandler.add(name, query, selector, params);
         if (removed != null) {
             return Stream.of(
                     new TriggerInfo(

@@ -47,6 +47,7 @@ import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.security.AuthorizationViolationException;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -73,6 +74,9 @@ public class Cypher {
     @Context
     public Pools pools;
 
+    @Context
+    public ProcedureCallContext procedureCallContext;
+
     @NotThreadSafe
     @Procedure("apoc.cypher.run")
     @Description("Runs a dynamically constructed read-only statement with the given parameters.")
@@ -80,7 +84,7 @@ public class Cypher {
             @Name(value = "statement", description = "The Cypher statement to run.") String statement,
             @Name(value = "params", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> params) {
-        return runCypherQuery(tx, statement, params);
+        return runCypherQuery(tx, statement, params, procedureCallContext);
     }
 
     @Procedure(name = "apoc.cypher.runMany", mode = WRITE)
@@ -107,7 +111,8 @@ public class Cypher {
             // At this point you may have questions like;
             // - "Why do we execute this statement in a new transaction?"
             // My guess is as good as yours. This is the way of the apoc. Safe travels.
-            final var results = new RunManyResultSpliterator(innerTx.execute(cypher, params), stats);
+            final var results = new RunManyResultSpliterator(
+                    innerTx.execute(Util.prefixQueryWithCheck(procedureCallContext, cypher), params), stats);
             return StreamSupport.stream(results, false).onClose(results::close).onClose(innerTx::commit);
         } catch (AuthorizationViolationException accessModeException) {
             // We meet again, few people make it this far into this world!
@@ -188,7 +193,7 @@ public class Cypher {
             @Name(value = "statement", description = "The Cypher statement to run.") String statement,
             @Name(value = "params", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> params) {
-        return runCypherQuery(tx, statement, params);
+        return runCypherQuery(tx, statement, params, procedureCallContext);
     }
 
     @Procedure(name = "apoc.cypher.runWrite", mode = WRITE)
@@ -206,7 +211,7 @@ public class Cypher {
             @Name(value = "statement", description = "The Cypher schema statement to run.") String statement,
             @Name(value = "params", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> params) {
-        return runCypherQuery(tx, statement, params);
+        return runCypherQuery(tx, statement, params, procedureCallContext);
     }
 
     @NotThreadSafe
@@ -231,8 +236,9 @@ public class Cypher {
         if (targetQuery.isEmpty()) {
             return Stream.of(new CaseMapResult(Collections.emptyMap()));
         } else {
-            return tx.execute(withParamMapping(targetQuery, params.keySet()), params).stream()
-                    .map(CaseMapResult::new);
+            String query =
+                    Util.prefixQueryWithCheck(procedureCallContext, withParamMapping(targetQuery, params.keySet()));
+            return tx.execute(query, params).stream().map(CaseMapResult::new);
         }
     }
 
@@ -294,16 +300,18 @@ public class Cypher {
             String ifQuery = (String) caseItr.next();
 
             if (condition) {
-                return tx.execute(withParamMapping(ifQuery, params.keySet()), params).stream()
-                        .map(CaseMapResult::new);
+                String query =
+                        Util.prefixQueryWithCheck(procedureCallContext, withParamMapping(ifQuery, params.keySet()));
+                return tx.execute(query, params).stream().map(CaseMapResult::new);
             }
         }
 
         if (elseQuery.isEmpty()) {
             return Stream.of(new CaseMapResult(Collections.emptyMap()));
         } else {
-            return tx.execute(withParamMapping(elseQuery, params.keySet()), params).stream()
-                    .map(CaseMapResult::new);
+            String query =
+                    Util.prefixQueryWithCheck(procedureCallContext, withParamMapping(elseQuery, params.keySet()));
+            return tx.execute(query, params).stream().map(CaseMapResult::new);
         }
     }
 

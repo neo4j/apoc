@@ -27,6 +27,7 @@ import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.CompressionAlgo.NONE;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.assertError;
+import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -36,6 +37,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import apoc.HelperProcedures;
 import apoc.csv.CsvTestUtil;
 import apoc.graph.Graphs;
 import apoc.meta.Meta;
@@ -60,6 +62,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
@@ -440,11 +443,13 @@ public class ExportCsvTest {
     public static DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+                    directory.toPath().toAbsolutePath())
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     @BeforeClass
     public static void setUp() {
-        TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class, Meta.class, ImportCsv.class);
+        TestUtil.registerProcedure(
+                db, ExportCSV.class, Graphs.class, Meta.class, ImportCsv.class, HelperProcedures.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally(
@@ -477,7 +482,7 @@ public class ExportCsvTest {
     public void testExportInvalidQuoteValue() {
         try {
             String fileName = "all.csv";
-            TestUtil.testCall(
+            testCall(
                     db,
                     "CALL apoc.export.csv.all($file,{quotes: 'Invalid'})",
                     map("file", fileName),
@@ -494,7 +499,7 @@ public class ExportCsvTest {
     public void textExportWithTypes() {
         db.executeTransactionally(
                 "CREATE (n:TestNode) SET n = {valFloat:toFloat(123), name:'NodeName', valInt:5, dateVal: date('2024-11-01')};");
-        TestUtil.testCall(
+        testCall(
                 db,
                 """
                             CALL apoc.graph.fromCypher("MATCH (n:TestNode) RETURN n", {}, 'TestNode.csv',{}) YIELD graph
@@ -524,7 +529,7 @@ public class ExportCsvTest {
     public void testExportAllCsvCompressed() {
         final CompressionAlgo compressionAlgo = DEFLATE;
         String fileName = "all.csv.zz";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file, $config)",
                 map("file", fileName, "config", map("compression", compressionAlgo.name())),
@@ -536,7 +541,7 @@ public class ExportCsvTest {
     public void testConsistentQuotingAlways() {
         // All in one file
         String fileName1 = "allOneFileAlways.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: false})",
                 map("file", fileName1),
@@ -546,7 +551,7 @@ public class ExportCsvTest {
         // In separate files
         String fileNameStart = "allBulkImportAlways";
         String fileName2 = fileNameStart + ".csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: true})",
                 map("file", fileName2),
@@ -561,7 +566,7 @@ public class ExportCsvTest {
         assertEquals(EXPECTED_ALL_ALWAYS_REL, readFile(fileNameStart + ".relationships.REL.csv"));
 
         // Streaming
-        TestUtil.testCall(db, "CALL apoc.export.csv.all(null,{stream: true})", (r) -> {
+        testCall(db, "CALL apoc.export.csv.all(null,{stream: true})", (r) -> {
             String data = (String) r.get("data");
             assertEquals(EXPECTED_ALL_ALWAYS, data);
         });
@@ -571,7 +576,7 @@ public class ExportCsvTest {
     public void testConsistentQuotingIfNeeded() {
         // All in one file
         String fileName1 = "allOneFileIfNeeded.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'ifNeeded'})",
                 map("file", fileName1),
@@ -581,7 +586,7 @@ public class ExportCsvTest {
         // In separate files
         String fileNameStart = "allBulkImportIfNeeded";
         String fileName2 = fileNameStart + ".csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: true, quotes: 'ifNeeded'})",
                 map("file", fileName2),
@@ -597,7 +602,7 @@ public class ExportCsvTest {
         assertEquals(EXPECTED_ALL_IF_NEEDED_REL, readFile(fileNameStart + ".relationships.REL.csv"));
 
         // Streaming
-        TestUtil.testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'ifNeeded'})", (r) -> {
+        testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'ifNeeded'})", (r) -> {
             String data = (String) r.get("data");
             assertEquals(EXPECTED_ALL_IF_NEEDED, data);
         });
@@ -607,7 +612,7 @@ public class ExportCsvTest {
     public void testConsistentQuotingIfNeededDifferentiateNulls() {
         // All in one file
         String fileName1 = "allOneFileIfNeeded.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'ifNeeded', differentiateNulls: true})",
                 map("file", fileName1),
@@ -617,7 +622,7 @@ public class ExportCsvTest {
         // In separate files
         String fileNameStart = "allBulkImportIfNeeded";
         String fileName2 = fileNameStart + ".csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: true, quotes: 'ifNeeded', differentiateNulls: true})",
                 map("file", fileName2),
@@ -636,7 +641,7 @@ public class ExportCsvTest {
                 EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_REL, readFile(fileNameStart + ".relationships.REL.csv"));
 
         // Streaming
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all(null,{stream: true, quotes: 'ifNeeded', differentiateNulls: true})",
                 (r) -> {
@@ -649,7 +654,7 @@ public class ExportCsvTest {
     public void testConsistentQuotingNone() {
         // All in one file
         String fileName1 = "allOneFileNone.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'none'})",
                 map("file", fileName1),
@@ -659,7 +664,7 @@ public class ExportCsvTest {
         // In separate files
         String fileNameStart = "allBulkImportIfNone";
         String fileName2 = fileNameStart + ".csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{bulkImport: true, quotes: 'none'})",
                 map("file", fileName2),
@@ -675,7 +680,7 @@ public class ExportCsvTest {
         assertEquals(EXPECTED_ALL_IF_NEEDED_REL, readFile(fileNameStart + ".relationships.REL.csv"));
 
         // Streaming
-        TestUtil.testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'none'})", (r) -> {
+        testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'none'})", (r) -> {
             String data = (String) r.get("data");
             assertEquals(EXPECTED_ALL_NONE, data);
         });
@@ -694,7 +699,7 @@ public class ExportCsvTest {
                 "MATCH (u:Roundtrip) return u.name as name",
                 "config",
                 map(CompressionConfig.COMPRESSION, GZIP.name()));
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.query($query, $file, $config)",
                 params,
@@ -703,7 +708,7 @@ public class ExportCsvTest {
         final String deleteQuery = "MATCH (n:Roundtrip) DETACH DELETE n";
         db.executeTransactionally(deleteQuery);
 
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Roundtrip']}], [], $config) ",
                 params,
@@ -725,13 +730,12 @@ public class ExportCsvTest {
         final Map<String, Object> params =
                 map("file", fileName, "query", "MATCH (n: Test) RETURN n", "config", map("quotes", "always"));
 
-        TestUtil.testCall(
-                db, "CALL apoc.export.csv.all($file, $config)", params, (r) -> assertEquals(fileName, r.get("file")));
+        testCall(db, "CALL apoc.export.csv.all($file, $config)", params, (r) -> assertEquals(fileName, r.get("file")));
 
         final String deleteQuery = "MATCH (n:Test) DETACH DELETE n";
         db.executeTransactionally(deleteQuery);
 
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Test']}],[],{})",
                 params,
@@ -770,7 +774,7 @@ public class ExportCsvTest {
                         "config",
                         map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
 
-                TestUtil.testCall(
+                testCall(
                         db,
                         "CALL apoc.export.csv.query(\"MATCH (d:ESCAPING) WITH d RETURN d.age as age, d.name as name\", $file, $config)",
                         params,
@@ -805,7 +809,7 @@ public class ExportCsvTest {
                         "config",
                         map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
 
-                TestUtil.testCall(
+                testCall(
                         db,
                         """
                         MATCH (n:ESCAPING)
@@ -846,7 +850,7 @@ public class ExportCsvTest {
                         "config",
                         map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
 
-                TestUtil.testCall(
+                testCall(
                         db,
                         """
                         CALL apoc.graph.fromCypher('MATCH (n:ESCAPING) RETURN n',{}, 'test',{description: "test graph"}) yield graph
@@ -886,7 +890,7 @@ public class ExportCsvTest {
                         "config",
                         map("quotes", quotingType, "differentiateNulls", shouldDifferentiateNulls));
 
-                TestUtil.testCall(
+                testCall(
                         db,
                         "CALL apoc.export.csv.all($file, $config)",
                         params,
@@ -916,7 +920,7 @@ public class ExportCsvTest {
     }
 
     private void testExportCsvAllCommon(String fileName) {
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,null)",
                 map("file", fileName),
@@ -933,7 +937,7 @@ public class ExportCsvTest {
         final long totalNodes = 14L;
         final long totalRels = 4L;
         final long totalProps = 29L;
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file, null)",
                 map("file", fileName),
@@ -941,7 +945,7 @@ public class ExportCsvTest {
         assertEquals(EXP_SAMPLE, readFile(fileName));
 
         // quotes: 'none' to simplify header testing
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file, {sampling: true, samplingConfig: {sample: 1}, quotes: 'none'})",
                 map("file", fileName),
@@ -960,7 +964,7 @@ public class ExportCsvTest {
     @Test
     public void testExportAllCsvWithQuotes() {
         String fileName = "all.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{quotes: true})",
                 map("file", fileName),
@@ -971,7 +975,7 @@ public class ExportCsvTest {
     @Test
     public void testExportAllCsvWithoutQuotes() {
         String fileName = "all.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{quotes: 'none'})",
                 map("file", fileName),
@@ -982,7 +986,7 @@ public class ExportCsvTest {
     @Test
     public void testExportAllCsvNeededQuotes() {
         String fileName = "all.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.all($file,{quotes: 'ifNeeded'})",
                 map("file", fileName),
@@ -993,7 +997,7 @@ public class ExportCsvTest {
     @Test
     public void testExportGraphCsv() {
         String fileName = "graph.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.graph.fromDB('test',{}) yield graph "
                         + "CALL apoc.export.csv.graph(graph, $file,{quotes: 'none'}) "
@@ -1007,7 +1011,7 @@ public class ExportCsvTest {
     @Test
     public void testExportGraphCsvWithoutQuotes() {
         String fileName = "graph.csv";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.graph.fromDB('test',{}) yield graph " + "CALL apoc.export.csv.graph(graph, $file,null) "
                         + "YIELD nodes, relationships, properties, file, source,format, time "
@@ -1021,13 +1025,11 @@ public class ExportCsvTest {
     public void testExportQueryCsv() {
         String fileName = "query.csv";
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
-        TestUtil.testCall(
-                db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(5)"));
-                    assertEquals(fileName, r.get("file"));
-                    assertEquals("csv", r.get("format"));
-                });
+        testCall(db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
+            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+            assertEquals(fileName, r.get("file"));
+            assertEquals("csv", r.get("format"));
+        });
         assertEquals(EXPECTED_QUERY, readFile(fileName));
     }
 
@@ -1035,7 +1037,7 @@ public class ExportCsvTest {
     public void testExportQueryCsvWithoutQuotes() {
         String fileName = "query.csv";
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.query($query,$file,{quotes: false})",
                 map("file", fileName, "query", query),
@@ -1057,7 +1059,7 @@ public class ExportCsvTest {
         for (String query : invalidQueries) {
             QueryExecutionException e = Assert.assertThrows(
                     QueryExecutionException.class,
-                    () -> TestUtil.testCall(
+                    () -> testCall(
                             db,
                             """
                         CALL apoc.export.csv.query(
@@ -1076,13 +1078,11 @@ public class ExportCsvTest {
     public void testExportQueryNodesCsv() {
         String fileName = "query_nodes.csv";
         String query = "MATCH (u:User) return u";
-        TestUtil.testCall(
-                db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
-                    assertEquals(fileName, r.get("file"));
-                    assertEquals("csv", r.get("format"));
-                });
+        testCall(db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
+            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertEquals(fileName, r.get("file"));
+            assertEquals("csv", r.get("format"));
+        });
         assertEquals(EXPECTED_QUERY_NODES, readFile(fileName));
     }
 
@@ -1090,7 +1090,7 @@ public class ExportCsvTest {
     public void testExportQueryNodesCsvParams() {
         String fileName = "query_nodes.csv";
         String query = "MATCH (u:User) WHERE u.age > $age return u";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.query($query,$file,{params:{age:10}})",
                 map("file", fileName, "query", query),
@@ -1321,7 +1321,7 @@ public class ExportCsvTest {
         db.executeTransactionally(
                 "CREATE (n:Document{pk:$pk, copyright: $copyright})", map("copyright", copyright, "pk", pk));
         String query = "MATCH (n:Document{pk:'5921569'}) return n.pk as pk, n.copyright as copyright";
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.query($query, null, $config)",
                 map("query", query, "config", map("stream", true)),
@@ -1339,7 +1339,7 @@ public class ExportCsvTest {
         db.executeTransactionally(
                 "CREATE (p:Position {place: point({latitude: 12.78, longitude: 56.7, height: 1.1})})");
 
-        TestUtil.testCall(
+        testCall(
                 db,
                 "CALL apoc.export.csv.query($query, null, {quotes: 'none', stream: true}) YIELD data RETURN data",
                 map("query", "MATCH (p:Position) RETURN p.place as place"),
@@ -1376,5 +1376,15 @@ public class ExportCsvTest {
             assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
             sb.append(r.get("data"));
         };
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocCsvQuery() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.export.csv.query('%s RETURN apoc.cypherVersion() AS version', null, { stream:true }) YIELD data RETURN data",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion);
+            testCall(db, query, r -> assertTrue(r.get("data").toString().contains(cypherVersion.result)));
+        }
     }
 }
