@@ -20,7 +20,7 @@ allprojects {
 }
 
 apply plugin: 'java-library'
-if (System.env.CI != null)
+if (System.env.CI != null && System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "")
     apply from: 'teamcity-repository.gradle'
 
 repositories {
@@ -36,9 +36,10 @@ repositories {
                 password System.getenv('CODEARTIFACT_TOKEN')
             }
         }
-    } else {
-        mavenCentral()
     }
+
+    mavenCentral()
+    
     maven {
         url "https://repo.gradle.org/gradle/libs-releases"
     }
@@ -70,9 +71,10 @@ subprojects {
                     password System.getenv('CODEARTIFACT_TOKEN')
                 }
             }
-        } else {
-            mavenCentral()
         }
+        
+        mavenCentral()
+
         maven {
             url "https://repo.gradle.org/gradle/libs-releases"
         }
