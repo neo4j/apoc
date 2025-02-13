@@ -1364,20 +1364,16 @@ public class Util {
         return result;
     }
 
-    /**
-     * A helper function to give the Pre-parser text that can be appended to a query to force it to be
-     * of a certain Cypher Version
-     * @param procedureCallContext the injectable context from the procedure framework
-     * @return Cypher Pre-parser for Cypher Version setting
-     */
-    public static String getCypherVersionPrefix(ProcedureCallContext procedureCallContext) {
-        return procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5)
-                ? "CYPHER 5 "
-                : "CYPHER 25 ";
-    }
-
     public static String getCypherVersionString(ProcedureCallContext procedureCallContext) {
-        return procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5) ? "5" : "25";
+        if (procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5)) {
+            return "5";
+        } else if (procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_25)) {
+            return "25";
+        } else {
+            // When a new version of Cypher is added, please update here :)
+            throw new RuntimeException(
+                    "Unsupported cypher query language: " + procedureCallContext.calledwithQueryLanguage());
+        }
     }
 
     private static final Pattern CYPHER_VERSION_PATTERN =
