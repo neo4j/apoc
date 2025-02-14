@@ -215,7 +215,7 @@ public class TestContainerUtil {
                 .withNeo4jConfig("dbms.logs.debug.level", "DEBUG")
                 .withNeo4jConfig("dbms.routing.driver.logging.level", "DEBUG")
                 .withNeo4jConfig("internal.dbms.cypher.enable_experimental_versions", "true")
-                .withNeo4jConfig("db.query.default_language", "cypher_" + cypherVersionSetting)
+                .withNeo4jConfig("internal.db.query.default_language", "cypher_" + cypherVersionSetting)
                 // Additional kernel assertions
                 .withNeo4jConfig(
                         "server.jvm.additional",
