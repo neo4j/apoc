@@ -56,6 +56,13 @@ dependencies {
     testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.2.0'
     testImplementation group: 'pl.pragmatists', name: 'JUnitParams', version: '1.1.1'
 
+    constraints {
+        // Remove when json-path has updated transitive dependency
+        api('net.minidev:json-smart:2.5.2') {
+            because 'CVE-2024-57699'
+        }
+    }
+
     configurations.configureEach {
         exclude group: 'org.slf4j', module: 'slf4j-nop'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
