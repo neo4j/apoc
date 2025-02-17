@@ -40,6 +40,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import apoc.HelperProcedures;
 import apoc.text.Strings;
 import apoc.util.TestUtil;
 import apoc.util.Util;
@@ -88,7 +89,13 @@ public class CypherTest {
     public static void setUp() {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(
-                db, Cypher.class, Utils.class, CypherFunctions.class, Timeboxed.class, Strings.class);
+                db,
+                Cypher.class,
+                Utils.class,
+                CypherFunctions.class,
+                Timeboxed.class,
+                Strings.class,
+                HelperProcedures.class);
     }
 
     @After
@@ -620,5 +627,220 @@ public class CypherTest {
         final var txs = db.executeTransactionally(
                 "show transactions", Map.of(), r -> r.stream().toList());
         assertThat(txs).satisfiesExactly(row -> assertEquals("show transactions", row.get("currentQuery")));
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocCase() {
+        // Test if case
+        for (String procName : List.of("case", "do.case")) {
+            for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+                testCall(
+                        db,
+                        String.format(
+                                """
+                                %s
+                                CALL apoc.%s([true, '%s RETURN apoc.cypherVersion() AS version'])
+                                """,
+                                cypherVersion.outerVersion, procName, cypherVersion.innerVersion),
+                        r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+            }
+        }
+
+        // Test else case
+        for (String procName : List.of("case", "do.case")) {
+            for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+                testCall(
+                        db,
+                        String.format(
+                                """
+                                %s
+                                CALL apoc.%s([false, 'RETURN 1 AS version'], '%s RETURN apoc.cypherVersion() AS version')
+                                """,
+                                cypherVersion.outerVersion, procName, cypherVersion.innerVersion),
+                        r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+            }
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocWhen() {
+        // Test if case
+        for (String procName : List.of("when", "do.when")) {
+            for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+                testCall(
+                        db,
+                        String.format(
+                                """
+                            %s
+                            CALL apoc.%s(true, '%s RETURN apoc.cypherVersion() AS version', 'RETURN 1')
+                            """,
+                                cypherVersion.outerVersion, procName, cypherVersion.innerVersion),
+                        r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+            }
+        }
+
+        // Test else case
+        for (String procName : List.of("when", "do.when")) {
+            for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+                testCall(
+                        db,
+                        String.format(
+                                """
+                                %s
+                                CALL apoc.%s(false, 'RETURN 1 AS version', '%s RETURN apoc.cypherVersion() AS version')
+                                """,
+                                cypherVersion.outerVersion, procName, cypherVersion.innerVersion),
+                        r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+            }
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocDoIt() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCall(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            CALL apoc.cypher.doIt('%s RETURN apoc.cypherVersion() AS version', {})
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion),
+                    r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRun() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCall(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            CALL apoc.cypher.run('%s RETURN apoc.cypherVersion() AS version', {})
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion),
+                    r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunMany() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testResult(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            CALL apoc.cypher.runMany('%s RETURN apoc.cypherVersion() AS version;\n %s RETURN apoc.cypherVersion() AS version;', {}, {statistics: false})
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion, cypherVersion.innerVersion),
+                    r -> {
+                        assertTrue(r.hasNext());
+                        Map<String, Object> row = r.next();
+                        assertEquals(cypherVersion.result, ((Map<String, Object>) row.get("result")).get("version"));
+                        assertTrue(r.hasNext());
+                        row = r.next();
+                        assertEquals(cypherVersion.result, ((Map<String, Object>) row.get("result")).get("version"));
+                        assertFalse(r.hasNext());
+                    });
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunManyReadOnly() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testResult(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            CALL apoc.cypher.runManyReadOnly('%s RETURN apoc.cypherVersion() AS version;\n %s RETURN apoc.cypherVersion() AS version;', {}, {statistics: false})
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion, cypherVersion.innerVersion),
+                    r -> {
+                        assertTrue(r.hasNext());
+                        Map<String, Object> row = r.next();
+                        assertEquals(cypherVersion.result, ((Map<String, Object>) row.get("result")).get("version"));
+                        assertTrue(r.hasNext());
+                        row = r.next();
+                        assertEquals(cypherVersion.result, ((Map<String, Object>) row.get("result")).get("version"));
+                        assertFalse(r.hasNext());
+                    });
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunTimeboxed() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCall(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            CALL apoc.cypher.runTimeboxed('%s RETURN apoc.cypherVersion() AS version;', {}, 100000)
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion, cypherVersion.innerVersion),
+                    r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunWrite() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCall(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            CALL apoc.cypher.runWrite('%s CREATE (n:Test {prop: apoc.cypherVersion()}) RETURN n.prop AS version;', {})
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion, cypherVersion.innerVersion),
+                    r -> assertEquals(cypherVersion.result, ((Map<String, Object>) r.get("value")).get("version")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunFirstColumnSingle() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCall(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            RETURN apoc.cypher.runFirstColumnSingle('%s RETURN apoc.cypherVersion() AS version', {}) AS value
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion, cypherVersion.innerVersion),
+                    r -> assertEquals(cypherVersion.result, r.get("value")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunFirstColumnMany() {
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCall(
+                    db,
+                    String.format(
+                            """
+                            %s
+                            RETURN apoc.cypher.runFirstColumnMany('%s UNWIND [1, 2] AS a RETURN apoc.cypherVersion() AS version', {}) AS value
+                            """,
+                            cypherVersion.outerVersion, cypherVersion.innerVersion),
+                    r -> assertEquals(Arrays.asList(cypherVersion.result, cypherVersion.result), r.get("value")));
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocRunSchema() {
+        // This doesn't return anything, so just check it doesn't error :)
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            testCallEmpty(
+                    db,
+                    String.format(
+                            "%s CALL apoc.cypher.runSchema('%s CREATE INDEX test IF NOT EXISTS FOR (w:Test) ON (w.name)',{})",
+                            cypherVersion.outerVersion, cypherVersion.innerVersion),
+                    Collections.emptyMap());
+        }
     }
 }

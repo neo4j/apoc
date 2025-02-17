@@ -18,7 +18,6 @@
  */
 package apoc.periodic;
 
-import static apoc.periodic.Periodic.applyPlanner;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.lastTransactionChecks;
@@ -37,11 +36,13 @@ import static org.junit.Assert.fail;
 import static org.neo4j.driver.internal.util.Iterables.count;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
+import apoc.HelperProcedures;
 import apoc.cypher.Cypher;
 import apoc.refactor.GraphRefactoring;
 import apoc.schema.Schemas;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
+import apoc.util.Util;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import java.util.Collections;
@@ -59,6 +60,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.neo4j.common.DependencyResolver;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -94,12 +96,20 @@ public class PeriodicTest {
     public static AssertableLogProvider logProvider = new AssertableLogProvider();
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule(logProvider);
+    public DbmsRule db = new ImpermanentDbmsRule(logProvider)
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     @Before
     public void initDb() {
         TestUtil.registerProcedure(
-                db, Periodic.class, Schemas.class, Cypher.class, Utils.class, MockLogger.class, GraphRefactoring.class);
+                db,
+                Periodic.class,
+                Schemas.class,
+                Cypher.class,
+                Utils.class,
+                MockLogger.class,
+                GraphRefactoring.class,
+                HelperProcedures.class);
         db.executeTransactionally(
                 "call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
@@ -238,42 +248,60 @@ public class PeriodicTest {
 
     @Test
     public void testApplyPlanner() {
-        assertEquals("RETURN 1", applyPlanner("RETURN 1", Periodic.Planner.DEFAULT));
+        assertEquals("CYPHER 5 RETURN 1", Util.applyPlanner("RETURN 1", Util.Planner.DEFAULT, "5"));
         assertEquals(
-                "cypher planner=cost MATCH (n:cypher) RETURN n",
-                applyPlanner("MATCH (n:cypher) RETURN n", Periodic.Planner.COST));
+                "CYPHER 5 planner=cost MATCH (n:cypher) RETURN n",
+                Util.applyPlanner("MATCH (n:cypher) RETURN n", Util.Planner.COST, "5"));
         assertEquals(
-                "cypher planner=idp MATCH (n:cypher) RETURN n",
-                applyPlanner("MATCH (n:cypher) RETURN n", Periodic.Planner.IDP));
+                "CYPHER 25 planner=cost  MATCH (n:cypher) RETURN n",
+                Util.applyPlanner("CYPHER 25 MATCH (n:cypher) RETURN n", Util.Planner.COST, "5"));
         assertEquals(
-                "cypher planner=dp  runtime=compiled MATCH (n) RETURN n",
-                applyPlanner("cypher runtime=compiled MATCH (n) RETURN n", Periodic.Planner.DP));
-        assertEquals("cypher planner=dp MATCH (n) RETURN n", applyPlanner("MATCH (n) RETURN n", Periodic.Planner.DP));
+                "CYPHER 5 planner=idp MATCH (n:cypher) RETURN n",
+                Util.applyPlanner("MATCH (n:cypher) RETURN n", Util.Planner.IDP, "5"));
         assertEquals(
-                "cypher planner=idp  expressionEngine=compiled MATCH (n) RETURN n",
-                applyPlanner("cypher expressionEngine=compiled MATCH (n) RETURN n", Periodic.Planner.IDP));
+                "CYPHER 25 planner=dp  runtime=compiled MATCH (n) RETURN n",
+                Util.applyPlanner("cypher runtime=compiled MATCH (n) RETURN n", Util.Planner.DP, "25"));
         assertEquals(
-                "cypher expressionEngine=compiled  planner=cost  MATCH (n) RETURN n",
-                applyPlanner("cypher expressionEngine=compiled planner=idp MATCH (n) RETURN n", Periodic.Planner.COST));
+                "CYPHER 5 planner=dp MATCH (n) RETURN n",
+                Util.applyPlanner("MATCH (n) RETURN n", Util.Planner.DP, "5"));
         assertEquals(
-                "cypher  planner=cost  MATCH (n) RETURN n",
-                applyPlanner("cypher planner=cost MATCH (n) RETURN n", Periodic.Planner.COST));
+                "CYPHER 25 planner=idp  expressionEngine=compiled MATCH (n) RETURN n",
+                Util.applyPlanner("cypher expressionEngine=compiled MATCH (n) RETURN n", Util.Planner.IDP, "25"));
+        assertEquals(
+                "CYPHER 5  expressionEngine=compiled  planner=cost  MATCH (n) RETURN n",
+                Util.applyPlanner(
+                        "cypher expressionEngine=compiled planner=idp MATCH (n) RETURN n", Util.Planner.COST, "5"));
+        assertEquals(
+                "CYPHER 5   planner=cost  MATCH (n) RETURN n",
+                Util.applyPlanner("cypher planner=cost MATCH (n) RETURN n", Util.Planner.COST, "5"));
     }
 
     @Test
     public void testSlottedRuntime() {
+        // Positive Tests
         assertEquals(
-                "cypher runtime=slotted MATCH (n:cypher) RETURN n",
-                Periodic.slottedRuntime("MATCH (n:cypher) RETURN n"));
-        assertTrue(Periodic.slottedRuntime("MATCH (n) RETURN n").contains("cypher runtime=slotted "));
-        assertFalse(Periodic.slottedRuntime(" cypher runtime=compiled MATCH (n) RETURN n")
-                .contains("cypher runtime=slotted "));
-        assertFalse(Periodic.slottedRuntime("cypher runtime=compiled MATCH (n) RETURN n")
-                .contains("cypher runtime=slotted cypher"));
-        assertTrue(Periodic.slottedRuntime(" MATCH (n) RETURN n").contains(" runtime=slotted "));
-        assertTrue(Periodic.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n")
-                .contains(" runtime=slotted "));
-        assertFalse(Periodic.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n")
+                "CYPHER 5 runtime=slotted MATCH (n:cypher) RETURN n",
+                Util.slottedRuntime("MATCH (n:cypher) RETURN n", "5"));
+        assertEquals("CYPHER 25 runtime=slotted MATCH (n) RETURN n", Util.slottedRuntime("MATCH (n) RETURN n", "25"));
+        assertEquals(
+                "CYPHER 5 runtime=slotted  MATCH (n) RETURN n",
+                Util.slottedRuntime("CYPHER 5 MATCH (n) RETURN n", "25"));
+        assertEquals("CYPHER 5 runtime=slotted  MATCH (n) RETURN n", Util.slottedRuntime(" MATCH (n) RETURN n", "5"));
+        assertEquals(
+                "CYPHER 5 runtime=slotted  expressionEngine=compiled MATCH (n) RETURN n",
+                Util.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n", "5"));
+        assertEquals(
+                "CYPHER 5 runtime=compiled expressionEngine=compiled MATCH (n) RETURN n",
+                Util.slottedRuntime("CYPHER 5 runtime=compiled expressionEngine=compiled MATCH (n) RETURN n", "5"));
+
+        // Negative tests
+        assertFalse(Util.slottedRuntime(" cypher runtime=compiled MATCH (n) RETURN n", "5")
+                .contains("runtime=slotted "));
+        assertFalse(Util.slottedRuntime("cypher runtime=compiled MATCH (n) RETURN n", "25")
+                .contains("runtime=slotted cypher"));
+        assertFalse(Util.slottedRuntime("cypher expressionEngine=compiled MATCH (n) RETURN n", "5")
+                .contains(" runtime=slotted cypher"));
+        assertFalse(Util.slottedRuntime("cypher 25 expressionEngine=compiled MATCH (n) RETURN n", "5")
                 .contains(" runtime=slotted cypher"));
     }
 
@@ -328,7 +356,7 @@ public class PeriodicTest {
                     assertEquals(10L, row.get("failedBatches"));
 
                     String expectedPattern =
-                            "(?s)Invalid input.*\\\"UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\".*";
+                            "(?s)Invalid input.*\\\"CYPHER(?:\\s+(\\d+))? UNWIND \\$_batch AS _batch WITH _batch.id AS id  CREATE null\\\".*";
 
                     String expectedBatchPattern = "org.neo4j.graphdb.QueryExecutionException: " + expectedPattern;
 
@@ -927,5 +955,90 @@ public class PeriodicTest {
                 QueryExecutionException.class,
                 () -> testCall(db, query, row -> fail("The test should fail but it didn't")));
         assertTrue(ExceptionUtils.getRootCause(e) instanceof org.neo4j.exceptions.SyntaxException);
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicCommit() {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.commit('%s CREATE (n:$(apoc.cypherVersion()) {id: %d}) RETURN 0 LIMIT 1')",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicCountdown() throws InterruptedException {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.countdown('test', '%s CREATE (n:$(apoc.cypherVersion()) {id: %d}) RETURN 0 LIMIT 1', 0)",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            Thread.sleep(2000); // Wait 3s to make sure the countdown has been called
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicIterate() {
+        db.executeTransactionally("CREATE (:CYPHER_5 {id: -1}), (:CYPHER_25 {id: -1})");
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.iterate('%s MATCH (p:$(apoc.cypherVersion())) RETURN p', 'SET p.id = %d', {})",
+                    cypherVersion.outerVersion, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id: %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicRepeat() throws InterruptedException {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.repeat('test%d', '%s MERGE (n:$(apoc.cypherVersion()) {id: %d})', 1)",
+                    cypherVersion.outerVersion, id, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            Thread.sleep(3000); // Wait 3s to make sure the repeat has been called
+            db.executeTransactionally(String.format("CALL apoc.periodic.cancel('test%d')", id));
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
+    }
+
+    @Test
+    public void testDifferentCypherVersionsApocPeriodicSubmit() throws InterruptedException {
+        int id = 0;
+        for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
+            var query = String.format(
+                    "%s CALL apoc.periodic.submit('test%d', '%s CREATE (n:$(apoc.cypherVersion()) {id: %d})')",
+                    cypherVersion.outerVersion, id, cypherVersion.innerVersion, id);
+            db.executeTransactionally(query);
+            Thread.sleep(1000); // Wait 1s to make sure the submit has been called
+            // Check the node was created with the right label
+            var checkerQuery =
+                    String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
+            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            id++;
+        }
     }
 }

@@ -25,6 +25,7 @@ import static apoc.ApocConfig.apocConfig;
 import static org.junit.Assert.assertFalse;
 import static org.xmlunit.diff.ElementSelectors.byName;
 
+import apoc.HelperProcedures;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import java.util.Arrays;
@@ -237,7 +238,7 @@ public class ExportGraphMLTestUtil {
     }
 
     public static void setUpGraphMl(GraphDatabaseService db, TestName testName) {
-        TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class);
+        TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class, HelperProcedures.class);
 
         apocConfig()
                 .setProperty(

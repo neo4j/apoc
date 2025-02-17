@@ -20,6 +20,7 @@ package apoc.cypher;
 
 import static apoc.cypher.CypherUtils.withParamMapping;
 
+import apoc.util.Util;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -40,10 +42,13 @@ public class CypherFunctions {
     @Context
     public Transaction tx;
 
+    @Context
+    public ProcedureCallContext procedureCallContext;
+
     public Object runFirstColumn(String statement, Map<String, Object> params, boolean expectMultipleValues) {
         if (params == null) params = Collections.emptyMap();
         String resolvedStatement = withParamMapping(statement, params.keySet());
-        if (!resolvedStatement.contains(" runtime")) resolvedStatement = "cypher runtime=slotted " + resolvedStatement;
+        resolvedStatement = Util.slottedRuntime(resolvedStatement, Util.getCypherVersionString(procedureCallContext));
         try (Result result = tx.execute(resolvedStatement, params)) {
 
             String firstColumn = result.columns().get(0);
