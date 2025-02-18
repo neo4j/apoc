@@ -22,6 +22,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAM
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -114,6 +115,7 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
             LoginContext loginContext,
             ClientConnectionInfo clientInfo,
             RoutingInfo routingInfo,
+            List<String> bookmarks,
             long timeout,
             TimeUnit unit,
             Consumer<Status> terminationCallback,
@@ -124,6 +126,7 @@ public abstract class DbmsRule extends ExternalResource implements GraphDatabase
                         loginContext,
                         clientInfo,
                         routingInfo,
+                        bookmarks,
                         timeout,
                         unit,
                         terminationCallback,
