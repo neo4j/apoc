@@ -67,9 +67,8 @@ public class VirtualNode implements Node {
         Objects.requireNonNull(node, ERROR_NODE_NULL);
         final long id = node.getId();
         // if node is already virtual, we return the same id
-        this.id = id < 0 || wrapNodeIDs ? id : -id - 1;
+        this.id = id < 0 || wrapNodeIDs ? id : MIN_ID.decrementAndGet();
         // to not overlap this nodes ids with ids from VirtualNode(Label[] labels, Map<String, Object> props)
-        MIN_ID.updateAndGet(x -> Math.min(x, this.id));
         this.labels.addAll(Util.labelStrings(node));
         String[] keys = propertyNames.toArray(new String[propertyNames.size()]);
         this.props.putAll(node.getProperties(keys));
