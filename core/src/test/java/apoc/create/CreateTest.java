@@ -416,6 +416,35 @@ public class CreateTest {
     }
 
     @Test
+    public void test2VirtualFromNodesHaveUniqueIDs() {
+        testCall(
+                db,
+                """
+                        CREATE (n1:Cat { name:'Maja', born: 2023 } ), (n2:Cat { name:'Pelle', born: 2023 } )
+                        RETURN apoc.create.virtual.fromNode(n1, ['name']) AS node1, apoc.create.virtual.fromNode(n2, ['name']) AS node2
+                        """,
+                (row) -> {
+                    Node node1 = (Node) row.get("node1");
+
+                    assertTrue(node1.hasLabel(label("Cat")));
+                    var firstNodeID = node1.getId();
+                    assertTrue(node1.getId() < 0);
+                    assertEquals("Maja", node1.getProperty("name"));
+                    assertNull(node1.getProperty("born"));
+
+                    Node node2 = (Node) row.get("node2");
+
+                    assertTrue(node2.hasLabel(label("Cat")));
+                    var secondNodeID = node2.getId();
+                    assertTrue(node2.getId() < 0);
+                    assertEquals("Pelle", node2.getProperty("name"));
+                    assertNull(node2.getProperty("born"));
+
+                    assertNotEquals(firstNodeID, secondNodeID);
+                });
+    }
+
+    @Test
     public void testVirtualFromNodeFunctionWithWrapping() {
         testCall(
                 db,
