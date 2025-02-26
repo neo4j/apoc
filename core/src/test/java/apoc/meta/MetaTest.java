@@ -766,6 +766,64 @@ public class MetaTest {
     }
 
     @Test
+    public void testSubGraphNonExistingLabels() {
+        db.executeTransactionally(
+                """
+                MATCH (n) DETACH DELETE n
+                WITH COUNT(1) as foo
+                CREATE (:Foo), (:Bar), (:Test) // label Test created here
+                WITH COUNT(1) as foo
+                MATCH (t:Test) DELETE t // node with label Test delete again
+                WITH COUNT(1) as foo
+                MATCH (n)
+                RETURN n
+                """);
+        // Check for a completely new label
+        testCall(db, "CALL apoc.meta.subGraph({includeLabels:['X'],rels:[],excludes:[]})", (row) -> {
+            List<Node> nodes = (List<Node>) row.get("nodes");
+            List<Relationship> rels = (List<Relationship>) row.get("relationships");
+            assertEquals(0, nodes.size());
+            assertEquals(0, rels.size());
+        });
+        // Check for a previous existing label
+        testCall(db, "CALL apoc.meta.subGraph({includeLabels:['Test'],rels:[],excludes:[]})", (row) -> {
+            List<Node> nodes = (List<Node>) row.get("nodes");
+            List<Relationship> rels = (List<Relationship>) row.get("relationships");
+            assertEquals(0, nodes.size());
+            assertEquals(0, rels.size());
+        });
+    }
+
+    @Test
+    public void testSubGraphNonExistingTypes() {
+        db.executeTransactionally(
+                """
+                MATCH (n) DETACH DELETE n
+                WITH COUNT(1) as foo
+                CREATE (:Foo)-[:R]->(:Bar)-[:Rtest]->(:Test)
+                WITH COUNT(1) as foo
+                MATCH (t:Test) DETACH DELETE t
+                WITH COUNT(1) as foo
+                MATCH (n)
+                RETURN n
+                """);
+        // Check for a completely new type
+        testCall(db, "CALL apoc.meta.subGraph({includeLabels:[],includeRels:['X'],excludes:[]})", (row) -> {
+            List<Node> nodes = (List<Node>) row.get("nodes");
+            List<Relationship> rels = (List<Relationship>) row.get("relationships");
+            assertEquals(2, nodes.size());
+            assertEquals(0, rels.size());
+        });
+        // Check for a previous existing type
+        testCall(db, "CALL apoc.meta.subGraph({includeLabels:[],includeRels:['Rtest'],excludes:[]})", (row) -> {
+            List<Node> nodes = (List<Node>) row.get("nodes");
+            List<Relationship> rels = (List<Relationship>) row.get("relationships");
+            assertEquals(2, nodes.size());
+            assertEquals(0, rels.size());
+        });
+    }
+
+    @Test
     public void testSubGraphLimitLabels() {
         final String labels = "labels";
         testSubgraphLabelsCommon(labels);

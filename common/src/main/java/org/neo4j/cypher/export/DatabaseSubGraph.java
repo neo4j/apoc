@@ -142,24 +142,39 @@ class CountOptimisedDatabaseSubGraph extends DatabaseSubGraph {
 
     @Override
     public long countsForNode(Label label) {
-        return read.countsForNode(tokenRead.nodeLabel(label.name()));
+        int nodeLabelID = tokenRead.nodeLabel(label.name());
+        if (nodeLabelID < 0) {
+            return 0;
+        }
+        return read.countsForNode(nodeLabelID);
     }
 
     @Override
     public long countsForRelationship(RelationshipType type, Label end) {
-        return read.countsForRelationship(
-                TokenConstants.ANY_LABEL, tokenRead.relationshipType(type.name()), tokenRead.nodeLabel(end.name()));
+        int relTypeID = tokenRead.relationshipType(type.name());
+        int nodeLabelID = tokenRead.nodeLabel(end.name());
+        if (nodeLabelID < 0 || relTypeID < 0) {
+            return 0;
+        }
+        return read.countsForRelationship(TokenConstants.ANY_LABEL, relTypeID, nodeLabelID);
     }
 
     @Override
     public long countsForRelationship(Label start, RelationshipType type) {
-        return read.countsForRelationship(
-                tokenRead.nodeLabel(start.name()), tokenRead.relationshipType(type.name()), TokenConstants.ANY_LABEL);
+        int relTypeID = tokenRead.relationshipType(type.name());
+        int nodeLabelID = tokenRead.nodeLabel(start.name());
+        if (nodeLabelID < 0 || relTypeID < 0) {
+            return 0;
+        }
+        return read.countsForRelationship(tokenRead.nodeLabel(start.name()), relTypeID, TokenConstants.ANY_LABEL);
     }
 
     @Override
     public long countsForRelationship(RelationshipType type) {
-        return read.countsForRelationship(
-                TokenConstants.ANY_LABEL, tokenRead.relationshipType(type.name()), TokenConstants.ANY_LABEL);
+        int relTypeID = tokenRead.relationshipType(type.name());
+        if (relTypeID < 0) {
+            return 0;
+        }
+        return read.countsForRelationship(TokenConstants.ANY_LABEL, relTypeID, TokenConstants.ANY_LABEL);
     }
 }
