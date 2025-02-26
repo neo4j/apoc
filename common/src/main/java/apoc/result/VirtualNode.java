@@ -47,7 +47,7 @@ public class VirtualNode implements Node {
         this.id = MIN_ID.decrementAndGet();
         addLabels(asList(labels));
         this.props.putAll(props);
-        this.elementId = null;
+        this.elementId = UUID.randomUUID().toString();
     }
 
     @SuppressWarnings("unused") // used from extended
@@ -68,11 +68,13 @@ public class VirtualNode implements Node {
         final long id = node.getId();
         // if node is already virtual, we return the same id
         this.id = id < 0 || wrapNodeIDs ? id : MIN_ID.decrementAndGet();
+        this.elementId = id < 0 || wrapNodeIDs
+                ? node.getElementId()
+                : UUID.randomUUID().toString();
         // to not overlap this nodes ids with ids from VirtualNode(Label[] labels, Map<String, Object> props)
         this.labels.addAll(Util.labelStrings(node));
         String[] keys = propertyNames.toArray(new String[propertyNames.size()]);
         this.props.putAll(node.getProperties(keys));
-        this.elementId = node.getElementId();
     }
 
     public VirtualNode(Node node, List<String> propertyNames) {
