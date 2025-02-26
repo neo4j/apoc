@@ -30,6 +30,7 @@ import apoc.coll.Coll;
 import apoc.path.Paths;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterables;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -412,6 +413,62 @@ public class CreateTest {
                     assertTrue(node.getId() < 0);
                     assertEquals("Vincent", node.getProperty("name"));
                     assertNull(node.getProperty("born"));
+                });
+    }
+
+    @Test
+    public void test2VirtualFromNodesHaveUniqueIDs() {
+        testCall(
+                db,
+                """
+                        CREATE (n1:Cat { name:'Maja', born: 2023 } ), (n2:Cat { name:'Pelle', born: 2023 } )
+                        RETURN apoc.create.virtual.fromNode(n1, ['name']) AS node1, apoc.create.virtual.fromNode(n2, ['name']) AS node2
+                        """,
+                (row) -> {
+                    Node node1 = (Node) row.get("node1");
+
+                    assertTrue(node1.hasLabel(label("Cat")));
+                    var firstNodeID = node1.getId();
+                    assertTrue(node1.getId() < 0);
+                    assertEquals("Maja", node1.getProperty("name"));
+                    assertNull(node1.getProperty("born"));
+
+                    Node node2 = (Node) row.get("node2");
+
+                    assertTrue(node2.hasLabel(label("Cat")));
+                    var secondNodeID = node2.getId();
+                    assertTrue(node2.getId() < 0);
+                    assertEquals("Pelle", node2.getProperty("name"));
+                    assertNull(node2.getProperty("born"));
+
+                    assertNotEquals(firstNodeID, secondNodeID);
+                });
+    }
+
+    @Test
+    public void testVirtualFromSameNodesHaveUniqueIDs() {
+        testResult(
+                db,
+                """
+                        CREATE (n1:Cat { name:'Maja', born: 2023 } )
+                        WITH n1
+                        UNWIND [1,2,3] AS i
+                        RETURN apoc.create.virtual.fromNode(n1, ['name']) AS node1
+                        """,
+                (result) -> {
+                    HashSet<Long> nodeIDs = new HashSet<>();
+                    while (result.hasNext()) {
+                        Map<String, Object> r = result.next();
+                        Node node1 = (Node) r.get("node1");
+
+                        assertTrue(node1.hasLabel(label("Cat")));
+                        nodeIDs.add(node1.getId());
+                        assertTrue(node1.getId() < 0);
+                        assertEquals("Maja", node1.getProperty("name"));
+                        assertNull(node1.getProperty("born"));
+                    }
+
+                    assertEquals(3, nodeIDs.size());
                 });
     }
 
