@@ -166,7 +166,7 @@ class CountOptimisedDatabaseSubGraph extends DatabaseSubGraph {
         if (nodeLabelID < 0 || relTypeID < 0) {
             return 0;
         }
-        return read.countsForRelationship(tokenRead.nodeLabel(start.name()), relTypeID, TokenConstants.ANY_LABEL);
+        return read.countsForRelationship(nodeLabelID, relTypeID, TokenConstants.ANY_LABEL);
     }
 
     @Override
