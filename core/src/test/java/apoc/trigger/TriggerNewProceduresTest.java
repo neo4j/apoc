@@ -30,6 +30,7 @@ import static org.neo4j.internal.helpers.collection.MapUtil.map;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 import apoc.HelperProcedures;
+import apoc.convert.Json;
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
 import apoc.util.Util;
@@ -91,7 +92,7 @@ public class TriggerNewProceduresTest {
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
         waitDbsAvailable(db, sysDb);
         // Procedures are global for the DBMS, so it is sufficient to register them via one DB.
-        TestUtil.registerProcedure(db, TriggerNewProcedures.class, Nodes.class, Trigger.class);
+        TestUtil.registerProcedure(db, TriggerNewProcedures.class, Nodes.class, Trigger.class, Json.class);
     }
 
     @AfterClass
@@ -141,6 +142,28 @@ public class TriggerNewProceduresTest {
         db.executeTransactionally("MATCH (f:Foo) DELETE f");
         testCallEventually(
                 db, "MATCH (c:Counter) RETURN c.count as count", (row) -> assertEquals(1L, row.get("count")), TIMEOUT);
+    }
+
+    @Test
+    public void testRemoveNode2() {
+        db.executeTransactionally("CREATE (f:Foo {prop: 1})");
+
+        String name = "access-removed-node";
+        String query = "CREATE (:TEST {data: apoc.convert.toJson($deletedNodes)})";
+        sysDb.executeTransactionally(
+                "CALL apoc.trigger.install('neo4j', $name, $query, {phase: 'afterAsync'})",
+                Map.of("name", name, "query", query));
+        awaitTriggerDiscovered(db, name, query);
+
+        db.executeTransactionally("MATCH (f:Foo) DETACH DELETE f");
+        Util.sleep(500);
+        testCall(db, "MATCH (g:TEST) RETURN g.data AS data", (row) -> {
+            String data = (String) row.get("data");
+            assertTrue(data.contains("\"labels\":[\"Foo\"]"));
+            assertTrue(data.contains("\"properties\":{\"prop\":1}"));
+            // The id is not negative
+            assertFalse(data.contains("\"id\":\"-"));
+        });
     }
 
     @Test
@@ -214,6 +237,28 @@ public class TriggerNewProceduresTest {
 
         db.executeTransactionally("MATCH (f:Foo) DETACH DELETE f");
         testCall(db, "MATCH (c:Counter) RETURN c.count as count", (row) -> assertEquals(1L, row.get("count")));
+    }
+
+    @Test
+    public void testRemoveRelationship2() {
+        db.executeTransactionally("CREATE (f:Foo)-[:X {prop: 1}]->(f)");
+
+        String name = "access-removed-rels";
+        String query = "CREATE (:TEST {data: apoc.convert.toJson($deletedRelationships)})";
+        sysDb.executeTransactionally(
+                "CALL apoc.trigger.install('neo4j', $name, $query, {phase: 'afterAsync'})",
+                Map.of("name", name, "query", query));
+        awaitTriggerDiscovered(db, name, query);
+
+        db.executeTransactionally("MATCH (f:Foo) DETACH DELETE f");
+        Util.sleep(500);
+        testCall(db, "MATCH (g:TEST) RETURN g.data AS data", (row) -> {
+            String data = (String) row.get("data");
+            assertTrue(data.contains("\"label\":\"X\""));
+            assertTrue(data.contains("\"properties\":{\"prop\":1}"));
+            // The id is not negative
+            assertFalse(data.contains("\"id\":\"-"));
+        });
     }
 
     @Test
