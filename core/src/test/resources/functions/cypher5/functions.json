@@ -1,85 +1,177 @@
-[ {
-  "isDeprecated" : true,
-  "aggregating" : false,
-  "signature" : "apoc.create.uuid() :: STRING",
-  "name" : "apoc.create.uuid",
-  "description" : "Returns a UUID.",
-  "returnDescription" : "STRING",
-  "deprecatedBy" : "Neo4j randomUUID() function",
-  "category" : "",
-  "isBuiltIn" : false,
-  "argumentDescription" : [ ]
-}, {
-  "isDeprecated" : true,
-  "aggregating" : false,
-  "signature" : "apoc.map.setEntry(map :: MAP, key :: STRING, value :: ANY) :: MAP",
-  "name" : "apoc.map.setEntry",
-  "description" : "Adds or updates the given entry in the `MAP`.",
-  "returnDescription" : "MAP",
-  "deprecatedBy" : "apoc.map.setKey",
-  "category" : "",
-  "isBuiltIn" : false,
-  "argumentDescription" : [ {
-    "name" : "map",
-    "description" : "The map to be updated.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  }, {
-    "name" : "key",
-    "description" : "The key to add or update the map with.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "value",
-    "description" : "The value to set the given key to.",
-    "isDeprecated" : false,
-    "type" : "ANY"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "aggregating" : false,
-  "signature" : "apoc.text.levenshteinDistance(text1 :: STRING, text2 :: STRING) :: INTEGER",
-  "name" : "apoc.text.levenshteinDistance",
-  "description" : "Compares the given `STRING` values using the Levenshtein distance algorithm.",
-  "returnDescription" : "INTEGER",
-  "deprecatedBy" : "apoc.text.distance",
-  "category" : "",
-  "isBuiltIn" : false,
-  "argumentDescription" : [ {
-    "name" : "text1",
-    "description" : "The first string to be compared against the second.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "text2",
-    "description" : "The second string to be compared against the first.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ]
-}, {
-  "isDeprecated" : true,
-  "aggregating" : false,
-  "signature" : "apoc.text.regreplace(text :: STRING, regex :: STRING, replacement :: STRING) :: STRING",
-  "name" : "apoc.text.regreplace",
-  "description" : "Finds and replaces all matches found by the given regular expression with the given replacement.",
-  "returnDescription" : "STRING",
-  "deprecatedBy" : "apoc.text.replace",
-  "category" : "",
-  "isBuiltIn" : false,
-  "argumentDescription" : [ {
-    "name" : "text",
-    "description" : "The string to be modified.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "regex",
-    "description" : "The regular expression pattern to replace in the original string.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "replacement",
-    "description" : "The value to be inserted in the original string.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  } ]
-} ]
+[
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.math.coth(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.coth",
+    "description": "Returns the hyperbolic cotangent.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.math.cosh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.cosh",
+    "description": "Returns the hyperbolic cosine.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.create.uuid() :: STRING",
+    "name": "apoc.create.uuid",
+    "description": "Returns a UUID.",
+    "returnDescription": "STRING",
+    "deprecatedBy": "Neo4j randomUUID() function",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": []
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.map.setEntry(map :: MAP, key :: STRING, value :: ANY) :: MAP",
+    "name": "apoc.map.setEntry",
+    "description": "Adds or updates the given entry in the `MAP`.",
+    "returnDescription": "MAP",
+    "deprecatedBy": "apoc.map.setKey",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "map",
+        "description": "The map to be updated.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "key",
+        "description": "The key to add or update the map with.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "value",
+        "description": "The value to set the given key to.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.math.sinh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.sinh",
+    "description": "Returns the hyperbolic sine of the given value.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.math.tanh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.tanh",
+    "description": "Returns the hyperbolic tangent of the given value.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.text.levenshteinDistance(text1 :: STRING, text2 :: STRING) :: INTEGER",
+    "name": "apoc.text.levenshteinDistance",
+    "description": "Compares the given `STRING` values using the Levenshtein distance algorithm.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "apoc.text.distance",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "text1",
+        "description": "The first string to be compared against the second.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "text2",
+        "description": "The second string to be compared against the first.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.text.regreplace(text :: STRING, regex :: STRING, replacement :: STRING) :: STRING",
+    "name": "apoc.text.regreplace",
+    "description": "Finds and replaces all matches found by the given regular expression with the given replacement.",
+    "returnDescription": "STRING",
+    "deprecatedBy": "apoc.text.replace",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "text",
+        "description": "The string to be modified.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "regex",
+        "description": "The regular expression pattern to replace in the original string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "replacement",
+        "description": "The value to be inserted in the original string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  }
+]
