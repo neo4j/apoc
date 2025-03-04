@@ -156,14 +156,17 @@ public class TriggerNewProceduresTest {
         awaitTriggerDiscovered(db, name, query);
 
         db.executeTransactionally("MATCH (f:Foo) DETACH DELETE f");
-        Util.sleep(500);
-        testCall(db, "MATCH (g:TEST) RETURN g.data AS data", (row) -> {
-            String data = (String) row.get("data");
-            assertTrue(data.contains("\"labels\":[\"Foo\"]"));
-            assertTrue(data.contains("\"properties\":{\"prop\":1}"));
-            // The id is not negative
-            assertFalse(data.contains("\"id\":\"-"));
-        });
+        testCallEventually(
+                db,
+                "MATCH (g:TEST) RETURN g.data AS data",
+                (row) -> {
+                    String data = (String) row.get("data");
+                    assertTrue(data.contains("\"labels\":[\"Foo\"]"));
+                    assertTrue(data.contains("\"properties\":{\"prop\":1}"));
+                    // The id is not negative
+                    assertFalse(data.contains("\"id\":\"-"));
+                },
+                TIMEOUT);
     }
 
     @Test
