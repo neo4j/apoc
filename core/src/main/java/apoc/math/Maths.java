@@ -18,6 +18,8 @@
  */
 package apoc.math;
 
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
@@ -92,6 +94,16 @@ public class Maths {
 
     @UserFunction("apoc.math.tanh")
     @Description("Returns the hyperbolic tangent of the given value.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Double tanhCypher5(@Name(value = "value", description = "An angle in radians.") Double value) {
+        if (value == null) return null;
+        return sinh(value) / cosh(value);
+    }
+
+    @UserFunction(name = "apoc.math.tanh", deprecatedBy = "tanh()")
+    @Description("Returns the hyperbolic tangent of the given value.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public Double tanh(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return sinh(value) / cosh(value);
@@ -99,6 +111,16 @@ public class Maths {
 
     @UserFunction("apoc.math.coth")
     @Description("Returns the hyperbolic cotangent.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Double cothCypher5(@Name(value = "value", description = "An angle in radians.") Double value) {
+        if (value == null || value.equals(0D)) return null;
+        return cosh(value) / sinh(value);
+    }
+
+    @UserFunction(name = "apoc.math.coth", deprecatedBy = "coth()")
+    @Description("Returns the hyperbolic cotangent.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public Double coth(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null || value.equals(0D)) return null;
         return cosh(value) / sinh(value);
@@ -106,6 +128,16 @@ public class Maths {
 
     @UserFunction("apoc.math.cosh")
     @Description("Returns the hyperbolic cosine.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Double coshCypher5(@Name(value = "value", description = "An angle in radians.") Double value) {
+        if (value == null) return null;
+        return (Math.exp(value) + Math.exp(-value)) / 2;
+    }
+
+    @UserFunction(name = "apoc.math.cosh", deprecatedBy = "cosh()")
+    @Description("Returns the hyperbolic cosine.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public Double cosh(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return (Math.exp(value) + Math.exp(-value)) / 2;
@@ -113,6 +145,16 @@ public class Maths {
 
     @UserFunction("apoc.math.sinh")
     @Description("Returns the hyperbolic sine of the given value.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Double sinhCypher5(@Name(value = "value", description = "An angle in radians.") Double value) {
+        if (value == null) return null;
+        return (Math.exp(value) - Math.exp(-value)) / 2;
+    }
+
+    @UserFunction(name = "apoc.math.sinh", deprecatedBy = "sinh()")
+    @Description("Returns the hyperbolic sine of the given value.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public Double sinh(@Name(value = "value", description = "An angle in radians.") Double value) {
         if (value == null) return null;
         return (Math.exp(value) - Math.exp(-value)) / 2;

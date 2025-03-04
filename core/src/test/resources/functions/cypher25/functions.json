@@ -1,1 +1,78 @@
-[]
+[
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.math.coth(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.coth",
+    "description": "Returns the hyperbolic cotangent.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": "coth()",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.math.cosh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.cosh",
+    "description": "Returns the hyperbolic cosine.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": "cosh()",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.math.sinh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.sinh",
+    "description": "Returns the hyperbolic sine of the given value.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": "sinh()",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.math.tanh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.tanh",
+    "description": "Returns the hyperbolic tangent of the given value.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": "tanh()",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An angle in radians.",
+        "isDeprecated": false,
+        "type": "FLOAT"
+      }
+    ]
+  }
+]
