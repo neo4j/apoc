@@ -302,7 +302,7 @@ public class VirtualNode implements Node {
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        return Objects.hashCode(elementId);
     }
 
     @Override
