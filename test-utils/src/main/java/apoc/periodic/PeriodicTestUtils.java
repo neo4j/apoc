@@ -89,7 +89,20 @@ public class PeriodicTestUtils {
                     case FAILED -> assertThat(periodicResult.exceptionNow()).hasMessageContaining("terminated");
                     case SUCCESS -> assertThat(periodicResult.resultNow())
                             .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
-                            .containsEntry("wasTerminated", true);
+                            .satisfiesAnyOf(
+                                    row -> assertThat(row).containsEntry("wasTerminated", true),
+                                    row -> assertThat(row)
+                                            .extractingByKey("batchErrors")
+                                            .asString()
+                                            .contains("terminated"),
+                                    row -> assertThat(row)
+                                            .extractingByKey("commitErrors")
+                                            .asString()
+                                            .contains("terminated"),
+                                    row -> assertThat(row)
+                                            .extractingByKey("errorMessages")
+                                            .asString()
+                                            .contains("terminated"));
                     default -> fail("Unexpected state of periodic query execution " + state);
                 }
             });
@@ -97,7 +110,8 @@ public class PeriodicTestUtils {
             // Assert there's no query still running that is not supposed to.
             try (final var tx = db.beginTx()) {
                 assertThat(tx.execute("SHOW TRANSACTIONS YIELD transactionId, currentQuery").stream())
-                        .allSatisfy(row -> assertThat(row.get("currentQuery"))
+                        .allSatisfy(row -> assertThat(row)
+                                .extractingByKey("currentQuery")
                                 .asString()
                                 .doesNotContain(iterateQueryContains)
                                 .doesNotContain(periodicQuery));
