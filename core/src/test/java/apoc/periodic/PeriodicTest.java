@@ -279,10 +279,21 @@ public class PeriodicTest {
 
     @Test
     public void testTerminateCommit() {
-        PeriodicTestUtils.testTerminateWithCommand(
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
                 db,
-                "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id MERGE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)', {})",
-                "UNWIND range(0,1000) as id WITH id MERGE (n:Foo {id: id}) WITH n limit 1000 RETURN COUNT(n)");
+                // This query never finish
+                """
+                        CALL apoc.periodic.commit(
+                          'CALL apoc.util.sleep(1000) // Avoid overloading the dbms
+                           UNWIND range(0,1000) AS id
+                           WITH id
+                           MERGE (n:Foo {id: id})
+                           WITH n
+                           LIMIT 1000
+                           RETURN COUNT(n)',
+                          {}
+                        )""",
+                "CALL apoc.util.sleep(1000)");
     }
 
     @Test
@@ -351,26 +362,34 @@ public class PeriodicTest {
 
     @Test
     public void testTerminateIterate() {
-        PeriodicTestUtils.testTerminateWithCommand(
+        // Calls to apoc.util.sleep needed to not overload db and keep execution alive long enough for termination.
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
                 db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})",
-                "UNWIND range(0,1000) as id RETURN id");
-        PeriodicTestUtils.testTerminateWithCommand(
+                """
+                        CALL apoc.periodic.iterate(
+                          'UNWIND range(0,1000) AS id CALL apoc.util.sleep(1000) RETURN id',
+                          'CALL apoc.util.sleep(1000) WITH $id AS id CREATE (:Foo {id: $id})',
+                          {batchSize:1,parallel:true}
+                        )""",
+                "UNWIND range(0,1000) AS id");
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
                 db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:true})",
-                "UNWIND range(0,1000) as id RETURN id");
-        PeriodicTestUtils.testTerminateWithCommand(
+                """
+                        CALL apoc.periodic.iterate(
+                          'UNWIND range(0,1000) AS id CALL apoc.util.sleep(1000) RETURN id',
+                          'CALL apoc.util.sleep(1000) WITH $id AS id CREATE (:Foo {id: $id})',
+                          {batchSize:2,iterateList:true}
+                        )""",
+                "UNWIND range(0,1000) AS id");
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
                 db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,1000) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:10,iterateList:false})",
-                "UNWIND range(0,1000) as id RETURN id");
-    }
-
-    @Test
-    public void testTerminateIterateWithTerminateTransactionCommand() {
-        PeriodicTestUtils.testTerminateWithCommand(
-                db,
-                "CALL apoc.periodic.iterate('UNWIND range(0,999999) as id RETURN id', 'WITH $id as id CREATE (:Foo {id: $id})', {batchSize:1,parallel:true})",
-                "UNWIND range(0,999999) as id RETURN id");
+                """
+                        CALL apoc.periodic.iterate(
+                          'UNWIND range(0,1000) AS id CALL apoc.util.sleep(1000) RETURN id',
+                          'CALL apoc.util.sleep(1000) WITH $id AS id CREATE (:Foo {id: $id})',
+                          {batchSize:2,iterateList:false}
+                        )""",
+                "UNWIND range(0,1000) AS id");
     }
 
     @Test
