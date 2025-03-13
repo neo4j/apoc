@@ -49,6 +49,13 @@ subprojects {
     apply plugin: "com.diffplug.spotless"
     apply plugin: 'java-library'
 
+    dependencies {
+        testImplementation(platform("org.junit:junit-bom:5.11.4"))
+        testImplementation('org.junit.jupiter:junit-jupiter')
+        testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+        testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
+    }
+
     spotless {
         java {
             target 'src/*/java/**/*.java'
@@ -94,9 +101,9 @@ subprojects {
         from javadoc
         archiveClassifier = 'javadoc'
     }
-    test {
-        useJunitPlatform()
 
+    test {
+        useJUnitPlatform()
         //exclude '**/CypherProceduresClusterTest.class'//, '**/AtomicTest.class'
 
         // neo4jDockerImage system property is used in TestContainerUtil
@@ -153,13 +160,6 @@ subprojects {
                 details.useVersion '4.1.101.Final' // Use same Netty version as server
             }
         }
-    }
-
-    dependencies {
-        testImplementation(platform("org.junit:junit-bom:5.12.0"))
-        testImplementation('org.junit.jupiter:junit-jupiter')
-        testRuntimeOnly('org.junit.platform:junit-platform-launcher')
-        testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
     }
 
     compileJava {
