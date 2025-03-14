@@ -6,6 +6,13 @@ plugins {
     id("com.diffplug.spotless") version "6.22.0"
 }
 
+ext {
+    publicDir = "${project.rootDir}"
+    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.03.0"
+    testContainersVersion = '1.20.2'
+    apacheArrowVersion = '15.0.0'
+}
+
 downloadLicenses {
     excludeDependencies = [
             'org.neo4j.*'
@@ -106,6 +113,8 @@ subprojects {
                 'testDockerBundle': project.hasProperty("testDockerBundle"),
                 'org.neo4j.io.pagecache.tracing.cursor.DefaultPageCursorTracer.CHECK_REPORTED_COUNTERS': 'true' // Extra assertions in kernel
 
+        environment 'NEO4JVERSION', neo4jVersionEffective
+
         maxHeapSize = "5G"
         forkEvery = 50
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
@@ -167,10 +176,3 @@ subprojects {
 
 apply from: "licenses-3rdparties.gradle"
 apply from: "licenses-source-header.gradle"
-
-ext {
-    publicDir = "${project.rootDir}"
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.03.0"
-    testContainersVersion = '1.20.2'
-    apacheArrowVersion = '15.0.0'
-}
