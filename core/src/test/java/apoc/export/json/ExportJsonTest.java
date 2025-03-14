@@ -32,6 +32,8 @@ import static apoc.util.TestUtil.assertError;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -42,14 +44,16 @@ import apoc.HelperProcedures;
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
-import apoc.util.FileTestUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.google.common.io.Resources;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Assert;
@@ -69,7 +73,6 @@ public class ExportJsonTest {
 
     private static final String DEFLATE_EXT = ".zz";
     private static final File directory = new File("target/import");
-    private static final File directoryExpected = new File("src/test/resources/exportJSON");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
@@ -80,7 +83,9 @@ public class ExportJsonTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
+            // Run with aligned format to get sequential ids (assertions depends on this)
+            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @Before
     public void setup() {
@@ -214,10 +219,10 @@ public class ExportJsonTest {
 
     @Test
     public void testExportAllJsonStream() {
-        String filename = "all.json";
         TestUtil.testCall(db, "CALL apoc.export.json.all(null, {stream: true})", (r) -> {
             assertStreamResults(r, "database");
-            assertStreamEquals(filename, r.get("data").toString());
+            assertThat(r.get("data").toString().lines())
+                    .zipSatisfy(readResourceLines("exportJSON/all.json"), jsonEquals);
         });
     }
 
@@ -232,14 +237,15 @@ public class ExportJsonTest {
                         "all_array.json",
                         Format.JSON_ID_AS_KEYS.name(),
                         "all_id_as_keys.json")
-                .forEach((jsonFormat, fileName) -> {
+                .forEach((jsonFormat, resource) -> {
                     TestUtil.testCall(
                             db,
                             "CALL apoc.export.json.all(null, $config)",
                             map("config", map("jsonFormat", jsonFormat, "stream", true)),
                             (r) -> {
                                 assertStreamResults(r, "database");
-                                assertStreamEquals(fileName, r.get("data").toString());
+                                assertThat(r.get("data").toString().lines())
+                                        .zipSatisfy(readResourceLines("exportJSON/" + resource), jsonEquals);
                             });
                 });
     }
@@ -255,7 +261,8 @@ public class ExportJsonTest {
                 map("file", filename, "config", map("stream", true, "compression", algo.name())),
                 (r) -> {
                     assertStreamResults(r, "database");
-                    assertStreamEquals(expectedFile, getDecompressedData(algo, r.get("data")));
+                    assertThat(getDecompressedData(algo, r.get("data")).lines())
+                            .zipSatisfy(readResourceLines("exportJSON/all.json"), jsonEquals);
                 });
     }
 
@@ -325,7 +332,8 @@ public class ExportJsonTest {
                 (r) -> {
                     assertTrue(
                             "Should get statement", r.get("source").toString().contains("statement: cols(7)"));
-                    assertStreamEquals(filename, r.get("data").toString());
+                    assertThat(r.get("data").toString().lines())
+                            .zipSatisfy(readResourceLines("exportJSON/mapPointDatetime.json"), jsonEquals);
                 });
     }
 
@@ -738,7 +746,7 @@ public class ExportJsonTest {
     private void assertFileEquals(String fileName, CompressionAlgo algo) {
         String fileExt = algo.equals(DEFLATE) ? DEFLATE_EXT : "";
         String actualText = BinaryTestUtil.readFileToString(new File(directory, fileName + fileExt), UTF_8, algo);
-        assertStreamEquals(fileName, actualText);
+        assertThat(actualText.lines()).zipSatisfy(readResourceLines("exportJSON/" + fileName), jsonEquals);
     }
 
     private void assertFileEquals(String fileName) {
@@ -756,10 +764,6 @@ public class ExportJsonTest {
         assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
     }
 
-    private void assertStreamEquals(String fileName, String actualText) {
-        FileTestUtil.assertStreamEquals(directoryExpected, fileName, actualText);
-    }
-
     @Test
     public void testDifferentCypherVersionsApocJsonQuery() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
@@ -768,6 +772,17 @@ public class ExportJsonTest {
                     cypherVersion.outerVersion, cypherVersion.innerVersion);
             testCall(
                     db, query, r -> TestCase.assertTrue(r.get("data").toString().contains(cypherVersion.result)));
+        }
+    }
+
+    private static final BiConsumer<String, String> jsonEquals =
+            (actual, expected) -> assertThatJson(actual).isEqualTo(expected);
+
+    private List<String> readResourceLines(String resource) {
+        try {
+            return Resources.readLines(Resources.getResource(resource), UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read " + resource, e);
         }
     }
 }

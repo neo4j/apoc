@@ -38,6 +38,7 @@ import static apoc.export.cypher.ExportCypherTestUtils.SCHEMA_WITH_UNIQUE_IMPORT
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_REL;
 import static apoc.export.util.ExportConfig.RELS_WITH_TYPE_KEY;
 import static apoc.util.Util.map;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
@@ -206,7 +207,7 @@ public class ExportCypherMultiRelTest {
                 r -> Iterators.stream(r.<String>columnAs("cypherStatements")).collect(Collectors.joining("\n")));
 
         // check cypherStatements result
-        assertEquals(expectedCypherStatement, cypherStatements.replace("  ", " "));
+        assertThat(cypherStatements.replace("  ", " ")).isEqualTo(expectedCypherStatement);
 
         // delete and recreate using export nodeStatements, relationshipStatements
         db.executeTransactionally("MATCH (n) DETACH DELETE n");

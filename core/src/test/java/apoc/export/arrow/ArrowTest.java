@@ -64,7 +64,9 @@ public class ArrowTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
+            // Test assertions depends on sequential ids
+            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     public static final List<Map<String, Object>> EXPECTED = List.of(
             new HashMap<>() {
