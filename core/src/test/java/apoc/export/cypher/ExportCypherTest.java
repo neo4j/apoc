@@ -108,7 +108,9 @@ public class ExportCypherTest {
                             .build(),
                     false)
             .withSetting(
-                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
+                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false)
+            // Test assertions depends on sequential ids
+            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @Rule
     public TestName testName = new TestName();

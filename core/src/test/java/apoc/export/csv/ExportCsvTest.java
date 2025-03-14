@@ -444,7 +444,9 @@ public class ExportCsvTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
+            // Assertions depends on sequential ids
+            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @BeforeClass
     public static void setUp() {

@@ -69,6 +69,7 @@ dependencies {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
     testImplementation 'org.assertj:assertj-core:3.26.3'
+    testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:4.1.0'
 
     configurations.all {
         exclude group: 'org.slf4j', module: 'slf4j-nop'

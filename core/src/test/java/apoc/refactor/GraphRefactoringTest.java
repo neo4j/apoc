@@ -1311,21 +1311,27 @@ public class GraphRefactoringTest {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (a)-[:TEST_REL {prop: 'one'}]->(a), (a)-[:TEST_REL {prop: 'two'}]->(a) WITH c CREATE (c)-[:TEST_REL]->(c);");
-        testCall(
-                db,
-                "MATCH (n:TestNode) WITH collect(n) as nodes CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true, produceSelfRel: false}) yield node return node",
-                (r) -> {
-                    Node node = (Node) r.get("node");
-                    Iterator<Relationship> relIterator = node.getRelationships().iterator();
-                    final String expectedRelType = "TEST_REL";
-                    final Relationship firstRel = relIterator.next();
-                    assertSelfRel(firstRel, expectedRelType);
-                    assertEquals(Map.of("prop", "two"), firstRel.getAllProperties());
-                    final Relationship secondRel = relIterator.next();
-                    assertSelfRel(secondRel, expectedRelType);
-                    assertEquals(Map.of("prop", "one"), secondRel.getAllProperties());
-                    assertFalse(relIterator.hasNext());
-                });
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (n:TestNode)
+                    WITH collect(n) as nodes
+                    CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true, produceSelfRel: false}) YIELD node
+                    RETURN node
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .extractingByKey("node", InstanceOfAssertFactories.type(Node.class))
+                    .satisfies(node -> {
+                        assertThat(node.getRelationships())
+                                .hasSize(2)
+                                .allSatisfy(rel -> assertSelfRel(rel, "TEST_REL"))
+                                .satisfiesOnlyOnce(rel ->
+                                        assertThat(rel.getAllProperties()).isEqualTo(Map.of("prop", "one")))
+                                .satisfiesOnlyOnce(rel ->
+                                        assertThat(rel.getAllProperties()).isEqualTo(Map.of("prop", "two")));
+                    });
+        }
     }
 
     @Test
