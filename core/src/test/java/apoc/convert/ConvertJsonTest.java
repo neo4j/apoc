@@ -19,26 +19,23 @@
 package apoc.convert;
 
 import static apoc.convert.Json.NODE;
-import static apoc.convert.Json.RELATIONSHIP;
 import static apoc.util.JsonUtil.PATH_OPTIONS_ERROR_MESSAGE;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Arrays.asList;
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.junit.Assert.*;
 
-import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import junit.framework.TestCase;
+import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Arrays;
-import org.hamcrest.MatcherAssert;
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -301,89 +298,200 @@ public class ConvertJsonTest {
 
     @Test
     public void testToJsonRel() {
-        testCall(
-                db,
-                "CREATE (f:User {name:'Adam'})-[rel:KNOWS {since: 1993.1, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}) RETURN apoc.convert.toJson(rel) as value",
-                (row) -> {
-                    Map<String, Object> map = Util.fromJson((String) row.get("value"), Map.class);
-                    List<String> user = List.of("User");
-                    assertJsonNode((Map<String, Object>) map.get("start"), "0", user, Map.of("name", "Adam"));
-                    assertJsonNode((Map<String, Object>) map.get("end"), "1", user, Map.of("name", "Jim", "age", 42L));
-                    assertJsonRel(map, "0", "KNOWS", Map.of("since", 1993.1D, "bffSince", "P5M1DT12H"), RELATIONSHIP);
-                });
+        final var query =
+                """
+                CREATE (f:User {name:'Adam'})-[rel:KNOWS {since: 1993.1, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42})
+                RETURN apoc.convert.toJson(rel) as value
+                """;
+        try (final var tx = db.beginTx()) {
+            Assertions.assertThat(tx.execute(query).columnAs("value").stream())
+                    .satisfiesExactly(
+                            value -> assertThatJson(value)
+                                    .isEqualTo(
+                                            """
+                                {
+                                  "id": "${json-unit.any-string}",
+                                  "type": "relationship",
+                                  "label": "KNOWS",
+                                  "start": {
+                                    "id": "${json-unit.any-string}",
+                                    "type": "node",
+                                    "labels": ["User"],
+                                    "properties": {"name": "Adam"}
+                                  },
+                                  "end": {
+                                    "id": "${json-unit.any-string}",
+                                    "type": "node",
+                                    "labels": ["User"],
+                                    "properties": {"name": "Jim", "age": 42}
+                                  },
+                                  "properties": {"bffSince": "P5M1DT12H", "since": 1993.1}
+                                }
+                        """));
+        }
     }
 
     @Test
     public void testToJsonPath() {
-        testCall(
-                db,
-                "CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baz {a:'b'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www', two:2, three: localdatetime('2020-01-01')}) RETURN apoc.convert.toJson(p) AS value",
-                (row) -> {
-                    List<String> test = List.of("Test");
-                    List<String> bar = List.of("Bar");
-                    List<String> baz = List.of("Baz");
-                    List<Object> list = Util.fromJson((String) row.get("value"), List.class);
-                    assertEquals(5, list.size());
-
-                    assertJsonNode((Map<String, Object>) list.get(0), "0", test, Map.of("foo", 7L));
-
-                    Map<String, Object> firstRel = (Map<String, Object>) list.get(1);
-                    assertJsonNode((Map<String, Object>) firstRel.get("start"), "0", test, Map.of("foo", 7L));
-                    assertJsonNode((Map<String, Object>) firstRel.get("end"), "1", baz, Map.of("a", "b"));
-                    assertJsonRel(firstRel, "0", "TEST", null, RELATIONSHIP);
-
-                    assertJsonNode((Map<String, Object>) list.get(2), "1", baz, Map.of("a", "b"));
-
-                    Map<String, Object> secondRel = (Map<String, Object>) list.get(3);
-                    assertJsonNode(
-                            (Map<String, Object>) secondRel.get("start"),
-                            "2",
-                            bar,
-                            Map.of("one", "www", "two", 2L, "three", "2020-01-01T00:00"));
-                    assertJsonNode((Map<String, Object>) secondRel.get("end"), "1", baz, Map.of("a", "b"));
-                    assertJsonRel(secondRel, "1", "TEST_2", Map.of("aa", "bb"), RELATIONSHIP);
-
-                    assertJsonNode(
-                            (Map<String, Object>) list.get(4),
-                            "2",
-                            bar,
-                            Map.of("one", "www", "two", 2L, "three", "2020-01-01T00:00"));
-                });
+        final var query =
+                """
+                CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baz {a:'b'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www', two:2, three: localdatetime('2020-01-01')})
+                RETURN apoc.convert.toJson(p) AS value
+                """;
+        try (final var tx = db.beginTx()) {
+            Assertions.assertThat(tx.execute(query).columnAs("value").stream())
+                    .satisfiesExactly(
+                            value -> assertThatJson(value)
+                                    .isEqualTo(
+                                            """
+                                [
+                                  {
+                                    "id": "${json-unit.any-string}",
+                                    "type": "node",
+                                    "properties": {"foo": 7},
+                                    "labels": ["Test"]
+                                  },
+                                  {
+                                    "start": {
+                                      "id": "${json-unit.any-string}",
+                                      "type": "node",
+                                      "properties": {"foo": 7},
+                                      "labels": ["Test"]
+                                    },
+                                    "end": {
+                                      "id": "${json-unit.any-string}",
+                                      "type": "node",
+                                      "properties": {"a": "b"},
+                                      "labels": ["Baz"]
+                                    },
+                                    "id": "${json-unit.any-string}",
+                                    "label": "TEST",
+                                    "type": "relationship"
+                                  },
+                                  {
+                                    "id": "${json-unit.any-string}",
+                                    "type": "node",
+                                    "properties": {"a": "b"},
+                                    "labels": ["Baz"]
+                                  },
+                                  {
+                                    "start": {
+                                      "id": "${json-unit.any-string}",
+                                      "type": "node",
+                                      "properties": {
+                                        "one": "www",
+                                        "two": 2,
+                                        "three": "2020-01-01T00:00"
+                                      },
+                                      "labels": ["Bar"]
+                                    },
+                                    "end": {
+                                      "id": "${json-unit.any-string}",
+                                      "type": "node",
+                                      "properties": {"a": "b"},
+                                      "labels": ["Baz"]
+                                    },
+                                    "id": "${json-unit.any-string}",
+                                    "label": "TEST_2",
+                                    "type": "relationship",
+                                    "properties": {"aa": "bb"}
+                                  },
+                                  {
+                                    "id": "${json-unit.any-string}",
+                                    "type": "node",
+                                    "properties": {
+                                      "one": "www",
+                                      "two": 2,
+                                      "three": "2020-01-01T00:00"
+                                    },
+                                    "labels": ["Bar"]
+                                  }
+                                ]
+                                """));
+        }
     }
 
     @Test
     public void testToJsonListOfPath() {
-        testCall(
-                db,
+        final var query =
                 """
-                          CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'}), q=(:Omega {alpha: 'beta'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'})
-                          WITH collect(p) AS collectP, q RETURN apoc.convert.toJson(collectP+q) AS value""",
-                (row) -> {
-                    List<String> test = List.of("Test");
-                    List<String> bar = List.of("Bar");
-                    List<String> bazBaa = List.of("Baa", "Baz");
-                    List<String> omega = List.of("Omega");
-                    List<Object> list = Util.fromJson((String) row.get("value"), List.class);
-                    assertEquals(2, list.size());
-                    List<Object> firstSubList = (List<Object>) list.get(0);
-                    List<Object> secondSubList = (List<Object>) list.get(1);
-
-                    assertEquals(3, firstSubList.size());
-                    assertJsonNode((Map<String, Object>) firstSubList.get(0), "0", test, Map.of("foo", 7L));
-                    Map<String, Object> firstRel = (Map<String, Object>) firstSubList.get(1);
-                    assertJsonNode((Map<String, Object>) firstRel.get("start"), "0", test, Map.of("foo", 7L));
-                    assertJsonNode((Map<String, Object>) firstRel.get("end"), "1", bazBaa, Map.of("a", "b"));
-                    assertJsonRel(firstRel, "0", "TEST", null, RELATIONSHIP);
-                    assertJsonNode((Map<String, Object>) firstSubList.get(2), "1", bazBaa, Map.of("a", "b"));
-
-                    assertEquals(3, secondSubList.size());
-                    assertJsonNode((Map<String, Object>) secondSubList.get(0), "2", omega, Map.of("alpha", "beta"));
-                    Map<String, Object> secondRel = (Map<String, Object>) secondSubList.get(1);
-                    assertJsonNode((Map<String, Object>) secondRel.get("start"), "3", bar, Map.of("one", "www"));
-                    assertJsonNode((Map<String, Object>) secondRel.get("end"), "2", omega, Map.of("alpha", "beta"));
-                    assertJsonRel(secondRel, "1", "TEST_2", Map.of("aa", "bb"), RELATIONSHIP);
-                    assertJsonNode((Map<String, Object>) secondSubList.get(2), "3", bar, Map.of("one", "www"));
-                });
+                CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'}), q=(:Omega {alpha: 'beta'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'})
+                WITH collect(p) AS collectP, q RETURN apoc.convert.toJson(collectP+q) AS value""";
+        try (final var tx = db.beginTx()) {
+            Assertions.assertThat(tx.execute(query).columnAs("value").stream())
+                    .satisfiesExactly(
+                            value -> assertThatJson(value)
+                                    .isEqualTo(
+                                            """
+                         [
+                           [
+                             {
+                               "id": "${json-unit.any-string}",
+                               "type": "node",
+                               "properties": {"foo": 7 },
+                               "labels": ["Test"]
+                             },
+                             {
+                               "start": {
+                                 "id": "${json-unit.any-string}",
+                                 "type": "node",
+                                 "properties": {"foo": 7},
+                                 "labels": ["Test"]
+                               },
+                               "end": {
+                                 "id": "${json-unit.any-string}",
+                                 "type": "node",
+                                 "properties": {
+                                   "a": "b"
+                                 },
+                                 "labels": ["Baa", "Baz"]
+                               },
+                               "id": "${json-unit.any-string}",
+                               "label": "TEST",
+                               "type": "relationship"
+                             },
+                             {
+                               "id": "${json-unit.any-string}",
+                               "type": "node",
+                               "properties": {"a": "b"},
+                               "labels": ["Baa", "Baz"]
+                             }
+                           ],
+                           [
+                             {
+                               "id": "${json-unit.any-string}",
+                               "type": "node",
+                               "properties": {"alpha": "beta"},
+                               "labels": ["Omega"]
+                             },
+                             {
+                               "start": {
+                                 "id": "${json-unit.any-string}",
+                                 "type": "node",
+                                 "properties": {"one": "www"},
+                                 "labels": ["Bar"]
+                               },
+                               "end": {
+                                 "id": "${json-unit.any-string}",
+                                 "type": "node",
+                                 "properties": {"alpha": "beta"},
+                                 "labels": ["Omega"]
+                               },
+                               "id": "${json-unit.any-string}",
+                               "label": "TEST_2",
+                               "type": "relationship",
+                               "properties": {"aa": "bb"}
+                             },
+                             {
+                               "id": "${json-unit.any-string}",
+                               "type": "node",
+                               "properties": {"one": "www"},
+                               "labels": ["Bar"]
+                             }
+                           ]
+                         ]
+                 """));
+        }
     }
 
     @Test
@@ -619,135 +727,104 @@ public class ConvertJsonTest {
                         (u1)-[:Flag {id: "rel6", Created: '2018-11-21T11:20:31', FlagType: 1}]->(c1)""";
         db.executeTransactionally(createDatabase);
 
-        String queryToGetGeneratedIds =
-                """
-                MATCH (n)
-                RETURN n.id as givenId, id(n) as id, elementId(n) as elementId
-                UNION
-                MATCH ()-[r]->()
-                RETURN r.id as givenId, id(r) as id, elementId(r) as elementId
-                """;
-
-        db.executeTransactionally(queryToGetGeneratedIds);
-        Map<String, Map<String, String>> generatedIdsMapping =
-                db.executeTransactionally(queryToGetGeneratedIds, Collections.emptyMap(), result -> result.stream()
-                        .collect(Collectors.toMap(
-                                row -> row.get("givenId").toString(),
-                                row -> Map.of(
-                                        "id", row.get("id").toString(),
-                                        "elementId", row.get("elementId").toString()))));
-
         String call =
                 """
-                CYPHER 5
-                MATCH (parent:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd'})
-                WITH parent
-                OPTIONAL MATCH childFlagPath=(parent)-[:HAS]->(:Comm)<-[:Flag]-(:User)
-                WITH COLLECT(childFlagPath) AS cfp
-                CALL apoc.convert.toTree(cfp) yield value
-                RETURN value""";
+                        CYPHER 5
+                        MATCH (parent:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd'})
+                        WITH parent
+                        OPTIONAL MATCH childFlagPath=(parent)-[:HAS]->(:Comm)<-[:Flag]-(:User)
+                        WITH COLLECT(childFlagPath) AS cfp
+                        CALL apoc.convert.toTree(cfp) yield value
+                        RETURN value""";
 
-        testCall(db, call, (row) -> {
-            Map<?, ?> root = (Map<?, ?>) row.get("value");
-
-            assertEquals("Bib", root.get("_type"));
-            assertEquals(
-                    generatedIdsMapping
-                            .get("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd")
-                            .get("id"),
-                    root.get("_id").toString());
-            assertEquals(
-                    generatedIdsMapping
-                            .get("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd")
-                            .get("elementId"),
-                    root.get("_elementId").toString());
-            assertEquals("57523a6f-fda9-4a61-c4f6-08d47cdcf0cd", root.get("id"));
-            assertEquals(2L, root.get("langId"));
-
-            List<Map> has = (List<Map>) root.get("has"); // HAS REL
-            assertEquals(2, has.size());
-
-            Map<?, ?> hasPart = has.get(0);
-
-            assertEquals("Comm", hasPart.get("_type"));
-            assertEquals(
-                    generatedIdsMapping
-                            .get("a34fd608-262b-678a-cb38-6991297fa9c8")
-                            .get("id"),
-                    hasPart.get("_id").toString());
-            assertEquals(
-                    generatedIdsMapping
-                            .get("a34fd608-262b-678a-cb38-6991297fa9c8")
-                            .get("elementId"),
-                    hasPart.get("_elementId").toString());
-            assertEquals("a34fd608-262b-678a-cb38-6991297fa9c8", hasPart.get("id"));
-            assertEquals(2L, hasPart.get("langId"));
-            List<Map> subParts = (List<Map>) hasPart.get("flag");
-            assertEquals(2, subParts.size());
-
-            /*USER*/
-            MatcherAssert.assertThat(
-                    subParts,
-                    Matchers.hasItem(MapUtil.map(
-                            "_type",
-                            "User",
-                            "flag.Created",
-                            "2018-11-21T11:22:01",
-                            "_id",
-                            Long.parseLong(generatedIdsMapping
-                                    .get("facebook|680594762097202")
-                                    .get("id")),
-                            "_elementId",
-                            generatedIdsMapping.get("facebook|680594762097202").get("elementId"),
-                            "id",
-                            "facebook|680594762097202",
-                            "flag.id",
-                            "rel3",
-                            "flag._id",
-                            Long.parseLong(generatedIdsMapping.get("rel3").get("id")),
-                            "flag._elementId",
-                            generatedIdsMapping.get("rel3").get("elementId"),
-                            "flag.id",
-                            "rel3",
-                            "flag.FlagType",
-                            4L)));
-
-            MatcherAssert.assertThat(
-                    subParts,
-                    Matchers.hasItem(MapUtil.map(
-                            "_type",
-                            "User",
-                            "flag.Created",
-                            "2018-11-21T11:20:31",
-                            "_id",
-                            Long.parseLong(generatedIdsMapping
-                                    .get("google-oauth2|106707535753175966005")
-                                    .get("id")),
-                            "_elementId",
-                            generatedIdsMapping
-                                    .get("google-oauth2|106707535753175966005")
-                                    .get("elementId"),
-                            "id",
-                            "google-oauth2|106707535753175966005",
-                            "flag.id",
-                            "rel6",
-                            "flag._id",
-                            Long.parseLong(generatedIdsMapping.get("rel6").get("id")),
-                            "flag._elementId",
-                            generatedIdsMapping.get("rel6").get("elementId"),
-                            "flag.FlagType",
-                            1L)));
-            hasPart = has.get(1);
-
-            assertEquals("Comm", hasPart.get("_type"));
-            assertEquals(
-                    Long.parseLong(generatedIdsMapping
-                            .get("a34fd608-1751-0b5d-cb38-6991297fa9c9")
-                            .get("id")),
-                    hasPart.get("_id"));
-            assertEquals("a34fd608-1751-0b5d-cb38-6991297fa9c9", hasPart.get("id"));
-            assertEquals(2L, hasPart.get("langId"));
-        });
+        try (final var tx = db.beginTx()) {
+            assertThatJson(tx.execute(call).stream().toList())
+                    .when(Option.IGNORING_ARRAY_ORDER)
+                    .isEqualTo(
+                            """
+                                    [
+                                      {
+                                        "value": {
+                                          "_elementId": "${json-unit.any-string}",
+                                          "_type": "Bib",
+                                          "_id": "${json-unit.any-number}",
+                                          "id": "57523a6f-fda9-4a61-c4f6-08d47cdcf0cd",
+                                          "has": [
+                                            {
+                                              "_elementId": "${json-unit.any-string}",
+                                              "has._elementId": "${json-unit.any-string}",
+                                              "flag": [
+                                                {
+                                                  "_elementId": "${json-unit.any-string}",
+                                                  "flag.id": "rel4",
+                                                  "flag._elementId": "${json-unit.any-string}",
+                                                  "_type": "User",
+                                                  "flag._id": "${json-unit.any-number}",
+                                                  "flag.Created": "2018-11-21T11:22:04",
+                                                  "_id": "${json-unit.any-number}",
+                                                  "id": "facebook|680594762097202",
+                                                  "flag.FlagType": 5
+                                                },
+                                                {
+                                                  "_elementId": "${json-unit.any-string}",
+                                                  "flag.id": "rel5",
+                                                  "flag._elementId": "${json-unit.any-string}",
+                                                  "_type": "User",
+                                                  "flag._id": "${json-unit.any-number}",
+                                                  "flag.Created": "2018-11-21T11:20:34",
+                                                  "_id": "${json-unit.any-number}",
+                                                  "id": "google-oauth2|106707535753175966005",
+                                                  "flag.FlagType": 2
+                                                }
+                                              ],
+                                              "_type": "Comm",
+                                              "_id": "${json-unit.any-number}",
+                                              "id": "a34fd608-1751-0b5d-cb38-6991297fa9c9",
+                                              "langId": 2,
+                                              "has.id": "rel1",
+                                              "has._id": "${json-unit.any-number}"
+                                            },
+                                            {
+                                              "_elementId": "${json-unit.any-string}",
+                                              "has._elementId": "${json-unit.any-string}",
+                                              "flag": [
+                                                {
+                                                  "_elementId": "${json-unit.any-string}",
+                                                  "flag.id": "rel3",
+                                                  "flag._elementId": "${json-unit.any-string}",
+                                                  "_type": "User",
+                                                  "flag._id": "${json-unit.any-number}",
+                                                  "flag.Created": "2018-11-21T11:22:01",
+                                                  "_id": "${json-unit.any-number}",
+                                                  "id": "facebook|680594762097202",
+                                                  "flag.FlagType": 4
+                                                },
+                                                {
+                                                  "_elementId": "${json-unit.any-string}",
+                                                  "flag.id": "rel6",
+                                                  "flag._elementId": "${json-unit.any-string}",
+                                                  "_type": "User",
+                                                  "flag._id": "${json-unit.any-number}",
+                                                  "flag.Created": "2018-11-21T11:20:31",
+                                                  "_id": "${json-unit.any-number}",
+                                                  "id": "google-oauth2|106707535753175966005",
+                                                  "flag.FlagType": 1
+                                                }
+                                              ],
+                                              "_type": "Comm",
+                                              "_id": "${json-unit.any-number}",
+                                              "id": "a34fd608-262b-678a-cb38-6991297fa9c8",
+                                              "langId": 2,
+                                              "has.id": "rel2",
+                                              "has._id": "${json-unit.any-number}"
+                                            }
+                                          ],
+                                          "langId": 2
+                                        }
+                                      }
+                                    ]
+                                    """);
+        }
     }
 
     @Test

@@ -30,6 +30,7 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -188,30 +189,33 @@ public class GraphRefactoringTest {
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
 
-        TestUtil.testCall(
-                db,
-                "MATCH p=(f:Alpha)-->(b:Beta)-->(c:Gamma)-->(d:Delta)-->(e:Epsilon) WITH p, [b,c] as list CALL apoc.refactor.deleteAndReconnect(p, list) YIELD nodes, relationships RETURN nodes, relationships",
-                (row) -> {
-                    List<Node> nodes = (List<Node>) row.get("nodes");
-                    assertEquals(3, nodes.size());
-                    Node node1 = nodes.get(0);
-                    assertEquals(singletonList(label("Alpha")), node1.getLabels());
-                    Node node2 = nodes.get(1);
-                    assertEquals(singletonList(label("Delta")), node2.getLabels());
-                    Node node3 = nodes.get(2);
-                    assertEquals(singletonList(label("Epsilon")), node3.getLabels());
-                    List<Relationship> rels = (List<Relationship>) row.get("relationships");
-                    assertEquals(2, rels.size());
-                    Relationship rel1 = rels.get(0);
-                    assertEquals("REL_4", rel1.getType().name());
-                    assertEquals("bb", rel1.getProperty("aa"));
-                    assertEquals("dd", rel1.getProperty("cc"));
-                    assertEquals("ff", rel1.getProperty("ee"));
-                    Relationship rel2 = rels.get(1);
-                    assertEquals("REL_1", rel2.getType().name());
-                    assertEquals("b", rel2.getProperty("a"));
-                    assertNotNull(row.get("nodes"));
-                });
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    "MATCH p=(f:Alpha)-->(b:Beta)-->(c:Gamma)-->(d:Delta)-->(e:Epsilon) WITH p, [b,c] as list CALL apoc.refactor.deleteAndReconnect(p, list) YIELD nodes, relationships RETURN nodes, relationships";
+            assertThat(tx.execute(query).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("nodes", nodes -> assertThat(nodes)
+                            .asInstanceOf(InstanceOfAssertFactories.list(Node.class))
+                            .satisfiesExactly(
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Alpha")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Delta")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Epsilon"))))
+                    .hasEntrySatisfying("relationships", rels -> assertThat(rels)
+                            .asInstanceOf(InstanceOfAssertFactories.list(Relationship.class))
+                            .hasSize(2)
+                            .satisfiesOnlyOnce(r -> {
+                                assertThat(r.getType().name()).isEqualTo("REL_4");
+                                assertThat(r.getAllProperties())
+                                        .containsEntry("aa", "bb")
+                                        .containsEntry("cc", "dd")
+                                        .containsEntry("ee", "ff");
+                            })
+                            .satisfiesOnlyOnce(r -> {
+                                assertThat(r.getType().name()).isEqualTo("REL_1");
+                                assertThat(r.getAllProperties()).containsEntry("a", "b");
+                            }));
+            tx.commit();
+        }
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(3L, row.get("result")));
     }
@@ -1321,7 +1325,7 @@ public class GraphRefactoringTest {
                     """;
             assertThat(tx.execute(query).stream())
                     .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
-                    .extractingByKey("node", InstanceOfAssertFactories.type(Node.class))
+                    .extractingByKey("node", type(Node.class))
                     .satisfies(node -> {
                         assertThat(node.getRelationships())
                                 .hasSize(2)
