@@ -69,7 +69,9 @@ public class SchemasTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
+            // Test assertions depends on sequential ids
+            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @Before
     public void setUp() {
