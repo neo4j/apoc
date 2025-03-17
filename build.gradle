@@ -6,6 +6,13 @@ plugins {
     id("com.diffplug.spotless") version "6.22.0"
 }
 
+ext {
+    publicDir = "${project.rootDir}"
+    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.03.0"
+    testContainersVersion = '1.20.2'
+    apacheArrowVersion = '15.0.0'
+}
+
 downloadLicenses {
     excludeDependencies = [
             'org.neo4j.*'
@@ -167,10 +174,3 @@ subprojects {
 
 apply from: "licenses-3rdparties.gradle"
 apply from: "licenses-source-header.gradle"
-
-ext {
-    publicDir = "${project.rootDir}"
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.03.0"
-    testContainersVersion = '1.20.2'
-    apacheArrowVersion = '15.0.0'
-}

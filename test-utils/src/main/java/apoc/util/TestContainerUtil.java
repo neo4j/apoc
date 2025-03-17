@@ -19,6 +19,7 @@
 package apoc.util;
 
 import static apoc.util.TestUtil.printFullStackTrace;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,8 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -43,13 +42,8 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.description.LazyTextDescription;
-import org.gradle.tooling.BuildLauncher;
-import org.gradle.tooling.GradleConnector;
-import org.gradle.tooling.ProjectConnection;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
@@ -80,8 +74,6 @@ public class TestContainerUtil {
     public static File baseDir = Paths.get("..").toFile();
     public static File pluginsFolder = new File(baseDir, "build/plugins");
     public static File importFolder = new File(baseDir, "build/import");
-    private static File coreDir = new File(baseDir, System.getProperty("coreDir"));
-    public static File extendedDir = new File(baseDir, "extended");
 
     public static String dockerImageForNeo4j(Neo4jVersion version) {
         if (version == Neo4jVersion.COMMUNITY) return neo4jCommunityDockerImageVersion;
@@ -152,7 +144,6 @@ public class TestContainerUtil {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        File projectDir;
         // We define the container with external volumes
         importFolder.mkdirs();
         // use a separate folder for mounting plugins jar - build/libs might contain other jars as well.
@@ -176,18 +167,20 @@ public class TestContainerUtil {
 
         if (!testDockerBundle) {
             for (ApocPackage apocPackage : apocPackages) {
-                if (apocPackage == ApocPackage.CORE) {
-                    projectDir = coreDir;
-                } else {
-                    projectDir = extendedDir;
+                final String jarPathProp =
+                        switch (apocPackage) {
+                            case CORE -> "apoc-core.test.jar.path";
+                            case EXTENDED -> "apoc-extended.test.jar.path";
+                        };
+                final var jarPath = Path.of(System.getProperty(jarPathProp));
+                final var destination = pluginsFolder.toPath().resolve(jarPath.getFileName());
+                try {
+                    System.out.println("Copying %s (prop %s) => %s".formatted(jarPath, jarPathProp, destination));
+                    Files.createDirectories(pluginsFolder.toPath());
+                    Files.copy(jarPath, destination, REPLACE_EXISTING);
+                } catch (IOException e) {
+                    throw new RuntimeException("Failed to copy %s to %s".formatted(jarPath, destination), e);
                 }
-
-                executeGradleTasks(projectDir, "shadowJar");
-
-                copyFilesToPlugin(
-                        new File(projectDir, "build/libs"),
-                        new WildcardFileFilter(Arrays.asList("*-extended.jar", "*-core.jar")),
-                        pluginsFolder);
             }
         }
 
@@ -254,40 +247,6 @@ public class TestContainerUtil {
             neo4jContainer.withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()));
         }
         return neo4jContainer.withWaitForNeo4jDatabaseReady(password, version);
-    }
-
-    public static void copyFilesToPlugin(File directory, IOFileFilter instance, File pluginsFolder) {
-        Collection<File> files = FileUtils.listFiles(directory, instance, null);
-        for (File file : files) {
-            try {
-                FileUtils.copyFileToDirectory(file, pluginsFolder);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public static void executeGradleTasks(File baseDir, String... tasks) {
-        try (ProjectConnection connection = GradleConnector.newConnector()
-                .forProjectDirectory(baseDir)
-                .useBuildDistribution()
-                .connect()) {
-            BuildLauncher buildLauncher = connection.newBuild().forTasks(tasks);
-
-            String neo4jVersionOverride = System.getenv("NEO4JVERSION");
-            System.out.println("neo4jVersionOverride = " + neo4jVersionOverride);
-            if (neo4jVersionOverride != null) {
-                buildLauncher = buildLauncher.addArguments("-P", "neo4jVersionOverride=" + neo4jVersionOverride);
-            }
-
-            String localMaven = System.getenv("LOCAL_MAVEN");
-            System.out.println("localMaven = " + localMaven);
-            if (localMaven != null) {
-                buildLauncher = buildLauncher.addArguments("-D", "maven.repo.local=" + localMaven);
-            }
-
-            buildLauncher.run();
-        }
     }
 
     public static void testCall(
