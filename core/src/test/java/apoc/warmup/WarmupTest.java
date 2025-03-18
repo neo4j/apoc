@@ -41,7 +41,7 @@ public class WarmupTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
-            // Test assertions depends on sequential ids
+//             Procedure is only supported on record storage databases
             .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @Before
