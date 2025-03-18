@@ -57,7 +57,7 @@ public class VirtualNode implements Node {
         this.props.putAll(props);
         this.elementId = null;
     }
-    
+
     public VirtualNode(long nodeId, String elementId, Label[] labels, Map<String, Object> props) {
         this.id = nodeId;
         this.elementId = elementId;
