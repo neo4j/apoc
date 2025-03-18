@@ -71,11 +71,11 @@ public class GraphsTest {
     private static final Map<String, Object> graph = map("name", "test", "properties", map("answer", 42L));
 
     boolean nonVirtual(Entity entity) {
-        return !NumberUtils.isCreatable(entity.getElementId()) || Integer.parseInt(entity.getElementId()) > 0;
+        return !NumberUtils.isCreatable(entity.getElementId()) || entity.getId() > 0;
     }
 
     boolean virtual(Entity entity) {
-        return Integer.parseInt(entity.getElementId()) < 0;
+        return entity.getId() < 0;
     }
 
     @Rule
