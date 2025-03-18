@@ -69,9 +69,7 @@ public class SchemasTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
-            // Test assertions depends on sequential ids
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
 
     @Before
     public void setUp() {
@@ -435,13 +433,13 @@ public class SchemasTest {
                 if (cypherVersion.equals("5")) {
                     assertEquals(":Bar(foo)", r.get("name"));
                     final String expectedUserDescBarCons =
-                            "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
+                            "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
                     Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
                 } else {
                     assertTrue(r.get("name").toString().startsWith("constraint_"));
                     final String expectedUserDescBarCons =
-                            "name='constraint_4791de3e', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {foo}), ownedIndex=3";
+                            "name='constraint_4791de3e', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
                     Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
                 }
 
