@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -43,6 +44,7 @@ public class VirtualRelationship implements Relationship {
     private final Node endNode;
     private final RelationshipType type;
     private final long id;
+    private final String elementId;
     private final Map<String, Object> props = new HashMap<>();
 
     public VirtualRelationship(Node startNode, Node endNode, RelationshipType type, Map<String, Object> props) {
@@ -50,9 +52,21 @@ public class VirtualRelationship implements Relationship {
         this.props.putAll(props);
     }
 
+    public VirtualRelationship(
+            long id, String elementId, Node startNode, Node endNode, RelationshipType type, Map<String, Object> props) {
+        validateNodes(startNode, endNode);
+        this.id = id;
+        this.elementId = elementId;
+        this.startNode = startNode;
+        this.endNode = endNode;
+        this.type = type;
+        this.props.putAll(props);
+    }
+
     public VirtualRelationship(Node startNode, Node endNode, RelationshipType type) {
         validateNodes(startNode, endNode);
         this.id = MIN_ID.getAndDecrement();
+        this.elementId = UUID.randomUUID().toString();
         this.startNode = startNode;
         this.endNode = endNode;
         this.type = type;
@@ -63,6 +77,7 @@ public class VirtualRelationship implements Relationship {
             long id, Node startNode, Node endNode, RelationshipType type, Map<String, Object> props) {
         validateNodes(startNode, endNode);
         this.id = id;
+        this.elementId = UUID.randomUUID().toString();
         this.startNode = startNode;
         this.endNode = endNode;
         this.type = type;
@@ -85,7 +100,7 @@ public class VirtualRelationship implements Relationship {
 
     @Override
     public String getElementId() {
-        return String.valueOf(id);
+        return elementId;
     }
 
     @Override

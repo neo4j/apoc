@@ -156,11 +156,14 @@ public class TriggerMetadata {
                     .map(LabelEntry::label)
                     .toArray(Label[]::new);
             final Map<String, Object> props = getProps(txData.removedNodeProperties(), node);
-            return new VirtualNode(labels, props);
+            return new VirtualNode(node.getId(), node.getElementId(), labels, props);
         } else {
             Relationship rel = (Relationship) e;
             final Map<String, Object> props = getProps(txData.removedRelationshipProperties(), rel);
-            return new VirtualRelationship(rel.getStartNode(), rel.getEndNode(), rel.getType(), props);
+            // Note; We can't access the full node as that relies on database access, so all we can get is the id
+            var startNode = new VirtualNode(rel.getStartNodeId());
+            var endNode = new VirtualNode(rel.getEndNodeId());
+            return new VirtualRelationship(rel.getId(), rel.getElementId(), startNode, endNode, rel.getType(), props);
         }
     }
 
@@ -174,8 +177,6 @@ public class TriggerMetadata {
     public TriggerMetadata rebind(Transaction tx) {
         final List<Node> createdNodes = Util.rebind(this.createdNodes, tx);
         final List<Relationship> createdRelationships = Util.rebind(this.createdRelationships, tx);
-        //        final List<Node> deletedNodes = Util.rebind(this.deletedNodes, tx);
-        //        final List<Relationship> deletedRelationships = Util.rebind(this.deletedRelationships, tx);
         final Map<String, List<Node>> removedLabels = rebindMap(this.removedLabels, tx);
         final Map<String, List<Node>> assignedLabels = rebindMap(this.assignedLabels, tx);
         final Map<String, List<PropertyEntryContainer<Node>>> removedNodeProperties =
