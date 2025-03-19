@@ -118,6 +118,23 @@ public class ExportCsvTest {
             ,,,,,,,,"3","4","NEXT_DELIVERY","","",""
             ,,,,,,,,"8","9","REL","0"," ",""
             """;
+    private static final String EXPECTED_ALL_ALWAYS_2 =
+            """
+            "_id","_labels","age","city","kids","male","name","street","_start","_end","_type","id","value1","value2"
+            "0",":User:User1","42","","[""a"",""b"",""c""]","true","foo","",,,,,,
+            "1",":User","42","","","","bar","",,,,,,
+            "2",":User","12","","","","","",,,,,,
+            "3",":Address:Address1","","Milano","","","Andrea","Via Garibaldi, 7",,,,,,
+            "4",":Address","","","","","Bar Sport","",,,,,,
+            "5",":Address","","","","","","via Benni",,,,,,
+            "6",":ESCAPING","1","","","","I am ""groot"", and more ","",,,,,,
+            "7",":ESCAPING","2","","",""," ","",,,,,,
+            "8",":ESCAPING","3","","","","","",,,,,,
+            "9",":ESCAPING","4","","","","","",,,,,,
+            ,,,,,,,,"0","1","KNOWS","","",""
+            ,,,,,,,,"8","9","REL","0"," ",""
+            ,,,,,,,,"3","4","NEXT_DELIVERY","","",""
+            """;
     private static final String EXPECTED_ALL_ALWAYS_USER =
             """
             ":ID","name","age:long",":LABEL"
@@ -137,16 +154,16 @@ public class ExportCsvTest {
             """;
     private static final String EXPECTED_ALL_ALWAYS_ADDRESS1 =
             """
-            ":ID","street","name","city",":LABEL"
-            "3","Via Garibaldi, 7","Andrea","Milano","Address1;Address"
+            ":ID","name","city","street",":LABEL"
+            "3","Andrea","Milano","Via Garibaldi, 7","Address1;Address"
             """;
     private static final String EXPECTED_ALL_ALWAYS_ESCAPING =
             """
-            ":ID","age:long","name",":LABEL"
-            "6","1","I am ""groot"", and more ","ESCAPING"
-            "7","2"," ","ESCAPING"
-            "8","3","","ESCAPING"
-            "9","4","","ESCAPING"
+            ":ID","name","age:long",":LABEL"
+            "6","I am ""groot"", and more ","1","ESCAPING"
+            "7"," ","2","ESCAPING"
+            "8","","3","ESCAPING"
+            "9","","4","ESCAPING"
             """;
     private static final String EXPECTED_ALL_ALWAYS_KNOWS =
             """
@@ -200,6 +217,24 @@ public class ExportCsvTest {
             8,:ESCAPING,3,,,,,,,,,,,
             9,:ESCAPING,4,,,,,,,,,,,
             ,,,,,,,,0,1,KNOWS,,,
+            ,,,,,,,,8,9,REL,0, ,
+            ,,,,,,,,3,4,NEXT_DELIVERY,,,
+            """;
+
+    private static final String EXPECTED_ALL_NONE_2 =
+            """
+            _id,_labels,age,city,kids,male,name,street,_start,_end,_type,id,value1,value2
+            0,:User:User1,42,,["a","b","c"],true,foo,,,,,,,
+            1,:User,42,,,,bar,,,,,,,
+            2,:User,12,,,,,,,,,,,
+            3,:Address:Address1,,Milano,,,Andrea,Via Garibaldi, 7,,,,,,
+            4,:Address,,,,,Bar Sport,,,,,,,
+            5,:Address,,,,,,via Benni,,,,,,
+            6,:ESCAPING,1,,,,I am "groot", and more ,,,,,,,
+            7,:ESCAPING,2,,,, ,,,,,,,
+            8,:ESCAPING,3,,,,,,,,,,,
+            9,:ESCAPING,4,,,,,,,,,,,
+            ,,,,,,,,0,1,KNOWS,,,
             ,,,,,,,,3,4,NEXT_DELIVERY,,,
             ,,,,,,,,8,9,REL,0, ,
             """;
@@ -211,16 +246,16 @@ public class ExportCsvTest {
             """;
     private static final String EXPECTED_ALL_NONE_ADDRESS1 =
             """
-            :ID,street,name,city,:LABEL
-            3,Via Garibaldi, 7,Andrea,Milano,Address1;Address
+            :ID,name,city,street,:LABEL
+            3,Andrea,Milano,Via Garibaldi, 7,Address1;Address
             """;
     private static final String EXPECTED_ALL_NONE_ESCAPING =
             """
-            :ID,age:long,name,:LABEL
-            6,1,I am "groot", and more ,ESCAPING
-            7,2, ,ESCAPING
-            8,3,,ESCAPING
-            9,4,,ESCAPING
+            :ID,name,age:long,:LABEL
+            6,I am "groot", and more ,1,ESCAPING
+            7, ,2,ESCAPING
+            8,,3,ESCAPING
+            9,,4,ESCAPING
             """;
 
     private static final String EXPECTED_ALL_IF_NEEDED_RELS =
@@ -266,16 +301,16 @@ public class ExportCsvTest {
             """;
     private static final String EXPECTED_ALL_IF_NEEDED_ADDRESS1 =
             """
-            :ID,street,name,city,:LABEL
-            3,"Via Garibaldi, 7",Andrea,Milano,Address1;Address
+            :ID,name,city,street,:LABEL
+            3,Andrea,Milano,"Via Garibaldi, 7",Address1;Address
             """;
     private static final String EXPECTED_ALL_IF_NEEDED_ESCAPING =
             """
-            :ID,age:long,name,:LABEL
-            6,1,"I am ""groot"", and more ",ESCAPING
-            7,2, ,ESCAPING
-            8,3,,ESCAPING
-            9,4,,ESCAPING
+            :ID,name,age:long,:LABEL
+            6,"I am ""groot"", and more ",1,ESCAPING
+            7, ,2,ESCAPING
+            8,,3,ESCAPING
+            9,,4,ESCAPING
             """;
     private static final String EXPECTED_ALL_IF_NEEDED_KNOWS =
             """
@@ -402,11 +437,11 @@ public class ExportCsvTest {
             """;
     private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_ESCAPING =
             """
-            :ID,age:long,name,:LABEL
-            6,1,"I am ""groot"", and more ",ESCAPING
-            7,2, ,ESCAPING
-            8,3,"",ESCAPING
-            9,4,,ESCAPING
+            :ID,name,age:long,:LABEL
+            6,"I am ""groot"", and more ",1,ESCAPING
+            7, ,2,ESCAPING
+            8,"",3,ESCAPING
+            9,,4,ESCAPING
             """;
     private static final String EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED_REL =
             """
@@ -444,9 +479,7 @@ public class ExportCsvTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
-            // Assertions depends on sequential ids
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
+            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
 
     @BeforeClass
     public static void setUp() {
@@ -661,7 +694,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file,{bulkImport: false, quotes: 'none'})",
                 map("file", fileName1),
                 (r) -> assertResults(fileName1, r, "database"));
-        assertEquals(EXPECTED_ALL_NONE, readFile(fileName1));
+        assertEquals(EXPECTED_ALL_NONE_2, readFile(fileName1));
 
         // In separate files
         String fileNameStart = "allBulkImportIfNone";
@@ -684,7 +717,7 @@ public class ExportCsvTest {
         // Streaming
         testCall(db, "CALL apoc.export.csv.all(null,{stream: true, quotes: 'none'})", (r) -> {
             String data = (String) r.get("data");
-            assertEquals(EXPECTED_ALL_NONE, data);
+            assertEquals(EXPECTED_ALL_NONE_2, data);
         });
     }
 
@@ -871,11 +904,11 @@ public class ExportCsvTest {
     @Test
     public void testCsvAllWithDifferentiatedNulls() {
         Map<String, String> differentiateNulls = Map.of(
-                "none", EXPECTED_ALL_NONE,
+                "none", EXPECTED_ALL_NONE_2,
                 "ifNeeded", EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED,
                 "always", EXPECTED_ALL_DIFFERENTIATE_NULLS_ALWAYS);
         Map<String, String> dontDifferentiateNulls = Map.of(
-                "none", EXPECTED_ALL_NONE,
+                "none", EXPECTED_ALL_NONE_2,
                 "ifNeeded", EXPECTED_ALL_IF_NEEDED,
                 "always", EXPECTED_ALL_ALWAYS);
 
@@ -982,7 +1015,7 @@ public class ExportCsvTest {
                 "CALL apoc.export.csv.all($file,{quotes: 'none'})",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "database"));
-        assertEquals(EXPECTED_ALL_NONE, readFile(fileName));
+        assertEquals(EXPECTED_ALL_NONE_2, readFile(fileName));
     }
 
     @Test
@@ -1020,7 +1053,7 @@ public class ExportCsvTest {
                         + "RETURN *",
                 map("file", fileName),
                 (r) -> assertResults(fileName, r, "graph"));
-        assertEquals(EXPECTED_ALL_ALWAYS, readFile(fileName));
+        assertEquals(EXPECTED_ALL_ALWAYS_2, readFile(fileName));
     }
 
     @Test
