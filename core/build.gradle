@@ -12,6 +12,7 @@ jar {
     manifest {
         attributes 'Implementation-Version': version
     }
+    archiveClassifier.set('')
     duplicatesStrategy = 'exclude'
 }
 
@@ -23,6 +24,31 @@ configurations {
 shadowJar {
     archiveClassifier.set('core')
     duplicatesStrategy = 'exclude'
+}
+
+tasks.register('combinedJar', Jar) {
+    dependsOn(project(':common').jar)
+    dependsOn(project.jar)
+
+    archiveClassifier.set('all')
+
+    manifest {
+        attributes 'Implementation-Version': version
+    }
+
+    from(zipTree(project(':common').tasks.jar.archiveFile))
+    from(zipTree(project.tasks.jar.archiveFile))
+}
+
+tasks.register('combinedSources', Jar) {
+    from sourceSets.main.allJava
+    from project(':common').sourceSets.main.allJava
+    archiveClassifier = 'all-sources'
+}
+
+tasks.register('combinedJavaDoc', Jar) {
+    from javadoc
+    archiveClassifier = 'all-javadoc'
 }
 
 javadoc {
@@ -100,6 +126,10 @@ publishing {
             artifact(mySourcesJar)
             artifact(myJavadocJar)
             artifact(jar)
+
+            artifact(combinedJar)
+            artifact(combinedSources)
+            artifact(combinedJavaDoc)
 
             pom.withXml {
                 def root = asNode()
