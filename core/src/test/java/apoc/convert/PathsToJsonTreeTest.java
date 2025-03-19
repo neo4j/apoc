@@ -28,7 +28,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
@@ -37,9 +36,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
 public class PathsToJsonTreeTest {
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            // Run with aligned format to get sequential ids (assertions depends on this)
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
+    public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
     public void setUp() throws Exception {
@@ -78,7 +75,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"b",
-                                "r._id":0,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"B",
                                 "_id":1,
@@ -87,7 +84,7 @@ public class PathsToJsonTreeTest {
                              }
                           ],
                           "_type":"A",
-                          "_id":0,
+                          "_id": "${json-unit.any-number}",
                           "_elementId": "${json-unit.any-string}"
                        }
                     }""";
@@ -193,7 +190,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"a",
-                                "r._id":0,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"A",
                                 "_id":0,
@@ -236,31 +233,31 @@ public class PathsToJsonTreeTest {
             var expectedRow =
                     """
                     {   "tree":{
-                          "nodeName":"b",
+                                "nodeName":"a",
                           "r":[
                              {
-                                "nodeName":"a",
-                                "r._id":0,
+                                "nodeName":"b",
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "r":[
                                    {
-                                      "nodeName":"b",
-                                      "r._id":1,
+                                      "nodeName":"a",
+                                      "r._id": "${json-unit.any-number}",
                                       "r._elementId": "${json-unit.any-string}",
-                                      "_type":"B",
-                                      "_id":1,
+                                      "_type":"A",
+                                      "_id": "${json-unit.any-number}",
                                       "_elementId": "${json-unit.any-string}",
                                       "r.relName":"r"
                                    }
                                 ],
-                                "_type":"A",
-                                "_id":0,
+                                "_type":"B",
+                                "_id": "${json-unit.any-number}",
                                 "_elementId": "${json-unit.any-string}",
                                 "r.relName":"r"
                              }
                           ],
-                          "_type":"B",
-                          "_id":1,
+                          "_type":"A",
+                          "_id": "${json-unit.any-number}",
                           "_elementId": "${json-unit.any-string}"
                        }
                     }""";
@@ -293,7 +290,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"b",
-                                "r._id":0,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"B",
                                 "_id":1,
@@ -334,7 +331,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"b",
-                                "r._id":0,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"B",
                                 "_id":1,
@@ -354,7 +351,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"d",
-                                "r._id":1,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"D",
                                 "_id":3,
@@ -397,7 +394,7 @@ public class PathsToJsonTreeTest {
                     {   "tree":{
                           "nodeName":"a",
                           "_type":"A",
-                          "_id":0,
+                          "_id":"${json-unit.any-number}",
                           "_elementId": "${json-unit.any-string}",
                           "r1":[
                              {
@@ -405,18 +402,18 @@ public class PathsToJsonTreeTest {
                                 "r2":[
                                    {
                                       "nodeName":"a",
-                                      "r2._id":1,
+                                      "r2._id":"${json-unit.any-number}",
                                       "r2._elementId": "${json-unit.any-string}",
                                       "_type":"A",
                                       "r2.relName":"r2",
-                                      "_id":0,
+                                      "_id":"${json-unit.any-number}",
                                       "_elementId": "${json-unit.any-string}"
                                    }
                                 ],
                                 "_type":"B",
-                                "r1._id":0,
+                                "r1._id":"${json-unit.any-number}",
                                 "r1._elementId": "${json-unit.any-string}",
-                                "_id":1,
+                                "_id":"${json-unit.any-number}",
                                 "_elementId": "${json-unit.any-string}",
                                 "r1.relName":"r1"
                              }
@@ -462,7 +459,7 @@ public class PathsToJsonTreeTest {
                             "r2": [
                               {
                                 "nodeName": "c",
-                                "r2._id": 1,
+                                "r2._id": "${json-unit.any-number}",
                                 "r2._elementId": "${json-unit.any-string}",
                                 "_type": "C",
                                 "r2.relName": "r2",
@@ -473,7 +470,7 @@ public class PathsToJsonTreeTest {
                             "r3": [
                               {
                                 "nodeName": "d",
-                                "r3._id": 2,
+                                "r3._id": "${json-unit.any-number}",
                                 "r3._elementId": "${json-unit.any-string}",
                                 "r3.relName": "r3",
                                 "_type": "D",
@@ -482,7 +479,7 @@ public class PathsToJsonTreeTest {
                               }
                             ],
                             "_type": "B",
-                            "r1._id": 0,
+                            "r1._id": "${json-unit.any-number}",
                             "r1._elementId": "${json-unit.any-string}",
                             "_id": 1,
                             "_elementId": "${json-unit.any-string}",
@@ -531,7 +528,7 @@ public class PathsToJsonTreeTest {
                             "r2": [
                               {
                                 "nodeName": "c",
-                                "r2._id": 1,
+                                "r2._id":  "${json-unit.any-number}",
                                 "r2._elementId": "${json-unit.any-string}",
                                 "_type": "C",
                                 "r2.relName": "r2",
@@ -542,7 +539,7 @@ public class PathsToJsonTreeTest {
                             "r3": [
                               {
                                 "nodeName": "d",
-                                "r3._id": 2,
+                                "r3._id": "${json-unit.any-number}",
                                 "r3._elementId": "${json-unit.any-string}",
                                 "r3.relName": "r3",
                                 "_type": "D",
@@ -551,7 +548,7 @@ public class PathsToJsonTreeTest {
                               }
                             ],
                             "_type": "B",
-                            "r1._id": 0,
+                            "r1._id": "${json-unit.any-number}",
                             "r1._elementId": "${json-unit.any-string}",
                             "_id": 1,
                             "_elementId": "${json-unit.any-string}",
@@ -598,7 +595,7 @@ public class PathsToJsonTreeTest {
                                 "r2":[
                                    {
                                       "nodeName":"c",
-                                      "r2._id":1,
+                                      "r2._id": "${json-unit.any-number}",
                                       "r2._elementId": "${json-unit.any-string}",
                                       "_type":"C",
                                       "r2.relName":"r2",
@@ -609,7 +606,7 @@ public class PathsToJsonTreeTest {
                                 "r3":[
                                    {
                                       "nodeName":"b",
-                                      "r3._id":2,
+                                      "r3._id": "${json-unit.any-number}",
                                       "r3._elementId": "${json-unit.any-string}",
                                       "r3.relName":"r3",
                                       "_type":"B",
@@ -618,7 +615,7 @@ public class PathsToJsonTreeTest {
                                    }
                                 ],
                                 "_type":"B",
-                                "r1._id":0,
+                                "r1._id": "${json-unit.any-number}",
                                 "r1._elementId": "${json-unit.any-string}",
                                 "_id":1,
                                 "_elementId": "${json-unit.any-string}",
@@ -659,7 +656,7 @@ public class PathsToJsonTreeTest {
                              {
                                 "nodeName":"b",
                                 "_type":"B",
-                                "r1._id":0,
+                                "r1._id": "${json-unit.any-number}",
                                 "r1._elementId": "${json-unit.any-string}",
                                 "_id":1,
                                 "_elementId": "${json-unit.any-string}",
@@ -675,7 +672,7 @@ public class PathsToJsonTreeTest {
                           "r2":[
                              {
                                 "nodeName":"b",
-                                "r2._id":1,
+                                "r2._id": "${json-unit.any-number}",
                                 "r2._elementId": "${json-unit.any-string}",
                                 "_type":"B",
                                 "r2.relName":"r2",
@@ -717,7 +714,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"c",
-                                "r._id":0,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"C",
                                 "_id":1,
@@ -763,7 +760,7 @@ public class PathsToJsonTreeTest {
                           "r":[
                              {
                                 "nodeName":"c",
-                                "r._id":0,
+                                "r._id": "${json-unit.any-number}",
                                 "r._elementId": "${json-unit.any-string}",
                                 "_type":"C",
                                 "_id":1,
