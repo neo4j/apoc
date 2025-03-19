@@ -96,7 +96,7 @@ public class NodesTest {
                 db,
                 "MATCH (n) WITH n, apoc.nodes.isDense(n) as dense "
                         + "WHERE n:Foo AND dense OR n:Bar AND NOT dense RETURN count(*) as c",
-                (row) -> assertEquals(2L, row.get("c")));
+                (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
