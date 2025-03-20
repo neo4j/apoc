@@ -84,8 +84,6 @@ public class ExportJsonTest {
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
             .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
-            // Run with aligned format to get sequential ids (assertions depends on this)
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @Before
     public void setup() {
