@@ -83,7 +83,9 @@ public class PropertiesManager {
     private static Object createPropertyValueFromSet(Set<Object> input, RefactorConfig refactorConfig) {
         Object array;
         try {
-            if (input.size() == 1 && !refactorConfig.isSingleElementAsArray()) {
+            if (input.isEmpty()) {
+                return new String[0];
+            } else if (input.size() == 1 && !refactorConfig.isSingleElementAsArray()) {
                 return input.toArray()[0];
             } else {
                 if (sameTypeForAllElements(input)) {
