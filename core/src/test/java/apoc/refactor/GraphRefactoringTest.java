@@ -425,6 +425,87 @@ public class GraphRefactoringTest {
     }
 
     @Test
+    public void testMergingOfEmptyNodeListProps() {
+        db.executeTransactionally(
+                "MERGE (t:TEST {prop: []})-[r:ACCESS {prop: 1}]->(t2:BLA )<-[r2:ACCESS {prop: 1}]-(t3:TEST {prop: []})");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        RETURN node
+                       """,
+                (r) -> {
+                    Node node = (Node) r.get("node");
+                    assertTrue(node.hasLabel(label("TEST")));
+                    assertArrayEquals(new String[0], (String[]) node.getProperty("prop"));
+                });
+    }
+
+    @Test
+    public void testMergingOfOneEmptyNodeListProps() {
+        db.executeTransactionally(
+                "MERGE (t:TEST {prop: ['hi']})-[r:ACCESS {prop: 1}]->(t2:BLA )<-[r2:ACCESS {prop: 1}]-(t3:TEST {prop: []})");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        RETURN node
+                       """,
+                (r) -> {
+                    Node node = (Node) r.get("node");
+                    assertTrue(node.hasLabel(label("TEST")));
+                    assertArrayEquals(new String[] {"hi"}, (String[]) node.getProperty("prop"));
+                });
+    }
+
+    @Test
+    public void testMergingOfEmptyRelListProps() {
+        db.executeTransactionally("MERGE (t:TEST)-[r:ACCESS {prop: []}]->(t2:BLA )<-[r2:ACCESS {prop: []}]-(t3:TEST)");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        MATCH (node)-[r]->()
+                        RETURN r
+                       """,
+                (r) -> {
+                    Relationship rel = (Relationship) r.get("r");
+                    assertTrue(rel.isType(RelationshipType.withName("ACCESS")));
+                    assertArrayEquals(new String[0], (String[]) rel.getProperty("prop"));
+                });
+    }
+
+    @Test
+    public void testMergingOfOneEmptyRelListProps() {
+        db.executeTransactionally(
+                "MERGE (t:TEST)-[r:ACCESS {prop: ['hi']}]->(t2:BLA )<-[r2:ACCESS {prop: []}]-(t3:TEST)");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        MATCH (node)-[r]->()
+                        RETURN r
+                       """,
+                (r) -> {
+                    Relationship rel = (Relationship) r.get("r");
+                    assertTrue(rel.isType(RelationshipType.withName("ACCESS")));
+                    assertArrayEquals(new String[] {"hi"}, (String[]) rel.getProperty("prop"));
+                });
+    }
+
+    @Test
     public void testMergeNodesShouldNotFailWithSamePropKeysConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (a:A) REQUIRE a.prop1 IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR (a:B) REQUIRE a.prop1 IS UNIQUE");
@@ -1378,7 +1459,9 @@ public class GraphRefactoringTest {
             assertOverrideNode(r);
             final List<Relationship> rels = (List<Relationship>) r.get("rels");
             assertEquals(1, rels.size());
-            assertEquals(false, rels.get(0).getProperty("isReduced"));
+            // Property is overwritten, it is not deterministic which one will be found first, so just check it is a
+            // bool
+            assertTrue(rels.get(0).getProperty("isReduced") instanceof Boolean);
         });
     }
 
