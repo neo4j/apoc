@@ -345,7 +345,7 @@ public class ApocConfig extends LifecycleAdapter {
         if (importFolder == null) {
             return false;
         } else {
-            return !"/target/test data/neo4j".equals(importFolder);
+            return !importFolder.startsWith("/target/test data/neo4j");
         }
     }
 
