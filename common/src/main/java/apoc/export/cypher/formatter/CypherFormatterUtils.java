@@ -275,6 +275,8 @@ public class CypherFormatterUtils {
         if (value instanceof DurationValue) {
             return toStringFunction((DurationValue) value);
         }
+
+        // TODO Bug, Character values comes here (among others).
         return value.toString();
     }
 
