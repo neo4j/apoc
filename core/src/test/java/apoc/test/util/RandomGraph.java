@@ -55,7 +55,7 @@ public class RandomGraph {
                         INT32VECTOR,
                         INT64VECTOR,
                         FLOAT,
-                        CHAR-> false;
+                        CHAR -> false;
                 default -> true;
             })
             .toList();
