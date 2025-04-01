@@ -22,9 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 import static org.neo4j.test.assertion.Assert.awaitUntilAsserted;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.neo4j.common.DependencyResolver;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -63,6 +67,73 @@ public class PeriodicTestUtils {
         return numberOfKilledTransactions > 0;
     }
 
+    private enum State {
+        RUNNING,
+        SUCCESS,
+        FAILED,
+        CANCELLED
+    }
+
+    private static State getState(Future periodicResult) {
+        if (!periodicResult.isDone()) return State.RUNNING;
+        if (periodicResult.isCancelled()) return State.CANCELLED;
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    periodicResult.get(); // may throw InterruptedException when done
+                    return State.SUCCESS;
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                } catch (ExecutionException e) {
+                    return State.FAILED;
+                }
+            }
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
+    private static Throwable getExceptionNow(Future<List<Map<String, Object>>> periodicResult) {
+        if (!periodicResult.isDone()) throw new IllegalStateException("Task has not completed");
+        if (periodicResult.isCancelled()) throw new IllegalStateException("Task was cancelled");
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    periodicResult.get();
+                    throw new IllegalStateException("Task completed with a result");
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                } catch (ExecutionException e) {
+                    return e.getCause();
+                }
+            }
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
+    private static List<Map<String, Object>> getResultNow(Future<List<Map<String, Object>>> periodicResult) {
+        if (!periodicResult.isDone()) throw new IllegalStateException("Task has not completed");
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    return periodicResult.get();
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("Task completed with exception");
+                } catch (CancellationException e) {
+                    throw new IllegalStateException("Task was cancelled");
+                }
+            }
+        } finally {
+            if (interrupted) Thread.currentThread().interrupt();
+        }
+    }
+
     public static void testTerminateInnerPeriodicQuery(DbmsRule db, String periodicQuery, String iterateQueryContains) {
         assertThat(periodicQuery).contains(iterateQueryContains);
 
@@ -84,10 +155,10 @@ public class PeriodicTestUtils {
 
             // Assert that the outer query also terminated
             awaitUntilAsserted(() -> {
-                final var state = periodicResult.state();
+                final var state = getState(periodicResult);
                 switch (state) {
-                    case FAILED -> assertThat(periodicResult.exceptionNow()).hasMessageContaining("terminated");
-                    case SUCCESS -> assertThat(periodicResult.resultNow())
+                    case FAILED -> assertThat(getExceptionNow(periodicResult)).hasMessageContaining("terminated");
+                    case SUCCESS -> assertThat(getResultNow(periodicResult))
                             .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
                             .satisfiesAnyOf(
                                     row -> assertThat(row).containsEntry("wasTerminated", true),
@@ -138,6 +209,6 @@ public class PeriodicTestUtils {
                 .toList();
 
         assertThat(innerTxIds).describedAs("All txs:%n%s", txs).isNotEmpty();
-        return innerTxIds.getFirst();
+        return innerTxIds.get(0);
     }
 }
