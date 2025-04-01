@@ -458,6 +458,33 @@ public class UtilsTest {
     }
 
     @Test
+    public void testValidatePredicateNull() {
+        TestUtil.testCall(
+                db,
+                "RETURN apoc.util.validatePredicate(null,'message',null) AS value",
+                r -> assertEquals(true, r.get("value")));
+    }
+
+    @Test
+    public void testValidatePredicateNullFromRuntime() {
+        db.executeTransactionally(
+                """
+                CREATE (m:Movie {title: "The Matrix"})
+                CREATE (g:Genre {name: "Action"})
+                MERGE (m)-[:SEARCH]->(m)
+                MERGE (m)-[:SEARCH]->(g)
+                """);
+        TestUtil.testCall(
+                db,
+                """
+                        MATCH (this1)-[this2:SEARCH]->(this3:Genre)
+                        WHERE apoc.util.validatePredicate(NOT (this3.name = "Action"), "neo4j/graphql/FORBIDDEN", [])
+                        RETURN "OK" AS value
+                        """,
+                r -> assertEquals("OK", r.get("value")));
+    }
+
+    @Test
     public void testValidatePredicateTrue() {
         db.executeTransactionally("CREATE (:Person {predicate: true})");
         TestUtil.testFail(

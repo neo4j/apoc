@@ -127,11 +127,11 @@ public class Utils {
     @Description(
             "If the given predicate is true an exception is thrown, otherwise it returns true (for use inside `WHERE` subclauses).")
     public boolean validatePredicate(
-            @Name(value = "predicate", description = "The predicate to be evaluated.") boolean predicate,
+            @Name(value = "predicate", description = "The predicate to be evaluated.") Boolean predicate,
             @Name(value = "message", description = "The error message thrown if the predicate evaluates to `true`.")
                     String message,
             @Name(value = "params", description = "Parameters to format the message with.") List<Object> params) {
-        if (predicate) {
+        if (predicate != null && predicate) {
             if (params != null && !params.isEmpty())
                 message = String.format(message, params.toArray(new Object[params.size()]));
             throw new RuntimeException(message);
