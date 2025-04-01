@@ -18,19 +18,23 @@
  */
 package apoc.periodic;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.fail;
+import static org.neo4j.test.assertion.Assert.awaitUntilAsserted;
 
-import apoc.util.TransactionTestUtil;
-import apoc.util.collection.Iterators;
+import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.neo4j.common.DependencyResolver;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.DbmsRule;
 
 public class PeriodicTestUtils {
+
     public static void killPeriodicQueryAsync(DbmsRule db) {
         new Thread(() -> {
                     int retries = 10;
@@ -59,25 +63,81 @@ public class PeriodicTestUtils {
         return numberOfKilledTransactions > 0;
     }
 
-    public static void testTerminateWithCommand(DbmsRule db, String periodicQuery, String iterateQuery) {
-        long timeBefore = System.currentTimeMillis();
-        TransactionTestUtil.terminateTransactionAsync(db, 10L, iterateQuery);
-        checkPeriodicTerminated(db, periodicQuery);
-        TransactionTestUtil.lastTransactionChecks(db, periodicQuery, timeBefore);
+    public static void testTerminateInnerPeriodicQuery(DbmsRule db, String periodicQuery, String iterateQueryContains) {
+        assertThat(periodicQuery).contains(iterateQueryContains);
+
+        final var executor = Executors.newCachedThreadPool();
+        try {
+            // Start execution of periodic query in separate thread.
+            final var periodicResult = executor.submit(() -> db.executeTransactionally(
+                    periodicQuery, Map.of(), r -> r.stream().toList()));
+
+            // Terminate the inner query
+            awaitUntilAsserted(() -> {
+                final var innerTxId = findInnerQueryTx(db, periodicQuery, iterateQueryContains);
+                try (final var tx = db.beginTx()) {
+                    assertThat(tx.execute("TERMINATE TRANSACTION $id", Map.of("id", innerTxId)).stream())
+                            .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                            .containsEntry("message", "Transaction terminated.");
+                }
+            });
+
+            // Assert that the outer query also terminated
+            awaitUntilAsserted(() -> {
+                final var state = periodicResult.state();
+                switch (state) {
+                    case FAILED -> assertThat(periodicResult.exceptionNow()).hasMessageContaining("terminated");
+                    case SUCCESS -> assertThat(periodicResult.resultNow())
+                            .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                            .satisfiesAnyOf(
+                                    row -> assertThat(row).containsEntry("wasTerminated", true),
+                                    row -> assertThat(row)
+                                            .extractingByKey("batchErrors")
+                                            .asString()
+                                            .contains("terminated"),
+                                    row -> assertThat(row)
+                                            .extractingByKey("commitErrors")
+                                            .asString()
+                                            .contains("terminated"),
+                                    row -> assertThat(row)
+                                            .extractingByKey("errorMessages")
+                                            .asString()
+                                            .contains("terminated"));
+                    default -> fail("Unexpected state of periodic query execution " + state);
+                }
+            });
+
+            // Assert there's no query still running that is not supposed to.
+            try (final var tx = db.beginTx()) {
+                assertThat(tx.execute("SHOW TRANSACTIONS YIELD transactionId, currentQuery").stream())
+                        .allSatisfy(row -> assertThat(row)
+                                .extractingByKey("currentQuery")
+                                .asString()
+                                .doesNotContain(iterateQueryContains)
+                                .doesNotContain(periodicQuery));
+            }
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
-    private static void checkPeriodicTerminated(DbmsRule db, String periodicQuery) {
-        try {
-            org.neo4j.test.assertion.Assert.assertEventually(
-                    () -> db.executeTransactionally(periodicQuery, Map.of(), result -> {
-                        Map<String, Object> row = Iterators.single(result);
-                        return (boolean) row.get("wasTerminated");
-                    }),
-                    (value) -> value,
-                    15L,
-                    TimeUnit.SECONDS);
-        } catch (Exception tfe) {
-            assertTrue(tfe.getMessage(), tfe.getMessage().contains("terminated"));
-        }
+    private static String findInnerQueryTx(GraphDatabaseService db, String notQuery, String queryContains) {
+        final var showTxs = "SHOW TRANSACTIONS YIELD transactionId as txId, currentQuery as query";
+        // Show all queries to make test failures easier to investigate.
+        final var txs =
+                db.executeTransactionally(showTxs, Map.of(), r -> r.stream().toList());
+        final var innerTxIds = txs.stream()
+                .filter(row -> {
+                    final var query = row.get("query");
+                    return query != null
+                            && !query.equals(notQuery)
+                            && !query.toString().toLowerCase(Locale.ROOT).contains("apoc.periodic.")
+                            && query.toString().contains(queryContains);
+                })
+                .map(row -> row.get("txId").toString())
+                .toList();
+
+        assertThat(innerTxIds).describedAs("All txs:%n%s", txs).isNotEmpty();
+        return innerTxIds.getFirst();
     }
 }

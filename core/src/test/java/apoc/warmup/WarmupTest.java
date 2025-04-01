@@ -40,7 +40,9 @@ public class WarmupTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
+            //             Procedure is only supported on record storage databases
+            .withSetting(GraphDatabaseSettings.db_format, "aligned");
 
     @Before
     public void setUp() {

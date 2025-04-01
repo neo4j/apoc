@@ -118,8 +118,50 @@ public class ExportGraphMLTest {
         db.shutdown();
     }
 
+    private String testWithUnknownDefault =
+            """
+            <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+            <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:java="http://www.yworks.com/xml/yfiles-common/1.0/java" xmlns:sys="http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0" xmlns:x="http://www.yworks.com/xml/yfiles-common/markup/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:y="http://www.yworks.com/xml/graphml" xmlns:yed="http://www.yworks.com/xml/yed/3" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd">
+              <key attr.name="restBaseUrl" attr.type="string" for="node" id="d3">
+                <default xml:space="preserve"/>
+              </key>
+              <key id="age" for="node" attr.name="age" attr.type="long"></key>
+              <graph edgedefault="directed" id="G">
+                <node id="n0" labels=":Gem"><data key="labels">:Gem</data><data key="age">42</data><data key="likes">"food"</data><data key="height">173</data></node>
+                <node id="n1" labels=":Gem"><data key="labels">:Gem</data><data key="age">42</data><data key="likes">"food"</data><data key="height">173</data></node>
+                <node id="n2" labels=":Gem"><data key="labels">:Gem</data><data key="age">42</data><data key="likes">"food"</data></node>
+                <edge id="e0" source="n0" target="n1" label="KNOWS"><data key="label">KNOWS</data></edge>
+                <graphml:edge source="n0" target="n1" label="CREATED"></graphml:edge>
+              </graph>
+              <data key="d7">
+                <y:Resources/>
+              </data>
+            </graphml>
+            """;
+
+    // The element: <default xml:space="preserve"/> should be skipped
     @Test
-    public void testImportGraphML() throws Exception {
+    public void testImportGraphMLWithUnknownDefaultKey() throws Exception {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+
+        File output = new File(directory, "test.graphml");
+        FileWriter fw = new FileWriter(output);
+        fw.write(testWithUnknownDefault);
+        fw.close();
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.graphml($file, {readLabels:true})",
+                map("file", output.getAbsolutePath()),
+                (r) -> {
+                    assertResults(output, r, "statement");
+                });
+
+        TestUtil.testCall(
+                db, "MATCH  (c:Gem {age: 42}) RETURN COUNT(c) AS c", null, (r) -> assertEquals(3L, r.get("c")));
+    }
+
+    @Test
+    public void testImportGraphMLIssue() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "import.graphml");

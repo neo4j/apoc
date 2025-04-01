@@ -18,12 +18,11 @@
  */
 package apoc.convert;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
@@ -35,29 +34,6 @@ import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 
 public class PathsToJsonTreeTest {
-    private Object parseJson(String json) {
-        return JsonUtil.parse(json, null, Object.class);
-    }
-
-    // Because the nodes and relationships contain elementId, which is random,
-    // we need to test out equality leaving it out of the assertion
-    private Object removeElementId(Object a) {
-        if (a != null) {
-            if (a instanceof HashMap) {
-                HashMap<String, Object> obj = (HashMap<String, Object>) a;
-                var keysToRemove = obj.keySet().stream()
-                        .filter(key -> key.contains("elementId"))
-                        .collect(Collectors.toList());
-                keysToRemove.forEach((key) -> obj.remove(key));
-                obj.values().forEach((child) -> removeElementId(child));
-            } else if (a instanceof ArrayList) {
-                ArrayList<Object> obj = (ArrayList<Object>) a;
-                obj.forEach((child) -> removeElementId(child));
-            }
-        }
-
-        return a;
-    }
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule();
@@ -92,25 +68,28 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r._id\":0,"
-                    + "            \"_type\":\"B\","
-                    + "            \"_id\":1,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "r":[
+                             {
+                                "nodeName":"b",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"B",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"A",
+                          "_id": "${json-unit.any-number}",
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -127,16 +106,17 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "_type":"A",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -153,30 +133,38 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-            var expectedRowA = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            var expectedRowB = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"b\","
-                    + "      \"_type\":\"B\","
-                    + "      \"_id\":1"
-                    + "   }"
-                    + "}";
-            var expectedRowC = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"c\","
-                    + "      \"_type\":\"C\","
-                    + "      \"_id\":2"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 3);
-            assertEquals(parseJson(expectedRowA), removeElementId(rows.get(0)));
-            assertEquals(parseJson(expectedRowB), removeElementId(rows.get(1)));
-            assertEquals(parseJson(expectedRowC), removeElementId(rows.get(2)));
+            var expectedRowA =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "_type":"A",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            var expectedRowB =
+                    """
+                    {   "tree":{
+                          "nodeName":"b",
+                          "_type":"B",
+                          "_id":1,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            var expectedRowC =
+                    """
+                    {   "tree":{
+                          "nodeName":"c",
+                          "_type":"C",
+                          "_id":2,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(
+                            row -> assertThatJson(row).isEqualTo(expectedRowA),
+                            row -> assertThatJson(row).isEqualTo(expectedRowB),
+                            row -> assertThatJson(row).isEqualTo(expectedRowC));
         }
     }
 
@@ -195,26 +183,28 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"b\","
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"a\","
-                    + "            \"r._id\":0,"
-                    + "            \"_type\":\"A\","
-                    + "            \"_id\":0,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"B\","
-                    + "      \"_id\":1"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 1);
-
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"b",
+                          "r":[
+                             {
+                                "nodeName":"a",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"A",
+                                "_id":0,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"B",
+                          "_id":1,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -240,32 +230,39 @@ public class PathsToJsonTreeTest {
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(query);
             var rows = result.stream().collect(Collectors.toList());
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"b\","
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"a\","
-                    + "            \"r._id\":0,"
-                    + "            \"r\":["
-                    + "               {"
-                    + "                  \"nodeName\":\"b\","
-                    + "                  \"r._id\":1,"
-                    + "                  \"_type\":\"B\","
-                    + "                  \"_id\":1,"
-                    + "                  \"r.relName\":\"r\""
-                    + "               }"
-                    + "            ],"
-                    + "            \"_type\":\"A\","
-                    + "            \"_id\":0,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"B\","
-                    + "      \"_id\":1"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                                "nodeName":"a",
+                          "r":[
+                             {
+                                "nodeName":"b",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "r":[
+                                   {
+                                      "nodeName":"a",
+                                      "r._id": "${json-unit.any-number}",
+                                      "r._elementId": "${json-unit.any-string}",
+                                      "_type":"A",
+                                      "_id": "${json-unit.any-number}",
+                                      "_elementId": "${json-unit.any-string}",
+                                      "r.relName":"r"
+                                   }
+                                ],
+                                "_type":"B",
+                                "_id": "${json-unit.any-number}",
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"A",
+                          "_id": "${json-unit.any-number}",
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -286,25 +283,28 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r._id\":0,"
-                    + "            \"_type\":\"B\","
-                    + "            \"_id\":1,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 1);
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "r":[
+                             {
+                                "nodeName":"b",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"B",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"A",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -324,41 +324,49 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-            var expectedRowA = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r._id\":0,"
-                    + "            \"_type\":\"B\","
-                    + "            \"_id\":1,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            var expectedRowC = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"c\","
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"d\","
-                    + "            \"r._id\":1,"
-                    + "            \"_type\":\"D\","
-                    + "            \"_id\":3,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"C\","
-                    + "      \"_id\":2"
-                    + "   }"
-                    + "}";
-            assertEquals(rows.size(), 2);
-            assertEquals(parseJson(expectedRowA), removeElementId(rows.get(0)));
-            assertEquals(parseJson(expectedRowC), removeElementId(rows.get(1)));
+            var expectedRowA =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "r":[
+                             {
+                                "nodeName":"b",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"B",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"A",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            var expectedRowC =
+                    """
+                    {   "tree":{
+                          "nodeName":"c",
+                          "r":[
+                             {
+                                "nodeName":"d",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"D",
+                                "_id":3,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"C",
+                          "_id":2,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRowA), row -> assertThatJson(row)
+                            .isEqualTo(expectedRowC));
         }
     }
 
@@ -381,35 +389,39 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-
-            assertEquals(rows.size(), 1);
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0,"
-                    + "      \"r1\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r2\":["
-                    + "               {"
-                    + "                  \"nodeName\":\"a\","
-                    + "                  \"r2._id\":1,"
-                    + "                  \"_type\":\"A\","
-                    + "                  \"r2.relName\":\"r2\","
-                    + "                  \"_id\":0"
-                    + "               }"
-                    + "            ],"
-                    + "            \"_type\":\"B\","
-                    + "            \"r1._id\":0,"
-                    + "            \"_id\":1,"
-                    + "            \"r1.relName\":\"r1\""
-                    + "         }"
-                    + "      ]"
-                    + "   }"
-                    + "}";
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "_type":"A",
+                          "_id":"${json-unit.any-number}",
+                          "_elementId": "${json-unit.any-string}",
+                          "r1":[
+                             {
+                                "nodeName":"b",
+                                "r2":[
+                                   {
+                                      "nodeName":"a",
+                                      "r2._id":"${json-unit.any-number}",
+                                      "r2._elementId": "${json-unit.any-string}",
+                                      "_type":"A",
+                                      "r2.relName":"r2",
+                                      "_id":"${json-unit.any-number}",
+                                      "_elementId": "${json-unit.any-string}"
+                                   }
+                                ],
+                                "_type":"B",
+                                "r1._id":"${json-unit.any-number}",
+                                "r1._elementId": "${json-unit.any-string}",
+                                "_id":"${json-unit.any-number}",
+                                "_elementId": "${json-unit.any-string}",
+                                "r1.relName":"r1"
+                             }
+                          ]
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -434,44 +446,50 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-
-            assertEquals(rows.size(), 1);
-            var expectedRow = "{" + "  \"tree\": {"
-                    + "    \"nodeName\": \"a\","
-                    + "    \"_type\": \"A\","
-                    + "    \"_id\": 0,"
-                    + "    \"r1\": ["
-                    + "      {"
-                    + "        \"nodeName\": \"b\","
-                    + "        \"r2\": ["
-                    + "          {"
-                    + "            \"nodeName\": \"c\","
-                    + "            \"r2._id\": 1,"
-                    + "            \"_type\": \"C\","
-                    + "            \"r2.relName\": \"r2\","
-                    + "            \"_id\": 2"
-                    + "          }"
-                    + "        ],"
-                    + "        \"r3\": ["
-                    + "          {"
-                    + "            \"nodeName\": \"d\","
-                    + "            \"r3._id\": 2,"
-                    + "            \"r3.relName\": \"r3\","
-                    + "            \"_type\": \"D\","
-                    + "            \"_id\": 3"
-                    + "          }"
-                    + "        ],"
-                    + "        \"_type\": \"B\","
-                    + "        \"r1._id\": 0,"
-                    + "        \"_id\": 1,"
-                    + "        \"r1.relName\": \"r1\""
-                    + "      }"
-                    + "    ]"
-                    + "  }"
-                    + "}";
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {  "tree": {
+                        "nodeName": "a",
+                        "_type": "A",
+                        "_id": 0,
+                        "_elementId": "${json-unit.any-string}",
+                        "r1": [
+                          {
+                            "nodeName": "b",
+                            "r2": [
+                              {
+                                "nodeName": "c",
+                                "r2._id": "${json-unit.any-number}",
+                                "r2._elementId": "${json-unit.any-string}",
+                                "_type": "C",
+                                "r2.relName": "r2",
+                                "_id": 2,
+                                "_elementId": "${json-unit.any-string}"
+                              }
+                            ],
+                            "r3": [
+                              {
+                                "nodeName": "d",
+                                "r3._id": "${json-unit.any-number}",
+                                "r3._elementId": "${json-unit.any-string}",
+                                "r3.relName": "r3",
+                                "_type": "D",
+                                "_id": 3,
+                                "_elementId": "${json-unit.any-string}"
+                              }
+                            ],
+                            "_type": "B",
+                            "r1._id": "${json-unit.any-number}",
+                            "r1._elementId": "${json-unit.any-string}",
+                            "_id": 1,
+                            "_elementId": "${json-unit.any-string}",
+                            "r1.relName": "r1"
+                          }
+                        ]
+                      }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -497,44 +515,50 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-
-            assertEquals(rows.size(), 1);
-            var expectedRow = "{" + "  \"tree\": {"
-                    + "    \"nodeName\": \"a\","
-                    + "    \"_type\": \"A\","
-                    + "    \"_id\": 0,"
-                    + "    \"r1\": ["
-                    + "      {"
-                    + "        \"nodeName\": \"b\","
-                    + "        \"r2\": ["
-                    + "          {"
-                    + "            \"nodeName\": \"c\","
-                    + "            \"r2._id\": 1,"
-                    + "            \"_type\": \"C\","
-                    + "            \"r2.relName\": \"r2\","
-                    + "            \"_id\": 2"
-                    + "          }"
-                    + "        ],"
-                    + "        \"r3\": ["
-                    + "          {"
-                    + "            \"nodeName\": \"d\","
-                    + "            \"r3._id\": 2,"
-                    + "            \"r3.relName\": \"r3\","
-                    + "            \"_type\": \"D\","
-                    + "            \"_id\": 3"
-                    + "          }"
-                    + "        ],"
-                    + "        \"_type\": \"B\","
-                    + "        \"r1._id\": 0,"
-                    + "        \"_id\": 1,"
-                    + "        \"r1.relName\": \"r1\""
-                    + "      }"
-                    + "    ]"
-                    + "  }"
-                    + "}";
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {  "tree": {
+                        "nodeName": "a",
+                        "_type": "A",
+                        "_id": 0,
+                        "_elementId": "${json-unit.any-string}",
+                        "r1": [
+                          {
+                            "nodeName": "b",
+                            "r2": [
+                              {
+                                "nodeName": "c",
+                                "r2._id":  "${json-unit.any-number}",
+                                "r2._elementId": "${json-unit.any-string}",
+                                "_type": "C",
+                                "r2.relName": "r2",
+                                "_id": 2,
+                                "_elementId": "${json-unit.any-string}"
+                              }
+                            ],
+                            "r3": [
+                              {
+                                "nodeName": "d",
+                                "r3._id": "${json-unit.any-number}",
+                                "r3._elementId": "${json-unit.any-string}",
+                                "r3.relName": "r3",
+                                "_type": "D",
+                                "_id": 3,
+                                "_elementId": "${json-unit.any-string}"
+                              }
+                            ],
+                            "_type": "B",
+                            "r1._id": "${json-unit.any-number}",
+                            "r1._elementId": "${json-unit.any-string}",
+                            "_id": 1,
+                            "_elementId": "${json-unit.any-string}",
+                            "r1.relName": "r1"
+                          }
+                        ]
+                      }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -542,7 +566,7 @@ public class PathsToJsonTreeTest {
     public void testToTreeGraphWithLoops() {
         /*          r1:R1          r2:R2
               a:A ---------> b:B --------> c:C
-                            /  /|\
+                            /  /|
                             |___|
                             r3:R3
         */
@@ -558,44 +582,50 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-
-            assertEquals(rows.size(), 1);
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0,"
-                    + "      \"r1\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r2\":["
-                    + "               {"
-                    + "                  \"nodeName\":\"c\","
-                    + "                  \"r2._id\":1,"
-                    + "                  \"_type\":\"C\","
-                    + "                  \"r2.relName\":\"r2\","
-                    + "                  \"_id\":2"
-                    + "               }"
-                    + "            ],"
-                    + "            \"r3\":["
-                    + "               {"
-                    + "                  \"nodeName\":\"b\","
-                    + "                  \"r3._id\":2,"
-                    + "                  \"r3.relName\":\"r3\","
-                    + "                  \"_type\":\"B\","
-                    + "                  \"_id\":1"
-                    + "               }"
-                    + "            ],"
-                    + "            \"_type\":\"B\","
-                    + "            \"r1._id\":0,"
-                    + "            \"_id\":1,"
-                    + "            \"r1.relName\":\"r1\""
-                    + "         }"
-                    + "      ]"
-                    + "   }"
-                    + "}";
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "_type":"A",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}",
+                          "r1":[
+                             {
+                                "nodeName":"b",
+                                "r2":[
+                                   {
+                                      "nodeName":"c",
+                                      "r2._id": "${json-unit.any-number}",
+                                      "r2._elementId": "${json-unit.any-string}",
+                                      "_type":"C",
+                                      "r2.relName":"r2",
+                                      "_id":2,
+                                      "_elementId": "${json-unit.any-string}"
+                                   }
+                                ],
+                                "r3":[
+                                   {
+                                      "nodeName":"b",
+                                      "r3._id": "${json-unit.any-number}",
+                                      "r3._elementId": "${json-unit.any-string}",
+                                      "r3.relName":"r3",
+                                      "_type":"B",
+                                      "_id":1,
+                                      "_elementId": "${json-unit.any-string}"
+                                   }
+                                ],
+                                "_type":"B",
+                                "r1._id": "${json-unit.any-number}",
+                                "r1._elementId": "${json-unit.any-string}",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r1.relName":"r1"
+                             }
+                          ]
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -615,42 +645,49 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-
-            assertEquals(rows.size(), 2);
-            var expectedFirstRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"a\","
-                    + "      \"_type\":\"A\","
-                    + "      \"_id\":0,"
-                    + "      \"r1\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"_type\":\"B\","
-                    + "            \"r1._id\":0,"
-                    + "            \"_id\":1,"
-                    + "            \"r1.relName\":\"r1\""
-                    + "         }"
-                    + "      ]"
-                    + "   }"
-                    + "}";
-            var expectedSecondRow = "{" + "   \"tree\":{"
-                    + "      \"nodeName\":\"c\","
-                    + "      \"r2\":["
-                    + "         {"
-                    + "            \"nodeName\":\"b\","
-                    + "            \"r2._id\":1,"
-                    + "            \"_type\":\"B\","
-                    + "            \"r2.relName\":\"r2\","
-                    + "            \"_id\":1"
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"C\","
-                    + "      \"_id\":2"
-                    + "   }"
-                    + "}";
-            assertEquals(parseJson(expectedFirstRow), removeElementId(rows.get(0)));
-            assertEquals(parseJson(expectedSecondRow), removeElementId(rows.get(1)));
+            var expectedFirstRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"a",
+                          "_type":"A",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}",
+                          "r1":[
+                             {
+                                "nodeName":"b",
+                                "_type":"B",
+                                "r1._id": "${json-unit.any-number}",
+                                "r1._elementId": "${json-unit.any-string}",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r1.relName":"r1"
+                             }
+                          ]
+                       }
+                    }""";
+            var expectedSecondRow =
+                    """
+                    {   "tree":{
+                          "nodeName":"c",
+                          "r2":[
+                             {
+                                "nodeName":"b",
+                                "r2._id": "${json-unit.any-number}",
+                                "r2._elementId": "${json-unit.any-string}",
+                                "_type":"B",
+                                "r2.relName":"r2",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}"
+                             }
+                          ],
+                          "_type":"C",
+                          "_id":2,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedFirstRow), row -> assertThatJson(row)
+                            .isEqualTo(expectedSecondRow));
         }
     }
 
@@ -670,26 +707,28 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
-
-            assertEquals(rows.size(), 1);
             // No nodename under A:B
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"c\","
-                    + "            \"r._id\":0,"
-                    + "            \"_type\":\"C\","
-                    + "            \"_id\":1,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"A:B\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "r":[
+                             {
+                                "nodeName":"c",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"C",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"A:B",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 
@@ -715,21 +754,27 @@ public class PathsToJsonTreeTest {
 
             assertEquals(rows.size(), 1);
             // No nodename under A:B
-            var expectedRow = "{" + "   \"tree\":{"
-                    + "      \"r\":["
-                    + "         {"
-                    + "            \"nodeName\":\"c\","
-                    + "            \"r._id\":0,"
-                    + "            \"_type\":\"C\","
-                    + "            \"_id\":1,"
-                    + "            \"r.relName\":\"r\""
-                    + "         }"
-                    + "      ],"
-                    + "      \"_type\":\"A:B\","
-                    + "      \"_id\":0"
-                    + "   }"
-                    + "}";
-            assertEquals(parseJson(expectedRow), removeElementId(rows.get(0)));
+            var expectedRow =
+                    """
+                    {   "tree":{
+                          "r":[
+                             {
+                                "nodeName":"c",
+                                "r._id": "${json-unit.any-number}",
+                                "r._elementId": "${json-unit.any-string}",
+                                "_type":"C",
+                                "_id":1,
+                                "_elementId": "${json-unit.any-string}",
+                                "r.relName":"r"
+                             }
+                          ],
+                          "_type":"A:B",
+                          "_id":0,
+                          "_elementId": "${json-unit.any-string}"
+                       }
+                    }""";
+            assertThat(tx.execute(query).stream())
+                    .satisfiesExactly(row -> assertThatJson(row).isEqualTo(expectedRow));
         }
     }
 }

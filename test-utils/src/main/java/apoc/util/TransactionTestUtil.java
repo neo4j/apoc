@@ -36,7 +36,6 @@ import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 
 public class TransactionTestUtil {
-    public static final String TRANSACTION_LIST = "SHOW TRANSACTIONS";
     public static final long DEFAULT_TIMEOUT = 10L;
 
     public static void checkTerminationGuard(GraphDatabaseService db, String query) {
@@ -99,7 +98,7 @@ public class TransactionTestUtil {
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {
         // checking for query cancellation from transaction list command
-        testResult(db, TRANSACTION_LIST, map("query", query), result -> {
+        testResult(db, "SHOW TRANSACTIONS", map("query", query), result -> {
             final boolean currentQuery =
                     result.columnAs("currentQuery").stream().noneMatch(currQuery -> currQuery.equals(query));
             assertTrue(currentQuery);
@@ -117,10 +116,10 @@ public class TransactionTestUtil {
 
                     assertEventually(
                             () -> db.executeTransactionally(
-                                    TRANSACTION_LIST + " YIELD currentQuery, transactionId "
-                                            + "WHERE currentQuery CONTAINS $query AND NOT currentQuery STARTS WITH $transactionList "
+                                    "SHOW TRANSACTIONS YIELD currentQuery, transactionId "
+                                            + "WHERE currentQuery CONTAINS $query AND NOT currentQuery STARTS WITH 'SHOW TRANSACTIONS' "
                                             + "RETURN transactionId",
-                                    map("query", query, "transactionList", TRANSACTION_LIST),
+                                    map("query", query),
                                     result -> {
                                         final ResourceIterator<String> msgIterator = result.columnAs("transactionId");
                                         if (!msgIterator.hasNext()) {

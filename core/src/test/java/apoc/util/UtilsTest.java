@@ -50,6 +50,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 import org.neo4j.values.storable.RandomValues;
+import org.neo4j.values.storable.ValueCategory;
 import org.neo4j.values.storable.ValueType;
 
 /**
@@ -339,6 +340,7 @@ public class UtilsTest {
         final var seed = new Random().nextLong();
         final var rand = RandomValues.create(new Random(seed));
         final var randStorables = stream(ValueType.values())
+                .filter(t -> t.valueGroup.category().equals(ValueCategory.VECTOR))
                 .map(t -> rand.nextValueOfType(t).asObject())
                 .toList();
         final var randMap =

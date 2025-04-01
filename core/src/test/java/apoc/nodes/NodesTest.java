@@ -96,7 +96,7 @@ public class NodesTest {
                 db,
                 "MATCH (n) WITH n, apoc.nodes.isDense(n) as dense "
                         + "WHERE n:Foo AND dense OR n:Bar AND NOT dense RETURN count(*) as c",
-                (row) -> assertEquals(2L, row.get("c")));
+                (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
@@ -996,9 +996,10 @@ public class NodesTest {
                 (r) -> {
                     Map<String, Object> map = r.next();
 
-                    assertEquals(Util.map("name", "c1"), ((Node) map.get("from")).getAllProperties());
-                    assertEquals(asList(label("CLabel")), ((Node) map.get("from")).getLabels());
-                    assertEquals(Collections.emptyMap(), ((VirtualRelationship) map.get("rel")).getAllProperties());
+                    assertEquals(
+                            Util.map("name", "b1", "count", 2), ((VirtualNode) map.get("from")).getAllProperties());
+                    assertEquals(asList(label("ALabel"), label("BLabel")), ((Node) map.get("from")).getLabels());
+                    assertEquals(Util.map("count", 1), ((VirtualRelationship) map.get("rel")).getAllProperties());
                     assertEquals(
                             "KNOWS",
                             ((VirtualRelationship) map.get("rel")).getType().name());
@@ -1006,10 +1007,9 @@ public class NodesTest {
                     assertEquals(label, labelSet((Node) map.get("to")));
                     assertTrue(r.hasNext());
                     map = r.next();
-                    assertEquals(
-                            Util.map("name", "b1", "count", 2), ((VirtualNode) map.get("from")).getAllProperties());
-                    assertEquals(label, labelSet((VirtualNode) map.get("from")));
-                    assertEquals(Util.map("count", 1), ((VirtualRelationship) map.get("rel")).getAllProperties());
+                    assertEquals(Util.map("name", "c1"), ((Node) map.get("from")).getAllProperties());
+                    assertEquals(asSet(label("CLabel")), labelSet((Node) map.get("from")));
+                    assertEquals(Collections.emptyMap(), ((VirtualRelationship) map.get("rel")).getAllProperties());
                     assertEquals(
                             "KNOWS",
                             ((VirtualRelationship) map.get("rel")).getType().name());

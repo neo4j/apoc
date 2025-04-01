@@ -30,6 +30,7 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -188,30 +189,33 @@ public class GraphRefactoringTest {
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(5L, row.get("result")));
 
-        TestUtil.testCall(
-                db,
-                "MATCH p=(f:Alpha)-->(b:Beta)-->(c:Gamma)-->(d:Delta)-->(e:Epsilon) WITH p, [b,c] as list CALL apoc.refactor.deleteAndReconnect(p, list) YIELD nodes, relationships RETURN nodes, relationships",
-                (row) -> {
-                    List<Node> nodes = (List<Node>) row.get("nodes");
-                    assertEquals(3, nodes.size());
-                    Node node1 = nodes.get(0);
-                    assertEquals(singletonList(label("Alpha")), node1.getLabels());
-                    Node node2 = nodes.get(1);
-                    assertEquals(singletonList(label("Delta")), node2.getLabels());
-                    Node node3 = nodes.get(2);
-                    assertEquals(singletonList(label("Epsilon")), node3.getLabels());
-                    List<Relationship> rels = (List<Relationship>) row.get("relationships");
-                    assertEquals(2, rels.size());
-                    Relationship rel1 = rels.get(0);
-                    assertEquals("REL_4", rel1.getType().name());
-                    assertEquals("bb", rel1.getProperty("aa"));
-                    assertEquals("dd", rel1.getProperty("cc"));
-                    assertEquals("ff", rel1.getProperty("ee"));
-                    Relationship rel2 = rels.get(1);
-                    assertEquals("REL_1", rel2.getType().name());
-                    assertEquals("b", rel2.getProperty("a"));
-                    assertNotNull(row.get("nodes"));
-                });
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    "MATCH p=(f:Alpha)-->(b:Beta)-->(c:Gamma)-->(d:Delta)-->(e:Epsilon) WITH p, [b,c] as list CALL apoc.refactor.deleteAndReconnect(p, list) YIELD nodes, relationships RETURN nodes, relationships";
+            assertThat(tx.execute(query).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .hasEntrySatisfying("nodes", nodes -> assertThat(nodes)
+                            .asInstanceOf(InstanceOfAssertFactories.list(Node.class))
+                            .satisfiesExactly(
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Alpha")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Delta")),
+                                    n -> assertThat(n.getLabels()).containsExactly(label("Epsilon"))))
+                    .hasEntrySatisfying("relationships", rels -> assertThat(rels)
+                            .asInstanceOf(InstanceOfAssertFactories.list(Relationship.class))
+                            .hasSize(2)
+                            .satisfiesOnlyOnce(r -> {
+                                assertThat(r.getType().name()).isEqualTo("REL_4");
+                                assertThat(r.getAllProperties())
+                                        .containsEntry("aa", "bb")
+                                        .containsEntry("cc", "dd")
+                                        .containsEntry("ee", "ff");
+                            })
+                            .satisfiesOnlyOnce(r -> {
+                                assertThat(r.getType().name()).isEqualTo("REL_1");
+                                assertThat(r.getAllProperties()).containsEntry("a", "b");
+                            }));
+            tx.commit();
+        }
 
         TestUtil.testCall(db, Util.NODE_COUNT, (row) -> assertEquals(3L, row.get("result")));
     }
@@ -417,6 +421,87 @@ public class GraphRefactoringTest {
                     assertEquals(id, node.getElementId());
                     assertTrue(node.hasLabel(label("Person")));
                     assertEquals(2L, node.getProperty("ID"));
+                });
+    }
+
+    @Test
+    public void testMergingOfEmptyNodeListProps() {
+        db.executeTransactionally(
+                "MERGE (t:TEST {prop: []})-[r:ACCESS {prop: 1}]->(t2:BLA )<-[r2:ACCESS {prop: 1}]-(t3:TEST {prop: []})");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        RETURN node
+                       """,
+                (r) -> {
+                    Node node = (Node) r.get("node");
+                    assertTrue(node.hasLabel(label("TEST")));
+                    assertArrayEquals(new String[0], (String[]) node.getProperty("prop"));
+                });
+    }
+
+    @Test
+    public void testMergingOfOneEmptyNodeListProps() {
+        db.executeTransactionally(
+                "MERGE (t:TEST {prop: ['hi']})-[r:ACCESS {prop: 1}]->(t2:BLA )<-[r2:ACCESS {prop: 1}]-(t3:TEST {prop: []})");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        RETURN node
+                       """,
+                (r) -> {
+                    Node node = (Node) r.get("node");
+                    assertTrue(node.hasLabel(label("TEST")));
+                    assertArrayEquals(new String[] {"hi"}, (String[]) node.getProperty("prop"));
+                });
+    }
+
+    @Test
+    public void testMergingOfEmptyRelListProps() {
+        db.executeTransactionally("MERGE (t:TEST)-[r:ACCESS {prop: []}]->(t2:BLA )<-[r2:ACCESS {prop: []}]-(t3:TEST)");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        MATCH (node)-[r]->()
+                        RETURN r
+                       """,
+                (r) -> {
+                    Relationship rel = (Relationship) r.get("r");
+                    assertTrue(rel.isType(RelationshipType.withName("ACCESS")));
+                    assertArrayEquals(new String[0], (String[]) rel.getProperty("prop"));
+                });
+    }
+
+    @Test
+    public void testMergingOfOneEmptyRelListProps() {
+        db.executeTransactionally(
+                "MERGE (t:TEST)-[r:ACCESS {prop: ['hi']}]->(t2:BLA )<-[r2:ACCESS {prop: []}]-(t3:TEST)");
+        testCall(
+                db,
+                """
+                        MATCH (t:TEST)
+                        WITH collect(t) AS tests
+                        CALL apoc.refactor.mergeNodes(tests, {properties:"combine", mergeRels: true, singleElementAsArray: true})
+                        YIELD node
+                        MATCH (node)-[r]->()
+                        RETURN r
+                       """,
+                (r) -> {
+                    Relationship rel = (Relationship) r.get("r");
+                    assertTrue(rel.isType(RelationshipType.withName("ACCESS")));
+                    assertArrayEquals(new String[] {"hi"}, (String[]) rel.getProperty("prop"));
                 });
     }
 
@@ -1311,21 +1396,27 @@ public class GraphRefactoringTest {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (a)-[:TEST_REL {prop: 'one'}]->(a), (a)-[:TEST_REL {prop: 'two'}]->(a) WITH c CREATE (c)-[:TEST_REL]->(c);");
-        testCall(
-                db,
-                "MATCH (n:TestNode) WITH collect(n) as nodes CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true, produceSelfRel: false}) yield node return node",
-                (r) -> {
-                    Node node = (Node) r.get("node");
-                    Iterator<Relationship> relIterator = node.getRelationships().iterator();
-                    final String expectedRelType = "TEST_REL";
-                    final Relationship firstRel = relIterator.next();
-                    assertSelfRel(firstRel, expectedRelType);
-                    assertEquals(Map.of("prop", "two"), firstRel.getAllProperties());
-                    final Relationship secondRel = relIterator.next();
-                    assertSelfRel(secondRel, expectedRelType);
-                    assertEquals(Map.of("prop", "one"), secondRel.getAllProperties());
-                    assertFalse(relIterator.hasNext());
-                });
+        try (final var tx = db.beginTx()) {
+            final var query =
+                    """
+                    MATCH (n:TestNode)
+                    WITH collect(n) as nodes
+                    CALL apoc.refactor.mergeNodes(nodes, {mergeRels: true, produceSelfRel: false}) YIELD node
+                    RETURN node
+                    """;
+            assertThat(tx.execute(query).stream())
+                    .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                    .extractingByKey("node", type(Node.class))
+                    .satisfies(node -> {
+                        assertThat(node.getRelationships())
+                                .hasSize(2)
+                                .allSatisfy(rel -> assertSelfRel(rel, "TEST_REL"))
+                                .satisfiesOnlyOnce(rel ->
+                                        assertThat(rel.getAllProperties()).isEqualTo(Map.of("prop", "one")))
+                                .satisfiesOnlyOnce(rel ->
+                                        assertThat(rel.getAllProperties()).isEqualTo(Map.of("prop", "two")));
+                    });
+        }
     }
 
     @Test
@@ -1368,7 +1459,9 @@ public class GraphRefactoringTest {
             assertOverrideNode(r);
             final List<Relationship> rels = (List<Relationship>) r.get("rels");
             assertEquals(1, rels.size());
-            assertEquals(false, rels.get(0).getProperty("isReduced"));
+            // Property is overwritten, it is not deterministic which one will be found first, so just check it is a
+            // bool
+            assertTrue(rels.get(0).getProperty("isReduced") instanceof Boolean);
         });
     }
 

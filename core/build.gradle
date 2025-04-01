@@ -3,16 +3,16 @@ import org.gradle.api.internal.artifacts.DefaultExcludeRule
 plugins {
     id 'java'
     id 'maven-publish'
+    id('com.gradleup.shadow') version '8.3.6'
 }
 
 archivesBaseName = "apoc"
-
-apply plugin: 'com.github.johnrengelman.shadow'
 
 jar {
     manifest {
         attributes 'Implementation-Version': version
     }
+    archiveClassifier.set('')
     duplicatesStrategy = 'exclude'
 }
 
@@ -24,6 +24,31 @@ configurations {
 shadowJar {
     archiveClassifier.set('core')
     duplicatesStrategy = 'exclude'
+}
+
+tasks.register('combinedJar', Jar) {
+    dependsOn(project(':common').jar)
+    dependsOn(project.jar)
+
+    archiveClassifier.set('all')
+
+    manifest {
+        attributes 'Implementation-Version': version
+    }
+
+    from(zipTree(project(':common').tasks.jar.archiveFile))
+    from(zipTree(project.tasks.jar.archiveFile))
+}
+
+tasks.register('combinedSources', Jar) {
+    from sourceSets.main.allJava
+    from project(':common').sourceSets.main.allJava
+    archiveClassifier = 'all-sources'
+}
+
+tasks.register('combinedJavaDoc', Jar) {
+    from javadoc
+    archiveClassifier = 'all-javadoc'
 }
 
 javadoc {
@@ -63,12 +88,13 @@ dependencies {
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(":common").sourceSets.test.output
     testImplementation project(':test-utils')
-    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+    testImplementation "com.neo4j:enterprise-it-test-support:$neo4jVersionEffective"
     testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
     testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
         exclude group: 'org.slf4j', module: 'slf4j-api'
     }
     testImplementation 'org.assertj:assertj-core:3.26.3'
+    testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:4.1.0'
 
     configurations.all {
         exclude group: 'org.slf4j', module: 'slf4j-nop'
@@ -100,6 +126,10 @@ publishing {
             artifact(mySourcesJar)
             artifact(myJavadocJar)
             artifact(jar)
+
+            artifact(combinedJar)
+            artifact(combinedSources)
+            artifact(combinedJavaDoc)
 
             pom.withXml {
                 def root = asNode()
