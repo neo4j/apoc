@@ -190,7 +190,7 @@ public class VirtualRelationship implements Relationship {
 
     @Override
     public int hashCode() {
-        return (int) (id ^ (id >>> 32));
+        return Objects.hashCode(elementId);
     }
 
     public Relationship withProperties(Map<String, Object> props) {
