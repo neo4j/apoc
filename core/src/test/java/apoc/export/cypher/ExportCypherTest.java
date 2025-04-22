@@ -140,6 +140,58 @@ public class ExportCypherTest {
     }
 
     @Test
+    public void testCypherRoundTrip() {
+        // Set up
+        db.executeTransactionally(
+                """
+                CREATE CONSTRAINT composite_unique
+                FOR (n:Node)
+                REQUIRE (n.propA, n.propB) IS UNIQUE;
+                """);
+
+        db.executeTransactionally(
+                """
+                CREATE (a:Node {propA: "X", propB: "1"})
+                CREATE (b:Node {propA: "Y"})
+                CREATE (a)-[:LINKED_TO]->(b);
+                """);
+
+        String fileName = "allWithConstraints.cypher";
+
+        // Run export
+        testCall(
+                db,
+                "CALL apoc.export.cypher.all($fileName, {writeNodeProperties: true})",
+                map("fileName", fileName),
+                (r) -> assertEquals(fileName, r.get("file")));
+
+        db.executeTransactionally("""
+                DROP CONSTRAINT composite_unique;
+                """);
+
+        db.executeTransactionally("""
+                MATCH (n) DETACH DELETE n;
+                """);
+
+        final String cypherStatements = readFile(fileName);
+        db.executeTransactionally("CALL apoc.cypher.runMany($statements, {})", map("statements", cypherStatements));
+
+        testCall(
+                db,
+                """
+                        RETURN EXISTS {
+                            MATCH (a:Node {propA: "X", propB: "1"})-[:LINKED_TO]->(b:Node {propA: "Y"})
+                        }
+                        AND COUNT { MATCH (n) RETURN 1 } = 2
+                        AND NOT EXISTS { MATCH (n:`UNIQUE IMPORT LABEL`) RETURN 1 } AS dbIsCorrect
+                        """,
+                (r) -> assertTrue((Boolean) r.get("dbIsCorrect")));
+
+        // Clean up
+        db.executeTransactionally("MATCH (n) DETACH DELETE n;");
+    }
+
+    @Test
     public void testUniqueNodeLabels() {
         // Check the unique node test doesn't fail if the node has extra non-unique constrained labels
         String createExtraNodes = "MATCH (n) SET n:EXTRA_LABEL";
