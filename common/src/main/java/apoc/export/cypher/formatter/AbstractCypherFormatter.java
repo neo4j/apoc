@@ -600,7 +600,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
     private String getUniqueConstrainedLabel(Node node, Map<String, Set<String>> uniqueConstraints) {
         return uniqueConstraints.entrySet().stream()
                 .filter(e -> node.hasLabel(Label.label(e.getKey()))
-                        && e.getValue().stream().anyMatch(k -> node.hasProperty(k)))
+                        && e.getValue().stream().allMatch(k -> node.hasProperty(k)))
                 .map(e -> e.getKey())
                 .findFirst()
                 .orElse(CypherFormatterUtils.UNIQUE_ID_LABEL);
