@@ -18,6 +18,8 @@
  */
 package apoc.export.util;
 
+import static org.neo4j.internal.helpers.collection.Iterables.asResourceIterable;
+
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.ArrayList;
@@ -35,6 +37,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -73,13 +76,13 @@ public class NodesAndRelsSubGraph implements SubGraph {
     }
 
     @Override
-    public Iterable<Node> getNodes() {
-        return nodes;
+    public ResourceIterable<Node> getNodes() {
+        return asResourceIterable(nodes);
     }
 
     @Override
-    public Iterable<Relationship> getRelationships() {
-        return rels;
+    public ResourceIterable<Relationship> getRelationships() {
+        return asResourceIterable(rels);
     }
 
     @Override

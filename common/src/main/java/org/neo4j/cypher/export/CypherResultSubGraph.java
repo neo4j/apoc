@@ -19,6 +19,7 @@
 package org.neo4j.cypher.export;
 
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
+import static org.neo4j.internal.helpers.collection.Iterables.asResourceIterable;
 
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
@@ -160,13 +161,13 @@ public class CypherResultSubGraph implements SubGraph {
     }
 
     @Override
-    public Iterable<Node> getNodes() {
-        return nodes.values();
+    public ResourceIterable<Node> getNodes() {
+        return asResourceIterable(nodes.values());
     }
 
     @Override
-    public Iterable<Relationship> getRelationships() {
-        return relationships.values();
+    public ResourceIterable<Relationship> getRelationships() {
+        return asResourceIterable(relationships.values());
     }
 
     public Collection<Label> getLabels() {

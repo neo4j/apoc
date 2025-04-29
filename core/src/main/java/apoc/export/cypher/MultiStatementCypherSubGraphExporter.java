@@ -136,8 +136,14 @@ public class MultiStatementCypherSubGraphExporter {
 
     // ---- Nodes ----
 
+    private boolean hasNodes() {
+        try (final var nodes = graph.getNodes()) {
+            return nodes.iterator().hasNext();
+        }
+    }
+
     private void exportNodes(PrintWriter out, Reporter reporter, int batchSize) {
-        if (graph.getNodes().iterator().hasNext()) {
+        if (hasNodes()) {
             begin(out);
             appendNodes(out, batchSize, reporter);
             commit(out);
@@ -146,8 +152,10 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void exportNodesUnwindBatch(PrintWriter out, Reporter reporter) {
-        if (graph.getNodes().iterator().hasNext()) {
-            this.cypherFormat.statementForNodes(graph.getNodes(), uniqueConstraints, exportConfig, out, reporter, db);
+        if (hasNodes()) {
+            try (final var nodes = graph.getNodes()) {
+                this.cypherFormat.statementForNodes(nodes, uniqueConstraints, exportConfig, out, reporter, db);
+            }
             out.flush();
         }
     }
@@ -173,8 +181,14 @@ public class MultiStatementCypherSubGraphExporter {
 
     // ---- Relationships ----
 
+    private boolean hasRels() {
+        try (final var rels = graph.getRelationships()) {
+            return rels.iterator().hasNext();
+        }
+    }
+
     private void exportRelationships(PrintWriter out, Reporter reporter, int batchSize) {
-        if (graph.getRelationships().iterator().hasNext()) {
+        if (hasRels()) {
             begin(out);
             appendRelationships(out, batchSize, reporter);
             commit(out);
@@ -183,9 +197,10 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     private void exportRelationshipsUnwindBatch(PrintWriter out, Reporter reporter) {
-        if (graph.getRelationships().iterator().hasNext()) {
-            this.cypherFormat.statementForRelationships(
-                    graph.getRelationships(), uniqueConstraints, exportConfig, out, reporter, db);
+        if (hasRels()) {
+            try (final var rels = graph.getRelationships()) {
+                this.cypherFormat.statementForRelationships(rels, uniqueConstraints, exportConfig, out, reporter, db);
+            }
             out.flush();
         }
     }
@@ -420,7 +435,7 @@ public class MultiStatementCypherSubGraphExporter {
         return getArtificialUniqueRels(rel, 0);
     }
 
-    public long countArtificialUniqueNodes(Iterable<Node> n) {
+    public long countArtificialUniqueNodes(ResourceIterable<Node> n) {
         long artificialUniques = 0;
         for (Node node : n) {
             artificialUniques = getArtificialUniqueNodes(node, artificialUniques);

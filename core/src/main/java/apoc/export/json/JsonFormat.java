@@ -39,6 +39,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.security.AuthorizationViolationException;
@@ -188,7 +189,8 @@ public class JsonFormat {
         return jsonGenerator;
     }
 
-    private void writeNodes(Iterable<Node> nodes, Reporter reporter, JsonGenerator jsonGenerator, ExportConfig config)
+    private void writeNodes(
+            ResourceIterable<Node> nodes, Reporter reporter, JsonGenerator jsonGenerator, ExportConfig config)
             throws IOException {
         for (Node node : nodes) {
             writeNode(reporter, jsonGenerator, node, config);
