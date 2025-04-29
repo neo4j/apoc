@@ -223,5 +223,10 @@
         "sha1": "0b8c2690762c91e0172e72b3d02004c8399b0dc2",
         "sha256": "01233afddacfa84e1da8350a93c5b3ceed0baf9bd72f7a1157ec05bed59099fc",
         "md5": "41e44d92a439c7e545a63f830d7dec59"
+    },
+    "2025.04.0": {
+        "sha1": "8869f8d2d36ae11d5e11b1db05961e0d7bd68873",
+        "sha256": "f00a206d1b31ada8dc88b338bf5acd9d7fbc7732f06f1fb71028eb75e59f73f1",
+        "md5": "b51ed5d9554ea71f0b44ef9d8f494e28"
     }
 }
