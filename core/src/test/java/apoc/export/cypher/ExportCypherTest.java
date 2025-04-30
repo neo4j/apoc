@@ -26,6 +26,7 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static apoc.util.Util.map;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -1536,6 +1537,19 @@ public class ExportCypherTest {
                 },
                 config,
                 false);
+    }
+
+    @Test
+    public void exportInSameTransaction() {
+        db.executeTransactionally("CREATE (:COMMITED_NODE {p: 'node is committed'})");
+        try (final var tx = db.beginTx()) {
+            assertThat(tx.execute("CREATE (:`UNCOMITTED_NODE` {p: 'node not committed'})").stream())
+                    .isEmpty();
+            final var exportQuery = "CALL apoc.export.cypher.all(null, {stream: true})";
+
+            // This is a weird behaviour, not sure if it's a bug.
+            assertThat(tx.execute(exportQuery).stream()).isEmpty();
+        }
     }
 
     @Test

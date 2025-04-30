@@ -29,6 +29,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -49,12 +50,12 @@ public class DatabaseSubGraph implements SubGraph {
     }
 
     @Override
-    public Iterable<Node> getNodes() {
+    public ResourceIterable<Node> getNodes() {
         return transaction.getAllNodes();
     }
 
     @Override
-    public Iterable<Relationship> getRelationships() {
+    public ResourceIterable<Relationship> getRelationships() {
         return transaction.getAllRelationships();
     }
 

@@ -30,14 +30,15 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.internal.kernel.api.TokenRead;
 
 public interface SubGraph {
-    Iterable<Node> getNodes();
+    ResourceIterable<Node> getNodes();
 
-    Iterable<Relationship> getRelationships();
+    ResourceIterable<Relationship> getRelationships();
 
     Iterable<IndexDefinition> getIndexes();
 
