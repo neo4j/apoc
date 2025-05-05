@@ -78,6 +78,8 @@ public class CountingInputStream extends FilterInputStream implements SizeCounte
     }
 
     public SeekableByteChannel asChannel() throws IOException {
-        return new SeekableInMemoryByteChannel(this.readAllBytes());
+        try (final var stream = this) {
+            return new SeekableInMemoryByteChannel(stream.readAllBytes());
+        }
     }
 }
