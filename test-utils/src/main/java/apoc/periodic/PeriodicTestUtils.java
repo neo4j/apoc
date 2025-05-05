@@ -31,11 +31,10 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.impl.api.KernelTransactions;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.rule.DbmsRule;
 
 public class PeriodicTestUtils {
 
-    public static void killPeriodicQueryAsync(DbmsRule db) {
+    public static void killPeriodicQueryAsync(GraphDatabaseAPI db) {
         new Thread(() -> {
                     int retries = 10;
                     try {
@@ -63,7 +62,8 @@ public class PeriodicTestUtils {
         return numberOfKilledTransactions > 0;
     }
 
-    public static void testTerminateInnerPeriodicQuery(DbmsRule db, String periodicQuery, String iterateQueryContains) {
+    public static void testTerminateInnerPeriodicQuery(
+            GraphDatabaseService db, String periodicQuery, String iterateQueryContains) {
         assertThat(periodicQuery).contains(iterateQueryContains);
 
         final var executor = Executors.newCachedThreadPool();
