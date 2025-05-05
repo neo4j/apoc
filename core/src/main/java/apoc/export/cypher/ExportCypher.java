@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.neo4j.cypher.export.CypherResultSubGraph;
@@ -104,7 +105,7 @@ public class ExportCypher {
                     Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
-        return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), false);
+        return exportCypher(fileName, source, DatabaseSubGraph::new, new ExportConfig(config), false);
     }
 
     @NotThreadSafe
@@ -138,8 +139,8 @@ public class ExportCypher {
                     Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportCypher(
-                fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config), false);
+        final Function<Transaction, SubGraph> graph = threadTx -> new NodesAndRelsSubGraph(threadTx, nodes, rels, true);
+        return exportCypher(fileName, source, graph, new ExportConfig(config), false);
     }
 
     @NotThreadSafe
@@ -169,11 +170,12 @@ public class ExportCypher {
                     Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
 
-        Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
-        Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
-        String source = String.format("graph: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportCypher(
-                fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config), false);
+        final var nodes = (Collection<Node>) graph.get("nodes");
+        final var rels = (Collection<Relationship>) graph.get("relationships");
+        final var source = "graph: nodes(%d), rels(%d)".formatted(nodes.size(), rels.size());
+        final Function<Transaction, SubGraph> subGraph =
+                threadTx -> new NodesAndRelsSubGraph(threadTx, nodes, rels, true);
+        return exportCypher(fileName, source, subGraph, new ExportConfig(config), false);
     }
 
     @NotThreadSafe
@@ -207,12 +209,10 @@ public class ExportCypher {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query));
-        SubGraph graph;
-        graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween(), false);
-        String source = String.format(
-                "statement: nodes(%d), rels(%d)",
-                Iterables.count(graph.getNodes()), Iterables.count(graph.getRelationships()));
-        return exportCypher(fileName, source, graph, c, false);
+        final var graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween(), false);
+        final var source = "statement: nodes(%d), rels(%d)"
+                .formatted(Iterables.count(graph.getNodes()), Iterables.count(graph.getRelationships()));
+        return exportCypher(fileName, source, graph::rebind, c, false);
     }
 
     @NotThreadSafe
@@ -243,11 +243,15 @@ public class ExportCypher {
                     Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
-        return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), true);
+        return exportCypher(fileName, source, DatabaseSubGraph::new, new ExportConfig(config), true);
     }
 
     private Stream<DataProgressInfo> exportCypher(
-            @Name("file") String fileName, String source, SubGraph graph, ExportConfig c, boolean onlySchema) {
+            @Name("file") String fileName,
+            String source,
+            Function<Transaction, SubGraph> graph,
+            ExportConfig c,
+            boolean onlySchema) {
         apocConfig.checkWriteAllowed(c, fileName);
 
         DataProgressInfo progressInfo = new DataProgressInfo(fileName, source, "cypher");
@@ -270,7 +274,7 @@ public class ExportCypher {
                     pools.getDefaultExecutorService(),
                     db,
                     txInThread -> {
-                        doExport(graph, c, onlySchema, reporterWithConsumer, cypherFileManager);
+                        doExport(graph.apply(txInThread), c, onlySchema, reporterWithConsumer, cypherFileManager);
                         return true;
                     },
                     0,
@@ -280,7 +284,7 @@ public class ExportCypher {
                     new QueueBasedSpliterator<>(queue, DataProgressInfo.EMPTY, terminationGuard, Integer.MAX_VALUE);
             return StreamSupport.stream(spliterator, false);
         } else {
-            doExport(graph, c, onlySchema, reporter, cypherFileManager);
+            doExport(graph.apply(tx), c, onlySchema, reporter, cypherFileManager);
             return reporter.stream().map(pi -> (DataProgressInfo) pi).map((dpi) -> dpi.enrich(cypherFileManager));
         }
     }

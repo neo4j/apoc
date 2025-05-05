@@ -1545,10 +1545,11 @@ public class ExportCypherTest {
         try (final var tx = db.beginTx()) {
             assertThat(tx.execute("CREATE (:`UNCOMITTED_NODE` {p: 'node not committed'})").stream())
                     .isEmpty();
-            final var exportQuery = "CALL apoc.export.cypher.all(null, {stream: true})";
+            final var exportQuery = "CALL apoc.export.cypher.all(null, {stream: true}) YIELD cypherStatements AS s";
 
-            // This is a weird behaviour, not sure if it's a bug.
-            assertThat(tx.execute(exportQuery).stream()).isEmpty();
+            assertThat(tx.execute(exportQuery).<String>columnAs("s").stream())
+                    .anySatisfy(s -> assertThat(s).contains("COMMITED_NODE"))
+                    .allSatisfy(s -> assertThat(s).doesNotContain("UNCOMITTED_NODE"));
         }
     }
 

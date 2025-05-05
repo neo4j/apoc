@@ -34,12 +34,52 @@ import org.neo4j.graphdb.security.AuthorizationViolationException;
 
 public class CypherResultSubGraph implements SubGraph {
 
-    private final SortedMap<String, Node> nodes = new TreeMap<>();
-    private final SortedMap<String, Relationship> relationships = new TreeMap<>();
-    private final Collection<Label> labels = new HashSet<>();
-    private final Collection<RelationshipType> types = new HashSet<>();
-    private final Collection<IndexDefinition> indexes = new HashSet<>();
-    private final Collection<ConstraintDefinition> constraints = new HashSet<>();
+    private final SortedMap<String, Node> nodes;
+    private final SortedMap<String, Relationship> relationships;
+    private final Collection<Label> labels;
+    private final Collection<RelationshipType> types;
+    private final Collection<IndexDefinition> indexes;
+    private final Collection<ConstraintDefinition> constraints;
+
+    private CypherResultSubGraph(
+            SortedMap<String, Node> nodes,
+            SortedMap<String, Relationship> relationships,
+            Collection<Label> labels,
+            Collection<RelationshipType> types,
+            Collection<IndexDefinition> indexes,
+            Collection<ConstraintDefinition> constraints) {
+        this.nodes = nodes;
+        this.relationships = relationships;
+        this.labels = labels;
+        this.types = types;
+        this.indexes = indexes;
+        this.constraints = constraints;
+    }
+
+    private CypherResultSubGraph() {
+        this(new TreeMap<>(), new TreeMap<>(), new HashSet<>(), new HashSet<>(), new HashSet<>(), new HashSet<>());
+    }
+
+    public CypherResultSubGraph rebind(Transaction tx) {
+        final var reboundNodes = new TreeMap<String, Node>();
+        this.nodes.forEach((key, node) -> {
+            try {
+                reboundNodes.put(key, Util.rebind(tx, node));
+            } catch (NotFoundException e) {
+                // Ignore, mimics previous behaviour where this can happen.
+            }
+        });
+
+        final var reboundRels = new TreeMap<String, Relationship>();
+        this.relationships.forEach((key, rel) -> {
+            try {
+                reboundRels.put(key, Util.rebind(tx, rel));
+            } catch (NotFoundException e) {
+                // Ignore, mimics previous behaviour where this can happen.
+            }
+        });
+        return new CypherResultSubGraph(reboundNodes, reboundRels, labels, types, indexes, constraints);
+    }
 
     public void add(Node node) {
         final String id = node.getElementId();
@@ -66,11 +106,11 @@ public class CypherResultSubGraph implements SubGraph {
         }
     }
 
-    public static SubGraph from(Transaction tx, Result result, boolean addBetween) {
+    public static CypherResultSubGraph from(Transaction tx, Result result, boolean addBetween) {
         return from(tx, result, addBetween, true);
     }
 
-    public static SubGraph from(Transaction tx, Result result, boolean addBetween, boolean addRelNodes) {
+    public static CypherResultSubGraph from(Transaction tx, Result result, boolean addBetween, boolean addRelNodes) {
         final CypherResultSubGraph graph = new CypherResultSubGraph();
         final List<String> columns = result.columns();
         try {
