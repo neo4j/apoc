@@ -39,146 +39,134 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_REL;
 import static apoc.export.util.ExportConfig.RELS_WITH_TYPE_KEY;
 import static apoc.util.Util.map;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.neo4j.configuration.SettingImpl.newBuilder;
-import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
 import apoc.cypher.Cypher;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
-import java.util.List;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.neo4j.graphdb.Node;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
 public class ExportCypherMultiRelTest {
+    @Inject
+    GraphDatabaseService db;
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            // as for the GraphRefactoringTest, we need to set internal.dbms.debug.trace_cursors=false
-            // because, with DbmsRule, using structures like StreamSupport.stream(node.getRelationships(dir,
-            // type).spliterator(), false)..etc.. an 'IllegalStateException: Closeable RelationshipTraversalCursor[..]
-            // was not closed!' is thrown.
-            // With a non-test instance it works without this config
-            .withSetting(
-                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
-                            .build(),
-                    false);
-
-    @Before
-    public void setUp() {
-        TestUtil.registerProcedure(db, ExportCypher.class, Cypher.class);
-        db.executeTransactionally(
-                "create (pers:Person {name: 'MyName'})-[:WORKS_FOR {id: 1}]->(proj:Project {a: 1}), \n"
-                        + "(pers)-[:WORKS_FOR {id: 2}]->(proj), "
-                        + "(pers)-[:WORKS_FOR {id: 2}]->(proj), \n"
-                        + "(pers)-[:WORKS_FOR {id: 3}]->(proj), \n"
-                        + "(pers)-[:WORKS_FOR {id: 4}]->(proj), \n"
-                        + "(pers)-[:WORKS_FOR {id: 5}]->(proj), \n"
-                        + "(pers)-[:IS_TEAM_MEMBER_OF {name: 'aaa'}]->(:Team {name: 'one'}),\n"
-                        + "(pers)-[:IS_TEAM_MEMBER_OF {name: 'eee'}]->(:Team {name: 'two'})");
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfigRaw(Map.of(
+                "internal.dbms.debug.track_cursor_close", "true",
+                "db.format", "aligned" // Test assertions depends on sequential ids
+                ));
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void setUp() {
+        TestUtil.registerProcedure(db, ExportCypher.class, Cypher.class);
+    }
+
+    @BeforeEach
+    void beforeEach() {
+        db.executeTransactionally(
+                """
+                create
+                  (pers:Person {name: 'MyName'})-[:WORKS_FOR {id: 1}]->(proj:Project {a: 1}),
+                  (pers)-[:WORKS_FOR {id: 2}]->(proj),
+                  (pers)-[:WORKS_FOR {id: 2}]->(proj),
+                  (pers)-[:WORKS_FOR {id: 3}]->(proj),
+                  (pers)-[:WORKS_FOR {id: 4}]->(proj),
+                  (pers)-[:WORKS_FOR {id: 5}]->(proj),
+                  (pers)-[:IS_TEAM_MEMBER_OF {name: 'aaa'}]->(:Team {name: 'one'}),
+                  (pers)-[:IS_TEAM_MEMBER_OF {name: 'eee'}]->(:Team {name: 'two'})
+                """);
     }
 
     @Test
     public void updateAllOptimizationNone() {
-        String expectedCypherStatement =
-                NODES_MULTI_RELS + SCHEMA_WITH_UNIQUE_IMPORT_ID + RELS_MULTI_RELS + CLEANUP_SMALL_BATCH;
-        final Map<String, Object> map = withoutOptimization(map("cypherFormat", "updateAll"));
-
-        testsCommon(expectedCypherStatement, map);
+        testsCommon(
+                NODES_MULTI_RELS + SCHEMA_WITH_UNIQUE_IMPORT_ID + RELS_MULTI_RELS + CLEANUP_SMALL_BATCH,
+                withoutOptimization(map("cypherFormat", "updateAll")));
     }
 
     @Test
     public void createOptimizationNone() {
-        String expectedCypherStatement = NODES_MULTI_REL_CREATE
-                + SCHEMA_WITH_UNIQUE_IMPORT_ID
-                + RELS_ADD_STRUCTURE_MULTI_RELS
-                + CLEANUP_SMALL_BATCH_NODES;
-        final Map<String, Object> map = withoutOptimization(map("cypherFormat", "create"));
-
-        testsCommon(expectedCypherStatement, map);
+        testsCommon(
+                NODES_MULTI_REL_CREATE
+                        + SCHEMA_WITH_UNIQUE_IMPORT_ID
+                        + RELS_ADD_STRUCTURE_MULTI_RELS
+                        + CLEANUP_SMALL_BATCH_NODES,
+                withoutOptimization(map("cypherFormat", "create")));
     }
 
     @Test
     public void addStructureOptimizationNone() {
-        String expectedCypherStatement = NODES_MULTI_RELS_ADD_STRUCTURE
-                + SCHEMA_UPDATE_STRUCTURE_MULTI_REL
-                + RELS_ADD_STRUCTURE_MULTI_RELS
-                + CLEANUP_EMPTY;
-        final Map<String, Object> map = withoutOptimization(map("cypherFormat", "addStructure"));
-        testsCommon(expectedCypherStatement, map);
+        testsCommon(
+                NODES_MULTI_RELS_ADD_STRUCTURE
+                        + SCHEMA_UPDATE_STRUCTURE_MULTI_REL
+                        + RELS_ADD_STRUCTURE_MULTI_RELS
+                        + CLEANUP_EMPTY,
+                withoutOptimization(map("cypherFormat", "addStructure")));
     }
 
     @Test
     public void updateStructureOptimizationNone() {
-        String expectedCypherStatement = ":begin\n:commit\n" + SCHEMA_UPDATE_STRUCTURE_MULTI_REL
-                + RELSUPDATE_STRUCTURE_2 + CLEANUP_SMALL_BATCH_ONLY_RELS;
-        final Map<String, Object> map = withoutOptimization(map("cypherFormat", "updateStructure"));
-
-        testsCommon(expectedCypherStatement, map, true);
+        testsCommon(
+                ":begin\n:commit\n" + SCHEMA_UPDATE_STRUCTURE_MULTI_REL + RELSUPDATE_STRUCTURE_2
+                        + CLEANUP_SMALL_BATCH_ONLY_RELS,
+                withoutOptimization(map("cypherFormat", "updateStructure")),
+                true);
     }
 
     @Test
     public void updateAllWithOptimization() {
-        String expectedCypherStatement = SCHEMA_WITH_UNIQUE_IMPORT_ID + NODES_UNWIND_UPDATE_STRUCTURE
-                + RELS_UNWIND_UPDATE_ALL_MULTI_RELS + "\n" + CLEANUP_SMALL_BATCH;
-        final Map<String, Object> map = withOptimizationSmallBatch(map("cypherFormat", "updateAll"));
-
-        testsCommon(expectedCypherStatement, map);
+        testsCommon(
+                SCHEMA_WITH_UNIQUE_IMPORT_ID + NODES_UNWIND_UPDATE_STRUCTURE + RELS_UNWIND_UPDATE_ALL_MULTI_RELS + "\n"
+                        + CLEANUP_SMALL_BATCH,
+                withOptimizationSmallBatch(map("cypherFormat", "updateAll")));
     }
 
     @Test
     public void createWithOptimization() {
-        String expectedCypherStatement =
-                SCHEMA_WITH_UNIQUE_IMPORT_ID + NODES_UNWIND + RELS_UNWIND_MULTI_RELS + CLEANUP_SMALL_BATCH;
-        final Map<String, Object> map = withOptimizationSmallBatch(map("cypherFormat", "create"));
-
-        testsCommon(expectedCypherStatement, map);
+        testsCommon(
+                SCHEMA_WITH_UNIQUE_IMPORT_ID + NODES_UNWIND + RELS_UNWIND_MULTI_RELS + CLEANUP_SMALL_BATCH,
+                withOptimizationSmallBatch(map("cypherFormat", "create")));
     }
 
     @Test
     public void addStructureWithOptimization() {
-        String expectedCypherStatement = SCHEMA_UPDATE_STRUCTURE_MULTI_REL
-                + NODES_UNWIND_ADD_STRUCTURE
-                + RELS_UNWIND_MULTI_RELS
-                + CLEANUP_SMALL_BATCH_ONLY_RELS;
-        final Map<String, Object> map = withOptimizationSmallBatch(map("cypherFormat", "addStructure"));
-
-        testsCommon(expectedCypherStatement, map);
+        testsCommon(
+                SCHEMA_UPDATE_STRUCTURE_MULTI_REL
+                        + NODES_UNWIND_ADD_STRUCTURE
+                        + RELS_UNWIND_MULTI_RELS
+                        + CLEANUP_SMALL_BATCH_ONLY_RELS,
+                withOptimizationSmallBatch(map("cypherFormat", "addStructure")));
     }
 
     @Test
     public void addStructureWithOptimizationAndWithoutNodeCleanup() {
-        String expectedCypherStatement = SCHEMA_UPDATE_STRUCTURE_MULTI_REL
-                + NODES_UNWIND_ADD_STRUCTURE
-                + RELS_UNWIND_MULTI_RELS
-                + CLEANUP_SMALL_BATCH_ONLY_RELS;
-        final Map<String, Object> map = withOptimizationSmallBatch(map("cypherFormat", "addStructure"));
-
-        testsCommon(expectedCypherStatement, map, false);
+        testsCommon(
+                SCHEMA_UPDATE_STRUCTURE_MULTI_REL
+                        + NODES_UNWIND_ADD_STRUCTURE
+                        + RELS_UNWIND_MULTI_RELS
+                        + CLEANUP_SMALL_BATCH_ONLY_RELS,
+                withOptimizationSmallBatch(map("cypherFormat", "addStructure")),
+                false);
     }
 
     @Test
     public void updateStructureWithOptimization() {
-        String expectedCypherStatement =
-                SCHEMA_UPDATE_STRUCTURE_MULTI_REL + RELS_UNWIND_UPDATE_ALL_MULTI_RELS + CLEANUP_SMALL_BATCH_ONLY_RELS;
-        final Map<String, Object> map = withOptimizationSmallBatch(map("cypherFormat", "updateStructure"));
-
-        testsCommon(expectedCypherStatement, map, true);
+        testsCommon(
+                SCHEMA_UPDATE_STRUCTURE_MULTI_REL + RELS_UNWIND_UPDATE_ALL_MULTI_RELS + CLEANUP_SMALL_BATCH_ONLY_RELS,
+                withOptimizationSmallBatch(map("cypherFormat", "updateStructure")),
+                true);
     }
 
     private Map<String, Object> withoutOptimization(Map<String, Object> map) {
@@ -227,34 +215,29 @@ public class ExportCypherMultiRelTest {
     }
 
     private void consistencyCheck() {
-        TestUtil.testResult(
-                db,
-                "match p=(start:Person {name: 'MyName'})-[rel:WORKS_FOR]->(end:Project) return rel ORDER BY rel.id",
-                r -> {
-                    final ResourceIterator<Relationship> rels = r.columnAs("rel");
-                    Relationship next = rels.next();
-                    final Node startNode = next.getStartNode();
-                    final Node endNode = next.getEndNode();
-                    assertFalse(next.hasProperty(UNIQUE_ID_REL));
-                    assertEquals(1L, next.getProperty("id"));
-                    commonAssertions(rels.next(), startNode, endNode, 2L);
-                    commonAssertions(rels.next(), startNode, endNode, 2L);
-                    commonAssertions(rels.next(), startNode, endNode, 3L);
-                    commonAssertions(rels.next(), startNode, endNode, 4L);
-                    commonAssertions(rels.next(), startNode, endNode, 5L);
-                    assertFalse(rels.hasNext());
-                });
-
-        final List<Object> teams = TestUtil.firstColumn(
-                db,
-                "match p=(start {name: 'MyName'})-[rel:IS_TEAM_MEMBER_OF]->(end:Team) return end.name order by end.name");
-        assertEquals(List.of("one", "two"), teams);
-    }
-
-    private void commonAssertions(Relationship next, Node startNode, Node endNode, long id) {
-        assertEquals(startNode, next.getStartNode());
-        assertEquals(endNode, next.getEndNode());
-        assertEquals(id, next.getProperty("id"));
-        assertFalse(next.hasProperty(UNIQUE_ID_REL));
+        final var worksForQuery =
+                "match p=(start:Person {name: 'MyName'})-[rel:WORKS_FOR]->(end:Project) return rel ORDER BY rel.id";
+        try (final var tx = db.beginTx();
+                final var result = tx.execute(worksForQuery)) {
+            final var resultList = result.<Relationship>columnAs("rel").stream().toList();
+            final var firstRel = resultList.getFirst();
+            assertThat(resultList)
+                    .satisfiesExactly(
+                            r -> assertThat(r.getProperty("id")).isEqualTo(1L),
+                            r -> assertThat(r.getProperty("id")).isEqualTo(2L),
+                            r -> assertThat(r.getProperty("id")).isEqualTo(2L),
+                            r -> assertThat(r.getProperty("id")).isEqualTo(3L),
+                            r -> assertThat(r.getProperty("id")).isEqualTo(4L),
+                            r -> assertThat(r.getProperty("id")).isEqualTo(5L))
+                    .allSatisfy(r -> assertThat(r.hasProperty(UNIQUE_ID_REL)).isFalse())
+                    .allSatisfy(r -> assertThat(r.getStartNode()).isEqualTo(firstRel.getStartNode()))
+                    .allSatisfy(r -> assertThat(r.getEndNode()).isEqualTo(firstRel.getEndNode()));
+        }
+        final var teamsQuery =
+                "match p=(start {name: 'MyName'})-[rel:IS_TEAM_MEMBER_OF]->(end:Team) return end.name order by end.name";
+        try (final var tx = db.beginTx();
+                final var result = tx.execute(teamsQuery)) {
+            assertThat(result.<String>columnAs("end.name").stream()).containsExactly("one", "two");
+        }
     }
 }
