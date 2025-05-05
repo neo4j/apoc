@@ -18,6 +18,7 @@
  */
 package apoc.periodic;
 
+import static apoc.util.Util.CONSUME_VOID;
 import static apoc.util.Util.merge;
 
 import apoc.Pools;
@@ -42,7 +43,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryStatistics;
-import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Description;
@@ -86,7 +86,7 @@ public class PeriodicUtils {
 
         @Override
         public boolean equals(Object o) {
-            return this == o || o instanceof JobInfo && name.equals(((JobInfo) o).name);
+            return this == o || o instanceof JobInfo other && name.equals(other.name);
         }
 
         @Override
@@ -321,8 +321,7 @@ public class PeriodicUtils {
                 name,
                 () -> {
                     try {
-                        // `resultAsString` in order to consume result
-                        db.executeTransactionally(statement, params, Result::resultAsString);
+                        db.executeTransactionally(statement, params, CONSUME_VOID);
                     } catch (Exception e) {
                         log.warn("in background task via submit", e);
                         throw new RuntimeException(e);
@@ -337,13 +336,13 @@ public class PeriodicUtils {
      * Call from a procedure that gets a <code>@Context GraphDatbaseAPI db;</code> injected and provide that db to the runnable.
      */
     public static <T> JobInfo submitJob(String name, Runnable task, Log log, Pools pools) {
-        JobInfo info = new JobInfo(name);
-        Future<T> future = pools.getJobList().remove(info);
-        if (future != null && !future.isDone()) future.cancel(false);
+        final var info = new JobInfo(name);
+        var future = pools.getJobList().remove(info);
+        if (future != null) future.cancel(false);
 
-        Runnable wrappingTask = wrapTask(name, task, log);
-        Future newFuture = pools.getScheduledExecutorService().submit(wrappingTask);
-        pools.getJobList().put(info, newFuture);
+        final var newFuture = pools.getScheduledExecutorService().submit(wrapTask(name, task, log));
+        future = pools.getJobList().put(info, newFuture);
+        if (future != null) future.cancel(false);
         return info;
     }
 

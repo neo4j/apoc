@@ -22,6 +22,7 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.lastTransactionChecks;
 import static apoc.util.TransactionTestUtil.terminateTransactionAsync;
+import static apoc.util.Util.CONSUME_VOID;
 import static apoc.util.Util.map;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
@@ -45,24 +46,24 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hamcrest.MatcherAssert;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.common.DependencyResolver;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransientTransactionFailureException;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
@@ -76,9 +77,11 @@ import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
 public class PeriodicTest {
     public static class MockLogger {
         @Context
@@ -93,13 +96,18 @@ public class PeriodicTest {
     public static final long RUNDOWN_COUNT = 1000;
     public static final int BATCH_SIZE = 399;
 
+    @Inject
+    GraphDatabaseAPI db;
+
     public static AssertableLogProvider logProvider = new AssertableLogProvider();
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule(logProvider)
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setInternalLogProvider(logProvider)
+                .setConfigRaw(Map.of("internal.dbms.cypher.enable_experimental_versions", "true"));
+    }
 
-    @Before
+    @BeforeAll
     public void initDb() {
         TestUtil.registerProcedure(
                 db,
@@ -109,14 +117,14 @@ public class PeriodicTest {
                 Utils.class,
                 MockLogger.class,
                 GraphRefactoring.class,
-                HelperProcedures.class);
-        db.executeTransactionally(
-                "call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
+                HelperProcedures.class,
+                TickTockProcedure.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @AfterEach
+    void afterEach() {
+        db.executeTransactionally(
+                "call apoc.periodic.list() yield name call apoc.periodic.cancel(name) yield name as name2 return count(*)");
     }
 
     @Test
@@ -170,7 +178,10 @@ public class PeriodicTest {
     public void testSubmitStatement() throws Exception {
         String callList = "CALL apoc.periodic.list()";
         // force pre-caching the queryplan
-        assertFalse(db.executeTransactionally(callList, Collections.emptyMap(), Result::hasNext));
+        try (final var tx = db.beginTx();
+                final var result = tx.execute(callList)) {
+            assertThat(result.stream()).isEmpty();
+        }
 
         testCall(db, "CALL apoc.periodic.submit('foo','create (:Foo)')", (row) -> {
             assertEquals("foo", row.get("name"));
@@ -226,7 +237,7 @@ public class PeriodicTest {
     public void testSubmitStatementWithParams() throws Exception {
         String callList = "CALL apoc.periodic.list()";
         // force pre-caching the queryplan
-        assertFalse(db.executeTransactionally(callList, Collections.emptyMap(), Result::hasNext));
+        db.executeTransactionally(callList, Map.of(), CONSUME_VOID);
 
         testCall(
                 db,
@@ -243,7 +254,11 @@ public class PeriodicTest {
 
         assertEquals(1L, count);
 
-        testCall(db, callList, (r) -> assertEquals(true, r.get("done")));
+        try (final var tx = db.beginTx();
+                final var result = tx.execute(callList)) {
+            assertThat(result.stream())
+                    .contains(Map.of("name", "foo", "done", true, "cancelled", false, "delay", 0L, "rate", 0L));
+        }
     }
 
     @Test
@@ -1058,6 +1073,35 @@ public class PeriodicTest {
                     String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
             testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
             id++;
+        }
+    }
+
+    @Test
+    void concurrentRepeat() throws InterruptedException {
+        try (final var executors = Executors.newWorkStealingPool()) {
+            for (var i = 0; i < 2048; i++) {
+                executors.submit(() -> db.executeTransactionally(
+                        "CALL apoc.periodic.repeat('repeat-concurrent', 'CALL test.tick()', 1)"));
+            }
+            executors.shutdown();
+            assertThat(executors.awaitTermination(5, TimeUnit.MINUTES)).isTrue();
+        }
+        try (final var tx = db.beginTx();
+                final var res = tx.execute("CALL apoc.periodic.cancel('repeat-concurrent')")) {
+            assertThat(res.stream()).hasSize(1);
+        }
+        Thread.sleep(1_000); // Allow time for the cancel to have effect.
+        final var ticks = TickTockProcedure.counter.get();
+        Thread.sleep(4_000);
+        assertThat(TickTockProcedure.counter.get()).isEqualTo(ticks);
+    }
+
+    public static class TickTockProcedure {
+        public static final AtomicLong counter = new AtomicLong();
+
+        @Procedure(name = "test.tick")
+        public void tick() {
+            counter.incrementAndGet();
         }
     }
 }

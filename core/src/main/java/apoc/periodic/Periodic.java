@@ -22,6 +22,7 @@ import static apoc.periodic.PeriodicUtils.recordError;
 import static apoc.periodic.PeriodicUtils.submitJob;
 import static apoc.periodic.PeriodicUtils.submitProc;
 import static apoc.periodic.PeriodicUtils.wrapTask;
+import static apoc.util.Util.CONSUME_VOID;
 import static apoc.util.Util.merge;
 import static org.neo4j.graphdb.QueryExecutionType.QueryType;
 
@@ -267,15 +268,8 @@ public class Periodic {
                     Map<String, Object> config) {
         validateQuery(statement);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
-        JobInfo info = schedule(
-                name,
-                () -> {
-                    // `resultAsString` in order to consume result
-                    db.executeTransactionally(
-                            Util.prefixQueryWithCheck(procedureCallContext, statement), params, Result::resultAsString);
-                },
-                0,
-                rate);
+        final var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
+        JobInfo info = schedule(name, () -> db.executeTransactionally(query, params, CONSUME_VOID), 0, rate);
         return Stream.of(info);
     }
 
@@ -311,14 +305,16 @@ public class Periodic {
      * Call from a procedure that gets a <code>@Context GraphDatbaseAPI db;</code> injected and provide that db to the runnable.
      */
     public JobInfo schedule(String name, Runnable task, long delay, long repeat) {
-        JobInfo info = new JobInfo(name, delay, repeat);
-        Future future = pools.getJobList().remove(info);
-        if (future != null && !future.isDone()) future.cancel(false);
+        final var info = new JobInfo(name, delay, repeat);
 
-        Runnable wrappingTask = wrapTask(name, task, log);
-        ScheduledFuture<?> newFuture = pools.getScheduledExecutorService()
-                .scheduleWithFixedDelay(wrappingTask, delay, repeat, TimeUnit.SECONDS);
-        pools.getJobList().put(info, newFuture);
+        var future = pools.getJobList().remove(info);
+        if (future != null) future.cancel(false);
+
+        final var newFuture = pools.getScheduledExecutorService()
+                .scheduleWithFixedDelay(wrapTask(name, task, log), delay, repeat, TimeUnit.SECONDS);
+        future = pools.getJobList().put(info, newFuture);
+        if (future != null) future.cancel(false);
+
         return info;
     }
 
