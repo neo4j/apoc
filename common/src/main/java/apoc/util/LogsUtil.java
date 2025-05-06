@@ -29,13 +29,13 @@ import org.neo4j.cypher.internal.ast.prettifier.Prettifier;
 import org.neo4j.cypher.internal.config.CypherConfiguration;
 import org.neo4j.cypher.internal.parser.AstParserFactory$;
 import org.neo4j.cypher.internal.rewriting.rewriters.sensitiveLiteralReplacement;
-import org.neo4j.cypher.internal.util.OpenCypherExceptionFactory;
+import org.neo4j.cypher.internal.util.Neo4jCypherExceptionFactory;
 import scala.Option;
 
 public class LogsUtil {
     public static String sanitizeQuery(Config config, String query, CypherVersion defaultCypherVersion) {
         try {
-            final var exceptionFactory = new OpenCypherExceptionFactory(scala.Option.empty());
+            final var exceptionFactory = new Neo4jCypherExceptionFactory(query, scala.Option.empty());
             final var extension =
                     ExpressionStringifier.Extension$.MODULE$.simple((ExpressionStringifier$.MODULE$.failingExtender()));
             final var stringifier = new DefaultExpressionStringifier(extension, false, false, false, false);
