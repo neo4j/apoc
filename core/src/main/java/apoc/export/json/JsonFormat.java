@@ -61,6 +61,10 @@ public class JsonFormat {
         this.format = format;
     }
 
+    public boolean supportsBatching() {
+        return format == Format.JSON_LINES;
+    }
+
     private ProgressInfo dump(Writer writer, Reporter reporter, Consumer<JsonGenerator> consumer) throws Exception {
         try (Transaction tx = db.beginTx();
                 JsonGenerator jsonGenerator = getJsonGenerator(writer)) {
@@ -200,6 +204,7 @@ public class JsonFormat {
         Map<String, Object> allProperties = node.getAllProperties();
         writeJsonIdKeyStart(jsonGenerator, node.getId());
         JsonFormatSerializer.DEFAULT.writeNode(jsonGenerator, node, config);
+        jsonGenerator.flush();
         reporter.update(1, 0, allProperties.size());
     }
 
@@ -227,6 +232,7 @@ public class JsonFormat {
         Map<String, Object> allProperties = rel.getAllProperties();
         writeJsonIdKeyStart(jsonGenerator, rel.getId());
         JsonFormatSerializer.DEFAULT.writeRelationship(jsonGenerator, rel, config);
+        jsonGenerator.flush();
         reporter.update(0, 1, allProperties.size());
     }
 

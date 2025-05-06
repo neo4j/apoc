@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
@@ -92,15 +93,15 @@ public class ExportJson {
                     Map<String, Object> config) {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
-        return exportJson(fileName, source, new DatabaseSubGraph(tx), config);
+        return exportJson(fileName, source, DatabaseSubGraph::new, config);
     }
 
     @NotThreadSafe
     @Procedure("apoc.export.json.data")
     @Description("Exports the given `NODE` and `RELATIONSHIP` values to the provided JSON file.")
     public Stream<ExportProgressInfo> data(
-            @Name(value = "nodes", description = "A list of nodes to export.") List<Node> nodes,
-            @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
+            @Name(value = "nodes", description = "A list of nodes to export.") List<Node> nodesIn,
+            @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> relsIn,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
             @Name(
@@ -121,11 +122,11 @@ public class ExportJson {
                     """)
                     Map<String, Object> config) {
         // initialize empty lists if nodes or rels are null
-        nodes = nodes == null ? Collections.emptyList() : nodes;
-        rels = rels == null ? Collections.emptyList() : rels;
+        final var nodes = nodesIn == null ? Collections.<Node>emptyList() : nodesIn;
+        final var rels = relsIn == null ? Collections.<Relationship>emptyList() : relsIn;
 
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportJson(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), config);
+        return exportJson(fileName, source, threadTx -> new NodesAndRelsSubGraph(threadTx, nodes, rels, true), config);
     }
 
     @NotThreadSafe
@@ -153,10 +154,10 @@ public class ExportJson {
                     """)
                     Map<String, Object> config) {
 
-        Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
-        Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
+        final Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
+        final Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
         String source = String.format("graph: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportJson(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), config);
+        return exportJson(fileName, source, threadTx -> new NodesAndRelsSubGraph(threadTx, nodes, rels), config);
     }
 
     @NotThreadSafe
@@ -188,17 +189,24 @@ public class ExportJson {
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
         Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query), params);
         String source = String.format("statement: cols(%d)", result.columns().size());
-        return exportJson(fileName, source, result, config);
+        return exportJson(fileName, source, threadTx -> threadTx.execute(Util.prefixQueryWithCheck(procedureCallContext, query), params), config);
     }
 
     private Stream<ExportProgressInfo> exportJson(
-            String fileName, String source, Object data, Map<String, Object> config) {
-        ExportConfig exportConfig = new ExportConfig(config);
+            String fileName, String source, Function<Transaction, Object> data, Map<String, Object> config) {
+        final var exportConfig = new ExportConfig(config);
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "json";
-        ProgressReporter reporter = new ProgressReporter(null, null, new ExportProgressInfo(fileName, source, format));
-        JsonFormat exporter = new JsonFormat(db, getJsonFormat(config));
-        ExportFileManager cypherFileManager = FileManagerFactory.createFileManager(fileName, false, exportConfig);
+
+        final var progressInfo = new ExportProgressInfo(fileName, source, format);
+        final var exporter = new JsonFormat(db, getJsonFormat(config));
+        if (exporter.supportsBatching()) {
+            progressInfo.batchSize = exportConfig.getBatchSize();
+        }
+
+        final var reporter = new ProgressReporter(null, null, progressInfo);
+
+        final var cypherFileManager = FileManagerFactory.createFileManager(fileName, false, exportConfig);
         if (exportConfig.streamStatements()) {
             return ExportUtils.getProgressInfoStream(
                     db,
@@ -209,9 +217,9 @@ public class ExportJson {
                     reporter,
                     cypherFileManager,
                     (threadBoundTx, reporterWithConsumer) ->
-                            dump(data, exportConfig, reporterWithConsumer, exporter, cypherFileManager));
+                            dump(data.apply(threadBoundTx), exportConfig, reporterWithConsumer, exporter, cypherFileManager));
         } else {
-            dump(data, exportConfig, reporter, exporter, cypherFileManager);
+            dump(data.apply(tx), exportConfig, reporter, exporter, cypherFileManager);
             return Stream.of((ExportProgressInfo) reporter.getTotal());
         }
     }

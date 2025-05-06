@@ -77,7 +77,7 @@ public class ProgressReporter implements Reporter {
         acceptBatch();
     }
 
-    public void acceptBatch() {
+    private void acceptBatch() {
         if (batchSize != -1 && totalEntities / batchSize > lastBatch) {
             updateRunningBatch(progressInfo);
             if (consumer != null) {
@@ -86,7 +86,7 @@ public class ProgressReporter implements Reporter {
         }
     }
 
-    public void updateRunningBatch(ProgressInfo progressInfo) {
+    private void updateRunningBatch(ProgressInfo progressInfo) {
         lastBatch = Math.max(totalEntities / batchSize, lastBatch);
         progressInfo.setBatches(lastBatch);
         this.progressInfo.setRows(totalEntities);
