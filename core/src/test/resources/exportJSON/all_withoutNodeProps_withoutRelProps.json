@@ -1,0 +1,4 @@
+{"type":"node","id":"0","labels":["User"]}
+{"type":"node","id":"1","labels":["User"]}
+{"type":"node","id":"2","labels":["User"]}
+{"id":"0","type":"relationship","label":"KNOWS","start":{"id":"0","labels":["User"]},"end":{"id":"1","labels":["User"]}}
