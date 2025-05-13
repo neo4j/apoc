@@ -585,17 +585,54 @@ public class ExportJsonTest {
         String filename = "data.json";
         TestUtil.testCall(
                 db,
-                "MATCH (nod:User) " + "MATCH ()-[reels:KNOWS]->() "
-                        + "WITH collect(nod) AS node, collect(reels) AS rels "
-                        + "CALL apoc.export.json.data(node, rels, $file, null) "
-                        + "YIELD nodes, relationships, properties, file, source, format, time "
-                        + "RETURN *",
+                """
+                        MATCH (nod:User) MATCH ()-[reels:KNOWS]->()
+                        WITH collect(nod) AS node, collect(reels) AS rels
+                        CALL apoc.export.json.data(node, rels, $file, null)
+                        YIELD nodes, relationships, properties, file, source, format, time
+                        RETURN *""",
                 map("file", filename),
                 (r) -> {
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
         assertFileEquals(filename);
+    }
+
+    @Test
+    public void testExportDataWithNodeAndRelProps() {
+        var filenames = Map.of(
+                "", "data_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:true", "data_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:false", "data_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true", "data_withNodeProps_withRelProps.json",
+                "writeNodeProperties:false", "data_withoutNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:true", "data_withNodeProps_withRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:false",
+                        "data_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:true",
+                        "data_withoutNodeProps_withRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:false",
+                        "data_withoutNodeProps_withoutRelProps.json");
+        for (var entry : filenames.entrySet()) {
+            var config = entry.getKey();
+            var filename = entry.getValue();
+            TestUtil.testCall(
+                    db,
+                    """
+                            MATCH (nod:User) MATCH ()-[reels:KNOWS]->()
+                            WITH collect(nod) AS node, collect(reels) AS rels
+                            CALL apoc.export.json.data(node, rels, $file, {%s})
+                            YIELD nodes, relationships, properties, file, source, format, time
+                            RETURN *"""
+                            .formatted(config),
+                    map("file", filename),
+                    (r) -> {
+                        assertEquals(filename, r.get("file"));
+                        assertEquals("json", r.get("format"));
+                    });
+            assertFileEquals(filename);
+        }
     }
 
     @Test
@@ -611,55 +648,99 @@ public class ExportJsonTest {
     }
 
     @Test
+    public void testExportQueryWithWriteNodePropertiesJson() {
+        var filenames = Map.of(
+                "", "query_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:true", "query_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:false", "query_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true", "query_withNodeProps_withRelProps.json",
+                "writeNodeProperties:false", "query_withoutNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:true", "query_withNodeProps_withRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:false",
+                        "query_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:true",
+                        "query_withoutNodeProps_withRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:false",
+                        "query_withoutNodeProps_withoutRelProps.json");
+
+        for (var entry : filenames.entrySet()) {
+            var config = entry.getKey();
+            var filename = entry.getValue();
+
+            String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
+
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.export.json.query($query,$file,{%s})".formatted(config),
+                    map("file", filename, "query", query),
+                    (r) -> {
+                        assertTrue(
+                                "Should get statement",
+                                r.get("source").toString().contains("statement: cols(1)"));
+                        assertEquals(filename, r.get("file"));
+                        assertEquals("json", r.get("format"));
+                    });
+            assertFileEquals(filename);
+        }
+    }
+
+    @Test
     public void testExportAllWithWriteNodePropertiesJson() {
-        String filename = "with_node_properties.json";
-        String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
+        var filenames = Map.of(
+                "", "all_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:true", "all_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:false", "all_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true", "all_withNodeProps_withRelProps.json",
+                "writeNodeProperties:false", "all_withoutNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:true", "all_withNodeProps_withRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:false", "all_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:true", "all_withoutNodeProps_withRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:false",
+                        "all_withoutNodeProps_withoutRelProps.json");
 
-        TestUtil.testCall(
-                db,
-                "CALL apoc.export.json.query($query,$file,{writeNodeProperties:true})",
-                map("file", filename, "query", query),
-                (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
-                    assertEquals(filename, r.get("file"));
-                    assertEquals("json", r.get("format"));
-                });
-        assertFileEquals(filename);
+        for (var entry : filenames.entrySet()) {
+            var config = entry.getKey();
+            var filename = entry.getValue();
+
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.export.json.all($file,{%s})".formatted(config),
+                    map("file", filename),
+                    (r) -> assertResults(filename, r, "database"));
+            assertFileEquals(filename);
+        }
     }
 
     @Test
-    public void testExportAllWithDefaultWriteNodePropertiesJson() {
-        String filename = "with_node_properties.json";
-        String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
+    public void testExportGraphWithWriteNodePropertiesJson() {
+        var filenames = Map.of(
+                "", "all_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:true", "all_withNodeProps_withRelProps.json",
+                "writeRelationshipProperties:false", "all_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true", "all_withNodeProps_withRelProps.json",
+                "writeNodeProperties:false", "all_withoutNodeProps_withoutRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:true", "all_withNodeProps_withRelProps.json",
+                "writeNodeProperties:true, writeRelationshipProperties:false", "all_withNodeProps_withoutRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:true", "all_withoutNodeProps_withRelProps.json",
+                "writeNodeProperties:false, writeRelationshipProperties:false",
+                        "all_withoutNodeProps_withoutRelProps.json");
 
-        // default value for writeNodeProperties is true
-        TestUtil.testCall(
-                db, "CALL apoc.export.json.query($query,$file,{})", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
-                    assertEquals(filename, r.get("file"));
-                    assertEquals("json", r.get("format"));
-                });
-        assertFileEquals(filename);
-    }
+        for (var entry : filenames.entrySet()) {
+            var config = entry.getKey();
+            var filename = entry.getValue();
 
-    @Test
-    public void testExportAllWithoutWriteNodePropertiesJson() {
-        String filename = "without_node_properties.json";
-        String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
-
-        TestUtil.testCall(
-                db,
-                "CALL apoc.export.json.query($query,$file,{writeNodeProperties:false})",
-                map("file", filename, "query", query),
-                (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
-                    assertEquals(filename, r.get("file"));
-                    assertEquals("json", r.get("format"));
-                });
-        assertFileEquals(filename);
+            TestUtil.testCall(
+                    db,
+                    """
+                            CALL apoc.graph.fromDB('test',{}) YIELD graph
+                            CALL apoc.export.json.graph(graph, $file, {%s})
+                            YIELD nodes, relationships, properties, file, source, format, time
+                            RETURN *"""
+                            .formatted(config),
+                    map("file", filename),
+                    (r) -> assertResults(filename, r, "graph"));
+            assertFileEquals(filename);
+        }
     }
 
     @Test

@@ -1,0 +1,1 @@
+{"rel":{"id":"0","type":"relationship","label":"KNOWS","properties":{"bffSince":"P5M1DT12H","since":1993},"start":{"id":"0","labels":["User"]},"end":{"id":"1","labels":["User"]}}}
