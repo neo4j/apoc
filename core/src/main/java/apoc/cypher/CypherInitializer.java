@@ -39,6 +39,7 @@ import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.WriteOperationsNotAllowedException;
 import org.neo4j.graphdb.event.DatabaseEventContext;
 import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.kernel.availability.AvailabilityListener;
@@ -193,6 +194,8 @@ public class CypherInitializer implements AvailabilityListener {
                                 .forEachRemaining(Node::delete);
                     }
                     tx.commit();
+                } catch (WriteOperationsNotAllowedException e) {
+                    // Ignore these, writes are not possible so we assume there are no triggers.
                 } catch (Exception e) {
                     userLog.error(
                             "Failed to cleanup apoc triggers during database drop of %s, please run `apoc.trigger.dropAll` manually to cleanup: %s"
