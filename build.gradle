@@ -22,7 +22,7 @@ static def neo4jReleases() {
     }
 
     return releases
-            .findAll { it >= "5.0.0" }
+            .findAll {it.tokenize(".").first().toInteger() >= 5 }
             .sort { o1, o2 -> normalizeVersion(o1) <=> normalizeVersion(o2) }
             .reverse()
 }
