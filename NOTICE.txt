@@ -63,14 +63,14 @@ Apache-2.0
   commons-codec-1.18.0.jar
   commons-collections-3.2.2.jar
   commons-compress-1.27.1.jar
-  commons-configuration2-2.11.0.jar
+  commons-configuration2-2.12.0.jar
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
-  commons-io-2.18.0.jar
+  commons-io-2.19.0.jar
   commons-lang-2.6.jar
   commons-lang3-3.12.0.jar
   commons-lang3-3.17.0.jar
-  commons-logging-1.3.2.jar
+  commons-logging-1.3.5.jar
   commons-math3-3.6.1.jar
   commons-net-3.9.0.jar
   commons-text-1.10.0.jar
@@ -89,14 +89,14 @@ Apache-2.0
   fst-2.50.jar
   geronimo-jcache_1.0_spec-1.0-alpha-1.jar
   gradle-tooling-api-7.3.jar
-  grpc-api-1.71.0.jar
-  grpc-context-1.71.0.jar
-  grpc-core-1.71.0.jar
-  grpc-netty-1.71.0.jar
-  grpc-protobuf-1.71.0.jar
-  grpc-protobuf-lite-1.71.0.jar
-  grpc-stub-1.71.0.jar
-  grpc-util-1.71.0.jar
+  grpc-api-1.72.0.jar
+  grpc-context-1.72.0.jar
+  grpc-core-1.72.0.jar
+  grpc-netty-1.72.0.jar
+  grpc-protobuf-1.72.0.jar
+  grpc-protobuf-lite-1.72.0.jar
+  grpc-stub-1.72.0.jar
+  grpc-util-1.72.0.jar
   gson-2.11.0.jar
   guava-33.4.0-jre.jar
   guice-4.2.3.jar
@@ -135,15 +135,15 @@ Apache-2.0
   j2objc-annotations-3.0.0.jar
   jPowerShell-3.0.jar
   jProcesses-1.6.5.jar
-  jackson-annotations-2.18.3.jar
-  jackson-core-2.18.3.jar
-  jackson-databind-2.18.3.jar
-  jackson-dataformat-cbor-2.18.3.jar
-  jackson-dataformat-csv-2.18.3.jar
-  jackson-datatype-jsr310-2.18.3.jar
-  jackson-jaxrs-base-2.18.3.jar
-  jackson-jaxrs-json-provider-2.18.3.jar
-  jackson-module-jaxb-annotations-2.18.3.jar
+  jackson-annotations-2.19.0.jar
+  jackson-core-2.19.0.jar
+  jackson-databind-2.19.0.jar
+  jackson-dataformat-cbor-2.19.0.jar
+  jackson-dataformat-csv-2.19.0.jar
+  jackson-datatype-jsr310-2.19.0.jar
+  jackson-jaxrs-base-2.19.0.jar
+  jackson-jaxrs-json-provider-2.19.0.jar
+  jackson-module-jaxb-annotations-2.19.0.jar
   jakarta.validation-api-2.0.2.jar
   javapoet-1.13.0.jar
   javassist-3.30.2-GA.jar
@@ -206,71 +206,86 @@ Apache-2.0
   lucene-queryparser-9.11.1.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
-  netty-all-4.1.101.Final.jar
-  netty-buffer-4.1.101.Final.jar
-  netty-codec-4.1.101.Final.jar
-  netty-codec-dns-4.1.101.Final.jar
-  netty-codec-haproxy-4.1.101.Final.jar
-  netty-codec-http-4.1.101.Final.jar
-  netty-codec-http2-4.1.101.Final.jar
-  netty-codec-memcache-4.1.101.Final.jar
-  netty-codec-mqtt-4.1.101.Final.jar
-  netty-codec-redis-4.1.101.Final.jar
-  netty-codec-smtp-4.1.101.Final.jar
-  netty-codec-socks-4.1.101.Final.jar
-  netty-codec-stomp-4.1.101.Final.jar
-  netty-codec-xml-4.1.101.Final.jar
-  netty-common-4.1.101.Final.jar
-  netty-handler-4.1.101.Final.jar
-  netty-handler-proxy-4.1.101.Final.jar
-  netty-handler-ssl-ocsp-4.1.101.Final.jar
-  netty-resolver-4.1.101.Final.jar
-  netty-resolver-dns-4.1.101.Final.jar
-  netty-resolver-dns-classes-macos-4.1.101.Final.jar
-  netty-resolver-dns-native-macos-4.1.101.Final-osx-aarch_64.jar
-  netty-resolver-dns-native-macos-4.1.101.Final-osx-x86_64.jar
-  netty-tcnative-classes-2.0.70.Final.jar
-  netty-transport-4.1.101.Final.jar
-  netty-transport-classes-epoll-4.1.101.Final.jar
-  netty-transport-classes-kqueue-4.1.101.Final.jar
-  netty-transport-native-epoll-4.1.101.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.1.101.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.1.101.Final.jar
-  netty-transport-native-kqueue-4.1.101.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.1.101.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.1.101.Final.jar
-  netty-transport-rxtx-4.1.101.Final.jar
-  netty-transport-sctp-4.1.101.Final.jar
-  netty-transport-udt-4.1.101.Final.jar
+  netty-all-4.2.1.Final.jar
+  netty-buffer-4.2.1.Final.jar
+  netty-codec-4.2.1.Final.jar
+  netty-codec-base-4.2.1.Final.jar
+  netty-codec-classes-quic-4.2.1.Final.jar
+  netty-codec-compression-4.2.1.Final.jar
+  netty-codec-dns-4.2.1.Final.jar
+  netty-codec-haproxy-4.2.1.Final.jar
+  netty-codec-http-4.2.1.Final.jar
+  netty-codec-http2-4.2.1.Final.jar
+  netty-codec-marshalling-4.2.1.Final.jar
+  netty-codec-memcache-4.2.1.Final.jar
+  netty-codec-mqtt-4.2.1.Final.jar
+  netty-codec-native-quic-4.2.1.Final-linux-aarch_64.jar
+  netty-codec-native-quic-4.2.1.Final-linux-x86_64.jar
+  netty-codec-native-quic-4.2.1.Final-osx-aarch_64.jar
+  netty-codec-native-quic-4.2.1.Final-osx-x86_64.jar
+  netty-codec-native-quic-4.2.1.Final-windows-x86_64.jar
+  netty-codec-protobuf-4.2.1.Final.jar
+  netty-codec-redis-4.2.1.Final.jar
+  netty-codec-smtp-4.2.1.Final.jar
+  netty-codec-socks-4.2.1.Final.jar
+  netty-codec-stomp-4.2.1.Final.jar
+  netty-codec-xml-4.2.1.Final.jar
+  netty-common-4.2.1.Final.jar
+  netty-handler-4.2.1.Final.jar
+  netty-handler-proxy-4.2.1.Final.jar
+  netty-handler-ssl-ocsp-4.2.1.Final.jar
+  netty-resolver-4.2.1.Final.jar
+  netty-resolver-dns-4.2.1.Final.jar
+  netty-resolver-dns-classes-macos-4.2.1.Final.jar
+  netty-resolver-dns-native-macos-4.2.1.Final-osx-aarch_64.jar
+  netty-resolver-dns-native-macos-4.2.1.Final-osx-x86_64.jar
+  netty-tcnative-classes-2.0.71.Final.jar
+  netty-transport-4.2.1.Final.jar
+  netty-transport-classes-epoll-4.2.1.Final.jar
+  netty-transport-classes-io_uring-4.2.1.Final.jar
+  netty-transport-classes-kqueue-4.2.1.Final.jar
+  netty-transport-native-epoll-4.2.1.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.2.1.Final-linux-riscv64.jar
+  netty-transport-native-epoll-4.2.1.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.2.1.Final.jar
+  netty-transport-native-io_uring-4.2.1.Final-linux-aarch_64.jar
+  netty-transport-native-io_uring-4.2.1.Final-linux-riscv64.jar
+  netty-transport-native-io_uring-4.2.1.Final-linux-x86_64.jar
+  netty-transport-native-kqueue-4.2.1.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.2.1.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.2.1.Final.jar
+  netty-transport-rxtx-4.2.1.Final.jar
+  netty-transport-sctp-4.2.1.Final.jar
+  netty-transport-udt-4.2.1.Final.jar
   nimbus-jose-jwt-9.31.jar
   objenesis-3.3.jar
   opencsv-5.7.1.jar
   opentest4j-1.3.0.jar
-  parquet-column-1.15.1.jar
-  parquet-common-1.15.1.jar
-  parquet-encoding-1.15.1.jar
-  parquet-floor-1.50.jar
-  parquet-format-structures-1.15.1.jar
-  parquet-hadoop-1.15.1.jar
-  parquet-jackson-1.15.1.jar
+  parquet-column-1.15.2.jar
+  parquet-common-1.15.2.jar
+  parquet-encoding-1.15.2.jar
+  parquet-floor-1.51.jar
+  parquet-format-structures-1.15.2.jar
+  parquet-hadoop-1.15.2.jar
+  parquet-jackson-1.15.2.jar
   perfmark-api-0.27.0.jar
-  picocli-4.7.6.jar
+  picocli-4.7.7.jar
   proto-google-common-protos-2.51.0.jar
   reactor-core-3.6.16.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.16.jar
   scala-reflect-2.13.16.jar
-  shiro-cache-2.0.3.jar
-  shiro-config-core-2.0.3.jar
-  shiro-core-2.0.3.jar
-  shiro-crypto-cipher-2.0.3.jar
-  shiro-crypto-core-2.0.3.jar
-  shiro-crypto-hash-2.0.3.jar
-  shiro-event-2.0.3.jar
-  shiro-hashes-argon2-2.0.3.jar
-  shiro-hashes-bcrypt-2.0.3.jar
-  shiro-lang-2.0.3.jar
+  shiro-cache-2.0.4.jar
+  shiro-config-core-2.0.4.jar
+  shiro-core-2.0.4.jar
+  shiro-crypto-cipher-2.0.4.jar
+  shiro-crypto-core-2.0.4.jar
+  shiro-crypto-hash-2.0.4.jar
+  shiro-event-2.0.4.jar
+  shiro-hashes-argon2-2.0.4.jar
+  shiro-hashes-bcrypt-2.0.4.jar
+  shiro-lang-2.0.4.jar
   snappy-java-1.1.10.7.jar
   token-provider-2.0.3.jar
   websocket-api-9.4.53.v20231009.jar
@@ -278,7 +293,7 @@ Apache-2.0
   websocket-common-9.4.53.v20231009.jar
   websocket-server-9.4.53.v20231009.jar
   websocket-servlet-9.4.53.v20231009.jar
-  woodstox-core-5.4.0.jar
+  woodstox-core-7.1.0.jar
   zookeeper-3.8.3.jar
   zookeeper-jute-3.8.3.jar
 
@@ -291,8 +306,8 @@ BSD 2-Clause
 BSD-2-Clause
   jline-3.22.0.jar
   jsch-0.1.55.jar
-  stax2-api-4.2.1.jar
-  zstd-jni-1.5.7-2.jar
+  stax2-api-4.2.2.jar
+  zstd-jni-1.5.7-3.jar
 
 BSD-2-Clause
   dnsjava-3.4.0.jar
