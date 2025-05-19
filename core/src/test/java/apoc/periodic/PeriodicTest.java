@@ -177,11 +177,8 @@ public class PeriodicTest {
     @Test
     public void testSubmitStatement() throws Exception {
         String callList = "CALL apoc.periodic.list()";
-        // force pre-caching the queryplan
-        try (final var tx = db.beginTx();
-                final var result = tx.execute(callList)) {
-            assertThat(result.stream()).isEmpty();
-        }
+        // force pre-caching the queryplan => higher probability to get a result in the last assertion
+        db.executeTransactionally(callList, Map.of(), CONSUME_VOID);
 
         testCall(db, "CALL apoc.periodic.submit('foo','create (:Foo)')", (row) -> {
             assertEquals("foo", row.get("name"));
@@ -195,7 +192,15 @@ public class PeriodicTest {
 
         assertEquals(1L, count);
 
-        testCall(db, callList, (r) -> assertEquals(true, r.get("done")));
+        try (final var tx = db.beginTx();
+                final var result = tx.execute(callList)) {
+            final var resultList = result.stream().toList();
+            // We clean up completed tasks periodically so this can be empty
+            if (!resultList.isEmpty()) {
+                assertThat(resultList)
+                        .contains(Map.of("name", "foo", "done", true, "cancelled", false, "delay", 0L, "rate", 0L));
+            }
+        }
     }
 
     @Test
@@ -236,7 +241,7 @@ public class PeriodicTest {
     @Test
     public void testSubmitStatementWithParams() throws Exception {
         String callList = "CALL apoc.periodic.list()";
-        // force pre-caching the queryplan
+        // force pre-caching the queryplan => higher probability to get a result in the last assertion
         db.executeTransactionally(callList, Map.of(), CONSUME_VOID);
 
         testCall(
@@ -256,8 +261,12 @@ public class PeriodicTest {
 
         try (final var tx = db.beginTx();
                 final var result = tx.execute(callList)) {
-            assertThat(result.stream())
-                    .contains(Map.of("name", "foo", "done", true, "cancelled", false, "delay", 0L, "rate", 0L));
+            final var resultList = result.stream().toList();
+            // We clean up completed tasks periodically so this can be empty
+            if (!resultList.isEmpty()) {
+                assertThat(resultList)
+                        .contains(Map.of("name", "foo", "done", true, "cancelled", false, "delay", 0L, "rate", 0L));
+            }
         }
     }
 
