@@ -46,7 +46,7 @@ public enum JsonFormatSerializer {
             Node endNode = rel.getEndNode();
             jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField("type", "relationship");
-            writeRelationshipDetails(jsonGenerator, rel, config.writeNodeProperties());
+            writeRelationshipDetails(jsonGenerator, rel, config.writeRelationshipProperties());
             writeRelationshipNode(jsonGenerator, "start", startNode, config);
             writeRelationshipNode(jsonGenerator, "end", endNode, config);
             jsonGenerator.writeEndObject();

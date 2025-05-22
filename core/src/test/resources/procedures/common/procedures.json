@@ -3157,7 +3157,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description":"{\n        stream = false :: BOOLEAN,\n        writeNodeProperties = true :: BOOLEAN,\n        writeRelationshipProperties = writeNodeProperties :: BOOLEAN,\n        jsonFormat = 'JSON_LINES' :: STRING,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3246,7 +3246,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description":"{\n        stream = false :: BOOLEAN,\n        writeNodeProperties = true :: BOOLEAN,\n        writeRelationshipProperties = writeNodeProperties :: BOOLEAN,\n        jsonFormat = 'JSON_LINES' :: STRING,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3330,7 +3330,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description":"{\n        stream = false :: BOOLEAN,\n        writeNodeProperties = true :: BOOLEAN,\n        writeRelationshipProperties = writeNodeProperties :: BOOLEAN,\n        jsonFormat = 'JSON_LINES' :: STRING,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
@@ -3414,7 +3414,7 @@
     "type" : "STRING"
   }, {
     "name" : "config",
-    "description" : "{\n        stream = false :: BOOLEAN,\n        batchSize = 20000 :: INTEGER,\n        bulkImport = false :: BOOLEAN,\n        timeoutSeconds = 100 :: INTEGER,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING,\n        sampling = false :: BOOLEAN,\n        samplingConfig :: MAP\n}\n",
+    "description":"{\n        stream = false :: BOOLEAN,\n        writeNodeProperties = true :: BOOLEAN,\n        writeRelationshipProperties = writeNodeProperties :: BOOLEAN,\n        jsonFormat = 'JSON_LINES' :: STRING,\n        compression = 'None' :: STRING,\n        charset = 'UTF_8' :: STRING\n}\n",
     "isDeprecated" : false,
     "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"

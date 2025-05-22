@@ -321,7 +321,7 @@ public class ExportJsonS3Test extends S3BaseTest {
 
     @Test
     public void testExportAllWithWriteNodePropertiesJson() {
-        String filename = "with_node_properties.json";
+        String filename = "query_withNodeProps_withRelProps.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
 
@@ -340,7 +340,7 @@ public class ExportJsonS3Test extends S3BaseTest {
 
     @Test
     public void testExportAllWithDefaultWriteNodePropertiesJson() {
-        String filename = "with_node_properties.json";
+        String filename = "query_withNodeProps_withRelProps.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
 
@@ -355,7 +355,7 @@ public class ExportJsonS3Test extends S3BaseTest {
 
     @Test
     public void testExportAllWithoutWriteNodePropertiesJson() {
-        String filename = "without_node_properties.json";
+        String filename = "query_withoutNodeProps_withoutRelProps.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
 
