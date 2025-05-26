@@ -5,6 +5,7 @@ def allowList = [
                 [name: 'The BSD License', url: 'http://www.opensource.org/licenses/bsd-license.php'],
                 [name: 'BSD 2-Clause License'],
                 [name: 'BSD 2-Clause license', url: 'http://opensource.org/licenses/BSD-2-Clause'],
+                [name: 'The BSD 2-Clause License', url: 'http://www.opensource.org/licenses/bsd-license.php'],
                 [name: 'BSD', url: 'http://www.jcraft.com/jzlib/LICENSE.txt'],
                 [name: 'Revised BSD', url: 'http://www.jcraft.com/jsch/LICENSE.txt'],
                 [name: 'The BSD 2-Clause License', url: 'http://www.opensource.org/licenses/bsd-license.php'],

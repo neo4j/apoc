@@ -80,13 +80,11 @@ public class ExportJson {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
-                            timeoutSeconds = 100 :: INTEGER,
+                            writeNodeProperties = true :: BOOLEAN,
+                            writeRelationshipProperties = writeNodeProperties :: BOOLEAN,
+                            jsonFormat = 'JSON_LINES' :: STRING,
                             compression = 'None' :: STRING,
-                            charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            charset = 'UTF_8' :: STRING
                     }
                     """)
                     Map<String, Object> config) {
@@ -110,13 +108,11 @@ public class ExportJson {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
-                            timeoutSeconds = 100 :: INTEGER,
+                            writeNodeProperties = true :: BOOLEAN,
+                            writeRelationshipProperties = writeNodeProperties :: BOOLEAN,
+                            jsonFormat = 'JSON_LINES' :: STRING,
                             compression = 'None' :: STRING,
-                            charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            charset = 'UTF_8' :: STRING
                     }
                     """)
                     Map<String, Object> config) {
@@ -142,13 +138,11 @@ public class ExportJson {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
-                            timeoutSeconds = 100 :: INTEGER,
+                            writeNodeProperties = true :: BOOLEAN,
+                            writeRelationshipProperties = writeNodeProperties :: BOOLEAN,
+                            jsonFormat = 'JSON_LINES' :: STRING,
                             compression = 'None' :: STRING,
-                            charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            charset = 'UTF_8' :: STRING
                     }
                     """)
                     Map<String, Object> config) {
@@ -173,13 +167,11 @@ public class ExportJson {
                                     """
                     {
                             stream = false :: BOOLEAN,
-                            batchSize = 20000 :: INTEGER,
-                            bulkImport = false :: BOOLEAN,
-                            timeoutSeconds = 100 :: INTEGER,
+                            writeNodeProperties = true :: BOOLEAN,
+                            writeRelationshipProperties = writeNodeProperties :: BOOLEAN,
+                            jsonFormat = 'JSON_LINES' :: STRING,
                             compression = 'None' :: STRING,
-                            charset = 'UTF_8' :: STRING,
-                            sampling = false :: BOOLEAN,
-                            samplingConfig :: MAP
+                            charset = 'UTF_8' :: STRING
                     }
                     """)
                     Map<String, Object> config) {
