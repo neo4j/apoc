@@ -1133,8 +1133,32 @@ public class Util {
         double y;
         Double z = null;
 
-        final CoordinateReferenceSystem crs =
-                CoordinateReferenceSystem.byName((String) getOrDefault(pointMap, defaultPointMap, "crs"));
+        String givenCRS = (String) getOrDefault(pointMap, defaultPointMap, "crs");
+        if (givenCRS == null) {
+            if (pointMap.containsKey("latitude") && pointMap.containsKey("longitude")) {
+                // WGS-84-3D is assumed; docs say height or x is allowed
+                if (pointMap.containsKey("height") || pointMap.containsKey("x")) {
+                    givenCRS = CoordinateReferenceSystem.WGS_84_3D.getName();
+                } else {
+                    givenCRS = CoordinateReferenceSystem.WGS_84.getName();
+                }
+            }
+
+            if (pointMap.containsKey("x") && pointMap.containsKey("y")) {
+                if (pointMap.containsKey("z")) {
+                    givenCRS = CoordinateReferenceSystem.CARTESIAN_3D.getName();
+                } else {
+                    givenCRS = CoordinateReferenceSystem.CARTESIAN.getName();
+                }
+            }
+        }
+
+        if (givenCRS == null) {
+            // This means the user gave no CRS, and we were unable to infer it which means it is an invalid point
+            throw new RuntimeException("Cannot convert the map with keys: " + pointMap.keySet() + " to a POINT value.");
+        }
+
+        final CoordinateReferenceSystem crs = CoordinateReferenceSystem.byName(givenCRS);
 
         // It does not depend on the prefix of crs, I could also pass a point({x: 56.7, y: 12.78, crs: 'wgs-84'})
         final boolean isLatitudePresent = pointMap.containsKey("latitude")

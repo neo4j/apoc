@@ -1,0 +1,4 @@
+{"id": 0,"type": "node","properties": {"orderID": 1, "coordinates": {"latitude": 38.8232,"longitude": -122.7955,"height": 3}},"labels": ["Earthquake"]}
+{"id": 1,"type": "node","properties": {"orderID": 2, "coordinates": {"latitude": 38.8232,"longitude": -122.7955}},"labels": ["Earthquake"]}
+{"id": 2,"type": "node","properties": {"orderID": 3, "coordinates": {"y": 38.8232,"x": -122.7955}},"labels": ["Earthquake"]}
+{"id": 3,"type": "node","properties": {"orderID": 4, "coordinates": {"y": 38.8232,"x": -122.7955,"z": 3}},"labels": ["Earthquake"]}
