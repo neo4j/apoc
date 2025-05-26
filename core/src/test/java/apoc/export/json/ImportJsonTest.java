@@ -121,6 +121,69 @@ public class ImportJsonTest {
     }
 
     @Test
+    public void testImportOfPointValues() {
+        db.executeTransactionally(
+                "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Earthquake) REQUIRE n.neo4jImportId IS UNIQUE");
+
+        String filename = "importPointValues.json";
+
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.json($file, {nodePropertyMappings: { Earthquake: { coordinates: 'POINT' }}})",
+                map("file", filename),
+                (r) -> {
+                    // then
+                    Assert.assertEquals(filename, r.get("file"));
+                    Assert.assertEquals("file", r.get("source"));
+                    Assert.assertEquals("json", r.get("format"));
+                    Assert.assertEquals(4L, r.get("nodes"));
+                    Assert.assertEquals(0L, r.get("relationships"));
+                    Assert.assertEquals(12L, r.get("properties"));
+                    Assert.assertEquals(4L, r.get("rows"));
+                    Assert.assertEquals(true, r.get("done"));
+                });
+
+        try (Transaction tx = db.beginTx()) {
+            var result = tx.execute("MATCH (n:Earthquake) RETURN n ORDER BY n.orderID")
+                    .<Node>columnAs("n");
+            Node node = result.next();
+            assertEquals(
+                    Values.pointValue(CoordinateReferenceSystem.WGS_84_3D, -122.7955, 38.8232, 3),
+                    node.getProperty("coordinates"));
+            node = result.next();
+            assertEquals(
+                    Values.pointValue(CoordinateReferenceSystem.WGS_84, -122.7955, 38.8232),
+                    node.getProperty("coordinates"));
+            node = result.next();
+            assertEquals(
+                    Values.pointValue(CoordinateReferenceSystem.CARTESIAN, -122.7955, 38.8232),
+                    node.getProperty("coordinates"));
+            node = result.next();
+            assertEquals(
+                    Values.pointValue(CoordinateReferenceSystem.CARTESIAN_3D, -122.7955, 38.8232, 3),
+                    node.getProperty("coordinates"));
+            assertFalse(result.hasNext());
+        }
+    }
+
+    @Test
+    public void testInvalidPointValues() {
+        db.executeTransactionally(
+                "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Earthquake) REQUIRE n.neo4jImportId IS UNIQUE");
+
+        String filename = "invalidPointValues.json";
+        try {
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.import.json($file, {nodePropertyMappings: { Earthquake: { coordinates: 'POINT' }}})",
+                    map("file", filename),
+                    (r) -> fail("Should fail due to invalid POINT value"));
+        } catch (Exception e) {
+            assertRootMessage("Cannot convert the map with keys: [lat, long, height] to a POINT value.", e);
+        }
+    }
+
+    @Test
     public void shouldImportAllJsonWithPropertyMappings() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS UNIQUE");
         // given
