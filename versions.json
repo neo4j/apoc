@@ -72,17 +72,35 @@
         }
     },
     {
+        "neo4j": "5.26.7",
+        "neo4jVersion": "5.26.7",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
+        "config": {
+            "+:dbms.security.procedures.unrestricted": [
+                "apoc.*"
+            ]
+        }
+    },
+    {
         "neo4j": "5.26.6",
         "neo4jVersion": "5.26.6",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
@@ -92,15 +110,15 @@
     {
         "neo4j": "5.26.5",
         "neo4jVersion": "5.26.5",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
@@ -110,15 +128,15 @@
     {
         "neo4j": "5.26.4",
         "neo4jVersion": "5.26.4",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
@@ -128,15 +146,15 @@
     {
         "neo4j": "5.26.3",
         "neo4jVersion": "5.26.3",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
@@ -146,15 +164,15 @@
     {
         "neo4j": "5.26.2",
         "neo4jVersion": "5.26.2",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
@@ -164,15 +182,15 @@
     {
         "neo4j": "5.26.1",
         "neo4jVersion": "5.26.1",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
@@ -182,15 +200,15 @@
     {
         "neo4j": "5.26.0",
         "neo4jVersion": "5.26.0",
-        "apoc": "5.26.6",
-        "version": "5.26.6",
-        "url": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.6",
-        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.6/apoc-5.26.6-core.jar",
-        "sha1": "23c4c6addcee9069d7b6dc299d70e06fd372f9d9",
-        "sha256": "8eb85d34b53c7adbbc213b4f3174f9b032bd00ce59e00e9b3228ec4415bb67df",
-        "md5": "d0c481b2497c4a67e54ba43cb969df94",
+        "apoc": "5.26.7",
+        "version": "5.26.7",
+        "url": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/5.26.7",
+        "jar": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/5.26.7/apoc-5.26.7-core.jar",
+        "sha1": "631ee316339822511843dfa4f8cd7700467bce69",
+        "sha256": "dea69e3fbb16b9ffc6e9da6251bcb978b719942e1c53aaaf429b1ee1bf01962b",
+        "md5": "cb5f1aa58db341a93781893c3277b68d",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
