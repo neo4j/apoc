@@ -486,36 +486,6 @@
   } ]
 }, {
   "isDeprecated" : false,
-  "signature" : "apoc.case(conditionals :: LIST<ANY>, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.case",
-  "description" : "For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The result returned from the evaluated Cypher query.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : null,
-  "argumentDescription" : [ {
-    "name" : "conditionals",
-    "description" : "A list of conditionals, where each conditional is a pair: the first element is a predicate, and the second is a Cypher query to be executed based on that predicate.",
-    "isDeprecated" : false,
-    "type" : "LIST<ANY>"
-  }, {
-    "name" : "elseQuery",
-    "description" : "A Cypher query to evaluate if all conditionals evaluate to false.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=, type=STRING}",
-    "type" : "STRING"
-  }, {
-    "name" : "params",
-    "description" : "A map of parameters to be used in the executed Cypher query.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : false,
   "signature" : "apoc.coll.elements(coll :: LIST<ANY>, limit = -1 :: INTEGER, offset = 0 :: INTEGER) :: (_1 :: ANY, _2 :: ANY, _3 :: ANY, _4 :: ANY, _5 :: ANY, _6 :: ANY, _7 :: ANY, _8 :: ANY, _9 :: ANY, _10 :: ANY, _1s :: STRING, _2s :: STRING, _3s :: STRING, _4s :: STRING, _5s :: STRING, _6s :: STRING, _7s :: STRING, _8s :: STRING, _9s :: STRING, _10s :: STRING, _1i :: INTEGER, _2i :: INTEGER, _3i :: INTEGER, _4i :: INTEGER, _5i :: INTEGER, _6i :: INTEGER, _7i :: INTEGER, _8i :: INTEGER, _9i :: INTEGER, _10i :: INTEGER, _1f :: FLOAT, _2f :: FLOAT, _3f :: FLOAT, _4f :: FLOAT, _5f :: FLOAT, _6f :: FLOAT, _7f :: FLOAT, _8f :: FLOAT, _9f :: FLOAT, _10f :: FLOAT, _1b :: BOOLEAN, _2b :: BOOLEAN, _3b :: BOOLEAN, _4b :: BOOLEAN, _5b :: BOOLEAN, _6b :: BOOLEAN, _7b :: BOOLEAN, _8b :: BOOLEAN, _9b :: BOOLEAN, _10b :: BOOLEAN, _1l :: LIST<ANY>, _2l :: LIST<ANY>, _3l :: LIST<ANY>, _4l :: LIST<ANY>, _5l :: LIST<ANY>, _6l :: LIST<ANY>, _7l :: LIST<ANY>, _8l :: LIST<ANY>, _9l :: LIST<ANY>, _10l :: LIST<ANY>, _1m :: MAP, _2m :: MAP, _3m :: MAP, _4m :: MAP, _5m :: MAP, _6m :: MAP, _7m :: MAP, _8m :: MAP, _9m :: MAP, _10m :: MAP, _1n :: NODE, _2n :: NODE, _3n :: NODE, _4n :: NODE, _5n :: NODE, _6n :: NODE, _7n :: NODE, _8n :: NODE, _9n :: NODE, _10n :: NODE, _1r :: RELATIONSHIP, _2r :: RELATIONSHIP, _3r :: RELATIONSHIP, _4r :: RELATIONSHIP, _5r :: RELATIONSHIP, _6r :: RELATIONSHIP, _7r :: RELATIONSHIP, _8r :: RELATIONSHIP, _9r :: RELATIONSHIP, _10r :: RELATIONSHIP, _1p :: PATH, _2p :: PATH, _3p :: PATH, _4p :: PATH, _5p :: PATH, _6p :: PATH, _7p :: PATH, _8p :: PATH, _9p :: PATH, _10p :: PATH, elements :: INTEGER)",
   "name" : "apoc.coll.elements",
   "description" : "Deconstructs a `LIST<ANY>` into identifiers indicating their specific type.",
@@ -1791,70 +1761,6 @@
     "name" : "params",
     "description" : "The parameters for the given Cypher statement.",
     "isDeprecated" : false,
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : false,
-  "signature" : "apoc.do.case(conditionals :: LIST<ANY>, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.do.case",
-  "description" : "For each pair of conditional queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true.\nIf none of the conditionals are true, the `ELSE` query will run instead.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The result returned from the evaluated Cypher query.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : null,
-  "argumentDescription" : [ {
-    "name" : "conditionals",
-    "description" : "A list of conditionals, where each conditional is a pair: the first element is a predicate, and the second is a Cypher query to be executed based on that predicate.",
-    "isDeprecated" : false,
-    "type" : "LIST<ANY>"
-  }, {
-    "name" : "elseQuery",
-    "description" : "A Cypher query to evaluate if all conditionals evaluate to false.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=, type=STRING}",
-    "type" : "STRING"
-  }, {
-    "name" : "params",
-    "description" : "A map of parameters to be used in the executed Cypher query.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-}, {
-  "isDeprecated" : false,
-  "signature" : "apoc.do.when(condition :: BOOLEAN, ifQuery :: STRING, elseQuery :: STRING, params = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.do.when",
-  "description" : "Runs the given read/write `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The result returned from the evaluated Cypher query.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : null,
-  "argumentDescription" : [ {
-    "name" : "condition",
-    "description" : "The predicate that determines whether to execute the `ifQuery`.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "ifQuery",
-    "description" : "The Cypher statement to run if the condition is true.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "elseQuery",
-    "description" : "The Cypher statement to run if the condition is false.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
     "type" : "MAP"
   } ]
 }, {
@@ -7721,39 +7627,4 @@
     "isDeprecated" : false,
     "type" : "LIST<ANY>"
   } ]
-}, {
-  "isDeprecated" : false,
-  "signature" : "apoc.when(condition :: BOOLEAN, ifQuery :: STRING, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
-  "name" : "apoc.when",
-  "description" : "This procedure will run the read-only `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.",
-  "returnDescription" : [ {
-    "name" : "value",
-    "description" : "The result returned from the evaluated Cypher query.",
-    "isDeprecated" : false,
-    "type" : "MAP"
-  } ],
-  "deprecatedBy" : null,
-  "argumentDescription" : [ {
-    "name" : "condition",
-    "description" : "The predicate deciding if to run the `ifQuery`or not.",
-    "isDeprecated" : false,
-    "type" : "BOOLEAN"
-  }, {
-    "name" : "ifQuery",
-    "description" : "The Cypher statement to run if the condition is true.",
-    "isDeprecated" : false,
-    "type" : "STRING"
-  }, {
-    "name" : "elseQuery",
-    "description" : "The Cypher statement to run if the condition is false.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value=, type=STRING}",
-    "type" : "STRING"
-  }, {
-    "name" : "params",
-    "description" : "The parameters for the given Cypher statement.",
-    "isDeprecated" : false,
-    "default" : "DefaultParameterValue{value={}, type=MAP}",
-    "type" : "MAP"
-  } ]
-} ]
+}]

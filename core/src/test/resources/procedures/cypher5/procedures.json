@@ -1,5 +1,42 @@
 [
   {
+    "isDeprecated": false,
+    "signature": "apoc.case(conditionals :: LIST<ANY>, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.case",
+    "description": "For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The result returned from the evaluated Cypher query.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "conditionals",
+        "description": "A list of conditionals, where each conditional is a pair: the first element is a predicate, and the second is a Cypher query to be executed based on that predicate.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "elseQuery",
+        "description": "A Cypher query to evaluate if all conditionals evaluate to false.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "params",
+        "description": "A map of parameters to be used in the executed Cypher query.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
     "isDeprecated": true,
     "signature": "apoc.convert.toTree(paths :: LIST<PATH>, lowerCaseRels = true :: BOOLEAN, config = {} :: MAP) :: (value :: MAP)",
     "name": "apoc.convert.toTree",
@@ -97,6 +134,85 @@
         "description": "The maximum time, in milliseconds, the statement can run for.",
         "isDeprecated": false,
         "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.do.case(conditionals :: LIST<ANY>, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.do.case",
+    "description": "For each pair of conditional queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true.\nIf none of the conditionals are true, the `ELSE` query will run instead.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The result returned from the evaluated Cypher query.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "conditionals",
+        "description": "A list of conditionals, where each conditional is a pair: the first element is a predicate, and the second is a Cypher query to be executed based on that predicate.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "elseQuery",
+        "description": "A Cypher query to evaluate if all conditionals evaluate to false.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "params",
+        "description": "A map of parameters to be used in the executed Cypher query.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.do.when(condition :: BOOLEAN, ifQuery :: STRING, elseQuery :: STRING, params = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.do.when",
+    "description": "Runs the given read/write `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The result returned from the evaluated Cypher query.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "condition",
+        "description": "The predicate that determines whether to execute the `ifQuery`.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "ifQuery",
+        "description": "The Cypher statement to run if the condition is true.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "elseQuery",
+        "description": "The Cypher statement to run if the condition is false.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
       }
     ]
   },
@@ -1175,6 +1291,49 @@
         "isDeprecated": false,
         "default": "DefaultParameterValue{value=false, type=BOOLEAN}",
         "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.when(condition :: BOOLEAN, ifQuery :: STRING, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
+    "name": "apoc.when",
+    "description": "This procedure will run the read-only `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The result returned from the evaluated Cypher query.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "condition",
+        "description": "The predicate deciding if to run the `ifQuery`or not.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "ifQuery",
+        "description": "The Cypher statement to run if the condition is true.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "elseQuery",
+        "description": "The Cypher statement to run if the condition is false.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "params",
+        "description": "The parameters for the given Cypher statement.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
       }
     ]
   }
