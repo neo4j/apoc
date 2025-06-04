@@ -1,5 +1,23 @@
 [
     {
+        "neo4j": "2025.05.0",
+        "neo4jVersion": "2025.05.0",
+        "apoc": "2025.05.0",
+        "version": "2025.05.0",
+        "url": "https://github.com/neo4j/apoc/releases/2025.05.0",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/2025.05.0",
+        "jar": "https://github.com/neo4j/apoc/releases/download/2025.05.0/apoc-2025.05.0-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/2025.05.0/apoc-2025.05.0-core.jar",
+        "sha1": "918d0e6d244c93886e9611b4d0aa2deb86c6a804",
+        "sha256": "dbae4fee5f60002b604c382b7c78375499405b22a3cdb112aae44cfecb1e04a4",
+        "md5": "e191bc086cb291e2ed8a14733acc602e",
+        "config": {
+            "+:dbms.security.procedures.unrestricted": [
+                "apoc.*"
+            ]
+        }
+    },
+    {
         "neo4j": "2025.04.0",
         "neo4jVersion": "2025.04.0",
         "apoc": "2025.04.0",
