@@ -29,6 +29,8 @@ import java.util.stream.Stream;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.UserFunction;
@@ -54,6 +56,18 @@ public class Convert {
     }
 
     @UserFunction("apoc.convert.toList")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Converts the given value into a `LIST<ANY>`.")
+    public List<Object> toListCypher5(
+            @Name(value = "value", description = "The value to convert into a list.") Object list) {
+        return ConvertUtils.convertToList(list);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.convert.toList",
+            deprecatedBy = "Cypher's conversion functions, see the docs for more information.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Converts the given value into a `LIST<ANY>`.")
     public List<Object> toList(@Name(value = "value", description = "The value to convert into a list.") Object list) {
         return ConvertUtils.convertToList(list);

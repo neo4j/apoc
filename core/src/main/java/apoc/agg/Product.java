@@ -18,6 +18,8 @@
  */
 package apoc.agg;
 
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.*;
 
 /**
@@ -26,6 +28,17 @@ import org.neo4j.procedure.*;
  */
 public class Product {
     @UserAggregationFunction("apoc.agg.product")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the product of all non-null `INTEGER` and `FLOAT` values in the collection.")
+    public ProductFunction productCypher5() {
+        return new ProductFunction();
+    }
+
+    @Deprecated
+    @UserAggregationFunction(
+            name = "apoc.agg.product",
+            deprecatedBy = "Cypher's `reduce()`: `RETURN reduce(x = 1, i IN values | x * i)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the product of all non-null `INTEGER` and `FLOAT` values in the collection.")
     public ProductFunction product() {
         return new ProductFunction();
