@@ -457,6 +457,21 @@ public class GraphRefactoring {
      * and deleting the old.
      */
     @Procedure(name = "apoc.refactor.setType", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Changes the type of the given `RELATIONSHIP`.")
+    public Stream<UpdatedRelationshipResult> setTypeCypher5(
+            @Name(value = "rel", description = "The relationship to change the type of.") Relationship rel,
+            @Name(value = "newType", description = "The new type for the relationship.") String newType) {
+        return setType(rel, newType);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.refactor.setType",
+            mode = Mode.WRITE,
+            deprecatedBy =
+                    "Cypher's dynamic types: `CREATE (from)-[newRel:$(newType)]->(to) SET newRel = properties(oldRel) DELETE oldRel`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Changes the type of the given `RELATIONSHIP`.")
     public Stream<UpdatedRelationshipResult> setType(
             @Name(value = "rel", description = "The relationship to change the type of.") Relationship rel,
@@ -652,6 +667,37 @@ public class GraphRefactoring {
      * Create category nodes from unique property values
      */
     @Procedure(name = "apoc.refactor.categorize", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Creates new category `NODE` values from `NODE` values in the graph with the specified `sourceKey` as one of its property keys.\n"
+                    + "The new category `NODE` values are then connected to the original `NODE` values with a `RELATIONSHIP` of the given type.")
+    public void categorizeCypher5(
+            @Name(value = "sourceKey", description = "The property key to add to the on the new node.")
+                    String sourceKey,
+            @Name(value = "type", description = "The relationship type to connect to the new node.")
+                    String relationshipType,
+            @Name(value = "outgoing", description = "Whether the relationship should be outgoing or not.")
+                    Boolean outgoing,
+            @Name(value = "label", description = "The label of the new node.") String label,
+            @Name(
+                            value = "targetKey",
+                            description = "The name by which the source key value will be referenced on the new node.")
+                    String targetKey,
+            @Name(
+                            value = "copiedKeys",
+                            description = "A list of additional property keys to be copied to the new node.")
+                    List<String> copiedKeys,
+            @Name(value = "batchSize", description = "The max size of each batch.") long batchSize)
+            throws ExecutionException {
+        categorize(sourceKey, relationshipType, outgoing, label, targetKey, copiedKeys, batchSize);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.refactor.categorize",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's CALL {} IN TRANSACTIONS and dynamic labels, see the docs for more information.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Creates new category `NODE` values from `NODE` values in the graph with the specified `sourceKey` as one of its property keys.\n"
                     + "The new category `NODE` values are then connected to the original `NODE` values with a `RELATIONSHIP` of the given type.")

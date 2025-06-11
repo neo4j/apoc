@@ -73,6 +73,8 @@ import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -217,6 +219,19 @@ public class Meta {
     }
 
     @UserFunction("apoc.meta.cypher.isType")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns true if the given value matches the given type.")
+    public boolean isTypeCypherCypher5(
+            @Name(value = "value", description = "An object to check the type of.") Object value,
+            @Name(value = "type", description = "The verification type.") String type) {
+        return type.equalsIgnoreCase(typeCypher(value));
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.meta.cypher.isType",
+            deprecatedBy = "Cypher's type predicate expressions: `value IS :: <TYPE>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns true if the given value matches the given type.")
     public boolean isTypeCypher(
             @Name(value = "value", description = "An object to check the type of.") Object value,
@@ -225,6 +240,16 @@ public class Meta {
     }
 
     @UserFunction("apoc.meta.cypher.type")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the type name of the given value.")
+    public String typeCypherCypher5(
+            @Name(value = "value", description = "An object to get the type of.") Object value) {
+        return typeCypher(value);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.meta.cypher.type", deprecatedBy = "Cypher's `valueType()` function.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the type name of the given value.")
     public String typeCypher(@Name(value = "value", description = "An object to get the type of.") Object value) {
         Types type = Types.of(value);

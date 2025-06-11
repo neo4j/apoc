@@ -1,12 +1,543 @@
 [
   {
     "isDeprecated": true,
+    "aggregating": true,
+    "signature": "apoc.agg.graph(path :: ANY) :: MAP",
+    "name": "apoc.agg.graph",
+    "description": "Returns all distinct `NODE` and `RELATIONSHIP` values collected into a `MAP` with the keys `nodes` and `relationships`.",
+    "returnDescription": "MAP",
+    "deprecatedBy": "Cypher's `COLLECT {}` expression.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "path",
+        "description": "A path to return nodes and relationships from.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": true,
+    "signature": "apoc.agg.product(value :: INTEGER | FLOAT) :: INTEGER | FLOAT",
+    "name": "apoc.agg.product",
+    "description": "Returns the product of all non-null `INTEGER` and `FLOAT` values in the collection.",
+    "returnDescription": "INTEGER | FLOAT",
+    "deprecatedBy": "Cypher's `reduce()`: `RETURN reduce(x = 1, i IN values | x * i)`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "A value to be multiplied in the aggregate.",
+        "isDeprecated": false,
+        "type": "INTEGER | FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
     "aggregating": false,
-    "signature": "apoc.math.coth(value :: FLOAT) :: FLOAT",
-    "name": "apoc.math.coth",
-    "description": "Returns the hyperbolic cotangent.",
+    "signature": "apoc.coll.contains(coll :: LIST<ANY>, value :: ANY) :: BOOLEAN",
+    "name": "apoc.coll.contains",
+    "description": "Returns whether or not the given value exists in the given collection.",
+    "returnDescription": "BOOLEAN",
+    "deprecatedBy": "Cypher's `IN`: `value IN coll`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to search for the given value.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "value",
+        "description": "The value in the list to check for the existence of.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.containsAll(coll1 :: LIST<ANY>, coll2 :: LIST<ANY>) :: BOOLEAN",
+    "name": "apoc.coll.containsAll",
+    "description": "Returns whether or not all of the given values exist in the given collection.",
+    "returnDescription": "BOOLEAN",
+    "deprecatedBy": "Cypher's `all()`: `all(x IN coll2 WHERE x IN coll1)`",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll1",
+        "description": "The list to search for the given values in.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "coll2",
+        "description": "The list of values in the given list to check for the existence of.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.fill(item :: STRING, count :: INTEGER) :: LIST<ANY>",
+    "name": "apoc.coll.fill",
+    "description": "Returns a `LIST<ANY>` with the given count of items.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's list comprehension: `RETURN [i IN range(1, count) | item]`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "item",
+        "description": "The item to be present in the returned list.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "count",
+        "description": "The number of times the given item should appear in the returned list.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.max(values :: LIST<ANY>) :: ANY",
+    "name": "apoc.coll.max",
+    "description": "Returns the maximum of all values in the given `LIST<ANY>`.",
+    "returnDescription": "ANY",
+    "deprecatedBy": "Cypher's `max()` function: `UNWIND values AS value RETURN max(value)`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "values",
+        "description": "The list to find the maximum in.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.min(values :: LIST<ANY>) :: ANY",
+    "name": "apoc.coll.min",
+    "description": "Returns the minimum of all values in the given `LIST<ANY>`.",
+    "returnDescription": "ANY",
+    "deprecatedBy": "Cypher's `min()` function: `UNWIND values AS value RETURN min(value)`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "values",
+        "description": "The list to find the minimum in.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.occurrences(coll :: LIST<ANY>, item :: ANY) :: INTEGER",
+    "name": "apoc.coll.occurrences",
+    "description": "Returns the count of the given item in the collection.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's reduce() and `CASE` expression: `RETURN reduce(count = 0, x IN coll | count + CASE WHEN x = item THEN 1 ELSE 0 END)`",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to collect the count of the given value from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "item",
+        "description": "The value to count in the given list.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.pairWithOffset(coll :: LIST<ANY>, offset :: INTEGER) :: LIST<ANY>",
+    "name": "apoc.coll.pairWithOffset",
+    "description": "Returns a `LIST<ANY>` of pairs defined by the offset.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cyphers list comprehension: `RETURN [i IN range(0, size(list) - 1) | [list[i], list[i + offset]]] AS value`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to create pairs from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "offset",
+        "description": "The offset to make each pair with from the given list.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.pairs(list :: LIST<ANY>) :: LIST<ANY>",
+    "name": "apoc.coll.pairs",
+    "description": "Returns a `LIST<ANY>` of adjacent elements in the `LIST<ANY>` ([1,2],[2,3],[3,null]).",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's list comprehension: `RETURN [i IN range(0, size(list) - 1) | [list[i], list[i + 1]]]`",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "list",
+        "description": "The list to create pairs from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.pairsMin(list :: LIST<ANY>) :: LIST<ANY>",
+    "name": "apoc.coll.pairsMin",
+    "description": "Returns `LIST<ANY>` values of adjacent elements in the `LIST<ANY>` ([1,2],[2,3]), skipping the final element.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's list comprehension: `RETURN [i IN range(0, size(list) - 2) | [list[i], list[i + 1]]]`",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "list",
+        "description": "The list to create pairs from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.partition(coll :: LIST<ANY>, batchSize :: INTEGER) :: LIST<ANY>",
+    "name": "apoc.coll.partition",
+    "description": "Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\nThe final `LIST<ANY>` may be smaller than the given batch size.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's list comprehension: `RETURN [i IN range(0, size(list), offset) | list[i..i + offset]] AS value`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to partition into smaller sublists.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "batchSize",
+        "description": "The max size of each partitioned sublist.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.randomItem(coll :: LIST<ANY>) :: ANY",
+    "name": "apoc.coll.randomItem",
+    "description": "Returns a random item from the `LIST<ANY>`, or null on `LIST<NOTHING>` or `LIST<NULL>`.",
+    "returnDescription": "ANY",
+    "deprecatedBy": "Cypher's `rand()` function: `RETURN list[toInteger(rand() * size(list))]`",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to return a random item from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.sortNodes(coll :: LIST<NODE>, prop :: STRING) :: LIST<ANY>",
+    "name": "apoc.coll.sortNodes",
+    "description": "Sorts the given `LIST<NODE>` by the property of the nodes into descending order.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's COLLECT {} and ORDER BY: `RETURN COLLECT { MATCH (n) RETURN n ORDER BY n.prop DESC }`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list of nodes to be sorted.",
+        "isDeprecated": false,
+        "type": "LIST<NODE>"
+      },
+      {
+        "name": "prop",
+        "description": "The property key on the node to be used to sort the list by.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.stdev(list :: LIST<INTEGER | FLOAT>, isBiasCorrected = true :: BOOLEAN) :: INTEGER | FLOAT",
+    "name": "apoc.coll.stdev",
+    "description": "Returns sample or population standard deviation with `isBiasCorrected` true or false respectively.",
+    "returnDescription": "INTEGER | FLOAT",
+    "deprecatedBy": "Cypher's `stDev()` and `stDevP()` functions.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "list",
+        "description": "A list to collect the standard deviation from.",
+        "isDeprecated": false,
+        "type": "LIST<INTEGER | FLOAT>"
+      },
+      {
+        "name": "isBiasCorrected",
+        "description": "Will perform a sample standard deviation if `isBiasCorrected`, otherwise a population standard deviation is performed.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=true, type=BOOLEAN}",
+        "type": "BOOLEAN"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.sum(coll :: LIST<INTEGER | FLOAT>) :: FLOAT",
+    "name": "apoc.coll.sum",
+    "description": "Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.",
     "returnDescription": "FLOAT",
-    "deprecatedBy": "coth()",
+    "deprecatedBy": "Cypher's `reduce()` function: `RETURN reduce(sum = 0.0, x IN list | sum + x)`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list of numbers to create a sum from.",
+        "isDeprecated": false,
+        "type": "LIST<INTEGER | FLOAT>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.sumLongs(coll :: LIST<INTEGER | FLOAT>) :: INTEGER",
+    "name": "apoc.coll.sumLongs",
+    "description": "Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `reduce()` function: `RETURN reduce(sum = 0.0, x IN toIntegerList(list) | sum + x)`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list of numbers to create a sum from after each is cast to a java Long value.",
+        "isDeprecated": false,
+        "type": "LIST<INTEGER | FLOAT>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.unionAll(list1 :: LIST<ANY>, list2 :: LIST<ANY>) :: LIST<ANY>",
+    "name": "apoc.coll.unionAll",
+    "description": "Returns the full union of the two given `LIST<ANY>` values (duplicates included).",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's list concatenation: `list1 + list2`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "list1",
+        "description": "The list of values to compare against `list2` and form a union from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "list2",
+        "description": "The list of values to compare against `list1` and form a union from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.coll.zip(list1 :: LIST<ANY>, list2 :: LIST<ANY>) :: LIST<ANY>",
+    "name": "apoc.coll.zip",
+    "description": "Returns the two given `LIST<ANY>` values zipped together as a `LIST<LIST<ANY>>`.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's `UNWIND` and `range()` function; `UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]]`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "list1",
+        "description": "The list to zip together with `list2`.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "list2",
+        "description": "The list to zip together with `list1`.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.convert.toList(value :: ANY) :: LIST<ANY>",
+    "name": "apoc.convert.toList",
+    "description": "Converts the given value into a `LIST<ANY>`.",
+    "returnDescription": "LIST<ANY>",
+    "deprecatedBy": "Cypher's conversion functions, see the docs for more information.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "The value to convert into a list.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.date.currentTimestamp() :: INTEGER",
+    "name": "apoc.date.currentTimestamp",
+    "description": "Returns the current Unix epoch timestamp in milliseconds.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `datetime.realtime().epochMillis`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": []
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.date.field(time :: INTEGER, unit = d :: STRING, timezone = UTC :: STRING) :: INTEGER",
+    "name": "apoc.date.field",
+    "description": "Returns the value of one field from the given date time.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `instance.field` component access.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "time",
+        "description": "The timestamp in ms since epoch to return a field from.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "unit",
+        "description": "The unit of the field to return the value of.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=d, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "timezone",
+        "description": "The timezone the given timestamp is in.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=UTC, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.date.fromISO8601(time :: STRING) :: INTEGER",
+    "name": "apoc.date.fromISO8601",
+    "description": "Converts the given date `STRING` (ISO8601) to an `INTEGER` representing the time value in milliseconds.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `datetime()`",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "time",
+        "description": "The datetime to convert to ms.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.date.toISO8601(time :: INTEGER, unit = ms :: STRING) :: STRING",
+    "name": "apoc.date.toISO8601",
+    "description": "Returns a `STRING` representation of a specified time value in the ISO8601 format.",
+    "returnDescription": "STRING",
+    "deprecatedBy": "Cypher's `toString()`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "time",
+        "description": "The timestamp since epoch to format.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "unit",
+        "description": "The unit of the given timestamp.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=ms, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.math.cosh(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.cosh",
+    "description": "Returns the hyperbolic cosine.",
+    "returnDescription": "FLOAT",
+    "deprecatedBy": "cosh()",
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [
@@ -21,11 +552,11 @@
   {
     "isDeprecated": true,
     "aggregating": false,
-    "signature": "apoc.math.cosh(value :: FLOAT) :: FLOAT",
-    "name": "apoc.math.cosh",
-    "description": "Returns the hyperbolic cosine.",
+    "signature": "apoc.math.coth(value :: FLOAT) :: FLOAT",
+    "name": "apoc.math.coth",
+    "description": "Returns the hyperbolic cotangent.",
     "returnDescription": "FLOAT",
-    "deprecatedBy": "cosh()",
+    "deprecatedBy": "coth()",
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [
@@ -72,6 +603,154 @@
         "description": "An angle in radians.",
         "isDeprecated": false,
         "type": "FLOAT"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.meta.cypher.isType(value :: ANY, type :: STRING) :: BOOLEAN",
+    "name": "apoc.meta.cypher.isType",
+    "description": "Returns true if the given value matches the given type.",
+    "returnDescription": "BOOLEAN",
+    "deprecatedBy": "Cypher's type predicate expressions: `value IS :: <TYPE>`.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An object to check the type of.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "type",
+        "description": "The verification type.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.meta.cypher.type(value :: ANY) :: STRING",
+    "name": "apoc.meta.cypher.type",
+    "description": "Returns the type name of the given value.",
+    "returnDescription": "STRING",
+    "deprecatedBy": "Cypher's `valueType()` function.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "value",
+        "description": "An object to get the type of.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.node.degree(node :: NODE, relTypes =  :: STRING) :: INTEGER",
+    "name": "apoc.node.degree",
+    "description": "Returns the total degrees of the given `NODE`.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `COUNT {}` expression.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node to count the total number of relationships on.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "relTypes",
+        "description": "The relationship types to restrict the count to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.node.degree.in(node :: NODE, relTypes =  :: STRING) :: INTEGER",
+    "name": "apoc.node.degree.in",
+    "description": "Returns the total number of incoming `RELATIONSHIP` values connected to the given `NODE`.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `COUNT {}` expression.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node for which to count the total number of incoming relationships.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "relTypes",
+        "description": "The relationship type to restrict the count to.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.node.degree.out(node :: NODE, relTypes =  :: STRING) :: INTEGER",
+    "name": "apoc.node.degree.out",
+    "description": "Returns the total number of outgoing `RELATIONSHIP` values from the given `NODE`.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's `COUNT {}` expression.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node for which to count the total number of outgoing relationships.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "relTypes",
+        "description": "The relationship type to restrict the count to.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.node.relationship.exists(node :: NODE, relTypes =  :: STRING) :: BOOLEAN",
+    "name": "apoc.node.relationship.exists",
+    "description": "Returns a `BOOLEAN` based on whether the given `NODE` has a connecting `RELATIONSHIP` (or whether the given `NODE` has a connecting `RELATIONSHIP` of the given type and direction).",
+    "returnDescription": "BOOLEAN",
+    "deprecatedBy": "Cypher's `EXISTS {}` expression.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node to check for the specified relationship types.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "relTypes",
+        "description": "The relationship types to check for on the given node. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
       }
     ]
   }
