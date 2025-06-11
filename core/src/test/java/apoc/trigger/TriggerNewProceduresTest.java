@@ -47,7 +47,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.ProvideSystemProperty;
 import org.junit.rules.TemporaryFolder;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -86,7 +85,6 @@ public class TriggerNewProceduresTest {
         databaseManagementService = new TestDatabaseManagementServiceBuilder(
                         storeDir.getRoot().toPath())
                 .setConfig(procedure_unrestricted, List.of("apoc*"))
-                .setConfig(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
                 .build();
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
