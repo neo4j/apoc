@@ -69,6 +69,8 @@ import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.internal.kernel.api.TokenRead;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -208,16 +210,31 @@ public class Nodes {
     public record DeletionLongResult(@Description("The number of deleted nodes.") Long value) {}
 
     @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Deletes all `NODE` values with the given ids.")
+    public Stream<DeletionLongResult> deleteCypher5(
+            @Name(
+                            value = "nodes",
+                            description =
+                                    "The nodes to be deleted. Nodes can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
+                    Object nodes,
+            @Name(value = "batchSize", description = "The number of node values to delete in a single batch.")
+                    long batchSize) {
+        return delete(nodes, batchSize);
+    }
+
+    @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE, deprecatedBy = "Cypher's `CALL {...} IN TRANSACTIONS`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Deletes all `NODE` values with the given ids.")
     public Stream<DeletionLongResult> delete(
             @Name(
                             value = "nodes",
                             description =
                                     "The nodes to be deleted. Nodes can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
-                    Object ids,
+                    Object nodes,
             @Name(value = "batchSize", description = "The number of node values to delete in a single batch.")
                     long batchSize) {
-        Iterator<Node> it = Util.nodeStream((InternalTransaction) tx, ids).iterator();
+        Iterator<Node> it = Util.nodeStream((InternalTransaction) tx, nodes).iterator();
         long count = 0;
         while (it.hasNext()) {
             final List<Node> batch = Util.take(it, (int) batchSize);
@@ -245,6 +262,23 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.relationship.exists")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Returns a `BOOLEAN` based on whether the given `NODE` has a connecting `RELATIONSHIP` (or whether the given `NODE` has a connecting `RELATIONSHIP` of the given type and direction).")
+    public boolean hasRelationshipCypher5(
+            @Name(value = "node", description = "The node to check for the specified relationship types.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to check for on the given node. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
+        return hasRelationship(node, types);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.node.relationship.exists", deprecatedBy = "Cypher's `EXISTS {}` expression.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Returns a `BOOLEAN` based on whether the given `NODE` has a connecting `RELATIONSHIP` (or whether the given `NODE` has a connecting `RELATIONSHIP` of the given type and direction).")
     public boolean hasRelationship(
@@ -592,6 +626,22 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the total degrees of the given `NODE`.")
+    public long degreeCypher5(
+            @Name(value = "node", description = "The node to count the total number of relationships on.") Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description =
+                                    "The relationship types to restrict the count to. Relationship types are represented using APOC's rel-direction-pattern syntax; `[<]RELATIONSHIP_TYPE1[>]|[<]RELATIONSHIP_TYPE2[>]|...`.")
+                    String types) {
+        return degree(node, types);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.node.degree", deprecatedBy = "Cypher's `COUNT {}` expression.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the total degrees of the given `NODE`.")
     public long degree(
             @Name(value = "node", description = "The node to count the total number of relationships on.") Node node,
@@ -610,6 +660,25 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree.in")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the total number of incoming `RELATIONSHIP` values connected to the given `NODE`.")
+    public long degreeInCypher5(
+            @Name(
+                            value = "node",
+                            description = "The node for which to count the total number of incoming relationships.")
+                    Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description = "The relationship type to restrict the count to.")
+                    String type) {
+
+        return degreeIn(node, type);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.node.degree.in", deprecatedBy = "Cypher's `COUNT {}` expression.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the total number of incoming `RELATIONSHIP` values connected to the given `NODE`.")
     public long degreeIn(
             @Name(
@@ -630,6 +699,24 @@ public class Nodes {
     }
 
     @UserFunction("apoc.node.degree.out")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the total number of outgoing `RELATIONSHIP` values from the given `NODE`.")
+    public long degreeOutCypher5(
+            @Name(
+                            value = "node",
+                            description = "The node for which to count the total number of outgoing relationships.")
+                    Node node,
+            @Name(
+                            value = "relTypes",
+                            defaultValue = "",
+                            description = "The relationship type to restrict the count to.")
+                    String type) {
+        return degreeOut(node, type);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.node.degree.out", deprecatedBy = "Cypher's `COUNT {}` expression.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the total number of outgoing `RELATIONSHIP` values from the given `NODE`.")
     public long degreeOut(
             @Name(

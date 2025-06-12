@@ -29,6 +29,8 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -44,6 +46,17 @@ public class Cover {
             @Description("The relationships connected to the given nodes.") Relationship rel) {}
 
     @Procedure("apoc.algo.cover")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")
+    public Stream<AlgoCoverRelationshipResult> coverCypher5(
+            @Name(value = "nodes", description = "The nodes to look for connected relationships on.") Object nodes) {
+        Set<Node> nodeSet = Util.nodeStream((InternalTransaction) tx, nodes).collect(Collectors.toSet());
+        return coverNodes(nodeSet).map(AlgoCoverRelationshipResult::new);
+    }
+
+    @Deprecated
+    @Procedure(name = "apoc.algo.cover", deprecatedBy = "Cypher's `MATCH` and `IN` clauses.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")
     public Stream<AlgoCoverRelationshipResult> cover(
             @Name(value = "nodes", description = "The nodes to look for connected relationships on.") Object nodes) {

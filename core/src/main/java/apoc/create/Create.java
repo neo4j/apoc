@@ -45,6 +45,21 @@ public class Create {
     public Transaction tx;
 
     @Procedure(name = "apoc.create.node", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates a `NODE` with the given dynamic labels.")
+    public Stream<CreatedNodeResult> nodeCypher5(
+            @Name(value = "labels", description = "The labels to assign to the new node.") List<String> labelNames,
+            @Name(value = "props", description = "The properties to assign to the new node.")
+                    Map<String, Object> props) {
+        return node(labelNames, props);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.node",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic labels: `CREATE (n:$(labels)) SET n = props`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates a `NODE` with the given dynamic labels.")
     public Stream<CreatedNodeResult> node(
             @Name(value = "labels", description = "The labels to assign to the new node.") List<String> labelNames,
@@ -54,6 +69,20 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.addLabels", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Adds the given labels to the given `NODE` values.")
+    public Stream<UpdatedNodeResult> addLabelsCypher5(
+            @Name(value = "nodes", description = "The nodes to add labels to.") Object nodes,
+            @Name(value = "labels", description = "The labels to add to the nodes.") List<String> labelNames) {
+        return addLabels(nodes, labelNames);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.addLabels",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic labels; `SET n:$(labels)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Adds the given labels to the given `NODE` values.")
     public Stream<UpdatedNodeResult> addLabels(
             @Name(value = "nodes", description = "The nodes to add labels to.") Object nodes,
@@ -69,6 +98,21 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setProperty", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sets the given property to the given `NODE` values.")
+    public Stream<UpdatedNodeResult> setPropertyCypher5(
+            @Name(value = "nodes", description = "The nodes to set a property on.") Object nodes,
+            @Name(value = "key", description = "The name of the property key to set.") String key,
+            @Name(value = "value", description = "The value of the property to set.") Object value) {
+        return setProperty(nodes, key, value);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.setProperty",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic properties: `SET node[key] = value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sets the given property to the given `NODE` values.")
     public Stream<UpdatedNodeResult> setProperty(
             @Name(value = "nodes", description = "The nodes to set a property on.") Object nodes,
@@ -81,6 +125,21 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setRelProperty", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sets the given property on the `RELATIONSHIP` values.")
+    public Stream<UpdatedRelationshipResult> setRelPropertyCypher5(
+            @Name(value = "rels", description = "The relationships to set a property on.") Object rels,
+            @Name(value = "key", description = "The name of the property key to set.") String key,
+            @Name(value = "value", description = "The value of the property to set.") Object value) {
+        return setRelProperty(rels, key, value);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.setRelProperty",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic properties: `SET rel[key] = value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sets the given property on the `RELATIONSHIP` values.")
     public Stream<UpdatedRelationshipResult> setRelProperty(
             @Name(value = "rels", description = "The relationships to set a property on.") Object rels,
@@ -93,6 +152,22 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setProperties", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sets the given properties to the given `NODE` values.")
+    public Stream<UpdatedNodeResult> setPropertiesCypher5(
+            @Name(value = "nodes", description = "The nodes to set properties on.") Object nodes,
+            @Name(value = "keys", description = "The property keys to set on the given nodes.") List<String> keys,
+            @Name(value = "values", description = "The values to assign to the properties on the given nodes.")
+                    List<Object> values) {
+        return setProperties(nodes, keys, values);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.setProperties",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic properties: `SET node[key] = value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sets the given properties to the given `NODE` values.")
     public Stream<UpdatedNodeResult> setProperties(
             @Name(value = "nodes", description = "The nodes to set properties on.") Object nodes,
@@ -106,6 +181,21 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.removeProperties", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Removes the given properties from the given `NODE` values.")
+    public Stream<UpdatedNodeResult> removePropertiesCypher5(
+            @Name(value = "nodes", description = "The nodes to remove properties from.") Object nodes,
+            @Name(value = "keys", description = "The property keys to remove from the given nodes.")
+                    List<String> keys) {
+        return removeProperties(nodes, keys);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.removeProperties",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic properties: `REMOVE node[key]`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Removes the given properties from the given `NODE` values.")
     public Stream<UpdatedNodeResult> removeProperties(
             @Name(value = "nodes", description = "The nodes to remove properties from.") Object nodes,
@@ -118,6 +208,23 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setRelProperties", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sets the given properties on the `RELATIONSHIP` values.")
+    public Stream<UpdatedRelationshipResult> setRelPropertiesCypher5(
+            @Name(value = "rels", description = "The relationships to set properties on.") Object rels,
+            @Name(value = "keys", description = "The keys of the properties to set on the given relationships.")
+                    List<String> keys,
+            @Name(value = "values", description = "The values of the properties to set on the given relationships.")
+                    List<Object> values) {
+        return setRelProperties(rels, keys, values);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.setRelProperties",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic properties: `SET rel[key] = value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sets the given properties on the `RELATIONSHIP` values.")
     public Stream<UpdatedRelationshipResult> setRelProperties(
             @Name(value = "rels", description = "The relationships to set properties on.") Object rels,
@@ -132,6 +239,21 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.removeRelProperties", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Removes the given properties from the given `RELATIONSHIP` values.")
+    public Stream<UpdatedRelationshipResult> removeRelPropertiesCypher5(
+            @Name(value = "rels", description = "The relationships to remove properties from.") Object rels,
+            @Name(value = "keys", description = "The property keys to remove from the given nodes.")
+                    List<String> keys) {
+        return removeRelProperties(rels, keys);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.removeRelProperties",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic properties: `REMOVE rel[key]`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Removes the given properties from the given `RELATIONSHIP` values.")
     public Stream<UpdatedRelationshipResult> removeRelProperties(
             @Name(value = "rels", description = "The relationships to remove properties from.") Object rels,
@@ -144,6 +266,20 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.setLabels", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sets the given labels to the given `NODE` values. Non-matching labels are removed from the nodes.")
+    public Stream<UpdatedNodeResult> setLabelsCypher5(
+            @Name(value = "nodes", description = "The nodes to set labels on.") Object nodes,
+            @Name(value = "labels", description = "The labels to set on the given nodes.") List<String> labelNames) {
+        return setLabels(nodes, labelNames);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.setLabels",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic labels; `SET n:$(labels)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sets the given labels to the given `NODE` values. Non-matching labels are removed from the nodes.")
     public Stream<UpdatedNodeResult> setLabels(
             @Name(value = "nodes", description = "The nodes to set labels on.") Object nodes,
@@ -164,6 +300,21 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.removeLabels", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Removes the given labels from the given `NODE` values.")
+    public Stream<UpdatedNodeResult> removeLabelsCypher(
+            @Name(value = "nodes", description = "The node to remove labels from.") Object nodes,
+            @Name(value = "labels", description = "The labels to remove from the given node.")
+                    List<String> labelNames) {
+        return removeLabels(nodes, labelNames);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.removeLabels",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic labels: `REMOVE node:$(labels)`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Removes the given labels from the given `NODE` values.")
     public Stream<UpdatedNodeResult> removeLabels(
             @Name(value = "nodes", description = "The node to remove labels from.") Object nodes,
@@ -180,6 +331,21 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.nodes", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates `NODE` values with the given dynamic labels.")
+    public Stream<CreatedNodeResult> nodesCypher5(
+            @Name(value = "labels", description = "The labels to assign to the new nodes.") List<String> labelNames,
+            @Name(value = "props", description = "The properties to assign to the new nodes.")
+                    List<Map<String, Object>> props) {
+        return nodes(labelNames, props);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.nodes",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic labels: `UNWIND props AS p CREATE (n:$(labels)) SET n = p`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates `NODE` values with the given dynamic labels.")
     public Stream<CreatedNodeResult> nodes(
             @Name(value = "labels", description = "The labels to assign to the new nodes.") List<String> labelNames,
@@ -190,6 +356,24 @@ public class Create {
     }
 
     @Procedure(name = "apoc.create.relationship", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates a `RELATIONSHIP` with the given dynamic relationship type.")
+    public Stream<CreatedRelationshipResult> relationshipCypher5(
+            @Name(value = "from", description = "The node from which the outgoing relationship will start.") Node from,
+            @Name(value = "relType", description = "The type to assign to the new relationship.") String relType,
+            @Name(value = "props", description = "The properties to assign to the new relationship.")
+                    Map<String, Object> props,
+            @Name(value = "to", description = "The node to which the incoming relationship will be connected.")
+                    Node to) {
+        return relationship(from, relType, props, to);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.create.relationship",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic types: `CREATE (from)-[n:$(relType)]->(to) SET n = props`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates a `RELATIONSHIP` with the given dynamic relationship type.")
     public Stream<CreatedRelationshipResult> relationship(
             @Name(value = "from", description = "The node from which the outgoing relationship will start.") Node from,

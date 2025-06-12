@@ -54,6 +54,8 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.util.ValueUtils;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -74,6 +76,22 @@ public class Coll {
     public ProcedureCallContext procedureCallContext;
 
     @UserFunction("apoc.coll.stdev")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns sample or population standard deviation with `isBiasCorrected` true or false respectively.")
+    public Number stdevCypher5(
+            @Name(value = "list", description = "A list to collect the standard deviation from.") List<Number> list,
+            @Name(
+                            value = "isBiasCorrected",
+                            defaultValue = "true",
+                            description =
+                                    "Will perform a sample standard deviation if `isBiasCorrected`, otherwise a population standard deviation is performed.")
+                    boolean isBiasCorrected) {
+        return stdev(list, isBiasCorrected);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.stdev", deprecatedBy = "Cypher's `stDev()` and `stDevP()` functions.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns sample or population standard deviation with `isBiasCorrected` true or false respectively.")
     public Number stdev(
             @Name(value = "list", description = "A list to collect the standard deviation from.") List<Number> list,
@@ -108,6 +126,20 @@ public class Coll {
     public record ZipToRowsListResult(@Description("A zipped pair.") List<Object> value) {}
 
     @Procedure("apoc.coll.zipToRows")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the two `LIST<ANY>` values zipped together, with one row per zipped pair.")
+    public Stream<ZipToRowsListResult> zipToRowsCypher5(
+            @Name(value = "list1", description = "The list to zip together with `list2`.") List<Object> list1,
+            @Name(value = "list2", description = "The list to zip together with `list1`.") List<Object> list2) {
+        return zipToRows(list1, list2);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.coll.zipToRows",
+            deprecatedBy =
+                    "Cypher's `UNWIND` and `range()` function; `UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]]`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the two `LIST<ANY>` values zipped together, with one row per zipped pair.")
     public Stream<ZipToRowsListResult> zipToRows(
             @Name(value = "list1", description = "The list to zip together with `list2`.") List<Object> list1,
@@ -118,6 +150,20 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.zip")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the two given `LIST<ANY>` values zipped together as a `LIST<LIST<ANY>>`.")
+    public List<List<Object>> zipCypher5(
+            @Name(value = "list1", description = "The list to zip together with `list2`.") List<Object> list1,
+            @Name(value = "list2", description = "The list to zip together with `list1`.") List<Object> list2) {
+        return zip(list1, list2);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.zip",
+            deprecatedBy =
+                    "Cypher's `UNWIND` and `range()` function; `UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]]`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the two given `LIST<ANY>` values zipped together as a `LIST<LIST<ANY>>`.")
     public List<List<Object>> zip(
             @Name(value = "list1", description = "The list to zip together with `list2`.") List<Object> list1,
@@ -133,6 +179,19 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.pairs")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a `LIST<ANY>` of adjacent elements in the `LIST<ANY>` ([1,2],[2,3],[3,null]).")
+    public List<List<Object>> pairsCypher5(
+            @Name(value = "list", description = "The list to create pairs from.") List<Object> list) {
+        return pairs(list);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.pairs",
+            deprecatedBy =
+                    "Cypher's list comprehension: `RETURN [i IN range(0, size(list) - 1) | [list[i], list[i + 1]]]`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a `LIST<ANY>` of adjacent elements in the `LIST<ANY>` ([1,2],[2,3],[3,null]).")
     public List<List<Object>> pairs(
             @Name(value = "list", description = "The list to create pairs from.") List<Object> list) {
@@ -142,6 +201,20 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.pairsMin")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Returns `LIST<ANY>` values of adjacent elements in the `LIST<ANY>` ([1,2],[2,3]), skipping the final element.")
+    public List<List<Object>> pairsMinCypher5(
+            @Name(value = "list", description = "The list to create pairs from.") List<Object> list) {
+        return pairsMin(list);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.pairsMin",
+            deprecatedBy =
+                    "Cypher's list comprehension: `RETURN [i IN range(0, size(list) - 2) | [list[i], list[i + 1]]]`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Returns `LIST<ANY>` values of adjacent elements in the `LIST<ANY>` ([1,2],[2,3]), skipping the final element.")
     public List<List<Object>> pairsMin(
@@ -152,6 +225,18 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sum")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.")
+    public Double sumCypher5(
+            @Name(value = "coll", description = "The list of numbers to create a sum from.") List<Number> list) {
+        return sum(list);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.sum",
+            deprecatedBy = "Cypher's `reduce()` function: `RETURN reduce(sum = 0.0, x IN list | sum + x)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.")
     public Double sum(
             @Name(value = "coll", description = "The list of numbers to create a sum from.") List<Number> list) {
@@ -176,6 +261,19 @@ public class Coll {
 
     @NotThreadSafe
     @UserFunction("apoc.coll.min")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the minimum of all values in the given `LIST<ANY>`.")
+    public Object minCypher5(
+            @Name(value = "values", description = "The list to find the minimum in.") List<Object> list) {
+        return min(list);
+    }
+
+    @NotThreadSafe
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.min",
+            deprecatedBy = "Cypher's `min()` function: `UNWIND values AS value RETURN min(value)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the minimum of all values in the given `LIST<ANY>`.")
     public Object min(@Name(value = "values", description = "The list to find the minimum in.") List<Object> list) {
         if (list == null || list.isEmpty()) return null;
@@ -192,6 +290,19 @@ public class Coll {
 
     @NotThreadSafe
     @UserFunction("apoc.coll.max")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the maximum of all values in the given `LIST<ANY>`.")
+    public Object maxCypher5(
+            @Name(value = "values", description = "The list to find the maximum in.") List<Object> list) {
+        return max(list);
+    }
+
+    @NotThreadSafe
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.max",
+            deprecatedBy = "Cypher's `max()` function: `UNWIND values AS value RETURN max(value)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the maximum of all values in the given `LIST<ANY>`.")
     public Object max(@Name(value = "values", description = "The list to find the maximum in.") List<Object> list) {
         if (list == null || list.isEmpty()) return null;
@@ -781,6 +892,21 @@ public class Coll {
     public record PartitionListResult(@Description("The partitioned list.") List<Object> value) {}
 
     @Procedure("apoc.coll.partition")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n"
+            + "The final `LIST<ANY>` may be smaller than the given batch size.")
+    public Stream<PartitionListResult> partitionCypher5(
+            @Name(value = "coll", description = "The list to partition into smaller sublists.") List<Object> list,
+            @Name(value = "batchSize", description = "The max size of each partitioned sublist.") long batchSize) {
+        return partition(list, batchSize);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.coll.partition",
+            deprecatedBy =
+                    "Cypher's list comprehension: `RETURN [i IN range(0, size(list), offset) | list[i..i + offset]] AS value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n"
             + "The final `LIST<ANY>` may be smaller than the given batch size.")
     public Stream<PartitionListResult> partition(
@@ -791,6 +917,21 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.partition")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n"
+            + "The final `LIST<ANY>` may be smaller than the given batch size.")
+    public List<Object> partitionFnCypher5(
+            @Name(value = "coll", description = "The list to partition into smaller sublists.") List<Object> list,
+            @Name(value = "batchSize", description = "The max size of each partitioned sublist.") long batchSize) {
+        return partitionFn(list, batchSize);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.partition",
+            deprecatedBy =
+                    "Cypher's list comprehension: `RETURN [i IN range(0, size(list), offset) | list[i..i + offset]] AS value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\n"
             + "The final `LIST<ANY>` may be smaller than the given batch size.")
     public List<Object> partitionFn(
@@ -832,6 +973,17 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.contains")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns whether or not the given value exists in the given collection.")
+    public boolean containsCypher5(
+            @Name(value = "coll", description = "The list to search for the given value.") List<Object> coll,
+            @Name(value = "value", description = "The value in the list to check for the existence of.") Object value) {
+        return contains(coll, value);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.contains", deprecatedBy = "Cypher's `IN`: `value IN coll`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns whether or not the given value exists in the given collection.")
     public boolean contains(
             @Name(value = "coll", description = "The list to search for the given value.") List<Object> coll,
@@ -914,6 +1066,18 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.containsAll")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns whether or not all of the given values exist in the given collection.")
+    public boolean containsAllCypher5(
+            @Name(value = "coll1", description = "The list to search for the given values in.") List<Object> coll,
+            @Name(value = "coll2", description = "The list of values in the given list to check for the existence of.")
+                    List<Object> values) {
+        return containsAll(coll, values);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.containsAll", deprecatedBy = "Cypher's `all()`: `all(x IN coll2 WHERE x IN coll1)`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns whether or not all of the given values exist in the given collection.")
     public boolean containsAll(
             @Name(value = "coll1", description = "The list to search for the given values in.") List<Object> coll,
@@ -980,6 +1144,23 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sumLongs")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.")
+    public Long sumLongsCypher5(
+            @Name(
+                            value = "coll",
+                            description =
+                                    "The list of numbers to create a sum from after each is cast to a java Long value.")
+                    List<Number> list) {
+        return sumLongs(list);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.sumLongs",
+            deprecatedBy =
+                    "Cypher's `reduce()` function: `RETURN reduce(sum = 0.0, x IN toIntegerList(list) | sum + x)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the sum of all the `INTEGER | FLOAT` in the `LIST<INTEGER | FLOAT>`.")
     public Long sumLongs(
             @Name(
@@ -1005,6 +1186,21 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sortNodes")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sorts the given `LIST<NODE>` by the property of the nodes into descending order.")
+    public List<Node> sortNodesCypher5(
+            @Name(value = "coll", description = "The list of nodes to be sorted.") List<Node> coll,
+            @Name(value = "prop", description = "The property key on the node to be used to sort the list by.")
+                    String prop) {
+        return sortNodes(coll, prop);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.sortNodes",
+            deprecatedBy =
+                    "Cypher's COLLECT {} and ORDER BY: `RETURN COLLECT { MATCH (n) RETURN n ORDER BY n.prop DESC }`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sorts the given `LIST<NODE>` by the property of the nodes into descending order.")
     public List<Node> sortNodes(
             @Name(value = "coll", description = "The list of nodes to be sorted.") List<Node> coll,
@@ -1151,6 +1347,19 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.unionAll")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the full union of the two given `LIST<ANY>` values (duplicates included).")
+    public List<Object> unionAllCypher5(
+            @Name(value = "list1", description = "The list of values to compare against `list2` and form a union from.")
+                    List<Object> first,
+            @Name(value = "list2", description = "The list of values to compare against `list1` and form a union from.")
+                    List<Object> second) {
+        return unionAll(first, second);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.unionAll", deprecatedBy = "Cypher's list concatenation: `list1 + list2`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the full union of the two given `LIST<ANY>` values (duplicates included).")
     public List<Object> unionAll(
             @Name(value = "list1", description = "The list of values to compare against `list2` and form a union from.")
@@ -1179,6 +1388,18 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.randomItem")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a random item from the `LIST<ANY>`, or null on `LIST<NOTHING>` or `LIST<NULL>`.")
+    public Object randomItemCypher5(
+            @Name(value = "coll", description = "The list to return a random item from.") List<Object> coll) {
+        return randomItem(coll);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.randomItem",
+            deprecatedBy = "Cypher's `rand()` function: `RETURN list[toInteger(rand() * size(list))]`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a random item from the `LIST<ANY>`, or null on `LIST<NOTHING>` or `LIST<NULL>`.")
     public Object randomItem(
             @Name(value = "coll", description = "The list to return a random item from.") List<Object> coll) {
@@ -1340,6 +1561,21 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.occurrences")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the count of the given item in the collection.")
+    public long occurrencesCypher5(
+            @Name(value = "coll", description = "The list to collect the count of the given value from.")
+                    List<Object> coll,
+            @Name(value = "item", description = "The value to count in the given list.") Object item) {
+        return occurrences(coll, item);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.occurrences",
+            deprecatedBy =
+                    "Cypher's reduce() and `CASE` expression: `RETURN reduce(count = 0, x IN coll | count + CASE WHEN x = item THEN 1 ELSE 0 END)`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the count of the given item in the collection.")
     public long occurrences(
             @Name(value = "coll", description = "The list to collect the count of the given value from.")
@@ -1530,6 +1766,22 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.fill")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a `LIST<ANY>` with the given count of items.")
+    public List<Object> fillCypher5(
+            @Name(value = "item", description = "The item to be present in the returned list.") String item,
+            @Name(
+                            value = "count",
+                            description = "The number of times the given item should appear in the returned list.")
+                    long count) {
+        return Collections.nCopies((int) count, item);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.fill",
+            deprecatedBy = "Cypher's list comprehension: `RETURN [i IN range(1, count) | item]`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a `LIST<ANY>` with the given count of items.")
     public List<Object> fill(
             @Name(value = "item", description = "The item to be present in the returned list.") String item,
@@ -1561,6 +1813,21 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.pairWithOffset")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
+    public List<List<Object>> pairWithOffsetFnCypher5(
+            @Name(value = "coll", description = "The list to create pairs from.") List<Object> values,
+            @Name(value = "offset", description = "The offset to make each pair with from the given list.")
+                    long offset) {
+        return pairWithOffsetFn(values, offset);
+    }
+
+    @Deprecated
+    @UserFunction(
+            name = "apoc.coll.pairWithOffset",
+            deprecatedBy =
+                    "Cyphers list comprehension: `RETURN [i IN range(0, size(list) - 1) | [list[i], list[i + offset]]] AS value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
     public List<List<Object>> pairWithOffsetFn(
             @Name(value = "coll", description = "The list to create pairs from.") List<Object> values,
@@ -1582,6 +1849,21 @@ public class Coll {
     public record PairWithOffsetListResult(@Description("The created pair.") List<Object> value) {}
 
     @Procedure("apoc.coll.pairWithOffset")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
+    public Stream<PairWithOffsetListResult> pairWithOffsetCypher5(
+            @Name(value = "coll", description = "The list to create pairs from.") List<Object> values,
+            @Name(value = "offset", description = "The offset to make each pair with from the given list.")
+                    long offset) {
+        return pairWithOffsetFn(values, offset).stream().map(PairWithOffsetListResult::new);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.coll.pairWithOffset",
+            deprecatedBy =
+                    "Cypher's list comprehension: `RETURN [i IN range(0, size(list) - 1) | [list[i], list[i + offset]]] AS value`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a `LIST<ANY>` of pairs defined by the offset.")
     public Stream<PairWithOffsetListResult> pairWithOffset(
             @Name(value = "coll", description = "The list to create pairs from.") List<Object> values,

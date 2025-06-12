@@ -39,6 +39,8 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -75,10 +77,32 @@ public class Rename {
     @Context
     public ProcedureCallContext procedureCallContext;
 
+    @Procedure(name = "apoc.refactor.rename.label", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Renames the given label from `oldLabel` to `newLabel` for all `NODE` values.\n"
+                    + "If a `LIST<NODE>` is provided, the renaming is applied to the `NODE` values within this `LIST<NODE>` only.")
+    public Stream<BatchAndTotalResultWithInfo> labelCypher5(
+            @Name(value = "oldLabel", description = "The label to rename.") String oldLabel,
+            @Name(value = "newLabel", description = "The new name to give the label.") String newLabel,
+            @Name(
+                            value = "nodes",
+                            defaultValue = "[]",
+                            description =
+                                    "The nodes to apply the new name to. If this list is empty, all nodes with the old label will be renamed.")
+                    List<Node> nodes) {
+        return label(oldLabel, newLabel, nodes);
+    }
+
     /**
      * Rename the Label of a node by creating a new one and deleting the old.
      */
-    @Procedure(name = "apoc.refactor.rename.label", mode = Mode.WRITE)
+    @Deprecated
+    @Procedure(
+            name = "apoc.refactor.rename.label",
+            mode = Mode.WRITE,
+            deprecatedBy = "Cypher's dynamic labels; `REMOVE n:$(oldLabel) SET n:$(newLabel)`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Renames the given label from `oldLabel` to `newLabel` for all `NODE` values.\n"
                     + "If a `LIST<NODE>` is provided, the renaming is applied to the `NODE` values within this `LIST<NODE>` only.")
@@ -108,6 +132,43 @@ public class Rename {
      * Rename the Relationship Type by creating a new one and deleting the old.
      */
     @Procedure(name = "apoc.refactor.rename.type", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Renames all `RELATIONSHIP` values with type `oldType` to `newType`.\n"
+                    + "If a `LIST<RELATIONSHIP>` is provided, the renaming is applied to the `RELATIONSHIP` values within this `LIST<RELATIONSHIP>` only.")
+    public Stream<BatchAndTotalResultWithInfo> typeCypher5(
+            @Name(value = "oldType", description = "The type to rename.") String oldType,
+            @Name(value = "newType", description = "The new type for the relationship.") String newType,
+            @Name(
+                            value = "rels",
+                            defaultValue = "[]",
+                            description =
+                                    "The relationships to apply the new name to. If this list is empty, all relationships with the old type will be renamed.")
+                    List<Relationship> rels,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    """
+                    {
+                        batchSize = 100000 :: INTEGER,
+                        concurrency :: INTEGER,
+                        retries = 0 :: INTEGER,
+                        parallel = true :: BOOLEAN,
+                        batchMode = "BATCH" :: STRING
+                    }
+                    """)
+                    Map<String, Object> config) {
+        return type(oldType, newType, rels, config);
+    }
+
+    @Deprecated
+    @Procedure(
+            name = "apoc.refactor.rename.type",
+            mode = Mode.WRITE,
+            deprecatedBy =
+                    "Cypher's dynamic types: `CREATE (from)-[newRel:$(newType)]->(to) SET newRel = properties(oldRel) DELETE oldRel`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Renames all `RELATIONSHIP` values with type `oldType` to `newType`.\n"
                     + "If a `LIST<RELATIONSHIP>` is provided, the renaming is applied to the `RELATIONSHIP` values within this `LIST<RELATIONSHIP>` only.")
