@@ -223,6 +223,7 @@ public class Nodes {
         return delete(nodes, batchSize);
     }
 
+    @Deprecated
     @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE, deprecatedBy = "Cypher's `CALL {...} IN TRANSACTIONS`.")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Deletes all `NODE` values with the given ids.")

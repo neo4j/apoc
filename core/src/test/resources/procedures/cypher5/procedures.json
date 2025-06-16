@@ -1,6 +1,29 @@
 [
   {
     "isDeprecated": false,
+    "signature": "apoc.algo.cover(nodes :: ANY) :: (rel :: RELATIONSHIP)",
+    "name": "apoc.algo.cover",
+    "description": "Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.",
+    "returnDescription": [
+      {
+        "name": "rel",
+        "description": "The relationships connected to the given nodes.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to look for connected relationships on.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
     "signature": "apoc.case(conditionals :: LIST<ANY>, elseQuery =  :: STRING, params = {} :: MAP) :: (value :: MAP)",
     "name": "apoc.case",
     "description": "For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.",
@@ -33,6 +56,93 @@
         "isDeprecated": false,
         "default": "DefaultParameterValue{value={}, type=MAP}",
         "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.coll.pairWithOffset(coll :: LIST<ANY>, offset :: INTEGER) :: (value :: LIST<ANY>)",
+    "name": "apoc.coll.pairWithOffset",
+    "description": "Returns a `LIST<ANY>` of pairs defined by the offset.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The created pair.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to create pairs from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "offset",
+        "description": "The offset to make each pair with from the given list.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.coll.partition(coll :: LIST<ANY>, batchSize :: INTEGER) :: (value :: LIST<ANY>)",
+    "name": "apoc.coll.partition",
+    "description": "Partitions the original `LIST<ANY>` into a new `LIST<ANY>` of the given batch size.\nThe final `LIST<ANY>` may be smaller than the given batch size.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The partitioned list.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "coll",
+        "description": "The list to partition into smaller sublists.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "batchSize",
+        "description": "The max size of each partitioned sublist.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.coll.zipToRows(list1 :: LIST<ANY>, list2 :: LIST<ANY>) :: (value :: LIST<ANY>)",
+    "name": "apoc.coll.zipToRows",
+    "description": "Returns the two `LIST<ANY>` values zipped together, with one row per zipped pair.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "A zipped pair.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "list1",
+        "description": "The list to zip together with `list2`.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "list2",
+        "description": "The list to zip together with `list1`.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
       }
     ]
   },
@@ -70,6 +180,390 @@
         "isDeprecated": false,
         "default": "DefaultParameterValue{value={}, type=MAP}",
         "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.addLabels(nodes :: ANY, labels :: LIST<STRING>) :: (node :: NODE)",
+    "name": "apoc.create.addLabels",
+    "description": "Adds the given labels to the given `NODE` values.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The updated node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to add labels to.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "labels",
+        "description": "The labels to add to the nodes.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.node(labels :: LIST<STRING>, props :: MAP) :: (node :: NODE)",
+    "name": "apoc.create.node",
+    "description": "Creates a `NODE` with the given dynamic labels.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The created node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "labels",
+        "description": "The labels to assign to the new node.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "props",
+        "description": "The properties to assign to the new node.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.nodes(labels :: LIST<STRING>, props :: LIST<MAP>) :: (node :: NODE)",
+    "name": "apoc.create.nodes",
+    "description": "Creates `NODE` values with the given dynamic labels.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The created node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "labels",
+        "description": "The labels to assign to the new nodes.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "props",
+        "description": "The properties to assign to the new nodes.",
+        "isDeprecated": false,
+        "type": "LIST<MAP>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.relationship(from :: NODE, relType :: STRING, props :: MAP, to :: NODE) :: (rel :: RELATIONSHIP)",
+    "name": "apoc.create.relationship",
+    "description": "Creates a `RELATIONSHIP` with the given dynamic relationship type.",
+    "returnDescription": [
+      {
+        "name": "rel",
+        "description": "The created relationship.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "from",
+        "description": "The node from which the outgoing relationship will start.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "relType",
+        "description": "The type to assign to the new relationship.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "props",
+        "description": "The properties to assign to the new relationship.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "to",
+        "description": "The node to which the incoming relationship will be connected.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.removeLabels(nodes :: ANY, labels :: LIST<STRING>) :: (node :: NODE)",
+    "name": "apoc.create.removeLabels",
+    "description": "Removes the given labels from the given `NODE` values.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The updated node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The node to remove labels from.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "labels",
+        "description": "The labels to remove from the given node.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.removeProperties(nodes :: ANY, keys :: LIST<STRING>) :: (node :: NODE)",
+    "name": "apoc.create.removeProperties",
+    "description": "Removes the given properties from the given `NODE` values.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The updated node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to remove properties from.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "keys",
+        "description": "The property keys to remove from the given nodes.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.removeRelProperties(rels :: ANY, keys :: LIST<STRING>) :: (rel :: RELATIONSHIP)",
+    "name": "apoc.create.removeRelProperties",
+    "description": "Removes the given properties from the given `RELATIONSHIP` values.",
+    "returnDescription": [
+      {
+        "name": "rel",
+        "description": "The updated relationship.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "rels",
+        "description": "The relationships to remove properties from.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "keys",
+        "description": "The property keys to remove from the given nodes.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.setLabels(nodes :: ANY, labels :: LIST<STRING>) :: (node :: NODE)",
+    "name": "apoc.create.setLabels",
+    "description": "Sets the given labels to the given `NODE` values. Non-matching labels are removed from the nodes.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The updated node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to set labels on.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "labels",
+        "description": "The labels to set on the given nodes.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.setProperties(nodes :: ANY, keys :: LIST<STRING>, values :: LIST<ANY>) :: (node :: NODE)",
+    "name": "apoc.create.setProperties",
+    "description": "Sets the given properties to the given `NODE` values.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The updated node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to set properties on.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "keys",
+        "description": "The property keys to set on the given nodes.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "values",
+        "description": "The values to assign to the properties on the given nodes.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.setProperty(nodes :: ANY, key :: STRING, value :: ANY) :: (node :: NODE)",
+    "name": "apoc.create.setProperty",
+    "description": "Sets the given property to the given `NODE` values.",
+    "returnDescription": [
+      {
+        "name": "node",
+        "description": "The updated node.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to set a property on.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "key",
+        "description": "The name of the property key to set.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "value",
+        "description": "The value of the property to set.",
+        "isDeprecated": false,
+        "type": "ANY"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.setRelProperties(rels :: ANY, keys :: LIST<STRING>, values :: LIST<ANY>) :: (rel :: RELATIONSHIP)",
+    "name": "apoc.create.setRelProperties",
+    "description": "Sets the given properties on the `RELATIONSHIP` values.",
+    "returnDescription": [
+      {
+        "name": "rel",
+        "description": "The updated relationship.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "rels",
+        "description": "The relationships to set properties on.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "keys",
+        "description": "The keys of the properties to set on the given relationships.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "values",
+        "description": "The values of the properties to set on the given relationships.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.create.setRelProperty(rels :: ANY, key :: STRING, value :: ANY) :: (rel :: RELATIONSHIP)",
+    "name": "apoc.create.setRelProperty",
+    "description": "Sets the given property on the `RELATIONSHIP` values.",
+    "returnDescription": [
+      {
+        "name": "rel",
+        "description": "The updated relationship.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "rels",
+        "description": "The relationships to set a property on.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "key",
+        "description": "The name of the property key to set.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "value",
+        "description": "The value of the property to set.",
+        "isDeprecated": false,
+        "type": "ANY"
       }
     ]
   },
@@ -753,6 +1247,87 @@
   },
   {
     "isDeprecated": false,
+    "signature": "apoc.nodes.delete(nodes :: ANY, batchSize :: INTEGER) :: (value :: INTEGER)",
+    "name": "apoc.nodes.delete",
+    "description": "Deletes all `NODE` values with the given ids.",
+    "returnDescription": [
+      {
+        "name": "value",
+        "description": "The number of deleted nodes.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "nodes",
+        "description": "The nodes to be deleted. Nodes can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.",
+        "isDeprecated": false,
+        "type": "ANY"
+      },
+      {
+        "name": "batchSize",
+        "description": "The number of node values to delete in a single batch.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.refactor.categorize(sourceKey :: STRING, type :: STRING, outgoing :: BOOLEAN, label :: STRING, targetKey :: STRING, copiedKeys :: LIST<STRING>, batchSize :: INTEGER)",
+    "name": "apoc.refactor.categorize",
+    "description": "Creates new category `NODE` values from `NODE` values in the graph with the specified `sourceKey` as one of its property keys.\nThe new category `NODE` values are then connected to the original `NODE` values with a `RELATIONSHIP` of the given type.",
+    "returnDescription": [],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "sourceKey",
+        "description": "The property key to add to the on the new node.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "type",
+        "description": "The relationship type to connect to the new node.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "outgoing",
+        "description": "Whether the relationship should be outgoing or not.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "label",
+        "description": "The label of the new node.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "targetKey",
+        "description": "The name by which the source key value will be referenced on the new node.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "copiedKeys",
+        "description": "A list of additional property keys to be copied to the new node.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "batchSize",
+        "description": "The max size of each batch.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
     "signature": "apoc.refactor.deleteAndReconnect(path :: PATH, nodes :: LIST<NODE>, config = {} :: MAP) :: (nodes :: LIST<NODE>, relationships :: LIST<RELATIONSHIP>)",
     "name": "apoc.refactor.deleteAndReconnect",
     "description": "Removes the given `NODE` values from the `PATH` (and graph, including all of its relationships) and reconnects the remaining `NODE` values.\nNote, undefined behaviour for paths that visits the same node multiple times.\nNote, nodes that are not connected in the same direction as the path will not be reconnected, for example `MATCH p=(:A)-->(b:B)<--(:C) CALL apoc.refactor.deleteAndReconnect(p, [b]) ...` will not reconnect the :A and :C nodes.",
@@ -790,6 +1365,258 @@
         "isDeprecated": false,
         "default": "DefaultParameterValue{value={}, type=MAP}",
         "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.refactor.rename.label(oldLabel :: STRING, newLabel :: STRING, nodes = [] :: LIST<NODE>) :: (batches :: INTEGER, total :: INTEGER, timeTaken :: INTEGER, committedOperations :: INTEGER, failedOperations :: INTEGER, failedBatches :: INTEGER, retries :: INTEGER, errorMessages :: MAP, batch :: MAP, operations :: MAP, constraints :: LIST<STRING>, indexes :: LIST<STRING>)",
+    "name": "apoc.refactor.rename.label",
+    "description": "Renames the given label from `oldLabel` to `newLabel` for all `NODE` values.\nIf a `LIST<NODE>` is provided, the renaming is applied to the `NODE` values within this `LIST<NODE>` only.",
+    "returnDescription": [
+      {
+        "name": "batches",
+        "description": "The number of batches the operation was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "total",
+        "description": "The total number of renamings performed.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "timeTaken",
+        "description": "The time taken to complete the operation.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "committedOperations",
+        "description": "The total number of committed operations.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "failedOperations",
+        "description": "The total number of failed operations.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "failedBatches",
+        "description": "The total number of failed batches.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "retries",
+        "description": "The total number of retries.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "errorMessages",
+        "description": "The collected error messages.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "batch",
+        "description": "{\n     total :: INTEGER,\n     failed :: INTEGER,\n     committed :: INTEGER,\n     errors :: MAP\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "operations",
+        "description": "{\n     total :: INTEGER,\n     failed :: INTEGER,\n     committed :: INTEGER,\n     errors :: MAP\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "constraints",
+        "description": "Constraints associated with the given label or type.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "indexes",
+        "description": "Indexes associated with the given label or type.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "oldLabel",
+        "description": "The label to rename.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "newLabel",
+        "description": "The new name to give the label.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "nodes",
+        "description": "The nodes to apply the new name to. If this list is empty, all nodes with the old label will be renamed.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=[], type=LIST<NODE>}",
+        "type": "LIST<NODE>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.refactor.rename.type(oldType :: STRING, newType :: STRING, rels = [] :: LIST<RELATIONSHIP>, config = {} :: MAP) :: (batches :: INTEGER, total :: INTEGER, timeTaken :: INTEGER, committedOperations :: INTEGER, failedOperations :: INTEGER, failedBatches :: INTEGER, retries :: INTEGER, errorMessages :: MAP, batch :: MAP, operations :: MAP, constraints :: LIST<STRING>, indexes :: LIST<STRING>)",
+    "name": "apoc.refactor.rename.type",
+    "description": "Renames all `RELATIONSHIP` values with type `oldType` to `newType`.\nIf a `LIST<RELATIONSHIP>` is provided, the renaming is applied to the `RELATIONSHIP` values within this `LIST<RELATIONSHIP>` only.",
+    "returnDescription": [
+      {
+        "name": "batches",
+        "description": "The number of batches the operation was run in.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "total",
+        "description": "The total number of renamings performed.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "timeTaken",
+        "description": "The time taken to complete the operation.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "committedOperations",
+        "description": "The total number of committed operations.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "failedOperations",
+        "description": "The total number of failed operations.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "failedBatches",
+        "description": "The total number of failed batches.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "retries",
+        "description": "The total number of retries.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "errorMessages",
+        "description": "The collected error messages.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "batch",
+        "description": "{\n     total :: INTEGER,\n     failed :: INTEGER,\n     committed :: INTEGER,\n     errors :: MAP\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "operations",
+        "description": "{\n     total :: INTEGER,\n     failed :: INTEGER,\n     committed :: INTEGER,\n     errors :: MAP\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "constraints",
+        "description": "Constraints associated with the given label or type.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "indexes",
+        "description": "Indexes associated with the given label or type.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "oldType",
+        "description": "The type to rename.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "newType",
+        "description": "The new type for the relationship.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "rels",
+        "description": "The relationships to apply the new name to. If this list is empty, all relationships with the old type will be renamed.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=[], type=LIST<RELATIONSHIP>}",
+        "type": "LIST<RELATIONSHIP>"
+      },
+      {
+        "name": "config",
+        "description": "{\n    batchSize = 100000 :: INTEGER,\n    concurrency :: INTEGER,\n    retries = 0 :: INTEGER,\n    parallel = true :: BOOLEAN,\n    batchMode = \"BATCH\" :: STRING\n}\n",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "signature": "apoc.refactor.setType(rel :: RELATIONSHIP, newType :: STRING) :: (input :: INTEGER, output :: RELATIONSHIP, error :: STRING)",
+    "name": "apoc.refactor.setType",
+    "description": "Changes the type of the given `RELATIONSHIP`.",
+    "returnDescription": [
+      {
+        "name": "input",
+        "description": "The id of the given relationship.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "output",
+        "description": "The id of the new relationship with the updated type.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      },
+      {
+        "name": "error",
+        "description": "The message if an error occurred.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ],
+    "deprecatedBy": null,
+    "argumentDescription": [
+      {
+        "name": "rel",
+        "description": "The relationship to change the type of.",
+        "isDeprecated": false,
+        "type": "RELATIONSHIP"
+      },
+      {
+        "name": "newType",
+        "description": "The new type for the relationship.",
+        "isDeprecated": false,
+        "type": "STRING"
       }
     ]
   },

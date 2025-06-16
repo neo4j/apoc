@@ -162,7 +162,7 @@ public class Coll {
     @UserFunction(
             name = "apoc.coll.zip",
             deprecatedBy =
-                    "Cypher's `UNWIND` and `range()` function; `UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]]`.")
+                    "Cypher's `UNWIND` and `range()` function; `COLLECT { UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]] }`.")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the two given `LIST<ANY>` values zipped together as a `LIST<LIST<ANY>>`.")
     public List<List<Object>> zip(

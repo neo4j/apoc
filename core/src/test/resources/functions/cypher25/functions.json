@@ -403,7 +403,7 @@
     "name": "apoc.coll.zip",
     "description": "Returns the two given `LIST<ANY>` values zipped together as a `LIST<LIST<ANY>>`.",
     "returnDescription": "LIST<ANY>",
-    "deprecatedBy": "Cypher's `UNWIND` and `range()` function; `UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]]`.",
+    "deprecatedBy": "Cypher's `UNWIND` and `range()` function; `COLLECT { UNWIND range(0, size(list1) - 1) AS i RETURN [list1[i], list2[i]] }`.",
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [
