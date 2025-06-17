@@ -61,7 +61,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -97,7 +96,6 @@ public class ExportGraphMLTest {
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath());

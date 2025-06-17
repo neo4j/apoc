@@ -60,7 +60,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
@@ -83,7 +82,6 @@ public class ExportJsonTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             // Run with aligned format to get sequential ids (assertions depends on this)
             .withSetting(GraphDatabaseSettings.db_format, "aligned");
 

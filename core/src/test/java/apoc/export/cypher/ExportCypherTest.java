@@ -59,7 +59,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -103,7 +102,6 @@ public class ExportCypherTest {
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseInternalSettings.enable_experimental_cypher_versions, true)
             .withSetting(
                     newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                             .build(),
