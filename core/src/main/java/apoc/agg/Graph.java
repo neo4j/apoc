@@ -27,6 +27,8 @@ import java.util.Set;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.*;
 
 /**
@@ -35,6 +37,16 @@ import org.neo4j.procedure.*;
  */
 public class Graph {
     @UserAggregationFunction("apoc.agg.graph")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Returns all distinct `NODE` and `RELATIONSHIP` values collected into a `MAP` with the keys `nodes` and `relationships`.")
+    public GraphAggregation graphCypher5() {
+        return new GraphAggregation();
+    }
+
+    @Deprecated
+    @UserAggregationFunction(name = "apoc.agg.graph", deprecatedBy = "Cypher's `COLLECT {}` expression.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Returns all distinct `NODE` and `RELATIONSHIP` values collected into a `MAP` with the keys `nodes` and `relationships`.")
     public GraphAggregation graph() {

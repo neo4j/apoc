@@ -39,6 +39,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import org.apache.commons.lang3.StringUtils;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.*;
 
 /**
@@ -108,6 +110,21 @@ public class Date {
     }
 
     @UserFunction("apoc.date.field")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the value of one field from the given date time.")
+    public Long fieldCypher5(
+            final @Name(value = "time", description = "The timestamp in ms since epoch to return a field from.") Long
+                            time,
+            @Name(value = "unit", defaultValue = "d", description = "The unit of the field to return the value of.")
+                    String unit,
+            @Name(value = "timezone", defaultValue = "UTC", description = "The timezone the given timestamp is in.")
+                    String timezone) {
+        return field(time, unit, timezone);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.date.field", deprecatedBy = "Cypher's `instance.field` component access.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the value of one field from the given date time.")
     public Long field(
             final @Name(value = "time", description = "The timestamp in ms since epoch to return a field from.") Long
@@ -123,6 +140,15 @@ public class Date {
     }
 
     @UserFunction("apoc.date.currentTimestamp")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns the current Unix epoch timestamp in milliseconds.")
+    public long currentTimestampCypher5() {
+        return System.currentTimeMillis();
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.date.currentTimestamp", deprecatedBy = "Cypher's `datetime.realtime().epochMillis`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the current Unix epoch timestamp in milliseconds.")
     public long currentTimestamp() {
         return System.currentTimeMillis();
@@ -195,6 +221,17 @@ public class Date {
     }
 
     @UserFunction("apoc.date.toISO8601")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a `STRING` representation of a specified time value in the ISO8601 format.")
+    public String toISO8601Cypher5(
+            final @Name(value = "time", description = "The timestamp since epoch to format.") Long time,
+            @Name(value = "unit", defaultValue = "ms", description = "The unit of the given timestamp.") String unit) {
+        return time == null ? null : parse(unit(unit).toMillis(time), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", null);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.date.toISO8601", deprecatedBy = "Cypher's `toString()`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a `STRING` representation of a specified time value in the ISO8601 format.")
     public String toISO8601(
             final @Name(value = "time", description = "The timestamp since epoch to format.") Long time,
@@ -203,6 +240,17 @@ public class Date {
     }
 
     @UserFunction("apoc.date.fromISO8601")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Converts the given date `STRING` (ISO8601) to an `INTEGER` representing the time value in milliseconds.")
+    public Long fromISO8601Cypher5(
+            final @Name(value = "time", description = "The datetime to convert to ms.") String time) {
+        return time == null ? null : Instant.parse(time).toEpochMilli();
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.date.fromISO8601", deprecatedBy = "Cypher's `datetime()`")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Converts the given date `STRING` (ISO8601) to an `INTEGER` representing the time value in milliseconds.")
     public Long fromISO8601(final @Name(value = "time", description = "The datetime to convert to ms.") String time) {
