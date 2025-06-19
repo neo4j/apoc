@@ -48,6 +48,8 @@ import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.security.AuthorizationViolationException;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Mode;
@@ -216,6 +218,28 @@ public class Cypher {
 
     @NotThreadSafe
     @Procedure("apoc.when")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "This procedure will run the read-only `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
+    public Stream<CaseMapResult> whenCypher5(
+            @Name(value = "condition", description = "The predicate deciding if to run the `ifQuery`or not.")
+                    boolean condition,
+            @Name(value = "ifQuery", description = "The Cypher statement to run if the condition is true.")
+                    String ifQuery,
+            @Name(
+                            value = "elseQuery",
+                            defaultValue = "",
+                            description = "The Cypher statement to run if the condition is false.")
+                    String elseQuery,
+            @Name(value = "params", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> params) {
+        return when(condition, ifQuery, elseQuery, params);
+    }
+
+    @NotThreadSafe
+    @Deprecated
+    @Procedure(value = "apoc.when", deprecatedBy = "Cypher's conditional queries; WHEN ... THEN.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "This procedure will run the read-only `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
     public Stream<CaseMapResult> when(
@@ -243,6 +267,24 @@ public class Cypher {
     }
 
     @Procedure(value = "apoc.do.when", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Runs the given read/write `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
+    public Stream<CaseMapResult> doWhenCypher5(
+            @Name(value = "condition", description = "The predicate that determines whether to execute the `ifQuery`.")
+                    boolean condition,
+            @Name(value = "ifQuery", description = "The Cypher statement to run if the condition is true.")
+                    String ifQuery,
+            @Name(value = "elseQuery", description = "The Cypher statement to run if the condition is false.")
+                    String elseQuery,
+            @Name(value = "params", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
+                    Map<String, Object> params) {
+        return when(condition, ifQuery, elseQuery, params);
+    }
+
+    @Deprecated
+    @Procedure(value = "apoc.do.when", mode = Mode.WRITE, deprecatedBy = "Cypher's conditional queries; WHEN ... THEN.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Runs the given read/write `ifQuery` if the conditional has evaluated to true, otherwise the `elseQuery` will run.")
     public Stream<CaseMapResult> doWhen(
@@ -268,6 +310,32 @@ public class Cypher {
 
     @NotThreadSafe
     @Procedure("apoc.case")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.")
+    public Stream<CaseMapResult> whenCaseCypher5(
+            @Name(
+                            value = "conditionals",
+                            description =
+                                    "A list of conditionals, where each conditional is a pair: the first element is a predicate, and the second is a Cypher query to be executed based on that predicate.")
+                    List<Object> conditionals,
+            @Name(
+                            value = "elseQuery",
+                            defaultValue = "",
+                            description = "A Cypher query to evaluate if all conditionals evaluate to false.")
+                    String elseQuery,
+            @Name(
+                            value = "params",
+                            defaultValue = "{}",
+                            description = "A map of parameters to be used in the executed Cypher query.")
+                    Map<String, Object> params) {
+        return whenCase(conditionals, elseQuery, params);
+    }
+
+    @NotThreadSafe
+    @Deprecated
+    @Procedure(value = "apoc.case", deprecatedBy = "Cypher's conditional queries; WHEN ... THEN.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "For each pair of conditional and read-only queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true. If none of the conditionals are true, the `ELSE` query will run instead.")
     public Stream<CaseMapResult> whenCase(
@@ -316,6 +384,32 @@ public class Cypher {
     }
 
     @Procedure(name = "apoc.do.case", mode = Mode.WRITE)
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "For each pair of conditional queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true.\n"
+                    + "If none of the conditionals are true, the `ELSE` query will run instead.")
+    public Stream<CaseMapResult> doWhenCaseCypher5(
+            @Name(
+                            value = "conditionals",
+                            description =
+                                    "A list of conditionals, where each conditional is a pair: the first element is a predicate, and the second is a Cypher query to be executed based on that predicate.")
+                    List<Object> conditionals,
+            @Name(
+                            value = "elseQuery",
+                            defaultValue = "",
+                            description = "A Cypher query to evaluate if all conditionals evaluate to false.")
+                    String elseQuery,
+            @Name(
+                            value = "params",
+                            defaultValue = "{}",
+                            description = "A map of parameters to be used in the executed Cypher query.")
+                    Map<String, Object> params) {
+        return whenCase(conditionals, elseQuery, params);
+    }
+
+    @Deprecated
+    @Procedure(name = "apoc.do.case", mode = Mode.WRITE, deprecatedBy = "Cypher's conditional queries; WHEN ... THEN.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "For each pair of conditional queries in the given `LIST<ANY>`, this procedure will run the first query for which the conditional is evaluated to true.\n"
                     + "If none of the conditionals are true, the `ELSE` query will run instead.")
