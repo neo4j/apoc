@@ -248,5 +248,10 @@
         "sha1": "94d79601b7f48b7ec8672be4d0348473e239400e",
         "sha256": "54dc6090c35cacd833cf318a730ad4d35b76e5e1b1c9d5affbd6d2a27ef88ce1",
         "md5": "26377fd05ef86cae8ea7853610458cdf"
+    },
+    "2025.05.1": {
+        "sha1": "5dfad7bc03538bc4f677e11a0aea3c5d23b240f7",
+        "sha256": "b96f2ba024fc08c0478cfa6a18d230eea1860f6a799e7396d8c6d345afb80668",
+        "md5": "452bcc3a7b0c77765979878100f392ca"
     }
 }
