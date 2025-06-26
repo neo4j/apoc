@@ -310,7 +310,7 @@ public class Coll {
         var preparser = "CYPHER " + Util.getCypherVersionString(procedureCallContext) + " runtime=slotted ";
         try (Result result = tx.execute(
                 preparser
-                        + "RETURN reduce(res=null, x in $list | CASE WHEN res IS NULL OR res<x THEN x ELSE res END) AS value",
+                        + "RETURN reduce(res=null, x in $list | CASE WHEN res IS NULL OR res < x THEN x ELSE res END) AS value",
                 Collections.singletonMap("list", list))) {
             return result.next().get("value");
         }

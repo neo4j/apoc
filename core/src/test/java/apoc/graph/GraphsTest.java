@@ -54,7 +54,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.configuration.SettingImpl;
 import org.neo4j.configuration.SettingValueParsers;
 import org.neo4j.graphdb.Entity;
@@ -84,7 +83,6 @@ public class GraphsTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"))
             .withSetting(
                     SettingImpl.newBuilder("internal.dbms.debug.track_cursor_close", SettingValueParsers.BOOL, false)
                             .build(),

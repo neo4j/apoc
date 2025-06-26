@@ -23,7 +23,6 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -76,7 +75,19 @@ public class MetaTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"))
+            .withSetting(
+                    GraphDatabaseSettings.procedure_unrestricted,
+                    List.of(
+                            "apoc.meta.nodes.count",
+                            "apoc.meta.stats",
+                            "apoc.meta.data",
+                            "apoc.meta.schema",
+                            "apoc.meta.nodeTypeProperties",
+                            "apoc.meta.relTypeProperties",
+                            "apoc.meta.graph",
+                            "apoc.meta.graph.of",
+                            "apoc.meta.graphSample",
+                            "apoc.meta.subGraph"))
             .withSetting(
                     newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                             .build(),
@@ -86,7 +97,8 @@ public class MetaTest {
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, Meta.class, Graphs.class, Nodes.class, HelperProcedures.class);
+        TestUtil.registerProcedure(
+                db, Meta.class, MetaRestricted.class, Graphs.class, Nodes.class, HelperProcedures.class);
     }
 
     @After

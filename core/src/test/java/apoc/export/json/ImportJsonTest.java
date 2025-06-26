@@ -32,7 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import apoc.schema.Schemas;
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
@@ -78,14 +77,13 @@ public class ImportJsonTest {
     public DbmsRule db = new ImpermanentDbmsRule()
             .withSetting(
                     GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.getCanonicalFile().toPath())
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, List.of("apoc.*"));
+                    directory.getCanonicalFile().toPath());
 
     public ImportJsonTest() throws IOException {}
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, ImportJson.class, Schemas.class, Utils.class);
+        TestUtil.registerProcedure(db, ImportJson.class, Utils.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }
 

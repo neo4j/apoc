@@ -20,7 +20,6 @@ package apoc.it.core;
 
 import static apoc.it.core.ApocSplitTest.CORE_FUNCTIONS;
 import static apoc.it.core.ApocSplitTest.CORE_PROCEDURES;
-import static java.util.Collections.singletonList;
 
 import apoc.agg.CollAggregation;
 import apoc.agg.Graph;
@@ -66,9 +65,11 @@ import apoc.math.Maths;
 import apoc.math.Regression;
 import apoc.merge.Merge;
 import apoc.meta.Meta;
+import apoc.meta.MetaRestricted;
 import apoc.neighbors.Neighbors;
 import apoc.nodes.Grouping;
 import apoc.nodes.Nodes;
+import apoc.nodes.NodesRestricted;
 import apoc.number.ArabicRoman;
 import apoc.number.Numbers;
 import apoc.number.exact.Exact;
@@ -77,6 +78,7 @@ import apoc.path.Paths;
 import apoc.periodic.Periodic;
 import apoc.refactor.GraphRefactoring;
 import apoc.refactor.rename.Rename;
+import apoc.schema.SchemaRestricted;
 import apoc.schema.Schemas;
 import apoc.scoring.Scoring;
 import apoc.search.ParallelNodeSearch;
@@ -93,6 +95,7 @@ import apoc.util.Utils;
 import apoc.version.Version;
 import apoc.warmup.Warmup;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -112,7 +115,14 @@ public class ApocVersionsTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"));
+            .withSetting(GraphDatabaseSettings.procedure_unrestricted, List.of(
+                    "apoc.nodes.link",
+                    "apoc.node.relationship.exists",
+                    "apoc.nodes.connected",
+                    "apoc.nodes.isDense",
+                    "apoc.schema.nodes",
+                    "apoc.schema.relationship"
+            ));
 
     @Before
     public void setUp() {
@@ -160,9 +170,11 @@ public class ApocVersionsTest {
                 Median.class,
                 Merge.class,
                 Meta.class,
+                MetaRestricted.class,
                 Neighbors.class,
                 Neo4jLogStream.class,
                 Nodes.class,
+                NodesRestricted.class,
                 Numbers.class,
                 ParallelNodeSearch.class,
                 PathExplorer.class,
@@ -176,6 +188,7 @@ public class ApocVersionsTest {
                 Regression.class,
                 SchemaIndex.class,
                 Schemas.class,
+                SchemaRestricted.class,
                 Scoring.class,
                 Statistics.class,
                 Strings.class,
