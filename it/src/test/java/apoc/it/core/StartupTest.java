@@ -35,6 +35,7 @@ import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestContainerUtil.Neo4jVersion;
 import apoc.util.TestUtil;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.junit.Test;
@@ -95,6 +96,11 @@ public class StartupTest {
             assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
             assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
 
+            // Check the versions are compatible; we should be testing using the same versions always
+            assertFalse(startupLog.contains("The apoc version"));
+            assertFalse(startupLog.contains("and the Neo4j DBMS versions"));
+            assertFalse(startupLog.contains("The two first numbers of both versions needs to be the same."));
+
             session.close();
             neo4jContainer.close();
         } catch (Exception ex) {
@@ -103,6 +109,36 @@ public class StartupTest {
                 ex.printStackTrace();
                 fail("Should not have thrown exception when trying to start Neo4j: " + ex);
             } else if (!TestUtil.isRunningInCI()) {
+                fail("The docker image " + dockerImageForNeo4j(version)
+                        + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
+                        + ex);
+            }
+        }
+    }
+
+    @Test
+    public void check_versions_are_compatible() {
+        try {
+            Neo4jContainerExtension neo4jContainer = createDB(
+                    version,
+                    List.of(ApocPackage.CORE),
+                    !TestUtil.isRunningInCI(),
+                    null,
+                    Map.of("internal.neo4j.custom.version", "5.27-aura"));
+            neo4jContainer.start();
+
+            String startupLog = neo4jContainer.getLogs();
+            // Check that the versions are not incompatible, even though we set the version to 5.27-aura
+            assertFalse(startupLog.contains("The apoc version"));
+            assertFalse(startupLog.contains("and the Neo4j DBMS versions"));
+            assertFalse(startupLog.contains("The two first numbers of both versions needs to be the same."));
+
+            neo4jContainer.close();
+        } catch (Exception ex) {
+            if (TestContainerUtil.isDockerImageAvailable(ex)) {
+                ex.printStackTrace();
+                fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+            } else {
                 fail("The docker image " + dockerImageForNeo4j(version)
                         + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
                         + ex);

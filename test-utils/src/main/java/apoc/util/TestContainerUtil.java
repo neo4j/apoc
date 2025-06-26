@@ -62,6 +62,7 @@ public class TestContainerUtil {
     }
 
     public static final String APOC_TEST_DOCKER_BUNDLE = "testDockerBundle";
+    private static final Map<String, String> EMPTY_MAP = Collections.emptyMap();
 
     // read neo4j version from build.gradle
     public static final String neo4jEnterpriseDockerImageVersion = System.getProperty("neo4jDockerImage");
@@ -102,36 +103,46 @@ public class TestContainerUtil {
             Neo4jVersion version,
             List<ApocPackage> apocPackages,
             boolean withLogging,
-            GraphDatabaseSettings.CypherVersion cypherVersion) {
+            GraphDatabaseSettings.CypherVersion cypherVersion,
+            Map<String, String> withSystemProperties) {
         return switch (version) {
-            case ENTERPRISE -> createEnterpriseDB(apocPackages, withLogging, cypherVersion);
-            case COMMUNITY -> createCommunityDB(apocPackages, withLogging, cypherVersion);
+            case ENTERPRISE -> createEnterpriseDB(apocPackages, withLogging, cypherVersion, withSystemProperties);
+            case COMMUNITY -> createCommunityDB(apocPackages, withLogging, cypherVersion, withSystemProperties);
         };
     }
 
     public static Neo4jContainerExtension createEnterpriseDB(List<ApocPackage> apocPackages, boolean withLogging) {
-        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, null);
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, null, EMPTY_MAP);
     }
 
     public static Neo4jContainerExtension createEnterpriseDB(
-            List<ApocPackage> apocPackages, boolean withLogging, GraphDatabaseSettings.CypherVersion cypherVersion) {
-        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.ENTERPRISE, cypherVersion);
+            List<ApocPackage> apocPackages,
+            boolean withLogging,
+            GraphDatabaseSettings.CypherVersion cypherVersion,
+            Map<String, String> withSystemProperties) {
+        return createNeo4jContainer(
+                apocPackages, withLogging, Neo4jVersion.ENTERPRISE, cypherVersion, withSystemProperties);
     }
 
     public static Neo4jContainerExtension createCommunityDB(List<ApocPackage> apocPackages, boolean withLogging) {
-        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY, null);
+        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY, null, EMPTY_MAP);
     }
 
     public static Neo4jContainerExtension createCommunityDB(
-            List<ApocPackage> apocPackages, boolean withLogging, GraphDatabaseSettings.CypherVersion cypherVersion) {
-        return createNeo4jContainer(apocPackages, withLogging, Neo4jVersion.COMMUNITY, cypherVersion);
+            List<ApocPackage> apocPackages,
+            boolean withLogging,
+            GraphDatabaseSettings.CypherVersion cypherVersion,
+            Map<String, String> withSystemProperties) {
+        return createNeo4jContainer(
+                apocPackages, withLogging, Neo4jVersion.COMMUNITY, cypherVersion, withSystemProperties);
     }
 
     private static Neo4jContainerExtension createNeo4jContainer(
             List<ApocPackage> apocPackages,
             boolean withLogging,
             Neo4jVersion version,
-            GraphDatabaseSettings.CypherVersion cypherVersion) {
+            GraphDatabaseSettings.CypherVersion cypherVersion,
+            Map<String, String> withSystemProperties) {
         String dockerImage;
         if (version == Neo4jVersion.ENTERPRISE) {
             dockerImage = neo4jEnterpriseDockerImageVersion;
@@ -246,6 +257,11 @@ public class TestContainerUtil {
         } else {
             neo4jContainer.withPlugins(MountableFile.forHostPath(pluginsFolder.toPath()));
         }
+
+        for (String key : withSystemProperties.keySet()) {
+            neo4jContainer.withNeo4jConfig("-D" + key, withSystemProperties.get(key));
+        }
+
         return neo4jContainer.withWaitForNeo4jDatabaseReady(password, version);
     }
 
