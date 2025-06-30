@@ -96,11 +96,22 @@ public class CypherInitializer implements AvailabilityListener {
                             String neo4jVersion = org.neo4j.kernel.internal.Version.getNeo4jVersion();
                             final String apocVersion =
                                     Version.class.getPackage().getImplementationVersion();
-                            if (isVersionDifferent(neo4jVersion, apocVersion)) {
-                                userLog.warn(
-                                        "The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n"
-                                                + "The two first numbers of both versions needs to be the same.",
-                                        apocVersion, neo4jVersion);
+                            // When running unit tests, the apocVersion is null as the version if taken from the
+                            // manifest in the jar
+                            // To test this properly, use docker tests
+                            if (apocVersion != null && isVersionDifferent(neo4jVersion, apocVersion)) {
+                                // We need to double-check that this isn't due to the CalVer release doing a custom
+                                // setting of 5.27 for 2025.0x, so use the "unsupported" way of getting the Neo4j
+                                // version
+                                String neo4jPackageVersion = org.neo4j.kernel.internal.Version.class
+                                        .getPackage()
+                                        .getImplementationVersion();
+                                if (isVersionDifferent(neo4jPackageVersion, apocVersion)) {
+                                    userLog.warn(
+                                            "The apoc version (%s) and the Neo4j DBMS versions %s are incompatible. \n"
+                                                    + "The two first numbers of both versions needs to be the same.",
+                                            apocVersion, neo4jVersion);
+                                }
                             }
                             databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
                         }
