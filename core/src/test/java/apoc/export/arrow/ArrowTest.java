@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import apoc.graph.Graphs;
 import apoc.load.LoadArrow;
 import apoc.meta.Meta;
+import apoc.meta.MetaRestricted;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -131,7 +132,8 @@ public class ArrowTest {
     public static void beforeClass() {
         db.executeTransactionally(
                 "CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015-05-18T19:32:24.000'), place:point({latitude: 13.1, longitude: 33.46789, height: 100.0})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42})");
-        TestUtil.registerProcedure(db, ExportArrow.class, LoadArrow.class, Graphs.class, Meta.class);
+        TestUtil.registerProcedure(
+                db, ExportArrow.class, LoadArrow.class, Graphs.class, Meta.class, MetaRestricted.class);
     }
 
     @AfterClass
@@ -313,7 +315,9 @@ public class ArrowTest {
     private void testStreamRoundtripAllCommon() {
         // given - when
         final byte[] byteArray = db.executeTransactionally(
-                "CALL apoc.export.arrow.stream.all() YIELD value AS byteArray ", Map.of(), this::extractByteArray);
+                "CYPHER 5 CALL apoc.export.arrow.stream.all() YIELD value AS byteArray ",
+                Map.of(),
+                this::extractByteArray);
 
         // then
         final String query = "CALL apoc.load.arrow.stream($byteArray) YIELD value " + "RETURN value";

@@ -59,6 +59,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.rule.DbmsRule;
@@ -88,6 +89,7 @@ public class MetaTest {
                             "apoc.meta.graph.of",
                             "apoc.meta.graphSample",
                             "apoc.meta.subGraph"))
+            .withSetting(GraphDatabaseInternalSettings.cypher_enable_vector_type, true)
             .withSetting(
                     newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                             .build(),
@@ -369,6 +371,30 @@ public class MetaTest {
                 "RETURN apoc.meta.cypher.type($value) AS value",
                 singletonMap("value", value),
                 row -> assertEquals(type, row.get("value")));
+    }
+
+    @Test
+    public void testVectorTypes() {
+        var vectorTypes = List.of("INT64", "INT32", "INT16", "INT8", "FLOAT64", "FLOAT32");
+        for (String type : vectorTypes) {
+            TestUtil.testCall(
+                    db,
+                    """
+                            CYPHER 25
+                            WITH VECTOR([1, 2, 3], 3, %s) AS v
+                            RETURN apoc.meta.cypher.type(v) AS value"""
+                            .formatted(type),
+                    row -> assertEquals("VECTOR", row.get("value")));
+
+            TestUtil.testCall(
+                    db,
+                    """
+                            CYPHER 25
+                            WITH VECTOR([1, 2, 3], 3, %s) AS v
+                            RETURN apoc.meta.cypher.isType(v, "VECTOR") AS value"""
+                            .formatted(type),
+                    row -> assertEquals(true, row.get("value")));
+        }
     }
 
     private void testIsTypeName(Object value, String type) {
@@ -1577,6 +1603,64 @@ public class MetaTest {
                 assertEquals(List.of("Long", "String"), rec.get("propertyTypes"));
                 assertEquals(2L, rec.get("propertyObservations"));
                 assertEquals(2L, rec.get("totalObservations"));
+                assertEquals(false, rec.get("mandatory"));
+            }
+        });
+    }
+
+    @Test
+    public void testVectorTypesOnProperties() {
+        var vectorTypes = List.of("INT64", "INT32", "INT16", "INT8", "FLOAT64", "FLOAT32");
+        for (String type : vectorTypes) {
+            db.executeTransactionally("CYPHER 25 CREATE (:Foo { z: VECTOR([1, 2, 3], 3, %s) });".formatted(type));
+        }
+
+        TestUtil.testResult(db, "CALL apoc.meta.nodeTypeProperties()", r -> {
+            List<Map<String, Object>> records = gatherRecords(r);
+            assertEquals(1, records.size());
+            for (Map<String, Object> rec : records) {
+                assertEquals(":`Foo`", rec.get("nodeType"));
+                assertEquals(List.of("Foo"), rec.get("nodeLabels"));
+                assertEquals("z", rec.get("propertyName"));
+                assertEquals(
+                        List.of(
+                                "Float32Vector",
+                                "Float64Vector",
+                                "Int16Vector",
+                                "Int32Vector",
+                                "Int64Vector",
+                                "Int8Vector"),
+                        rec.get("propertyTypes"));
+                assertEquals(6L, rec.get("propertyObservations"));
+                assertEquals(6L, rec.get("totalObservations"));
+                assertEquals(false, rec.get("mandatory"));
+            }
+        });
+
+        for (String type : vectorTypes) {
+            db.executeTransactionally(
+                    "CYPHER 25 CREATE (:A)-[:Foo { z: VECTOR([1, 2, 3], 3, %s) }]->(:B);".formatted(type));
+        }
+
+        TestUtil.testResult(db, "CALL apoc.meta.relTypeProperties()", r -> {
+            List<Map<String, Object>> records = gatherRecords(r);
+            assertEquals(1, records.size());
+            for (Map<String, Object> rec : records) {
+                assertEquals(":`Foo`", rec.get("relType"));
+                assertEquals(List.of("A"), rec.get("sourceNodeLabels"));
+                assertEquals(List.of("B"), rec.get("targetNodeLabels"));
+                assertEquals("z", rec.get("propertyName"));
+                assertEquals(
+                        List.of(
+                                "Float32Vector",
+                                "Float64Vector",
+                                "Int16Vector",
+                                "Int32Vector",
+                                "Int64Vector",
+                                "Int8Vector"),
+                        rec.get("propertyTypes"));
+                assertEquals(6L, rec.get("propertyObservations"));
+                assertEquals(6L, rec.get("totalObservations"));
                 assertEquals(false, rec.get("mandatory"));
             }
         });

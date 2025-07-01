@@ -39,6 +39,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.values.storable.DurationValue;
+import org.neo4j.values.storable.VectorValue;
 
 public enum Types {
     LONG,
@@ -60,7 +61,8 @@ public enum Types {
     LOCAL_TIME,
     LOCAL_DATE_TIME,
     TIME,
-    DURATION;
+    DURATION,
+    VECTOR;
 
     private String typeOfList = "ANY";
 
@@ -167,6 +169,11 @@ public enum Types {
         }
         if (ZonedDateTime.class.isAssignableFrom(type)) {
             return DATE_TIME;
+        }
+        // The functions using this are deprecated, so give minimal support
+        // They should be using Cypher anyway
+        if (VectorValue.class.isAssignableFrom(type)) {
+            return VECTOR;
         }
         return ANY;
     }

@@ -115,14 +115,15 @@ public class ApocVersionsTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, List.of(
-                    "apoc.nodes.link",
-                    "apoc.node.relationship.exists",
-                    "apoc.nodes.connected",
-                    "apoc.nodes.isDense",
-                    "apoc.schema.nodes",
-                    "apoc.schema.relationship"
-            ));
+            .withSetting(
+                    GraphDatabaseSettings.procedure_unrestricted,
+                    List.of(
+                            "apoc.nodes.link",
+                            "apoc.node.relationship.exists",
+                            "apoc.nodes.connected",
+                            "apoc.nodes.isDense",
+                            "apoc.schema.nodes",
+                            "apoc.schema.relationship"));
 
     @Before
     public void setUp() {

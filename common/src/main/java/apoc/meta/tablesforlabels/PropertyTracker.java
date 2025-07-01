@@ -88,5 +88,11 @@ public class PropertyTracker {
         typeMappings.put("org.neo4j.values.storable.DurationValue[]", "DurationArray");
         typeMappings.put("java.time.OffsetTime", "Time");
         typeMappings.put("java.time.OffsetTime[]", "TimeArray");
+        typeMappings.put("org.neo4j.values.storable.Int64Vector", "Int64Vector");
+        typeMappings.put("org.neo4j.values.storable.Int32Vector", "Int32Vector");
+        typeMappings.put("org.neo4j.values.storable.Int16Vector", "Int16Vector");
+        typeMappings.put("org.neo4j.values.storable.Int8Vector", "Int8Vector");
+        typeMappings.put("org.neo4j.values.storable.Float64Vector", "Float64Vector");
+        typeMappings.put("org.neo4j.values.storable.Float32Vector", "Float32Vector");
     }
 }
