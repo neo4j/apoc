@@ -75,11 +75,18 @@ public class NodesTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, singletonList("apoc.*"));
+            .withSetting(
+                    GraphDatabaseSettings.procedure_unrestricted,
+                    List.of(
+                            "apoc.nodes.link",
+                            "apoc.node.relationship.exists",
+                            "apoc.node.relationships.exist",
+                            "apoc.nodes.connected",
+                            "apoc.nodes.isDense"));
 
     @Before
     public void setUp() {
-        TestUtil.registerProcedure(db, Nodes.class, Create.class);
+        TestUtil.registerProcedure(db, Nodes.class, Create.class, NodesRestricted.class);
     }
 
     @After

@@ -21,7 +21,6 @@ package apoc.nodes;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.map;
 import static org.junit.Assert.*;
-import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
@@ -45,7 +44,7 @@ import org.neo4j.values.storable.DurationValue;
 public class GroupingTest {
 
     @Rule
-    public DbmsRule db = new ImpermanentDbmsRule().withSetting(procedure_unrestricted, List.of("apoc*"));
+    public DbmsRule db = new ImpermanentDbmsRule();
 
     @Before
     public void setUp() {

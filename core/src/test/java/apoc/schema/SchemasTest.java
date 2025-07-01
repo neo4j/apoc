@@ -36,7 +36,6 @@ import apoc.result.IndexConstraintRelationshipInfo;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -69,11 +68,13 @@ public class SchemasTest {
 
     @Rule
     public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.procedure_unrestricted, Collections.singletonList("apoc.*"));
+            .withSetting(
+                    GraphDatabaseSettings.procedure_unrestricted,
+                    List.of("apoc.schema.nodes", "apoc.schema.relationship"));
 
     @Before
     public void setUp() {
-        registerProcedure(db, Schemas.class);
+        registerProcedure(db, Schemas.class, SchemaRestricted.class);
         dropSchema();
     }
 

@@ -25,7 +25,6 @@ import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.*;
 import static org.junit.Assert.*;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.neo4j.configuration.GraphDatabaseSettings.procedure_unrestricted;
 import static org.neo4j.internal.helpers.collection.MapUtil.map;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
@@ -36,7 +35,6 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import java.io.File;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -82,10 +80,8 @@ public class TriggerNewProceduresTest {
 
     @BeforeClass
     public static void beforeClass() {
-        databaseManagementService = new TestDatabaseManagementServiceBuilder(
-                        storeDir.getRoot().toPath())
-                .setConfig(procedure_unrestricted, List.of("apoc*"))
-                .build();
+        databaseManagementService =
+                new TestDatabaseManagementServiceBuilder(storeDir.getRoot().toPath()).build();
         db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
         sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
         waitDbsAvailable(db, sysDb);
