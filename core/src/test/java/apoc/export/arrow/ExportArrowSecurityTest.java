@@ -36,6 +36,7 @@ import static apoc.export.arrow.ExportArrowService.EXPORT_TO_FILE_ARROW_ERROR;
 import apoc.export.ExportCoreSecurityTest;
 import apoc.export.SecurityTestUtil;
 import apoc.meta.Meta;
+import apoc.meta.MetaRestricted;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import com.nimbusds.jose.util.Pair;
@@ -95,7 +96,7 @@ public class ExportArrowSecurityTest {
         Logger logger = Logger.getLogger(ExportArrowSecurityTest.class.getName());
         logger.setLevel(Level.SEVERE);
 
-        TestUtil.registerProcedure(db, ExportArrow.class, Meta.class);
+        TestUtil.registerProcedure(db, ExportArrow.class, Meta.class, MetaRestricted.class);
     }
 
     @AfterClass

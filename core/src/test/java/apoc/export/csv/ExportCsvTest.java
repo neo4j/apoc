@@ -42,6 +42,7 @@ import apoc.HelperProcedures;
 import apoc.csv.CsvTestUtil;
 import apoc.graph.Graphs;
 import apoc.meta.Meta;
+import apoc.meta.MetaRestricted;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
 import apoc.util.TestUtil;
@@ -556,7 +557,13 @@ public class ExportCsvTest {
     @BeforeAll
     void setUp() {
         TestUtil.registerProcedure(
-                db, ExportCSV.class, Graphs.class, Meta.class, ImportCsv.class, HelperProcedures.class);
+                db,
+                ExportCSV.class,
+                Graphs.class,
+                Meta.class,
+                MetaRestricted.class,
+                ImportCsv.class,
+                HelperProcedures.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
 

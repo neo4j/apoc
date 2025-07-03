@@ -29,6 +29,7 @@ import apoc.algo.Cover;
 import apoc.coll.Coll;
 import apoc.map.Maps;
 import apoc.meta.Meta;
+import apoc.meta.MetaRestricted;
 import apoc.path.PathExplorer;
 import apoc.util.TestUtil;
 import java.util.Collections;
@@ -52,7 +53,14 @@ public class CloneSubgraphTest {
     @Before
     public void setup() {
         TestUtil.registerProcedure(
-                db, GraphRefactoring.class, Coll.class, PathExplorer.class, Cover.class, Meta.class, Maps.class);
+                db,
+                GraphRefactoring.class,
+                Coll.class,
+                PathExplorer.class,
+                Cover.class,
+                Meta.class,
+                Maps.class,
+                MetaRestricted.class);
 
         // tree structure, testing clone of branches and standins
         db.executeTransactionally("CREATE (rA:Root{name:'A'}), \n" + "(rB:Root{name:'B'}),\n"
