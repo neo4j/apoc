@@ -112,6 +112,9 @@ public class XmlGraphMLReader {
         },
         INT() {
             Object parse(String value) {
+                if (value.equalsIgnoreCase("NAN")) {
+                    return Float.NaN; // No Integer.NAN
+                }
                 return Integer.parseInt(value);
             }
 
@@ -121,6 +124,9 @@ public class XmlGraphMLReader {
         },
         LONG() {
             Object parse(String value) {
+                if (value.equalsIgnoreCase("NAN")) {
+                    return Float.NaN; // No Long.NAN
+                }
                 return Long.parseLong(value);
             }
 
@@ -130,6 +136,9 @@ public class XmlGraphMLReader {
         },
         FLOAT() {
             Object parse(String value) {
+                if (value.equalsIgnoreCase("NAN")) {
+                    return Float.NaN;
+                }
                 return Float.parseFloat(value);
             }
 
@@ -139,6 +148,9 @@ public class XmlGraphMLReader {
         },
         DOUBLE() {
             Object parse(String value) {
+                if (value.equalsIgnoreCase("NAN")) {
+                    return Double.NaN;
+                }
                 return Double.parseDouble(value);
             }
 
