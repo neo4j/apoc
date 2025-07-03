@@ -554,6 +554,69 @@ public class ExportGraphMLTest {
         commonAssertionImportNodeEdge(absolutePath, query, map("file", absolutePath));
     }
 
+    // There was a bug that some programs export valid graphml files with NaN strings, we do support
+    // NAN in Cypher, so no reason to error badly on them.
+    @Test
+    public void testNumbersThatAreNaN() throws Exception {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+
+        File output = new File(directory, "gemTest.graphml");
+        FileWriter fw = new FileWriter(output);
+        String NAN_NUMBERS =
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+                         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+                  <key id="age" for="node" attr.name="age" attr.type="long"/>
+                  <key id="height" for="node" attr.name="height" attr.type="int"/>
+                  <key id="weight" for="node" attr.name="weight" attr.type="double"/>
+                  <key id="shoeSize" for="node" attr.name="shoeSize" attr.type="float"/>
+                  <graph id="G" edgedefault="directed">
+                    <node id="n0">
+                      <data key="age">25</data>
+                      <data key="height">189</data>
+                      <data key="weight">93</data>
+                      <data key="shoeSize">44</data>
+                    </node>
+                    <node id="n1">
+                      <data key="age">nan</data>
+                      <data key="height">nan</data>
+                      <data key="weight">nan</data>
+                      <data key="shoeSize">nan</data>
+                    </node>
+                <edge source="n0" target="n1">
+                    </edge>
+                </graph>
+                </graphml>""";
+        fw.write(NAN_NUMBERS);
+        fw.close();
+        final String query = "CALL apoc.import.graphml($file,{readLabels: true, storeNodeIds:true})";
+        final String absolutePath = output.getAbsolutePath();
+
+        TestUtil.testCall(db, query, map("file", absolutePath), (r) -> {
+            assertEquals(2L, r.get("nodes"));
+            assertEquals(1L, r.get("relationships"));
+            assertEquals(8L, r.get("properties"));
+            assertEquals(absolutePath, r.get("file"));
+            assertEquals("file", r.get("source"));
+            assertEquals("graphml", r.get("format"));
+            assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+        });
+
+        TestUtil.testCall(db, "MATCH (a)-[rel:RELATED]->(b) RETURN a, rel, b", null, (r) -> {
+            Node a = (Node) r.get("a");
+            var mapA = Util.map("id", "n0", "age", 25L, "weight", 93.0, "shoeSize", 44.0f, "height", 189);
+            assertEquals(mapA, a.getAllProperties());
+
+            Node b = (Node) r.get("b");
+            var mapB = Util.map(
+                    "id", "n1", "age", Float.NaN, "weight", Double.NaN, "shoeSize", Float.NaN, "height", Float.NaN);
+            assertEquals(mapB, b.getAllProperties());
+        });
+    }
+
     @Test
     public void testImportGraphMLNodeEdgeWithBinary() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
