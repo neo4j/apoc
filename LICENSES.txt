@@ -24,9 +24,9 @@ Apache-2.0
   aws-java-sdk-core-1.12.643.jar
   aws-java-sdk-kms-1.12.643.jar
   aws-java-sdk-s3-1.12.643.jar
-  byte-buddy-1.15.11.jar
-  byte-buddy-agent-1.15.11.jar
-  caffeine-3.2.0.jar
+  byte-buddy-1.17.5.jar
+  byte-buddy-agent-1.17.5.jar
+  caffeine-3.2.1.jar
   cassandra-driver-core-3.10.0.jar
   commons-beanutils-1.9.4.jar
   commons-cli-1.5.0.jar
@@ -123,24 +123,24 @@ Apache-2.0
   jcip-annotations-1.0-1.jar
   jctools-core-4.0.5.jar
   jettison-1.5.4.jar
-  jetty-alpn-java-server-12.0.16.jar
-  jetty-alpn-server-12.0.16.jar
-  jetty-ee-12.0.16.jar
-  jetty-ee8-nested-12.0.16.jar
-  jetty-ee8-security-12.0.16.jar
-  jetty-ee8-servlet-12.0.16.jar
-  jetty-ee8-webapp-12.0.16.jar
-  jetty-http-12.0.16.jar
-  jetty-http2-common-12.0.16.jar
-  jetty-http2-hpack-12.0.16.jar
-  jetty-http2-server-12.0.16.jar
-  jetty-io-12.0.16.jar
-  jetty-security-12.0.16.jar
-  jetty-server-12.0.16.jar
+  jetty-alpn-java-server-12.0.17.jar
+  jetty-alpn-server-12.0.17.jar
+  jetty-ee-12.0.17.jar
+  jetty-ee8-nested-12.0.17.jar
+  jetty-ee8-security-12.0.17.jar
+  jetty-ee8-servlet-12.0.17.jar
+  jetty-ee8-webapp-12.0.17.jar
+  jetty-http-12.0.17.jar
+  jetty-http2-common-12.0.17.jar
+  jetty-http2-hpack-12.0.17.jar
+  jetty-http2-server-12.0.17.jar
+  jetty-io-12.0.17.jar
+  jetty-security-12.0.17.jar
+  jetty-server-12.0.17.jar
   jetty-servlet-api-4.0.6.jar
-  jetty-session-12.0.16.jar
-  jetty-util-12.0.16.jar
-  jetty-xml-12.0.16.jar
+  jetty-session-12.0.17.jar
+  jetty-util-12.0.17.jar
+  jetty-xml-12.0.17.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.643.jar
@@ -176,57 +176,58 @@ Apache-2.0
   lucene-queryparser-9.11.1.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
-  netty-all-4.2.1.Final.jar
-  netty-buffer-4.2.1.Final.jar
-  netty-codec-4.2.1.Final.jar
-  netty-codec-base-4.2.1.Final.jar
-  netty-codec-classes-quic-4.2.1.Final.jar
-  netty-codec-compression-4.2.1.Final.jar
-  netty-codec-dns-4.2.1.Final.jar
-  netty-codec-haproxy-4.2.1.Final.jar
-  netty-codec-http-4.2.1.Final.jar
-  netty-codec-http2-4.2.1.Final.jar
-  netty-codec-marshalling-4.2.1.Final.jar
-  netty-codec-memcache-4.2.1.Final.jar
-  netty-codec-mqtt-4.2.1.Final.jar
-  netty-codec-native-quic-4.2.1.Final-linux-aarch_64.jar
-  netty-codec-native-quic-4.2.1.Final-linux-x86_64.jar
-  netty-codec-native-quic-4.2.1.Final-osx-aarch_64.jar
-  netty-codec-native-quic-4.2.1.Final-osx-x86_64.jar
-  netty-codec-native-quic-4.2.1.Final-windows-x86_64.jar
-  netty-codec-protobuf-4.2.1.Final.jar
-  netty-codec-redis-4.2.1.Final.jar
-  netty-codec-smtp-4.2.1.Final.jar
-  netty-codec-socks-4.2.1.Final.jar
-  netty-codec-stomp-4.2.1.Final.jar
-  netty-codec-xml-4.2.1.Final.jar
-  netty-common-4.2.1.Final.jar
-  netty-handler-4.2.1.Final.jar
-  netty-handler-proxy-4.2.1.Final.jar
-  netty-handler-ssl-ocsp-4.2.1.Final.jar
-  netty-resolver-4.2.1.Final.jar
-  netty-resolver-dns-4.2.1.Final.jar
-  netty-resolver-dns-classes-macos-4.2.1.Final.jar
-  netty-resolver-dns-native-macos-4.2.1.Final-osx-aarch_64.jar
-  netty-resolver-dns-native-macos-4.2.1.Final-osx-x86_64.jar
-  netty-tcnative-classes-2.0.71.Final.jar
-  netty-transport-4.2.1.Final.jar
-  netty-transport-classes-epoll-4.2.1.Final.jar
-  netty-transport-classes-io_uring-4.2.1.Final.jar
-  netty-transport-classes-kqueue-4.2.1.Final.jar
-  netty-transport-native-epoll-4.2.1.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.2.1.Final-linux-riscv64.jar
-  netty-transport-native-epoll-4.2.1.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.2.1.Final.jar
-  netty-transport-native-io_uring-4.2.1.Final-linux-aarch_64.jar
-  netty-transport-native-io_uring-4.2.1.Final-linux-riscv64.jar
-  netty-transport-native-io_uring-4.2.1.Final-linux-x86_64.jar
-  netty-transport-native-kqueue-4.2.1.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.2.1.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.2.1.Final.jar
-  netty-transport-rxtx-4.2.1.Final.jar
-  netty-transport-sctp-4.2.1.Final.jar
-  netty-transport-udt-4.2.1.Final.jar
+  netty-all-4.2.2.Final.jar
+  netty-buffer-4.2.2.Final.jar
+  netty-codec-4.2.2.Final.jar
+  netty-codec-base-4.2.2.Final.jar
+  netty-codec-classes-quic-4.2.2.Final.jar
+  netty-codec-compression-4.2.2.Final.jar
+  netty-codec-dns-4.2.2.Final.jar
+  netty-codec-haproxy-4.2.2.Final.jar
+  netty-codec-http-4.2.2.Final.jar
+  netty-codec-http2-4.2.2.Final.jar
+  netty-codec-http3-4.2.2.Final.jar
+  netty-codec-marshalling-4.2.2.Final.jar
+  netty-codec-memcache-4.2.2.Final.jar
+  netty-codec-mqtt-4.2.2.Final.jar
+  netty-codec-native-quic-4.2.2.Final-linux-aarch_64.jar
+  netty-codec-native-quic-4.2.2.Final-linux-x86_64.jar
+  netty-codec-native-quic-4.2.2.Final-osx-aarch_64.jar
+  netty-codec-native-quic-4.2.2.Final-osx-x86_64.jar
+  netty-codec-native-quic-4.2.2.Final-windows-x86_64.jar
+  netty-codec-protobuf-4.2.2.Final.jar
+  netty-codec-redis-4.2.2.Final.jar
+  netty-codec-smtp-4.2.2.Final.jar
+  netty-codec-socks-4.2.2.Final.jar
+  netty-codec-stomp-4.2.2.Final.jar
+  netty-codec-xml-4.2.2.Final.jar
+  netty-common-4.2.2.Final.jar
+  netty-handler-4.2.2.Final.jar
+  netty-handler-proxy-4.2.2.Final.jar
+  netty-handler-ssl-ocsp-4.2.2.Final.jar
+  netty-resolver-4.2.2.Final.jar
+  netty-resolver-dns-4.2.2.Final.jar
+  netty-resolver-dns-classes-macos-4.2.2.Final.jar
+  netty-resolver-dns-native-macos-4.2.2.Final-osx-aarch_64.jar
+  netty-resolver-dns-native-macos-4.2.2.Final-osx-x86_64.jar
+  netty-tcnative-classes-2.0.72.Final.jar
+  netty-transport-4.2.2.Final.jar
+  netty-transport-classes-epoll-4.2.2.Final.jar
+  netty-transport-classes-io_uring-4.2.2.Final.jar
+  netty-transport-classes-kqueue-4.2.2.Final.jar
+  netty-transport-native-epoll-4.2.2.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.2.2.Final-linux-riscv64.jar
+  netty-transport-native-epoll-4.2.2.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.2.2.Final.jar
+  netty-transport-native-io_uring-4.2.2.Final-linux-aarch_64.jar
+  netty-transport-native-io_uring-4.2.2.Final-linux-riscv64.jar
+  netty-transport-native-io_uring-4.2.2.Final-linux-x86_64.jar
+  netty-transport-native-kqueue-4.2.2.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.2.2.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.2.2.Final.jar
+  netty-transport-rxtx-4.2.2.Final.jar
+  netty-transport-sctp-4.2.2.Final.jar
+  netty-transport-udt-4.2.2.Final.jar
   nimbus-jose-jwt-9.31.jar
   objenesis-3.3.jar
   opencsv-5.7.1.jar
@@ -241,7 +242,7 @@ Apache-2.0
   perfmark-api-0.27.0.jar
   picocli-4.7.7.jar
   proto-google-common-protos-2.51.0.jar
-  reactor-core-3.6.16.jar
+  reactor-core-3.6.18.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.16.jar
@@ -2224,14 +2225,14 @@ Eclipse Public License - v 2.0
   jersey-container-servlet-core-2.43.jar
   jersey-hk2-2.43.jar
   jersey-server-2.43.jar
-  junit-jupiter-5.12.2.jar
-  junit-jupiter-api-5.12.2.jar
-  junit-jupiter-engine-5.12.2.jar
-  junit-jupiter-params-5.12.2.jar
-  junit-platform-commons-1.12.2.jar
-  junit-platform-engine-1.12.2.jar
-  junit-platform-launcher-1.12.2.jar
-  junit-platform-testkit-1.12.2.jar
+  junit-jupiter-5.13.1.jar
+  junit-jupiter-api-5.13.1.jar
+  junit-jupiter-engine-5.13.1.jar
+  junit-jupiter-params-5.13.1.jar
+  junit-platform-commons-1.13.1.jar
+  junit-platform-engine-1.13.1.jar
+  junit-platform-launcher-1.13.1.jar
+  junit-platform-testkit-1.13.1.jar
   osgi-resource-locator-1.0.3.jar
 ------------------------------------------------------------------------------
 
@@ -2912,11 +2913,11 @@ and/or involve the use of third party software.
 ------------------------------------------------------------------------------
 MIT
   bcpkix-jdk15on-1.70.jar
-  bcpkix-jdk18on-1.80.jar
+  bcpkix-jdk18on-1.81.jar
   bcprov-jdk15on-1.70.jar
-  bcprov-jdk18on-1.80.jar
+  bcprov-jdk18on-1.81.jar
   bcutil-jdk15on-1.70.jar
-  bcutil-jdk18on-1.80.jar
+  bcutil-jdk18on-1.81.jar
   cassandra-1.20.2.jar
   checker-qual-3.43.0.jar
   couchbase-1.20.2.jar
@@ -2930,7 +2931,7 @@ MIT
   jersey-hk2-2.43.jar
   jnr-x86asm-1.0.2.jar
   localstack-1.20.2.jar
-  mockito-core-5.17.0.jar
+  mockito-core-5.18.0.jar
   mssql-jdbc-6.2.1.jre7.jar
   mysql-1.20.2.jar
   neo4j-1.20.2.jar
