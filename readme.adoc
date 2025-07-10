@@ -1,8 +1,8 @@
 :readme:
 :branch: 5.26
 :docs: https://neo4j.com/docs/apoc/current
-:apoc-release: 5.26.8
-:neo4j-version: 5.26.8
+:apoc-release: 5.26.9
+:neo4j-version: 5.26.9
 :img: https://raw.githubusercontent.com/neo4j/apoc/dev/images
 
 https://community.neo4j.com[image:https://img.shields.io/discourse/users?logo=discourse&server=https%3A%2F%2Fcommunity.neo4j.com[Discourse users]]
