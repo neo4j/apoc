@@ -48,12 +48,12 @@ public class RandomGraph {
                         CHAR_ARRAY,
                         SHORT_ARRAY,
                         FLOAT_ARRAY,
-                        FLOAT32VECTOR,
-                        FLOAT64VECTOR,
-                        INT8VECTOR,
-                        INT16VECTOR,
-                        INT32VECTOR,
-                        INT64VECTOR,
+                        FLOAT32_VECTOR,
+                        FLOAT64_VECTOR,
+                        INT8_VECTOR,
+                        INT16_VECTOR,
+                        INT32_VECTOR,
+                        INT64_VECTOR,
                         FLOAT,
                         CHAR -> false;
                 default -> true;
