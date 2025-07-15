@@ -34,12 +34,12 @@ import apoc.util.TestContainerUtil;
 import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestContainerUtil.Neo4jVersion;
 import apoc.util.TestUtil;
+import apoc.version.Version;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import apoc.version.Version;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -261,11 +261,28 @@ public class StartupTest {
 
         // The Neo4jDockerVersion will have the format "neo4j:yyyy.MM.x-..."
         // The apocVersion will have the format "yyyy.MM.x"
-        boolean compatibleVersions = neo4jDockerVersion.substring(6, 13).equals(apocVersion.substring(0, 7));
+        // We want to verify if the "yyyy.MM" parts are the same
+        Pattern pattern = Pattern.compile("\\d{4}\\.[0-1]\\d");
+        String neo4jMinorVersion = "";
+        String apocMinorVersion = "";
+
+        var neo4jMatcher = pattern.matcher(neo4jDockerVersion);
+        if (neo4jMatcher.find()) {
+            neo4jMinorVersion = neo4jMatcher.group();
+        } else {
+            throw new IllegalStateException("Expected to extract Neo4j minor version from " + neo4jDockerVersion);
+        }
+
+        var apocMatcher = pattern.matcher(apocVersion);
+        if (apocMatcher.find()) {
+            apocMinorVersion = apocMatcher.group();
+        } else {
+            throw new IllegalStateException("Expected to extract apoc minor version from " + apocVersion);
+        }
 
         // Check that we only warn on incompatible versions when the versions are incompatible
         // and not e.g. because the dbms.components() is being set to 5.27-aura
-        if (compatibleVersions) {
+        if (neo4jMinorVersion.equals(apocMinorVersion)) {
             assertFalse(startupLog.contains("The apoc version"));
             assertFalse(startupLog.contains("and the Neo4j DBMS versions"));
             assertFalse(startupLog.contains("The two first numbers of both versions needs to be the same."));
