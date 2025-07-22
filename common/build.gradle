@@ -42,7 +42,7 @@ dependencies {
     compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.0', withoutServers
     compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.26.1'
     compileOnly group: 'com.github.seancfoley', name: 'ipaddress', version: '5.3.3'
-    compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.14.0'
+    compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.18.0'
 
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(':test-utils')
