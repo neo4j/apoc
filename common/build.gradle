@@ -60,6 +60,9 @@ dependencies {
         api('net.minidev:json-smart:2.5.2') {
             because 'CVE-2024-57699'
         }
+        api('org.apache.commons:commons-lang3:3.18.0') {
+            because 'CVE-2025-48924'
+        }
     }
 
     configurations.configureEach {
