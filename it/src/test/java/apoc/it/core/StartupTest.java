@@ -34,9 +34,11 @@ import apoc.util.TestContainerUtil;
 import apoc.util.TestContainerUtil.ApocPackage;
 import apoc.util.TestContainerUtil.Neo4jVersion;
 import apoc.util.TestUtil;
+import apoc.version.Version;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -95,12 +97,7 @@ public class StartupTest {
             assertFalse(startupLog.contains("SLF4J: No SLF4J providers were found"));
             assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
             assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
-
-            // Check the versions are compatible; we should be testing using the same versions always
-            assertFalse(startupLog.contains("The apoc version"));
-            assertFalse(startupLog.contains("and the Neo4j DBMS versions"));
-            assertFalse(startupLog.contains("The two first numbers of both versions needs to be the same."));
-
+            assertOnCompatibilityWarning(startupLog);
             session.close();
             neo4jContainer.close();
         } catch (Exception ex) {
@@ -128,10 +125,7 @@ public class StartupTest {
             neo4jContainer.start();
 
             String startupLog = neo4jContainer.getLogs();
-            // Check that the versions are not incompatible, even though we set the version to 5.27-aura
-            assertFalse(startupLog.contains("The apoc version"));
-            assertFalse(startupLog.contains("and the Neo4j DBMS versions"));
-            assertFalse(startupLog.contains("The two first numbers of both versions needs to be the same."));
+            assertOnCompatibilityWarning(startupLog);
 
             neo4jContainer.close();
         } catch (Exception ex) {
@@ -256,6 +250,46 @@ public class StartupTest {
                         + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
                         + ex);
             }
+        }
+    }
+
+    private void assertOnCompatibilityWarning(String startupLog) {
+        // The Neo4j version is usually bumped before the APOC version,
+        // so sometimes versions are technically incompatible when we test
+        final String neo4jDockerVersion = dockerImageForNeo4j(version);
+        final String apocVersion = Version.class.getPackage().getImplementationVersion();
+
+        // The Neo4jDockerVersion will have the format "neo4j:yyyy.MM.x-..."
+        // The apocVersion will have the format "yyyy.MM.x"
+        // We want to verify if the "yyyy.MM" parts are the same
+        Pattern pattern = Pattern.compile("\\d{4}\\.[0-1]\\d");
+        String neo4jMinorVersion = "";
+        String apocMinorVersion = "";
+
+        var neo4jMatcher = pattern.matcher(neo4jDockerVersion);
+        if (neo4jMatcher.find()) {
+            neo4jMinorVersion = neo4jMatcher.group();
+        } else {
+            throw new IllegalStateException("Expected to extract Neo4j minor version from " + neo4jDockerVersion);
+        }
+
+        var apocMatcher = pattern.matcher(apocVersion);
+        if (apocMatcher.find()) {
+            apocMinorVersion = apocMatcher.group();
+        } else {
+            throw new IllegalStateException("Expected to extract apoc minor version from " + apocVersion);
+        }
+
+        // Check that we only warn on incompatible versions when the versions are incompatible
+        // and not e.g. because the dbms.components() is being set to 5.27-aura
+        if (neo4jMinorVersion.equals(apocMinorVersion)) {
+            assertFalse(startupLog.contains("The apoc version"));
+            assertFalse(startupLog.contains("and the Neo4j DBMS versions"));
+            assertFalse(startupLog.contains("The two first numbers of both versions needs to be the same."));
+        } else {
+            assertTrue(startupLog.contains("The apoc version"));
+            assertTrue(startupLog.contains("and the Neo4j DBMS versions"));
+            assertTrue(startupLog.contains("The two first numbers of both versions needs to be the same."));
         }
     }
 
