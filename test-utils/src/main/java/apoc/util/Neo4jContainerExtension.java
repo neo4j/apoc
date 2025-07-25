@@ -137,11 +137,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
                 if (statement.isEmpty()) {
                     continue;
                 }
-                session.writeTransaction(tx -> {
-                    tx.run(statement);
-                    tx.commit();
-                    return null;
-                });
+                session.executeWriteWithoutResult(tx -> tx.run(statement));
             }
         }
     }
