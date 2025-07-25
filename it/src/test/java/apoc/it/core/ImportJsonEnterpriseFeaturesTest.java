@@ -47,11 +47,7 @@ public class ImportJsonEnterpriseFeaturesTest {
         neo4jContainer.start();
         session = neo4jContainer.getSession();
 
-        session.writeTransaction(tx -> {
-            tx.run("CREATE (u:User {name: \"Fred\"})");
-            tx.commit();
-            return null;
-        });
+        session.executeWriteWithoutResult(tx -> tx.run("CREATE (u:User {name: \"Fred\"})"));
 
         // First export a file that we can import
         String filename = "all.json";
@@ -62,17 +58,13 @@ public class ImportJsonEnterpriseFeaturesTest {
                 (r) -> Assert.assertTrue(r.hasNext()));
 
         // Remove node so we can import it after
-        session.writeTransaction(tx -> {
-            tx.run("MATCH (n) DETACH DELETE n");
-            tx.commit();
-            return null;
-        });
+        session.executeWriteWithoutResult(tx -> tx.run("MATCH (n) DETACH DELETE n"));
     }
 
     @Before
     public void cleanUpDb() {
         // Remove all current constraints/indexes
-        session.writeTransaction(tx -> {
+        session.executeWriteWithoutResult(tx -> {
             final List<String> constraints = tx.run("SHOW CONSTRAINTS YIELD name")
                     .list(i -> i.get("name").asString());
             constraints.forEach(name -> tx.run(String.format("DROP CONSTRAINT %s", name)));
@@ -80,16 +72,10 @@ public class ImportJsonEnterpriseFeaturesTest {
             final List<String> indexes =
                     tx.run("SHOW INDEXES YIELD name").list(i -> i.get("name").asString());
             indexes.forEach(name -> tx.run(String.format("DROP INDEX %s", name)));
-            tx.commit();
-            return null;
         });
 
         // Make sure we have no other nodes so all uniqueness constraints work
-        session.writeTransaction(tx -> {
-            tx.run("MATCH (n) DETACH DELETE n");
-            tx.commit();
-            return null;
-        });
+        session.executeWriteWithoutResult(tx -> tx.run("MATCH (n) DETACH DELETE n"));
     }
 
     @AfterClass
@@ -100,12 +86,10 @@ public class ImportJsonEnterpriseFeaturesTest {
 
     @Test
     public void shouldFailBecauseOfMissingUniqueConstraintException() {
-        session.writeTransaction(tx -> {
+        session.executeWriteWithoutResult(tx -> {
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS NOT NULL");
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId, n.name) IS NODE KEY");
-            tx.commit();
-            return null;
-        });
+    });
 
         String filename = "all.json";
         Exception e = Assert.assertThrows(
@@ -119,10 +103,8 @@ public class ImportJsonEnterpriseFeaturesTest {
     @Test
     public void shouldWorkWithSingularNodeKeyAsConstraint() {
         // Add unique constraint (test if single node key works)
-        session.writeTransaction(tx -> {
+        session.executeWriteWithoutResult(tx -> {
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId) IS NODE KEY");
-            tx.commit();
-            return null;
         });
 
         // Test import procedure

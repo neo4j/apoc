@@ -75,16 +75,8 @@ public class MetaEnterpriseFeaturesTest {
 
     @Test
     public void testNodeTypePropertiesBasic() {
-        session.writeTransaction(tx -> {
-            tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.s) IS NOT NULL;");
-            tx.commit();
-            return null;
-        });
-        session.writeTransaction(tx -> {
-            tx.run("CREATE (:Foo { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] });");
-            tx.commit();
-            return null;
-        });
+        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.s) IS NOT NULL;"));
+        session.executeWriteWithoutResult(tx -> tx.run("CREATE (:Foo { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] });"));
         testResult(session, "CALL apoc.meta.nodeTypeProperties();", (r) -> {
             List<Map<String, Object>> records = gatherRecords(r);
             assertTrue(hasRecordMatching(
