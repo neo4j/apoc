@@ -224,12 +224,10 @@ public class ArgumentDescriptionsTest {
 
     @Test
     public void functionArgumentDescriptionsDefaultVersion() throws IOException {
-        // TODO: When Cypher command for getting default is available use that here
-        // for now we just force this to use the preset default
         assertResultAsJsonEquals(
-                CypherVersion.Default,
-                showFunctions(CypherVersion.Default),
-                "/functions/cypher%s/functions.json".formatted(CypherVersion.Default),
+                CypherVersion.Cypher5,
+                showFunctions(null),
+                "/functions/cypher%s/functions.json".formatted(CypherVersion.Cypher5),
                 "/functions/common/functions.json");
     }
 
@@ -247,12 +245,10 @@ public class ArgumentDescriptionsTest {
 
     @Test
     public void procedureArgumentDescriptionsDefaultVersion() throws IOException {
-        // TODO: When Cypher command for getting default is available use that here
-        // for now we just force this to use the preset default
         assertResultAsJsonEquals(
-                CypherVersion.Default,
-                showProcedures(CypherVersion.Default),
-                "/procedures/cypher%s/procedures.json".formatted(CypherVersion.Default),
+                CypherVersion.Cypher5,
+                showProcedures(null),
+                "/procedures/cypher%s/procedures.json".formatted(CypherVersion.Cypher5),
                 "/procedures/common/procedures.json");
     }
 
