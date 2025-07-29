@@ -59,13 +59,12 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     private static void beforeTwoLabelsWithOneCompoundConstraintEach() {
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT compositeBase FOR (t:Base) REQUIRE (t.tenantId, t.id) IS NODE KEY"));
         session.executeWriteWithoutResult(tx ->
-                tx.run("CREATE CONSTRAINT compositeBase FOR (t:Base) REQUIRE (t.tenantId, t.id) IS NODE KEY"));
-        session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE (a:Person:Base {name: 'Phil', surname: 'Meyer', tenantId: 'neo4j', id: 'waBfk3z'}) "
-                    + "CREATE (b:Person:Base {name: 'Silvia', surname: 'Jones', tenantId: 'random', id: 'waBfk3z'}) "
-                    + "CREATE (a)-[:KNOWS {foo:2}]->(b)"
-        ));
+                tx.run("CREATE (a:Person:Base {name: 'Phil', surname: 'Meyer', tenantId: 'neo4j', id: 'waBfk3z'}) "
+                        + "CREATE (b:Person:Base {name: 'Silvia', surname: 'Jones', tenantId: 'random', id: 'waBfk3z'}) "
+                        + "CREATE (a)-[:KNOWS {foo:2}]->(b)"));
     }
 
     private static void afterTwoLabelsWithOneCompoundConstraintEach() {
