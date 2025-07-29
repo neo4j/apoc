@@ -89,7 +89,7 @@ public class ImportJsonEnterpriseFeaturesTest {
         session.executeWriteWithoutResult(tx -> {
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS NOT NULL");
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId, n.name) IS NODE KEY");
-    });
+        });
 
         String filename = "all.json";
         Exception e = Assert.assertThrows(

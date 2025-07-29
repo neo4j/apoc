@@ -80,9 +80,8 @@ public class SchemasEnterpriseFeaturesTest {
 
             final List<String> indexes =
                     tx.run("SHOW INDEXES YIELD name").list(i -> i.get("name").asString());
-            indexes.forEach(name -> tx.run(String.format("DROP INDEX %s", name)));}
-
-        );
+            indexes.forEach(name -> tx.run(String.format("DROP INDEX %s", name)));
+        });
     }
 
     @Test
@@ -134,8 +133,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testSchemaNodesWithNodeKey() {
-        session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE CONSTRAINT node_key_movie FOR (m:Movie) REQUIRE (m.first, m.second) IS NODE KEY"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT node_key_movie FOR (m:Movie) REQUIRE (m.first, m.second) IS NODE KEY"));
 
         testResult(session, CALL_SCHEMA_NODES_ORDERED, (result) -> {
             Map<String, Object> r = result.next();
@@ -166,7 +165,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testSchemaNodesWithNodeTypeConstraint() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT node_prop_type_movie FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT node_prop_type_movie FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER"));
 
         testResult(session, CALL_SCHEMA_NODES_ORDERED, (result) -> {
             Map<String, Object> r = result.next();
@@ -228,7 +228,7 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testSchemaNodeTypeConstraintExclude() {
         session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE CONSTRAINT node_prop_type_movie_first FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER"));
+                tx.run("CREATE CONSTRAINT node_prop_type_movie_first FOR (m:Movie) REQUIRE (m.first) IS :: INTEGER"));
 
         testResult(
                 session,
@@ -242,7 +242,8 @@ public class SchemasEnterpriseFeaturesTest {
             tx.run(
                     "CREATE CONSTRAINT rel_con_since FOR ()-[since:SINCE]-() REQUIRE (since.day, since.year) IS RELATIONSHIP KEY");
             tx.run(
-                    "CREATE CONSTRAINT rel_con_knows FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");});
+                    "CREATE CONSTRAINT rel_con_knows FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");
+        });
 
         HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
         AssertSchemaResult sinceConstraint = new AssertSchemaResult("SINCE", List.of("day", "year"));
@@ -282,9 +283,8 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testSchemaRelationshipsExclude() {
         session.executeWriteWithoutResult(tx -> {
-            tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");}
-
-        );
+            tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
+        });
 
         testResult(
                 session,
@@ -298,9 +298,8 @@ public class SchemasEnterpriseFeaturesTest {
             tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
             tx.run(
                     "CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY");
-            tx.run("CREATE CONSTRAINT rel_con_type FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER");}
-
-        );
+            tx.run("CREATE CONSTRAINT rel_con_type FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER");
+        });
 
         testResult(session, "CALL apoc.schema.nodes({})", (result) -> assertFalse(result.hasNext()));
     }
@@ -309,9 +308,8 @@ public class SchemasEnterpriseFeaturesTest {
     public void testRelExistenceConstraintIsKeptAndDropped() {
         session.executeWriteWithoutResult(tx -> {
             tx.run("CREATE CONSTRAINT rel_con_liked FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL");
-            tx.run("CREATE CONSTRAINT rel_con_since FOR ()-[since:SINCE]-() REQUIRE (since.day) IS NOT NULL");}
-
-        );
+            tx.run("CREATE CONSTRAINT rel_con_since FOR ()-[since:SINCE]-() REQUIRE (since.day) IS NOT NULL");
+        });
 
         HashSet<AssertSchemaResult> expectedResult = new HashSet<>();
         AssertSchemaResult sinceConstraint = new AssertSchemaResult("SINCE", "day");
@@ -425,9 +423,8 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testDropNodeKeyConstraintAndCreateNodeKeyConstraintWhenUsingDropExistingOnlyIfNotExist() {
         session.executeWriteWithoutResult(tx -> {
-            tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.bar,f.foo) IS NODE KEY");}
-
-        );
+            tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.bar,f.foo) IS NODE KEY");
+        });
         testResult(session, "CALL apoc.schema.assert(null,{Foo:[['bar','foo']]})", (result) -> {
             Map<String, Object> r = result.next();
             assertEquals("Foo", r.get("label"));
@@ -467,9 +464,8 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testDropSchemaWithNodeKeyConstraintWhenUsingDropExisting() {
         session.executeWriteWithoutResult(tx -> {
-            tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.foo, f.bar) IS NODE KEY");}
-
-        );
+            tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.foo, f.bar) IS NODE KEY");
+        });
         testCall(session, "CALL apoc.schema.assert(null,null)", (r) -> {
             assertEquals("Foo", r.get("label"));
             assertEquals(expectedKeys("foo", "bar"), r.get("keys"));
@@ -488,9 +484,8 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testDropConstraintExistsPropertyNode() {
         session.executeWriteWithoutResult(tx -> {
-            tx.run("CREATE CONSTRAINT FOR (m:Movie) REQUIRE (m.title) IS NOT NULL");}
-
-        );
+            tx.run("CREATE CONSTRAINT FOR (m:Movie) REQUIRE (m.title) IS NOT NULL");
+        });
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Movie", r.get("label"));
             assertEquals(expectedKeys("title"), r.get("keys"));
@@ -509,9 +504,8 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testDropConstraintTypePropertyNode() {
         session.executeWriteWithoutResult(tx -> {
-            tx.run("CREATE CONSTRAINT FOR (m:Movie) REQUIRE (m.title) IS :: STRING");}
-
-        );
+            tx.run("CREATE CONSTRAINT FOR (m:Movie) REQUIRE (m.title) IS :: STRING");
+        });
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Movie", r.get("label"));
             assertEquals(expectedKeys("title"), r.get("keys"));
@@ -530,9 +524,8 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testDropConstraintExistsPropertyRelationship() {
         session.executeWriteWithoutResult(tx -> {
-            tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS NOT NULL");}
-
-        );
+            tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS NOT NULL");
+        });
 
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Acted", r.get("label"));
@@ -551,8 +544,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testDropConstraintTypePropertyRelationship() {
-        session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS :: DATE"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT FOR ()-[acted:Acted]->() REQUIRE (acted.since) IS :: DATE"));
 
         testCall(session, "CALL apoc.schema.assert({},{})", (r) -> {
             assertEquals("Acted", r.get("label"));
@@ -571,8 +564,7 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testIndexOnMultipleProperties() {
-        session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE INDEX FOR (n:Foo) ON (n.bar, n.foo)"));
+        session.executeWriteWithoutResult(tx -> tx.run("CREATE INDEX FOR (n:Foo) ON (n.bar, n.foo)"));
 
         String indexName = session.readTransaction(tx -> {
             String name = tx.run("SHOW INDEXES YIELD name, type WHERE type <> 'LOOKUP' RETURN name")
@@ -583,8 +575,8 @@ public class SchemasEnterpriseFeaturesTest {
             return name;
         });
 
-        session.executeWriteWithoutResult(tx ->
-            tx.run("CALL db.awaitIndex($indexName)", Collections.singletonMap("indexName", indexName)));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CALL db.awaitIndex($indexName)", Collections.singletonMap("indexName", indexName)));
         testResult(
                 session,
                 "CALL apoc.schema.nodes() YIELD name, label, properties, status, type, "
@@ -608,7 +600,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testPropertyExistenceConstraintOnNode() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT foobarConstraint FOR (bar:Bar) REQUIRE (bar.foobar) IS NOT NULL"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT foobarConstraint FOR (bar:Bar) REQUIRE (bar.foobar) IS NOT NULL"));
 
         testResult(
                 session,
@@ -630,7 +623,7 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testConstraintExistsOnRelationship() {
         session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE CONSTRAINT likedConstraint FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL"));
+                tx.run("CREATE CONSTRAINT likedConstraint FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL"));
         testResult(session, "RETURN apoc.schema.relationship.constraintExists('LIKED', ['day'])", (result) -> {
             Map<String, Object> r = result.next();
             assertEquals(true, r.entrySet().iterator().next().getValue());
@@ -640,7 +633,7 @@ public class SchemasEnterpriseFeaturesTest {
     @Test
     public void testSchemaRelationships() {
         session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE CONSTRAINT likedConstraint FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL"));
+                tx.run("CREATE CONSTRAINT likedConstraint FOR ()-[like:LIKED]-() REQUIRE (like.day) IS NOT NULL"));
         testResult(session, "CALL apoc.schema.relationships()", (result) -> {
             Map<String, Object> r = result.next();
             assertEquals("CONSTRAINT FOR ()-[liked:LIKED]-() REQUIRE liked.day IS NOT NULL", r.get("name"));
@@ -685,8 +678,8 @@ public class SchemasEnterpriseFeaturesTest {
     public void testConstraintsRelationshipsAndExcludeRelationshipsValuatedShouldFail() {
         session.executeWriteWithoutResult(tx -> {
             tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL");
-            tx.run("CREATE CONSTRAINT since_con FOR ()-[since:SINCE]-() REQUIRE since.year IS NOT NULL");}
-        );
+            tx.run("CREATE CONSTRAINT since_con FOR ()-[since:SINCE]-() REQUIRE since.year IS NOT NULL");
+        });
 
         ClientException e = Assert.assertThrows(
                 ClientException.class,
@@ -702,8 +695,9 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testRelationshipKeyConstraint() {
-        session.executeWriteWithoutResult(tx ->
-            tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run(
+                        "CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE (knows.day, knows.year) IS RELATIONSHIP KEY"));
 
         testResult(session, "CALL apoc.schema.relationships({})", result -> {
             Map<String, Object> r = result.next();
@@ -727,7 +721,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testRelationshipTypePropConstraint() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT rel_con FOR ()-[knows:KNOWS]-() REQUIRE knows.day IS :: INTEGER"));
 
         testResult(session, "CALL apoc.schema.relationships({})", result -> {
             Map<String, Object> r = result.next();
@@ -743,7 +738,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testNodeConstraintExists() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS NOT NULL"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS NOT NULL"));
 
         testCall(
                 session,
@@ -753,7 +749,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testNodeTypePropConstraintExists() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS :: INTEGER"));
+        session.executeWriteWithoutResult(tx ->
+                tx.run("CREATE CONSTRAINT node_cons IF NOT EXISTS FOR (bar:Bar) REQUIRE bar.foobar IS :: INTEGER"));
 
         testCall(
                 session,
@@ -776,7 +773,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testRelationshipConstraintExists() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS NOT NULL"));
 
         testCall(
                 session,
@@ -786,7 +784,8 @@ public class SchemasEnterpriseFeaturesTest {
 
     @Test
     public void testRelationshipTypeConstraintExists() {
-        session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS :: INTEGER"));
+        session.executeWriteWithoutResult(
+                tx -> tx.run("CREATE CONSTRAINT like_con FOR ()-[like:LIKED]-() REQUIRE like.day IS :: INTEGER"));
 
         testCall(
                 session,
