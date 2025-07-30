@@ -22,41 +22,42 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.map;
 import static apoc.util.collection.Iterators.asSet;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.Entity;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class GraphAggregationTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Graph.class);
-        db.executeTransactionally(
-                "CREATE (a:A {id:'a'})-[:AB {id:'ab'}]->(b:B {id:'b'})-[:BC {id:'bc'}]->(c:C {id:'c'}),(a)-[:AC {id:'ac'}]->(c)");
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    @BeforeAll
+    public void setUp() {
+        TestUtil.registerProcedure(db, Graph.class);
     }
 
     @Test
     public void testGraph() {
+        db.executeTransactionally(
+                "CREATE (a:A {id:'a'})-[:AB {id:'ab'}]->(b:B {id:'b'})-[:BC {id:'bc'}]->(c:C {id:'c'}),(a)-[:AC {id:'ac'}]->(c)");
+
         Map<String, Entity> pcs = db.executeTransactionally(
                 "MATCH (n) RETURN n.id as id, n UNION ALL MATCH ()-[n]->() RETURN n.id as id, n",
                 Collections.emptyMap(),
