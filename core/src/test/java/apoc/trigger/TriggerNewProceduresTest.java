@@ -23,7 +23,10 @@ import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
 import static apoc.util.TestUtil.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.internal.helpers.collection.MapUtil.map;
 import static org.neo4j.test.assertion.Assert.assertEventually;
@@ -33,19 +36,19 @@ import apoc.convert.Json;
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
-import org.junit.rules.TemporaryFolder;
-import org.neo4j.configuration.GraphDatabaseSettings;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -56,45 +59,39 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.coreapi.TransactionImpl;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class TriggerNewProceduresTest {
     private static final File directory = new File("target/conf");
+
+    @Inject
+    GraphDatabaseService db;
+
+    GraphDatabaseService sysDb;
+
+    @Inject
+    DatabaseManagementService dbms;
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
     }
 
-    @ClassRule
-    public static TemporaryFolder storeDir = new TemporaryFolder();
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        System.setProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
+        System.setProperty("apoc.trigger.enabled", "true");
+        builder.setConfigRaw(Map.of("internal.dbms.debug.track_cursor_close", "true"));
+    }
 
-    private static GraphDatabaseService sysDb;
-    private static GraphDatabaseService db;
-    private static DatabaseManagementService databaseManagementService;
-
-    // we cannot set via ApocConfig.apocConfig().setProperty("apoc.trigger.refresh", "2000") in `setUp`, because is too
-    // late
-    @ClassRule
-    public static final ProvideSystemProperty systemPropertyRule = new ProvideSystemProperty(
-                    "apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH))
-            .and("apoc.trigger.enabled", "true");
-
-    @BeforeClass
-    public static void beforeClass() {
-        databaseManagementService =
-                new TestDatabaseManagementServiceBuilder(storeDir.getRoot().toPath()).build();
-        db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
-        sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
-        waitDbsAvailable(db, sysDb);
-        // Procedures are global for the DBMS, so it is sufficient to register them via one DB.
+    @BeforeAll
+    void beforeAll() {
+        this.sysDb = dbms.database("system");
         TestUtil.registerProcedure(db, TriggerNewProcedures.class, Nodes.class, Trigger.class, Json.class);
     }
 
-    @AfterClass
-    public static void afterClass() {
-        databaseManagementService.shutdown();
-    }
-
-    @After
+    @AfterEach
     public void after() {
         sysDb.executeTransactionally("CALL apoc.trigger.dropAll('neo4j')");
         testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
@@ -376,7 +373,7 @@ public class TriggerNewProceduresTest {
         final Node n = (Node) r.get("n");
         assertEquals(1L, n.getProperty("count"));
         final long txId = (long) n.getProperty("txId");
-        assertTrue("Current txId is: " + txId, txId > -1L);
+        assertThat(txId).isGreaterThan(-1);
     }
 
     @Test
@@ -390,7 +387,7 @@ public class TriggerNewProceduresTest {
         });
     }
 
-    private static void testTxIdWithRelationshipsCommon(String phase) {
+    private void testTxIdWithRelationshipsCommon(String phase) {
         String query =
                 """
                 MATCH (c:RelationshipCounter)
@@ -700,7 +697,7 @@ public class TriggerNewProceduresTest {
         testCascadeTransactionCommon("afterAsync");
     }
 
-    private static void testCascadeTransactionCommon(String phase) {
+    private void testCascadeTransactionCommon(String phase) {
         db.executeTransactionally("CREATE (:TransactionCounter {count:0});");
 
         // create the trigger
@@ -865,6 +862,56 @@ public class TriggerNewProceduresTest {
                     },
                     5L);
             id++;
+        }
+    }
+
+    @Test
+    void concurrentTriggers() throws InterruptedException {
+        final var count = 2048;
+        final var nodeTrigger = "unwind $createdNodes as n create (:Node {fromId: n.id})";
+        final var relTrigger = "unwind $createdRelationships as r create (:Rel {fromId: r.id})";
+        sysDb.executeTransactionally(
+                "call apoc.trigger.install('neo4j', 'concurrent-node-trigger', $t, {phase: 'after'})",
+                Map.of("t", nodeTrigger));
+        sysDb.executeTransactionally(
+                "call apoc.trigger.install('neo4j', 'concurrent-rel-trigger', $t, {phase: 'after'})",
+                Map.of("t", relTrigger));
+        awaitTriggerDiscovered(db, "concurrent-node-trigger", nodeTrigger);
+        awaitTriggerDiscovered(db, "concurrent-rel-trigger", relTrigger);
+        try (final var executor = Executors.newWorkStealingPool()) {
+            final var futures = new ArrayList<Future<?>>();
+            for (int i = 0; i < count; i++) {
+                final int id = i;
+                futures.add(executor.submit(() -> db.executeTransactionally(
+                        """
+                            create (:A {id: $id + '.A'})-[:R {id: $id + '.R'}]->(:B {id: $id + '.B'})
+                            """,
+                        Map.of("id", String.valueOf(id)),
+                        r -> r.stream().toList())));
+            }
+            executor.shutdown();
+            executor.awaitTermination(15, TimeUnit.MINUTES);
+            for (final var future : futures) {
+                assertThat(future.resultNow()).isEqualTo(List.of()); // Expose query failures
+            }
+        }
+
+        // Assert triggers ran for all queries
+        try (final var tx = db.beginTx()) {
+            final var nodeIds = tx.execute("match (n:A|B) return n.id order by n.id").columnAs("n.id").stream()
+                    .toList();
+            final var relIds = tx.execute("match ()-[r]->() return r.id order by r.id").columnAs("r.id").stream()
+                    .toList();
+            final var triggerNodeIds =
+                    tx.execute("match (n:Node) return n.fromId order by n.fromId").columnAs("n.fromId").stream()
+                            .toList();
+            final var triggerRelIds =
+                    tx.execute("match (n:Rel) return n.fromId order by n.fromId").columnAs("n.fromId").stream()
+                            .toList();
+            assertThat(triggerNodeIds).containsExactlyElementsOf(nodeIds);
+            assertThat(triggerRelIds).containsExactlyElementsOf(relIds);
+            assertThat(nodeIds).hasSize(count * 2);
+            assertThat(relIds).hasSize(count);
         }
     }
 }
