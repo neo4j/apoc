@@ -1,8 +1,8 @@
 :readme:
-:branch: 2025.06
+:branch: 2025.07
 :docs: https://neo4j.com/docs/apoc/current
-:apoc-release: 2025.06.2
-:neo4j-version: 2025.06.2
+:apoc-release: 2025.07.0
+:neo4j-version: 2025.07.0
 :img: https://raw.githubusercontent.com/neo4j/apoc/dev/images
 
 https://community.neo4j.com[image:https://img.shields.io/discourse/users?logo=discourse&server=https%3A%2F%2Fcommunity.neo4j.com[Discourse users]]
