@@ -22,13 +22,10 @@ import static apoc.algo.AlgoUtil.SETUP_GEO;
 import static apoc.algo.AlgoUtil.assertAStarResult;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
-import static apoc.util.Util.map;
-import static org.hamcrest.Matchers.contains;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThat;
 
 import apoc.util.TestUtil;
-import apoc.util.collection.Iterators;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
@@ -133,12 +130,13 @@ public class PathFindingTest {
                 db,
                 "MATCH (from:Loc{name:'A'}), (to:Loc{name:'D'}) "
                         + "CALL apoc.algo.dijkstra(from, to, 'ROAD>', 'd', 99999, 3) yield path, weight "
-                        + "RETURN path, weight",
+                        + "RETURN length(path) AS pathLength, weight ORDER BY weight",
                 result -> {
-                    List<Map<String, Object>> records = Iterators.asList(result);
-                    assertThat(map(records, map -> map.get("weight")), contains(50.0, 60.0, 100.0));
-
-                    assertThat(map(records, map -> ((Path) map.get("path")).length()), contains(2, 3, 1));
+                    assertThat(result.stream())
+                            .containsExactly(
+                                    Map.of("weigth", 50.0, "pathLength", 2),
+                                    Map.of("weigth", 60.0, "pathLength", 3),
+                                    Map.of("weigth", 100.0, "pathLength", 1));
                 });
     }
 

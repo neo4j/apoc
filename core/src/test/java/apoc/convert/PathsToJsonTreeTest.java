@@ -25,15 +25,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.stream.Collectors;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
-@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = true, configurationCallback = "configure")
 public class PathsToJsonTreeTest {
 
     @Inject
@@ -44,9 +46,9 @@ public class PathsToJsonTreeTest {
         TestUtil.registerProcedure(db, Json.class);
     }
 
-    @AfterEach
-    void clear() {
-        db.executeTransactionally("MATCH (n) DETACH DELETE n;");
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.db_format, "aligned"); // Assertions depends on sequential ids
     }
 
     @Test
@@ -54,7 +56,8 @@ public class PathsToJsonTreeTest {
         /*            r:R
               a:A --------> b:B
         */
-        db.executeTransactionally("CREATE (a: A {nodeName: 'a'})-[r: R {relName: 'r'}]->(b: B {nodeName: 'b'})");
+        db.executeTransactionally(
+                "CREATE (a: A {nodeName: 'a'}) CREATE (b: B {nodeName: 'b'}) CREATE (a)-[r: R {relName: 'r'}]->(b)");
 
         var query =
                 """

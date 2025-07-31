@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
-@ImpermanentEnterpriseDbmsExtension()
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
 public class MaxAndMinItemsAggregationTest {
     @Inject
     GraphDatabaseService db;
@@ -42,7 +42,7 @@ public class MaxAndMinItemsAggregationTest {
 
         db.executeTransactionally(Util.readResourceFile("movies.cypher"));
         db.executeTransactionally(
-                "MATCH (per:Person) MERGE (bb:BigBrother {name : 'Big Brother' })  MERGE (bb)-[:FOLLOWS]->(per)");
+                "MATCH (p:Person) MERGE (b:BigBrother {name : 'Big Brother' })  MERGE (b)-[:FOLLOWS]->(p)");
     }
 
     @Test
@@ -186,11 +186,9 @@ public class MaxAndMinItemsAggregationTest {
                         + "WITH apoc.agg.minItems(p, p.born, 2) as minResult "
                         + "RETURN minResult.value as born, [person in minResult.items | person.name] as persons",
                 (row) -> {
-                    assertEquals(1930L, row.get("born"));
-                    assertThat(row.get("persons"))
+                    assertThat(row).containsEntry("born", 1930L).hasEntrySatisfying("persons", p -> assertThat(p)
                             .asInstanceOf(list(String.class))
-                            .hasSize(2)
-                            .containsAnyOf("Gene Hackman", "Richard Harris", "Clint Eastwood");
+                            .containsAnyOf("Gene Hackman", "Richard Harris", "Clint Eastwood"));
                 });
     }
 

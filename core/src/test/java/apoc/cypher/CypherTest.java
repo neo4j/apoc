@@ -60,6 +60,7 @@ import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -200,7 +201,8 @@ public class CypherTest {
         return Util.toLong(value);
     }
 
-    @Test(timeout = 9000)
+    @Timeout(9000)
+    @Test
     public void testWithTimeout() {
         assertFalse(db.executeTransactionally(
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10000)', null, $timeout)",
@@ -348,7 +350,7 @@ public class CypherTest {
             if (result.hasNext()) {
                 final var row = result.next();
                 assertEquals(Map.of("0", 0L), row.get("value"));
-                assertFalse("Expected one or zero rows", result.hasNext());
+                assertFalse(result.hasNext(), "Expected one or zero rows");
             }
         }
 
@@ -419,7 +421,8 @@ public class CypherTest {
         assertTrue(duration < 1500L);
     }
 
-    @Test(timeout = 9000)
+    @Timeout(9000)
+    @Test
     public void shouldTooLongTimeboxBeNotHarmful() {
         assertFalse(db.executeTransactionally(
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10)', null, $timeout)",
