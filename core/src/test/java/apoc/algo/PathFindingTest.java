@@ -24,21 +24,21 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.map;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThat;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Path;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class PathFindingTest {
 
     private static final String SETUP_MISSING_PROPERTY = "CREATE " + "(a:Loc{name:'A'}), "
@@ -62,17 +62,12 @@ public class PathFindingTest {
             + "(c)-[:ROAD {d:30}]->(d), "
             + "(a)-[:ROAD {d:20}]->(c) ";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, PathFinding.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test

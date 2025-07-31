@@ -23,13 +23,14 @@ import static apoc.result.VirtualRelationship.ERROR_END_NODE_NULL;
 import static apoc.result.VirtualRelationship.ERROR_START_NODE_NULL;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.neo4j.graphdb.Label.label;
 
 import apoc.coll.Coll;
 import apoc.path.Paths;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterables;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -37,29 +38,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.*;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class CreateTest {
 
     public static final Label PERSON = Label.label("Person");
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Create.class, Paths.class, Coll.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test

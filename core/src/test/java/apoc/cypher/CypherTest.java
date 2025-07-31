@@ -33,12 +33,12 @@ import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.HelperProcedures;
 import apoc.text.Strings;
@@ -47,6 +47,7 @@ import apoc.util.Util;
 import apoc.util.Utils;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -57,37 +58,26 @@ import java.util.Map;
 import java.util.Random;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.graphdb.schema.ConstraintDefinition;
-import org.neo4j.graphdb.schema.IndexDefinition;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 08.05.16
- */
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
 public class CypherTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.allow_file_urls, true)
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    new File("src/test/resources").toPath().toAbsolutePath());
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(
                 db,
                 Cypher.class,
@@ -98,19 +88,12 @@ public class CypherTest {
                 HelperProcedures.class);
     }
 
-    @After
-    public void clearDB() {
-        db.executeTransactionally("MATCH (n) DETACH DELETE n");
-        try (Transaction tx = db.beginTx()) {
-            tx.schema().getConstraints().forEach(ConstraintDefinition::drop);
-            tx.schema().getIndexes().forEach(IndexDefinition::drop);
-            tx.commit();
-        }
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        final var csvRoot = new File("src/test/resources").toPath().toAbsolutePath();
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
+        builder.setConfig(GraphDatabaseSettings.allow_file_urls, true)
+                .setConfig(GraphDatabaseSettings.load_csv_file_url_root, csvRoot);
     }
 
     @Test

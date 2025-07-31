@@ -18,39 +18,30 @@
  */
 package apoc.algo;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 21.05.16
- */
+@ImpermanentEnterpriseDbmsExtension()
 public class CoverTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Cover.class);
-        db.executeTransactionally("CREATE (a)-[:X]->(b)-[:X]->(c)-[:X]->(d)");
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
     public void testCover() {
+        db.executeTransactionally("CREATE (a)-[:X]->(b)-[:X]->(c)-[:X]->(d)");
         List<String> nodeRepresentations = List.of("n", "id(n)", "elementId(n)");
         for (String nodeRep : nodeRepresentations) {
             TestUtil.testCall(

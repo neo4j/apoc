@@ -20,36 +20,32 @@ package apoc.convert;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
 public class PathsToJsonTreeTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Json.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
-    @After
-    public void clear() {
+    @AfterEach
+    void clear() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n;");
     }
 

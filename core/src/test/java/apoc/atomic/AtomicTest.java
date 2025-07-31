@@ -20,52 +20,36 @@ package apoc.atomic;
 
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
-import java.util.Arrays;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author AgileLARUS
- *
- * @since 26-06-17
- */
+@ImpermanentEnterpriseDbmsExtension()
 public class AtomicTest {
+    @Inject
+    GraphDatabaseService db;
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
-
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Atomic.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
-    private void assertContains(long[] longArray, List<Long> containsAll) {
-        List<Long> longList = Arrays.asList(ArrayUtils.toObject(longArray));
-        assertTrue(longList.containsAll(containsAll));
     }
 
     @Test
@@ -215,7 +199,7 @@ public class AtomicTest {
                 (r) -> {});
 
         long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-        assertContains(ages, List.of(40L, 60L));
+        assertThat(ages).contains(40L, 60L);
     }
 
     @Test
@@ -227,7 +211,7 @@ public class AtomicTest {
                 map("property", "age", "position", 0, "times", 5),
                 (r) -> {});
         long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-        assertContains(ages, List.of(50L, 60L));
+        assertThat(ages).contains(50L, 60L);
     }
 
     @Test
@@ -239,7 +223,7 @@ public class AtomicTest {
                 map("property", "age", "position", 2, "times", 5),
                 (r) -> {});
         long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-        assertContains(ages, List.of(40L, 50L));
+        assertThat(ages).contains(40L, 50L);
     }
 
     @Test
@@ -251,7 +235,7 @@ public class AtomicTest {
                 map("property", "age", "position", 0, "times", 5),
                 (r) -> {});
         long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-        assertEquals(0, ages.length);
+        assertThat(ages).isEmpty();
     }
 
     @Test
@@ -295,7 +279,7 @@ public class AtomicTest {
                 map("property", "age", "position", 2, "value", 55L, "times", 5),
                 (r) -> {});
         long[] ages = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) RETURN n.age as age;");
-        assertContains(ages, List.of(40L, 55L));
+        assertThat(ages).contains(40L, 55L);
     }
 
     @Test
@@ -309,7 +293,7 @@ public class AtomicTest {
                 (r) -> {});
         long[] ages = TestUtil.singleResultFirstColumn(
                 db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) RETURN r.since as since;");
-        assertContains(ages, List.of(40L, 50L, 55L, 60L));
+        assertThat(ages).contains(40L, 50L, 55L, 60L);
     }
 
     @Test
