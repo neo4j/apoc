@@ -22,23 +22,21 @@ import static apoc.algo.AlgoUtil.SETUP_GEO;
 import static apoc.algo.AlgoUtil.assertAStarResult;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
-import static apoc.util.Util.map;
-import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
-import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Path;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class PathFindingTest {
 
     private static final String SETUP_MISSING_PROPERTY = "CREATE " + "(a:Loc{name:'A'}), "
@@ -62,17 +60,12 @@ public class PathFindingTest {
             + "(c)-[:ROAD {d:30}]->(d), "
             + "(a)-[:ROAD {d:20}]->(c) ";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, PathFinding.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -138,12 +131,13 @@ public class PathFindingTest {
                 db,
                 "MATCH (from:Loc{name:'A'}), (to:Loc{name:'D'}) "
                         + "CALL apoc.algo.dijkstra(from, to, 'ROAD>', 'd', 99999, 3) yield path, weight "
-                        + "RETURN path, weight",
+                        + "RETURN length(path) AS pathLength, weight ORDER BY weight",
                 result -> {
-                    List<Map<String, Object>> records = Iterators.asList(result);
-                    assertThat(map(records, map -> map.get("weight")), contains(50.0, 60.0, 100.0));
-
-                    assertThat(map(records, map -> ((Path) map.get("path")).length()), contains(2, 3, 1));
+                    assertThat(result.stream())
+                            .containsExactly(
+                                    Map.of("weight", 50.0, "pathLength", 2L),
+                                    Map.of("weight", 60.0, "pathLength", 3L),
+                                    Map.of("weight", 100.0, "pathLength", 1L));
                 });
     }
 
@@ -155,16 +149,17 @@ public class PathFindingTest {
                 "MATCH (from:Loc{name:'A'}), (to:Loc{name:'D'}) "
                         + "CALL apoc.algo.allSimplePaths(from, to, 'ROAD>', 3) yield path "
                         + "RETURN path ORDER BY length(path)",
-                res -> {
-                    Path path;
-                    path = (Path) res.next().get("path");
-                    assertEquals(1, path.length());
-                    path = (Path) res.next().get("path");
-                    assertEquals(2, path.length());
-                    path = (Path) res.next().get("path");
-                    assertEquals(3, path.length());
-                    assertEquals(false, res.hasNext());
-                });
+                res -> assertThat(res.columnAs("path").stream())
+                        .satisfiesExactly(
+                                row -> assertThat(row)
+                                        .asInstanceOf(type(Path.class))
+                                        .satisfies(p -> assertThat(p.length()).isEqualTo(1)),
+                                row -> assertThat(row)
+                                        .asInstanceOf(type(Path.class))
+                                        .satisfies(p -> assertThat(p.length()).isEqualTo(2)),
+                                row -> assertThat(row)
+                                        .asInstanceOf(type(Path.class))
+                                        .satisfies(p -> assertThat(p.length()).isEqualTo(3))));
     }
 
     @Test

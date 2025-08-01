@@ -20,64 +20,57 @@ package apoc.bitwise;
 
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class BitwiseOperationsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    public static final String BITWISE_CALL = "return apoc.bitwise.op($a,$op,$b) as value";
-
-    private int a, b;
-
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, BitwiseOperations.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
+    public static final String BITWISE_CALL = "return apoc.bitwise.op($a,$op,$b) as value";
 
-    public void testOperation(String op, long expected) {
+    public void testOperation(String op, long expected, int a, int b) {
         Map<String, Object> params = map("a", a, "op", op, "b", b);
-        testCall(db, BITWISE_CALL, params, (row) -> assertEquals("operation " + op, expected, row.get("value")));
+        testCall(db, BITWISE_CALL, params, (row) -> assertEquals(expected, row.get("value"), "operation " + op));
     }
 
     @Test
     public void testOperations() {
-        a = 0b0011_1100;
-        b = 0b0000_1101;
-        testOperation("&", 12L);
-        testOperation("AND", 12L);
-        testOperation("OR", 61L);
-        testOperation("|", 61L);
-        testOperation("^", 49L);
-        testOperation("XOR", 49L);
-        testOperation("~", -61L);
-        testOperation("NOT", -61L);
+        int a = 0b0011_1100;
+        int b = 0b0000_1101;
+        testOperation("&", 12L, a, b);
+        testOperation("AND", 12L, a, b);
+        testOperation("OR", 61L, a, b);
+        testOperation("|", 61L, a, b);
+        testOperation("^", 49L, a, b);
+        testOperation("XOR", 49L, a, b);
+        testOperation("~", -61L, a, b);
+        testOperation("NOT", -61L, a, b);
     }
 
     @Test
     public void testOperations2() {
-        a = 0b0011_1100;
-        b = 2;
-        testOperation("<<", 240L);
-        testOperation("left shift", 240L);
-        testOperation(">>", 15L);
-        testOperation("right shift", 15L);
-        testOperation("right shift unsigned", 15L);
-        testOperation(">>>", 15L);
+        int a = 0b0011_1100;
+        int b = 2;
+        testOperation("<<", 240L, a, b);
+        testOperation("left shift", 240L, a, b);
+        testOperation(">>", 15L, a, b);
+        testOperation("right shift", 15L, a, b);
+        testOperation("right shift unsigned", 15L, a, b);
+        testOperation(">>>", 15L, a, b);
     }
 }

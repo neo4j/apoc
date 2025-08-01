@@ -25,28 +25,32 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Arrays.asList;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
 import junit.framework.TestCase;
 import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.util.Arrays;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@SuppressWarnings("unchecked")
+@ImpermanentEnterpriseDbmsExtension()
 public class ConvertJsonTest {
     private static final Map<String, Object> EXPECTED_COLUMNS_MAP =
             Map.of("row", Map.of("poiType", "Governorate", "poi", 772L), "col2", Map.of("_id", "772col2"));
@@ -59,22 +63,12 @@ public class ConvertJsonTest {
             Arrays.asList(new Object[] {EXPECTED_COLUMNS_MAP, null, null, null});
     public static final List<String> EXPECTED_AS_PATH_LIST = List.of("$['columns']");
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Json.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
-    @After
-    public void clear() {
-        db.executeTransactionally("MATCH (n) DETACH DELETE n;");
     }
 
     @Test
@@ -304,7 +298,7 @@ public class ConvertJsonTest {
                 RETURN apoc.convert.toJson(rel) as value
                 """;
         try (final var tx = db.beginTx()) {
-            Assertions.assertThat(tx.execute(query).columnAs("value").stream())
+            assertThat(tx.execute(query).columnAs("value").stream())
                     .satisfiesExactly(
                             value -> assertThatJson(value)
                                     .isEqualTo(
@@ -339,7 +333,7 @@ public class ConvertJsonTest {
                 RETURN apoc.convert.toJson(p) AS value
                 """;
         try (final var tx = db.beginTx()) {
-            Assertions.assertThat(tx.execute(query).columnAs("value").stream())
+            assertThat(tx.execute(query).columnAs("value").stream())
                     .satisfiesExactly(
                             value -> assertThatJson(value)
                                     .isEqualTo(
@@ -418,7 +412,7 @@ public class ConvertJsonTest {
                 CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'}), q=(:Omega {alpha: 'beta'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'})
                 WITH collect(p) AS collectP, q RETURN apoc.convert.toJson(collectP+q) AS value""";
         try (final var tx = db.beginTx()) {
-            Assertions.assertThat(tx.execute(query).columnAs("value").stream())
+            assertThat(tx.execute(query).columnAs("value").stream())
                     .satisfiesExactly(
                             value -> assertThatJson(value)
                                     .isEqualTo(
@@ -873,20 +867,20 @@ public class ConvertJsonTest {
         testCall(db, call, (row) -> {
             Map root = (Map) row.get("value");
             assertEquals("Category", root.get("_type"));
-            assertFalse("Should not contain key `name`", root.containsKey("name"));
+            assertFalse(root.containsKey("name"));
             assertEquals("computer", root.get("surname"));
             List<Map> parts = (List<Map>) root.get("subcategory");
             assertEquals(1, parts.size());
             Map pcParts = parts.get(0);
             assertEquals("Category", pcParts.get("_type"));
-            assertFalse("Should not contain key `name`", pcParts.containsKey("name"));
-            assertFalse("Should not contain key `subcategory.id`", pcParts.containsKey("subcategory.id"));
+            assertFalse(pcParts.containsKey("name"));
+            assertFalse(pcParts.containsKey("subcategory.id"));
             assertEquals("gen", pcParts.get("subcategory.subCat"));
             List<Map> subParts = (List<Map>) pcParts.get("subcategory");
             Map cpu = subParts.get(0);
             assertEquals("Category", pcParts.get("_type"));
-            assertFalse("Should not contain key `name`", cpu.containsKey("name"));
-            assertFalse("Should not contain key `subcategory.id`", cpu.containsKey("subcategory.id"));
+            assertFalse(cpu.containsKey("name"));
+            assertFalse(cpu.containsKey("subcategory.id"));
             assertEquals("ex", cpu.get("subcategory.subCat"));
         });
     }
@@ -906,19 +900,19 @@ public class ConvertJsonTest {
             Map root = (Map) row.get("value");
             assertEquals("Category", root.get("_type"));
             assertEquals("PC", root.get("name"));
-            assertFalse("Should not contain key `surname`", root.containsKey("surname"));
+            assertFalse(root.containsKey("surname"));
             List<Map> parts = (List<Map>) root.get("subcategory");
             assertEquals(1, parts.size());
             Map pcParts = parts.get(0);
             assertEquals("Category", pcParts.get("_type"));
             assertEquals("Parts", pcParts.get("name"));
-            assertFalse("Should not contain key `subcategory.id`", pcParts.containsKey("subcategory.id"));
+            assertFalse(pcParts.containsKey("subcategory.id"));
             assertEquals("gen", pcParts.get("subcategory.subCat"));
             List<Map> subParts = (List<Map>) pcParts.get("subcategory");
             Map cpu = subParts.get(0);
             assertEquals("Category", pcParts.get("_type"));
             assertEquals("CPU", cpu.get("name"));
-            assertFalse("Should not contain key `subcategory.id`", cpu.containsKey("subcategory.id"));
+            assertFalse(cpu.containsKey("subcategory.id"));
             assertEquals("ex", cpu.get("subcategory.subCat"));
         });
     }

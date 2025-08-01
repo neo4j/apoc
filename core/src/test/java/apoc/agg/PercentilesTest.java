@@ -20,31 +20,26 @@ package apoc.agg;
 
 import static apoc.util.TestUtil.testCall;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class PercentilesTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    public void setUp() {
         TestUtil.registerProcedure(db, Percentiles.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test

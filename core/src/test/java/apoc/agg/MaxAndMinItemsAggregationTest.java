@@ -19,43 +19,30 @@
 package apoc.agg;
 
 import static apoc.util.TestUtil.testCall;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.list;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;
-import java.util.Arrays;
-import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
 public class MaxAndMinItemsAggregationTest {
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    public void setUp() {
         TestUtil.registerProcedure(db, MaxAndMinItems.class);
 
-        String movies = Util.readResourceFile("movies.cypher");
-        String bigbrother =
-                "MATCH (per:Person) MERGE (bb:BigBrother {name : 'Big Brother' })  MERGE (bb)-[:FOLLOWS]->(per)";
-        try (Transaction tx = db.beginTx()) {
-            tx.execute(movies);
-            tx.execute(bigbrother);
-            tx.commit();
-        }
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        db.shutdown();
+        db.executeTransactionally(Util.readResourceFile("movies.cypher"));
+        db.executeTransactionally(
+                "MATCH (p:Person) MERGE (b:BigBrother {name : 'Big Brother' })  MERGE (b)-[:FOLLOWS]->(p)");
     }
 
     @Test
@@ -66,8 +53,7 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN maxResult.value as value, maxResult.items as items",
                 (row) -> {
                     assertEquals(10L, row.get("value"));
-                    assertThat((List<Object>) row.get("items"), iterableWithSize(1));
-                    assertThat((List<Object>) row.get("items"), contains(10L));
+                    assertThat(row.get("items")).asInstanceOf(list(Long.class)).containsExactly(10L);
                 });
 
         testCall(
@@ -77,8 +63,7 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN maxResult.value as value, maxResult.items as items",
                 (row) -> {
                     assertEquals(10L, row.get("value"));
-                    assertThat((List<Object>) row.get("items"), iterableWithSize(1));
-                    assertThat((List<Object>) row.get("items"), contains(10L));
+                    assertThat(row.get("items")).asInstanceOf(list(Long.class)).containsExactly(10L);
                 });
     }
 
@@ -90,8 +75,7 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN minResult.value as value, minResult.items as items",
                 (row) -> {
                     assertEquals(0L, row.get("value"));
-                    assertThat((List<Object>) row.get("items"), iterableWithSize(1));
-                    assertThat((List<Object>) row.get("items"), contains(0L));
+                    assertThat(row.get("items")).asInstanceOf(list(Long.class)).containsExactly(0L);
                 });
 
         testCall(
@@ -101,8 +85,7 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN minResult.value as value, minResult.items as items",
                 (row) -> {
                     assertEquals(0L, row.get("value"));
-                    assertThat((List<Object>) row.get("items"), iterableWithSize(1));
-                    assertThat((List<Object>) row.get("items"), contains(0L));
+                    assertThat(row.get("items")).asInstanceOf(list(Long.class)).containsExactly(0L);
                 });
     }
 
@@ -125,9 +108,9 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN maxResult.value as born, [person in maxResult.items | person.name] as persons",
                 (row) -> {
                     assertEquals(1974L, row.get("born"));
-                    assertThat((List<Object>) row.get("persons"), iterableWithSize(2));
-                    assertThat(
-                            (List<Object>) row.get("persons"), containsInAnyOrder("Jerry O'Connell", "Christian Bale"));
+                    assertThat(row.get("persons"))
+                            .asInstanceOf(list(String.class))
+                            .containsExactlyInAnyOrder("Jerry O'Connell", "Christian Bale");
                 });
     }
 
@@ -151,10 +134,9 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN minResult.value as born, [person in minResult.items | person.name] as persons",
                 (row) -> {
                     assertEquals(1930L, row.get("born"));
-                    assertThat((List<Object>) row.get("persons"), iterableWithSize(3));
-                    assertThat(
-                            (List<Object>) row.get("persons"),
-                            containsInAnyOrder("Gene Hackman", "Richard Harris", "Clint Eastwood"));
+                    assertThat(row.get("persons"))
+                            .asInstanceOf(list(String.class))
+                            .containsExactlyInAnyOrder("Gene Hackman", "Richard Harris", "Clint Eastwood");
                 });
     }
 
@@ -178,10 +160,10 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN maxResult.value as born, [person in maxResult.items | person.name] as persons",
                 (row) -> {
                     assertEquals(1974L, row.get("born"));
-                    List<String> persons = (List<String>) row.get("persons");
-                    assertThat(persons.size(), equalTo(1));
-                    assertTrue(
-                            Arrays.asList("Jerry O'Connell", "Christian Bale").containsAll(persons));
+                    assertThat(row.get("persons"))
+                            .asInstanceOf(list(String.class))
+                            .singleElement()
+                            .isIn("Jerry O'Connell", "Christian Bale");
                 });
     }
 
@@ -204,11 +186,9 @@ public class MaxAndMinItemsAggregationTest {
                         + "WITH apoc.agg.minItems(p, p.born, 2) as minResult "
                         + "RETURN minResult.value as born, [person in minResult.items | person.name] as persons",
                 (row) -> {
-                    assertEquals(1930L, row.get("born"));
-                    List<String> persons = (List<String>) row.get("persons");
-                    assertThat(persons.size(), equalTo(2));
-                    assertTrue(Arrays.asList("Gene Hackman", "Richard Harris", "Clint Eastwood")
-                            .containsAll(persons));
+                    assertThat(row).containsEntry("born", 1930L).hasEntrySatisfying("persons", p -> assertThat(p)
+                            .asInstanceOf(list(String.class))
+                            .containsAnyOf("Gene Hackman", "Richard Harris", "Clint Eastwood"));
                 });
     }
 
@@ -220,7 +200,9 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN maxResult.value as value, [person in maxResult.items | person.name] as persons",
                 (row) -> {
                     assertEquals(null, row.get("value"));
-                    assertThat((List<Object>) row.get("persons"), iterableWithSize(0));
+                    assertThat(row.get("persons"))
+                            .asInstanceOf(list(Object.class))
+                            .isEmpty();
                 });
     }
 
@@ -232,7 +214,9 @@ public class MaxAndMinItemsAggregationTest {
                         + "RETURN minResult.value as value, [person in minResult.items | person.name] as persons",
                 (row) -> {
                     assertEquals(null, row.get("value"));
-                    assertThat((List<Object>) row.get("persons"), iterableWithSize(0));
+                    assertThat(row.get("persons"))
+                            .asInstanceOf(list(Object.class))
+                            .isEmpty();
                 });
     }
 }

@@ -20,7 +20,7 @@ package apoc.agg;
 
 import static apoc.util.TestUtil.testCall;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;

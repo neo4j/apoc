@@ -22,37 +22,28 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 29.05.16
- */
+@ImpermanentEnterpriseDbmsExtension()
 public class ConvertTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void initDb() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Convert.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
