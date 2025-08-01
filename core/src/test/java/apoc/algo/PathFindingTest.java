@@ -23,6 +23,7 @@ import static apoc.algo.AlgoUtil.assertAStarResult;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
@@ -134,9 +135,9 @@ public class PathFindingTest {
                 result -> {
                     assertThat(result.stream())
                             .containsExactly(
-                                    Map.of("weigth", 50.0, "pathLength", 2),
-                                    Map.of("weigth", 60.0, "pathLength", 3),
-                                    Map.of("weigth", 100.0, "pathLength", 1));
+                                    Map.of("weight", 50.0, "pathLength", 2L),
+                                    Map.of("weight", 60.0, "pathLength", 3L),
+                                    Map.of("weight", 100.0, "pathLength", 1L));
                 });
     }
 
@@ -148,16 +149,20 @@ public class PathFindingTest {
                 "MATCH (from:Loc{name:'A'}), (to:Loc{name:'D'}) "
                         + "CALL apoc.algo.allSimplePaths(from, to, 'ROAD>', 3) yield path "
                         + "RETURN path ORDER BY length(path)",
-                res -> {
-                    Path path;
-                    path = (Path) res.next().get("path");
-                    assertEquals(1, path.length());
-                    path = (Path) res.next().get("path");
-                    assertEquals(2, path.length());
-                    path = (Path) res.next().get("path");
-                    assertEquals(3, path.length());
-                    assertEquals(false, res.hasNext());
-                });
+                res -> assertThat(res.columnAs("path").stream())
+                        .satisfiesExactly(
+                                row -> assertThat(row)
+                                        .asInstanceOf(type(Path.class))
+                                        .extracting("length")
+                                        .isEqualTo(1),
+                                row -> assertThat(row)
+                                        .asInstanceOf(type(Path.class))
+                                        .extracting("length")
+                                        .isEqualTo(2),
+                                row -> assertThat(row)
+                                        .asInstanceOf(type(Path.class))
+                                        .extracting("length")
+                                        .isEqualTo(3)));
     }
 
     @Test

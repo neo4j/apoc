@@ -48,11 +48,6 @@ public class GraphAggregationTest {
         TestUtil.registerProcedure(db, Graph.class);
     }
 
-    @BeforeAll
-    public void setUp() {
-        TestUtil.registerProcedure(db, Graph.class);
-    }
-
     @Test
     public void testGraph() {
         db.executeTransactionally(

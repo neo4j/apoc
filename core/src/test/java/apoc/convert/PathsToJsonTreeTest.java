@@ -215,9 +215,12 @@ public class PathsToJsonTreeTest {
                  <--------
                    r2:R
         */
-        db.executeTransactionally("CREATE "
-                + "(a: A {nodeName: 'a'})<-[r1: R {relName: 'r'}]-(b: B {nodeName: 'b'}),"
-                + "(a)-[r2: R {relName: 'r'}]->(b)");
+        db.executeTransactionally(
+                """
+                CREATE (a: A {nodeName: 'a'})
+                CREATE (b: B {nodeName: 'b'})
+                CREATE (a)-[:R {relName: 'r'}]->(b)
+                CREATE (b)-[:R {relName: 'r'}]->(a)""");
 
         var query =
                 """
@@ -227,8 +230,6 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
             var expectedRow =
                     """
                     {   "tree":{

@@ -19,7 +19,7 @@
 package apoc.cypher;
 
 import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
@@ -34,7 +34,7 @@ import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.availability.AvailabilityListener;
