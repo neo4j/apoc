@@ -153,16 +153,13 @@ public class PathFindingTest {
                         .satisfiesExactly(
                                 row -> assertThat(row)
                                         .asInstanceOf(type(Path.class))
-                                        .extracting("length")
-                                        .isEqualTo(1),
+                                        .satisfies(p -> assertThat(p.length()).isEqualTo(1)),
                                 row -> assertThat(row)
                                         .asInstanceOf(type(Path.class))
-                                        .extracting("length")
-                                        .isEqualTo(2),
+                                        .satisfies(p -> assertThat(p.length()).isEqualTo(2)),
                                 row -> assertThat(row)
                                         .asInstanceOf(type(Path.class))
-                                        .extracting("length")
-                                        .isEqualTo(3)));
+                                        .satisfies(p -> assertThat(p.length()).isEqualTo(3))));
     }
 
     @Test
