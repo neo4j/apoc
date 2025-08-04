@@ -24,22 +24,39 @@ import static apoc.util.Util.map;
 import static apoc.util.collection.Iterables.asSet;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.convert.Json;
 import apoc.util.TestUtil;
-import java.util.*;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class CollTest {
+
+    @Inject
+    GraphDatabaseService db;
+
+    @BeforeAll
+    void beforeAll() {
+        TestUtil.registerProcedure(db, Coll.class, Json.class);
+    }
+
     // query that procedures a list,
     // with both entity types, via collect(..), and hardcoded one
     private static final String QUERY_WITH_MIXED_TYPES =
@@ -57,24 +74,6 @@ public class CollTest {
 
     public static final Map<String, String> MAP_WITH_ALPHA = Map.of("something", "alpha");
     public static final Map<String, String> MAP_WITH_BETA = Map.of("something", "beta");
-
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void setUp() {
-        TestUtil.registerProcedure(db, Coll.class, Json.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
-    @After
-    public void after() {
-        db.executeTransactionally("MATCH (n) DETACH DELETE n");
-    }
 
     @Test
     public void testRunningTotal() {
@@ -1026,7 +1025,7 @@ public class CollTest {
             List<Map<String, Object>> result = (List<Map<String, Object>>) row.get("value");
             assertEquals(3, result.size());
 
-            Set<Long> keys = new HashSet<>(3);
+            final var keys = new HashSet<>(3);
 
             for (Map<String, Object> map : result) {
                 Object item = map.get("item");

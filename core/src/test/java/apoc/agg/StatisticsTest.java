@@ -20,30 +20,24 @@ package apoc.agg;
 
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.map;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class StatisticsTest {
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    public void setUp() {
         TestUtil.registerProcedure(db, Statistics.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test

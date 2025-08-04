@@ -20,37 +20,35 @@ package apoc.convert;
 
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = true, configurationCallback = "configure")
 public class PathsToJsonTreeTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, Json.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
-    @After
-    public void clear() {
-        db.executeTransactionally("MATCH (n) DETACH DELETE n;");
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.db_format, "aligned"); // Assertions depends on sequential ids
     }
 
     @Test
@@ -58,7 +56,8 @@ public class PathsToJsonTreeTest {
         /*            r:R
               a:A --------> b:B
         */
-        db.executeTransactionally("CREATE (a: A {nodeName: 'a'})-[r: R {relName: 'r'}]->(b: B {nodeName: 'b'})");
+        db.executeTransactionally(
+                "CREATE (a: A {nodeName: 'a'}) CREATE (b: B {nodeName: 'b'}) CREATE (a)-[r: R {relName: 'r'}]->(b)");
 
         var query =
                 """
@@ -216,9 +215,12 @@ public class PathsToJsonTreeTest {
                  <--------
                    r2:R
         */
-        db.executeTransactionally("CREATE "
-                + "(a: A {nodeName: 'a'})<-[r1: R {relName: 'r'}]-(b: B {nodeName: 'b'}),"
-                + "(a)-[r2: R {relName: 'r'}]->(b)");
+        db.executeTransactionally(
+                """
+                CREATE (a: A {nodeName: 'a'})
+                CREATE (b: B {nodeName: 'b'})
+                CREATE (a)-[:R {relName: 'r'}]->(b)
+                CREATE (b)-[:R {relName: 'r'}]->(a)""");
 
         var query =
                 """
@@ -228,8 +230,6 @@ public class PathsToJsonTreeTest {
                 RETURN tree""";
 
         try (Transaction tx = db.beginTx()) {
-            Result result = tx.execute(query);
-            var rows = result.stream().collect(Collectors.toList());
             var expectedRow =
                     """
                     {   "tree":{
