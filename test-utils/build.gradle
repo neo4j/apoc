@@ -30,11 +30,11 @@ dependencies {
     api group: 'org.neo4j.community', name: 'it-test-support', version: neo4jVersionEffective // , classifier: "tests"
     api group: 'org.neo4j', name: 'log-test-utils', version: neo4jVersionEffective // , classifier: "tests"
     api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '5.18.0'
-    api group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.4.0', withoutServers.andThen(withoutLoggers)
+    api group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.4.1', withoutServers.andThen(withoutLoggers)
     // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
-    api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.0', withoutServers.andThen(withoutLoggers)
-    api group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: '3.4.0', withoutServers.andThen(withoutLoggers)
+    api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.1', withoutServers.andThen(withoutLoggers)
+    api group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: '3.4.1', withoutServers.andThen(withoutLoggers)
     api group: 'org.testcontainers', name: 'testcontainers', version: testContainersVersion
     api group: 'org.testcontainers', name: 'neo4j', version: testContainersVersion
     api group: 'org.testcontainers', name: 'elasticsearch', version: testContainersVersion
