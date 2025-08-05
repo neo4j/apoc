@@ -136,6 +136,37 @@ public class PeriodicTest {
     }
 
     @Test
+    public void testRepeatWithErroringQueryProcedure() {
+        String logVal = "continuesAfterError";
+        String query =
+                """
+                        CYPHER 25
+                        CALL apoc.periodic.repeat(
+                            'repeat-with-error',
+                            'WITH COUNT { MATCH (n:ERROR) } AS c WITH 1/c AS potentialError CALL apoc.mockLog($logVal)',
+                            1,
+                            {params: {logVal: $logVal}, cancelOnError: false}
+                        )
+                """;
+
+        // execute a periodic procedure with `CALL apoc.mockLog(...)` as an inner procedure
+        // This will start by erroring as there are no nodes with :ERROR so 1/c will be a division by zero
+        db.executeTransactionally(query, Map.of("logVal", logVal));
+        // Sleep 2 seconds, then add a node, then the log should be added after
+        db.executeTransactionally("CALL apoc.util.sleep(1000) CREATE (:ERROR)");
+
+        // check custom log in logProvider
+        assertEventually(
+                () -> {
+                    String serialize = logProvider.serialize();
+                    return serialize.contains(logVal);
+                },
+                (val) -> val,
+                5L,
+                TimeUnit.SECONDS);
+    }
+
+    @Test
     public void testRepeatWithVoidProcedureAndReturn() {
         String logVal = "repeatVoidWithReturn";
         String query =
