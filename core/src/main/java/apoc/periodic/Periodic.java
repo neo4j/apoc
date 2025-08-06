@@ -44,6 +44,8 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
+import org.neo4j.kernel.api.QueryLanguage;
+import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.*;
@@ -259,8 +261,9 @@ public class Periodic {
     }
 
     @Procedure(name = "apoc.periodic.repeat", mode = Mode.WRITE)
-    @Description("Runs a repeatedly called background job.\n" + "To stop this procedure, use `apoc.periodic.cancel`.")
-    public Stream<JobInfo> repeat(
+    @Description("Runs a repeatedly called background job. To stop this procedure, use `apoc.periodic.cancel`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Stream<JobInfo> repeatCypher5(
             @Name(value = "name", description = "The name of the job.") String name,
             @Name(value = "statement", description = "The Cypher statement to run.") String statement,
             @Name(value = "rate", description = "The delay in seconds to wait between each job execution.") long rate,
@@ -269,7 +272,28 @@ public class Periodic {
         validateQuery(statement);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
         final var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
-        JobInfo info = schedule(name, () -> db.executeTransactionally(query, params, CONSUME_VOID), 0, rate);
+        JobInfo info = schedule(name, () -> db.executeTransactionally(query, params, CONSUME_VOID), 0, rate, true);
+        return Stream.of(info);
+    }
+
+    @Procedure(name = "apoc.periodic.repeat", mode = Mode.WRITE)
+    @Description("Runs a repeatedly called background job. To stop this procedure, use `apoc.periodic.cancel`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+    public Stream<JobInfo> repeat(
+            @Name(value = "name", description = "The name of the job.") String name,
+            @Name(value = "statement", description = "The Cypher statement to run.") String statement,
+            @Name(value = "rate", description = "The delay in seconds to wait between each job execution.") long rate,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description = "{ params = {} :: MAP, cancelOnError = true :: BOOLEAN }")
+                    Map<String, Object> config) {
+        validateQuery(statement);
+        Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
+        Boolean cancelOnError = (Boolean) config.getOrDefault("cancelOnError", true);
+        final var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
+        JobInfo info =
+                schedule(name, () -> db.executeTransactionally(query, params, CONSUME_VOID), 0, rate, cancelOnError);
         return Stream.of(info);
     }
 
@@ -304,14 +328,14 @@ public class Periodic {
     /**
      * Call from a procedure that gets a <code>@Context GraphDatbaseAPI db;</code> injected and provide that db to the runnable.
      */
-    public JobInfo schedule(String name, Runnable task, long delay, long repeat) {
+    public JobInfo schedule(String name, Runnable task, long delay, long repeat, boolean cancelOnError) {
         final var info = new JobInfo(name, delay, repeat);
 
         var future = pools.getJobList().remove(info);
         if (future != null) future.cancel(false);
 
         final var newFuture = pools.getScheduledExecutorService()
-                .scheduleWithFixedDelay(wrapTask(name, task, log), delay, repeat, TimeUnit.SECONDS);
+                .scheduleWithFixedDelay(wrapTask(name, task, log, cancelOnError), delay, repeat, TimeUnit.SECONDS);
         future = pools.getJobList().put(info, newFuture);
         if (future != null) future.cancel(false);
 

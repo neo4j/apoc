@@ -347,16 +347,27 @@ public class PeriodicUtils {
     }
 
     public static Runnable wrapTask(String name, Runnable task, Log log) {
+        return wrapTask(name, task, log, true);
+    }
+
+    public static Runnable wrapTask(String name, Runnable task, Log log, Boolean cancelOnError) {
         return () -> {
             log.debug("Executing task " + name);
             try {
                 task.run();
             } catch (Exception e) {
-                log.error(
-                        "Error while executing task " + name
-                                + " because of the following exception (the task will be killed):",
-                        e);
-                throw e;
+                if (cancelOnError) {
+                    log.error(
+                            "Error while executing task " + name
+                                    + " because of the following exception (the task will be killed):",
+                            e);
+                    throw e;
+                } else {
+                    log.warn(
+                            "Error while executing task " + name
+                                    + " because of the following exception (the task will continue to be run as requested):",
+                            e);
+                }
             }
             log.debug("Executed task " + name);
         };
