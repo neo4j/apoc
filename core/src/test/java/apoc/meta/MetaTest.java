@@ -633,6 +633,58 @@ public class MetaTest {
     }
 
     @Test
+    public void testOutgoingRelsAreCorrectMetaSchema() {
+        db.executeTransactionally("CREATE (:A)-[:HAS]->(:B), (:A)<-[:HAS]-(:B), (:A)<-[:HAS]-(:C), (:D)<-[:HAS]-(:E)");
+
+        testCall(db, "CALL apoc.meta.schema", (row) -> {
+            Map<String, Object> o = (Map<String, Object>) row.get("value");
+            // HAS: count 3, no props, type relationship
+            // A: count 3. no props, relationship out as B
+            // B: count 2. no props, relationship out as A
+            // C: count 1. no props, relationship out as A
+            // D: count 1. no props, relationship in as E
+            // E: count 1. no props, relationship out as D
+            Map<String, Object> relHas = (Map<String, Object>) o.get("HAS");
+            Map<String, Object> nodeA = (Map<String, Object>) o.get("A");
+            Map<String, Object> nodeB = (Map<String, Object>) o.get("B");
+            Map<String, Object> nodeC = (Map<String, Object>) o.get("C");
+            Map<String, Object> nodeD = (Map<String, Object>) o.get("D");
+            Map<String, Object> nodeE = (Map<String, Object>) o.get("E");
+            // Check counts
+            assertEquals(4L, relHas.get("count"));
+            assertEquals(3L, nodeA.get("count"));
+            assertEquals(2L, nodeB.get("count"));
+            assertEquals(1L, nodeC.get("count"));
+            assertEquals(1L, nodeD.get("count"));
+            assertEquals(1L, nodeE.get("count"));
+
+            Map<String, Object> nodeARels =
+                    (Map<String, Object>) ((Map<String, Object>) nodeA.get("relationships")).get("HAS");
+            Map<String, Object> nodeBRels =
+                    (Map<String, Object>) ((Map<String, Object>) nodeB.get("relationships")).get("HAS");
+            Map<String, Object> nodeCRels =
+                    (Map<String, Object>) ((Map<String, Object>) nodeC.get("relationships")).get("HAS");
+            Map<String, Object> nodeDRels =
+                    (Map<String, Object>) ((Map<String, Object>) nodeD.get("relationships")).get("HAS");
+            Map<String, Object> nodeERels =
+                    (Map<String, Object>) ((Map<String, Object>) nodeE.get("relationships")).get("HAS");
+            // Check directions
+            assertEquals("out", nodeARels.get("direction"));
+            assertEquals("out", nodeBRels.get("direction"));
+            assertEquals("out", nodeCRels.get("direction"));
+            assertEquals("in", nodeDRels.get("direction"));
+            assertEquals("out", nodeERels.get("direction"));
+
+            // Check end nodes
+            assertEquals(List.of("B"), nodeARels.get("labels"));
+            assertEquals(List.of("A"), nodeBRels.get("labels"));
+            assertEquals(List.of("A"), nodeCRels.get("labels"));
+            assertEquals(List.of("E"), nodeDRels.get("labels"));
+            assertEquals(List.of("D"), nodeERels.get("labels"));
+        });
+    }
+
+    @Test
     public void testMetaSchema() {
         db.executeTransactionally("create index for (n:Movie) on (n.title)");
         db.executeTransactionally("create constraint for (p:Person) require p.name is unique");
