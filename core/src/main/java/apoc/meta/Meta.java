@@ -893,8 +893,14 @@ public class Meta {
                                     (Map<String, Object>) relationshipNameToRelationshipMap.get(relationshipName);
                             Map<String, Object> existingRel =
                                     (Map<String, Object>) actualRelationshipsList.get(relationshipName);
-                            List<String> labels = (List<String>) existingRel.get("labels");
-                            labels.addAll((List<String>) relToAdd.get("labels"));
+                            // If the map is showing outgoing rels, do not add incoming ones. The incoming ones for
+                            // that node are meant to be inferred by the user (this is a side effect of having the
+                            // type name as the key, it only gives one option of direction)
+                            if (relToAdd.getOrDefault("direction", "")
+                                    .equals(existingRel.getOrDefault("direction", ""))) {
+                                List<String> labels = (List<String>) existingRel.get("labels");
+                                labels.addAll((List<String>) relToAdd.get("labels"));
+                            }
                         } else
                             actualRelationshipsList.put(
                                     relationshipName, relationshipNameToRelationshipMap.get(relationshipName));
