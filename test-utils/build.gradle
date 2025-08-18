@@ -44,7 +44,16 @@ dependencies {
     api group: 'org.testcontainers', name: 'cassandra', version: testContainersVersion
     api group: 'org.testcontainers', name: 'localstack', version: testContainersVersion
     api group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion
-    api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion
+
+    def arrowExclusions = {
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+        exclude group: 'io.netty', module: 'netty-common'
+        exclude group: 'io.netty', module: 'netty-buffer'
+    }
+    
+    api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
 
     implementation project(":common")
     implementation group: 'org.neo4j', name: 'neo4j-common', version: neo4jVersionEffective, classifier: "tests"
