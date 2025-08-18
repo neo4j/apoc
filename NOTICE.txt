@@ -199,58 +199,58 @@ Apache-2.0
   lucene-queryparser-9.11.1.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
-  netty-all-4.2.2.Final.jar
-  netty-buffer-4.2.2.Final.jar
-  netty-codec-4.2.2.Final.jar
-  netty-codec-base-4.2.2.Final.jar
-  netty-codec-classes-quic-4.2.2.Final.jar
-  netty-codec-compression-4.2.2.Final.jar
-  netty-codec-dns-4.2.2.Final.jar
-  netty-codec-haproxy-4.2.2.Final.jar
-  netty-codec-http-4.2.2.Final.jar
-  netty-codec-http2-4.2.2.Final.jar
-  netty-codec-http3-4.2.2.Final.jar
-  netty-codec-marshalling-4.2.2.Final.jar
-  netty-codec-memcache-4.2.2.Final.jar
-  netty-codec-mqtt-4.2.2.Final.jar
-  netty-codec-native-quic-4.2.2.Final-linux-aarch_64.jar
-  netty-codec-native-quic-4.2.2.Final-linux-x86_64.jar
-  netty-codec-native-quic-4.2.2.Final-osx-aarch_64.jar
-  netty-codec-native-quic-4.2.2.Final-osx-x86_64.jar
-  netty-codec-native-quic-4.2.2.Final-windows-x86_64.jar
-  netty-codec-protobuf-4.2.2.Final.jar
-  netty-codec-redis-4.2.2.Final.jar
-  netty-codec-smtp-4.2.2.Final.jar
-  netty-codec-socks-4.2.2.Final.jar
-  netty-codec-stomp-4.2.2.Final.jar
-  netty-codec-xml-4.2.2.Final.jar
-  netty-common-4.2.2.Final.jar
-  netty-handler-4.2.2.Final.jar
-  netty-handler-proxy-4.2.2.Final.jar
-  netty-handler-ssl-ocsp-4.2.2.Final.jar
-  netty-resolver-4.2.2.Final.jar
-  netty-resolver-dns-4.2.2.Final.jar
-  netty-resolver-dns-classes-macos-4.2.2.Final.jar
-  netty-resolver-dns-native-macos-4.2.2.Final-osx-aarch_64.jar
-  netty-resolver-dns-native-macos-4.2.2.Final-osx-x86_64.jar
+  netty-all-4.2.4.Final.jar
+  netty-buffer-4.2.4.Final.jar
+  netty-codec-4.2.4.Final.jar
+  netty-codec-base-4.2.4.Final.jar
+  netty-codec-classes-quic-4.2.4.Final.jar
+  netty-codec-compression-4.2.4.Final.jar
+  netty-codec-dns-4.2.4.Final.jar
+  netty-codec-haproxy-4.2.4.Final.jar
+  netty-codec-http-4.2.4.Final.jar
+  netty-codec-http2-4.2.4.Final.jar
+  netty-codec-http3-4.2.4.Final.jar
+  netty-codec-marshalling-4.2.4.Final.jar
+  netty-codec-memcache-4.2.4.Final.jar
+  netty-codec-mqtt-4.2.4.Final.jar
+  netty-codec-native-quic-4.2.4.Final-linux-aarch_64.jar
+  netty-codec-native-quic-4.2.4.Final-linux-x86_64.jar
+  netty-codec-native-quic-4.2.4.Final-osx-aarch_64.jar
+  netty-codec-native-quic-4.2.4.Final-osx-x86_64.jar
+  netty-codec-native-quic-4.2.4.Final-windows-x86_64.jar
+  netty-codec-protobuf-4.2.4.Final.jar
+  netty-codec-redis-4.2.4.Final.jar
+  netty-codec-smtp-4.2.4.Final.jar
+  netty-codec-socks-4.2.4.Final.jar
+  netty-codec-stomp-4.2.4.Final.jar
+  netty-codec-xml-4.2.4.Final.jar
+  netty-common-4.2.4.Final.jar
+  netty-handler-4.2.4.Final.jar
+  netty-handler-proxy-4.2.4.Final.jar
+  netty-handler-ssl-ocsp-4.2.4.Final.jar
+  netty-resolver-4.2.4.Final.jar
+  netty-resolver-dns-4.2.4.Final.jar
+  netty-resolver-dns-classes-macos-4.2.4.Final.jar
+  netty-resolver-dns-native-macos-4.2.4.Final-osx-aarch_64.jar
+  netty-resolver-dns-native-macos-4.2.4.Final-osx-x86_64.jar
   netty-tcnative-classes-2.0.72.Final.jar
-  netty-transport-4.2.2.Final.jar
-  netty-transport-classes-epoll-4.2.2.Final.jar
-  netty-transport-classes-io_uring-4.2.2.Final.jar
-  netty-transport-classes-kqueue-4.2.2.Final.jar
-  netty-transport-native-epoll-4.2.2.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.2.2.Final-linux-riscv64.jar
-  netty-transport-native-epoll-4.2.2.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.2.2.Final.jar
-  netty-transport-native-io_uring-4.2.2.Final-linux-aarch_64.jar
-  netty-transport-native-io_uring-4.2.2.Final-linux-riscv64.jar
-  netty-transport-native-io_uring-4.2.2.Final-linux-x86_64.jar
-  netty-transport-native-kqueue-4.2.2.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.2.2.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.2.2.Final.jar
-  netty-transport-rxtx-4.2.2.Final.jar
-  netty-transport-sctp-4.2.2.Final.jar
-  netty-transport-udt-4.2.2.Final.jar
+  netty-transport-4.2.4.Final.jar
+  netty-transport-classes-epoll-4.2.4.Final.jar
+  netty-transport-classes-io_uring-4.2.4.Final.jar
+  netty-transport-classes-kqueue-4.2.4.Final.jar
+  netty-transport-native-epoll-4.2.4.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.2.4.Final-linux-riscv64.jar
+  netty-transport-native-epoll-4.2.4.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.2.4.Final.jar
+  netty-transport-native-io_uring-4.2.4.Final-linux-aarch_64.jar
+  netty-transport-native-io_uring-4.2.4.Final-linux-riscv64.jar
+  netty-transport-native-io_uring-4.2.4.Final-linux-x86_64.jar
+  netty-transport-native-kqueue-4.2.4.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.2.4.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.2.4.Final.jar
+  netty-transport-rxtx-4.2.4.Final.jar
+  netty-transport-sctp-4.2.4.Final.jar
+  netty-transport-udt-4.2.4.Final.jar
   nimbus-jose-jwt-9.37.2.jar
   objenesis-3.3.jar
   opencsv-5.7.1.jar
@@ -265,7 +265,7 @@ Apache-2.0
   perfmark-api-0.27.0.jar
   picocli-4.7.7.jar
   proto-google-common-protos-2.51.0.jar
-  reactor-core-3.8.0-M4.jar
+  reactor-core-3.6.18.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.16.jar
