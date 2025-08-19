@@ -148,7 +148,7 @@ subprojects {
     configurations.configureEach {
         resolutionStrategy.eachDependency { details ->
             if (details.requested.group == 'io.netty' && !details.requested.name.contains('netty-tcnative') && !details.requested.name.equals('netty')) {
-                details.useVersion '4.1.101.Final' // Use same Netty version as server
+                details.useVersion '4.1.105.Final' // Use same Netty version as server
             }
         }
     }
@@ -172,5 +172,5 @@ ext {
     publicDir = "${project.rootDir}"
     neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.26.11"
     testContainersVersion = '1.20.2'
-    apacheArrowVersion = '15.0.0'
+    apacheArrowVersion = '17.0.0'
 }

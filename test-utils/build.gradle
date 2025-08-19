@@ -29,7 +29,7 @@ dependencies {
     api group: 'org.hamcrest', name: 'hamcrest-library', version: '2.2'
     api group: 'org.neo4j.community', name: 'it-test-support', version: neo4jVersionEffective // , classifier: "tests"
     api group: 'org.neo4j', name: 'log-test-utils', version: neo4jVersionEffective // , classifier: "tests"
-    api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '5.18.0'
+    api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '5.28.2'
     api group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.4.1', withoutServers.andThen(withoutLoggers)
     // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
@@ -44,7 +44,16 @@ dependencies {
     api group: 'org.testcontainers', name: 'cassandra', version: testContainersVersion
     api group: 'org.testcontainers', name: 'localstack', version: testContainersVersion
     api group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion
-    api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion
+
+    def arrowExclusions = {
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
+        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+        exclude group: 'io.netty', module: 'netty-common'
+        exclude group: 'io.netty', module: 'netty-buffer'
+    }
+    
+    api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
 
     implementation project(":common")
     implementation group: 'org.neo4j', name: 'neo4j-common', version: neo4jVersionEffective, classifier: "tests"
