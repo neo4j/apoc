@@ -1,0 +1,10 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities
+version: v1.25.0
+exclude:
+ global:
+   - processor/**
+   - test-utils/**
+   - it/**
+   - common/src/test/**
+   - core/src/test/**
+   - '**/*Test.java'
