@@ -176,8 +176,7 @@ public class StartupTest {
                 // The apoc.load.arrow procedures requires the user to provide their own dependencies
                 // This is done through Neo4j in enterprise but not in community
                 if (version == Neo4jVersion.COMMUNITY) {
-                    expectedCypher5Procedures = expectedCypher5Procedures
-                            .stream()
+                    expectedCypher5Procedures = expectedCypher5Procedures.stream()
                             .filter(p -> !p.contains("apoc.load.arrow"))
                             .toList();
                 }
