@@ -101,7 +101,7 @@ public class StartupTest {
             // if Testcontainers wasn't able to retrieve the docker image we ignore the test
             if (TestContainerUtil.isDockerImageAvailable(ex)) {
                 ex.printStackTrace();
-                fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+                 fail("Should not have thrown exception when trying to start Neo4j: " + ex);
             } else if (!TestUtil.isRunningInCI()) {
                 fail("The docker image " + dockerImageForNeo4j(version)
                         + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
