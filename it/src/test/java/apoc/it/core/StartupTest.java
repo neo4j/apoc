@@ -111,7 +111,7 @@ public class StartupTest {
     }
 
     @Test
-    public void check_cypherInitializer_waits_for_systemDb_to_be_available() {
+    public void check_cypherIngitializer_waits_for_systemDb_to_be_available() {
         // we check that with apoc-core jar and all extra-dependencies jars every procedure/function is detected
         assumeTrue(version == Neo4jVersion.ENTERPRISE);
         Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
