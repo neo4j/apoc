@@ -49,7 +49,7 @@ Apache-2.0
   arrow-vector-18.3.0.jar
   assertj-core-3.27.3.jar
   audience-annotations-0.12.0.jar
-  avro-1.9.2.jar
+  avro-1.11.4.jar
   awaitility-4.3.0.jar
   aws-java-sdk-core-1.12.643.jar
   aws-java-sdk-kms-1.12.643.jar
@@ -57,24 +57,23 @@ Apache-2.0
   byte-buddy-1.17.5.jar
   byte-buddy-agent-1.17.5.jar
   cache-api-1.1.1.jar
-  caffeine-3.2.1.jar
+  caffeine-3.2.2.jar
   cassandra-driver-core-3.10.0.jar
-  commons-beanutils-1.9.4.jar
-  commons-cli-1.5.0.jar
-  commons-codec-1.18.0.jar
-  commons-collections-3.2.2.jar
-  commons-compress-1.27.1.jar
+  commons-cli-1.9.0.jar
+  commons-codec-1.19.0.jar
+  commons-collections4-4.4.jar
+  commons-compress-1.28.0.jar
   commons-configuration2-2.12.0.jar
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
-  commons-io-2.19.0.jar
+  commons-io-2.20.0.jar
   commons-lang-2.6.jar
   commons-lang3-3.18.0.jar
   commons-logging-1.3.5.jar
   commons-math3-3.6.1.jar
   commons-net-3.9.0.jar
   commons-text-1.10.0.jar
-  commons-text-1.13.1.jar
+  commons-text-1.14.0.jar
   curator-client-5.2.0.jar
   curator-framework-5.2.0.jar
   curator-recipes-5.2.0.jar
@@ -88,88 +87,88 @@ Apache-2.0
   flight-core-18.3.0.jar
   fst-2.50.jar
   gradle-tooling-api-7.3.jar
-  grpc-api-1.73.0.jar
-  grpc-context-1.73.0.jar
-  grpc-core-1.73.0.jar
-  grpc-netty-1.73.0.jar
-  grpc-protobuf-1.73.0.jar
-  grpc-protobuf-lite-1.73.0.jar
-  grpc-stub-1.73.0.jar
-  grpc-util-1.73.0.jar
+  grpc-api-1.74.0.jar
+  grpc-context-1.74.0.jar
+  grpc-core-1.74.0.jar
+  grpc-netty-1.74.0.jar
+  grpc-protobuf-1.74.0.jar
+  grpc-protobuf-lite-1.74.0.jar
+  grpc-stub-1.74.0.jar
+  grpc-util-1.74.0.jar
   gson-2.11.0.jar
   guava-33.4.8-jre.jar
   guice-4.2.3.jar
   guice-servlet-4.2.3.jar
-  hadoop-annotations-3.4.1.jar
-  hadoop-auth-3.4.1.jar
-  hadoop-common-3.4.1-tests.jar
-  hadoop-common-3.4.1.jar
-  hadoop-hdfs-3.4.1-tests.jar
-  hadoop-hdfs-3.4.1.jar
-  hadoop-hdfs-client-3.4.1.jar
-  hadoop-mapreduce-client-app-3.4.1.jar
-  hadoop-mapreduce-client-common-3.4.1.jar
-  hadoop-mapreduce-client-core-3.4.1.jar
-  hadoop-mapreduce-client-hs-3.4.1.jar
-  hadoop-mapreduce-client-jobclient-3.4.1-tests.jar
-  hadoop-mapreduce-client-jobclient-3.4.1.jar
-  hadoop-mapreduce-client-shuffle-3.4.1.jar
-  hadoop-minicluster-3.4.1.jar
-  hadoop-registry-3.4.1.jar
-  hadoop-shaded-guava-1.3.0.jar
-  hadoop-shaded-protobuf_3_25-1.3.0.jar
-  hadoop-yarn-api-3.4.1.jar
-  hadoop-yarn-client-3.4.1.jar
-  hadoop-yarn-common-3.4.1.jar
-  hadoop-yarn-server-applicationhistoryservice-3.4.1.jar
-  hadoop-yarn-server-common-3.4.1.jar
-  hadoop-yarn-server-nodemanager-3.4.1.jar
-  hadoop-yarn-server-resourcemanager-3.4.1.jar
-  hadoop-yarn-server-tests-3.4.1-tests.jar
-  hadoop-yarn-server-timelineservice-3.4.1.jar
-  hadoop-yarn-server-web-proxy-3.4.1.jar
+  hadoop-annotations-3.4.2.jar
+  hadoop-auth-3.4.2.jar
+  hadoop-common-3.4.2-tests.jar
+  hadoop-common-3.4.2.jar
+  hadoop-hdfs-3.4.2-tests.jar
+  hadoop-hdfs-3.4.2.jar
+  hadoop-hdfs-client-3.4.2.jar
+  hadoop-mapreduce-client-app-3.4.2.jar
+  hadoop-mapreduce-client-common-3.4.2.jar
+  hadoop-mapreduce-client-core-3.4.2.jar
+  hadoop-mapreduce-client-hs-3.4.2.jar
+  hadoop-mapreduce-client-jobclient-3.4.2-tests.jar
+  hadoop-mapreduce-client-jobclient-3.4.2.jar
+  hadoop-mapreduce-client-shuffle-3.4.2.jar
+  hadoop-minicluster-3.4.2.jar
+  hadoop-registry-3.4.2.jar
+  hadoop-shaded-guava-1.4.0.jar
+  hadoop-shaded-protobuf_3_25-1.4.0.jar
+  hadoop-yarn-api-3.4.2.jar
+  hadoop-yarn-client-3.4.2.jar
+  hadoop-yarn-common-3.4.2.jar
+  hadoop-yarn-server-applicationhistoryservice-3.4.2.jar
+  hadoop-yarn-server-common-3.4.2.jar
+  hadoop-yarn-server-nodemanager-3.4.2.jar
+  hadoop-yarn-server-resourcemanager-3.4.2.jar
+  hadoop-yarn-server-tests-3.4.2-tests.jar
+  hadoop-yarn-server-timelineservice-3.4.2.jar
+  hadoop-yarn-server-web-proxy-3.4.2.jar
   httpclient-4.5.13.jar
   httpcore-4.4.13.jar
   ipaddress-5.5.1.jar
   j2objc-annotations-3.0.0.jar
   jPowerShell-3.0.jar
   jProcesses-1.6.5.jar
-  jackson-annotations-2.19.1.jar
-  jackson-core-2.19.1.jar
-  jackson-databind-2.19.1.jar
-  jackson-dataformat-cbor-2.19.1.jar
-  jackson-dataformat-csv-2.19.1.jar
-  jackson-datatype-jsr310-2.19.1.jar
-  jackson-jaxrs-base-2.19.1.jar
-  jackson-jaxrs-json-provider-2.19.1.jar
-  jackson-module-jaxb-annotations-2.19.1.jar
+  jackson-annotations-2.19.2.jar
+  jackson-core-2.19.2.jar
+  jackson-databind-2.19.2.jar
+  jackson-dataformat-cbor-2.19.2.jar
+  jackson-dataformat-csv-2.19.2.jar
+  jackson-datatype-jsr310-2.19.2.jar
+  jackson-jaxrs-base-2.19.2.jar
+  jackson-jaxrs-json-provider-2.19.2.jar
+  jackson-module-jaxb-annotations-2.19.2.jar
   jakarta.validation-api-2.0.2.jar
   javapoet-1.13.0.jar
   javassist-3.30.2-GA.jar
-  javax-websocket-client-impl-9.4.53.v20231009.jar
-  javax-websocket-server-impl-9.4.53.v20231009.jar
+  javax-websocket-client-impl-9.4.57.v20241219.jar
+  javax-websocket-server-impl-9.4.57.v20241219.jar
   javax.inject-1.jar
   jcip-annotations-1.0-1.jar
   jctools-core-4.0.5.jar
   jettison-1.5.4.jar
-  jetty-alpn-java-server-12.0.17.jar
-  jetty-alpn-server-12.0.17.jar
-  jetty-ee-12.0.17.jar
-  jetty-ee8-nested-12.0.17.jar
-  jetty-ee8-security-12.0.17.jar
-  jetty-ee8-servlet-12.0.17.jar
-  jetty-ee8-webapp-12.0.17.jar
-  jetty-http-12.0.17.jar
-  jetty-http2-common-12.0.17.jar
-  jetty-http2-hpack-12.0.17.jar
-  jetty-http2-server-12.0.17.jar
-  jetty-io-12.0.17.jar
-  jetty-security-12.0.17.jar
-  jetty-server-12.0.17.jar
+  jetty-alpn-java-server-12.0.25.jar
+  jetty-alpn-server-12.0.25.jar
+  jetty-ee-12.0.25.jar
+  jetty-ee8-nested-12.0.25.jar
+  jetty-ee8-security-12.0.25.jar
+  jetty-ee8-servlet-12.0.25.jar
+  jetty-ee8-webapp-12.0.25.jar
+  jetty-http-12.0.25.jar
+  jetty-http2-common-12.0.25.jar
+  jetty-http2-hpack-12.0.25.jar
+  jetty-http2-server-12.0.25.jar
+  jetty-io-12.0.25.jar
+  jetty-security-12.0.25.jar
+  jetty-server-12.0.25.jar
   jetty-servlet-api-4.0.6.jar
-  jetty-session-12.0.17.jar
-  jetty-util-12.0.17.jar
-  jetty-xml-12.0.17.jar
+  jetty-session-12.0.25.jar
+  jetty-util-12.0.25.jar
+  jetty-xml-12.0.25.jar
   jffi-1.2.16-native.jar
   jffi-1.2.16.jar
   jmespath-java-1.12.643.jar
@@ -190,13 +189,13 @@ Apache-2.0
   kerby-pkix-2.0.3.jar
   kerby-util-2.0.3.jar
   listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar
-  log4j-api-2.20.0.jar
-  log4j-core-2.20.0.jar
-  log4j-layout-template-json-2.20.0.jar
-  lucene-analysis-common-9.11.1.jar
-  lucene-backward-codecs-9.11.1.jar
-  lucene-core-9.11.1.jar
-  lucene-queryparser-9.11.1.jar
+  log4j-api-2.24.3.jar
+  log4j-core-2.24.3.jar
+  log4j-layout-template-json-2.24.3.jar
+  lucene-analysis-common-10.2.2.jar
+  lucene-backward-codecs-10.2.2.jar
+  lucene-core-10.2.2.jar
+  lucene-queryparser-10.2.2.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
   netty-all-4.2.4.Final.jar
@@ -258,14 +257,14 @@ Apache-2.0
   parquet-column-1.15.2.jar
   parquet-common-1.15.2.jar
   parquet-encoding-1.15.2.jar
-  parquet-floor-1.57.jar
+  parquet-floor-1.58.jar
   parquet-format-structures-1.15.2.jar
   parquet-hadoop-1.15.2.jar
   parquet-jackson-1.15.2.jar
   perfmark-api-0.27.0.jar
   picocli-4.7.7.jar
   proto-google-common-protos-2.51.0.jar
-  reactor-core-3.6.18.jar
+  reactor-core-3.8.0-M6.jar
   reload4j-1.2.22.jar
   scala-collection-contrib_2.13-0.3.0.jar
   scala-library-2.13.16.jar
@@ -281,11 +280,11 @@ Apache-2.0
   shiro-hashes-bcrypt-2.0.5.jar
   shiro-lang-2.0.5.jar
   snappy-java-1.1.10.7.jar
-  websocket-api-9.4.53.v20231009.jar
-  websocket-client-9.4.53.v20231009.jar
-  websocket-common-9.4.53.v20231009.jar
-  websocket-server-9.4.53.v20231009.jar
-  websocket-servlet-9.4.53.v20231009.jar
+  websocket-api-9.4.57.v20241219.jar
+  websocket-client-9.4.57.v20241219.jar
+  websocket-common-9.4.57.v20241219.jar
+  websocket-server-9.4.57.v20241219.jar
+  websocket-servlet-9.4.57.v20241219.jar
   woodstox-core-5.4.0.jar
   zookeeper-3.8.4.jar
   zookeeper-jute-3.8.4.jar
@@ -361,35 +360,35 @@ Eclipse Distribution License - v 1.0
   txw2-2.3.2.jar
 
 Eclipse Public License - Version 1.0
-  javax-websocket-client-impl-9.4.53.v20231009.jar
-  javax-websocket-server-impl-9.4.53.v20231009.jar
-  websocket-api-9.4.53.v20231009.jar
-  websocket-client-9.4.53.v20231009.jar
-  websocket-common-9.4.53.v20231009.jar
-  websocket-server-9.4.53.v20231009.jar
-  websocket-servlet-9.4.53.v20231009.jar
+  javax-websocket-client-impl-9.4.57.v20241219.jar
+  javax-websocket-server-impl-9.4.57.v20241219.jar
+  websocket-api-9.4.57.v20241219.jar
+  websocket-client-9.4.57.v20241219.jar
+  websocket-common-9.4.57.v20241219.jar
+  websocket-server-9.4.57.v20241219.jar
+  websocket-servlet-9.4.57.v20241219.jar
 
 Eclipse Public License - Version 1.0
   jetty-servlet-api-4.0.6.jar
 
 Eclipse Public License - Version 2.0
-  jetty-alpn-java-server-12.0.17.jar
-  jetty-alpn-server-12.0.17.jar
-  jetty-ee-12.0.17.jar
-  jetty-ee8-nested-12.0.17.jar
-  jetty-ee8-security-12.0.17.jar
-  jetty-ee8-servlet-12.0.17.jar
-  jetty-ee8-webapp-12.0.17.jar
-  jetty-http-12.0.17.jar
-  jetty-http2-common-12.0.17.jar
-  jetty-http2-hpack-12.0.17.jar
-  jetty-http2-server-12.0.17.jar
-  jetty-io-12.0.17.jar
-  jetty-security-12.0.17.jar
-  jetty-server-12.0.17.jar
-  jetty-session-12.0.17.jar
-  jetty-util-12.0.17.jar
-  jetty-xml-12.0.17.jar
+  jetty-alpn-java-server-12.0.25.jar
+  jetty-alpn-server-12.0.25.jar
+  jetty-ee-12.0.25.jar
+  jetty-ee8-nested-12.0.25.jar
+  jetty-ee8-security-12.0.25.jar
+  jetty-ee8-servlet-12.0.25.jar
+  jetty-ee8-webapp-12.0.25.jar
+  jetty-http-12.0.25.jar
+  jetty-http2-common-12.0.25.jar
+  jetty-http2-hpack-12.0.25.jar
+  jetty-http2-server-12.0.25.jar
+  jetty-io-12.0.25.jar
+  jetty-security-12.0.25.jar
+  jetty-server-12.0.25.jar
+  jetty-session-12.0.25.jar
+  jetty-util-12.0.25.jar
+  jetty-xml-12.0.25.jar
 
 Eclipse Public License - v 1.0
   eclipse-collections-11.1.0.jar
@@ -409,14 +408,14 @@ Eclipse Public License - v 2.0
   jersey-container-servlet-core-2.43.jar
   jersey-hk2-2.43.jar
   jersey-server-2.43.jar
-  junit-jupiter-5.13.3.jar
-  junit-jupiter-api-5.13.3.jar
-  junit-jupiter-engine-5.13.3.jar
-  junit-jupiter-params-5.13.3.jar
-  junit-platform-commons-1.13.3.jar
-  junit-platform-engine-1.13.3.jar
-  junit-platform-launcher-1.13.3.jar
-  junit-platform-testkit-1.13.3.jar
+  junit-jupiter-5.13.4.jar
+  junit-jupiter-api-5.13.4.jar
+  junit-jupiter-engine-5.13.4.jar
+  junit-jupiter-params-5.13.4.jar
+  junit-platform-commons-1.13.4.jar
+  junit-platform-engine-1.13.4.jar
+  junit-platform-launcher-1.13.4.jar
+  junit-platform-testkit-1.13.4.jar
   osgi-resource-locator-1.0.3.jar
 
 GNU General Public License (GPL), version 2, with the Classpath exception

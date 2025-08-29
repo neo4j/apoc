@@ -39,7 +39,7 @@ dependencies {
     compileOnly group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
     // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
     // and remove the manual licensing check for it in licenses-3rdparties.gradle
-    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.1', withoutServers
+    compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.2', withoutServers
     compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.54.0'
     compileOnly group: 'com.github.seancfoley', name: 'ipaddress', version: '5.3.3'
     compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.18.0'
