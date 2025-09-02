@@ -18,35 +18,35 @@
  */
 package apoc.schema;
 
-import static apoc.util.TestUtil.registerProcedure;
 import static apoc.util.TestUtil.singleResultFirstColumn;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Arrays.asList;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.InstanceOfAssertFactories.map;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_LABEL;
 import static org.neo4j.internal.schema.SchemaUserDescription.TOKEN_REL_TYPE;
 
 import apoc.result.AssertSchemaResult;
 import apoc.result.IndexConstraintRelationshipInfo;
+import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import junit.framework.TestCase;
-import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
@@ -55,32 +55,37 @@ import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
 import org.neo4j.graphdb.schema.Schema;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 12.05.16
- */
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
 public class SchemasTest {
     public static final String CALL_SCHEMA_NODES_ORDERED = "CALL apoc.schema.nodes() "
             + "YIELD label, type, properties, status, userDescription, name " + "RETURN * ORDER BY label, type";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.procedure_unrestricted,
-                    List.of("apoc.schema.nodes", "apoc.schema.relationship"));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
-        registerProcedure(db, Schemas.class, SchemaRestricted.class);
-        dropSchema();
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.procedure_unrestricted, List.of("apoc.schema.nodes", "apoc.schema.relationship"));
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void beforeAll() {
+        TestUtil.registerProcedure(db, Schemas.class, SchemaRestricted.class);
+    }
+
+    @BeforeEach
+    void dropSchema() {
+        try (Transaction tx = db.beginTx()) {
+            Schema schema = tx.schema();
+            schema.getConstraints().forEach(ConstraintDefinition::drop);
+            schema.getIndexes().forEach(IndexDefinition::drop);
+            tx.commit();
+        }
     }
 
     @Test
@@ -332,7 +337,8 @@ public class SchemasTest {
                 assertEquals("NO FAILURE", r.get("failure"));
                 assertEquals(100d, r.get("populationProgress"));
                 assertEquals(1d, r.get("valuesSelectivity"));
-                Assertions.assertThat(r.get("userDescription").toString())
+                assertThat(r.get("userDescription"))
+                        .asString()
                         .contains("name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
 
                 if (cypherVersion.equals("5")) {
@@ -392,12 +398,14 @@ public class SchemasTest {
         db.executeTransactionally("CREATE INDEX rel_index_composite FOR ()-[r:PURCHASED]-() ON (r.date, r.amount)");
         awaitIndexesOnline();
 
-        assertTrue(singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['since'])"));
-        assertFalse(singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['dunno'])"));
+        assertTrue((Boolean)
+                singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['since'])"));
+        assertFalse((Boolean)
+                singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['dunno'])"));
         // - composite index
-        assertTrue(singleResultFirstColumn(
+        assertTrue((Boolean) singleResultFirstColumn(
                 db, "RETURN apoc.schema.relationship.indexExists('PURCHASED', ['date', 'amount'])"));
-        assertFalse(singleResultFirstColumn(
+        assertFalse((Boolean) singleResultFirstColumn(
                 db, "RETURN apoc.schema.relationship.indexExists('PURCHASED', ['date', 'another'])"));
     }
 
@@ -417,7 +425,7 @@ public class SchemasTest {
                 assertEquals("ONLINE", r.get("status"));
                 final String expectedUserDescBarIdx =
                         "name='constraint_4791de3e', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
-                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarIdx);
+                assertThat(r.get("userDescription")).asString().contains(expectedUserDescBarIdx);
 
                 if (cypherVersion.equals("5")) {
                     assertEquals(":Bar(foo)", r.get("name"));
@@ -435,13 +443,13 @@ public class SchemasTest {
                     assertEquals(":Bar(foo)", r.get("name"));
                     final String expectedUserDescBarCons =
                             "name='constraint_4791de3e', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
-                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                    assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
                 } else {
                     assertTrue(r.get("name").toString().startsWith("constraint_"));
                     final String expectedUserDescBarCons =
                             "name='constraint_4791de3e', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
-                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                    assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
                 }
 
                 assertFalse(result.hasNext());
@@ -482,12 +490,12 @@ public class SchemasTest {
                     assertEquals(":Bar(bar)", r.get("name"));
                     final String expectedUserDescBarCons =
                             "name='bar_unique', type='UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
-                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                    assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
                 } else {
                     assertEquals("bar_unique", r.get("name"));
                     final String expectedUserDescBarCons =
                             "name='bar_unique', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {bar}), ownedIndex";
-                    Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
+                    assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
                 }
 
                 r = result.next();
@@ -497,7 +505,7 @@ public class SchemasTest {
                 assertEquals("ONLINE", r.get("status"));
                 final String expectedUserDescFoo =
                         "name='foo_idx', type='RANGE', schema=(:Foo {foo}), indexProvider='range-1.0' )";
-                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescFoo);
+                assertThat(r.get("userDescription").toString()).contains(expectedUserDescFoo);
 
                 if (cypherVersion.equals("5")) {
                     assertEquals(":Foo(foo)", r.get("name"));
@@ -523,7 +531,7 @@ public class SchemasTest {
             assertEquals("ONLINE", r.get("status"));
             final String expectedUserDesc =
                     "name='pointIdx', type='POINT', schema=(:Baz {baz}), indexProvider='point-1.0'";
-            Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDesc);
+            assertThat(r.get("userDescription").toString()).contains(expectedUserDesc);
 
             assertFalse(result.hasNext());
         });
@@ -780,7 +788,7 @@ public class SchemasTest {
                         assertEquals("NO FAILURE", r.get("failure"));
                         assertEquals(100d, r.get("populationProgress"));
                         assertEquals(1d, r.get("valuesSelectivity"));
-                        Assertions.assertThat(r.get("userDescription").toString())
+                        assertThat(r.get("userDescription").toString())
                                 .contains(
                                         "name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
 
@@ -824,7 +832,7 @@ public class SchemasTest {
                         assertEquals("NO FAILURE", r.get("failure"));
                         assertEquals(100d, r.get("populationProgress"));
                         assertEquals(1d, r.get("valuesSelectivity"));
-                        Assertions.assertThat(r.get("userDescription").toString())
+                        assertThat(r.get("userDescription").toString())
                                 .contains(
                                         "name='index1', type='RANGE', schema=(:Foo {bar}), indexProvider='range-1.0' )");
 
@@ -843,9 +851,9 @@ public class SchemasTest {
                         assertEquals("NO FAILURE", r.get("failure"));
                         assertEquals(100d, r.get("populationProgress"));
                         assertEquals(1d, r.get("valuesSelectivity"));
-                        Assertions.assertThat(r.get("userDescription").toString())
+                        assertThat(r.get("userDescription").toString())
                                 .contains(
-                                        "name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-2.0' )");
+                                        "name='index3', type='TEXT', schema=(:Person {name}), indexProvider='text-3.0' )");
 
                         if (cypherVersion.equals("5")) {
                             assertEquals(":Person(name)", r.get("name"));
@@ -872,16 +880,11 @@ public class SchemasTest {
         db.executeTransactionally("CREATE INDEX FOR (n:Movie) ON (n.title)");
         awaitIndexesOnline();
 
-        QueryExecutionException e = Assert.assertThrows(
-                QueryExecutionException.class,
-                () -> testResult(
-                        db,
-                        "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})",
-                        (result) -> {}));
-        TestCase.assertTrue(
-                e.getMessage()
-                        .contains(
-                                "Parameters labels and excludeLabels are both valuated. Please check parameters and valuate only one."));
+        assertThatThrownBy(() -> db.executeTransactionally(
+                        "CALL apoc.schema.nodes({labels:['Foo', 'Person', 'Bar'], excludeLabels:['Bar']})"))
+                .isInstanceOf(QueryExecutionException.class)
+                .hasMessageContaining(
+                        "Parameters labels and excludeLabels are both valuated. Please check parameters and valuate only one.");
     }
 
     @Test
@@ -897,16 +900,11 @@ public class SchemasTest {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
 
-        QueryExecutionException e = Assert.assertThrows(
-                QueryExecutionException.class,
-                () -> testResult(
-                        db,
-                        "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})",
-                        (result) -> {}));
-        TestCase.assertTrue(
-                e.getMessage()
-                        .contains(
-                                "Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one."));
+        assertThatThrownBy(() -> db.executeTransactionally(
+                        "CALL apoc.schema.relationships({relationships:['LIKED'], excludeRelationships:['SINCE']})"))
+                .isInstanceOf(QueryExecutionException.class)
+                .hasMessageContaining(
+                        "Parameters relationships and excludeRelationships are both valuated. Please check parameters and valuate only one.");
     }
 
     @Test
@@ -1103,7 +1101,7 @@ public class SchemasTest {
                 assertEquals(1d, row.get("valuesSelectivity"));
                 final String expectedUserDesc =
                         "name='node_label_lookup_index', type='LOOKUP', schema=(:<any-labels>), indexProvider='token-lookup-1.0'";
-                Assertions.assertThat(row.get("userDescription").toString()).contains(expectedUserDesc);
+                assertThat(row.get("userDescription").toString()).contains(expectedUserDesc);
 
                 if (cypherVersion.equals("5")) {
                     assertEquals(":" + TOKEN_LABEL + "()", row.get("name"));
@@ -1127,15 +1125,6 @@ public class SchemasTest {
         }
     }
 
-    private void dropSchema() {
-        try (Transaction tx = db.beginTx()) {
-            Schema schema = tx.schema();
-            schema.getConstraints().forEach(ConstraintDefinition::drop);
-            schema.getIndexes().forEach(IndexDefinition::drop);
-            tx.commit();
-        }
-    }
-
     @Test
     public void testIndexesWithMultipleLabelsAndRelTypes() {
         final String idxName = "fullIdxNode";
@@ -1147,44 +1136,56 @@ public class SchemasTest {
 
         for (String cypherVersion : Util.getCypherVersions()) {
             var preparser = "CYPHER " + cypherVersion + " ";
-            testCall(db, preparser + "CALL apoc.schema.nodes()", (r) -> {
-                assertEquals("ONLINE", r.get("status"));
-                assertEquals(List.of("Blah", "Moon"), r.get("label"));
-                assertEquals("FULLTEXT", r.get("type"));
-                assertEquals(List.of("weightProp", "anotherProp"), r.get("properties"));
-                assertEquals("NO FAILURE", r.get("failure"));
-                assertEquals(100d, r.get("populationProgress"));
-                assertEquals(1d, r.get("valuesSelectivity"));
-                final long indexId = db.executeTransactionally(
-                        "SHOW INDEXES YIELD id, name WHERE name = $indexName RETURN id",
-                        Map.of("indexName", idxName),
-                        res -> res.<Long>columnAs("id").next());
+            try (final var tx = db.beginTx()) {
+                final var indexId = tx
+                        .execute(
+                                "SHOW INDEXES YIELD id, name WHERE name = $indexName RETURN id",
+                                Map.of("indexName", idxName))
+                        .columnAs("id")
+                        .stream()
+                        .findAny()
+                        .orElse("=== Did not find id ===");
+                final var expectedName =
+                        "5".equals(cypherVersion) ? ":[Blah, Moon],(weightProp,anotherProp)" : "fullIdxNode";
+                assertThat(tx.execute("CYPHER %s CALL apoc.schema.nodes()".formatted(cypherVersion)).stream())
+                        .singleElement(map(String.class, Object.class))
+                        .containsExactlyInAnyOrderEntriesOf(Map.of(
+                                "status",
+                                "ONLINE",
+                                "label",
+                                List.of("Blah", "Moon"),
+                                "type",
+                                "FULLTEXT",
+                                "properties",
+                                List.of("weightProp", "anotherProp"),
+                                "failure",
+                                "NO FAILURE",
+                                "populationProgress",
+                                100d,
+                                "valuesSelectivity",
+                                1d,
+                                "size",
+                                0L,
+                                "name",
+                                expectedName,
+                                "userDescription",
+                                "Index( id=%s, name='%s', type='FULLTEXT', schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-2.0' )"
+                                        .formatted(indexId, idxName)));
 
-                String expectedIndexDescription = String.format(
-                        "Index( id=%s, name='%s', type='FULLTEXT', "
-                                + "schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-1.0' )",
-                        indexId, idxName);
-                assertEquals(expectedIndexDescription, r.get("userDescription"));
-
-                if (cypherVersion.equals("5")) {
-                    assertEquals(":[Blah, Moon],(weightProp,anotherProp)", r.get("name"));
-                } else {
-                    assertEquals("fullIdxNode", r.get("name"));
-                }
-            });
-
-            testCall(db, preparser + "CALL apoc.schema.relationships()", (r) -> {
-                assertEquals("ONLINE", r.get("status"));
-                assertEquals(List.of("TYPE_1", "TYPE_2"), r.get("relationshipType"));
-                assertEquals(List.of("alpha", "beta"), r.get("properties"));
-                assertEquals("FULLTEXT", r.get("type"));
-
-                if (cypherVersion.equals("5")) {
-                    assertEquals(":[TYPE_1, TYPE_2],(alpha,beta)", r.get("name"));
-                } else {
-                    assertEquals("fullIdxRel", r.get("name"));
-                }
-            });
+                assertThat(tx.execute("CYPHER %s CALL apoc.schema.relationships()".formatted(cypherVersion)).stream())
+                        .singleElement(map(String.class, Object.class))
+                        .containsExactlyInAnyOrderEntriesOf(Map.of(
+                                "status",
+                                "ONLINE",
+                                "relationshipType",
+                                List.of("TYPE_1", "TYPE_2"),
+                                "properties",
+                                List.of("alpha", "beta"),
+                                "type",
+                                "FULLTEXT",
+                                "name",
+                                "5".equals(cypherVersion) ? ":[TYPE_1, TYPE_2],(alpha,beta)" : "fullIdxRel"));
+            }
         }
     }
 
@@ -1265,7 +1266,7 @@ public class SchemasTest {
 
         // create the failed index and check that has state "FAILED"
         db.executeTransactionally("CREATE INDEX failedIdx FOR (n:LabelTest) ON (n.prop)");
-        Assert.assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
+        assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
 
         testCall(
                 db,
@@ -1278,7 +1279,7 @@ public class SchemasTest {
                 String actualFailure = (String) r.get("failure");
                 String expectedFailure =
                         "Property value is too large to index, please see index documentation for limitations.";
-                assertThat(actualFailure, containsString(expectedFailure));
+                assertThat(actualFailure).contains(expectedFailure);
                 assertEquals("FAILED", r.get("status"));
                 assertEquals("LabelTest", r.get("label"));
                 assertEquals("RANGE", r.get("type"));
@@ -1305,7 +1306,7 @@ public class SchemasTest {
 
         // create the failed index and check that has state "FAILED"
         db.executeTransactionally("CREATE INDEX failedIdx FOR ()-[r:REL_TEST]-() ON (r.prop)");
-        Assert.assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
+        assertThrows(IllegalStateException.class, this::awaitIndexesOnline);
 
         testCall(db, "SHOW INDEXES YIELD name, state WHERE name = 'failedIdx'", (r) -> {
             assertEquals("FAILED", r.get("state"));
