@@ -398,6 +398,8 @@ public class SchemasTest {
         db.executeTransactionally("CREATE INDEX rel_index_composite FOR ()-[r:PURCHASED]-() ON (r.date, r.amount)");
         awaitIndexesOnline();
 
+        assertTrue((Boolean)
+                singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['since'])"));
         assertFalse((Boolean)
                 singleResultFirstColumn(db, "RETURN apoc.schema.relationship.indexExists('KNOWS', ['dunno'])"));
         // - composite index
