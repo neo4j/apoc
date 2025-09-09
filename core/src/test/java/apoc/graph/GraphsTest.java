@@ -1360,7 +1360,7 @@ public class GraphsTest {
 
     @Test
     public void gemTest() {
-        db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
+        db.executeTransactionally("create (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
