@@ -1359,7 +1359,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocCsvQuery() {
+    public void gemTest() {
         db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
