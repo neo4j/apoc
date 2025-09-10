@@ -221,6 +221,7 @@ public class Date {
         return time == null ? null : parse(unit(unit).toMillis(time), format, timezone);
     }
 
+    @Deprecated
     @UserFunction(value = "apoc.date.format", deprecatedBy = "Cypher's format function; format(input, format)")
     @QueryLanguageScope(scope = QueryLanguage.CYPHER_25)
     @Description(

@@ -84,7 +84,7 @@ public class TemporalProcedures {
      */
     @Deprecated
     @UserFunction(value = "apoc.temporal.format", deprecatedBy = "Cypher's format function; format(input, format)")
-    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Formats the given temporal value into the given time format.")
     public String format(
             @Name(value = "temporal", description = "A temporal value to be formatted.") Object input,
@@ -118,13 +118,6 @@ public class TemporalProcedures {
         return input.toString();
     }
 
-    /**
-     * Convert a Duration into a LocalTime and format the value as a String
-     *
-     * @param input
-     * @param format
-     * @return
-     */
     @UserFunction("apoc.temporal.formatDuration")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Formats the given duration into the given time format.")
@@ -143,13 +136,6 @@ public class TemporalProcedures {
         }
     }
 
-    /**
-     * Convert a Duration into a LocalTime and format the value as a String
-     *
-     * @param input
-     * @param format
-     * @return
-     */
     @Deprecated
     @UserFunction(value = "apoc.temporal.formatDuration", deprecatedBy = "Cypher's format function; format(input, format)")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
