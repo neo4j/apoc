@@ -157,6 +157,21 @@ public class TemporalProcedures {
     }
 
     @UserFunction("apoc.temporal.toZonedTemporal")
+    @QueryLanguageScope(scope = QueryLanguage.CYPHER_5)
+    @Description("Parses the given date `STRING` using the specified format into the given time zone.")
+    public ZonedDateTime toZonedTemporalCypher5(
+            @Name(value = "time", description = "The date string to be parsed.") String time,
+            @Name(value = "format", defaultValue = DEFAULT_FORMAT, description = "The format of the given date string.")
+                    String format,
+            final @Name(value = "timezone", defaultValue = "UTC", description = "The timezone the given string is in.")
+                    String timezone) {
+        Long value = parseOrThrow(time, getFormat(format, timezone));
+        return value == null ? null : Instant.ofEpochMilli(value).atZone(ZoneId.of(timezone));
+    }
+
+    @Deprecated
+    @UserFunction(value = "apoc.temporal.toZonedTemporal", deprecatedBy = "Cypher's temporal pattern constructors.")
+    @QueryLanguageScope(scope = QueryLanguage.CYPHER_25)
     @Description("Parses the given date `STRING` using the specified format into the given time zone.")
     public ZonedDateTime toZonedTemporal(
             @Name(value = "time", description = "The date string to be parsed.") String time,
