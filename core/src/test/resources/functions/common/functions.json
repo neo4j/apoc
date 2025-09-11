@@ -1736,46 +1736,6 @@
   {
     "isDeprecated": false,
     "aggregating": false,
-    "signature": "apoc.date.format(time :: INTEGER, unit = ms :: STRING, format = yyyy-MM-dd HH:mm:ss :: STRING, timezone =  :: STRING) :: STRING",
-    "name": "apoc.date.format",
-    "description": "Returns a `STRING` representation of the time value.\nThe time unit (default: ms), date format (default: ISO), and time zone (default: current time zone) can all be changed.",
-    "returnDescription": "STRING",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "time",
-        "description": "The timestamp since epoch to format.",
-        "isDeprecated": false,
-        "type": "INTEGER"
-      },
-      {
-        "name": "unit",
-        "description": "The unit of the given timestamp.",
-        "isDeprecated": false,
-        "default": "DefaultParameterValue{value=ms, type=STRING}",
-        "type": "STRING"
-      },
-      {
-        "name": "format",
-        "description": "The format to convert the given temporal value to.",
-        "isDeprecated": false,
-        "default": "DefaultParameterValue{value=yyyy-MM-dd HH:mm:ss, type=STRING}",
-        "type": "STRING"
-      },
-      {
-        "name": "timezone",
-        "description": "The timezone the given timestamp is in.",
-        "isDeprecated": false,
-        "default": "DefaultParameterValue{value=, type=STRING}",
-        "type": "STRING"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
     "signature": "apoc.date.parse(time :: STRING, unit = ms :: STRING, format = yyyy-MM-dd HH:mm:ss :: STRING, timezone =  :: STRING) :: INTEGER",
     "name": "apoc.date.parse",
     "description": "Parses the given date `STRING` from a specified format into the specified time unit.",
@@ -3753,57 +3713,6 @@
         "description": "The score.",
         "isDeprecated": false,
         "type": "INTEGER"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.temporal.format(temporal :: ANY, format = yyyy-MM-dd :: STRING) :: STRING",
-    "name": "apoc.temporal.format",
-    "description": "Formats the given temporal value into the given time format.",
-    "returnDescription": "STRING",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "temporal",
-        "description": "A temporal value to be formatted.",
-        "isDeprecated": false,
-        "type": "ANY"
-      },
-      {
-        "name": "format",
-        "description": "The format to return the temporal value in.",
-        "isDeprecated": false,
-        "default": "DefaultParameterValue{value=yyyy-MM-dd, type=STRING}",
-        "type": "STRING"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.temporal.formatDuration(input :: ANY, format :: STRING) :: STRING",
-    "name": "apoc.temporal.formatDuration",
-    "description": "Formats the given duration into the given time format.",
-    "returnDescription": "STRING",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "input",
-        "description": "The duration value to be formatted into a string.",
-        "isDeprecated": false,
-        "type": "ANY"
-      },
-      {
-        "name": "format",
-        "description": "The format to return the duration in.",
-        "isDeprecated": false,
-        "type": "STRING"
       }
     ]
   },

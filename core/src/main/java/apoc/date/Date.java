@@ -204,6 +204,26 @@ public class Date {
     }
 
     @UserFunction("apoc.date.format")
+    @QueryLanguageScope(scope = QueryLanguage.CYPHER_5)
+    @Description(
+            "Returns a `STRING` representation of the time value.\n"
+                    + "The time unit (default: ms), date format (default: ISO), and time zone (default: current time zone) can all be changed.")
+    public String formatCypher5(
+            final @Name(value = "time", description = "The timestamp since epoch to format.") Long time,
+            @Name(value = "unit", defaultValue = "ms", description = "The unit of the given timestamp.") String unit,
+            @Name(
+                            value = "format",
+                            defaultValue = DEFAULT_FORMAT,
+                            description = "The format to convert the given temporal value to.")
+                    String format,
+            @Name(value = "timezone", defaultValue = "", description = "The timezone the given timestamp is in.")
+                    String timezone) {
+        return time == null ? null : parse(unit(unit).toMillis(time), format, timezone);
+    }
+
+    @Deprecated
+    @UserFunction(value = "apoc.date.format", deprecatedBy = "Cypher's format function; format(input, format)")
+    @QueryLanguageScope(scope = QueryLanguage.CYPHER_25)
     @Description(
             "Returns a `STRING` representation of the time value.\n"
                     + "The time unit (default: ms), date format (default: ISO), and time zone (default: current time zone) can all be changed.")
