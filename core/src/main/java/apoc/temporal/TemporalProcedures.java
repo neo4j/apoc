@@ -25,7 +25,6 @@ import static apoc.util.DurationFormatUtil.getOrCreateDurationPattern;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Description;
@@ -47,10 +46,10 @@ public class TemporalProcedures {
     public String formatCypher5(
             @Name(value = "temporal", description = "A temporal value to be formatted.") Object input,
             @Name(
-                    value = "format",
-                    defaultValue = "yyyy-MM-dd",
-                    description = "The format to return the temporal value in.")
-            String format) {
+                            value = "format",
+                            defaultValue = "yyyy-MM-dd",
+                            description = "The format to return the temporal value in.")
+                    String format) {
 
         try {
             DateTimeFormatter formatter = getOrCreate(format);
@@ -137,7 +136,9 @@ public class TemporalProcedures {
     }
 
     @Deprecated
-    @UserFunction(value = "apoc.temporal.formatDuration", deprecatedBy = "Cypher's format function; format(input, format)")
+    @UserFunction(
+            value = "apoc.temporal.formatDuration",
+            deprecatedBy = "Cypher's format function; format(input, format)")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Formats the given duration into the given time format.")
     public String formatDuration(
