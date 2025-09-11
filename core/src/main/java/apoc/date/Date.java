@@ -117,9 +117,9 @@ public class Date {
     public Map<String, Object> fields(
             final @Name(value = "date", description = "A string representation of a temporal value.") String date,
             final @Name(
-                    value = "pattern",
-                    defaultValue = DEFAULT_FORMAT,
-                    description = "The format the given temporal is formatted as.") String pattern) {
+                            value = "pattern",
+                            defaultValue = DEFAULT_FORMAT,
+                            description = "The format the given temporal is formatted as.") String pattern) {
         if (date == null) {
             return Util.map();
         }
@@ -324,9 +324,9 @@ public class Date {
             @Name(value = "time", description = "The datetime to convert.") String time,
             @Name(value = "unit", defaultValue = "ms", description = "The conversion unit.") String unit,
             @Name(value = "format", defaultValue = DEFAULT_FORMAT, description = "The format the given datetime is in.")
-            String format,
+                    String format,
             final @Name(value = "timezone", defaultValue = "", description = "The timezone the given datetime is in.")
-            String timezone) {
+                    String timezone) {
         Long value = StringUtils.isBlank(time) ? null : parseOrThrow(time, getFormat(format, timezone));
         return value == null ? null : unit(unit).convert(value, TimeUnit.MILLISECONDS);
     }
@@ -369,18 +369,20 @@ public class Date {
     }
 
     @Deprecated
-    @UserFunction(value = "apoc.date.convertFormat", deprecatedBy = "Cypher's temporal pattern constructors and format() function.")
+    @UserFunction(
+            value = "apoc.date.convertFormat",
+            deprecatedBy = "Cypher's temporal pattern constructors and format() function.")
     @QueryLanguageScope(scope = QueryLanguage.CYPHER_25)
     @Description("Converts a `STRING` of one type of date format into a `STRING` of another type of date format.")
     public String convertFormat(
             @Name(value = "temporal", description = "A string representation of a temporal value.") String input,
             @Name(value = "currentFormat", description = "The format the given temporal is formatted as.")
-            String currentFormat,
+                    String currentFormat,
             @Name(
-                    value = "convertTo",
-                    defaultValue = "yyyy-MM-dd",
-                    description = "The format to convert the given temporal value to.")
-            String convertTo) {
+                            value = "convertTo",
+                            defaultValue = "yyyy-MM-dd",
+                            description = "The format to convert the given temporal value to.")
+                    String convertTo) {
         if (input == null || input.isEmpty()) {
             return null;
         }
