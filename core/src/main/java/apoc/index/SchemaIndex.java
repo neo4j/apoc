@@ -148,7 +148,7 @@ public class SchemaIndex {
                         int[] labelIds = Iterables.stream(indexDefinition.getLabels())
                                 .mapToInt(lbl -> tokenRead.nodeLabel(lbl.name()))
                                 .toArray();
-                        schema = SchemaDescriptors.fulltext(EntityType.NODE, labelIds, propertyKeyIds);
+                        schema = SchemaDescriptors.forSemanticSearch(EntityType.NODE, labelIds, propertyKeyIds);
                     } else {
                         String label =
                                 Iterables.single(indexDefinition.getLabels()).name();
