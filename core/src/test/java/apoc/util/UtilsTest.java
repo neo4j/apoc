@@ -340,7 +340,7 @@ public class UtilsTest {
         final var seed = new Random().nextLong();
         final var rand = RandomValues.create(new Random(seed));
         final var randStorables = stream(ValueType.values())
-                .filter(t -> t.valueGroup.category().equals(ValueCategory.VECTOR))
+                .filter(t -> !t.valueGroup.category().equals(ValueCategory.VECTOR))
                 .map(t -> rand.nextValueOfType(t).asObject())
                 .toList();
         final var randMap =

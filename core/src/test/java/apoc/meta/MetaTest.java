@@ -90,6 +90,8 @@ public class MetaTest {
                             "apoc.meta.graphSample",
                             "apoc.meta.subGraph"))
             .withSetting(GraphDatabaseInternalSettings.cypher_enable_vector_type, true)
+            .withSetting(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
+            .withSetting(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE)
             .withSetting(
                     newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                             .build(),
