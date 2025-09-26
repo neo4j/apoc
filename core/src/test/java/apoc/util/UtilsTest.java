@@ -42,6 +42,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.RelationshipType;
@@ -50,7 +51,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.rule.DbmsRule;
 import org.neo4j.test.rule.ImpermanentDbmsRule;
 import org.neo4j.values.storable.RandomValues;
-import org.neo4j.values.storable.ValueCategory;
 import org.neo4j.values.storable.ValueType;
 
 /**
@@ -63,7 +63,10 @@ public class UtilsTest {
     private static final String COMPLEX_STRING = "Mätrix II 哈哈\uD83D\uDE04123";
 
     @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    public static DbmsRule db = new ImpermanentDbmsRule()
+            .withSetting(GraphDatabaseInternalSettings.cypher_enable_vector_type, true)
+            .withSetting(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
+            .withSetting(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE);
 
     @BeforeClass
     public static void setUp() {
@@ -340,7 +343,6 @@ public class UtilsTest {
         final var seed = new Random().nextLong();
         final var rand = RandomValues.create(new Random(seed));
         final var randStorables = stream(ValueType.values())
-                .filter(t -> t.valueGroup.category().equals(ValueCategory.VECTOR))
                 .map(t -> rand.nextValueOfType(t).asObject())
                 .toList();
         final var randMap =
