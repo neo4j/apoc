@@ -33,6 +33,8 @@ import org.neo4j.driver.Session;
 This test is just to verify the split of core and extended
 */
 public class ApocSplitTest {
+    // Note: the arrow procedures are not in this list as they require the user to provide their own dependency
+    // and thus are not loaded by default
     public static final Set<String> CORE_PROCEDURES = Set.of(
             "apoc.periodic.truncate",
             "apoc.periodic.list",
@@ -141,18 +143,10 @@ public class ApocSplitTest {
             "apoc.load.jsonParams",
             "apoc.load.xml",
             "apoc.import.xml",
-            "apoc.load.arrow.stream",
-            "apoc.load.arrow",
             "apoc.schema.properties.distinct",
             "apoc.schema.properties.distinctCount",
             "apoc.log.stream",
             "apoc.text.phoneticDelta",
-            "apoc.export.arrow.stream.all",
-            "apoc.export.arrow.stream.graph",
-            "apoc.export.arrow.stream.query",
-            "apoc.export.arrow.all",
-            "apoc.export.arrow.graph",
-            "apoc.export.arrow.query",
             "apoc.export.cypher.all",
             "apoc.export.cypher.data",
             "apoc.export.cypher.graph",
