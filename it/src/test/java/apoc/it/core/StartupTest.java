@@ -171,15 +171,11 @@ public class StartupTest {
                                 "CYPHER 5 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
                         .list(record -> record.get("name").asString());
 
-                var expectedCypher5Procedures = sorted(ApocSignatures.PROCEDURES_CYPHER_5);
-
-                // The apoc.load.arrow procedures requires the user to provide their own dependencies
-                // This is done through Neo4j in enterprise but not in community
-                if (version == Neo4jVersion.COMMUNITY) {
-                    expectedCypher5Procedures = expectedCypher5Procedures.stream()
-                            .filter(p -> !p.contains("apoc.load.arrow"))
-                            .toList();
-                }
+                // The apoc.load.arrow procedures requires the user to provide their own dependencies,
+                // so they will not be loaded by default
+                var expectedCypher5Procedures = sorted(ApocSignatures.PROCEDURES_CYPHER_5).stream()
+                        .filter(p -> !p.contains("apoc.load.arrow"))
+                        .toList();
 
                 assertEquals(expectedCypher5Procedures, procedureNames);
                 assertEquals(sorted(ApocSignatures.FUNCTIONS_CYPHER_5), functionNames);
