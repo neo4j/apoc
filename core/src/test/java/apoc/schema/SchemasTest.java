@@ -1169,7 +1169,7 @@ public class SchemasTest {
                                 "name",
                                 expectedName,
                                 "userDescription",
-                                "Index( id=%s, name='%s', type='FULLTEXT', schema=(:Blah:Moon {weightProp, anotherProp}), indexProvider='fulltext-2.0' )"
+                                "Index( id=%s, name='%s', type='FULLTEXT', schema=(:Blah|Moon {weightProp, anotherProp}), indexProvider='fulltext-2.0' )"
                                         .formatted(indexId, idxName)));
 
                 assertThat(tx.execute("CYPHER %s CALL apoc.schema.relationships()".formatted(cypherVersion)).stream())
