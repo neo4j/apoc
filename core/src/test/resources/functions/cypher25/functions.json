@@ -443,6 +443,38 @@
   {
     "isDeprecated": true,
     "aggregating": false,
+    "signature": "apoc.date.convertFormat(temporal :: STRING, currentFormat :: STRING, convertTo = yyyy-MM-dd :: STRING) :: STRING",
+    "name": "apoc.date.convertFormat",
+    "description": "Converts a `STRING` of one type of date format into a `STRING` of another type of date format.",
+    "returnDescription": "STRING",
+    "deprecatedBy": "Cypher's temporal pattern constructors and format() function.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "temporal",
+        "description": "A string representation of a temporal value.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "currentFormat",
+        "description": "The format the given temporal is formatted as.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "convertTo",
+        "description": "The format to convert the given temporal value to.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=yyyy-MM-dd, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
     "signature": "apoc.date.currentTimestamp() :: INTEGER",
     "name": "apoc.date.currentTimestamp",
     "description": "Returns the current Unix epoch timestamp in milliseconds.",
@@ -481,6 +513,32 @@
         "description": "The timezone the given timestamp is in.",
         "isDeprecated": false,
         "default": "DefaultParameterValue{value=UTC, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.date.fields(date :: STRING, pattern = yyyy-MM-dd HH:mm:ss :: STRING) :: MAP",
+    "name": "apoc.date.fields",
+    "description": "Splits the given date into fields returning a `MAP` containing the values of each field.",
+    "returnDescription": "MAP",
+    "deprecatedBy": "Cypher's temporal pattern constructors.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "date",
+        "description": "A string representation of a temporal value.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "pattern",
+        "description": "The format the given temporal is formatted as.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=yyyy-MM-dd HH:mm:ss, type=STRING}",
         "type": "STRING"
       }
     ]
@@ -540,6 +598,46 @@
         "name": "time",
         "description": "The datetime to convert to ms.",
         "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.date.parse(time :: STRING, unit = ms :: STRING, format = yyyy-MM-dd HH:mm:ss :: STRING, timezone =  :: STRING) :: INTEGER",
+    "name": "apoc.date.parse",
+    "description": "Parses the given date `STRING` from a specified format into the specified time unit.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": "Cypher's temporal pattern constructors.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "time",
+        "description": "The datetime to convert.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "unit",
+        "description": "The conversion unit.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=ms, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "format",
+        "description": "The format the given datetime is in.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=yyyy-MM-dd HH:mm:ss, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "timezone",
+        "description": "The timezone the given datetime is in.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
         "type": "STRING"
       }
     ]
@@ -841,6 +939,39 @@
         "name": "format",
         "description": "The format to return the duration in.",
         "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
+    "signature": "apoc.temporal.toZonedTemporal(time :: STRING, format = yyyy-MM-dd HH:mm:ss :: STRING, timezone = UTC :: STRING) :: ZONED DATETIME",
+    "name": "apoc.temporal.toZonedTemporal",
+    "description": "Parses the given date `STRING` using the specified format into the given time zone.",
+    "returnDescription": "ZONED DATETIME",
+    "deprecatedBy": "Cypher's temporal pattern constructors.",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "time",
+        "description": "The date string to be parsed.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "format",
+        "description": "The format of the given date string.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=yyyy-MM-dd HH:mm:ss, type=STRING}",
+        "type": "STRING"
+      },
+      {
+        "name": "timezone",
+        "description": "The timezone the given string is in.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=UTC, type=STRING}",
         "type": "STRING"
       }
     ]
