@@ -21,7 +21,7 @@ downloadLicenses {
 
 allprojects {
     group = 'org.neo4j.procedure'
-    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '2025.10.0'
+    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '2025.10.1'
     archivesBaseName = 'apoc'
     description = """neo4j-apoc-procedures"""
 }
@@ -61,7 +61,7 @@ subprojects {
         testImplementation('org.junit.jupiter:junit-jupiter')
 
         // We want the same netty version as other neo4j dependencies, are there better ways than to keep this in sync?
-        implementation(enforcedPlatform('io.netty:netty-bom:4.2.4.Final'))
+        implementation(platform('io.netty:netty-bom:4.2.4.Final'))
 
         testRuntimeOnly('org.junit.platform:junit-platform-launcher')
         testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
