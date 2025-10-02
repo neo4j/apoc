@@ -1,91 +1,91 @@
 import org.gradle.api.internal.artifacts.DefaultExcludeRule
 
 plugins {
-    id 'java'
+  id 'java'
 }
 
 archivesBaseName = "apoc-processor"
 
 jar {
-    manifest {
-        attributes 'Implementation-Version': version
-    }
+  manifest {
+    attributes 'Implementation-Version': version
+  }
 }
 
 javadoc {
-    failOnError = false
-    options.addStringOption('Xdoclint:none', '-quiet')
+  failOnError = false
+  options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 dependencies {
-    implementation group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective   // mandatory to run @ServiceProvider based META-INF code generation
-    api 'com.squareup:javapoet:1.13.0'
-    testImplementation 'com.google.testing.compile:compile-testing:0.19'
-    testImplementation 'org.assertj:assertj-core:3.26.3'
-    testImplementation 'org.mockito:mockito-core:4.2.0'
+  implementation group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective   // mandatory to run @ServiceProvider based META-INF code generation
+  api 'com.squareup:javapoet:1.13.0'
+  testImplementation 'com.google.testing.compile:compile-testing:0.19'
+  testImplementation 'org.assertj:assertj-core:3.26.3'
+  testImplementation 'org.mockito:mockito-core:4.2.0'
 }
 
 publishing {
-    repositories {
-        maven {
-            name = 'pipeline'
-            url = "file://${project(':core').buildDir}/repo"
-        }
-        if (System.getenv("CODEARTIFACT_PUBLISH_URL") ?: "" != "") {
-            maven {
-                name = 'codeartifact-publish'
-                url System.getenv('CODEARTIFACT_PUBLISH_URL')
-                credentials {
-                    username System.getenv('CODEARTIFACT_USERNAME')
-                    password System.getenv('CODEARTIFACT_TOKEN')
-                }
-            }
-        }
+  repositories {
+    maven {
+      name = 'pipeline'
+      url = "file://${project(':core').buildDir}/repo"
     }
-    publications {
-        shadow(MavenPublication) { publication ->
-            artifactId("apoc-processor")
-            artifact(mySourcesJar)
-            artifact(myJavadocJar)
-
-            from components.java
-
-            versionMapping {
-                usage('java-api') {
-                    fromResolutionOf('runtimeClasspath')
-                }
-                usage('java-runtime') {
-                    fromResolutionResult()
-                }
-            }
-            pom {
-                name = 'neo4j-apoc-procedure-processor'
-                description = 'A processor for APOC'
-                url = 'http://github.com/neo4j/apoc'
-                licenses {
-                    license {
-                        name = 'The Apache Software License, Version 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        comments = 'Note that this license is for the project itself, and not for its dependencies.'
-                        distribution = 'repo'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'neo4j'
-                        name = 'The Neo4j Team'
-                        url = 'https://neo4j.com/'
-                        organization = 'Neo4j Inc.'
-                        organizationUrl = 'https://neo4j.com/'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git://github.com/neo4j/apoc.git'
-                    developerConnection = 'scm:git:git@github.com:neo4j/apoc.git'
-                    url = 'https://github.com/neo4j/apoc'
-                }
-            }
+    if (System.getenv("CODEARTIFACT_PUBLISH_URL") ?: "" != "") {
+      maven {
+        name = 'codeartifact-publish'
+        url System.getenv('CODEARTIFACT_PUBLISH_URL')
+        credentials {
+          username System.getenv('CODEARTIFACT_USERNAME')
+          password System.getenv('CODEARTIFACT_TOKEN')
         }
+      }
     }
+  }
+  publications {
+    shadow(MavenPublication) { publication ->
+      artifactId("apoc-processor")
+      artifact(mySourcesJar)
+      artifact(myJavadocJar)
+
+      from components.java
+
+      versionMapping {
+        usage('java-api') {
+          fromResolutionOf('runtimeClasspath')
+        }
+        usage('java-runtime') {
+          fromResolutionResult()
+        }
+      }
+      pom {
+        name = 'neo4j-apoc-procedure-processor'
+        description = 'A processor for APOC'
+        url = 'http://github.com/neo4j/apoc'
+        licenses {
+          license {
+            name = 'The Apache Software License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            comments = 'Note that this license is for the project itself, and not for its dependencies.'
+            distribution = 'repo'
+          }
+        }
+        developers {
+          developer {
+            id = 'neo4j'
+            name = 'The Neo4j Team'
+            url = 'https://neo4j.com/'
+            organization = 'Neo4j Inc.'
+            organizationUrl = 'https://neo4j.com/'
+          }
+        }
+        scm {
+          connection = 'scm:git:git://github.com/neo4j/apoc.git'
+          developerConnection = 'scm:git:git@github.com:neo4j/apoc.git'
+          url = 'https://github.com/neo4j/apoc'
+        }
+      }
+    }
+  }
 }
 

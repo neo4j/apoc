@@ -1,33 +1,33 @@
 description = 'APOC :: Integration Tests Module'
 
 dependencies {
-    testImplementation project(':common')
-    testImplementation project(':core')
-    testImplementation project(':test-utils')
-    testImplementation project(':common').sourceSets.test.output
-    testImplementation project(':core').sourceSets.test.output
+  testImplementation project(':common')
+  testImplementation project(':core')
+  testImplementation project(':test-utils')
+  testImplementation project(':common').sourceSets.test.output
+  testImplementation project(':core').sourceSets.test.output
 
-    testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
-    testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.10.0'
+  testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
+  testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.10.0'
 
-    configurations.all {
-        exclude group: 'org.slf4j', module: 'slf4j-nop'
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+  configurations.all {
+    exclude group: 'org.slf4j', module: 'slf4j-nop'
+    exclude group: 'ch.qos.logback', module: 'logback-classic'
+  }
 }
 
 
 tasks.register('copyApocJar', Copy) {
-    dependsOn(':core:shadowJar')
-    from project(':core').tasks.shadowJar.archiveFile into layout.buildDirectory.dir('test/jar')
+  dependsOn(':core:shadowJar')
+  from project(':core').tasks.shadowJar.archiveFile into layout.buildDirectory.dir('test/jar')
 }
 
 test {
-    dependsOn(copyApocJar)
-    maxParallelForks = 1
-    doFirst {
-        var apocJarPath = layout.buildDirectory.file("test/jar/apoc-${version}-core.jar").get().asFile.absolutePath
-        println("apoc-core.test.jar.path=$apocJarPath")
-        systemProperty 'apoc-core.test.jar.path', apocJarPath
-    }
+  dependsOn(copyApocJar)
+  maxParallelForks = 1
+  doFirst {
+    var apocJarPath = layout.buildDirectory.file("test/jar/apoc-${version}-core.jar").get().asFile.absolutePath
+    println("apoc-core.test.jar.path=$apocJarPath")
+    systemProperty 'apoc-core.test.jar.path', apocJarPath
+  }
 }
