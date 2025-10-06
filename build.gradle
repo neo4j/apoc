@@ -14,7 +14,7 @@ downloadLicenses {
 
 allprojects {
     group = 'org.neo4j.procedure'
-    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '5.26.13'
+    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '5.26.14'
     archivesBaseName = 'apoc'
     description = """neo4j-apoc-procedures"""
 }
@@ -100,8 +100,8 @@ subprojects {
         // neo4jDockerImage system property is used in TestContainerUtil
         systemProperties 'user.language': 'en',
                 'user.country': 'US',
-                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.26.13-enterprise-debian',
-                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.26.13-debian',
+                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:5.26.14-enterprise-debian',
+                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:5.26.14-debian',
                 'coreDir': 'core',
                 'testDockerBundle': project.hasProperty("testDockerBundle") ? true : false,
                 'org.neo4j.io.pagecache.tracing.cursor.DefaultPageCursorTracer.CHECK_REPORTED_COUNTERS': 'true' // Extra assertions in kernel
@@ -170,7 +170,7 @@ apply from: "licenses-source-header.gradle"
 
 ext {
     publicDir = "${project.rootDir}"
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.26.13"
+    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "5.26.14"
     testContainersVersion = '1.20.2'
     apacheArrowVersion = '17.0.0'
 }
