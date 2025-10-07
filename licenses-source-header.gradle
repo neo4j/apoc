@@ -1,22 +1,22 @@
 allprojects { proj ->
-    plugins.withType(JavaLibraryPlugin) {
-        proj.apply plugin: 'com.github.hierynomus.license'
+  plugins.withType(JavaLibraryPlugin) {
+    proj.apply plugin: 'com.github.hierynomus.license'
 
-        def sourceFileHeader = rootProject.file("${project.rootDir}/licenses/headers/source-header.txt")
-        // License header checking and insertion
-        license {
-            header = sourceFileHeader
-            // what comment style to use
-            mapping {
-                java = 'SLASHSTAR_STYLE'
-            }
-            // exclude 'test/resources/**'
-            include '**/*.java'
-        }
-        tasks.check.dependsOn tasks.license
-
-        tasks.named("licenseTest").configure {
-            it.dependsOn("compileTestJava")
-        }
+    def sourceFileHeader = rootProject.file("${project.rootDir}/licenses/headers/source-header.txt")
+    // License header checking and insertion
+    license {
+      header = sourceFileHeader
+      // what comment style to use
+      mapping {
+        java = 'SLASHSTAR_STYLE'
+      }
+      // exclude 'test/resources/**'
+      include '**/*.java'
     }
+    tasks.check.dependsOn tasks.license
+
+    tasks.named("licenseTest").configure {
+      it.dependsOn("compileTestJava")
+    }
+  }
 }

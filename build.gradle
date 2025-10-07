@@ -1,182 +1,172 @@
 plugins {
-    id("java-library")
-    id('com.gradleup.shadow') version '8.3.6'
-    id("maven-publish")
-    id("com.github.hierynomus.license-report") version "0.16.1"
-    id("com.diffplug.spotless") version "6.22.0"
+  id("java-library")
+  id('com.gradleup.shadow') version '8.3.6'
+  id("maven-publish")
+  id("com.github.hierynomus.license-report") version "0.16.1"
+  id("com.diffplug.spotless") version "6.22.0"
 }
 
 ext {
-    publicDir = "${project.rootDir}"
-    neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.10.0"
-    testContainersVersion = '1.20.2'
-    apacheArrowVersion = '15.0.0'
+  publicDir = "${project.rootDir}"
+  neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.10.0"
+  testContainersVersion = '1.20.2'
+  apacheArrowVersion = '15.0.0'
 }
 
 downloadLicenses {
-    excludeDependencies = [
-            'org.neo4j.*'
-    ]
+  excludeDependencies = ['org.neo4j.*']
 }
 
 allprojects {
-    group = 'org.neo4j.procedure'
-    version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '2025.10.0'
-    archivesBaseName = 'apoc'
-    description = """neo4j-apoc-procedures"""
+  apply plugin: "com.diffplug.spotless"
+
+  group = 'org.neo4j.procedure'
+  version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '2025.10.0'
+  archivesBaseName = 'apoc'
+  description = """neo4j-apoc-procedures"""
+
+  repositories {
+    if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
+      maven {
+        url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
+        credentials {
+          username System.getenv('CODEARTIFACT_USERNAME')
+          password System.getenv('CODEARTIFACT_TOKEN')
+        }
+      }
+    } else {
+      mavenCentral()
+    }
+    maven {
+      url "https://repo.gradle.org/gradle/libs-releases"
+    }
+    mavenLocal()
+  }
+
+  spotless {
+    java {
+      target 'src/*/java/**/*.java'
+      removeUnusedImports()
+      palantirJavaFormat('2.50.0')
+    }
+    groovyGradle {
+      target '*.gradle'
+      greclipse().configFile(rootProject.file('greclipse.properties'))
+    }
+  }
 }
 
 apply plugin: 'java-library'
+
 if (System.env.CI != null)
-    apply from: 'teamcity-repository.gradle'
-
-repositories {
-
-    /*maven {  // this contains the neo4j 4.0.0-beta jars
-    url "https://neo4j.bintray.com/community/"
-}*/
-    if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
-        maven {
-            url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
-            credentials {
-                username System.getenv('CODEARTIFACT_USERNAME')
-                password System.getenv('CODEARTIFACT_TOKEN')
-            }
-        }
-    } else {
-        mavenCentral()
-    }
-    maven {
-        url "https://repo.gradle.org/gradle/libs-releases"
-    }
-    mavenLocal()
-}
+  apply from: 'teamcity-repository.gradle'
 
 subprojects {
-    apply plugin: "com.diffplug.spotless"
-    apply plugin: 'java-library'
+  apply plugin: 'java-library'
 
-    dependencies {
-        testImplementation(platform("org.junit:junit-bom:5.11.4"))
-        testImplementation('org.junit.jupiter:junit-jupiter')
+  dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation('org.junit.jupiter:junit-jupiter')
 
-        // We want the same netty version as other neo4j dependencies, are there better ways than to keep this in sync?
-        implementation(enforcedPlatform('io.netty:netty-bom:4.2.4.Final'))
+    // We want the same netty version as other neo4j dependencies, are there better ways than to keep this in sync?
+    implementation(platform('io.netty:netty-bom:4.2.4.Final'))
 
-        testRuntimeOnly('org.junit.platform:junit-platform-launcher')
-        testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
+    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+    testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
+  }
+
+  java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+  }
+
+  tasks.register('mySourcesJar', Jar) {
+    from sourceSets.main.allJava
+    archiveClassifier = 'sources'
+  }
+
+  tasks.register('myJavadocJar', Jar) {
+    from javadoc
+    archiveClassifier = 'javadoc'
+  }
+
+  test {
+    useJUnitPlatform()
+    //exclude '**/CypherProceduresClusterTest.class'//, '**/AtomicTest.class'
+
+    // neo4jDockerImage system property is used in TestContainerUtil
+    systemProperties 'user.language': 'en',
+    'user.country': 'US',
+    'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:2025.10.0-enterprise-debian',
+    'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:2025.10.0-debian',
+    'coreDir': 'core',
+    'testDockerBundle': project.hasProperty("testDockerBundle"),
+    'org.neo4j.io.pagecache.tracing.cursor.DefaultPageCursorTracer.CHECK_REPORTED_COUNTERS': 'true' // Extra assertions in kernel
+
+    environment 'NEO4JVERSION', neo4jVersionEffective
+
+    maxHeapSize = "5G"
+    forkEvery = 50
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    minHeapSize = "128m"
+
+    // This would apply only to TeamCity
+    // We need to ignore the failures because we may have tests muted
+    if (System.env.TEAMCITY_VERSION != null) {
+      ignoreFailures(true)
+      if (project.hasProperty('excludeSeleniumTests')) {
+        exclude '**/LoadHtmlTest*'
+        exclude '**/LoadHtmlTestParameterized*'
+      }
     }
 
-    spotless {
-        java {
-            target 'src/*/java/**/*.java'
-            removeUnusedImports()
-            palantirJavaFormat('2.50.0')
-        }
+    jvmArgs = [
+      "--add-opens",
+      "java.base/java.lang=ALL-UNNAMED",
+      "--add-opens",
+      "java.base/java.nio=ALL-UNNAMED",
+      "--add-opens",
+      "java.base/java.io=ALL-UNNAMED",
+      "--add-opens",
+      "java.base/java.util=ALL-UNNAMED",
+      "--add-opens",
+      "java.base/java.util.concurrent=ALL-UNNAMED",
+      "--add-opens",
+      "java.base/sun.net.www.protocol.http=ALL-UNNAMED",
+      "--add-opens",
+      "java.base/sun.nio.ch=ALL-UNNAMED",
+      "--add-opens",
+      "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+      "--add-opens",
+      "jdk.compiler/com.sun.tools.javac=ALL-UNNAMED",
+      "--add-opens",
+      "jdk.compiler/com.sun.source.doctree=ALL-UNNAMED",
+      "--add-opens",
+      "jdk.compiler/com.sun.source.tree=ALL-UNNAMED",
+      "--add-opens",
+      "jdk.compiler/com.sun.source.util=ALL-UNNAMED"
+    ]
+
+    filter {
+      setFailOnNoMatchingTests(false)
     }
 
-    repositories {
+    testLogging.showStandardStreams = true
+  }
 
-        /*maven {  // this contains the neo4j 4.0.0-beta jars
-        url "https://neo4j.bintray.com/community/"
-    }*/
-        if (System.getenv("CODEARTIFACT_DOWNLOAD_URL") ?: "" != "") {
-            maven {
-                url System.getenv('CODEARTIFACT_DOWNLOAD_URL')
-                credentials {
-                    username System.getenv('CODEARTIFACT_USERNAME')
-                    password System.getenv('CODEARTIFACT_TOKEN')
-                }
-            }
-        } else {
-            mavenCentral()
-        }
-        maven {
-            url "https://repo.gradle.org/gradle/libs-releases"
-        }
-        mavenLocal()
-    }
+  configurations {
+    apt
+  }
 
+  compileJava {
+    options.annotationProcessorPath = configurations.apt
+    options.compilerArgs += ["-AIgnoreContextWarnings"]
+    options.encoding = "UTF-8"
+  }
 
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
-    tasks.register('mySourcesJar', Jar) {
-        from sourceSets.main.allJava
-        archiveClassifier = 'sources'
-    }
-
-    tasks.register('myJavadocJar', Jar) {
-        from javadoc
-        archiveClassifier = 'javadoc'
-    }
-
-    test {
-        useJUnitPlatform()
-        //exclude '**/CypherProceduresClusterTest.class'//, '**/AtomicTest.class'
-
-        // neo4jDockerImage system property is used in TestContainerUtil
-        systemProperties 'user.language': 'en',
-                'user.country': 'US',
-                'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:2025.10.0-enterprise-debian',
-                'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:2025.10.0-debian',
-                'coreDir': 'core',
-                'testDockerBundle': project.hasProperty("testDockerBundle"),
-                'org.neo4j.io.pagecache.tracing.cursor.DefaultPageCursorTracer.CHECK_REPORTED_COUNTERS': 'true' // Extra assertions in kernel
-
-        environment 'NEO4JVERSION', neo4jVersionEffective
-
-        maxHeapSize = "5G"
-        forkEvery = 50
-        maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-        minHeapSize = "128m"
-
-        // This would apply only to TeamCity
-        // We need to ignore the failures because we may have tests muted
-        if (System.env.TEAMCITY_VERSION != null) {
-            ignoreFailures(true)
-            if (project.hasProperty('excludeSeleniumTests')) {
-                exclude '**/LoadHtmlTest*'
-                exclude '**/LoadHtmlTestParameterized*'
-            }
-        }
-
-        jvmArgs = ["--add-opens", "java.base/java.lang=ALL-UNNAMED",
-                   "--add-opens", "java.base/java.nio=ALL-UNNAMED",
-                   "--add-opens", "java.base/java.io=ALL-UNNAMED",
-                   "--add-opens", "java.base/java.util=ALL-UNNAMED",
-                   "--add-opens", "java.base/java.util.concurrent=ALL-UNNAMED",
-                   "--add-opens", "java.base/sun.net.www.protocol.http=ALL-UNNAMED",
-                   "--add-opens", "java.base/sun.nio.ch=ALL-UNNAMED",
-                   "--add-opens", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-                   "--add-opens", "jdk.compiler/com.sun.tools.javac=ALL-UNNAMED",
-                   "--add-opens", "jdk.compiler/com.sun.source.doctree=ALL-UNNAMED",
-                   "--add-opens", "jdk.compiler/com.sun.source.tree=ALL-UNNAMED",
-                   "--add-opens", "jdk.compiler/com.sun.source.util=ALL-UNNAMED"]
-
-        filter {
-            setFailOnNoMatchingTests(false)
-        }
-
-        testLogging.showStandardStreams = true
-    }
-
-    configurations {
-        apt
-    }
-
-    compileJava {
-        options.annotationProcessorPath = configurations.apt
-        options.compilerArgs += ["-AIgnoreContextWarnings"]
-        options.encoding = "UTF-8"
-    }
-
-    compileTestJava {
-        options.encoding = "UTF-8"
-    }
-
+  compileTestJava {
+    options.encoding = "UTF-8"
+  }
 }
 
 apply from: "licenses-3rdparties.gradle"

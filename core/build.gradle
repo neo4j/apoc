@@ -1,194 +1,176 @@
 import org.gradle.api.internal.artifacts.DefaultExcludeRule
 
 plugins {
-    id 'java'
-    id 'maven-publish'
-    id('com.gradleup.shadow') version '8.3.6'
+  id 'java'
+  id 'maven-publish'
+  id('com.gradleup.shadow') version '8.3.6'
 }
 
 archivesBaseName = "apoc"
 
 jar {
-    manifest {
-        attributes 'Implementation-Version': version
-    }
-    archiveClassifier.set('')
-    duplicatesStrategy = 'exclude'
+  manifest {
+    attributes 'Implementation-Version': version
+  }
+  archiveClassifier.set('')
+  duplicatesStrategy = 'exclude'
 }
 
 
 configurations {
-    apt
+  apt
 }
 
 shadowJar {
-    archiveClassifier.set('core')
-    duplicatesStrategy = 'exclude'
+  archiveClassifier.set('core')
+  duplicatesStrategy = 'exclude'
 }
 
 tasks.register('combinedJar', Jar) {
-    dependsOn(project(':common').jar)
-    dependsOn(project.jar)
+  dependsOn(project(':common').jar)
+  dependsOn(project.jar)
 
-    archiveClassifier.set('all')
+  archiveClassifier.set('all')
 
-    manifest {
-        attributes 'Implementation-Version': version
-    }
+  manifest {
+    attributes 'Implementation-Version': version
+  }
 
-    from(zipTree(project(':common').tasks.jar.archiveFile))
-    from(zipTree(project.tasks.jar.archiveFile))
+  from(zipTree(project(':common').tasks.jar.archiveFile))
+  from(zipTree(project.tasks.jar.archiveFile))
 }
 
 tasks.register('combinedSources', Jar) {
-    from sourceSets.main.allJava
-    from project(':common').sourceSets.main.allJava
-    archiveClassifier = 'all-sources'
+  from sourceSets.main.allJava
+  from project(':common').sourceSets.main.allJava
+  archiveClassifier = 'all-sources'
 }
 
 tasks.register('combinedJavaDoc', Jar) {
-    from javadoc
-    archiveClassifier = 'all-javadoc'
+  from javadoc
+  archiveClassifier = 'all-javadoc'
 }
 
 javadoc {
-    failOnError = false
-    options.addStringOption('Xdoclint:none', '-quiet')
+  failOnError = false
+  options.addStringOption('Xdoclint:none', '-quiet')
 }
 
 
 dependencies {
-    apt project(':processor')
-    apt group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
+  apt project(':processor')
+  apt group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
 
-    // These will be dependencies packaged with the .jar
-    implementation project(":common")
-    implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1', {
-        exclude group: 'commons-beanutils', module: 'commons-beanutils'
-        exclude group: 'org.apache.commons', module: 'commons-collections4'
-    }
-    implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
+  // These will be dependencies packaged with the .jar
+  implementation project(":common")
+  implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1', {
+    exclude group: 'commons-beanutils', module: 'commons-beanutils'
+    exclude group: 'org.apache.commons', module: 'commons-collections4'
+  }
+  implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
 
-    def arrowExclusions = {
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
-        exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
-        exclude group: 'io.netty', module: 'netty-common'
-        exclude group: 'io.netty', module: 'netty-buffer'
-    }
+  def arrowExclusions = {
+    exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
+    exclude group: 'com.fasterxml.jackson.core', module: 'jackson-annotations'
+    exclude group: 'com.fasterxml.jackson.core', module: 'jackson-databind'
+    exclude group: 'io.netty', module: 'netty-common'
+    exclude group: 'io.netty', module: 'netty-buffer'
+  }
 
-    // These will be dependencies not packaged with the .jar
-    // They need to be provided either through the database or in an extra .jar
-    compileOnly group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion, arrowExclusions
-    compileOnly group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
+  // These will be dependencies not packaged with the .jar
+  // They need to be provided either through the database or in an extra .jar
+  compileOnly group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion, arrowExclusions
+  compileOnly group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
 
-    compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
-    compileOnly group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
+  compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
+  compileOnly group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
 
-    // These dependencies affect the tests only, they will not be packaged in the resulting .jar
-    testImplementation project(":common").sourceSets.test.output
-    testImplementation project(':test-utils')
-    testImplementation "com.neo4j:enterprise-it-test-support:$neo4jVersionEffective"
-    testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
-    testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
-        exclude group: 'org.slf4j', module: 'slf4j-api'
-    }
-    testImplementation 'org.assertj:assertj-core:3.26.3'
-    testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:4.1.0'
+  // These dependencies affect the tests only, they will not be packaged in the resulting .jar
+  testImplementation project(":common").sourceSets.test.output
+  testImplementation project(':test-utils')
+  testImplementation "com.neo4j:enterprise-it-test-support:$neo4jVersionEffective"
+  testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
+  testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
+    exclude group: 'org.slf4j', module: 'slf4j-api'
+  }
+  testImplementation 'org.assertj:assertj-core:3.26.3'
+  testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:4.1.0'
 
-    configurations.all {
-        exclude group: 'org.slf4j', module: 'slf4j-nop'
-        exclude group: 'ch.qos.logback', module: 'logback-classic'
-    }
+  configurations.all {
+    exclude group: 'org.slf4j', module: 'slf4j-nop'
+    exclude group: 'ch.qos.logback', module: 'logback-classic'
+  }
 }
 
 publishing {
-    repositories {
-        maven {
-            name = 'pipeline'
-            url = "file://${project(':core').buildDir}/repo"
-        }
-        if (System.getenv("CODEARTIFACT_PUBLISH_URL") ?: "" != "") {
-            maven {
-                name = 'codeartifact-publish'
-                url System.getenv('CODEARTIFACT_PUBLISH_URL')
-                credentials {
-                    username System.getenv('CODEARTIFACT_USERNAME')
-                    password System.getenv('CODEARTIFACT_TOKEN')
-                }
-            }
-        }
+  repositories {
+    maven {
+      name = 'pipeline'
+      url = "file://${project(':core').buildDir}/repo"
     }
-    publications {
-        shadow(MavenPublication) { publication ->
-            artifactId("apoc-core")
-            project.shadow.component(publication)
-            artifact(mySourcesJar)
-            artifact(myJavadocJar)
-            artifact(jar)
-
-            artifact(combinedJar)
-            artifact(combinedSources)
-            artifact(combinedJavaDoc)
-
-            pom.withXml {
-                def root = asNode()
-                root.appendNode("name", "neo4j-apoc-core")
-                root.appendNode("description", "Core package for Neo4j Procedures")
-                root.appendNode("url", "http://github.com/neo4j/apoc")
-
-                def scmNode = root.appendNode("scm")
-                scmNode.appendNode("url", "http://github.com/neo4j/apoc")
-
-                def licensesNode = root.appendNode("licenses")
-                def licenseNode = licensesNode.appendNode("license")
-                licenseNode.appendNode("name", 'The Apache Software License, Version 2.0')
-                licenseNode.appendNode("url", 'http://www.apache.org/licenses/LICENSE-2.0.txt')
-                licenseNode.appendNode("comments", 'Note that this license is for the project itself, and not for its dependencies.')
-                licenseNode.appendNode("distribution", 'repo')
-
-                def developersNode = root.appendNode("developers")
-                def developerNode = developersNode.appendNode("developer")
-                developerNode.appendNode("id", 'neo4j')
-                developerNode.appendNode("name", 'The Neo4j Team')
-                developerNode.appendNode("url", 'https://neo4j.com/')
-                developerNode.appendNode("organization", 'Neo4j Inc.')
-                developerNode.appendNode("organizationUrl", 'https://neo4j.com/')
-
-                def dependenciesNode = root.get("dependencies")[0]
-
-                if (dependenciesNode != null) {
-                    configurations.default.allDependencies.findAll {dependency -> dependency.group != "org.neo4j.procedure"}.forEach {
-                        def dependency = dependenciesNode.appendNode('dependency')
-                        dependency.appendNode('groupId', it.group)
-                        dependency.appendNode('artifactId', it.name)
-                        dependency.appendNode('version', it.version)
-                        dependency.appendNode('scope', "compile")
-
-                        def myExcludeRules = it.excludeRules
-                        if (myExcludeRules.size() == 0) {
-                            myExcludeRules = new HashSet<>()
-                        }
-
-                        myExcludeRules.add(new DefaultExcludeRule("org.slf4j", "slf4j-nop"))
-
-                        // for exclusions
-                        if (myExcludeRules.size() > 0) {
-                            def exclusions = dependency.appendNode('exclusions')
-                            myExcludeRules.each { ExcludeRule ex ->
-                                def exclusion = exclusions.appendNode('exclusion')
-                                exclusion.appendNode('artifactId', ex.module ? ex.module : "*")
-                                exclusion.appendNode('groupId', ex.group)
-                            }
-                        }
-                    }
-                }
-            }
+    if (System.getenv("CODEARTIFACT_PUBLISH_URL") ?: "" != "") {
+      maven {
+        name = 'codeartifact-publish'
+        url System.getenv('CODEARTIFACT_PUBLISH_URL')
+        credentials {
+          username System.getenv('CODEARTIFACT_USERNAME')
+          password System.getenv('CODEARTIFACT_TOKEN')
         }
+      }
     }
+  }
+  publications {
+    shadow(MavenPublication) { publication ->
+      artifactId("apoc-core")
+      artifact(mySourcesJar)
+      artifact(myJavadocJar)
+
+      artifact(combinedJar)
+      artifact(combinedSources)
+      artifact(combinedJavaDoc)
+
+      from components.java
+
+      versionMapping {
+        usage('java-api') {
+          fromResolutionOf('runtimeClasspath')
+        }
+        usage('java-runtime') {
+          fromResolutionResult()
+        }
+      }
+      pom {
+        name = 'neo4j-apoc-core'
+        description = 'Core package for Neo4j Procedures'
+        url = 'http://github.com/neo4j/apoc'
+        licenses {
+          license {
+            name = 'The Apache Software License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            comments = 'Note that this license is for the project itself, and not for its dependencies.'
+            distribution = 'repo'
+          }
+        }
+        developers {
+          developer {
+            id = 'neo4j'
+            name = 'The Neo4j Team'
+            url = 'https://neo4j.com/'
+            organization = 'Neo4j Inc.'
+            organizationUrl = 'https://neo4j.com/'
+          }
+        }
+        scm {
+          connection = 'scm:git:git://github.com/neo4j/apoc.git'
+          developerConnection = 'scm:git:git@github.com:neo4j/apoc.git'
+          url = 'https://github.com/neo4j/apoc'
+        }
+      }
+    }
+  }
 }
 
 tasks.register('copyRuntimeLibs', Copy) {
-    into "lib"
-    from configurations.testRuntimeClasspath
+  into "lib"
+  from configurations.testRuntimeClasspath
 }

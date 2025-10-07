@@ -1,17 +1,17 @@
 allprojects {
-    plugins.withType(JavaLibraryPlugin) {
-        repositories {
-            maven {
-                name = 'aws-codeartifact-repo'
-                url =  System.getenv('CODEARTIFACT_DOWNLOAD_URL')
-                credentials {
-                    username System.getenv('CODEARTIFACT_USERNAME')
-                    password System.getenv('CODEARTIFACT_TOKEN')
-                }
-                authentication {
-                    basic(BasicAuthentication)
-                }
-            }
+  plugins.withType(JavaLibraryPlugin) {
+    repositories {
+      maven {
+        name = 'aws-codeartifact-repo'
+        url =  System.getenv('CODEARTIFACT_DOWNLOAD_URL')
+        credentials {
+          username System.getenv('CODEARTIFACT_USERNAME')
+          password System.getenv('CODEARTIFACT_TOKEN')
         }
+        authentication {
+          basic(BasicAuthentication)
+        }
+      }
     }
+  }
 }
