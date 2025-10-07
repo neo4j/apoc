@@ -9,13 +9,13 @@ plugins {
 archivesBaseName = "apoc"
 
 jar {
-    manifest {
-        attributes 'Implementation-Title': "APOC Core"
-        attributes 'Implementation-Vendor': "Neo4j"
-        attributes 'Implementation-Version': version
-    }
-    archiveClassifier.set('')
-    duplicatesStrategy = 'exclude'
+  manifest {
+    attributes 'Implementation-Title': "APOC Core"
+    attributes 'Implementation-Vendor': "Neo4j"
+    attributes 'Implementation-Version': version
+  }
+  archiveClassifier.set('')
+  duplicatesStrategy = 'exclude'
 }
 
 
@@ -34,11 +34,11 @@ tasks.register('combinedJar', Jar) {
 
   archiveClassifier.set('all')
 
-    manifest {
-        attributes 'Implementation-Title': "APOC Core"
-        attributes 'Implementation-Vendor': "Neo4j"
-        attributes 'Implementation-Version': version
-    }
+  manifest {
+    attributes 'Implementation-Title': "APOC Core"
+    attributes 'Implementation-Vendor': "Neo4j"
+    attributes 'Implementation-Version': version
+  }
 
   from(zipTree(project(':common').tasks.jar.archiveFile))
   from(zipTree(project.tasks.jar.archiveFile))

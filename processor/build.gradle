@@ -7,11 +7,11 @@ plugins {
 archivesBaseName = "apoc-processor"
 
 jar {
-    manifest {
-        attributes 'Implementation-Title': "APOC Core"
-        attributes 'Implementation-Vendor': "Neo4j"
-        attributes 'Implementation-Version': version
-    }
+  manifest {
+    attributes 'Implementation-Title': "APOC Core"
+    attributes 'Implementation-Vendor': "Neo4j"
+    attributes 'Implementation-Version': version
+  }
 }
 
 javadoc {
