@@ -10,6 +10,8 @@ archivesBaseName = "apoc"
 
 jar {
   manifest {
+    attributes 'Implementation-Title': "APOC Core"
+    attributes 'Implementation-Vendor': "Neo4j"
     attributes 'Implementation-Version': version
   }
   archiveClassifier.set('')
@@ -33,6 +35,8 @@ tasks.register('combinedJar', Jar) {
   archiveClassifier.set('all')
 
   manifest {
+    attributes 'Implementation-Title': "APOC Core"
+    attributes 'Implementation-Vendor': "Neo4j"
     attributes 'Implementation-Version': version
   }
 
