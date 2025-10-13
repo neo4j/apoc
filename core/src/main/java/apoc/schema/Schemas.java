@@ -200,6 +200,8 @@ public class Schemas {
 
         for (IndexDefinition definition : Util.getIndexes(tx)) {
             if (definition.getIndexType() == IndexType.LOOKUP) continue;
+            // Don't drop vector indexes
+            if (definition.getIndexType() == IndexType.VECTOR) continue;
             if (definition.isConstraintIndex()) continue;
             if (definition.isMultiTokenIndex()) continue;
 

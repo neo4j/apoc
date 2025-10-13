@@ -89,7 +89,6 @@ public class MetaTest {
                             "apoc.meta.graph.of",
                             "apoc.meta.graphSample",
                             "apoc.meta.subGraph"))
-            .withSetting(GraphDatabaseInternalSettings.cypher_enable_vector_type, true)
             .withSetting(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
             .withSetting(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE)
             .withSetting(
@@ -539,6 +538,42 @@ public class MetaTest {
             assertEquals("ACTED_IN", rel.getType().name());
             assertEquals(1L, rel.getProperty("count"));
         });
+    }
+
+    @Test
+    public void testVectorIndexes() {
+        db.executeTransactionally(
+                """
+                CREATE VECTOR INDEX moviePlots IF NOT EXISTS
+                FOR (m:Movie)
+                ON m.embedding
+                OPTIONS { indexConfig: {
+                 `vector.dimensions`: 1536,
+                 `vector.similarity_function`: 'cosine'
+                }}
+                """);
+
+        db.executeTransactionally("CREATE (m:Movie {name:'The Movie', embedding: [1, 2, 3]})");
+
+        TestUtil.testResult(
+                db,
+                """
+                CALL apoc.meta.data()
+                YIELD label, property, count, unique, index, existence, type, array, left, right, other, otherLabels, elementType
+                RETURN * ORDER BY elementType, property""",
+                (r) -> {
+                    Map<String, Object> row = r.next();
+                    assertEquals("node", row.get("elementType"));
+                    assertEquals("embedding", row.get("property"));
+                    assertEquals("Movie", row.get("label"));
+                    assertEquals(true, row.get("index"));
+                    row = r.next();
+                    assertEquals("node", row.get("elementType"));
+                    assertEquals("name", row.get("property"));
+                    assertEquals("Movie", row.get("label"));
+                    assertEquals(false, row.get("index"));
+                    assertFalse(r.hasNext());
+                });
     }
 
     @Test
