@@ -142,6 +142,32 @@ public class SchemasTest {
     }
 
     @Test
+    public void testDropIndexDoesntAffectVectorIndexes() {
+        db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
+        db.executeTransactionally(
+                """
+                CREATE VECTOR INDEX moviePlots IF NOT EXISTS
+                FOR (m:Movie)
+                ON m.embedding
+                OPTIONS { indexConfig: {
+                 `vector.dimensions`: 1536,
+                 `vector.similarity_function`: 'cosine'
+                }}
+                """);
+        testCall(db, "CALL apoc.schema.assert(null,null)", (r) -> {
+            assertEquals("Foo", r.get("label"));
+            assertEquals("bar", r.get("key"));
+            assertEquals(false, r.get("unique"));
+            assertEquals("DROPPED", r.get("action"));
+        });
+        try (Transaction tx = db.beginTx()) {
+            List<IndexDefinition> indexes = Iterables.asList(tx.schema().getIndexes());
+            // the multi-token idx remains
+            assertEquals(1, indexes.size());
+        }
+    }
+
+    @Test
     public void testDropIndexAndCreateIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "CALL apoc.schema.assert({Bar:['foo']},null)", (result) -> {
