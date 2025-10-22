@@ -64,7 +64,6 @@ public class UtilsTest {
 
     @ClassRule
     public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseInternalSettings.cypher_enable_vector_type, true)
             .withSetting(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
             .withSetting(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE);
 

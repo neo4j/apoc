@@ -108,7 +108,6 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.TransactionTerminatedException;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexDefinition;
-import org.neo4j.graphdb.schema.IndexType;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
@@ -1327,37 +1326,16 @@ public class Util {
                 .orElse(-1);
     }
 
-    /*
-     * Get all indexes from Neo4j
-     * Currently filters out vector indexes
-     * When vector indexes are supported, this can be changed to transaction.schema().getIndexes()
-     */
     public static Iterable<IndexDefinition> getIndexes(Transaction transaction) {
-        return StreamSupport.stream(transaction.schema().getIndexes().spliterator(), false)
-                .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR)
-                .toList();
+        return transaction.schema().getIndexes();
     }
 
-    /*
-     * Get all indexes from Neo4j for a given label
-     * Currently filters out vector indexes
-     * When vector indexes are supported, this can be changed to transaction.schema().getIndexes(label)
-     */
     public static Iterable<IndexDefinition> getIndexes(Transaction transaction, Label label) {
-        return StreamSupport.stream(transaction.schema().getIndexes(label).spliterator(), false)
-                .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR)
-                .toList();
+        return transaction.schema().getIndexes(label);
     }
 
-    /*
-     * Get all indexes from Neo4j for a given relationship type
-     * Currently filters out vector indexes
-     * When vector indexes are supported, this can be changed to transaction.schema().getIndexes(relType)
-     */
     public static Iterable<IndexDefinition> getIndexes(Transaction transaction, RelationshipType relType) {
-        return StreamSupport.stream(transaction.schema().getIndexes(relType).spliterator(), false)
-                .filter(indexDefinition -> indexDefinition.getIndexType() != IndexType.VECTOR)
-                .toList();
+        return transaction.schema().getIndexes(relType);
     }
 
     public static <T> T withBackOffRetries(Supplier<T> func, long initialTimeout, long upperTimeout, Log log) {
