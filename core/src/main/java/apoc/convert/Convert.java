@@ -122,6 +122,18 @@ public class Convert {
     @SuppressWarnings("unchecked")
     @UserFunction("apoc.convert.toSet")
     @Description("Converts the given value into a set represented in Cypher as a `LIST<ANY>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public List<Object> toSetCypher5(
+            @Name(value = "list", description = "The list to convert into a set.") Object value) {
+        List list = ConvertUtils.convertToList(value);
+        return list == null ? null : new SetBackedList(new LinkedHashSet<>(list));
+    }
+
+    @Deprecated
+    @SuppressWarnings("unchecked")
+    @UserFunction(name = "apoc.convert.toSet", deprecatedBy = "Cypher's `coll.distinct` function.")
+    @Description("Converts the given value into a set represented in Cypher as a `LIST<ANY>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public List<Object> toSet(@Name(value = "list", description = "The list to convert into a set.") Object value) {
         List list = ConvertUtils.convertToList(value);
         return list == null ? null : new SetBackedList(new LinkedHashSet<>(list));

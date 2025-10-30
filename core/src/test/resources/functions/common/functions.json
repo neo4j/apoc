@@ -555,32 +555,6 @@
   {
     "isDeprecated": false,
     "aggregating": false,
-    "signature": "apoc.coll.flatten(coll :: LIST<ANY>, recursive = false :: BOOLEAN) :: LIST<ANY>",
-    "name": "apoc.coll.flatten",
-    "description": "Flattens the given `LIST<ANY>` (to flatten nested `LIST<ANY>` values, set recursive to true).",
-    "returnDescription": "LIST<ANY>",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "coll",
-        "description": "The list to flatten.",
-        "isDeprecated": false,
-        "type": "LIST<ANY>"
-      },
-      {
-        "name": "recursive",
-        "description": "Whether nested list items should also be flattened.",
-        "isDeprecated": false,
-        "default": "DefaultParameterValue{value=false, type=BOOLEAN}",
-        "type": "BOOLEAN"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
     "signature": "apoc.coll.frequencies(coll :: LIST<ANY>) :: LIST<ANY>",
     "name": "apoc.coll.frequencies",
     "description": "Returns a `LIST<ANY>` of frequencies of the items in the collection, keyed by `item` and `count`.",
@@ -613,62 +587,6 @@
         "description": "The list to return items and their count from.",
         "isDeprecated": false,
         "type": "LIST<ANY>"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.coll.indexOf(coll :: LIST<ANY>, value :: ANY) :: INTEGER",
-    "name": "apoc.coll.indexOf",
-    "description": "Returns the index for the first occurrence of the specified value in the `LIST<ANY>`.",
-    "returnDescription": "INTEGER",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "coll",
-        "description": "The list to find the given value in.",
-        "isDeprecated": false,
-        "type": "LIST<ANY>"
-      },
-      {
-        "name": "value",
-        "description": "The value to find the first occurrence of in the given list.",
-        "isDeprecated": false,
-        "type": "ANY"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.coll.insert(coll :: LIST<ANY>, index :: INTEGER, value :: ANY) :: LIST<ANY>",
-    "name": "apoc.coll.insert",
-    "description": "Inserts a value into the specified index in the `LIST<ANY>`.",
-    "returnDescription": "LIST<ANY>",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "coll",
-        "description": "The list to insert a value into.",
-        "isDeprecated": false,
-        "type": "LIST<ANY>"
-      },
-      {
-        "name": "index",
-        "description": "The position in the list to insert the given value.",
-        "isDeprecated": false,
-        "type": "INTEGER"
-      },
-      {
-        "name": "value",
-        "description": "The value to be inserted.",
-        "isDeprecated": false,
-        "type": "ANY"
       }
     ]
   },
@@ -788,38 +706,6 @@
   {
     "isDeprecated": false,
     "aggregating": false,
-    "signature": "apoc.coll.remove(coll :: LIST<ANY>, index :: INTEGER, length = 1 :: INTEGER) :: LIST<ANY>",
-    "name": "apoc.coll.remove",
-    "description": "Removes a range of values from the `LIST<ANY>`, beginning at position index for the given length of values.",
-    "returnDescription": "LIST<ANY>",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "coll",
-        "description": "The list to remove values from.",
-        "isDeprecated": false,
-        "type": "LIST<ANY>"
-      },
-      {
-        "name": "index",
-        "description": "The starting index in the list to begin removing values from.",
-        "isDeprecated": false,
-        "type": "INTEGER"
-      },
-      {
-        "name": "length",
-        "description": "The number of values to remove.",
-        "isDeprecated": false,
-        "default": "DefaultParameterValue{value=1, type=INTEGER}",
-        "type": "INTEGER"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
     "signature": "apoc.coll.removeAll(list1 :: LIST<ANY>, list2 :: LIST<ANY>) :: LIST<ANY>",
     "name": "apoc.coll.removeAll",
     "description": "Returns the first `LIST<ANY>` with all elements also present in the second `LIST<ANY>` removed.",
@@ -906,25 +792,6 @@
       {
         "name": "coll",
         "description": "The list to be shuffled.",
-        "isDeprecated": false,
-        "type": "LIST<ANY>"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.coll.sort(coll :: LIST<ANY>) :: LIST<ANY>",
-    "name": "apoc.coll.sort",
-    "description": "Sorts the given `LIST<ANY>` into ascending order.",
-    "returnDescription": "LIST<ANY>",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "coll",
-        "description": "The list to be sorted.",
         "isDeprecated": false,
         "type": "LIST<ANY>"
       }
@@ -1041,25 +908,6 @@
       {
         "name": "list2",
         "description": "The list of values to be removed from `list1`.",
-        "isDeprecated": false,
-        "type": "LIST<ANY>"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.coll.toSet(coll :: LIST<ANY>) :: LIST<ANY>",
-    "name": "apoc.coll.toSet",
-    "description": "Returns a unique `LIST<ANY>` from the given `LIST<ANY>`.",
-    "returnDescription": "LIST<ANY>",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "coll",
-        "description": "The list of values to remove all duplicates from.",
         "isDeprecated": false,
         "type": "LIST<ANY>"
       }
@@ -1343,25 +1191,6 @@
       {
         "name": "relList",
         "description": "The value to convert into a relationship list.",
-        "isDeprecated": false,
-        "type": "ANY"
-      }
-    ]
-  },
-  {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.convert.toSet(list :: ANY) :: LIST<ANY>",
-    "name": "apoc.convert.toSet",
-    "description": "Converts the given value into a set represented in Cypher as a `LIST<ANY>`.",
-    "returnDescription": "LIST<ANY>",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "list",
-        "description": "The list to convert into a set.",
         "isDeprecated": false,
         "type": "ANY"
       }
