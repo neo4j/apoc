@@ -27,23 +27,27 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
-import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
+import org.neo4j.values.storable.CoordinateReferenceSystem;
+import org.neo4j.values.storable.Values;
 
-@EnterpriseDbmsExtension(createDatabasePerTest = false)
-public class SchemaIndexTest {
+@ImpermanentEnterpriseDbmsExtension
+class SchemaIndexTest {
 
     private static final String SCHEMA_DISTINCT_COUNT_ORDERED =
             """
@@ -52,7 +56,6 @@ public class SchemaIndexTest {
             RETURN * ORDER BY label, key, value""";
     private static final String FULL_TEXT_LABEL = "FullTextOne";
     private static final String SCHEMA_LABEL = "SchemaTest";
-    private static final String FULL_TEXT_TWO_LABEL = "FullTextTwo";
 
     @Inject
     GraphDatabaseService db;
@@ -65,15 +68,19 @@ public class SchemaIndexTest {
     private static final int lastPerson = 200;
 
     @BeforeAll
-    void setUp() {
-        TestUtil.registerProcedure(db, SchemaIndex.class);
-        db.executeTransactionally(
+    void setup() {
+       TestUtil.registerProcedure(db, SchemaIndex.class);
+    }
+
+    @BeforeEach
+    void testSetUp() {
+       db.executeTransactionally(
                 "CREATE (city:City {name:'London'}) WITH city UNWIND range(" + firstPerson + "," + lastPerson
                         + ") as id CREATE (:Person {name:'name'+id, id:id, age:id % 100, address:id+'Main St.'})-[:LIVES_IN]->(city)");
 
-        // dataset for fulltext / composite indexes
         db.executeTransactionally(
                 """
+                CYPHER 25
                 CREATE (:FullTextOne {prop1: "Michael", prop2: 111}),
                     (:FullTextOne {prop1: "AA", prop2: 1}),
                     (:FullTextOne {prop1: "EE", prop2: 111}),
@@ -86,9 +93,25 @@ public class SchemaIndexTest {
                     (:FullTextTwo {prop1: "Ryan", prop3: 'abcde'}),
                     (:SchemaTest {prop1: 'a', prop2: 'bar'}),
                     (:SchemaTest {prop1: 'b', prop2: 'foo'}),
-                    (:SchemaTest {prop1: 'c', prop2: 'bar'})
-                    """);
-        //
+                    (:SchemaTest {prop1: 'c', prop2: 'bar'}),
+                    (:Label {prop: vector([1, 3, 14], 3, INT)}),
+                    (:Label {prop: vector([1, 3, 14], 3, INT)}),
+                    (:Label {prop: vector([1, 3, 15], 3, INT)}),
+                    (:Label {prop: [1, 3, 14]}),
+                    (:Label {prop: [1, 3, 14]}),
+                    (:Label {prop: [1, 3, 14]}),
+                    (:Label {prop: [1, 3, 15]}),
+                    (:Label {prop: [1.0, 2.3, 3.14]}),
+                    (:Label {prop: [1.0, 2.3, 3.14]}),
+                    (:Label {prop: [1.0, 2.3, 3.15]}),
+                    (:Label {prop: ["1", "3", "14"]}),
+                    (:Label {prop: ["1", "3", "14"]}),
+                    (:Label {prop: ["1", "3", "15"]}),
+                    (:Label {prop: [true, false, true]}),
+                    (:Label {prop: [true, false, true]}),
+                    (:Label {prop: point({ x: 2.3, y: 4.5, crs: 'cartesian'})})
+                """);
+
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.name)");
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.age)");
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.address)");
@@ -147,6 +170,119 @@ public class SchemaIndexTest {
 
     @Test
     @Timeout(5)
+    public void testFulltextAndRangeIndexOnSameSchema() {
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltextFullTextOne FOR (n:FullTextOne) ON EACH [n.prop1]");
+        db.executeTransactionally("CREATE RANGE INDEX range FOR (n:FullTextOne) ON n.prop1");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        testCall(
+                db,
+                "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", FULL_TEXT_LABEL, "key", "prop1"),
+                row -> assertEqualsInAnyOrder(Set.of("AA", "EE", "UU", "Ryan", "Michael"), (List) row.get("value")));
+
+        db.executeTransactionally("DROP INDEX fulltextFullTextOne");
+        db.executeTransactionally("DROP INDEX range");
+    }
+
+    @Test
+    @Timeout(5)
+    public void testRangeAndFulltextIndexOnSameSchema() {
+        db.executeTransactionally("CREATE RANGE INDEX range FOR (n:FullTextOne) ON n.prop1");
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltextFullTextOne FOR (n:FullTextOne) ON EACH [n.prop1]");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        testCall(
+                db,
+                "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", FULL_TEXT_LABEL, "key", "prop1"),
+                row -> assertEqualsInAnyOrder(Set.of("AA", "EE", "UU", "Ryan", "Michael"), (List) row.get("value")));
+
+        db.executeTransactionally("DROP INDEX fulltextFullTextOne");
+        db.executeTransactionally("DROP INDEX range");
+    }
+
+    @Test
+    @Timeout(5)
+    public void testRangeIndexForListAndVectors() {
+        db.executeTransactionally("CREATE INDEX range FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        testCall(
+                db,
+                "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", "Label", "key", "prop"),
+                row -> assertEqualsInAnyOrder(
+                        Set.of(
+                                List.of("1", "3", "14"),
+                                List.of("1", "3", "15"),
+                                List.of(1L, 3L, 14L),
+                                List.of(1L, 3L, 15L),
+                                List.of(1.0, 2.3, 3.14),
+                                List.of(1.0, 2.3, 3.15),
+                                Values.int64Vector(1, 3, 14),
+                                Values.int64Vector(1, 3, 15),
+                                List.of(true, false, true),
+                                Values.pointValue(CoordinateReferenceSystem.CARTESIAN, 2.3, 4.5)),
+                        (List) row.get("value")));
+
+        db.executeTransactionally("DROP INDEX range");
+    }
+
+    @Test
+    @Timeout(5)
+    public void testNoIndexForListAndVectors() {
+        testCall(
+                db,
+                "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", "Label", "key", "prop"),
+                row -> assertEqualsInAnyOrder(
+                        Set.of(
+                                List.of("1", "3", "14"),
+                                List.of("1", "3", "15"),
+                                List.of(1L, 3L, 14L),
+                                List.of(1L, 3L, 15L),
+                                List.of(1.0, 2.3, 3.14),
+                                List.of(1.0, 2.3, 3.15),
+                                Values.int64Vector(1, 3, 14),
+                                Values.int64Vector(1, 3, 15),
+                                List.of(true, false, true),
+                                Values.pointValue(CoordinateReferenceSystem.CARTESIAN, 2.3, 4.5)),
+                        (List) row.get("value")));
+    }
+
+    @Test
+    @Timeout(5)
+    public void shouldIgnoreOtherIndexTypes() {
+        // Only range indexes can be used to scan for all properties, otherwise some property types will not be covered
+        db.executeTransactionally("CREATE POINT INDEX point FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CREATE TEXT INDEX text FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltext FOR (n:Label) ON EACH [n.prop]");
+        db.executeTransactionally("CREATE VECTOR INDEX vector FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        testCall(
+                db,
+                "CALL apoc.schema.properties.distinct($label, $key)",
+                map("label", "Label", "key", "prop"),
+                row -> assertEqualsInAnyOrder(
+                        Set.of(
+                                List.of("1", "3", "14"),
+                                List.of("1", "3", "15"),
+                                List.of(1L, 3L, 14L),
+                                List.of(1L, 3L, 15L),
+                                List.of(1.0, 2.3, 3.14),
+                                List.of(1.0, 2.3, 3.15),
+                                Values.int64Vector(1, 3, 14),
+                                Values.int64Vector(1, 3, 15),
+                                List.of(true, false, true),
+                                Values.pointValue(CoordinateReferenceSystem.CARTESIAN, 2.3, 4.5)),
+                        (List) row.get("value")));
+
+        db.executeTransactionally("DROP INDEX point");
+        db.executeTransactionally("DROP INDEX text");
+        db.executeTransactionally("DROP INDEX fulltext");
+        db.executeTransactionally("DROP INDEX vector");
+    }
+
+    @Test
+    @Timeout(5)
     public void testDistinctWithVoidIndexShouldNotHangs() {
         db.executeTransactionally("create index VoidIndex for (n:VoidIndex) on (n.myProp)");
 
@@ -197,12 +333,10 @@ public class SchemaIndexTest {
                 db,
                 "CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", SCHEMA_LABEL, "key", "prop2"),
-                row -> assertEquals(Set.of("bar", "foo"), Set.copyOf((List) row.get("value"))));
+                row -> assertEqualsInAnyOrder(Set.of("bar", "foo"), (List) row.get("value")));
 
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "", "key", ""), (result) -> {
-            extractedFoo(result);
-            extractedPerson(result);
-            extractedSchemaTest(result);
+            extractEverything(result);
             assertFalse(result.hasNext());
         });
 
@@ -216,6 +350,48 @@ public class SchemaIndexTest {
 
     @Test
     @Timeout(5)
+    public void testDistinctCountWithRangeIndexForListAndVectors() {
+        db.executeTransactionally("CREATE INDEX range FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+        testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "Label", "key", "prop"), res -> {
+            extractedLabel(res);
+            assertFalse(res.hasNext());
+        });
+        db.executeTransactionally("DROP INDEX range");
+    }
+
+    @Test
+    @Timeout(5)
+    public void testDistinctCountWithoutIndexForListAndVectors() {
+        testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "Label", "key", "prop"), res -> {
+            extractedLabel(res);
+            assertFalse(res.hasNext());
+        });
+    }
+
+    @Test
+    @Timeout(5)
+    public void distinctCountShouldIgnoreOtherIndexTypes() {
+        // Only range indexes can be used to scan for all properties, otherwise some property types will not be covered
+        db.executeTransactionally("CREATE POINT INDEX point FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CREATE TEXT INDEX text FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CREATE FULLTEXT INDEX fulltext FOR (n:Label) ON EACH [n.prop]");
+        db.executeTransactionally("CREATE VECTOR INDEX vector FOR (n:Label) ON n.prop");
+        db.executeTransactionally("CALL db.awaitIndexes()");
+
+        testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "Label", "key", "prop"), res -> {
+            extractedLabel(res);
+            assertFalse(res.hasNext());
+        });
+
+        db.executeTransactionally("DROP INDEX point");
+        db.executeTransactionally("DROP INDEX text");
+        db.executeTransactionally("DROP INDEX fulltext");
+        db.executeTransactionally("DROP INDEX vector");
+    }
+
+    @Test
+    @Timeout(5)
     public void testDistinctWithFullTextIndexShouldNotHangs() {
         db.executeTransactionally("CREATE FULLTEXT INDEX FullTextOneProp1 FOR (n:FullTextOne) ON EACH [n.prop1]");
         db.executeTransactionally("CALL db.awaitIndexes");
@@ -224,7 +400,7 @@ public class SchemaIndexTest {
                 db,
                 "CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", FULL_TEXT_LABEL, "key", "prop1"),
-                row -> assertEquals(Set.of("AA", "EE", "UU", "Ryan", "Michael"), Set.copyOf((List) row.get("value"))));
+                row -> assertEqualsInAnyOrder(Set.of("AA", "EE", "UU", "Ryan", "Michael"), (List) row.get("value")));
 
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", FULL_TEXT_LABEL, "key", "prop1"), res -> {
             extractedFullTextFullTextOneProp1(res);
@@ -245,7 +421,7 @@ public class SchemaIndexTest {
                 db,
                 "CALL apoc.schema.properties.distinct($label, $key)",
                 map("label", FULL_TEXT_LABEL, "key", "prop1"),
-                row -> assertEquals(Set.of("AA", "EE", "UU", "Ryan", "Michael"), Set.copyOf((List) row.get("value"))));
+                row -> assertEqualsInAnyOrder(Set.of("AA", "EE", "UU", "Ryan", "Michael"), (List) row.get("value")));
 
         // in this case the procedure returns distinct rows though we have 2 different analogues indexes
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", FULL_TEXT_LABEL, "key", "prop1"), res -> {
@@ -270,18 +446,13 @@ public class SchemaIndexTest {
         });
 
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "", "key", ""), (result) -> {
-            extractedFoo(result);
-            extractedFullTextFullTextOneProp1(result);
-            extractedFullTextFullTextOneProp3(result);
-            assertDistinctCountProperties(FULL_TEXT_TWO_LABEL, "prop1", List.of("Ryan"), 2L, result);
-            assertDistinctCountProperties(FULL_TEXT_TWO_LABEL, "prop1", List.of("omega"), 1L, result);
-            assertDistinctCountProperties(FULL_TEXT_TWO_LABEL, "prop3", List.of("abcde"), 1L, result);
-            extractedPerson(result);
+            extractEverything(result);
             assertFalse(result.hasNext());
         });
 
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", FULL_TEXT_LABEL, "key", ""), (result) -> {
             extractedFullTextFullTextOneProp1(result);
+            extractedFullTextFullTextOneProp2(result);
             extractedFullTextFullTextOneProp3(result);
             assertFalse(result.hasNext());
         });
@@ -349,6 +520,7 @@ public class SchemaIndexTest {
     public void testDistinctCountPropertiesOnEmptyLabel() {
         String key = "name";
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "", "key", key), (result) -> {
+            assertDistinctCountProperties("City", "name", List.of("London"), 1L, result);
             assertDistinctCountProperties("Person", "name", personNames, 1L, result);
             assertFalse(result.hasNext());
         });
@@ -358,10 +530,7 @@ public class SchemaIndexTest {
     public void testDistinctCountPropertiesOnEmptyKey() {
         String label = "Person";
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", label, "key", ""), (result) -> {
-            assertDistinctCountProperties("Person", "address", personAddresses, 1L, result);
-            assertDistinctCountProperties("Person", "age", personAges, 2L, result);
-            assertDistinctCountProperties("Person", "id", personIds, 1L, result);
-            assertDistinctCountProperties("Person", "name", personNames, 1L, result);
+            extractedPerson(result);
             assertFalse(result.hasNext());
         });
     }
@@ -370,12 +539,7 @@ public class SchemaIndexTest {
     public void testDistinctCountPropertiesOnEmptyLabelAndEmptyKey() {
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "", "key", ""), (result) -> {
             assertTrue(result.hasNext());
-            assertEquals(map("label", "Foo", "key", "bar", "value", "four", "count", 2L), result.next());
-            assertEquals(map("label", "Foo", "key", "bar", "value", "three", "count", 1L), result.next());
-            assertDistinctCountProperties("Person", "address", personAddresses, 1L, result);
-            assertDistinctCountProperties("Person", "age", personAges, 2L, result);
-            assertDistinctCountProperties("Person", "id", personIds, 1L, result);
-            assertDistinctCountProperties("Person", "name", personNames, 1L, result);
+            extractEverything(result);
             assertFalse(result.hasNext());
         });
     }
@@ -388,7 +552,20 @@ public class SchemaIndexTest {
             Map<String, Object> map = result.next();
             assertEquals(label, map.get("label"));
             assertEquals(key, map.get("key"));
-            assertEquals(value, map.get("value"));
+
+            // Convert arrays to lists to be able to do equality checks
+            switch (map.get("value")) {
+                case long[] array -> assertEquals(
+                        value, Arrays.stream(array).boxed().toList());
+                case double[] array -> assertEquals(
+                        value, Arrays.stream(array).boxed().toList());
+                case boolean[] array -> assertEquals(
+                        value,
+                        IntStream.range(0, array.length).mapToObj(i -> array[i]).toList());
+                case Object[] array -> assertEquals(value, Arrays.stream(array).toList());
+                default -> assertEquals(value, map.get("value"));
+            }
+
             assertEquals(counts, map.get("count"));
         });
     }
@@ -397,6 +574,12 @@ public class SchemaIndexTest {
         assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("AA", "EE", "Michael"), 1L, res);
         assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("Ryan"), 3L, res);
         assertDistinctCountProperties(FULL_TEXT_LABEL, "prop1", List.of("UU"), 1L, res);
+    }
+
+    private void extractedFullTextFullTextOneProp2(Result res) {
+        assertDistinctCountProperties(FULL_TEXT_LABEL, "prop2", List.of("Ryan"), 1L, res);
+        assertDistinctCountProperties(FULL_TEXT_LABEL, "prop2", List.of(1L), 3L, res);
+        assertDistinctCountProperties(FULL_TEXT_LABEL, "prop2", List.of(111L), 2L, res);
     }
 
     private void extractedFullTextFullTextOneProp3(Result res) {
@@ -419,5 +602,52 @@ public class SchemaIndexTest {
         assertDistinctCountProperties("Person", "age", personAges, 2L, result);
         assertDistinctCountProperties("Person", "id", personIds, 1L, result);
         assertDistinctCountProperties("Person", "name", personNames, 1L, result);
+    }
+
+    private void extractedLabel(Result result) {
+        assertDistinctCountProperties("Label", "prop", List.of(List.of("1", "3", "14")), 2L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(List.of("1", "3", "15")), 1L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(List.of(true, false, true)), 2L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(List.of(1.0, 2.3, 3.14)), 2L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(List.of(1.0, 2.3, 3.15)), 1L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(List.of(1L, 3L, 14L)), 3L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(List.of(1L, 3L, 15L)), 1L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(Values.int64Vector(1, 3, 14)), 2L, result);
+        assertDistinctCountProperties("Label", "prop", List.of(Values.int64Vector(1, 3, 15)), 1L, result);
+        assertDistinctCountProperties(
+                "Label", "prop", List.of(Values.pointValue(CoordinateReferenceSystem.CARTESIAN, 2.3, 4.5)), 1L, result);
+    }
+
+    private void extractEverything(Result result) {
+        assertDistinctCountProperties("City", "name", List.of("London"), 1L, result);
+        extractedFoo(result);
+        extractedFullTextFullTextOneProp1(result);
+        extractedFullTextFullTextOneProp2(result);
+        extractedFullTextFullTextOneProp3(result);
+        assertDistinctCountProperties("FullTextTwo", "prop1", List.of("Ryan"), 2L, result);
+        assertDistinctCountProperties("FullTextTwo", "prop1", List.of("omega"), 1L, result);
+        assertDistinctCountProperties("FullTextTwo", "prop3", List.of("abcde"), 1L, result);
+        extractedLabel(result);
+        extractedPerson(result);
+        extractedSchemaTest(result);
+    }
+
+    private void assertEqualsInAnyOrder(Set<Object> expected, List<Object> actual) {
+        assertEquals(expected.size(), actual.size());
+        Set<Object> actualSet = new HashSet<>();
+
+        // Convert arrays to lists to be able to do equality checks
+        for (Object o : actual) {
+            switch (o) {
+                case long[] array -> actualSet.add(Arrays.stream(array).boxed().toList());
+                case double[] array -> actualSet.add(
+                        Arrays.stream(array).boxed().toList());
+                case boolean[] array -> actualSet.add(
+                        IntStream.range(0, array.length).mapToObj(i -> array[i]).toList());
+                case Object[] array -> actualSet.add(Arrays.stream(array).toList());
+                default -> actualSet.add(o);
+            }
+        }
+        assertEquals(expected, actualSet);
     }
 }
