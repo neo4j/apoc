@@ -22,22 +22,24 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.csv.CsvTestUtil;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class ImportCsvLdbcTest {
 
     private final String postfix = ".csv";
@@ -146,15 +148,18 @@ public class ImportCsvLdbcTest {
                             "tagclass_isSubclassOf_tagclass", ":START_ID(TagClass)|:END_ID(TagClass)\n"))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    new File("src/test/resources/csv-inputs").toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseSettings.allow_file_urls, true);
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() throws Exception {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        var directory = new File("src/test/resources/csv-inputs").toPath().toAbsolutePath();
+        builder.setConfig(GraphDatabaseSettings.load_csv_file_url_root, directory)
+                .setConfig(GraphDatabaseSettings.allow_file_urls, true);
+    }
+
+    @BeforeAll
+    void setUp() throws Exception {
         for (Map.Entry<String, String> entry : nodeCsvs.entrySet()) {
             CsvTestUtil.saveCsvFile(entry.getKey(), entry.getValue());
         }
@@ -165,11 +170,6 @@ public class ImportCsvLdbcTest {
         TestUtil.registerProcedure(db, ImportCsv.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -208,7 +208,7 @@ public class ImportCsvLdbcTest {
         long nodeCount = TestUtil.singleResultFirstColumn(db, "MATCH (n) RETURN count(n) AS nodeCount");
         long relationshipCount =
                 TestUtil.singleResultFirstColumn(db, "MATCH ()-[r]->() RETURN count(r) AS relationshipCount");
-        Assert.assertEquals(5, nodeCount);
-        Assert.assertEquals(6, relationshipCount);
+        assertEquals(5, nodeCount);
+        assertEquals(6, relationshipCount);
     }
 }

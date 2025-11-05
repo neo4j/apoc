@@ -23,57 +23,44 @@ import static org.junit.Assert.*;
 import apoc.create.Create;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author Benjamin Clauss
- * @since 15.06.2018
- */
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
 public class DiffTest {
 
-    private static Node node1;
-    private static Node node2;
-    private static Node node3;
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void setup() {
+    @BeforeAll
+    public void setUp() {
         TestUtil.registerProcedure(db, Diff.class, Create.class);
 
         try (Transaction tx = db.beginTx()) {
-            node1 = tx.createNode(Label.label("Node1"));
+            Node node1 = tx.createNode(Label.label("Node1"));
             node1.setProperty("prop1", "val1");
             node1.setProperty("prop2", 2L);
 
-            node2 = tx.createNode(Label.label("Node2"));
+            Node node2 = tx.createNode(Label.label("Node2"));
             node2.setProperty("prop1", "val1");
             node2.setProperty("prop2", 2L);
             node2.setProperty("prop4", "four");
 
-            node3 = tx.createNode(Label.label("Node3"));
+            Node node3 = tx.createNode(Label.label("Node3"));
             node3.setProperty("prop1", "val1");
             node3.setProperty("prop3", "3");
             node3.setProperty("prop4", "for");
             tx.commit();
         }
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test

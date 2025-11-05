@@ -22,12 +22,12 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.*;
 
 import apoc.temporal.TemporalProcedures;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -41,42 +41,31 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Stream;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class DateTest {
 
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    private DateFormat defaultFormat = formatInUtcZone("yyyy-MM-dd HH:mm:ss");
-    private String epochAsString = defaultFormat.format(new java.util.Date(0L));
-    private java.util.Date testDate = new java.util.Date(1464739200000L);
-    private String testDateAsString = defaultFormat.format(testDate);
+    private final DateFormat defaultFormat = formatInUtcZone("yyyy-MM-dd HH:mm:ss");
+    private final String epochAsString = defaultFormat.format(new java.util.Date(0L));
+    private final java.util.Date testDate = new java.util.Date(1464739200000L);
+    private final String testDateAsString = defaultFormat.format(testDate);
     private static final long SECONDS_PER_MINUTE = 60;
     private static final long SECONDS_PER_HOUR = SECONDS_PER_MINUTE * 60;
     private static final long SECONDS_PER_DAY = SECONDS_PER_HOUR * 24;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    public void setUp() {
         TestUtil.registerProcedure(db, Date.class, TemporalProcedures.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -141,11 +130,12 @@ public class DateTest {
 
     @Test
     public void testToUnixtimeWithIncorrectPatternFormat() {
-        expected.expect(instanceOf(QueryExecutionException.class));
-        testCall(
-                db,
-                "RETURN apoc.date.parse('12/12/1945 12:12:12','s','MM/dd/yyyy HH:mm:ss/neo4j') AS value",
-                row -> assertEquals(Instant.EPOCH, Instant.ofEpochSecond((long) row.get("value"))));
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "RETURN apoc.date.parse('12/12/1945 12:12:12','s','MM/dd/yyyy HH:mm:ss/neo4j') AS value",
+                        row -> {}));
     }
 
     @Test
@@ -171,7 +161,7 @@ public class DateTest {
 
     @Test
     public void testFromUnixtimeWithNullInputReturnsNull() {
-        testCall(db, "RETURN apoc.date.format(null,'s') AS value", row -> assertEquals(null, row.get("value")));
+        testCall(db, "RETURN apoc.date.format(null,'s') AS value", row -> assertNull(row.get("value")));
     }
 
     @Test
@@ -204,13 +194,12 @@ public class DateTest {
 
     @Test
     public void testParseAsZonedDateTimeWithIncorrectPatternFormat() {
-        expected.expect(instanceOf(QueryExecutionException.class));
-        testCall(
-                db,
-                "RETURN apoc.temporal.toZonedTemporal('03/23/1965 00:00:00','MM/dd/yyyy HH:mm:ss/neo4j','America/New_York') AS value",
-                row -> assertEquals(
-                        ZonedDateTime.of(LocalDateTime.of(1965, 3, 23, 0, 0), ZoneId.of("America/New_York")),
-                        row.get("value")));
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "RETURN apoc.temporal.toZonedTemporal('03/23/1965 00:00:00','MM/dd/yyyy HH:mm:ss/neo4j','America/New_York') AS value",
+                        row -> {}));
     }
 
     @Test
@@ -267,17 +256,19 @@ public class DateTest {
 
     @Test
     public void testFromUnixtimeWithIncorrectPatternFormat() {
-        expected.expect(instanceOf(QueryExecutionException.class));
-        testCall(db, "RETURN apoc.date.format(0,'s','MM/dd/yyyy HH:mm:ss/neo4j') AS value", row -> {});
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "RETURN apoc.date.format(0,'s','MM/dd/yyyy HH:mm:ss/neo4j') AS value", row -> {}));
     }
 
     @Test
-    public void testFromUnixtimeWithIncorrectPatternFormatAndTimeZone() {
-        expected.expect(instanceOf(QueryExecutionException.class));
-        testCall(
-                db,
-                "RETURN apoc.date.formatTimeZone(0,'s','MM/dd/yyyy HH:mm:ss/neo4j','Neo4j/Apoc') AS value",
-                row -> {});
+    void testFromUnixtimeWithIncorrectPatternFormatAndTimeZoneAndMessage() {
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "RETURN apoc.date.formatTimeZone(0,'s','MM/dd/yyyy HH:mm:ss/neo4j','Neo4j/Apoc') AS value",
+                        row -> {}));
     }
 
     @Test
@@ -287,14 +278,16 @@ public class DateTest {
 
     @Test
     public void testWrongUnitDoesThrowException() {
-        expected.expect(instanceOf(RuntimeException.class));
-        testCall(db, "RETURN apoc.date.format(-1,'wrong') AS value", row -> {});
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "RETURN apoc.date.format(-1,'wrong') AS value", row -> {}));
     }
 
     @Test
     public void testWrongPatternDoesThrowException() {
-        expected.expect(instanceOf(RuntimeException.class));
-        testCall(db, "RETURN apoc.date.format(-1,'s','aaaa-bb-cc') AS value", row -> {});
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "RETURN apoc.date.format(-1,'s','aaaa-bb-cc') AS value", row -> {}));
     }
 
     @Test
@@ -476,8 +469,8 @@ public class DateTest {
 
     @Test
     public void testConvert() {
-        Long firstOf2017ms = 1483228800000l;
-        Long firstOf2017d = 17167l;
+        Long firstOf2017ms = 1483228800000L;
+        Long firstOf2017d = 17167L;
         Map<String, Object> params = new HashMap<>();
         params.put("firstOf2017ms", firstOf2017ms);
         testCall(
@@ -489,8 +482,8 @@ public class DateTest {
 
     @Test
     public void testAdd() {
-        Long firstOf2017ms = 1483228800000l;
-        Long firstOf2017Plus5Daysms = 1483660800000l;
+        Long firstOf2017ms = 1483228800000L;
+        Long firstOf2017Plus5Daysms = 1483660800000L;
         Map<String, Object> params = new HashMap<>();
         params.put("firstOf2017ms", firstOf2017ms);
         testCall(
@@ -502,8 +495,8 @@ public class DateTest {
 
     @Test
     public void testAddNegative() {
-        Long firstOf2017ms = 1483228800000l;
-        Long firstOf2017Minus5Daysms = 1482796800000l;
+        Long firstOf2017ms = 1483228800000L;
+        Long firstOf2017Minus5Daysms = 1482796800000L;
         Map<String, Object> params = new HashMap<>();
         params.put("firstOf2017ms", firstOf2017ms);
         testCall(

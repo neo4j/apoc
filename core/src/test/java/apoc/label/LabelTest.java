@@ -19,29 +19,24 @@
 package apoc.label;
 
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class LabelTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Label.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -49,12 +44,14 @@ public class LabelTest {
 
         db.executeTransactionally("create (a:Person{name:'Foo'})");
 
-        testCall(db, "MATCH (a) RETURN apoc.label.exists(a, 'Person') as value", (row) -> {
-            assertEquals(true, row.get("value"));
-        });
-        testCall(db, "MATCH (a) RETURN apoc.label.exists(a, 'Dog') as value", (row) -> {
-            assertEquals(false, row.get("value"));
-        });
+        testCall(
+                db,
+                "MATCH (a) RETURN apoc.label.exists(a, 'Person') as value",
+                (row) -> assertEquals(true, row.get("value")));
+        testCall(
+                db,
+                "MATCH (a) RETURN apoc.label.exists(a, 'Dog') as value",
+                (row) -> assertEquals(false, row.get("value")));
     }
 
     @Test
@@ -63,11 +60,13 @@ public class LabelTest {
         db.executeTransactionally(
                 "create (a:Person{name:'Foo'}), (b:Person{name:'Bar'}), (a)-[:LOVE{since:2010}]->(b)");
 
-        testCall(db, "MATCH ()-[a]->() RETURN apoc.label.exists(a, 'LOVE') as value", (row) -> {
-            assertEquals(true, row.get("value"));
-        });
-        testCall(db, "MATCH ()-[a]->() RETURN apoc.label.exists(a, 'LIVES_IN') as value", (row) -> {
-            assertEquals(false, row.get("value"));
-        });
+        testCall(
+                db,
+                "MATCH ()-[a]->() RETURN apoc.label.exists(a, 'LOVE') as value",
+                (row) -> assertEquals(true, row.get("value")));
+        testCall(
+                db,
+                "MATCH ()-[a]->() RETURN apoc.label.exists(a, 'LIVES_IN') as value",
+                (row) -> assertEquals(false, row.get("value")));
     }
 }

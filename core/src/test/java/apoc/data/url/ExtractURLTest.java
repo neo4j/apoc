@@ -20,27 +20,27 @@ package apoc.data.url;
 
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension()
 public class ExtractURLTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
     private static HashMap<String, Map<String, Object>> testCases;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void beforeAll() {
         TestUtil.registerProcedure(db, ExtractURL.class);
 
         // Test cases map URLs to an array of strings representing what their correct answers should
@@ -136,11 +136,6 @@ public class ExtractURLTest {
                         null));
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
     public void testByCase() {
         for (String url : testCases.keySet()) {
@@ -150,7 +145,7 @@ public class ExtractURLTest {
                 Map value = (Map) row.get("value");
                 if (answers != null) {
                     for (Map.Entry o : answers.entrySet()) {
-                        assertEquals(o.getKey().toString(), o.getValue(), value.get(o.getKey()));
+                        assertEquals(o.getValue(), value.get(o.getKey()));
                     }
                 }
                 assertEquals(answers, value);

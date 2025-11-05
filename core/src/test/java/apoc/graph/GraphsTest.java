@@ -22,9 +22,9 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static java.util.Arrays.asList;
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.neo4j.graphdb.Label.label;
 
 import apoc.HelperProcedures;
@@ -33,6 +33,7 @@ import apoc.nodes.Nodes;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -50,25 +51,24 @@ import java.util.stream.Stream;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.configuration.SettingImpl;
 import org.neo4j.configuration.SettingValueParsers;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 27.05.16
- */
 @SuppressWarnings("unchecked")
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class GraphsTest {
 
     private static final Map<String, Object> graph = map("name", "test", "properties", map("answer", 42L));
@@ -81,20 +81,30 @@ public class GraphsTest {
         return entity.getId() < 0;
     }
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    SettingImpl.newBuilder("internal.dbms.debug.track_cursor_close", SettingValueParsers.BOOL, false)
-                            .build(),
-                    false)
-            .withSetting(
-                    SettingImpl.newBuilder("internal.dbms.debug.trace_cursors", SettingValueParsers.BOOL, false)
-                            .build(),
-                    false);
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                        SettingImpl.newBuilder(
+                                        "internal.dbms.debug.track_cursor_close", SettingValueParsers.BOOL, false)
+                                .build(),
+                        false)
+                .setConfig(GraphDatabaseSettings.db_format, "aligned")
+                .setConfig(
+                        SettingImpl.newBuilder("internal.dbms.debug.trace_cursors", SettingValueParsers.BOOL, false)
+                                .build(),
+                        false);
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Graphs.class, Nodes.class, HelperProcedures.class);
+    }
+
+    @BeforeEach
+    void beforeEach() {
         db.executeTransactionally(
                 "CREATE (a:Actor {name:'Tom Hanks'})-[r:ACTED_IN {roles:'Forrest'}]->(m:Movie {title:'Forrest Gump'}) RETURN [a,m] as nodes, [r] as relationships",
                 Collections.emptyMap(),
@@ -102,11 +112,6 @@ public class GraphsTest {
                     result.stream().forEach(graph::putAll);
                     return null;
                 });
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -643,7 +648,7 @@ public class GraphsTest {
                     assertEquals(
                             "The object `{\"name\":\"Daft Punk\"}` must have `id` as id-field name and `type` as label-field name",
                             row.get("message"));
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
@@ -677,7 +682,7 @@ public class GraphsTest {
                     assertEquals(0L, row.get("index"));
                     Set<String> message = messageToSet(row);
                     assertEquals(errors, message);
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
@@ -879,7 +884,7 @@ public class GraphsTest {
                     assertEquals(List.of(label("Artist")), node.getLabels());
                     assertTrue(virtual(node));
                     assertEquals(genesisMap, node.getAllProperties());
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
@@ -896,7 +901,7 @@ public class GraphsTest {
                     assertEquals(List.of(label("Artist")), node.getLabels());
                     assertTrue(virtual(node));
                     assertEquals(genesisMap, node.getAllProperties());
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
@@ -922,7 +927,7 @@ public class GraphsTest {
                     assertEquals(List.of(label("Artist")), node.getLabels());
                     assertTrue(virtual(node));
                     assertEquals(daftPunkMap, node.getAllProperties());
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
@@ -1087,7 +1092,7 @@ public class GraphsTest {
                             "The object `{\"key\":\"childKey\"}` must have `id` as id-field name and `type` as label-field name");
                     assertEquals(errors, messages);
 
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
@@ -1191,7 +1196,7 @@ public class GraphsTest {
                     assertEquals(person, rel.getStartNode());
                     assertEquals(book2Node, rel.getEndNode());
 
-                    assertFalse("should not have next", result.hasNext());
+                    assertFalse(result.hasNext());
                 });
     }
 
