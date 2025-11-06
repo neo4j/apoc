@@ -19,53 +19,36 @@
 package apoc.number;
 
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author inserpio
- * @since 25.8.2016
- */
+@EnterpriseDbmsExtension()
 public class NumbersTest {
 
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void sUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Numbers.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
     public void testFormat() {
         testCall(db, "RETURN apoc.number.format(12345) AS value", row -> assertEquals("12,345", row.get("value")));
-        testCall(db, "RETURN apoc.number.format('aaa') AS value", row -> assertEquals(null, row.get("value")));
+        testCall(db, "RETURN apoc.number.format('aaa') AS value", row -> assertNull(row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.format(12345, '', 'it') AS value",
                 row -> assertEquals("12.345", row.get("value")));
-        testCall(
-                db,
-                "RETURN apoc.number.format(12345, '', 'apoc') AS value",
-                row -> assertEquals(null, row.get("value")));
+        testCall(db, "RETURN apoc.number.format(12345, '', 'apoc') AS value", row -> assertNull(row.get("value")));
         testCall(
                 db,
                 "RETURN apoc.number.format(12345, '#,##0.00;(#,##0.00)') AS value",
@@ -105,7 +88,7 @@ public class NumbersTest {
                 db,
                 "RETURN apoc.number.parseInt('12.345', '#,##0.00;(#,##0.00)', 'it') AS value",
                 row -> assertEquals(12345L, row.get("value")));
-        testCall(db, "RETURN apoc.number.parseInt('aaa') AS value", row -> assertEquals(null, row.get("value")));
+        testCall(db, "RETURN apoc.number.parseInt('aaa') AS value", row -> assertNull(row.get("value")));
         testCall(db, "RETURN apoc.number.parseInt(null) AS value", row -> assertNull(row.get("value")));
     }
 
@@ -129,7 +112,7 @@ public class NumbersTest {
                 db,
                 "RETURN apoc.number.parseFloat('12.345,67', '#,##0.00;(#,##0.00)', 'it') AS value",
                 row -> assertEquals(12345.67, row.get("value")));
-        testCall(db, "RETURN apoc.number.parseFloat('aaa') AS value", row -> assertEquals(null, row.get("value")));
+        testCall(db, "RETURN apoc.number.parseFloat('aaa') AS value", row -> assertNull(row.get("value")));
         testCall(db, "RETURN apoc.number.parseFloat(null) AS value", row -> assertNull(row.get("value")));
     }
 }

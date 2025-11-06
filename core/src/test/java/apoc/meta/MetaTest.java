@@ -25,11 +25,11 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 import static org.neo4j.driver.Values.isoDuration;
@@ -43,6 +43,7 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import com.google.common.collect.ImmutableMap;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.InputStreamReader;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -53,17 +54,16 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.apache.commons.io.IOUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.*;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
 import org.neo4j.values.storable.DateTimeValue;
 import org.neo4j.values.storable.DateValue;
@@ -72,41 +72,43 @@ import org.neo4j.values.storable.LocalTimeValue;
 import org.neo4j.values.storable.TimeValue;
 import org.neo4j.values.storable.Values;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class MetaTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.procedure_unrestricted,
-                    List.of(
-                            "apoc.meta.nodes.count",
-                            "apoc.meta.stats",
-                            "apoc.meta.data",
-                            "apoc.meta.schema",
-                            "apoc.meta.nodeTypeProperties",
-                            "apoc.meta.relTypeProperties",
-                            "apoc.meta.graph",
-                            "apoc.meta.graph.of",
-                            "apoc.meta.graphSample",
-                            "apoc.meta.subGraph"))
-            .withSetting(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
-            .withSetting(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE)
-            .withSetting(
-                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
-                            .build(),
-                    false)
-            .withSetting(
-                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
-        TestUtil.registerProcedure(
-                db, Meta.class, MetaRestricted.class, Graphs.class, Nodes.class, HelperProcedures.class);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                        GraphDatabaseSettings.procedure_unrestricted,
+                        List.of(
+                                "apoc.meta.nodes.count",
+                                "apoc.meta.stats",
+                                "apoc.meta.data",
+                                "apoc.meta.schema",
+                                "apoc.meta.nodeTypeProperties",
+                                "apoc.meta.relTypeProperties",
+                                "apoc.meta.graph",
+                                "apoc.meta.graph.of",
+                                "apoc.meta.graphSample",
+                                "apoc.meta.subGraph"))
+                .setConfig(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
+                .setConfig(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE)
+                .setConfig(
+                        newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
+                                .build(),
+                        false)
+                .setConfig(
+                        newBuilder("internal.dbms.debug.trace_cursors", BOOL, false)
+                                .build(),
+                        false);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void setUp() {
+        TestUtil.registerProcedure(
+                db, Meta.class, MetaRestricted.class, Graphs.class, Nodes.class, HelperProcedures.class);
     }
 
     public static boolean hasRecordMatching(List<Map<String, Object>> records, Map<String, Object> record) {
@@ -362,7 +364,7 @@ public class MetaTest {
                 null);
         TestUtil.testCall(db, "RETURN apoc.meta.cypher.types($param) AS value", singletonMap("param", param), row -> {
             Map<String, String> res = (Map) row.get("value");
-            res.forEach(Assert::assertEquals);
+            res.forEach(Assertions::assertEquals);
         });
     }
 
@@ -403,7 +405,7 @@ public class MetaTest {
                 db,
                 "RETURN apoc.meta.cypher.isType($value,$type) AS value",
                 map("value", value, "type", type),
-                result -> assertEquals("type was not " + type, true, result.get("value")));
+                result -> assertEquals(true, result.get("value")));
         TestUtil.testCall(
                 db,
                 "RETURN apoc.meta.cypher.isType($value,$type) AS value",
@@ -505,7 +507,7 @@ public class MetaTest {
         db.executeTransactionally("CREATE (a:Actor)-[:ACTED_IN]->(m1:Movie),(a)-[:ACTED_IN]->(m2:Movie)");
         TestUtil.testCall(db, "CALL apoc.meta.graph()", (row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
-            Node n1 = nodes.get(0);
+            Node n1 = nodes.getFirst();
             assertTrue(n1.hasLabel(Label.label("Actor")));
             assertEquals(1L, n1.getProperty("count"));
             assertEquals("Actor", n1.getProperty("name"));
@@ -514,7 +516,7 @@ public class MetaTest {
             assertEquals("Movie", n2.getProperty("name"));
             assertEquals(2L, n2.getProperty("count"));
             List<Relationship> rels = (List<Relationship>) row.get("relationships");
-            Relationship rel = rels.iterator().next();
+            Relationship rel = rels.getFirst();
             assertEquals("ACTED_IN", rel.getType().name());
             assertEquals(2L, rel.getProperty("count"));
         });
@@ -1655,9 +1657,9 @@ public class MetaTest {
 
         // both together contract the data model and it should result in 0 results
         TestUtil.testResult(
-                db, "CALL apoc.meta.relTypeProperties({ includeLabels: ['A'], includeRels: ['RELB'] })", r -> {
-                    assertEquals(0, gatherRecords(r).size());
-                });
+                db,
+                "CALL apoc.meta.relTypeProperties({ includeLabels: ['A'], includeRels: ['RELB'] })",
+                r -> assertEquals(0, gatherRecords(r).size()));
     }
 
     @Test
@@ -2523,7 +2525,7 @@ public class MetaTest {
                                     8L,
                                     "propertyName",
                                     "summary"));
-                    Assert.assertEquals(expected, actual);
+                    assertEquals(expected, actual);
                 });
     }
 

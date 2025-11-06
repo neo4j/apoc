@@ -20,33 +20,33 @@ package apoc.merge;
 
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.*;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension()
 public class MergeTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Merge.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -129,80 +129,62 @@ public class MergeTest {
     @Test
     public void testMergeWithEmptyIdentityPropertiesShouldFail() {
         for (String idProps : new String[] {"null", "{}"}) {
-            try {
-                testCall(
-                        db,
-                        "CALL apoc.merge.node(['Person']," + idProps + ", {name:'John'}) YIELD node RETURN node",
-                        row -> assertTrue(row.get("node") instanceof Node));
-                fail();
-            } catch (QueryExecutionException e) {
-                assertTrue(e.getMessage().contains("you need to supply at least one identifying property for a merge"));
-            }
+
+            var e = assertThrows(
+                    QueryExecutionException.class,
+                    () -> testCall(
+                            db,
+                            "CALL apoc.merge.node(['Person']," + idProps + ", {name:'John'}) YIELD node RETURN node",
+                            row -> {}));
+            assertTrue(e.getMessage().contains("you need to supply at least one identifying property for a merge"));
         }
     }
 
     @Test
     public void testMergeNodeWithNullLabelsShouldFail() {
-        try {
-            testCall(
-                    db,
-                    "CALL apoc.merge.node([null], {name:'John'}) YIELD node RETURN node",
-                    row -> assertTrue(row.get("node") instanceof Node));
-            fail();
-        } catch (QueryExecutionException e) {
-            assertEquals(
-                    e.getMessage(),
-                    "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
-                            + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
-        }
+        var e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "CALL apoc.merge.node([null], {name:'John'}) YIELD node RETURN node", row -> {}));
+        assertEquals(
+                "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
+                        + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.",
+                e.getMessage());
     }
 
     @Test
     public void testMergeNodeWithMixedLabelsContainingNullShouldFail() {
-        try {
-            testCall(
-                    db,
-                    "CALL apoc.merge.node(['Person', null], {name:'John'}) YIELD node RETURN node",
-                    row -> assertTrue(row.get("node") instanceof Node));
-            fail();
-        } catch (QueryExecutionException e) {
-            assertEquals(
-                    e.getMessage(),
-                    "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
-                            + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
-        }
+        var e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db, "CALL apoc.merge.node(['Person', null], {name:'John'}) YIELD node RETURN node", row -> {}));
+        assertEquals(
+                "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
+                        + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.",
+                e.getMessage());
     }
 
     @Test
     public void testMergeNodeWithSingleEmptyLabelShouldFail() {
-        try {
-            testCall(
-                    db,
-                    "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node",
-                    row -> assertTrue(row.get("node") instanceof Node));
-            fail();
-        } catch (QueryExecutionException e) {
-            assertEquals(
-                    e.getMessage(),
-                    "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
-                            + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
-        }
+        var e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node", row -> {}));
+        assertEquals(
+                "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
+                        + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.",
+                e.getMessage());
     }
 
     @Test
     public void testMergeNodeContainingMixedLabelsContainingEmptyStringShouldFail() {
-        try {
-            testCall(
-                    db,
-                    "CALL apoc.merge.node(['Person', ''], {name:'John'}) YIELD node RETURN node",
-                    row -> assertTrue(row.get("node") instanceof Node));
-            fail();
-        } catch (QueryExecutionException e) {
-            assertEquals(
-                    e.getMessage(),
-                    "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
-                            + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.");
-        }
+        var e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db, "CALL apoc.merge.node(['Person', ''], {name:'John'}) YIELD node RETURN node", row -> {}));
+
+        assertEquals(
+                "Failed to invoke procedure `apoc.merge.node`: Caused by: java.lang.IllegalArgumentException: "
+                        + "The list of label names may not contain any `NULL` or empty `STRING` values. If you wish to merge a `NODE` without a label, pass an empty list instead.",
+                e.getMessage());
     }
 
     @Test
@@ -229,7 +211,7 @@ public class MergeTest {
                     db,
                     "CALL apoc.merge.node([$label],{id:1}, {name:'John'}) YIELD node RETURN node",
                     params,
-                    row -> assertTrue(row.get("node") instanceof Node));
+                    row -> assertInstanceOf(Node.class, row.get("node")));
         }
     }
 
@@ -275,40 +257,37 @@ public class MergeTest {
                     db,
                     "CREATE (a), (b) WITH a,b CALL apoc.merge.relationship(a, $relType, null, null, b) YIELD rel RETURN rel",
                     params,
-                    row -> assertTrue(row.get("rel") instanceof Relationship));
+                    row -> assertInstanceOf(Relationship.class, row.get("rel")));
         }
     }
 
     @Test
     public void testMergeRelWithNullRelTypeShouldFail() {
-        try {
-            testCall(
-                    db,
-                    "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e  CALL apoc.merge.relationship(s, null, null, null, e) YIELD rel RETURN rel",
-                    row -> assertTrue(row.get("rel") instanceof Relationship));
-            fail();
-        } catch (QueryExecutionException e) {
-            assertEquals(
-                    e.getMessage(),
-                    ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: "
-                            + "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."));
-        }
+        var e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e  CALL apoc.merge.relationship(s, null, null, null, e) YIELD rel RETURN rel",
+                        row -> {}));
+
+        assertEquals(
+                ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: "
+                        + "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."),
+                e.getMessage());
     }
 
     @Test
     public void testMergeWithEmptyRelTypeShouldFail() {
-        try {
-            testCall(
-                    db,
-                    "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, '', null, null, e) YIELD rel RETURN rel",
-                    row -> assertTrue(row.get("rel") instanceof Relationship));
-            fail();
-        } catch (QueryExecutionException e) {
-            assertEquals(
-                    e.getMessage(),
-                    ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: "
-                            + "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."));
-        }
+        var e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e CALL apoc.merge.relationship(s, '', null, null, e) YIELD rel RETURN rel",
+                        row -> {}));
+        assertEquals(
+                ("Failed to invoke procedure `apoc.merge.relationship`: Caused by: java.lang.IllegalArgumentException: "
+                        + "It is not possible to merge a `RELATIONSHIP` without a `RELATIONSHIP` type."),
+                e.getMessage());
     }
 
     // MERGE EAGER TESTS
@@ -392,7 +371,7 @@ public class MergeTest {
                 assertFalse(node.hasProperty("name"));
             }
         } catch (Exception e) {
-            fail();
+            Assertions.fail(e);
         }
     }
 
@@ -507,22 +486,20 @@ public class MergeTest {
                 assertEquals("Fri", rel.getProperty("since"));
             }
         } catch (Exception e) {
-            fail();
+            Assertions.fail(e);
         }
     }
 
     @Test
     public void testMergeEagerWithEmptyIdentityPropertiesShouldFail() {
         for (String idProps : new String[] {"null", "{}"}) {
-            try {
-                testCall(
-                        db,
-                        "CALL apoc.merge.node(['Person']," + idProps + ", {name:'John'}) YIELD node RETURN node",
-                        row -> assertTrue(row.get("node") instanceof Node));
-                fail();
-            } catch (QueryExecutionException e) {
-                assertTrue(e.getMessage().contains("you need to supply at least one identifying property for a merge"));
-            }
+            var e = assertThrows(
+                    QueryExecutionException.class,
+                    () -> testCall(
+                            db,
+                            "CALL apoc.merge.node(['Person']," + idProps + ", {name:'John'}) YIELD node RETURN node",
+                            row -> {}));
+            assertTrue(e.getMessage().contains("you need to supply at least one identifying property for a merge"));
         }
     }
 }

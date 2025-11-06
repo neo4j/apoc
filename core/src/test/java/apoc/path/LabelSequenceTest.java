@@ -18,42 +18,45 @@
  */
 package apoc.path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
 public class LabelSequenceTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
-                            .build(),
-                    false)
-            .withSetting(
-                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                        newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
+                                .build(),
+                        false)
+                .setConfig(
+                        newBuilder("internal.dbms.debug.trace_cursors", BOOL, false)
+                                .build(),
+                        false);
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         db.executeTransactionally(
                 "create (s:Start{name:'start'})-[:REL]->(:A{name:'a'})-[:REL]->(:B{name:'b'})-[:REL]->(:A:C{name:'ac'})-[:REL]->(:B:A{name:'ba'})-[:REL]->(:D:A{name:'da'})");
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
