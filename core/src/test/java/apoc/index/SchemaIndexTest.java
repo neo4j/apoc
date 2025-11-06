@@ -22,28 +22,27 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyList;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 23.05.16
- */
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class SchemaIndexTest {
 
     private static final String SCHEMA_DISTINCT_COUNT_ORDERED =
@@ -55,8 +54,8 @@ public class SchemaIndexTest {
     private static final String SCHEMA_LABEL = "SchemaTest";
     private static final String FULL_TEXT_TWO_LABEL = "FullTextTwo";
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
     private static List<String> personNames;
     private static List<String> personAddresses;
@@ -65,8 +64,8 @@ public class SchemaIndexTest {
     private static final int firstPerson = 1;
     private static final int lastPerson = 200;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, SchemaIndex.class);
         db.executeTransactionally(
                 "CREATE (city:City {name:'London'}) WITH city UNWIND range(" + firstPerson + "," + lastPerson
@@ -120,11 +119,6 @@ public class SchemaIndexTest {
         }
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
     public void testDistinctPropertiesOnFirstIndex() {
         testCall(
@@ -135,7 +129,8 @@ public class SchemaIndexTest {
                         assertEquals(new HashSet<>(personNames), new HashSet<>((Collection<String>) row.get("value"))));
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithoutIndexWaitingShouldNotHangs() {
         db.executeTransactionally("CREATE FULLTEXT INDEX fulltextFullTextOne FOR (n:FullTextOne) ON EACH [n.prop1]");
         // executing the apoc.schema.properties.distinct without CALL db.awaitIndexes() will throw an "Index is still
@@ -150,7 +145,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("DROP INDEX fulltextFullTextOne");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithVoidIndexShouldNotHangs() {
         db.executeTransactionally("create index VoidIndex for (n:VoidIndex) on (n.myProp)");
 
@@ -163,7 +159,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("drop index VoidIndex");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithCompositeIndexShouldNotHangs() {
         db.executeTransactionally("create index EmptyLabel for (n:EmptyLabel) on (n.one)");
         db.executeTransactionally("create index EmptyCompositeLabel for (n:EmptyCompositeLabel) on (n.two, n.three)");
@@ -184,7 +181,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("drop index EmptyCompositeLabel");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithCompositeIndexWithMixedRepeatedProps() {
         db.executeTransactionally("create index SchemaTest for (n:SchemaTest) on (n.prop1, n.prop2)");
         db.executeTransactionally("CALL db.awaitIndexes()");
@@ -216,7 +214,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("drop index SchemaTest");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithFullTextIndexShouldNotHangs() {
         db.executeTransactionally("CREATE FULLTEXT INDEX FullTextOneProp1 FOR (n:FullTextOne) ON EACH [n.prop1]");
         db.executeTransactionally("CALL db.awaitIndexes");
@@ -235,7 +234,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("DROP INDEX FullTextOneProp1");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testWithDifferentIndexesAndSameLabelProp() {
         db.executeTransactionally("CREATE FULLTEXT INDEX FullTextOneProp1 FOR (n:FullTextOne) ON EACH [n.prop1]");
         db.executeTransactionally("CREATE RANGE INDEX RangeProp1 FOR (n:FullTextOne) ON (n.prop1)");
@@ -257,7 +257,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("DROP INDEX RangeProp1");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithMultiLabelFullTextIndexShouldNotHangs() {
         db.executeTransactionally(
                 "CREATE FULLTEXT INDEX fulltextComposite FOR (n:FullTextOne|FullTextTwo) ON EACH [n.prop1,n.prop3]");
@@ -288,7 +289,8 @@ public class SchemaIndexTest {
         db.executeTransactionally("DROP INDEX fulltextComposite");
     }
 
-    @Test(timeout = 5000L)
+    @Test
+    @Timeout(5)
     public void testDistinctWithNoPreviousNodesShouldNotHangs() {
         db.executeTransactionally("CREATE INDEX LabelNotExistent FOR (n:LabelNotExistent) ON n.prop");
 

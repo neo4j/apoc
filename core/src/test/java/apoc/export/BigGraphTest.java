@@ -35,20 +35,22 @@ import apoc.refactor.GraphRefactoring;
 import apoc.refactor.rename.Rename;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class BigGraphTest {
     private static final File directory = new File("target/import");
 
@@ -56,15 +58,19 @@ public class BigGraphTest {
         directory.mkdirs();
     }
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.memory_tracking, true)
+                .setConfig(
+                        GraphDatabaseSettings.load_csv_file_url_root,
+                        directory.toPath().toAbsolutePath());
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(
                 db,
                 Rename.class,
@@ -82,11 +88,6 @@ public class BigGraphTest {
 
         final String query = Util.readResourceFile("moviesMod.cypher");
         IntStream.range(0, 10000).forEach(__ -> db.executeTransactionally(query));
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test

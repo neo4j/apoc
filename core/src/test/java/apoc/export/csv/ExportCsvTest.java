@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.HelperProcedures;
 import apoc.csv.CsvTestUtil;
@@ -58,7 +59,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -1165,7 +1165,7 @@ public class ExportCsvTest {
                 List.of("SHOW CONSTRAINTS YIELD id, name, type RETURN *", "SHOW INDEXES YIELD id, name, type RETURN *");
 
         for (String query : invalidQueries) {
-            QueryExecutionException e = Assert.assertThrows(
+            QueryExecutionException e = assertThrows(
                     QueryExecutionException.class,
                     () -> testCall(
                             db,

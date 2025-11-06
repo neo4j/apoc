@@ -22,14 +22,15 @@ import static apoc.util.MapUtil.map;
 import static java.util.Collections.EMPTY_LIST;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.coll.Coll;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,27 +38,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension()
 public class FingerprintingTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setup() {
+    @BeforeAll
+    void setup() {
         TestUtil.registerProcedure(db, Fingerprinting.class, Graphs.class, Coll.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test

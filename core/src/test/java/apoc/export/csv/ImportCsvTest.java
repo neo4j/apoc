@@ -26,17 +26,17 @@ import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.csv.CsvTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -53,36 +53,40 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.kernel.impl.core.NodeEntity;
 import org.neo4j.kernel.impl.core.RelationshipEntity;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 import org.neo4j.values.storable.CoordinateReferenceSystem;
 import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.Values;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class ImportCsvTest {
     public static final String BASE_URL_FILES = "src/test/resources/csv-inputs";
     private static final ZoneId DEFAULT_TIMEZONE = ZoneId.of("Asia/Tokyo");
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.allow_file_urls, true)
-            .withSetting(GraphDatabaseSettings.db_temporal_timezone, DEFAULT_TIMEZONE)
-            .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    new File(BASE_URL_FILES).toPath().toAbsolutePath());
+    @Inject
+    GraphDatabaseService db;
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.allow_file_urls, true)
+                .setConfig(GraphDatabaseSettings.db_temporal_timezone, DEFAULT_TIMEZONE)
+                .setConfig(GraphDatabaseSettings.memory_tracking, true)
+                .setConfig(
+                        GraphDatabaseSettings.load_csv_file_url_root,
+                        new File(BASE_URL_FILES).toPath().toAbsolutePath());
+    }
 
     final Map<String, String> testCsvs = Collections.unmodifiableMap(Stream.of(
                     new AbstractMap.SimpleEntry<>(
@@ -313,8 +317,8 @@ public class ImportCsvTest {
                             """))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue)));
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeAll
+    void setUp() throws IOException {
         for (Map.Entry<String, String> entry : testCsvs.entrySet()) {
             CsvTestUtil.saveCsvFile(entry.getKey(), entry.getValue());
         }
@@ -323,11 +327,6 @@ public class ImportCsvTest {
 
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -393,17 +392,15 @@ public class ImportCsvTest {
     public void issue2826WithImportCsv() {
         db.executeTransactionally("CREATE (n:Person {name: 'John'})");
         db.executeTransactionally("CREATE CONSTRAINT unique_person FOR (n:Person) REQUIRE n.name IS UNIQUE");
-        try {
-            TestUtil.testCall(
-                    db,
-                    "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
-                    map("file", "file:/id.csv", "config", map("delimiter", '|')),
-                    (r) -> fail());
-        } catch (RuntimeException e) {
-            String expected = "Failed to invoke procedure `apoc.import.csv`: "
-                    + "Caused by: IndexEntryConflictException{propertyValues=( String(\"John\") ), addedEntityId=-1, existingEntityId=0}";
-            assertEquals(expected, e.getMessage());
-        }
+
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> db.executeTransactionally(
+                        "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
+                        map("file", "file:/id.csv", "config", map("delimiter", '|'))));
+        String expected = "Failed to invoke procedure `apoc.import.csv`: "
+                + "Caused by: IndexEntryConflictException{propertyValues=( String(\"John\") ), addedEntityId=-1, existingEntityId=0}";
+        assertEquals(expected, e.getMessage());
 
         // should return only 1 node due to constraint exception
         TestUtil.testCall(
@@ -528,14 +525,14 @@ public class ImportCsvTest {
                     assertEquals(0L, r.get("relationships"));
                 });
 
-        Assert.assertEquals(
+        assertEquals(
                 "John",
                 TestUtil.<String>singleResultFirstColumn(
                         db, "MATCH (n:Person:Student:Employee) RETURN n.name AS name ORDER BY name"));
 
         long id = TestUtil.<Long>singleResultFirstColumn(
                 db, "MATCH (n:Person:Student:Employee) RETURN n.id AS id ORDER BY id");
-        Assert.assertEquals(1L, id);
+        assertEquals(1L, id);
     }
 
     @Test
@@ -666,12 +663,12 @@ public class ImportCsvTest {
                     assertEquals(2L, r.get("relationships"));
                 });
 
-        Assert.assertEquals(
+        assertEquals(
                 "John Jane",
                 TestUtil.singleResultFirstColumn(
                         db,
                         "MATCH (p1:Person)-[:FRIENDS_WITH]->(p2:Person) RETURN p1.name + ' ' + p2.name AS pair ORDER BY pair"));
-        Assert.assertEquals(
+        assertEquals(
                 "Jane John",
                 TestUtil.singleResultFirstColumn(
                         db,
@@ -691,7 +688,7 @@ public class ImportCsvTest {
                     assertEquals(1L, r.get("relationships"));
                 });
 
-        Assert.assertEquals(
+        assertEquals(
                 "806^04^150\\\\^123456 2",
                 TestUtil.singleResultFirstColumn(
                         db,
@@ -794,7 +791,7 @@ public class ImportCsvTest {
                     assertEquals(2L, r.get("nodes"));
                     assertEquals(1L, r.get("relationships"));
                 });
-        Assert.assertEquals(
+        assertEquals(
                 "John Jane",
                 TestUtil.singleResultFirstColumn(
                         db,
@@ -814,7 +811,7 @@ public class ImportCsvTest {
                     assertEquals(2L, r.get("nodes"));
                     assertEquals(1L, r.get("relationships"));
                 });
-        Assert.assertEquals(
+        assertEquals(
                 "John Jane",
                 TestUtil.singleResultFirstColumn(
                         db,
@@ -995,11 +992,11 @@ public class ImportCsvTest {
                     assertEquals(0L, r.get("relationships"));
                 });
 
-        Assert.assertEquals(
+        assertEquals(
                 "John", TestUtil.singleResultFirstColumn(db, "MATCH (n:Person) RETURN n.name AS name ORDER BY name"));
 
         long id = TestUtil.<Long>singleResultFirstColumn(db, "MATCH (n:Person) RETURN n.id AS id ORDER BY id");
-        Assert.assertEquals(1L, id);
+        assertEquals(1L, id);
     }
 
     @Test

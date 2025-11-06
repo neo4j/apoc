@@ -30,6 +30,7 @@ import apoc.meta.MetaRestricted;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -39,35 +40,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
 /**
  * CYPHER 5 only; moved to extended for Cypher 25
  */
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
 public class ArrowTest {
 
-    private static File directory = new File("target/arrow import");
+    private static final File directory = new File("target/arrow import");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
     }
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath())
-            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
-            // Test assertions depends on sequential ids
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
+    @Inject
+    GraphDatabaseService db;
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        final var csvRoot = directory.toPath().toAbsolutePath();
+        builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
+                .setConfig(GraphDatabaseSettings.db_format, "aligned")
+                .setConfig(GraphDatabaseSettings.load_csv_file_url_root, csvRoot);
+    }
 
     public static final List<Map<String, Object>> EXPECTED = List.of(
             new HashMap<>() {
@@ -128,21 +132,16 @@ public class ArrowTest {
                 }
             });
 
-    @BeforeClass
-    public static void beforeClass() {
+    @BeforeAll
+    void beforeAll() {
         db.executeTransactionally(
                 "CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015-05-18T19:32:24.000'), place:point({latitude: 13.1, longitude: 33.46789, height: 100.0})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42})");
         TestUtil.registerProcedure(
                 db, ExportArrow.class, LoadArrow.class, Graphs.class, Meta.class, MetaRestricted.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
-    @Before
-    public void before() {
+    @BeforeEach
+    void beforeEach() {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
     }
@@ -159,10 +158,10 @@ public class ArrowTest {
         return result.<Long>columnAs("batches").next();
     }
 
-    private <T> T readValue(String json, Class<T> clazz) {
+    private <T> T readValue(String json) {
         if (json == null) return null;
         try {
-            return JsonUtil.OBJECT_MAPPER.readValue(json, clazz);
+            return JsonUtil.OBJECT_MAPPER.readValue(json, (Class<T>) Map.class);
         } catch (JsonProcessingException e) {
             return null;
         }
@@ -202,7 +201,7 @@ public class ArrowTest {
                             .atOffset(ZoneOffset.UTC)
                             .toZonedDateTime(),
                     row.get("dateData"));
-            assertEquals(Arrays.asList("[0]"), row.get("arrayArray"));
+            assertEquals(List.of("[0]"), row.get("arrayArray"));
             assertEquals(1.1D, row.get("doubleData"));
             return true;
         });
@@ -242,7 +241,7 @@ public class ArrowTest {
                             .atOffset(ZoneOffset.UTC)
                             .toZonedDateTime(),
                     row.get("dateData"));
-            assertEquals(Arrays.asList("[0]"), row.get("arrayArray"));
+            assertEquals(List.of("[0]"), row.get("arrayArray"));
             assertEquals(1.1D, row.get("doubleData"));
             return true;
         });
@@ -272,7 +271,7 @@ public class ArrowTest {
                 .map(m -> (Map<String, Object>) m.get("value"))
                 .map(m -> {
                     final Map<String, Object> newMap = new HashMap(m);
-                    newMap.put("place", readValue((String) m.get("place"), Map.class));
+                    newMap.put("place", readValue((String) m.get("place")));
                     return newMap;
                 })
                 .collect(Collectors.toList());
@@ -353,7 +352,7 @@ public class ArrowTest {
                 Map.of(),
                 result -> result.<byte[]>columnAs("byteArray").stream().collect(Collectors.toList()));
 
-        final List<Long> expected = LongStream.range(0, 10000).mapToObj(l -> l).collect(Collectors.toList());
+        final List<Long> expected = LongStream.range(0, 10000).boxed().collect(Collectors.toList());
 
         // then
         final String query = "UNWIND $list AS byteArray " + "CALL apoc.load.arrow.stream(byteArray) YIELD value "
@@ -378,7 +377,7 @@ public class ArrowTest {
                 Map.of(),
                 this::extractFileName);
 
-        final List<Long> expected = LongStream.range(0, 10000).mapToObj(l -> l).collect(Collectors.toList());
+        final List<Long> expected = LongStream.range(0, 10000).boxed().collect(Collectors.toList());
 
         // then
         final String query = "CALL apoc.load.arrow($file) YIELD value " + "RETURN value.id AS id";
