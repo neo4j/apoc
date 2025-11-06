@@ -70,8 +70,8 @@ public class SchemaIndex {
         if (labelName.isEmpty() && keyName.isEmpty()) {
             query =
                     """
-                    MATCH (n)
-                    WITH labels(n) AS labels, keys(n) as keys
+                    WITH COLLECT { CALL db.labels() YIELD label RETURN label } AS labels,
+                      COLLECT { CALL db.propertyKeys() YIELD propertyKey AS propertyKey } AS keys
                     UNWIND labels AS label
                     UNWIND keys AS key
                     WITH DISTINCT label AS uniqueLabel, key AS uniqueKey
@@ -82,8 +82,8 @@ public class SchemaIndex {
         } else if (labelName.isEmpty()) {
             query =
                     """
-                    MATCH (n)
-                    UNWIND labels(n) AS label
+                    WITH COLLECT { CALL db.labels() YIELD label RETURN label } AS labels
+                    UNWIND labels AS label
                     WITH DISTINCT label AS uniqueLabel
                     MATCH (n:$(uniqueLabel))
                     WHERE n[$key] IS NOT NULL
@@ -92,8 +92,8 @@ public class SchemaIndex {
         } else if (keyName.isEmpty()) {
             query =
                     """
-                    MATCH (n:$($label))
-                    UNWIND keys(n) AS key
+                    WITH COLLECT { CALL db.propertyKeys() YIELD propertyKey AS propertyKey } AS keys
+                    UNWIND keys AS key
                     WITH DISTINCT key AS uniqueKey
                     MATCH (n:$($label))
                     WHERE n[uniqueKey] IS NOT NULL
