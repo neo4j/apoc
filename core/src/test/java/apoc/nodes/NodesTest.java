@@ -26,10 +26,10 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
@@ -40,6 +40,7 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,23 +48,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 18.08.16
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class NodesTest {
 
     private static final List<String> FIRST_ALPHA_CYCLE_PROPS = List.of("alpha", "one", "two", "alpha");
@@ -73,25 +71,24 @@ public class NodesTest {
     private static final List<String> ONE_STEP_PROPS = List.of("epsilon", "seven", "epsilon");
     private static final String DEPEND_ON_REL_TYPE = "DEPENDS_ON";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.procedure_unrestricted,
-                    List.of(
-                            "apoc.nodes.link",
-                            "apoc.node.relationship.exists",
-                            "apoc.node.relationships.exist",
-                            "apoc.nodes.connected",
-                            "apoc.nodes.isDense"));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
-        TestUtil.registerProcedure(db, Nodes.class, Create.class, NodesRestricted.class);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.procedure_unrestricted,
+                List.of(
+                        "apoc.nodes.link",
+                        "apoc.node.relationship.exists",
+                        "apoc.node.relationships.exist",
+                        "apoc.nodes.connected",
+                        "apoc.nodes.isDense"));
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void setUp() {
+        TestUtil.registerProcedure(db, Nodes.class, Create.class, NodesRestricted.class);
     }
 
     @Test
@@ -456,7 +453,7 @@ public class NodesTest {
                 (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
-                    assertFalse("value should not be empty", list.isEmpty());
+                    assertFalse(list.isEmpty());
                     list.forEach(map -> {
                         Node node = (Node) map.get("node");
                         List<String> data = (List<String>) map.get("types");
@@ -482,7 +479,7 @@ public class NodesTest {
                 (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
-                    assertFalse("value should not be empty", list.isEmpty());
+                    assertFalse(list.isEmpty());
                     list.forEach(map -> {
                         Map<String, Boolean> data = (Map<String, Boolean>) map.get("exists");
                         assertEquals(map("X", true, "Y", false), data);
@@ -493,7 +490,7 @@ public class NodesTest {
                 db, "MATCH (n:Bar) RETURN apoc.nodes.relationships.exist(collect(n), 'X|Y') AS value", (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
-                    assertFalse("value should not be empty", list.isEmpty());
+                    assertFalse(list.isEmpty());
                     list.forEach(map -> {
                         Map<String, Boolean> data = (Map<String, Boolean>) map.get("exists");
                         assertEquals(map("X", false, "Y", true), data);
@@ -731,9 +728,10 @@ public class NodesTest {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(b) CREATE (f)-[:Y]->(b) CREATE (f)-[:X]->(b) CREATE (f)<-[:X]-(b)");
 
-        TestUtil.testCall(db, "MATCH (f:Foo),(b:Bar)  RETURN apoc.node.degree(f, '<X|Y') as all", (r) -> {
-            assertEquals(3L, r.get("all"));
-        });
+        TestUtil.testCall(
+                db,
+                "MATCH (f:Foo),(b:Bar)  RETURN apoc.node.degree(f, '<X|Y') as all",
+                (r) -> assertEquals(3L, r.get("all")));
     }
 
     @Test
@@ -1031,8 +1029,8 @@ public class NodesTest {
                     assertEquals(
                             Util.map("name", "b1", "count", 2), ((VirtualNode) map.get("from")).getAllProperties());
                     assertEquals(label, labelSet((VirtualNode) map.get("from")));
-                    assertNull(((VirtualRelationship) map.get("rel")));
-                    assertNull(((Node) map.get("to")));
+                    assertNull(map.get("rel"));
+                    assertNull(map.get("to"));
                     assertFalse(r.hasNext());
                 });
     }

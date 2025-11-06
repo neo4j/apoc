@@ -22,8 +22,8 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testResult;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.configuration.GraphDatabaseSettings.lock_acquisition_timeout;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
@@ -31,38 +31,35 @@ import apoc.coll.Coll;
 import apoc.lock.Lock;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author AgileLARUS
- *
- * @since 03-04-2017
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class RenameTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule().withSetting(lock_acquisition_timeout, Duration.ofSeconds(5));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
-        TestUtil.registerProcedure(db, Rename.class, Coll.class, Lock.class, Utils.class);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(lock_acquisition_timeout, Duration.ofSeconds(5));
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void setUp() {
+        TestUtil.registerProcedure(db, Rename.class, Coll.class, Lock.class, Utils.class);
     }
 
     @Test

@@ -18,29 +18,29 @@
  */
 package apoc.path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class SequenceTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         String movies = Util.readResourceFile("movies.cypher");
         String additionalLink =
@@ -50,11 +50,6 @@ public class SequenceTest {
             tx.execute(additionalLink);
             tx.commit();
         }
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -108,7 +103,7 @@ public class SequenceTest {
                     "Penny Marshall",
                     "Rob Reiner"));
             List<String> names = (List<String>) row.get("names");
-            assertEquals(11l, names.size());
+            assertEquals(11L, names.size());
             assertTrue(names.containsAll(expectedNames));
         });
     }
@@ -131,7 +126,7 @@ public class SequenceTest {
                     "Penny Marshall",
                     "Tom Hanks"));
             List<String> names = (List<String>) row.get("names");
-            assertEquals(11l, names.size());
+            assertEquals(11L, names.size());
             assertTrue(names.containsAll(expectedNames));
         });
     }
@@ -155,7 +150,7 @@ public class SequenceTest {
                     "Penny Marshall",
                     "Rob Reiner"));
             List<String> names = (List<String>) row.get("names");
-            assertEquals(12l, names.size());
+            assertEquals(12L, names.size());
             assertTrue(names.containsAll(expectedNames));
         });
     }
@@ -179,7 +174,7 @@ public class SequenceTest {
                     "Penny Marshall",
                     "Rob Reiner"));
             List<String> names = (List<String>) row.get("names");
-            assertEquals(12l, names.size());
+            assertEquals(12L, names.size());
             assertTrue(names.containsAll(expectedNames));
         });
     }
@@ -203,7 +198,7 @@ public class SequenceTest {
                     "Penny Marshall",
                     "Rob Reiner"));
             List<String> names = (List<String>) row.get("names");
-            assertEquals(12l, names.size());
+            assertEquals(12L, names.size());
             assertTrue(names.containsAll(expectedNames));
         });
     }
@@ -228,7 +223,7 @@ public class SequenceTest {
                     "James Marshall",
                     "Rob Reiner"));
             List<String> names = (List<String>) row.get("names");
-            assertEquals(13l, names.size());
+            assertEquals(13L, names.size());
             assertTrue(names.containsAll(expectedNames));
         });
     }

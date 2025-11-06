@@ -19,30 +19,25 @@
 package apoc.math;
 
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class MathsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Maths.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -70,7 +65,7 @@ public class MathsTest {
         testCall(
                 db,
                 "RETURN apoc.math.maxInt() as max",
-                (row) -> assertEquals(Long.valueOf(Integer.MAX_VALUE), row.get("max")));
+                (row) -> assertEquals((long) Integer.MAX_VALUE, row.get("max")));
     }
 
     @Test
@@ -78,23 +73,17 @@ public class MathsTest {
         testCall(
                 db,
                 "RETURN apoc.math.minInt() as min",
-                (row) -> assertEquals(Long.valueOf(Integer.MIN_VALUE), row.get("min")));
+                (row) -> assertEquals((long) Integer.MIN_VALUE, row.get("min")));
     }
 
     @Test
     public void testMaxByte() {
-        testCall(
-                db,
-                "RETURN apoc.math.maxByte() as max",
-                (row) -> assertEquals(Long.valueOf(Byte.MAX_VALUE), row.get("max")));
+        testCall(db, "RETURN apoc.math.maxByte() as max", (row) -> assertEquals((long) Byte.MAX_VALUE, row.get("max")));
     }
 
     @Test
     public void testMinByte() {
-        testCall(
-                db,
-                "RETURN apoc.math.minByte() as min",
-                (row) -> assertEquals(Long.valueOf(Byte.MIN_VALUE), row.get("min")));
+        testCall(db, "RETURN apoc.math.minByte() as min", (row) -> assertEquals((long) Byte.MIN_VALUE, row.get("min")));
     }
 
     @Test
