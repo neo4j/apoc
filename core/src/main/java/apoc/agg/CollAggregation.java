@@ -22,10 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.neo4j.procedure.*;
 
-/**
- * @author mh
- * @since 18.12.17
- */
 public class CollAggregation {
     @UserAggregationFunction("apoc.agg.nth")
     @Description(
