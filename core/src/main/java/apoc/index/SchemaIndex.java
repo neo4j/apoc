@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -38,6 +39,9 @@ public class SchemaIndex {
 
     @Context
     public GraphDatabaseAPI db;
+
+    @Context
+    public Transaction tx;
 
     public record SchemaListResult(
             @Description("The list of distinct values for the given property.") List<Object> value) {}
@@ -108,12 +112,11 @@ public class SchemaIndex {
                     """;
         }
 
-        var result = db.executeTransactionally(query, Map.of("label", labelName, "key", keyName), res -> res.stream()
-                .toList());
-
-        return result.stream()
+        return tx
+                .execute(query,  Map.of("label", labelName, "key", keyName))
                 .map(row -> new PropertyValueCount(
-                        (String) row.get("label"), (String) row.get("key"), row.get("value"), (long) row.get("count")));
+                        (String) row.get("label"), (String) row.get("key"), row.get("value"), (long) row.get("count")))
+                .stream();
     }
 
     public static class PropertyValueCount {

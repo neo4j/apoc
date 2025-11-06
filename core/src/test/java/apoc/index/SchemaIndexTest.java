@@ -472,7 +472,7 @@ class SchemaIndexTest {
                         WITH *
                         CALL apoc.schema.properties.distinct("LabelNotExistent", "prop")
                         YIELD value RETURN *""",
-                r -> assertEquals(emptyList(), r.get("value")));
+                r -> assertEquals(List.of(2L), r.get("value")));
 
         db.executeTransactionally("DROP INDEX LabelNotExistent");
     }
