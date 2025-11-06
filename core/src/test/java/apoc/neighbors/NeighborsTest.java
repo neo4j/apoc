@@ -18,27 +18,27 @@
  */
 package apoc.neighbors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class NeighborsTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Neighbors.class);
         db.executeTransactionally("CREATE (a:First), " + "(b:Neighbor{name: 'b'}), "
                 + "(c:Neighbor{name: 'c'}), "
@@ -47,11 +47,6 @@ public class NeighborsTest {
                 + "(b)-[:KNOWS]->(a), "
                 + "(b)-[:KNOWS]->(c), "
                 + "(c)-[:KNOWS]->(d) ");
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
     }
 
     @Test
