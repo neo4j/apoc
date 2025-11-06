@@ -64,6 +64,7 @@ def allowList = [
       [name: 'The MIT License'],
       [name: 'Bouncy Castle Licence'],
       [name: 'MIT-0', url: 'https://spdx.org/licenses/MIT-0.html'],
+      [name: 'The MIT License (MIT)', url: 'https://raw.githubusercontent.com/auth0/java-jwt/master/LICENSE'],
     ]],
   [name: 'Eclipse Distribution License - v 1.0', url: 'https://www.eclipse.org/licenses/edl-v10.html', aliases: [
       [name: 'Eclipse Distribution License - v 1.0', url: 'http://www.eclipse.org/org/documents/edl-v10.php'],
