@@ -113,7 +113,7 @@ public class SchemaIndex {
         }
 
         return tx
-                .execute(query,  Map.of("label", labelName, "key", keyName))
+                .execute(query, Map.of("label", labelName, "key", keyName))
                 .map(row -> new PropertyValueCount(
                         (String) row.get("label"), (String) row.get("key"), row.get("value"), (long) row.get("count")))
                 .stream();

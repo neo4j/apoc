@@ -27,14 +27,13 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
-
-import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,12 +68,12 @@ class SchemaIndexTest {
 
     @BeforeAll
     void setup() {
-       TestUtil.registerProcedure(db, SchemaIndex.class);
+        TestUtil.registerProcedure(db, SchemaIndex.class);
     }
 
     @BeforeEach
     void testSetUp() {
-       db.executeTransactionally(
+        db.executeTransactionally(
                 "CREATE (city:City {name:'London'}) WITH city UNWIND range(" + firstPerson + "," + lastPerson
                         + ") as id CREATE (:Person {name:'name'+id, id:id, age:id % 100, address:id+'Main St.'})-[:LIVES_IN]->(city)");
 
