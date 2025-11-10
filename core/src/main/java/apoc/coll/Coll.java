@@ -1082,8 +1082,6 @@ public class Coll {
             @Name(value = "coll", description = "The list to find the given value in.") List<Object> coll,
             @Name(value = "value", description = "The value to find the first occurrence of in the given list.")
                     Object value) {
-        // return reduce(res=[0,-1], x in $list | CASE WHEN x=$value AND res[1]=-1 THEN [res[0], res[0]+1] ELSE
-        // [res[0]+1, res[1]] END)[1] as value
         if (coll == null || coll.isEmpty()) return -1;
         return Util.indexOf(coll, value);
     }

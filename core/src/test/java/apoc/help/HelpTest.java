@@ -105,7 +105,7 @@ public class HelpTest {
             assertEquals("function", row.get("type"));
             assertEquals("apoc.coll.toSet", row.get("name"));
             assertTrue(((String) row.get("text")).contains("unique `LIST<ANY>`"));
-            assertFalse(((Boolean) row.get("isDeprecated")));
+            assertTrue(((Boolean) row.get("isDeprecated")));
         });
         TestUtil.testCall(db, "CYPHER 25 CALL apoc.help($text)", map("text", "diff.nodes"), (row) -> {
             assertEquals("function", row.get("type"));
