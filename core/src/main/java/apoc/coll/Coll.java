@@ -270,9 +270,7 @@ public class Coll {
 
     @NotThreadSafe
     @Deprecated
-    @UserFunction(
-            name = "apoc.coll.min",
-            deprecatedBy = "Cypher's `min()` function: `UNWIND values AS value RETURN min(value)`.")
+    @UserFunction(name = "apoc.coll.min", deprecatedBy = "Cypher's `coll.min` function.")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the minimum of all values in the given `LIST<ANY>`.")
     public Object min(@Name(value = "values", description = "The list to find the minimum in.") List<Object> list) {
@@ -299,9 +297,7 @@ public class Coll {
 
     @NotThreadSafe
     @Deprecated
-    @UserFunction(
-            name = "apoc.coll.max",
-            deprecatedBy = "Cypher's `max()` function: `UNWIND values AS value RETURN max(value)`.")
+    @UserFunction(name = "apoc.coll.max", deprecatedBy = "Cypher's `coll.max` function.")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the maximum of all values in the given `LIST<ANY>`.")
     public Object max(@Name(value = "values", description = "The list to find the maximum in.") List<Object> list) {
@@ -1007,6 +1003,18 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.insert")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Inserts a value into the specified index in the `LIST<ANY>`.")
+    public List<Object> insertCypher5(
+            @Name(value = "coll", description = "The list to insert a value into.") List<Object> coll,
+            @Name(value = "index", description = "The position in the list to insert the given value.") long index,
+            @Name(value = "value", description = "The value to be inserted.") Object value) {
+        return insert(coll, index, value);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.insert", deprecatedBy = "Cypher's `coll.insert` function.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Inserts a value into the specified index in the `LIST<ANY>`.")
     public List<Object> insert(
             @Name(value = "coll", description = "The list to insert a value into.") List<Object> coll,
@@ -1036,6 +1044,20 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.remove")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description(
+            "Removes a range of values from the `LIST<ANY>`, beginning at position index for the given length of values.")
+    public List<Object> removeCypher5(
+            @Name(value = "coll", description = "The list to remove values from.") List<Object> coll,
+            @Name(value = "index", description = "The starting index in the list to begin removing values from.")
+                    long index,
+            @Name(value = "length", defaultValue = "1", description = "The number of values to remove.") long length) {
+        return remove(coll, index, length);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.remove", deprecatedBy = "Cypher's `coll.remove` function.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Removes a range of values from the `LIST<ANY>`, beginning at position index for the given length of values.")
     public List<Object> remove(
@@ -1055,6 +1077,19 @@ public class Coll {
 
     @UserFunction("apoc.coll.indexOf")
     @Description("Returns the index for the first occurrence of the specified value in the `LIST<ANY>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public long indexOfCypher5(
+            @Name(value = "coll", description = "The list to find the given value in.") List<Object> coll,
+            @Name(value = "value", description = "The value to find the first occurrence of in the given list.")
+                    Object value) {
+        if (coll == null || coll.isEmpty()) return -1;
+        return Util.indexOf(coll, value);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.indexOf", deprecatedBy = "Cypher's `coll.indexOf` function.")
+    @Description("Returns the index for the first occurrence of the specified value in the `LIST<ANY>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public long indexOf(
             @Name(value = "coll", description = "The list to find the given value in.") List<Object> coll,
             @Name(value = "value", description = "The value to find the first occurrence of in the given list.")
@@ -1135,6 +1170,19 @@ public class Coll {
 
     @UserFunction("apoc.coll.toSet")
     @Description("Returns a unique `LIST<ANY>` from the given `LIST<ANY>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public List<Object> toSetCypher5(
+            @Name(value = "coll", description = "The list of values to remove all duplicates from.")
+                    List<Object> list) {
+        if (list == null) return null;
+        List<AnyValue> anyValues = toAnyValues(list);
+        return new SetBackedList(new LinkedHashSet(anyValues));
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.toSet", deprecatedBy = "Cypher's `coll.distinct` function.")
+    @Description("Returns a unique `LIST<ANY>` from the given `LIST<ANY>`.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public List<Object> toSet(
             @Name(value = "coll", description = "The list of values to remove all duplicates from.")
                     List<Object> list) {
@@ -1177,6 +1225,15 @@ public class Coll {
     }
 
     @UserFunction("apoc.coll.sort")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Sorts the given `LIST<ANY>` into ascending order.")
+    public List<Object> sortCypher5(@Name(value = "coll", description = "The list to be sorted.") List<Object> coll) {
+        return sort(coll);
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.sort", deprecatedBy = "Cypher's `coll.sort` function.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Sorts the given `LIST<ANY>` into ascending order.")
     public List<Object> sort(@Name(value = "coll", description = "The list to be sorted.") List<Object> coll) {
         if (coll == null || coll.isEmpty()) return Collections.emptyList();
@@ -1598,6 +1655,23 @@ public class Coll {
 
     @UserFunction("apoc.coll.flatten")
     @Description("Flattens the given `LIST<ANY>` (to flatten nested `LIST<ANY>` values, set recursive to true).")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public List<Object> flattenCypher5(
+            @Name(value = "coll", description = "The list to flatten.") List<Object> coll,
+            @Name(
+                            value = "recursive",
+                            defaultValue = "false",
+                            description = "Whether nested list items should also be flattened.")
+                    boolean recursive) {
+        if (coll == null) return Collections.emptyList();
+        if (recursive) return flattenRecursive(coll, 0); // flatten everything
+        return flattenRecursive(coll, 0, 2); // flatten one level of lists in the input list if not recursive
+    }
+
+    @Deprecated
+    @UserFunction(name = "apoc.coll.flatten", deprecatedBy = "Cypher's `coll.flatten` function.")
+    @Description("Flattens the given `LIST<ANY>` (to flatten nested `LIST<ANY>` values, set recursive to true).")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public List<Object> flatten(
             @Name(value = "coll", description = "The list to flatten.") List<Object> coll,
             @Name(
