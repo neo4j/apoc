@@ -18,43 +18,35 @@
  */
 package apoc.stats;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 07.08.17
- */
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class DegreeDistributionTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, DegreeDistribution.class);
         db.executeTransactionally(
                 "UNWIND range(1,10) as rels CREATE (f:Foo) WITH * UNWIND range(1,rels) as r CREATE (f)-[:BAR]->(f)");
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
     public void degrees() {
         TestUtil.testCall(db, "CALL apoc.stats.degrees()", row -> {
-            assertEquals(null, row.get("type"));
+            assertNull(row.get("type"));
             assertEquals("BOTH", row.get("direction"));
             assertEquals(55L, row.get("total"));
             assertEquals(10L, row.get("max"));

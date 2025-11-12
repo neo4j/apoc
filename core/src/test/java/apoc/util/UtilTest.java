@@ -21,40 +21,55 @@ package apoc.util;
 import static apoc.util.MapUtil.map;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResultTransformer;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.NullLog;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 19.05.16
- */
+@EnterpriseDbmsExtension
 public class UtilTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
+
+    @Inject
+    GraphDatabaseAPI dbAPI;
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.procedure_unrestricted,
+                List.of(
+                        "apoc.nodes.link",
+                        "apoc.node.relationship.exists",
+                        "apoc.node.relationships.exist",
+                        "apoc.nodes.connected",
+                        "apoc.nodes.isDense"));
+    }
 
     private static Node node;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Utils.class);
         try (Transaction tx = db.beginTx()) {
             node = tx.createNode(Label.label("User"));
@@ -63,21 +78,16 @@ public class UtilTest {
         }
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testSubMap() {
+    void testSubMap() {
         assertEquals(map("b", "c"), Util.subMap(map("a.b", "c"), "a"));
         assertEquals(map("b", "c"), Util.subMap(map("a.b", "c"), "a."));
         assertEquals(map(), Util.subMap(map("a.b", "c"), "x"));
     }
 
     @Test
-    public void testPartitionList() {
-        List list = asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    void testPartitionList() {
+        List<Object> list = asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
         assertEquals(1, Util.partitionSubList(list, 0).count());
         assertEquals(1, Util.partitionSubList(list, 1).count());
         assertEquals(2, Util.partitionSubList(list, 2).count());
@@ -94,25 +104,25 @@ public class UtilTest {
     }
 
     @Test
-    public void cleanPassword() {
+    void cleanPassword() {
         String url = "http://%slocalhost:7474/path?query#ref";
         assertEquals(format(url, ""), Util.cleanUrl(format(url, "user:pass@")));
     }
 
     @Test
-    public void mergeNullMaps() {
+    void mergeNullMaps() {
         assertNotNull(Util.merge(null, null));
     }
 
     @Test
-    public void testValidateQuery() {
+    void testValidateQuery() {
         QueryExecutionException e =
                 assertThrows(QueryExecutionException.class, () -> Util.validateQuery(db, "MATCH (n) RETURN m"));
         assertTrue(e.getMessage().contains("Variable `m` not defined"));
     }
 
     @Test
-    public void testSanitize() {
+    void testSanitize() {
         assertEquals("``", Util.sanitize("`"));
         assertEquals("``", Util.sanitize("\u0060"));
         assertEquals("``", Util.sanitize("``"));
@@ -154,7 +164,7 @@ public class UtilTest {
     }
 
     @Test
-    public void testMerge() {
+    void testMerge() {
         try {
             final ResultTransformer<Object> resultTransformer =
                     res -> res.next().get("count");
@@ -181,12 +191,12 @@ public class UtilTest {
     }
 
     @Test
-    public void testIsWritableInstance() {
-        assertTrue(Util.isWriteableInstance(db));
+    void testIsWritableInstance() {
+        assertTrue(Util.isWriteableInstance(dbAPI));
     }
 
     @Test
-    public void testWithBackOffRetriesWithSuccess() {
+    void testWithBackOffRetriesWithSuccess() {
         long start = System.currentTimeMillis();
         int result = Util.withBackOffRetries(this::testFunction, 100, 2000, NullLog.getInstance());
         long time = System.currentTimeMillis() - start;
@@ -200,7 +210,7 @@ public class UtilTest {
     }
 
     @Test
-    public void testWithBackOffRetriesWithError() {
+    void testWithBackOffRetriesWithError() {
         long start = System.currentTimeMillis();
         assertThrows(
                 RuntimeException.class,

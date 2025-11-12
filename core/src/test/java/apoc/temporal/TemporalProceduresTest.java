@@ -18,35 +18,26 @@
  */
 package apoc.temporal;
 
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension()
 public class TemporalProceduresTest {
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, TemporalProcedures.class);
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
     }
 
     @Test
@@ -195,19 +186,20 @@ public class TemporalProceduresTest {
 
     @Test
     public void shouldFormatIsoDateWeekError() {
-        expected.expect(instanceOf(RuntimeException.class));
-        String output = TestUtil.singleResultFirstColumn(
-                db,
-                "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'WRONG_FORMAT' ) as output");
-        assertEquals("2018-12-10", output);
+        var e = assertThrows(
+                RuntimeException.class,
+                () -> TestUtil.singleResultFirstColumn(
+                        db,
+                        "RETURN apoc.temporal.format( date( { year: 2018, month: 12, day: 10 } ), 'WRONG_FORMAT' ) as output"));
+        assertTrue(e.getMessage().contains("Available formats are:"));
     }
 
     @Test
     public void shouldFormatDurationIsoDateWeekError() {
-        expected.expect(instanceOf(RuntimeException.class));
-        String output = TestUtil.singleResultFirstColumn(
-                db,
-                "RETURN apoc.temporal.formatDuration( date( { year: 2018, month: 12, day: 10 } ), 'wrongDuration' ) as output");
-        assertEquals("2018-12-10", output);
+        var e = assertThrows(
+                RuntimeException.class,
+                () -> TestUtil.singleResultFirstColumn(
+                        db,
+                        "RETURN apoc.temporal.formatDuration( date( { year: 2018, month: 12, day: 10 } ), 'wrongDuration' ) as output"));
     }
 }

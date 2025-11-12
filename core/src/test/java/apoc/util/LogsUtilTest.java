@@ -18,37 +18,37 @@
  */
 package apoc.util;
 
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.Config;
 import org.neo4j.cypher.internal.CypherVersion;
 
-public class LogsUtilTest {
+class LogsUtilTest {
 
     @Test
-    public void shouldRedactPasswords() {
+    void shouldRedactPasswords() {
         String sanitized = LogsUtil.sanitizeQuery(
                 Config.defaults(),
                 "CREATE USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED",
                 CypherVersion.Cypher5);
-        assertEquals(sanitized, "CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
+        Assertions.assertEquals("CREATE USER dummy IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED", sanitized);
     }
 
     @Test
-    public void shouldReturnInputIfInvalidQuery() {
+    void shouldReturnInputIfInvalidQuery() {
         String invalidQuery = "MATCH USER dummy IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED";
         String sanitized = LogsUtil.sanitizeQuery(Config.defaults(), invalidQuery, CypherVersion.Cypher5);
 
-        assertEquals(sanitized, invalidQuery);
+        Assertions.assertEquals(invalidQuery, sanitized);
     }
 
     @Test
-    public void whitespaceDeprecationSucceedsSanitization() {
+    void whitespaceDeprecationSucceedsSanitization() {
         String sanitized = LogsUtil.sanitizeQuery(
                 Config.defaults(),
                 "CREATE USER dum\u0085my IF NOT EXISTS SET PASSWORD 'pass12345' CHANGE NOT REQUIRED",
                 CypherVersion.Cypher5);
-        assertEquals(sanitized, "CREATE USER `dum\u0085my` IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED");
+        Assertions.assertEquals(
+                "CREATE USER `dum\u0085my` IF NOT EXISTS SET PASSWORD '******' CHANGE NOT REQUIRED", sanitized);
     }
 }

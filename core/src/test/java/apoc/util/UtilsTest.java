@@ -23,8 +23,13 @@ import static apoc.util.TestUtil.testCallEmpty;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toUnmodifiableMap;
 import static java.util.stream.IntStream.range;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
@@ -38,47 +43,43 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.hamcrest.Matchers;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 import org.neo4j.values.storable.RandomValues;
 import org.neo4j.values.storable.ValueType;
 
-/**
- * @author mh
- * @since 26.05.16
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class UtilsTest {
 
     private static final String SIMPLE_STRING = "Test";
     private static final String COMPLEX_STRING = "Mätrix II 哈哈\uD83D\uDE04123";
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
-            .withSetting(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE);
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
+                .setConfig(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE);
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Utils.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testMultipleCharsetsCompressionWithDifferentResults() {
+    void testMultipleCharsetsCompressionWithDifferentResults() {
 
         List<String> listCompressed = new ArrayList<>();
 
@@ -130,7 +131,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValueMainCompressorAlgoOnSimpleString() {
+    void testValueMainCompressorAlgoOnSimpleString() {
 
         String TEST_TO_GZIP = "H4sIAAAAAAAA/wtJLS4BADLRTXgEAAAA";
         String TEST_TO_DEFLATE = "eJwLSS0uAQAD3QGh";
@@ -162,7 +163,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testWrongDecompressionFromPreviousDifferentCompressionAlgo() {
+    void testWrongDecompressionFromPreviousDifferentCompressionAlgo() {
         RuntimeException e = assertThrows(
                 RuntimeException.class,
                 () -> TestUtil.testCall(
@@ -176,7 +177,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testWrongDecompressionFromPreviousDifferentCharset() {
+    void testWrongDecompressionFromPreviousDifferentCharset() {
 
         TestUtil.testCall(
                 db,
@@ -198,7 +199,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testCompressAndDecompressWithMultipleCompressionCharsetsReturningStartString() {
+    void testCompressAndDecompressWithMultipleCompressionCharsetsReturningStartString() {
 
         TestUtil.testCall(
                 db,
@@ -250,7 +251,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testCompressAndDecompressWithMultipleCompressionAlgosReturningStartString() {
+    void testCompressAndDecompressWithMultipleCompressionAlgosReturningStartString() {
 
         TestUtil.testCall(
                 db,
@@ -290,7 +291,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testSha1() {
+    void testSha1() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.util.sha1(['ABC']) AS value",
@@ -298,7 +299,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testMd5() {
+    void testMd5() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.util.md5(['ABC']) AS value",
@@ -306,7 +307,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void md5WithNestedTypes() {
+    void md5WithNestedTypes() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.util.md5(['ABC', true, {b: 'hej', a: [1, 2]}, ['hej', {b:'hå'}]]) AS value",
@@ -314,27 +315,27 @@ public class UtilsTest {
     }
 
     @Test
-    public void md5IsStableOnAllTypes() {
+    void md5IsStableOnAllTypes() {
         hashIsStable("md5");
     }
 
     @Test
-    public void sha1IsStableOnAllTypes() {
+    void sha1IsStableOnAllTypes() {
         hashIsStable("sha1");
     }
 
     @Test
-    public void sha256IsStableOnAllTypes() {
+    void sha256IsStableOnAllTypes() {
         hashIsStable("sha256");
     }
 
     @Test
-    public void sha512IsStableOnAllTypes() {
+    void sha512IsStableOnAllTypes() {
         hashIsStable("sha512");
     }
 
     @Test
-    public void sha384IsStableOnAllTypes() {
+    void sha384IsStableOnAllTypes() {
         hashIsStable("sha384");
     }
 
@@ -425,21 +426,23 @@ public class UtilsTest {
         final var a = tx.execute(query, params).stream().toList();
         final var b = tx.execute(query, params).stream().toList();
         final var message = "%s should have stable hash (seed=%s)".formatted(val, seed);
-        assertEquals(message, a, b);
+        assertEquals(a, b);
+        System.out.println(message);
         assertEquals(1, a.size());
-        final var first = a.get(0).entrySet().iterator().next();
-        for (final var e : a.get(0).entrySet()) {
-            assertEquals(message, first.getValue(), e.getValue());
+        final var first = a.getFirst().entrySet().iterator().next();
+        for (final var e : a.getFirst().entrySet()) {
+            assertEquals(first.getValue(), e.getValue());
+            System.out.println(message);
         }
     }
 
     @Test
-    public void testValidateFalse() {
-        TestUtil.testResult(db, "CALL apoc.util.validate(false,'message',null)", r -> assertEquals(false, r.hasNext()));
+    void testValidateFalse() {
+        TestUtil.testResult(db, "CALL apoc.util.validate(false,'message',null)", r -> assertFalse(r.hasNext()));
     }
 
     @Test
-    public void testValidateTrue() {
+    void testValidateTrue() {
         try {
             db.executeTransactionally("CALL apoc.util.validate(true,'message %d',[42])");
             fail("should have failed");
@@ -451,7 +454,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValidatePredicateReturn() {
+    void testValidatePredicateReturn() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.util.validatePredicate(false,'message',null) AS value",
@@ -459,7 +462,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValidatePredicateNull() {
+    void testValidatePredicateNull() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.util.validatePredicate(null,'message',null) AS value",
@@ -467,7 +470,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValidatePredicateNullFromRuntime() {
+    void testValidatePredicateNullFromRuntime() {
         db.executeTransactionally(
                 """
                 CREATE (m:Movie {title: "The Matrix"})
@@ -486,7 +489,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testValidatePredicateTrue() {
+    void testValidatePredicateTrue() {
         db.executeTransactionally("CREATE (:Person {predicate: true})");
         TestUtil.testFail(
                 db,
@@ -495,7 +498,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testSleep() {
+    void testSleep() {
         String cypherSleep = "call apoc.util.sleep($duration)";
         testCallEmpty(db, cypherSleep, MapUtil.map("duration", 0l)); // force building query plan
 
@@ -507,7 +510,7 @@ public class UtilsTest {
     }
 
     @Test
-    public void testSleepWithTerminate() {
+    void testSleepWithTerminate() {
         String cypherSleep = "call apoc.util.sleep($duration)";
         testCallEmpty(db, cypherSleep, MapUtil.map("duration", 0l)); // force building query plan
 
