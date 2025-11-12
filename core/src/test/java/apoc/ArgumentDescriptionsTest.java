@@ -19,7 +19,7 @@
 package apoc;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import apoc.agg.CollAggregation;
 import apoc.agg.Graph;
@@ -98,6 +98,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -105,42 +106,47 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.internal.CypherVersion;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class ArgumentDescriptionsTest {
     private final ObjectMapper json = new ObjectMapper();
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.procedure_unrestricted,
-                    List.of(
-                            "apoc.nodes.link",
-                            "apoc.node.relationship.exists",
-                            "apoc.nodes.connected",
-                            "apoc.nodes.isDense",
-                            "apoc.schema.nodes",
-                            "apoc.schema.relationship",
-                            "apoc.meta.nodes.count",
-                            "apoc.meta.stats",
-                            "apoc.meta.data",
-                            "apoc.meta.schema",
-                            "apoc.meta.nodeTypeProperties",
-                            "apoc.meta.relTypeProperties",
-                            "apoc.meta.graph",
-                            "apoc.meta.graph.of",
-                            "apoc.meta.graphSample",
-                            "apoc.meta.subGraph"));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.procedure_unrestricted,
+                List.of(
+                        "apoc.nodes.link",
+                        "apoc.node.relationship.exists",
+                        "apoc.nodes.connected",
+                        "apoc.nodes.isDense",
+                        "apoc.schema.nodes",
+                        "apoc.schema.relationship",
+                        "apoc.meta.nodes.count",
+                        "apoc.meta.stats",
+                        "apoc.meta.data",
+                        "apoc.meta.schema",
+                        "apoc.meta.nodeTypeProperties",
+                        "apoc.meta.relTypeProperties",
+                        "apoc.meta.graph",
+                        "apoc.meta.graph.of",
+                        "apoc.meta.graphSample",
+                        "apoc.meta.subGraph"));
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(
                 db,
                 ArabicRoman.class,
@@ -217,13 +223,8 @@ public class ArgumentDescriptionsTest {
                 Xml.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void functionArgumentDescriptionsDefaultVersion() throws IOException {
+    void functionArgumentDescriptionsDefaultVersion() throws IOException {
         assertResultAsJsonEquals(
                 CypherVersion.Cypher5,
                 showFunctions(null),
@@ -233,7 +234,7 @@ public class ArgumentDescriptionsTest {
 
     // Convert to ParametrizedTest with EnumSource in junit 5
     @Test
-    public void functionArgumentDescriptions() throws IOException {
+    void functionArgumentDescriptions() throws IOException {
         for (final var version : CypherVersion.values()) {
             assertResultAsJsonEquals(
                     version,
@@ -244,7 +245,7 @@ public class ArgumentDescriptionsTest {
     }
 
     @Test
-    public void procedureArgumentDescriptionsDefaultVersion() throws IOException {
+    void procedureArgumentDescriptionsDefaultVersion() throws IOException {
         assertResultAsJsonEquals(
                 CypherVersion.Cypher5,
                 showProcedures(null),
@@ -254,7 +255,7 @@ public class ArgumentDescriptionsTest {
 
     // Convert to ParametrizedTest with EnumSource in junit 5
     @Test
-    public void procedureArgumentDescriptions() throws IOException {
+    void procedureArgumentDescriptions() throws IOException {
         for (final var version : CypherVersion.values()) {
             assertResultAsJsonEquals(
                     version,
@@ -354,7 +355,7 @@ public class ArgumentDescriptionsTest {
         System.out.println();
         System.out.println("=".repeat(80));
         System.out.println();
-        System.out.println("cypher %s specific:".formatted(version.versionName));
+        System.out.printf("cypher %s specific:%n", version.versionName);
         System.out.println(writer.writeValueAsString(specificJson));
         fail("Remove call to generate");
     }
