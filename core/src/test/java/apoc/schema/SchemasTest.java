@@ -436,8 +436,8 @@ public class SchemasTest {
     }
 
     @Test
-    public void testUniquenessConstraintOnNode() {
-        db.executeTransactionally("CREATE CONSTRAINT FOR (bar:Bar) REQUIRE bar.foo IS UNIQUE");
+    void testUniquenessConstraintOnNode() {
+        db.executeTransactionally("CREATE CONSTRAINT constraintName FOR (bar:Bar) REQUIRE bar.foo IS UNIQUE");
         awaitIndexesOnline();
 
         for (String cypherVersion : Util.getCypherVersions()) {
@@ -450,13 +450,13 @@ public class SchemasTest {
                 assertEquals("RANGE", r.get("type"));
                 assertEquals("ONLINE", r.get("status"));
                 final String expectedUserDescBarIdx =
-                        "name='constraint_e4055330', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
+                        "name='constraintName', type='RANGE', schema=(:Bar {foo}), indexProvider='range-1.0', owningConstraint";
                 assertThat(r.get("userDescription")).asString().contains(expectedUserDescBarIdx);
 
                 if (cypherVersion.equals("5")) {
                     assertEquals(":Bar(foo)", r.get("name"));
                 } else {
-                    assertTrue(r.get("name").toString().startsWith("constraint_"));
+                    assertEquals("constraintName", r.get("name"));
                 }
 
                 r = result.next();
@@ -468,13 +468,13 @@ public class SchemasTest {
                 if (cypherVersion.equals("5")) {
                     assertEquals(":Bar(foo)", r.get("name"));
                     final String expectedUserDescBarCons =
-                            "name='constraint_e4055330', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
+                            "name='constraintName', type='UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
                     assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
 
                 } else {
-                    assertTrue(r.get("name").toString().startsWith("constraint_"));
+                    assertEquals("constraintName", r.get("name"));
                     final String expectedUserDescBarCons =
-                            "name='constraint_e4055330', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
+                            "name='constraintName', type='NODE PROPERTY UNIQUENESS', schema=(:Bar {foo}), ownedIndex=2";
                     assertThat(r.get("userDescription").toString()).contains(expectedUserDescBarCons);
                 }
 
