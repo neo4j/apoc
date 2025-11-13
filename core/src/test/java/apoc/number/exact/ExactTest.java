@@ -19,44 +19,29 @@
 package apoc.number.exact;
 
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author AgileLARUS
- *
- * @since 17 May 2017
- */
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class ExactTest {
 
-    @Rule
-    public ExpectedException expected = ExpectedException.none();
+    @Inject
+    GraphDatabaseService db;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @BeforeClass
-    public static void sUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Exact.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testAdd() {
+    void testAdd() {
         testCall(
                 db,
                 "return apoc.number.exact.add('1213669989','1238126387') as value",
@@ -64,12 +49,12 @@ public class ExactTest {
     }
 
     @Test
-    public void testAddNull() {
+    void testAddNull() {
         testCall(db, "return apoc.number.exact.add(null,'1238126387') as value", row -> assertNull(row.get("value")));
     }
 
     @Test
-    public void testSub() {
+    void testSub() {
         testCall(
                 db,
                 "return apoc.number.exact.sub('1238126387','1213669989') as value",
@@ -77,7 +62,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testMul() {
+    void testMul() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557', 15, 'HALF_DOWN') as value",
@@ -85,7 +70,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testDiv() {
+    void testDiv() {
         testCall(
                 db,
                 "return apoc.number.exact.div('550058444','662557', 18, 'HALF_DOWN') as value",
@@ -93,7 +78,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testToInteger() {
+    void testToInteger() {
         testCall(
                 db,
                 "return apoc.number.exact.toInteger('504238974', 5, 'HALF_DOWN') as value",
@@ -101,7 +86,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testToFloat() {
+    void testToFloat() {
         testCall(
                 db,
                 "return apoc.number.exact.toFloat('50423.1656', 10, null) as value",
@@ -109,7 +94,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testToExact() {
+    void testToExact() {
         testCall(
                 db,
                 "return apoc.number.exact.toExact(521468545698447) as value",
@@ -117,7 +102,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testPrec() {
+    void testPrec() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557', 5, 'HALF_DOWN') as value",
@@ -125,7 +110,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testRound() {
+    void testRound() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557', 10, 'DOWN') as value",
@@ -133,7 +118,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testMulWithoutOptionalParams() {
+    void testMulWithoutOptionalParams() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557') as value",
@@ -141,7 +126,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testAddScientificNotation() {
+    void testAddScientificNotation() {
         testCall(
                 db,
                 "return apoc.number.exact.add('1E6','1E6') as value",
