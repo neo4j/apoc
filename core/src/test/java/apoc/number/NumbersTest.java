@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
-@EnterpriseDbmsExtension()
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class NumbersTest {
 
     @Inject
@@ -41,7 +41,7 @@ public class NumbersTest {
     }
 
     @Test
-    public void testFormat() {
+    void testFormat() {
         testCall(db, "RETURN apoc.number.format(12345) AS value", row -> assertEquals("12,345", row.get("value")));
         testCall(db, "RETURN apoc.number.format('aaa') AS value", row -> assertNull(row.get("value")));
         testCall(
@@ -74,7 +74,7 @@ public class NumbersTest {
     }
 
     @Test
-    public void testParseInt() {
+    void testParseInt() {
         testCall(db, "RETURN apoc.number.parseInt('12,345') AS value", row -> assertEquals(12345L, row.get("value")));
         testCall(
                 db,
@@ -95,7 +95,7 @@ public class NumbersTest {
     // Parse Double
 
     @Test
-    public void testParseFloat() {
+    void testParseFloat() {
         testCall(
                 db,
                 "RETURN apoc.number.parseFloat('12,345.67') AS value",
