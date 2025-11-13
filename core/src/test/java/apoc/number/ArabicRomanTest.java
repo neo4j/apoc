@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
-@EnterpriseDbmsExtension()
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class ArabicRomanTest {
 
     @Inject
@@ -41,7 +41,7 @@ public class ArabicRomanTest {
     }
 
     @Test
-    public void testToArabic() {
+    void testToArabic() {
         testCall(
                 db,
                 "RETURN apoc.number.romanToArabic('MCMXXXII') AS value",
@@ -55,7 +55,7 @@ public class ArabicRomanTest {
     }
 
     @Test
-    public void testToRoman() {
+    void testToRoman() {
         testCall(
                 db,
                 "RETURN apoc.number.arabicToRoman(1932) AS value",

@@ -29,7 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
-@EnterpriseDbmsExtension()
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class ExactTest {
 
     @Inject
@@ -41,7 +41,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testAdd() {
+    void testAdd() {
         testCall(
                 db,
                 "return apoc.number.exact.add('1213669989','1238126387') as value",
@@ -49,12 +49,12 @@ public class ExactTest {
     }
 
     @Test
-    public void testAddNull() {
+    void testAddNull() {
         testCall(db, "return apoc.number.exact.add(null,'1238126387') as value", row -> assertNull(row.get("value")));
     }
 
     @Test
-    public void testSub() {
+    void testSub() {
         testCall(
                 db,
                 "return apoc.number.exact.sub('1238126387','1213669989') as value",
@@ -62,7 +62,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testMul() {
+    void testMul() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557', 15, 'HALF_DOWN') as value",
@@ -70,7 +70,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testDiv() {
+    void testDiv() {
         testCall(
                 db,
                 "return apoc.number.exact.div('550058444','662557', 18, 'HALF_DOWN') as value",
@@ -78,7 +78,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testToInteger() {
+    void testToInteger() {
         testCall(
                 db,
                 "return apoc.number.exact.toInteger('504238974', 5, 'HALF_DOWN') as value",
@@ -86,7 +86,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testToFloat() {
+    void testToFloat() {
         testCall(
                 db,
                 "return apoc.number.exact.toFloat('50423.1656', 10, null) as value",
@@ -94,7 +94,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testToExact() {
+    void testToExact() {
         testCall(
                 db,
                 "return apoc.number.exact.toExact(521468545698447) as value",
@@ -102,7 +102,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testPrec() {
+    void testPrec() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557', 5, 'HALF_DOWN') as value",
@@ -110,7 +110,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testRound() {
+    void testRound() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557', 10, 'DOWN') as value",
@@ -118,7 +118,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testMulWithoutOptionalParams() {
+    void testMulWithoutOptionalParams() {
         testCall(
                 db,
                 "return apoc.number.exact.mul('550058444','662557') as value",
@@ -126,7 +126,7 @@ public class ExactTest {
     }
 
     @Test
-    public void testAddScientificNotation() {
+    void testAddScientificNotation() {
         testCall(
                 db,
                 "return apoc.number.exact.add('1E6','1E6') as value",

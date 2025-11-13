@@ -53,7 +53,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testBasicSequence() {
+    void testBasicSequence() {
         List<String> nodeRepresentations = List.of("t", "id(t)", "elementId(t)", "[t]", "[id(t)]", "[elementId(t)]");
         for (String nodeRep : nodeRepresentations) {
             String query = String.format(
@@ -86,7 +86,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testSequenceWithMinLevel() {
+    void testSequenceWithMinLevel() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'>Person, ACTED_IN>, Movie, <DIRECTED', minLevel:3}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -109,7 +109,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testSequenceWithMaxLevel() {
+    void testSequenceWithMaxLevel() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'>Person, ACTED_IN>, Movie, <DIRECTED', maxLevel:2}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -132,7 +132,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testSequenceWhenNotBeginningAtStart() {
+    void testSequenceWhenNotBeginningAtStart() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'ACTED_IN>, Movie, <DIRECTED, >Person, ACTED_IN>', beginSequenceAtStart:false}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -156,7 +156,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testExpandWithSequenceIgnoresRelFilter() {
+    void testExpandWithSequenceIgnoresRelFilter() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'>Person, ACTED_IN>, Movie, <DIRECTED', relationshipFilter:'NONEXIST'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -180,7 +180,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testExpandWithSequenceIgnoresLabelFilter() {
+    void testExpandWithSequenceIgnoresLabelFilter() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'>Person, ACTED_IN>, Movie, <DIRECTED', labelFilter:'-Person,-Movie'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -204,7 +204,7 @@ public class SequenceTest {
     }
 
     @Test
-    public void testRelationshipFilterWorksWithoutTypeWithFullSequence() {
+    void testRelationshipFilterWorksWithoutTypeWithFullSequence() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{sequence:'>Person, >, Movie, <DIRECTED'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {

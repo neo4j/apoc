@@ -194,7 +194,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraphExtraRels() {
+    void testMetaGraphExtraRels() {
         db.executeTransactionally(
                 """
                 CREATE (a:S1 {SomeName1:'aaa'})
@@ -212,7 +212,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraphMaxRels() {
+    void testMetaGraphMaxRels() {
         db.executeTransactionally("CREATE (:S2 {id:'another'}), (:S2 {id:'another2'}), (:S2 {id:'another3'}), \n" +
                 // create nodes to be linked
                 "(a:S1 {id:'aaa'}), (b:S2 {id:'bbb'}), (c:S3 {id:'ccc'}), (d:S4 {id:'ddd'}), "
@@ -236,7 +236,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelationshipExistsSampling() {
+    void testRelationshipExistsSampling() {
         List<Long> skipSizes = List.of(2L, 100L, 1000L, -1L, 0L, 1L);
         List<Long> fromNodeCounts = List.of(4L, 1000L, 100L, 500L, 10000L, 4L);
         List<Integer> expectedChecks = List.of(2, 10, 1, 500, 10000, 4);
@@ -278,7 +278,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaType() {
+    void testMetaType() {
         try (Transaction tx = db.beginTx()) {
             Node node = tx.createNode();
             Relationship rel = node.createRelationshipTo(node, RelationshipType.withName("FOO"));
@@ -305,7 +305,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaTypeArray() {
+    void testMetaTypeArray() {
         testTypeName(asList(1, 2), "LIST OF INTEGER");
         testTypeName(asList(LocalDate.of(2018, 1, 1), 2), "LIST OF ANY");
         testTypeName(new Integer[] {1, 2}, "LIST OF INTEGER");
@@ -318,7 +318,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaIsType() {
+    void testMetaIsType() {
         try (Transaction tx = db.beginTx()) {
             Node node = tx.createNode();
             Relationship rel = node.createRelationshipTo(node, RelationshipType.withName("FOO"));
@@ -345,7 +345,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaTypes() {
+    void testMetaTypes() {
 
         Map<String, Object> param = map(
                 "MAP",
@@ -377,7 +377,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testVectorTypes() {
+    void testVectorTypes() {
         var vectorTypes = List.of("INT64", "INT32", "INT16", "INT8", "FLOAT64", "FLOAT32");
         for (String type : vectorTypes) {
             TestUtil.testCall(
@@ -446,7 +446,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaStats() {
+    void testMetaStats() {
         final var setup =
                 "CREATE (:Actor)-[:ACTED_IN]->(:Movie), ()-[:ACTED_IN]->(:Movie), (:Actor)-[:ACTED_IN]->(), ()-[:ACTED_IN]->()";
         final var expected = statsMap(Map.of(
@@ -469,7 +469,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaStats2() {
+    void testMetaStats2() {
         final var nodeLabels = List.of("", ":A", ":B", ":A:B");
         final var setup = new StringBuilder();
         for (final var labelsA : nodeLabels) {
@@ -503,7 +503,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraph() {
+    void testMetaGraph() {
         db.executeTransactionally("CREATE (a:Actor)-[:ACTED_IN]->(m1:Movie),(a)-[:ACTED_IN]->(m2:Movie)");
         TestUtil.testCall(db, "CALL apoc.meta.graph()", (row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
@@ -523,7 +523,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraph2() {
+    void testMetaGraph2() {
         db.executeTransactionally("CREATE (:Actor)-[:ACTED_IN]->(:Movie) ");
         TestUtil.testCall(db, "CALL apoc.meta.graphSample()", (row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
@@ -543,7 +543,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testVectorIndexes() {
+    void testVectorIndexes() {
         db.executeTransactionally(
                 """
                 CREATE VECTOR INDEX moviePlots IF NOT EXISTS
@@ -579,7 +579,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaData() {
+    void testMetaData() {
         db.executeTransactionally("create index for (n:Movie) on (n.title)");
         db.executeTransactionally("create constraint for (a:Actor) require a.name is unique");
         db.executeTransactionally(
@@ -672,7 +672,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testOutgoingRelsAreCorrectMetaSchema() {
+    void testOutgoingRelsAreCorrectMetaSchema() {
         db.executeTransactionally("CREATE (:A)-[:HAS]->(:B), (:A)<-[:HAS]-(:B), (:A)<-[:HAS]-(:C), (:D)<-[:HAS]-(:E)");
 
         testCall(db, "CALL apoc.meta.schema", (row) -> {
@@ -724,7 +724,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaSchema() {
+    void testMetaSchema() {
         db.executeTransactionally("create index for (n:Movie) on (n.title)");
         db.executeTransactionally("create constraint for (p:Person) require p.name is unique");
         db.executeTransactionally(
@@ -790,7 +790,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaSchemaWithNodesAndRelsWithoutProps() {
+    void testMetaSchemaWithNodesAndRelsWithoutProps() {
         db.executeTransactionally(
                 "CREATE (:Other), (:Other)-[:REL_1]->(:Movie)<-[:REL_2 {baz: 'baa'}]-(:Director), (:Director {alpha: 'beta'}), (:Actor {foo:'bar'}), (:Person)");
         testCall(db, "CALL apoc.meta.schema()", (row) -> {
@@ -837,7 +837,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaSchemaWithSmallSampleAndRelationships() {
+    void testMetaSchemaWithSmallSampleAndRelationships() {
         final List<String> labels = List.of("Other", "Foo");
         db.executeTransactionally(
                 "CREATE (:Foo), (:Other)-[:REL_0]->(:Other), (:Other)-[:REL_1]->(:Other)<-[:REL_2 {baz: 'baa'}]-(:Other), (:Other {alpha: 'beta'}), (:Other {foo:'bar'})-[:REL_3]->(:Other)");
@@ -853,7 +853,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testIssue1861LabelAndTypeWithSameName() {
+    void testIssue1861LabelAndTypeWithSameName() {
         db.executeTransactionally(
                 """
                 CREATE (s0 :person{id:1} ) SET s0.name = 'rose'
@@ -878,7 +878,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testSubGraphNoLimits() {
+    void testSubGraphNoLimits() {
         db.executeTransactionally("CREATE (:A)-[:X]->(b:B),(b)-[:Y]->(:C)");
         testCall(db, "CALL apoc.meta.subGraph({})", (row) -> {
             List<Node> nodes = (List<Node>) row.get("nodes");
@@ -893,7 +893,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testSubGraphNonExistingLabels() {
+    void testSubGraphNonExistingLabels() {
         db.executeTransactionally(
                 """
                 MATCH (n) DETACH DELETE n
@@ -922,7 +922,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testSubGraphNonExistingTypes() {
+    void testSubGraphNonExistingTypes() {
         db.executeTransactionally(
                 """
                 MATCH (n) DETACH DELETE n
@@ -951,7 +951,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testSubGraphLimitLabels() {
+    void testSubGraphLimitLabels() {
         final String labels = "labels";
         testSubgraphLabelsCommon(labels);
     }
@@ -971,19 +971,19 @@ public class MetaTest {
     }
 
     @Test
-    public void testSubGraphWithIncludeLabels() {
+    void testSubGraphWithIncludeLabels() {
         final String labels = "includeLabels";
         testSubgraphLabelsCommon(labels);
     }
 
     @Test
-    public void testSubGraphLimitWithRels() {
+    void testSubGraphLimitWithRels() {
         final String relsConf = "rels";
         assertMetaSubgraphCommon(relsConf);
     }
 
     @Test
-    public void testSubGraphLimitWithIncludeRels() {
+    void testSubGraphLimitWithIncludeRels() {
         final String relsConf = "includeRels";
         assertMetaSubgraphCommon(relsConf);
     }
@@ -1004,13 +1004,13 @@ public class MetaTest {
     }
 
     @Test
-    public void testSubGraphExcludes() {
+    void testSubGraphExcludes() {
         final String relsConf = "excludes";
         testExcludeLabelsCommon(relsConf);
     }
 
     @Test
-    public void testSubGraphExcludesLabels() {
+    void testSubGraphExcludesLabels() {
         final String relsConf = "excludeLabels";
         testExcludeLabelsCommon(relsConf);
     }
@@ -1035,7 +1035,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaSubgraphBothIncludeAndExclude() {
+    void testMetaSubgraphBothIncludeAndExclude() {
         final Consumer<Map<String, Object>> consumer = (row) -> {
             assertEquals(Collections.emptyList(), row.get("nodes"));
             assertEquals(Collections.emptyList(), row.get("relationships"));
@@ -1045,7 +1045,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDate() {
+    void testMetaDate() {
 
         Map<String, Object> param = map(
                 "DATE", DateValue.now(Clock.systemDefaultZone()),
@@ -1068,7 +1068,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaArray() {
+    void testMetaArray() {
 
         Map<String, Object> param = map(
                 "ARRAY", new String[] {"a", "b", "c"},
@@ -1111,7 +1111,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaNumber() {
+    void testMetaNumber() {
 
         Map<String, Object> param = map("INTEGER", 1L, "FLOAT", 1.0f, "DOUBLE", 1.0D, "NULL", null);
 
@@ -1126,7 +1126,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMeta() {
+    void testMeta() {
 
         Map<String, Object> param = map(
                 "LIST", asList(1.2, 2.1),
@@ -1160,7 +1160,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaList() {
+    void testMetaList() {
 
         Map<String, Object> param = map(
                 "LIST FLOAT", asList(1.2F, 2.1F),
@@ -1199,7 +1199,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaPoint() {
+    void testMetaPoint() {
         db.executeTransactionally("CREATE (:TEST {born:point({ longitude: 56.7, latitude: 12.78, height: 100 })})");
 
         TestUtil.testCall(
@@ -1209,7 +1209,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDuration() {
+    void testMetaDuration() {
         db.executeTransactionally("CREATE (:TEST {duration:duration('P5M1DT12H')})");
 
         TestUtil.testCall(
@@ -1219,7 +1219,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDataWithSample() {
+    void testMetaDataWithSample() {
         db.executeTransactionally("create index for (n:Person) on (n.name)");
         db.executeTransactionally("CREATE (:Person {name:'Tom'})");
         db.executeTransactionally("CREATE (:Person {name:'John', surname:'Brown'})");
@@ -1237,7 +1237,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDataWithSampleNormalized() {
+    void testMetaDataWithSampleNormalized() {
         db.executeTransactionally("create index for (n:Person) on (n.name)");
         db.executeTransactionally("CREATE (:Person {name:'Tom'})");
         db.executeTransactionally("CREATE (:Person {name:'John'})");
@@ -1271,7 +1271,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelationshipAndNodeNames() {
+    void testRelationshipAndNodeNames() {
         db.executeTransactionally("CREATE (a:NODE)-[r:RELATIONSHIP]->(m:Movie)");
         TestUtil.testResult(db, "CALL apoc.meta.data()", (r) -> {
             assertThat(r.stream().map(m -> m.get("label"))).contains("RELATIONSHIP", "NODE");
@@ -1280,7 +1280,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDataWithSample5() {
+    void testMetaDataWithSample5() {
         db.executeTransactionally("create index for (n:Person) on (n.name)");
         db.executeTransactionally("CREATE (:Person {name:'John', surname:'Brown'})");
         db.executeTransactionally("CREATE (:Person {name:'Daisy', surname:'Bob'})");
@@ -1299,7 +1299,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testSchemaWithSample() {
+    void testSchemaWithSample() {
         db.executeTransactionally("create constraint for (p:Person) require p.name is unique");
         db.executeTransactionally("CREATE (:Person {name:'Tom'})");
         db.executeTransactionally("CREATE (:Person {name:'John', surname:'Brown'})");
@@ -1330,7 +1330,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testSchemaWithSample5() {
+    void testSchemaWithSample5() {
         db.executeTransactionally("create constraint for (p:Person) require p.name is unique");
         db.executeTransactionally("CREATE (:Person {name:'Tom'})");
         db.executeTransactionally("CREATE (:Person {name:'John', surname:'Brown'})");
@@ -1358,7 +1358,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraphExtraRelsWithSample() {
+    void testMetaGraphExtraRelsWithSample() {
         db.executeTransactionally("CREATE (:S1 {name:'Tom'})");
         db.executeTransactionally("CREATE (:S2 {name:'John', surname:'Brown'})-[:KNOWS{since:2012}]->(:S7)");
         db.executeTransactionally("CREATE (:S1 {name:'Nick'})");
@@ -1379,7 +1379,7 @@ public class MetaTest {
     // Tests for T4L
 
     @Test
-    public void testRelTypePropertiesBasic() {
+    void testRelTypePropertiesBasic() {
         db.executeTransactionally("CREATE (:Base)-[:RELTYPE { a: 1, d: null }]->(:Target)");
         db.executeTransactionally("CREATE (:Base)-[:RELTYPE { a: 2, b: 2, c: 2, d: 4 }]->(:Target);");
 
@@ -1413,7 +1413,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesIncludes() {
+    void testRelTypePropertiesIncludes() {
         db.executeTransactionally("CREATE (:A)-[:CATCHME { c: 1 }]->(:B)");
         db.executeTransactionally("CREATE (:A)-[:IGNOREME { d: 1 }]->(:B)");
 
@@ -1425,7 +1425,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesIncludesWithDoubleRel() {
+    void testRelTypePropertiesIncludesWithDoubleRel() {
         db.executeTransactionally("CREATE (a:A)-[:FIRST_A {a: 1}]->(b:B), (a)-[:SECOND_B {b: '2'}]->(c)");
         db.executeTransactionally(
                 "CREATE (:Alpha)-[:FIRST_A {c: true}]->(:Beta), (:Gamma)-[:SECOND_B {d: datetime()}]->(:Delta)");
@@ -1467,7 +1467,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesNodeExcludes() {
+    void testNodeTypePropertiesNodeExcludes() {
         db.executeTransactionally("CREATE (:ExcludeMe)");
         db.executeTransactionally("CREATE (:IncludeMe)");
 
@@ -1479,7 +1479,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesNodeIncludes() {
+    void testNodeTypePropertiesNodeIncludes() {
         db.executeTransactionally("CREATE (:ExcludeMe)");
         db.executeTransactionally("CREATE (:IncludeMe)");
 
@@ -1491,7 +1491,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesRelExcludes() {
+    void testNodeTypePropertiesRelExcludes() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1510,7 +1510,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesRelIncludes() {
+    void testNodeTypePropertiesRelIncludes() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1529,7 +1529,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesWithWeirdConfig() {
+    void testNodeTypePropertiesWithWeirdConfig() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1550,7 +1550,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesWithWeirdConfig() {
+    void testRelTypePropertiesWithWeirdConfig() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1566,7 +1566,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesRelExcludes() {
+    void testRelTypePropertiesRelExcludes() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1578,7 +1578,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesRelIncludes() {
+    void testRelTypePropertiesRelIncludes() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1590,7 +1590,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesNodeExcludes() {
+    void testRelTypePropertiesNodeExcludes() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1606,7 +1606,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesNodeIncludes() {
+    void testRelTypePropertiesNodeIncludes() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1622,7 +1622,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesNodeIncludesRelIncludes1() {
+    void testNodeTypePropertiesNodeIncludesRelIncludes1() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1634,7 +1634,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesNodeIncludesRelIncludes2() {
+    void testNodeTypePropertiesNodeIncludesRelIncludes2() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1651,7 +1651,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesNodeIncludesAndRelsInclude1() {
+    void testRelTypePropertiesNodeIncludesAndRelsInclude1() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1663,7 +1663,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesNodeIncludesAndRelsInclude2() {
+    void testRelTypePropertiesNodeIncludesAndRelsInclude2() {
         db.executeTransactionally("CREATE (:A)-[:RELA { x: 1 }]->(:C)");
         db.executeTransactionally("CREATE (:B)-[:RELB { x: 1 }]->(:D)");
 
@@ -1680,7 +1680,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesCompleteResult() {
+    void testNodeTypePropertiesCompleteResult() {
         db.executeTransactionally("CREATE (:Foo { z: 'hej' });");
         db.executeTransactionally("CREATE (:Foo { z: 1 });");
 
@@ -1700,7 +1700,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testVectorTypesOnProperties() {
+    void testVectorTypesOnProperties() {
         var vectorTypes = List.of("INT64", "INT32", "INT16", "INT8", "FLOAT64", "FLOAT32");
         for (String type : vectorTypes) {
             db.executeTransactionally("CYPHER 25 CREATE (:Foo { z: VECTOR([1, 2, 3], 3, %s) });".formatted(type));
@@ -1758,7 +1758,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesCompleteResult() {
+    void testRelTypePropertiesCompleteResult() {
         db.executeTransactionally("CREATE (:A)-[:Foo { z: 'hej' }]->(:B);");
         db.executeTransactionally("CREATE (:A)-[:Foo { z: 1 }]->(:B);");
 
@@ -1779,7 +1779,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesWithSpecialSampleSize() {
+    void testNodeTypePropertiesWithSpecialSampleSize() {
         db.executeTransactionally("CREATE (:Foo { z: 'hej' });");
         db.executeTransactionally("CREATE (:Foo { z: 1 });");
         db.executeTransactionally("CREATE (:Foo { z: true });");
@@ -1811,7 +1811,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesEquivalenceAdvanced() {
+    void testNodeTypePropertiesEquivalenceAdvanced() {
         db.executeTransactionally("CREATE (:Foo { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] });");
         // Missing all properties to make everything non-mandatory.
         db.executeTransactionally("CREATE (:Foo { z: 1 });");
@@ -1820,7 +1820,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesEquivalenceAdvanced() {
+    void testRelTypePropertiesEquivalenceAdvanced() {
         db.executeTransactionally(
                 "CREATE (:Foo)-[:REL { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] }]->();");
         // Missing all properties to make everything non-mandatory.
@@ -1830,7 +1830,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testNodeTypePropertiesEquivalenceTypeMapping() {
+    void testNodeTypePropertiesEquivalenceTypeMapping() {
         String q = "CREATE (:Test {" + "    longProp: 1,"
                 + "    doubleProp: 3.14,"
                 + "    stringProp: 'Hello',"
@@ -1852,7 +1852,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesEquivalenceTypeMapping() {
+    void testRelTypePropertiesEquivalenceTypeMapping() {
         String q = "CREATE (t:Test)-[:REL{" + "    longProp: 1,"
                 + "    doubleProp: 3.14,"
                 + "    stringProp: 'Hello',"
@@ -1874,7 +1874,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDataOf() {
+    void testMetaDataOf() {
         db.executeTransactionally("create index for (n:Movie) on (n.title)");
         db.executeTransactionally("create constraint for (a:Actor) require a.name is unique");
         db.executeTransactionally(
@@ -2058,7 +2058,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDataOfWithRelConstraints() {
+    void testMetaDataOfWithRelConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKES]-() REQUIRE like.score IS UNIQUE");
         db.executeTransactionally(
                 "CREATE (gem:Person {name: \"Gem\"})-[:LIKES {score: 10}]->(cake:Cake {type: \"Chocolate\"})");
@@ -2220,7 +2220,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraphOf() {
+    void testMetaGraphOf() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom Hanks'}), (m:Movie {title:'Forrest Gump'}), (pr:Product{name: 'Awesome Product'}), "
                         + "(p)-[:VIEWED]->(m), (p)-[:BOUGHT{quantity: 10}]->(pr)");
@@ -2260,7 +2260,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaRelTypePropertiesWithManyRels() {
+    void testMetaRelTypePropertiesWithManyRels() {
         db.executeTransactionally("UNWIND range (0, 200) as idx CREATE (a:A)-[:FIRST_A]-> (b:B)");
         db.executeTransactionally("CREATE (a:A)-[:FIRST_A {a: 1}]->(b:B)");
 
@@ -2278,7 +2278,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaStatsWithTwoDots() {
+    void testMetaStatsWithTwoDots() {
         db.executeTransactionally(
                 "CREATE (n:`My:Label` {id:1})-[r:`http://www.w3.org/2000/01/rdf-schema#isDefinedBy` {alpha: 'beta'}]->(s:Another)");
         TestUtil.testCall(db, "CALL apoc.meta.stats()", row -> {
@@ -2299,7 +2299,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaDataWithRelIndexes() {
+    void testMetaDataWithRelIndexes() {
         datasetWithNodeRelIdxs();
 
         testResult(
@@ -2336,7 +2336,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaSchemaWithRelIndexes() {
+    void testMetaSchemaWithRelIndexes() {
         datasetWithNodeRelIdxs();
 
         TestUtil.testCall(db, "CALL apoc.meta.schema()", (row) -> {
@@ -2370,7 +2370,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaStatsWithLabelAndRelTypeCountInUse() {
+    void testMetaStatsWithLabelAndRelTypeCountInUse() {
         db.executeTransactionally("CREATE (:Node:Test)-[:REL {a: 'b'}]->(:Node {c: 'd'})<-[:REL]-(:Node:Test)");
         db.executeTransactionally("CREATE (:A {e: 'f'})-[:ANOTHER {g: 'h'}]->(:C)");
 
@@ -2416,7 +2416,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaNodesCount() {
+    void testMetaNodesCount() {
         db.executeTransactionally("CREATE (:MyCountLabel {id: 1}), (:MyCountLabel {id: 2}), (:ThirdLabel {id: 3})");
 
         // 2 outcome rels and 1 incoming
@@ -2478,7 +2478,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testRelTypePropertiesMovies() throws Exception {
+    void testRelTypePropertiesMovies() throws Exception {
         final String query = IOUtils.toString(new InputStreamReader(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("movies.cypher")));
 
@@ -2530,7 +2530,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraphSampling() {
+    void testMetaGraphSampling() {
         db.executeTransactionally("CREATE (:A)-[:R1]->(:B)-[:R1]->(:C)");
 
         // Not specifying sampling will check through all relationships and make sure they
@@ -2550,7 +2550,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testMetaGraphSparseSampling() {
+    void testMetaGraphSparseSampling() {
         // The 3 procedures using this sampling, set to look at the whole graph
         List<String> samplingBasedProcs = List.of(
                 "apoc.meta.graph(", "apoc.meta.graph.of(\"MATCH p = ()-[]->() RETURN p\", ", "apoc.meta.subGraph(");
@@ -2592,7 +2592,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocMetaDataOf() {
+    void testDifferentCypherVersionsApocMetaDataOf() {
         db.executeTransactionally("CREATE (:CYPHER_5 {prop: 1}), (:CYPHER_25 {prop: 1})");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
@@ -2604,7 +2604,7 @@ public class MetaTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocMetaGraphOf() {
+    void testDifferentCypherVersionsApocMetaGraphOf() {
         db.executeTransactionally("CREATE (:CYPHER_5), (:CYPHER_25)");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {

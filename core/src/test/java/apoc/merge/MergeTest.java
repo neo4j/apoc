@@ -50,12 +50,12 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNode() {
+    void testMergeNode() {
         testMergeNodeCommon(false);
     }
 
     @Test
-    public void testMergeNodeWithStats() {
+    void testMergeNodeWithStats() {
         testMergeNodeCommon(true);
     }
 
@@ -83,7 +83,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeWithPreExisting() {
+    void testMergeNodeWithPreExisting() {
         db.executeTransactionally("CREATE (p:Person{ssid:'123', name:'Jim'})");
         testCall(db, "CALL apoc.merge.node(['Person'],{ssid:'123'}, {name:'John'}) YIELD node RETURN node", (row) -> {
             Node node = (Node) row.get("node");
@@ -99,7 +99,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeWithNoLabel() {
+    void testMergeWithNoLabel() {
         testCall(db, "CALL apoc.merge.node(null, {name:'John'}) YIELD node RETURN node", (row) -> {
             Node node = (Node) row.get("node");
             assertFalse(node.getLabels().iterator().hasNext());
@@ -113,7 +113,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeWithEmptyLabelList() {
+    void testMergeNodeWithEmptyLabelList() {
         testCall(db, "CALL apoc.merge.node([], {name:'John'}) YIELD node RETURN node", (row) -> {
             Node node = (Node) row.get("node");
             assertFalse(node.getLabels().iterator().hasNext());
@@ -127,7 +127,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeWithEmptyIdentityPropertiesShouldFail() {
+    void testMergeWithEmptyIdentityPropertiesShouldFail() {
         for (String idProps : new String[] {"null", "{}"}) {
 
             var e = assertThrows(
@@ -141,7 +141,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeWithNullLabelsShouldFail() {
+    void testMergeNodeWithNullLabelsShouldFail() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(db, "CALL apoc.merge.node([null], {name:'John'}) YIELD node RETURN node", row -> {}));
@@ -152,7 +152,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeWithMixedLabelsContainingNullShouldFail() {
+    void testMergeNodeWithMixedLabelsContainingNullShouldFail() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(
@@ -164,7 +164,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeWithSingleEmptyLabelShouldFail() {
+    void testMergeNodeWithSingleEmptyLabelShouldFail() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(db, "CALL apoc.merge.node([''], {name:'John'}) YIELD node RETURN node", row -> {}));
@@ -175,7 +175,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeNodeContainingMixedLabelsContainingEmptyStringShouldFail() {
+    void testMergeNodeContainingMixedLabelsContainingEmptyStringShouldFail() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(
@@ -188,7 +188,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testEscapeIdentityPropertiesWithSpecialCharactersShouldWork() {
+    void testEscapeIdentityPropertiesWithSpecialCharactersShouldWork() {
         for (String key : new String[] {"normal", "i:d", "i-d", "i d"}) {
             Map<String, Object> identProps = MapUtil.map(key, "value");
             Map<String, Object> params = MapUtil.map("identProps", identProps);
@@ -203,7 +203,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testLabelsWithSpecialCharactersShouldWork() {
+    void testLabelsWithSpecialCharactersShouldWork() {
         for (String label :
                 new String[] {"Label with spaces", ":LabelWithColon", "label-with-dash", "LabelWithUmlautsÄÖÜ"}) {
             Map<String, Object> params = MapUtil.map("label", label);
@@ -217,7 +217,7 @@ public class MergeTest {
 
     // MERGE RELATIONSHIPS
     @Test
-    public void testMergeRelationships() {
+    void testMergeRelationships() {
         db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
 
         testCall(
@@ -250,7 +250,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testRelationshipTypesWithSpecialCharactersShouldWork() {
+    void testRelationshipTypesWithSpecialCharactersShouldWork() {
         for (String relType : new String[] {"Reltype with space", ":ReltypeWithCOlon", "rel-type-with-dash"}) {
             Map<String, Object> params = MapUtil.map("relType", relType);
             testCall(
@@ -262,7 +262,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeRelWithNullRelTypeShouldFail() {
+    void testMergeRelWithNullRelTypeShouldFail() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(
@@ -277,7 +277,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeWithEmptyRelTypeShouldFail() {
+    void testMergeWithEmptyRelTypeShouldFail() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(
@@ -292,12 +292,12 @@ public class MergeTest {
 
     // MERGE EAGER TESTS
     @Test
-    public void testMergeEagerNode() {
+    void testMergeEagerNode() {
         testMergeEagerCommon(false);
     }
 
     @Test
-    public void testMergeEagerNodeWithStats() {
+    void testMergeEagerNodeWithStats() {
         testMergeEagerCommon(true);
     }
 
@@ -323,7 +323,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerNodeWithOnCreate() {
+    void testMergeEagerNodeWithOnCreate() {
         testCall(
                 db,
                 "CALL apoc.merge.node.eager(['Person','Bastard'],{ssid:'123'}, {name:'John'},{occupation:'juggler'}) YIELD node RETURN node",
@@ -338,7 +338,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerNodeWithOnMatch() {
+    void testMergeEagerNodeWithOnMatch() {
         db.executeTransactionally("CREATE (p:Person:Bastard {ssid:'123'})");
         testCall(
                 db,
@@ -354,7 +354,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerNodesWithOnMatchCanMergeOnMultipleMatches() {
+    void testMergeEagerNodesWithOnMatchCanMergeOnMultipleMatches() {
         db.executeTransactionally("UNWIND range(1,5) as index MERGE (:Person:`Bastard Man`{ssid:'123', index:index})");
 
         try (Transaction tx = db.beginTx()) {
@@ -376,12 +376,12 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerRelationships() {
+    void testMergeEagerRelationships() {
         testMergeRelsCommon(false);
     }
 
     @Test
-    public void testMergeEagerRelationshipsWithStats() {
+    void testMergeEagerRelationshipsWithStats() {
         testMergeRelsCommon(true);
     }
 
@@ -445,7 +445,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerRelationshipsWithOnMatch() {
+    void testMergeEagerRelationshipsWithOnMatch() {
         db.executeTransactionally("create (:Person{name:'Foo'}), (:Person{name:'Bar'})");
 
         testCall(
@@ -471,7 +471,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerRelationshipsWithOnMatchCanMergeOnMultipleMatches() {
+    void testMergeEagerRelationshipsWithOnMatchCanMergeOnMultipleMatches() {
         db.executeTransactionally(
                 "CREATE (foo:Person{name:'Foo'}), (bar:Person{name:'Bar'}) WITH foo, bar UNWIND range(1,3) as index CREATE (foo)-[:KNOWS {rid:123}]->(bar)");
 
@@ -491,7 +491,7 @@ public class MergeTest {
     }
 
     @Test
-    public void testMergeEagerWithEmptyIdentityPropertiesShouldFail() {
+    void testMergeEagerWithEmptyIdentityPropertiesShouldFail() {
         for (String idProps : new String[] {"null", "{}"}) {
             var e = assertThrows(
                     QueryExecutionException.class,

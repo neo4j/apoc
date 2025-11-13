@@ -60,7 +60,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testBasicSequence() {
+    void testBasicSequence() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'A,B', beginSequenceAtStart:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -71,7 +71,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testNoMatchWhenImproperlyStartingSequenceAtStart() {
+    void testNoMatchWhenImproperlyStartingSequenceAtStart() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'A,B', beginSequenceAtStart:true, filterStartNode:true}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -81,7 +81,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testMatchWhenProperlyStartingSequenceAtStart() {
+    void testMatchWhenProperlyStartingSequenceAtStart() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'Start,A,B', beginSequenceAtStart:true, filterStartNode:true}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -92,7 +92,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithDenylist() {
+    void testSequenceWithDenylist() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'A|-C,B', beginSequenceAtStart:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -103,7 +103,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithTerminatorNode() {
+    void testSequenceWithTerminatorNode() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'/A|C,B', beginSequenceAtStart:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -114,7 +114,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithEndNode() {
+    void testSequenceWithEndNode() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'>A|C,B', beginSequenceAtStart:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -125,7 +125,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithEndNodeAndLimit() {
+    void testSequenceWithEndNodeAndLimit() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'>A|C,B', beginSequenceAtStart:false, limit:2}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -136,7 +136,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithTerminatorNodeAsStartNodeWithoutFilteringStartNode() {
+    void testSequenceWithTerminatorNodeAsStartNodeWithoutFilteringStartNode() {
         String query =
                 "MATCH (a:A {name: 'a'}) CALL apoc.path.subgraphNodes(a,{labelFilter:'/A, B', filterStartNode:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -147,7 +147,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithTerminatorNodeAndEndNode() {
+    void testSequenceWithTerminatorNodeAndEndNode() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.subgraphNodes(s,{labelFilter:'>A|C|/A:C, B', beginSequenceAtStart:false}) yield node return collect(distinct node.name) as nodes";
         TestUtil.testCall(db, query, (row) -> {
@@ -158,7 +158,7 @@ public class LabelSequenceTest {
     }
 
     @Test
-    public void testSequenceWithTerminatorNodeWhenUsingMinLevel() {
+    void testSequenceWithTerminatorNodeWhenUsingMinLevel() {
         String query =
                 "MATCH (s:Start {name: 'start'}) CALL apoc.path.expandConfig(s,{labelFilter:'/A, B', beginSequenceAtStart:false, minLevel:3}) yield path return collect(distinct last(nodes(path)).name) as nodes";
         TestUtil.testCall(db, query, (row) -> {

@@ -48,7 +48,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testFromNodes() {
+    void testFromNodes() {
         db.executeTransactionally("UNWIND range(1,3) as id create (:Person {name:'name'+id})");
         TestUtil.testCall(db, "RETURN apoc.map.fromNodes('Person','name') as value", (r) -> {
             Map<String, Node> map = (Map<String, Node>) r.get("value");
@@ -58,7 +58,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testValues() {
+    void testValues() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.values({b:42,a:'foo',c:false},['a','b','d']) as value",
@@ -78,7 +78,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testGroupBy() {
+    void testGroupBy() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.groupBy([{id:0,a:1},{id:1, b:false},{id:0,c:2}],'id') as value",
@@ -86,7 +86,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testGroupByMulti() {
+    void testGroupByMulti() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.groupByMulti([{id:0,a:1},{id:1, b:false},{id:0,c:2}],'id') as value",
@@ -100,7 +100,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testMerge() {
+    void testMerge() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.merge({a:1},{b:false}) AS value",
@@ -108,7 +108,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testMergeList() {
+    void testMergeList() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.mergeList([{a:1},{b:false}]) as value",
@@ -116,7 +116,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testFromPairs() {
+    void testFromPairs() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.fromPairs([['a',1],['b',false]]) AS value",
@@ -124,7 +124,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testFromValues() {
+    void testFromValues() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.fromValues(['a',1,'b',false]) AS value",
@@ -132,7 +132,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testFromLists() {
+    void testFromLists() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.fromLists(['a','b'],[1,false]) AS value",
@@ -140,7 +140,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testSetPairs() {
+    void testSetPairs() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.setPairs({}, [['a',1],['b',false]]) AS value",
@@ -148,7 +148,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testSetValues() {
+    void testSetValues() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.setValues({}, ['a',1,'b',false]) AS value",
@@ -156,7 +156,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testSetLists() {
+    void testSetLists() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.setLists({}, ['a','b'],[1,false]) AS value",
@@ -164,7 +164,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testGet() {
+    void testGet() {
         TestUtil.testCall(db, "RETURN apoc.map.get({a:1},'a') AS value", (r) -> assertEquals(1L, r.get("value")));
         TestUtil.testCall(db, "RETURN apoc.map.get({a:1},'c',42) AS value", (r) -> assertEquals(42L, r.get("value")));
         TestUtil.testCall(db, "RETURN apoc.map.get({a:1},'c',null,false) AS value", (r) -> assertNull(r.get("value")));
@@ -172,7 +172,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testSubMap() {
+    void testSubMap() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.submap({a:1,b:1},['a']) AS value",
@@ -194,7 +194,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testMGet() {
+    void testMGet() {
         TestUtil.testCall(
                 db, "RETURN apoc.map.mget({a:1,b:1},['a']) AS value", (r) -> assertEquals(List.of(1L), r.get("value")));
         TestUtil.testCall(
@@ -214,13 +214,13 @@ public class MapsTest {
     }
 
     @Test
-    public void testSetKey() {
+    void testSetKey() {
         TestUtil.testCall(
                 db, "RETURN apoc.map.setKey({a:1},'a',2) AS value", (r) -> assertEquals(map("a", 2L), r.get("value")));
     }
 
     @Test
-    public void testSetEntry() {
+    void testSetEntry() {
         TestUtil.testCall(
                 db,
                 "CYPHER 5 RETURN apoc.map.setEntry({a:1},'a',2) AS value",
@@ -228,7 +228,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKey() {
+    void testRemoveKey() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKey({a:1,b:2},'a') AS value",
@@ -236,13 +236,13 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveLastKey() {
+    void testRemoveLastKey() {
         TestUtil.testCall(
                 db, "RETURN apoc.map.removeKey({a:1},'a') AS value", (r) -> assertEquals(map(), r.get("value")));
     }
 
     @Test
-    public void testRemoveKeyRecursively() {
+    void testRemoveKeyRecursively() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKey({a:1,b:2,c:{a:3,b:4}},'a', {recursive:true}) AS value",
@@ -250,7 +250,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeyRecursivelySimpleProperties() {
+    void testRemoveKeyRecursivelySimpleProperties() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKey({a:1,b:2},'b', {recursive:true}) AS value",
@@ -258,7 +258,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveLastKeyRecursively() {
+    void testRemoveLastKeyRecursively() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKey({a:1,b:2,c:{a:3}},'a', {recursive:true}) AS value",
@@ -266,7 +266,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeyRecursivelyIncludingCollectionOfMaps() {
+    void testRemoveKeyRecursivelyIncludingCollectionOfMaps() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKey({a:1,b:2,c:[{a:3,b:4}, {a:4,b:5}]},'a', {recursive:true}) AS value",
@@ -274,7 +274,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeyRecursivelyIncludingCollectionOfStrings() {
+    void testRemoveKeyRecursivelyIncludingCollectionOfStrings() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKey({a:1,b:2,c:['a', 'b']},'a', {recursive:true}) AS value",
@@ -282,7 +282,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveAllKeys() {
+    void testRemoveAllKeys() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKeys({a:1,b:2},['a','b']) AS value",
@@ -290,7 +290,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeysRecursively() {
+    void testRemoveKeysRecursively() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKeys({a:1,b:2,c:{a:3,b:4}},['a','b'], {recursive:true}) AS value",
@@ -298,7 +298,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeysRecursivelyIncludingCollectionOfMaps() {
+    void testRemoveKeysRecursivelyIncludingCollectionOfMaps() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKeys({a:1,b:2,c:[{a:3,b:4,d:1}, {a:4,b:5,d:3}]},['a','b'],{recursive:true}) AS value",
@@ -306,7 +306,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeysRecursivelyRemovingCollectionCompletely() {
+    void testRemoveKeysRecursivelyRemovingCollectionCompletely() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKeys({a:1,b:2,c:[{d:1}, {b:5,d:3}]},['d','b'],{recursive:true}) AS value",
@@ -314,7 +314,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testRemoveKeysRecursivelyIncludingCollectionOfInts() {
+    void testRemoveKeysRecursivelyIncludingCollectionOfInts() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.removeKeys({a:1,b:2,c:[1,2,3]},['a','b'],{recursive:true}) AS value",
@@ -322,7 +322,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testClean() {
+    void testClean() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.clean({a:1,b:'',c:null,x:1234,z:false},['x'],['',false]) AS value",
@@ -330,7 +330,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testUpdateTree() {
+    void testUpdateTree() {
         TestUtil.testCall(
                 db,
                 "RETURN apoc.map.updateTree({id:1,c:{id:2},d:[{id:3}]},'id',[[1,{a:1}],[2,{a:2}],[3,{a:3}]]) AS value",
@@ -341,7 +341,7 @@ public class MapsTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testFlatten() {
+    void testFlatten() {
         Map<String, Object> nestedMap = map("somekey", "someValue", "somenumeric", 123);
         nestedMap = map("anotherkey", "anotherValue", "nested", nestedMap);
         Map<String, Object> map = map("string", "value", "int", 10, "nested", nestedMap);
@@ -365,7 +365,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testFlattenWithDelimiter() {
+    void testFlattenWithDelimiter() {
         Map<String, Object> nestedMap = map("somekey", "someValue", "somenumeric", 123);
         nestedMap = map("anotherkey", "anotherValue", "nested", nestedMap);
         Map<String, Object> map = map("string", "value", "int", 10, "nested", nestedMap);
@@ -389,7 +389,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testUnflattenRoundrip() {
+    void testUnflattenRoundrip() {
         List<Map<String, Object>> innerNestedListMap = List.of(
                 map("somekey", "someValue", "somenumeric", 123), map("keyFoo", "valueFoo"), map("keyBar", "valueBar"));
         Map<String, Object> nestedMap = map("anotherkey", "anotherValue", "nested", innerNestedListMap);
@@ -403,7 +403,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testUnflattenRoundtripWithCustomDelimiter() {
+    void testUnflattenRoundtripWithCustomDelimiter() {
         List<Map<String, Object>> subInnerListMap = List.of(
                 map("innernumeric", 123, "innernumericTwo", 456),
                 map("keyBar", "valueBar", "keyBaz", "valueBaz"),
@@ -422,7 +422,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testSortedProperties() {
+    void testSortedProperties() {
         TestUtil.testCall(
                 db,
                 "WITH {b:8, d:3, a:2, E: 12, C:9} as map RETURN apoc.map.sortedProperties(map, false) AS sortedProperties",
@@ -438,7 +438,7 @@ public class MapsTest {
     }
 
     @Test
-    public void testCaseInsensitiveSortedProperties() {
+    void testCaseInsensitiveSortedProperties() {
         TestUtil.testCall(
                 db,
                 "WITH {b:8, d:3, a:2, E: 12, C:9} as map RETURN apoc.map.sortedProperties(map) AS sortedProperties",

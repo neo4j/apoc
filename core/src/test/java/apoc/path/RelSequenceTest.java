@@ -55,7 +55,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testBasicRelSequence() {
+    void testBasicRelSequence() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -79,7 +79,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWithMinLevel() {
+    void testRelSequenceWithMinLevel() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie', minLevel:3}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -102,7 +102,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWithMaxLevel() {
+    void testRelSequenceWithMaxLevel() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie', maxLevel:2}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -125,7 +125,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWhenNotBeginningAtStart() {
+    void testRelSequenceWhenNotBeginningAtStart() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED,ACTED_IN>', labelFilter:'Movie,>Person', beginSequenceAtStart:false}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -149,7 +149,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelationshipFilterWorksWithoutTypeWithRelSequence() {
+    void testRelationshipFilterWorksWithoutTypeWithRelSequence() {
         TestUtil.testResult(
                 db,
                 "MATCH (k:Person {name:'Keanu Reeves'}) "

@@ -45,7 +45,7 @@ public class PathsTest {
     }
 
     @Test
-    public void createFull() {
+    void createFull() {
         TestUtil.testCall(
                 db,
                 "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.create(a, relationships(path)) as p",
@@ -53,7 +53,7 @@ public class PathsTest {
     }
 
     @Test
-    public void createEmpty() {
+    void createEmpty() {
         TestUtil.testCall(db, "RETURN apoc.path.create(null) as p", (row) -> assertNull(row.get("p")));
 
         TestUtil.testCall(db, "MATCH (a:A) RETURN apoc.path.create(a) as p", (row) -> assertPath(row, 0, "A", "A"));
@@ -66,7 +66,7 @@ public class PathsTest {
     }
 
     @Test
-    public void slice() {
+    void slice() {
         TestUtil.testCall(
                 db,
                 "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.slice(path,1,1) as p",
@@ -91,7 +91,7 @@ public class PathsTest {
     }
 
     @Test
-    public void combineFail() {
+    void combineFail() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> TestUtil.testCall(
@@ -102,7 +102,7 @@ public class PathsTest {
     }
 
     @Test
-    public void combine() {
+    void combine() {
         TestUtil.testCall(
                 db,
                 "MATCH p1 = (a:A)-[:NEXT]->(b:B), p2 = (b)-[:NEXT]->() RETURN apoc.path.combine(p1,p2) as p",
@@ -118,7 +118,7 @@ public class PathsTest {
     }
 
     @Test
-    public void elements() {
+    void elements() {
         TestUtil.testCall(db, "MATCH p = (a:A) RETURN apoc.path.elements(p) as e", (row) -> {
             List<Entity> pc = (List<Entity>) row.get("e");
             assertEquals(1, pc.size());
