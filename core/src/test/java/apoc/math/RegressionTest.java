@@ -39,7 +39,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void testCalculateRegr() {
+    void testCalculateRegr() {
         db.executeTransactionally(
                 """
                 CREATE (:REGR_TEST {x_property: 1 , y_property: 2 }),
@@ -60,7 +60,7 @@ public class RegressionTest {
     }
 
     @Test
-    public void testRegrR2isOne() {
+    void testRegrR2isOne() {
         db.executeTransactionally(
                 """
                 CREATE (:REGR_TEST2 {x_property: 1 , y_property: 1 }),

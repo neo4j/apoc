@@ -154,7 +154,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodesNewTx() {
+    void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodesNewTx() {
         cloneWithEmptyRelsTest(true, true);
         try (final var tx = db.beginTx();
                 final var res = tx.execute(cloneWithEmptyRelsMeta)) {
@@ -168,7 +168,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodesNewTxRollback() {
+    void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodesNewTxRollback() {
         cloneWithEmptyRelsTest(true, false);
         try (final var tx = db.beginTx();
                 final var res = tx.execute(cloneWithEmptyRelsMeta)) {
@@ -182,7 +182,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodes() {
+    void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodes() {
         cloneWithEmptyRelsTest(false, true);
         try (final var tx = db.beginTx();
                 final var res = tx.execute(cloneWithEmptyRelsMeta)) {
@@ -196,7 +196,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodesRollback() {
+    void testCloneSubgraphFromRootAWithEmptyRelsShouldCloneAllRelationshipsBetweenNodesRollback() {
         cloneWithEmptyRelsTest(false, false);
         try (final var tx = db.beginTx();
                 final var res = tx.execute(cloneWithEmptyRelsMeta)) {
@@ -210,7 +210,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromRootAWithoutRelsShouldCloneAllRelationshipsBetweenNodes() {
+    void testCloneSubgraphFromRootAWithoutRelsShouldCloneAllRelationshipsBetweenNodes() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'})" + "CALL apoc.path.subgraphAll(rootA, {}) YIELD nodes, relationships "
@@ -256,7 +256,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromRootAShouldOnlyIncludeRelsBetweenClones() {
+    void testCloneSubgraphFromRootAShouldOnlyIncludeRelsBetweenClones() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'})" + "CALL apoc.path.subgraphAll(rootA, {}) YIELD nodes, relationships "
@@ -302,7 +302,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithStandinsForRootAShouldHaveRootB() {
+    void testCloneSubgraphWithStandinsForRootAShouldHaveRootB() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'}), (rootB:Root{name:'B'}) "
@@ -356,7 +356,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithStandinsForNode1ShouldHaveRootB() {
+    void testCloneSubgraphWithStandinsForNode1ShouldHaveRootB() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'})--(node1), (rootB:Root{name:'B'}) "
@@ -408,7 +408,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithStandinsForRootAWithSkippedPropertiesShouldNotIncludeSkippedProperties() {
+    void testCloneSubgraphWithStandinsForRootAWithSkippedPropertiesShouldNotIncludeSkippedProperties() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'}), (rootB:Root{name:'B'}) "
@@ -472,7 +472,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithPropertiesOnRelationshipsPreserved() {
+    void testCloneSubgraphWithPropertiesOnRelationshipsPreserved() {
         try (final var tx = db.beginTx();
                 final var clean = tx.execute("MATCH (n) DETACH DELETE n");
                 final var create = tx.execute("CREATE (:A)-[:R{id:\"ID1\"}]->(:B)");
@@ -502,7 +502,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithStandinsForRootAAndOddballShouldHaveRootBAndUseNode12InPlaceOfOddball() {
+    void testCloneSubgraphWithStandinsForRootAAndOddballShouldHaveRootBAndUseNode12InPlaceOfOddball() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'}), (rootB:Root{name:'B'}), (node12:Node{name:'node12'}), (oddball:Oddball) "
@@ -561,7 +561,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithRelsNotBetweenProvidedNodesOrStandinsShouldBeIgnored() {
+    void testCloneSubgraphWithRelsNotBetweenProvidedNodesOrStandinsShouldBeIgnored() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'}), (rootB:Root{name:'B'}) "
@@ -596,7 +596,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithNoNodesButWithRelsAndStandinsShouldDoNothing() {
+    void testCloneSubgraphWithNoNodesButWithRelsAndStandinsShouldDoNothing() {
         TestUtil.testCallEmpty(
                 db,
                 "MATCH (rootA:Root{name:'A'}), (rootB:Root{name:'B'}) "
@@ -612,7 +612,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithA1ElementStandinPairShouldThrowException() {
+    void testCloneSubgraphWithA1ElementStandinPairShouldThrowException() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> TestUtil.testCall(
@@ -628,7 +628,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithA3ElementStandinPairShouldThrowException() {
+    void testCloneSubgraphWithA3ElementStandinPairShouldThrowException() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> TestUtil.testCall(
@@ -644,7 +644,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphWithANullElementInStandinPairShouldThrowException() {
+    void testCloneSubgraphWithANullElementInStandinPairShouldThrowException() {
         var e = assertThrows(
                 QueryExecutionException.class,
                 () -> TestUtil.testCall(
@@ -660,7 +660,7 @@ public class CloneSubgraphTest {
     }
 
     @Test
-    public void testCloneSubgraphFromPathsWithStandinsForRootAShouldHaveRootB() {
+    void testCloneSubgraphFromPathsWithStandinsForRootAShouldHaveRootB() {
         TestUtil.testCall(
                 db,
                 "MATCH (rootA:Root{name:'A'}), (rootB:Root{name:'B'}) "

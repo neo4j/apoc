@@ -55,7 +55,7 @@ public class LockTest {
     }
 
     @Test
-    public void shouldReadLockBlockAWrite() throws Exception {
+    void shouldReadLockBlockAWrite() throws Exception {
 
         Node node;
         try (Transaction tx = db.beginTx()) {

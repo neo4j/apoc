@@ -57,7 +57,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValuesSourceSingleValuesSameType() {
+    void testCombinePropertiesTargetArrayValuesSourceSingleValuesSameType() {
         TestUtil.singleResultFirstColumn(
                 db,
                 """
@@ -80,7 +80,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetSingleValueSourceArrayValuesSameType() {
+    void testCombinePropertiesTargetSingleValueSourceArrayValuesSameType() {
         TestUtil.singleResultFirstColumn(
                 db,
                 """
@@ -103,7 +103,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValueSourceArrayValuesSameType() {
+    void testCombinePropertiesTargetArrayValueSourceArrayValuesSameType() {
         db.executeTransactionally(
                 """
                 Create (d:Person {name:'Daniele'})
@@ -125,7 +125,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValuesSourceSingleValuesDifferentType() {
+    void testCombinePropertiesTargetArrayValuesSourceSingleValuesDifferentType() {
         db.executeTransactionally(
                 """
                 Create (d:Person {name:'Daniele'})
@@ -147,7 +147,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetSingleValueSourceArrayValuesDifferentType() {
+    void testCombinePropertiesTargetSingleValueSourceArrayValuesDifferentType() {
         db.executeTransactionally(
                 """
                 Create (d:Person {name:'Daniele'})
@@ -169,7 +169,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValueSourceArrayValuesDifferentTypeAndOneSameValue() {
+    void testCombinePropertiesTargetArrayValueSourceArrayValuesDifferentTypeAndOneSameValue() {
         db.executeTransactionally(
                 """
                 Create (d:Person {name:'Daniele'})
@@ -191,7 +191,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetSingleValueSourceSingleValuesSameTypeAndSameValue() {
+    void testCombinePropertiesTargetSingleValueSourceSingleValuesSameTypeAndSameValue() {
         db.executeTransactionally(
                 """
                 Create (d:Person {name:'Daniele'})
@@ -211,7 +211,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValueSourceArrayValuesSameTypeOneSameValue() {
+    void testCombinePropertiesTargetArrayValueSourceArrayValuesSameTypeOneSameValue() {
         db.executeTransactionally(
                 """
                 Create (d:Person {name:'Daniele'})
@@ -233,7 +233,7 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testMergeProperties() {
+    void testMergeProperties() {
         List<Node> nodes = TestUtil.firstColumn(
                 db,
                 "UNWIND [{name:'Joe',age:42,kids:'Jane'},{name:'Jane',age:32,kids:'June'}] AS data CREATE (p:Person) SET p = data RETURN p");
