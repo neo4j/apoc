@@ -1117,11 +1117,10 @@ public class PeriodicTest {
                     "%s CALL apoc.periodic.submit('test%d', '%s CREATE (n:$(apoc.cypherVersion()) {id: %d})')",
                     cypherVersion.outerVersion, id, cypherVersion.innerVersion, id);
             db.executeTransactionally(query);
-            Thread.sleep(1000); // Wait 1s to make sure the submit has been called
             // Check the node was created with the right label
             var checkerQuery =
                     String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
-            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            tryReadCount(50, checkerQuery, 1L);
             id++;
         }
     }
