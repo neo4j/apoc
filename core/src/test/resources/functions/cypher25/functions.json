@@ -1064,6 +1064,32 @@
     ]
   },
   {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.nodes.isDense(node :: NODE, relationshipType =  :: STRING) :: BOOLEAN",
+    "name": "apoc.nodes.isDense",
+    "description": "Returns true if the given `NODE` is a dense node.",
+    "returnDescription": "BOOLEAN",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node to check for being dense or not.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "relationshipType",
+        "description": "The type of the relationship to check the density of.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=, type=STRING}",
+        "type": "STRING"
+      }
+    ]
+  },
+  {
     "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.temporal.format(temporal :: ANY, format = yyyy-MM-dd :: STRING) :: STRING",

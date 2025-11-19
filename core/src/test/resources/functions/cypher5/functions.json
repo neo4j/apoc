@@ -1109,6 +1109,25 @@
   {
     "isDeprecated": false,
     "aggregating": false,
+    "signature": "apoc.nodes.isDense(node :: NODE) :: BOOLEAN",
+    "name": "apoc.nodes.isDense",
+    "description": "Returns true if the given `NODE` is a dense node.",
+    "returnDescription": "BOOLEAN",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node to check for being dense or not.",
+        "isDeprecated": false,
+        "type": "NODE"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
     "signature": "apoc.temporal.format(temporal :: ANY, format = yyyy-MM-dd :: STRING) :: STRING",
     "name": "apoc.temporal.format",
     "description": "Formats the given temporal value into the given time format.",

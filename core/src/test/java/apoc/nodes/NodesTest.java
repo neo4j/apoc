@@ -107,6 +107,56 @@ public class NodesTest {
     }
 
     @Test
+    public void isDenseWithRelType() {
+        db.executeTransactionally(
+                "CREATE (f:Foo) CREATE (b:Bar) WITH f UNWIND range(1,100) as id CREATE (f)-[:SELF]->(f)");
+
+        TestUtil.testResult(
+                db,
+                """
+                        CYPHER 25
+                        MATCH (n)
+                        WITH n, apoc.nodes.isDense(n, 'SELF') as dense
+                        RETURN labels(n)[0] as labels, dense ORDER BY labels""",
+                (result) -> {
+                    assertTrue(result.hasNext());
+                    var row1 = result.next();
+                    assertEquals("Bar", row1.get("labels"));
+                    assertFalse((boolean) row1.get("dense"));
+                    assertTrue(result.hasNext());
+                    var row2 = result.next();
+                    assertEquals("Foo", row2.get("labels"));
+                    assertTrue((boolean) row2.get("dense"));
+                    assertFalse(result.hasNext());
+                });
+    }
+
+    @Test
+    public void isDenseWithRelTypeUnderThreshold() {
+        db.executeTransactionally(
+                "CREATE (f:Foo) CREATE (b:Bar) WITH f UNWIND range(1,49) as id CREATE (f)-[:SELF]->(f)");
+
+        TestUtil.testResult(
+                db,
+                """
+                        CYPHER 25
+                        MATCH (n)
+                        WITH n, apoc.nodes.isDense(n, 'SELF') as dense
+                        RETURN labels(n)[0] as labels, dense ORDER BY labels""",
+                (result) -> {
+                    assertTrue(result.hasNext());
+                    var row1 = result.next();
+                    assertEquals("Bar", row1.get("labels"));
+                    assertFalse((boolean) row1.get("dense"));
+                    assertTrue(result.hasNext());
+                    var row2 = result.next();
+                    assertEquals("Foo", row2.get("labels"));
+                    assertFalse((boolean) row2.get("dense"));
+                    assertFalse(result.hasNext());
+                });
+    }
+
+    @Test
     public void nodesGetTest() {
         db.executeTransactionally("CREATE (f:Foo), (b:Bar), (c:Car)");
         TestUtil.testResult(
