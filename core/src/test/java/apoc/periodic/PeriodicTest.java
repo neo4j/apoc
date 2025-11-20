@@ -186,7 +186,7 @@ public class PeriodicTest {
     public void testSubmitWithVoidProcedureAndReturn() {
         String logVal = "submitVoidWithReturn";
         String query =
-                "CALL apoc.periodic.submit('submit-1', 'CALL apoc.mockLog($logVal)', {params: {logVal: $logVal}})";
+                "CALL apoc.periodic.submit('submit-2', 'CALL apoc.mockLog($logVal)', {params: {logVal: $logVal}})";
         testLogIncrease(query, logVal);
     }
 
@@ -207,12 +207,13 @@ public class PeriodicTest {
 
     @Test
     public void testSubmitStatement() throws Exception {
-        String callList = "CALL apoc.periodic.list()";
+        String callList =
+                "CALL apoc.periodic.list() YIELD name, done, cancelled, delay, rate WHERE name = 'foo2' RETURN *";
         // force pre-caching the queryplan => higher probability to get a result in the last assertion
         db.executeTransactionally(callList, Map.of(), CONSUME_VOID);
 
-        testCall(db, "CALL apoc.periodic.submit('foo','create (:Foo)')", (row) -> {
-            assertEquals("foo", row.get("name"));
+        testCall(db, "CALL apoc.periodic.submit('foo2','create (:Foo)')", (row) -> {
+            assertEquals("foo2", row.get("name"));
             assertEquals(false, row.get("done"));
             assertEquals(false, row.get("cancelled"));
             assertEquals(0L, row.get("delay"));
@@ -229,7 +230,7 @@ public class PeriodicTest {
             // We clean up completed tasks periodically so this can be empty
             if (!resultList.isEmpty()) {
                 assertThat(resultList)
-                        .contains(Map.of("name", "foo", "done", true, "cancelled", false, "delay", 0L, "rate", 0L));
+                        .contains(Map.of("name", "foo2", "done", true, "cancelled", false, "delay", 0L, "rate", 0L));
             }
         }
     }
@@ -271,7 +272,8 @@ public class PeriodicTest {
 
     @Test
     public void testSubmitStatementWithParams() throws Exception {
-        String callList = "CALL apoc.periodic.list()";
+        String callList =
+                "CALL apoc.periodic.list() YIELD name, done, cancelled, delay, rate WHERE name = 'foo' RETURN *";
         // force pre-caching the queryplan => higher probability to get a result in the last assertion
         db.executeTransactionally(callList, Map.of(), CONSUME_VOID);
 
@@ -896,7 +898,7 @@ public class PeriodicTest {
 
     @Test
     public void testSubmitFail() {
-        final String query = "CALL apoc.periodic.submit('foo','create (::Foo)')";
+        final String query = "CALL apoc.periodic.submit('foo1','create (::Foo)')";
         testCypherFail(query);
     }
 
@@ -1117,11 +1119,10 @@ public class PeriodicTest {
                     "%s CALL apoc.periodic.submit('test%d', '%s CREATE (n:$(apoc.cypherVersion()) {id: %d})')",
                     cypherVersion.outerVersion, id, cypherVersion.innerVersion, id);
             db.executeTransactionally(query);
-            Thread.sleep(1000); // Wait 1s to make sure the submit has been called
             // Check the node was created with the right label
             var checkerQuery =
                     String.format("MATCH (n:%s {id : %d}) RETURN count(n) AS count", cypherVersion.result, id);
-            testCall(db, checkerQuery, r -> assertEquals(1L, r.get("count")));
+            tryReadCount(50, checkerQuery, 1L);
             id++;
         }
     }
