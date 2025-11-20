@@ -21,55 +21,51 @@ package apoc.refactor.util;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.Util.map;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.refactor.GraphRefactoring;
 import apoc.util.ArrayBackedList;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author AgileLARUS
- *
- * @since 27-06-17
- */
+@EnterpriseDbmsExtension()
 public class PropertiesManagerTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    private String QUERY = "MATCH (d:Person {name:'Daniele'})\n" + "MATCH (p:Country {name:'USA'})\n"
-            + "MATCH (d)-[r:TRAVELS_TO]->(p)\n" + "MATCH (d)-[h:GOES_TO]->(p)\n"
-            + "MATCH (d)-[l:FLIGHTS_TO]->(p) return r as rel1,h as rel2";
+    private final String QUERY =
+            """
+            MATCH (d:Person {name:'Daniele'})
+            MATCH (p:Country {name:'USA'})
+            MATCH (d)-[r:TRAVELS_TO]->(p)
+            MATCH (d)-[h:GOES_TO]->(p)
+            MATCH (d)-[l:FLIGHTS_TO]->(p) return r as rel1,h as rel2""";
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, GraphRefactoring.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testCombinePropertiesTargetArrayValuesSourceSingleValuesSameType() {
+    void testCombinePropertiesTargetArrayValuesSourceSingleValuesSameType() {
         TestUtil.singleResultFirstColumn(
                 db,
-                "Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                        + "Create (d)-[:TRAVELS_TO {year:[2010,2015], reason:\"work\"}]->(p)\n"
-                        + "Create (d)-[:GOES_TO {year:1995, reason:\"fun\"}]->(p)\n"
-                        + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+                """
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:[2010,2015], reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:1995, reason:"fun"}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -78,18 +74,21 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList(2010L, 2015L, 1995L).toArray(), new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList(2010L, 2015L, 1995L),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testCombinePropertiesTargetSingleValueSourceArrayValuesSameType() {
+    void testCombinePropertiesTargetSingleValueSourceArrayValuesSameType() {
         TestUtil.singleResultFirstColumn(
                 db,
-                "Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                        + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                        + "Create (d)-[:GOES_TO {year:[2010,2015], reason:\"fun\"}]->(p)\n"
-                        + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+                """
+                        Create (d:Person {name:'Daniele'})
+                        Create (p:Country {name:'USA'})
+                        Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                        Create (d)-[:GOES_TO {year:[2010,2015], reason:"fun"}]->(p)
+                        Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -98,16 +97,20 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList(1995L, 2010L, 2015L).toArray(), new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList(1995L, 2010L, 2015L),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValueSourceArrayValuesSameType() {
-        db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                + "Create (d)-[:TRAVELS_TO {year:[1995,2014], reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:[2010,2015], reason:\"fun\"}]->(p)\n"
-                + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+    void testCombinePropertiesTargetArrayValueSourceArrayValuesSameType() {
+        db.executeTransactionally(
+                """
+                Create (d:Person {name:'Daniele'})
+                Create (p:Country {name:'USA'})
+                Create (d)-[:TRAVELS_TO {year:[1995,2014], reason:"work"}]->(p)
+                Create (d)-[:GOES_TO {year:[2010,2015], reason:"fun"}]->(p)
+                Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -116,17 +119,20 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList(1995L, 2014L, 2010L, 2015L).toArray(),
-                    new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList(1995L, 2014L, 2010L, 2015L),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValuesSourceSingleValuesDifferentType() {
-        db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                + "Create (d)-[:TRAVELS_TO {year:[2010,2015], reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:\"1995\", reason:\"fun\"}]->(p)\n"
-                + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+    void testCombinePropertiesTargetArrayValuesSourceSingleValuesDifferentType() {
+        db.executeTransactionally(
+                """
+                Create (d:Person {name:'Daniele'})
+                Create (p:Country {name:'USA'})
+                Create (d)-[:TRAVELS_TO {year:[2010,2015], reason:"work"}]->(p)
+                Create (d)-[:GOES_TO {year:"1995", reason:"fun"}]->(p)
+                Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -135,16 +141,20 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList("2010", "2015", "1995").toArray(), new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList("2010", "2015", "1995"),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testCombinePropertiesTargetSingleValueSourceArrayValuesDifferentType() {
-        db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                + "Create (d)-[:TRAVELS_TO {year:1995, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:[\"2010\",\"2015\"], reason:\"fun\"}]->(p)\n"
-                + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+    void testCombinePropertiesTargetSingleValueSourceArrayValuesDifferentType() {
+        db.executeTransactionally(
+                """
+                Create (d:Person {name:'Daniele'})
+                Create (p:Country {name:'USA'})
+                Create (d)-[:TRAVELS_TO {year:1995, reason:"work"}]->(p)
+                Create (d)-[:GOES_TO {year:["2010","2015"], reason:"fun"}]->(p)
+                Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -153,16 +163,20 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList("1995", "2010", "2015").toArray(), new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList("1995", "2010", "2015"),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValueSourceArrayValuesDifferentTypeAndOneSameValue() {
-        db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                + "Create (d)-[:TRAVELS_TO {year:[\"1995\",\"2014\"], reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:[2010,2015], reason:\"fun\"}]->(p)\n"
-                + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+    void testCombinePropertiesTargetArrayValueSourceArrayValuesDifferentTypeAndOneSameValue() {
+        db.executeTransactionally(
+                """
+                Create (d:Person {name:'Daniele'})
+                Create (p:Country {name:'USA'})
+                Create (d)-[:TRAVELS_TO {year:["1995","2014"], reason:"work"}]->(p)
+                Create (d)-[:GOES_TO {year:[2010,2015], reason:"fun"}]->(p)
+                Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -171,17 +185,20 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList("1995", "2014", "2010", "2015").toArray(),
-                    new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList("1995", "2014", "2010", "2015"),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testCombinePropertiesTargetSingleValueSourceSingleValuesSameTypeAndSameValue() {
-        db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                + "Create (d)-[:TRAVELS_TO {year:1996, reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:1996, reason:\"fun\"}]->(p)\n"
-                + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+    void testCombinePropertiesTargetSingleValueSourceSingleValuesSameTypeAndSameValue() {
+        db.executeTransactionally(
+                """
+                Create (d:Person {name:'Daniele'})
+                Create (p:Country {name:'USA'})
+                Create (d)-[:TRAVELS_TO {year:1996, reason:"work"}]->(p)
+                Create (d)-[:GOES_TO {year:1996, reason:"fun"}]->(p)
+                Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -194,11 +211,14 @@ public class PropertiesManagerTest {
     }
 
     @Test
-    public void testCombinePropertiesTargetArrayValueSourceArrayValuesSameTypeOneSameValue() {
-        db.executeTransactionally("Create (d:Person {name:'Daniele'})\n" + "Create (p:Country {name:'USA'})\n"
-                + "Create (d)-[:TRAVELS_TO {year:[1995,2014], reason:\"work\"}]->(p)\n"
-                + "Create (d)-[:GOES_TO {year:[2010,2014], reason:\"fun\"}]->(p)\n"
-                + "Create (d)-[:FLIGHTS_TO {company:\"Air America\"}]->(p) RETURN id(p) as id ");
+    void testCombinePropertiesTargetArrayValueSourceArrayValuesSameTypeOneSameValue() {
+        db.executeTransactionally(
+                """
+                Create (d:Person {name:'Daniele'})
+                Create (p:Country {name:'USA'})
+                Create (d)-[:TRAVELS_TO {year:[1995,2014], reason:"work"}]->(p)
+                Create (d)-[:GOES_TO {year:[2010,2014], reason:"fun"}]->(p)
+                Create (d)-[:FLIGHTS_TO {company:"Air America"}]->(p) RETURN id(p) as id""");
         testCall(db, QUERY, (r) -> {
             Relationship rel1 = (Relationship) r.get("rel1");
             Relationship rel2 = (Relationship) r.get("rel2");
@@ -207,12 +227,13 @@ public class PropertiesManagerTest {
                     rel2.getProperties("year"), rel1, new RefactorConfig(map("properties", "combine")));
 
             assertEquals(
-                    asList(1995L, 2014L, 2010L).toArray(), new ArrayBackedList(rel1.getProperty("year")).toArray());
+                    asList(1995L, 2014L, 2010L),
+                    new ArrayBackedList(rel1.getProperty("year")).stream().toList());
         });
     }
 
     @Test
-    public void testMergeProperties() {
+    void testMergeProperties() {
         List<Node> nodes = TestUtil.firstColumn(
                 db,
                 "UNWIND [{name:'Joe',age:42,kids:'Jane'},{name:'Jane',age:32,kids:'June'}] AS data CREATE (p:Person) SET p = data RETURN p");

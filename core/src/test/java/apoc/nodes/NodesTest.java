@@ -26,10 +26,10 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
@@ -40,6 +40,7 @@ import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,23 +48,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 18.08.16
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class NodesTest {
 
     private static final List<String> FIRST_ALPHA_CYCLE_PROPS = List.of("alpha", "one", "two", "alpha");
@@ -73,29 +71,28 @@ public class NodesTest {
     private static final List<String> ONE_STEP_PROPS = List.of("epsilon", "seven", "epsilon");
     private static final String DEPEND_ON_REL_TYPE = "DEPENDS_ON";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.procedure_unrestricted,
-                    List.of(
-                            "apoc.nodes.link",
-                            "apoc.node.relationship.exists",
-                            "apoc.node.relationships.exist",
-                            "apoc.nodes.connected",
-                            "apoc.nodes.isDense"));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.procedure_unrestricted,
+                List.of(
+                        "apoc.nodes.link",
+                        "apoc.node.relationship.exists",
+                        "apoc.node.relationships.exist",
+                        "apoc.nodes.connected",
+                        "apoc.nodes.isDense"));
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Nodes.class, Create.class, NodesRestricted.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void isDense() {
+    void isDense() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) WITH f UNWIND range(1,100) as id CREATE (f)-[:SELF]->(f)");
 
@@ -157,7 +154,7 @@ public class NodesTest {
     }
 
     @Test
-    public void nodesGetTest() {
+    void nodesGetTest() {
         db.executeTransactionally("CREATE (f:Foo), (b:Bar), (c:Car)");
         TestUtil.testResult(
                 db,
@@ -182,7 +179,7 @@ public class NodesTest {
     }
 
     @Test
-    public void relsGetTest() {
+    void relsGetTest() {
         db.executeTransactionally("CREATE ()-[:FOO]->(), ()-[:BAR]->(), ()-[:CAR]->()");
         TestUtil.testResult(
                 db,
@@ -207,7 +204,7 @@ public class NodesTest {
     }
 
     @Test
-    public void cycles() {
+    void cycles() {
         createDatasetForNodesCycles();
 
         // with all relationships
@@ -229,7 +226,7 @@ public class NodesTest {
     }
 
     @Test
-    public void cyclesWithRelTypes() {
+    void cyclesWithRelTypes() {
         createDatasetForNodesCycles();
 
         // with single specific relationship
@@ -291,7 +288,7 @@ public class NodesTest {
     }
 
     @Test
-    public void cyclesWithMaxDepth() {
+    void cyclesWithMaxDepth() {
         createDatasetForNodesCycles();
 
         // with {maxDepth: 1} config
@@ -364,7 +361,7 @@ public class NodesTest {
     }
 
     @Test
-    public void link() {
+    void link() {
         db.executeTransactionally(
                 "UNWIND range(1,10) as id CREATE (n:Foo {id:id}) WITH collect(n) as nodes call apoc.nodes.link(nodes,'BAR') RETURN size(nodes) as len");
 
@@ -373,7 +370,7 @@ public class NodesTest {
     }
 
     @Test
-    public void linkWithAvoidDuplicateTrue() {
+    void linkWithAvoidDuplicateTrue() {
         db.executeTransactionally(
                 "CREATE (n:Foo {id:1}), (m:Foo {id:2}) WITH [n,m] as nodes CALL apoc.nodes.link(nodes,'BAR') RETURN 1");
         TestUtil.testCall(
@@ -392,7 +389,7 @@ public class NodesTest {
     }
 
     @Test
-    public void delete() {
+    void delete() {
         db.executeTransactionally("UNWIND range(1,100) as id CREATE (n:Foo {id:id})-[:X]->(n)");
 
         long count = TestUtil.singleResultFirstColumn(
@@ -405,7 +402,7 @@ public class NodesTest {
     }
 
     @Test
-    public void nodesDeleteTest() {
+    void nodesDeleteTest() {
         db.executeTransactionally("CREATE (:FOO), (:BAR), (:BAZ)");
 
         long count = TestUtil.singleResultFirstColumn(
@@ -422,7 +419,7 @@ public class NodesTest {
     }
 
     @Test
-    public void types() {
+    void types() {
         db.executeTransactionally("CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(f) CREATE (f)-[:X]->(f)");
         TestUtil.testCall(
                 db,
@@ -444,7 +441,7 @@ public class NodesTest {
     }
 
     @Test
-    public void nodesTypes() {
+    void nodesTypes() {
         // given
         db.executeTransactionally("CREATE (f:Foo), (f)-[:Y]->(f), (f)-[:X]->(f)");
         db.executeTransactionally("CREATE (f:Bar), (f)-[:YY]->(f), (f)-[:XX]->(f)");
@@ -456,7 +453,7 @@ public class NodesTest {
                 (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
-                    assertFalse("value should not be empty", list.isEmpty());
+                    assertFalse(list.isEmpty());
                     list.forEach(map -> {
                         Node node = (Node) map.get("node");
                         List<String> data = (List<String>) map.get("types");
@@ -470,7 +467,7 @@ public class NodesTest {
     }
 
     @Test
-    public void nodesHasRelationship() {
+    void nodesHasRelationship() {
         // given
         db.executeTransactionally("CREATE (f:Foo), (f)-[:X]->(f)");
         db.executeTransactionally("CREATE (b:Bar), (b)-[:Y]->(b)");
@@ -482,7 +479,7 @@ public class NodesTest {
                 (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
-                    assertFalse("value should not be empty", list.isEmpty());
+                    assertFalse(list.isEmpty());
                     list.forEach(map -> {
                         Map<String, Boolean> data = (Map<String, Boolean>) map.get("exists");
                         assertEquals(map("X", true, "Y", false), data);
@@ -493,7 +490,7 @@ public class NodesTest {
                 db, "MATCH (n:Bar) RETURN apoc.nodes.relationships.exist(collect(n), 'X|Y') AS value", (result) -> {
                     // then
                     List<Map<String, Object>> list = (List<Map<String, Object>>) result.get("value");
-                    assertFalse("value should not be empty", list.isEmpty());
+                    assertFalse(list.isEmpty());
                     list.forEach(map -> {
                         Map<String, Boolean> data = (Map<String, Boolean>) map.get("exists");
                         assertEquals(map("X", false, "Y", true), data);
@@ -502,7 +499,7 @@ public class NodesTest {
     }
 
     @Test
-    public void hasRelationship() {
+    void hasRelationship() {
         db.executeTransactionally(
                 "CREATE (:Foo)-[:Y]->(:Bar),(n:FooBar) WITH n UNWIND range(1,100) as _ CREATE (n)-[:X]->(n)");
         TestUtil.testCall(
@@ -558,7 +555,7 @@ public class NodesTest {
     }
 
     @Test
-    public void hasRelationships() {
+    void hasRelationships() {
         db.executeTransactionally(
                 "CREATE (:Foo)-[:Y]->(:Bar),(n:FooBar) WITH n UNWIND range(1,100) as _ CREATE (n)-[:X]->(n)");
         TestUtil.testCall(
@@ -614,7 +611,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testConnected() {
+    void testConnected() {
         db.executeTransactionally("CREATE (st:StartThin),(et:EndThin),(ed:EndDense)");
         int relCount = 20;
         for (int rel = 0; rel < relCount; rel++) {
@@ -713,7 +710,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testDegreeTypeAndDirection() {
+    void testDegreeTypeAndDirection() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(b) CREATE (f)-[:Y]->(b) CREATE (f)-[:X]->(b) CREATE (f)<-[:X]-(b)");
 
@@ -727,17 +724,18 @@ public class NodesTest {
     }
 
     @Test
-    public void testDegreeMultiple() {
+    void testDegreeMultiple() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(b) CREATE (f)-[:Y]->(b) CREATE (f)-[:X]->(b) CREATE (f)<-[:X]-(b)");
 
-        TestUtil.testCall(db, "MATCH (f:Foo),(b:Bar)  RETURN apoc.node.degree(f, '<X|Y') as all", (r) -> {
-            assertEquals(3L, r.get("all"));
-        });
+        TestUtil.testCall(
+                db,
+                "MATCH (f:Foo),(b:Bar)  RETURN apoc.node.degree(f, '<X|Y') as all",
+                (r) -> assertEquals(3L, r.get("all")));
     }
 
     @Test
-    public void testDegreeTypeOnly() {
+    void testDegreeTypeOnly() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(b) CREATE (f)-[:Y]->(b) CREATE (f)-[:X]->(b) CREATE (f)<-[:X]-(b)");
 
@@ -751,7 +749,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testDegreeDirectionOnly() {
+    void testDegreeDirectionOnly() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) CREATE (f)-[:Y]->(b) CREATE (f)-[:X]->(b) CREATE (f)<-[:X]-(b)");
 
@@ -765,7 +763,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testDegreeInOutDirectionOnly() {
+    void testDegreeInOutDirectionOnly() {
         db.executeTransactionally(
                 "CREATE (a:Person{name:'test'}) CREATE (b:Person) CREATE (c:Person) CREATE (d:Person) CREATE (a)-[:Rel1]->(b) CREATE (a)-[:Rel1]->(c) CREATE (a)-[:Rel2]->(d) CREATE (a)-[:Rel1]->(b) CREATE (a)<-[:Rel2]-(b) CREATE (a)<-[:Rel2]-(c) CREATE (a)<-[:Rel2]-(d) CREATE (a)<-[:Rel1]-(d)");
 
@@ -779,7 +777,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testDegreeInOutType() {
+    void testDegreeInOutType() {
         db.executeTransactionally(
                 "CREATE (a:Person{name:'test'}) CREATE (b:Person) CREATE (c:Person) CREATE (d:Person) CREATE (a)-[:Rel1]->(b) CREATE (a)-[:Rel1]->(c) CREATE (a)-[:Rel2]->(d) CREATE (a)-[:Rel1]->(b) CREATE (a)<-[:Rel2]-(b) CREATE (a)<-[:Rel2]-(c) CREATE (a)<-[:Rel2]-(d) CREATE (a)<-[:Rel1]-(d)");
 
@@ -795,7 +793,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testId() {
+    void testId() {
         assertTrue(TestUtil.<Long>singleResultFirstColumn(db, "CREATE (f:Foo {foo:'bar'}) RETURN apoc.node.id(f) AS id")
                 >= 0);
         assertTrue(TestUtil.<Long>singleResultFirstColumn(
@@ -805,7 +803,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testRelId() {
+    void testRelId() {
         assertTrue(TestUtil.<Long>singleResultFirstColumn(
                         db, "CREATE (f)-[rel:REL {foo:'bar'}]->(f) RETURN apoc.rel.id(rel) AS id")
                 >= 0);
@@ -817,7 +815,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testLabels() {
+    void testLabels() {
         assertEquals(
                 singletonList("Foo"),
                 TestUtil.<List<String>>singleResultFirstColumn(
@@ -831,7 +829,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testProperties() {
+    void testProperties() {
         assertEquals(
                 singletonMap("foo", "bar"),
                 TestUtil.singleResultFirstColumn(
@@ -856,7 +854,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testSubProperties() {
+    void testSubProperties() {
         assertEquals(
                 singletonMap("foo", "bar"),
                 TestUtil.singleResultFirstColumn(
@@ -901,7 +899,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testProperty() {
+    void testProperty() {
         assertEquals(
                 "bar", TestUtil.singleResultFirstColumn(db, "RETURN apoc.any.property({foo:'bar'},'foo') AS props"));
         assertNull(TestUtil.singleResultFirstColumn(db, "RETURN apoc.any.property({foo:'bar'},'bar') AS props"));
@@ -945,7 +943,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testRelType() {
+    void testRelType() {
         assertEquals(
                 "REL",
                 TestUtil.singleResultFirstColumn(
@@ -961,7 +959,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergeSelfRelationship() {
+    void testMergeSelfRelationship() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE (a1:ALabel {name:'a1'})-[:KNOWS]->(b1:BLabel {name:'b1'})");
 
@@ -988,7 +986,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergeSelfRelationshipInverted() {
+    void testMergeSelfRelationshipInverted() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE (a1:ALabel {name:'a1'})-[:KNOWS]->(b1:BLabel {name:'b1'})");
 
@@ -1014,7 +1012,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergeNotSelfRelationship() {
+    void testMergeNotSelfRelationship() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE (a1:ALabel {name:'a1'})-[:KNOWS]->(b1:BLabel {name:'b1'})");
 
@@ -1031,14 +1029,14 @@ public class NodesTest {
                     assertEquals(
                             Util.map("name", "b1", "count", 2), ((VirtualNode) map.get("from")).getAllProperties());
                     assertEquals(label, labelSet((VirtualNode) map.get("from")));
-                    assertNull(((VirtualRelationship) map.get("rel")));
-                    assertNull(((Node) map.get("to")));
+                    assertNull(map.get("rel"));
+                    assertNull(map.get("to"));
                     assertFalse(r.hasNext());
                 });
     }
 
     @Test
-    public void testMergeWithRelationshipDirection() {
+    void testMergeWithRelationshipDirection() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE " + "(a1:ALabel {name:'a1'})-[:KNOWS]->(b1:BLabel {name:'b1'}),"
                 + "(a1)<-[:KNOWS]-(b2:CLabel {name:'c1'})");
@@ -1077,7 +1075,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergeRelationship() {
+    void testMergeRelationship() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE " + "(a1:ALabel {name:'a1'})-[:HAS_REL]->(b1:BLabel {name:'b1'}),"
                 + "(a2:ALabel {name:'a2'})-[:HAS_REL]->(b1),"
@@ -1115,7 +1113,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergePersonEmployee() {
+    void testMergePersonEmployee() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally("CREATE " + "(:Person {name:'mike'})-[:LIVES_IN]->(:City{name:'rome'}), "
                 + "(:Employee{name:'mike'})-[:WORKS_FOR]->(:Company{name:'Larus'}), "
@@ -1174,7 +1172,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergeVirtualNode() {
+    void testMergeVirtualNode() {
         db.executeTransactionally(
                 """
                 CREATE
@@ -1211,7 +1209,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testMergeVirtualNodeBOTH() {
+    void testMergeVirtualNodeBOTH() {
         db.executeTransactionally("CREATE \n" + "(p:Person {name: 'John'})-[:LIVES_IN]->(c:City{name:'London'}),"
                 + "(c)-[:LIVES_IN]->(p)");
 
@@ -1238,7 +1236,7 @@ public class NodesTest {
     }
 
     @Test
-    public void testIsDeleted() {
+    void testIsDeleted() {
         db.executeTransactionally("CREATE \n" + "(:NodeA)-[:HAS_REL_A]->(:NodeB)");
 
         TestUtil.testResult(

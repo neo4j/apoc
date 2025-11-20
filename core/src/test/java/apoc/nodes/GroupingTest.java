@@ -20,43 +20,38 @@ package apoc.nodes;
 
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.map;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.internal.util.Iterables;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 import org.neo4j.values.storable.DurationValue;
 
-/**
- * @author mh
- * @since 22.06.17
- */
+@EnterpriseDbmsExtension()
 public class GroupingTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Grouping.class, Nodes.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
-    public void createGraph() {
+    void createGraph() {
         db.executeTransactionally("CREATE " + "(alice:Person {name:'Alice', gender:'female', age:32, kids:1}),"
                 + "(bob:Person   {name:'Bob',   gender:'male',   age:42, kids:3}),"
                 + "(eve:Person   {name:'Eve',   gender:'female', age:28, kids:2}),"
@@ -71,7 +66,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupAllNodes() {
+    void testGroupAllNodes() {
         createGraph();
         Map<String, Object> female = map("gender", "female", "count_*", 2L, "min_age", 28L);
         Map<String, Object> male = map("gender", "male", "count_*", 1L, "min_age", 42L);
@@ -103,21 +98,21 @@ public class GroupingTest {
                             } else if (count.equals(2L)) { // KNOWS
                                 assertEquals(male, rel.getEndNode().getProperties(keys));
                             } else {
-                                assertTrue("Unexpected count value: " + count, false);
+                                fail("Unexpected count value: " + count);
                             }
                         } else if (value.equals("male")) {
                             assertEquals(male, node.getProperties(keys));
                             assertEquals(1L, rel.getProperty("count_*"));
                             assertEquals(other, rel.getEndNode().getProperties(keys));
                         } else {
-                            assertTrue("Unexpected value: " + value, false);
+                            fail("Unexpected gender value: " + value);
                         }
                     }
                 });
     }
 
     @Test
-    public void testGroupNode() {
+    void testGroupNode() {
         createGraph();
         Map<String, Object> female =
                 map("gender", "female", "count_*", 2L, "sum_kids", 3L, "min_age", 28L, "max_age", 32L, "avg_age", 30D);
@@ -149,19 +144,19 @@ public class GroupingTest {
                     node = (Node) row.get("node");
                     assertEquals(node.getProperty("gender").equals("female") ? female : male, node.getProperties(keys));
                     rel = (Relationship) row.get("relationship");
-                    assertEquals(null, rel);
+                    assertNull(rel);
                 });
     }
 
     @Test
-    public void testRemoveOrphans() {
+    void testRemoveOrphans() {
         db.executeTransactionally("CREATE (u:User {gender:'male'})");
         TestUtil.testCallCount(db, "CALL apoc.nodes.group(['User'],['gender'],null,{orphans:false})", 0);
         TestUtil.testCallCount(db, "CALL apoc.nodes.group(['User'],['gender'],null,{orphans:true})", 1);
     }
 
     @Test
-    public void testGroupWithDatetimes() {
+    void testGroupWithDatetimes() {
         db.executeTransactionally(
                 """
                 UNWIND range(1, 1000) AS minutes
@@ -180,20 +175,15 @@ public class GroupingTest {
         db.executeTransactionally("MATCH (n:Foo) DELETE n");
     }
 
-    public static class TestObject {
-        final String testValues; // Values to be inserted as nodes
-        final String expectedMin; // Expected minimum value
-        final String expectedMax; // Expected maximum value
-
-        public TestObject(String testValues, String expectedMin, String expectedMax) {
-            this.testValues = testValues;
-            this.expectedMin = expectedMin;
-            this.expectedMax = expectedMax;
-        }
-    }
+    /**
+     * @param testValues  Values to be inserted as nodes
+     * @param expectedMin Expected minimum value
+     * @param expectedMax Expected maximum value
+     */
+    public record TestObject(String testValues, String expectedMin, String expectedMax) {}
 
     @Test
-    public void testGroupWithVariousProperties() {
+    void testGroupWithVariousProperties() {
         List<TestObject> testObjects = List.of(
                 new TestObject("42, 99, 12, 34", "12", "99"),
                 new TestObject("\"alpha\", \"beta\", \"zeta\"", "\"alpha\"", "\"zeta\""),
@@ -256,9 +246,7 @@ public class GroupingTest {
             RETURN result = %s AS value, result
             """,
                         expectedMin),
-                (row) -> assertTrue(
-                        "Testing: " + testValues + "; expected: " + expectedMin + "; but got: " + row.get("result"),
-                        (Boolean) row.get("value")));
+                (row) -> assertTrue((Boolean) row.get("value")));
 
         // Test for maximum value
         TestUtil.testCall(
@@ -270,16 +258,14 @@ public class GroupingTest {
             RETURN result = %s AS value, result
             """,
                         expectedMax),
-                (row) -> assertTrue(
-                        "Testing: " + testValues + "; expected: " + expectedMax + "; but got: " + row.get("result"),
-                        (Boolean) row.get("value")));
+                (row) -> assertTrue((Boolean) row.get("value")));
 
         // Delete nodes
         db.executeTransactionally("MATCH (n:Test) DELETE n");
     }
 
     @Test
-    public void testSumAndAvg() {
+    void testSumAndAvg() {
         // Create nodes in the database
         db.executeTransactionally(
                 """
@@ -321,7 +307,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testSelfRels() {
+    void testSelfRels() {
         db.executeTransactionally("CREATE (u:User {gender:'male'})-[:REL]->(u)");
 
         Relationship rel = TestUtil.singleResultFirstColumn(
@@ -336,7 +322,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterMin() {
+    void testFilterMin() {
         db.executeTransactionally(
                 "CREATE (:User {name:'Joe',gender:'male'}), (:User {gender:'female',name:'Jane'}), (:User {gender:'female',name:'Jenny'})");
         TestUtil.testResult(
@@ -349,7 +335,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterMax() {
+    void testFilterMax() {
         db.executeTransactionally(
                 "CREATE (:User {name:'Joe',gender:'male'}), (:User {gender:'female',name:'Jane'}), (:User {gender:'female',name:'Jenny'})");
         TestUtil.testResult(
@@ -362,7 +348,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterRelationshipsInclude() {
+    void testFilterRelationshipsInclude() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         assertEquals(
                 "KNOWS",
@@ -372,7 +358,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterRelationshipsExclude() {
+    void testFilterRelationshipsExclude() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         assertEquals(
                 "KNOWS",
@@ -382,7 +368,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterRelationshipsBothExcludeAndInclude() {
+    void testFilterRelationshipsBothExcludeAndInclude() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         final Map<String, String> conf = map("includeRels", "LOVES", "excludeRels", "LOVES");
 
@@ -394,7 +380,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterRelationshipsExcludeAsList() {
+    void testFilterRelationshipsExcludeAsList() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         final Map<String, Object> conf = map("excludeRels", List.of("KNOWS", "LOVES"));
 
@@ -406,7 +392,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testFilterRelationshipsIncludeAsList() {
+    void testFilterRelationshipsIncludeAsList() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u)");
         final List<String> rels = List.of("KNOWS", "LOVES");
         final Map<String, Object> conf = map("includeRels", rels);
@@ -419,7 +405,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testGroupAllLabels() {
+    void testGroupAllLabels() {
         db.executeTransactionally("CREATE (u:User {name:'Joe',gender:'male'})");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['*'],['gender'])", result -> {
             Node node = Iterators.single(result.columnAs("node"));
@@ -428,7 +414,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testLimitNodes() {
+    void testLimitNodes() {
         db.executeTransactionally("CREATE (:User {name:'Joe',gender:'male'}), (:User {name:'Jane',gender:'female'})");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['User'],['gender'],null, {limitNodes:1})", result -> {
             Node node = Iterators.single(result.columnAs("node"));
@@ -437,7 +423,7 @@ public class GroupingTest {
     }
 
     @Test
-    public void testLimitRelsNodes() {
+    void testLimitRelsNodes() {
         db.executeTransactionally(
                 "CREATE (u:User {name:'Joe',gender:'male'})-[:KNOWS]->(u), (u)-[:LOVES]->(u), (u)-[:HATES]->(u)");
         TestUtil.testResult(db, "CALL apoc.nodes.group(['User'],['gender'],null, {relsPerNode:1})", result -> {

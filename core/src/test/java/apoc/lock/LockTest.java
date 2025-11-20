@@ -18,43 +18,44 @@
  */
 package apoc.lock;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static apoc.util.TestUtil.testCall;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Collections;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.kernel.impl.locking.LockAcquisitionTimeoutException;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.TransactionFailureException;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class LockTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.lock_acquisition_timeout, Duration.ofSeconds(1));
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.lock_acquisition_timeout, Duration.ofSeconds(1));
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Lock.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void shouldReadLockBlockAWrite() throws Exception {
+    void shouldReadLockBlockAWrite() throws Exception {
 
         Node node;
         try (Transaction tx = db.beginTx()) {
@@ -69,12 +70,10 @@ public class LockTest {
 
             final Thread thread = new Thread(() -> {
                 System.out.println(Instant.now().toString() + " pre-delete");
-                try {
-                    db.executeTransactionally(
-                            "match (n) delete n", Collections.emptyMap(), result -> result.resultAsString());
-                    fail("expecting lock timeout");
-                } catch (LockAcquisitionTimeoutException e) {
-                }
+
+                // TransactionFailure due to lock timeout
+                assertThrows(TransactionFailureException.class, () -> testCall(db, "MATCH (n) DELETE n", row -> {}));
+
                 System.out.println(Instant.now().toString() + " delete");
             });
             thread.start();

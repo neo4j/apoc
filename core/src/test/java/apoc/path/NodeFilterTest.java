@@ -18,33 +18,33 @@
  */
 package apoc.path;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
 /**
  * Test path expanders with node filters (where we already have the nodes that will be used for the allowlist, denylist, endnodes, and terminator nodes
  */
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class NodeFilterTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         String movies = Util.readResourceFile("movies.cypher");
         try (Transaction tx = db.beginTx()) {
@@ -53,19 +53,14 @@ public class NodeFilterTest {
         }
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
-    @After
+    @AfterEach
     public void removeOtherLabels() {
         db.executeTransactionally(
                 "OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
     }
 
     @Test
-    public void testTerminatorNodesPruneExpansion() {
+    void testTerminatorNodesPruneExpansion() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -82,7 +77,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testEndNodesContinueTraversal() {
+    void testEndNodesContinueTraversal() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
@@ -102,7 +97,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testEndNodesAndTerminatorNodesReturnExpectedResults() {
+    void testEndNodesAndTerminatorNodesReturnExpectedResults() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
@@ -122,7 +117,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testEndNodesAndTerminatorNodesReturnExpectedResultsReversed() {
+    void testEndNodesAndTerminatorNodesReturnExpectedResultsReversed() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
@@ -140,7 +135,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testTerminatorNodesOverruleEndNodes1() {
+    void testTerminatorNodesOverruleEndNodes1() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
@@ -158,7 +153,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testTerminatorNodesOverruleEndNodes2() {
+    void testTerminatorNodesOverruleEndNodes2() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
@@ -176,7 +171,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testEndNodesWithTerminationFilterPrunesExpansion() {
+    void testEndNodesWithTerminationFilterPrunesExpansion() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -193,7 +188,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testTerminatorNodesWithEndNodeFilterPrunesExpansion() {
+    void testTerminatorNodesWithEndNodeFilterPrunesExpansion() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -211,7 +206,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testDenylistNodesInPathPrunesPath() {
+    void testDenylistNodesInPathPrunesPath() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -228,7 +223,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testDenylistNodesWithEndNodesPrunesPath() {
+    void testDenylistNodesWithEndNodesPrunesPath() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -245,7 +240,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testDenylistNodesOverridesAllOtherNodeFilters() {
+    void testDenylistNodesOverridesAllOtherNodeFilters() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -260,7 +255,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testAllowlistNodes() {
+    void testAllowlistNodes() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -279,7 +274,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testAllowlistNodesIncludesEndNodes() {
+    void testAllowlistNodesIncludesEndNodes() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -298,7 +293,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testAllowlistNodesIncludesTerminatorNodes() {
+    void testAllowlistNodesIncludesTerminatorNodes() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -315,7 +310,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testAllowlistNodesAndLabelFiltersMustAgreeToInclude1() {
+    void testAllowlistNodesAndLabelFiltersMustAgreeToInclude1() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -332,7 +327,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testAllowlistNodesAndLabelFiltersMustAgreeToInclude2() {
+    void testAllowlistNodesAndLabelFiltersMustAgreeToInclude2() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -349,14 +344,14 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresDenylistNodes() {
+    void testStartNodeWithFilterStartNodeFalseIgnoresDenylistNodes() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{denylistNodes:[m], maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(44L, row.get("c")));
     }
 
     @Test
-    public void testDenylistNodesStillAppliesBelowMinLevel() {
+    void testDenylistNodesStillAppliesBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -371,14 +366,14 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresAllowlistNodesFilter() {
+    void testStartNodeWithFilterStartNodeFalseIgnoresAllowlistNodesFilter() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{allowlistNodes:[k], minLevel:1, maxLevel:1, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
-    public void testAllowlistNodesStillAppliesBelowMinLevel() {
+    void testAllowlistNodesStillAppliesBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -393,35 +388,35 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresTerminatorNodesFilter() {
+    void testStartNodeWithFilterStartNodeFalseIgnoresTerminatorNodesFilter() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{terminatorNodes:[m,k], maxLevel:2, filterStartNode:false}) yield path WITH k, path WHERE last(nodes(path)) = k RETURN count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
-    public void testTerminatorNodesDoesNotApplyBelowMinLevel() {
+    void testTerminatorNodesDoesNotApplyBelowMinLevel() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{terminatorNodes:[m,k], minLevel:1, maxLevel:2, filterStartNode:true}) yield path WITH k, path WHERE last(nodes(path)) = k RETURN count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
-    public void testStartNodeWithFilterStartNodeFalseIgnoresEndNodesFilter() {
+    void testStartNodeWithFilterStartNodeFalseIgnoresEndNodesFilter() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{endNodes:[m,k], maxLevel:2, filterStartNode:false}) yield path RETURN count(DISTINCT last(nodes(path))) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
-    public void testEndNodesDoesNotApplyBelowMinLevel() {
+    void testEndNodesDoesNotApplyBelowMinLevel() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}), (k:Person {name:'Keanu Reeves'}) CALL apoc.path.expandConfig(m,{endNodes:[m,k], minLevel:1, maxLevel:2, filterStartNode:true}) yield path RETURN count(DISTINCT last(nodes(path))) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(1L, row.get("c")));
     }
 
     @Test
-    public void testAllowlistNodesTakesPriority() {
+    void testAllowlistNodesTakesPriority() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -438,7 +433,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testDeprecatedAllowlistStillWorks() {
+    void testDeprecatedAllowlistStillWorks() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -455,7 +450,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testDenylistNodesTakesPriority() {
+    void testDenylistNodesTakesPriority() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -472,7 +467,7 @@ public class NodeFilterTest {
     }
 
     @Test
-    public void testDeprecatedDenylistNodesStillWorks() {
+    void testDeprecatedDenylistNodesStillWorks() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
