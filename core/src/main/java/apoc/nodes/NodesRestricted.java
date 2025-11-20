@@ -49,6 +49,7 @@ import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
 import org.neo4j.storageengine.api.RelationshipSelection;
+import org.neo4j.token.api.TokenConstants;
 
 public class NodesRestricted {
 
@@ -255,12 +256,38 @@ public class NodesRestricted {
 
     @UserFunction("apoc.nodes.isDense")
     @Description("Returns true if the given `NODE` is a dense node.")
-    public boolean isDense(@Name(value = "node", description = "The node to check for being dense or not.") Node node) {
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public boolean isDenseCypher5(
+            @Name(value = "node", description = "The node to check for being dense or not.") Node node) {
+        return isDense(node, "");
+    }
+
+    @UserFunction("apoc.nodes.isDense")
+    @Description("Returns true if the given `NODE` is a dense node.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+    public boolean isDense(
+            @Name(value = "node", description = "The node to check for being dense or not.") Node node,
+            @Name(
+                            value = "relationshipType",
+                            description = "The type of the relationship to check the density of.",
+                            defaultValue = "")
+                    String relationshipType) {
         try (NodeCursor nodeCursor = ktx.cursors().allocateNodeCursor(ktx.cursorContext())) {
             final long id = ((InternalTransaction) tx).elementIdMapper().nodeId(node.getElementId());
             ktx.dataRead().singleNode(id, nodeCursor);
             if (nodeCursor.next()) {
-                return nodeCursor.supportsFastDegreeLookup();
+                var supportsFastDegreeLookup = nodeCursor.supportsFastDegreeLookup();
+                if (supportsFastDegreeLookup && !relationshipType.isBlank()) {
+                    int denseThreshold = 50;
+                    TokenRead tokenRead = ktx.tokenRead();
+                    int relTypeId = tokenRead.relationshipType(relationshipType);
+                    if (relTypeId != TokenConstants.NO_TOKEN) {
+                        return nodeCursor.degreeWithMax(
+                                        denseThreshold, RelationshipSelection.selection(relTypeId, Direction.BOTH))
+                                >= denseThreshold;
+                    }
+                }
+                return supportsFastDegreeLookup;
             } else {
                 throw new IllegalArgumentException("node with id " + id + " does not exist.");
             }
