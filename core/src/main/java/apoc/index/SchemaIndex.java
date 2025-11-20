@@ -50,8 +50,16 @@ public class SchemaIndex {
     @Procedure("apoc.schema.properties.distinct")
     @Description("Returns all distinct `NODE` property values for the given key.")
     public Stream<SchemaListResult> distinct(
-            @Name(value = "label", description = "The node label to find distinct properties on.") String label,
-            @Name(value = "key", description = "The name of the property to find distinct values of.") String key) {
+            @Name(
+                            value = "label",
+                            description =
+                                    "The node label to find distinct property values on. If set to ``, the distinct property values for all labels will be found.")
+                    String label,
+            @Name(
+                            value = "key",
+                            description =
+                                    "The name of the property to find distinct values of. If set to ``, the distinct property values for the specified label and all property names will be found.")
+                    String key) {
         List<Object> values = distinctCount(label, key)
                 .map(propertyValueCount -> propertyValueCount.value)
                 .collect(Collectors.toList());
@@ -62,12 +70,17 @@ public class SchemaIndex {
     @Procedure("apoc.schema.properties.distinctCount")
     @Description("Returns all distinct property values and counts for the given key.")
     public Stream<PropertyValueCount> distinctCount(
-            @Name(value = "label", defaultValue = "", description = "The node label to count distinct properties on.")
+            @Name(
+                            value = "label",
+                            defaultValue = "",
+                            description =
+                                    "The node label to count distinct properties on. If set to ``, the distinct property values for all labels will be found. The default is: ``")
                     String labelName,
             @Name(
                             value = "key",
                             defaultValue = "",
-                            description = "The name of the property to count distinct values of.")
+                            description =
+                                    "The name of the property to count distinct values of. If set to ``, the distinct property values for the specified label and all property names will be found. The default is: ``")
                     String keyName) {
         String query;
 
