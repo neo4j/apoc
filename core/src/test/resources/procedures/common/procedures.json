@@ -7338,13 +7338,13 @@
     "argumentDescription": [
       {
         "name": "label",
-        "description": "The node label to find distinct properties on.",
+        "description":  "The node label to find distinct property values on. If set to ``, the distinct property values for all labels will be found.",
         "isDeprecated": false,
         "type": "STRING"
       },
       {
         "name": "key",
-        "description": "The name of the property to find distinct values of.",
+        "description": "The name of the property to find distinct values of. If set to ``, the distinct property values for the specified label and all property names will be found.",
         "isDeprecated": false,
         "type": "STRING"
       }
@@ -7385,14 +7385,14 @@
     "argumentDescription": [
       {
         "name": "label",
-        "description": "The node label to count distinct properties on.",
+        "description": "The node label to count distinct properties on. If set to ``, the distinct property values for all labels will be found. The default is: ``",
         "isDeprecated": false,
         "default": "DefaultParameterValue{value=, type=STRING}",
         "type": "STRING"
       },
       {
         "name": "key",
-        "description": "The name of the property to count distinct values of.",
+        "description": "The name of the property to count distinct values of. If set to ``, the distinct property values for the specified label and all property names will be found. The default is: ``",
         "isDeprecated": false,
         "default": "DefaultParameterValue{value=, type=STRING}",
         "type": "STRING"
