@@ -22,8 +22,8 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testResult;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.configuration.GraphDatabaseSettings.lock_acquisition_timeout;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
@@ -31,42 +31,39 @@ import apoc.coll.Coll;
 import apoc.lock.Lock;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author AgileLARUS
- *
- * @since 03-04-2017
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class RenameTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule().withSetting(lock_acquisition_timeout, Duration.ofSeconds(5));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(lock_acquisition_timeout, Duration.ofSeconds(5));
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Rename.class, Coll.class, Lock.class, Utils.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testRenameLabelForSomeNodes() {
+    void testRenameLabelForSomeNodes() {
         List<Node> nodes =
                 TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
         testCall(
@@ -80,7 +77,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameLabel() {
+    void testRenameLabel() {
         db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})");
         testCall(
                 db,
@@ -93,7 +90,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameLabelDoesntAllowCypherInjection() {
+    void testRenameLabelDoesntAllowCypherInjection() {
         db.executeTransactionally("UNWIND range(0,9) AS id CREATE (f:Foo {id: id})");
         testCall(
                 db,
@@ -119,7 +116,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameLabelDoesntAllowCypherInjectionForSomeNodes() {
+    void testRenameLabelDoesntAllowCypherInjectionForSomeNodes() {
         List<Node> nodes =
                 TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
         testCall(
@@ -155,7 +152,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameRelationship() {
+    void testRenameRelationship() {
         db.executeTransactionally(
                 "UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
         testCall(
@@ -169,7 +166,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameTypeForSomeRelationships() {
+    void testRenameTypeForSomeRelationships() {
         db.executeTransactionally(
                 "UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 
@@ -185,7 +182,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameTypeDoesntAllowCypherInjection() {
+    void testRenameTypeDoesntAllowCypherInjection() {
         db.executeTransactionally(
                 "UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
         testCall(
@@ -212,7 +209,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameTypeDoesntAllowCypherInjectionForSomeRelationships() {
+    void testRenameTypeDoesntAllowCypherInjectionForSomeRelationships() {
         db.executeTransactionally(
                 "UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
 
@@ -252,7 +249,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameNodesProperty() {
+    void testRenameNodesProperty() {
         TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
         testCall(
                 db,
@@ -265,7 +262,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenamePropertyForSomeNodes() {
+    void testRenamePropertyForSomeNodes() {
         List<Node> nodes =
                 TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
         db.executeTransactionally("Create constraint for (n:Foo) require n.name is UNIQUE");
@@ -280,7 +277,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenamePropertyDoesntAllowCypherInjection() {
+    void testRenamePropertyDoesntAllowCypherInjection() {
         db.executeTransactionally("UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id})");
         testCall(
                 db,
@@ -306,7 +303,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenamePropertyDoesntAllowCypherInjectionForSomeNodes() {
+    void testRenamePropertyDoesntAllowCypherInjectionForSomeNodes() {
         List<Node> nodes =
                 TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
         testCall(
@@ -342,7 +339,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameTypeProperty() {
+    void testRenameTypeProperty() {
         db.executeTransactionally(
                 "UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
         testCall(
@@ -356,7 +353,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameTypePropertyDoesntAllowCypherInjection() {
+    void testRenameTypePropertyDoesntAllowCypherInjection() {
         db.executeTransactionally(
                 "UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
         testCall(
@@ -383,7 +380,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameTypePropertyDoesntAllowCypherInjectionForSomeRelationships() {
+    void testRenameTypePropertyDoesntAllowCypherInjectionForSomeRelationships() {
         db.executeTransactionally(
                 "UNWIND range(0,9) as id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' +id}]->(:Fii)");
         List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
@@ -412,7 +409,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testLockException() {
+    void testLockException() {
         String query =
                 """
 				MERGE (account1:Account{ID: 1})
@@ -449,7 +446,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenamePropertyForSomeRelationship() {
+    void testRenamePropertyForSomeRelationship() {
         db.executeTransactionally(
                 "UNWIND range(0,9) AS id CREATE (f:Foo {id: id})-[:KNOWS {name: 'name' + id}]->(l:Fii {id: id})");
         List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r LIMIT 2");
@@ -464,7 +461,7 @@ public class RenameTest {
     }
 
     @Test
-    public void testRenameWithSameValues() {
+    void testRenameWithSameValues() {
         db.executeTransactionally("CREATE (n:ToRename {a: 1})-[:REL_TO_RENAME {a: 1}]->(:Other)");
         testCall(db, "CALL apoc.refactor.rename.label('ToRename', 'ToRename')", r -> assertEquals(1L, r.get("total")));
         testCallCount(db, "MATCH (n:ToRename {a: 1}) RETURN n", 1);

@@ -18,41 +18,34 @@
  */
 package apoc.path;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.*;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 19.02.18
- */
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class PathsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Paths.class);
         db.executeTransactionally("CREATE (a:A)-[:NEXT]->(b:B)-[:NEXT]->(c:C)-[:NEXT]->(d:D)");
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void createFull() {
+    void createFull() {
         TestUtil.testCall(
                 db,
                 "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.create(a, relationships(path)) as p",
@@ -60,7 +53,7 @@ public class PathsTest {
     }
 
     @Test
-    public void createEmpty() {
+    void createEmpty() {
         TestUtil.testCall(db, "RETURN apoc.path.create(null) as p", (row) -> assertNull(row.get("p")));
 
         TestUtil.testCall(db, "MATCH (a:A) RETURN apoc.path.create(a) as p", (row) -> assertPath(row, 0, "A", "A"));
@@ -73,7 +66,7 @@ public class PathsTest {
     }
 
     @Test
-    public void slice() {
+    void slice() {
         TestUtil.testCall(
                 db,
                 "MATCH path = (a:A)-[:NEXT*]->(d:D) RETURN apoc.path.slice(path,1,1) as p",
@@ -98,7 +91,7 @@ public class PathsTest {
     }
 
     @Test
-    public void combineFail() {
+    void combineFail() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> TestUtil.testCall(
@@ -109,7 +102,7 @@ public class PathsTest {
     }
 
     @Test
-    public void combine() {
+    void combine() {
         TestUtil.testCall(
                 db,
                 "MATCH p1 = (a:A)-[:NEXT]->(b:B), p2 = (b)-[:NEXT]->() RETURN apoc.path.combine(p1,p2) as p",
@@ -125,26 +118,26 @@ public class PathsTest {
     }
 
     @Test
-    public void elements() {
+    void elements() {
         TestUtil.testCall(db, "MATCH p = (a:A) RETURN apoc.path.elements(p) as e", (row) -> {
             List<Entity> pc = (List<Entity>) row.get("e");
             assertEquals(1, pc.size());
-            assertEquals(true, ((Node) pc.get(0)).hasLabel(Label.label("A")));
+            assertTrue(((Node) pc.get(0)).hasLabel(Label.label("A")));
         });
         TestUtil.testCall(db, "MATCH p = (a:A)-->() RETURN apoc.path.elements(p) as e", (row) -> {
             List<Entity> pc = (List<Entity>) row.get("e");
             assertEquals(3, pc.size());
-            assertEquals(true, ((Node) pc.get(0)).hasLabel(Label.label("A")));
-            assertEquals(true, ((Relationship) pc.get(1)).isType(RelationshipType.withName("NEXT")));
-            assertEquals(true, ((Node) pc.get(2)).hasLabel(Label.label("B")));
+            assertTrue(((Node) pc.get(0)).hasLabel(Label.label("A")));
+            assertTrue(((Relationship) pc.get(1)).isType(RelationshipType.withName("NEXT")));
+            assertTrue(((Node) pc.get(2)).hasLabel(Label.label("B")));
         });
     }
 
     private void assertPath(Map<String, Object> row, int length, String startLabel, String endLabel) {
         Path p = (Path) row.get("p");
         assertEquals(length, p.length());
-        assertEquals(true, p.startNode().hasLabel(Label.label(startLabel)));
-        assertEquals(true, p.endNode().hasLabel(Label.label(endLabel)));
+        assertTrue(p.startNode().hasLabel(Label.label(startLabel)));
+        assertTrue(p.endNode().hasLabel(Label.label(endLabel)));
         assertEquals(length > 0, p.relationships().iterator().hasNext());
         for (Relationship rel : p.relationships()) {
             assertEquals("NEXT", rel.getType().name());

@@ -19,86 +19,75 @@
 package apoc.math;
 
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class MathsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Maths.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testMaxLong() {
+    void testMaxLong() {
         testCall(db, "RETURN apoc.math.maxLong() as max", (row) -> assertEquals(Long.MAX_VALUE, row.get("max")));
     }
 
     @Test
-    public void testMinLong() {
+    void testMinLong() {
         testCall(db, "RETURN apoc.math.minLong() as min", (row) -> assertEquals(Long.MIN_VALUE, row.get("min")));
     }
 
     @Test
-    public void testMaxDouble() {
+    void testMaxDouble() {
         testCall(db, "RETURN apoc.math.maxDouble() as max", (row) -> assertEquals(Double.MAX_VALUE, row.get("max")));
     }
 
     @Test
-    public void testMinDouble() {
+    void testMinDouble() {
         testCall(db, "RETURN apoc.math.minDouble() as min", (row) -> assertEquals(Double.MIN_VALUE, row.get("min")));
     }
 
     @Test
-    public void testMaxInt() {
+    void testMaxInt() {
         testCall(
                 db,
                 "RETURN apoc.math.maxInt() as max",
-                (row) -> assertEquals(Long.valueOf(Integer.MAX_VALUE), row.get("max")));
+                (row) -> assertEquals((long) Integer.MAX_VALUE, row.get("max")));
     }
 
     @Test
-    public void testMinInt() {
+    void testMinInt() {
         testCall(
                 db,
                 "RETURN apoc.math.minInt() as min",
-                (row) -> assertEquals(Long.valueOf(Integer.MIN_VALUE), row.get("min")));
+                (row) -> assertEquals((long) Integer.MIN_VALUE, row.get("min")));
     }
 
     @Test
-    public void testMaxByte() {
-        testCall(
-                db,
-                "RETURN apoc.math.maxByte() as max",
-                (row) -> assertEquals(Long.valueOf(Byte.MAX_VALUE), row.get("max")));
+    void testMaxByte() {
+        testCall(db, "RETURN apoc.math.maxByte() as max", (row) -> assertEquals((long) Byte.MAX_VALUE, row.get("max")));
     }
 
     @Test
-    public void testMinByte() {
-        testCall(
-                db,
-                "RETURN apoc.math.minByte() as min",
-                (row) -> assertEquals(Long.valueOf(Byte.MIN_VALUE), row.get("min")));
+    void testMinByte() {
+        testCall(db, "RETURN apoc.math.minByte() as min", (row) -> assertEquals((long) Byte.MIN_VALUE, row.get("min")));
     }
 
     @Test
-    public void testSigmoid() {
+    void testSigmoid() {
         testCall(
                 db,
                 "RETURN apoc.math.sigmoid(2.5) as value",
@@ -107,7 +96,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testSigmoidPrime() {
+    void testSigmoidPrime() {
         testCall(
                 db,
                 "RETURN apoc.math.sigmoidPrime(2.5) as value",
@@ -116,7 +105,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testHyperbolicTan() {
+    void testHyperbolicTan() {
         testCall(
                 db,
                 "RETURN apoc.math.tanh(1.5) as value",
@@ -125,7 +114,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testHyperbolicCotan() {
+    void testHyperbolicCotan() {
         testCall(
                 db,
                 "RETURN apoc.math.coth(3.5) as value",
@@ -135,7 +124,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testHyperbolicSin() {
+    void testHyperbolicSin() {
         testCall(
                 db,
                 "RETURN apoc.math.sinh(1.5) as value",
@@ -144,7 +133,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testHyperbolicCos() {
+    void testHyperbolicCos() {
         testCall(
                 db,
                 "RETURN apoc.math.cosh(1.5) as value",
@@ -153,7 +142,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testHyperbolicSecant() {
+    void testHyperbolicSecant() {
         testCall(
                 db,
                 "RETURN apoc.math.sech(1.5) as value",
@@ -162,7 +151,7 @@ public class MathsTest {
     }
 
     @Test
-    public void testHyperbolicCosecant() {
+    void testHyperbolicCosecant() {
         testCall(
                 db,
                 "RETURN apoc.math.csch(1.5) as value",

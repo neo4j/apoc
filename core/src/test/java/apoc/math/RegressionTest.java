@@ -21,37 +21,31 @@ package apoc.math;
 import static org.junit.Assert.assertEquals;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author <a href="mailto:ali.arslan@rwth-aachen.de">AliArslan</a>
- */
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class RegressionTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Regression.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testCalculateRegr() {
-        db.executeTransactionally("CREATE " + "(:REGR_TEST {x_property: 1 , y_property: 2 }),"
-                + "(:REGR_TEST {x_property: 2 , y_property: 3 }),"
-                + "(:REGR_TEST {y_property: 10000 }),"
-                + "(:REGR_TEST {x_property: 3 , y_property: 6 })");
+    void testCalculateRegr() {
+        db.executeTransactionally(
+                """
+                CREATE (:REGR_TEST {x_property: 1 , y_property: 2 }),
+                (:REGR_TEST {x_property: 2 , y_property: 3 }),
+                (:REGR_TEST {y_property: 10000 }),
+                (:REGR_TEST {x_property: 3 , y_property: 6 })""");
 
         SimpleRegression expectedRegr = new SimpleRegression();
         expectedRegr.addData(1, 1);
@@ -66,11 +60,13 @@ public class RegressionTest {
     }
 
     @Test
-    public void testRegrR2isOne() {
-        db.executeTransactionally("CREATE " + "(:REGR_TEST2 {x_property: 1 , y_property: 1 }),"
-                + "(:REGR_TEST2 {x_property: 1 , y_property: 1 }),"
-                + "(:REGR_TEST2 {y_property: 10000 }),"
-                + "(:REGR_TEST2 {x_property: 1 , y_property: 1 })");
+    void testRegrR2isOne() {
+        db.executeTransactionally(
+                """
+                CREATE (:REGR_TEST2 {x_property: 1 , y_property: 1 }),
+                (:REGR_TEST2 {x_property: 1 , y_property: 1 }),
+                (:REGR_TEST2 {y_property: 10000 }),
+                (:REGR_TEST2 {x_property: 1 , y_property: 1 })""");
 
         SimpleRegression expectedRegr = new SimpleRegression();
         expectedRegr.addData(1, 1);

@@ -18,27 +18,27 @@
  */
 package apoc.neighbors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class NeighborsTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Neighbors.class);
         db.executeTransactionally("CREATE (a:First), " + "(b:Neighbor{name: 'b'}), "
                 + "(c:Neighbor{name: 'c'}), "
@@ -49,13 +49,8 @@ public class NeighborsTest {
                 + "(c)-[:KNOWS]->(d) ");
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void getNeighbors2Hops() {
+    void getNeighbors2Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.tohop(n,'KNOWS>', 2) YIELD node AS neighbor "
@@ -70,7 +65,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighbors3Hops() {
+    void getNeighbors3Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.tohop(n,'KNOWS>', 3) YIELD node AS neighbor "
@@ -85,7 +80,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsCount2Hops() {
+    void getNeighborsCount2Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.tohop.count(n,'KNOWS>', 2) YIELD value AS number "
@@ -94,7 +89,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsCount3Hops() {
+    void getNeighborsCount3Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.tohop.count(n,'KNOWS>', 3) YIELD value AS number "
@@ -103,7 +98,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsByHop2Hops() {
+    void getNeighborsByHop2Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.byhop(n,'KNOWS>', 2) YIELD nodes AS neighbor "
@@ -122,7 +117,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsByHop3Hops() {
+    void getNeighborsByHop3Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.byhop(n,'KNOWS>', 3) YIELD nodes AS neighbor "
@@ -141,7 +136,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsByHopCount2Hops() {
+    void getNeighborsByHopCount2Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.byhop.count(n,'KNOWS>', 2) YIELD value AS numbers "
@@ -153,7 +148,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsByHopCount3Hops() {
+    void getNeighborsByHopCount3Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.byhop.count(n,'KNOWS>', 3) YIELD value AS numbers "
@@ -165,7 +160,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsAt2Hops() {
+    void getNeighborsAt2Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.athop(n,'KNOWS>', 2) YIELD node AS neighbor "
@@ -180,7 +175,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsAt3Hops() {
+    void getNeighborsAt3Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.athop(n,'KNOWS>', 3) YIELD node AS neighbor "
@@ -195,7 +190,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsCountAt2Hops() {
+    void getNeighborsCountAt2Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.athop.count(n,'KNOWS>', 2) YIELD value AS number "
@@ -204,7 +199,7 @@ public class NeighborsTest {
     }
 
     @Test
-    public void getNeighborsCountAt3Hops() {
+    void getNeighborsCountAt3Hops() {
         TestUtil.testCall(
                 db,
                 "MATCH (n:First) WITH n " + "CALL apoc.neighbors.athop.count(n,'KNOWS>', 3) YIELD value AS number "

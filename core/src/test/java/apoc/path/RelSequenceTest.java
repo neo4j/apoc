@@ -18,31 +18,31 @@
  */
 package apoc.path;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class RelSequenceTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, PathExplorer.class);
         String movies = Util.readResourceFile("movies.cypher");
         String additionalLink =
@@ -54,13 +54,8 @@ public class RelSequenceTest {
         }
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testBasicRelSequence() {
+    void testBasicRelSequence() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie'}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -84,7 +79,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWithMinLevel() {
+    void testRelSequenceWithMinLevel() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie', minLevel:3}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -107,7 +102,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWithMaxLevel() {
+    void testRelSequenceWithMaxLevel() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED', labelFilter:'>Person,Movie', maxLevel:2}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -130,7 +125,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelSequenceWhenNotBeginningAtStart() {
+    void testRelSequenceWhenNotBeginningAtStart() {
         String query =
                 "MATCH (t:Person {name: 'Tom Hanks'}) CALL apoc.path.expandConfig(t,{relationshipFilter:'ACTED_IN>,<DIRECTED,ACTED_IN>', labelFilter:'Movie,>Person', beginSequenceAtStart:false}) yield path with distinct last(nodes(path)) as node return collect(node.name) as names";
         TestUtil.testCall(db, query, (row) -> {
@@ -154,7 +149,7 @@ public class RelSequenceTest {
     }
 
     @Test
-    public void testRelationshipFilterWorksWithoutTypeWithRelSequence() {
+    void testRelationshipFilterWorksWithoutTypeWithRelSequence() {
         TestUtil.testResult(
                 db,
                 "MATCH (k:Person {name:'Keanu Reeves'}) "
