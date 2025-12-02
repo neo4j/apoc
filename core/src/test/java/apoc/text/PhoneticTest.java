@@ -19,103 +19,92 @@
 package apoc.text;
 
 import static apoc.util.TestUtil.testCall;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension()
 public class PhoneticTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Phonetic.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void shouldComputeSimpleSoundexEncoding() {
+    void shouldComputeSimpleSoundexEncoding() {
         testCall(
                 db,
                 "RETURN apoc.text.phonetic('HellodearUser!') as value",
-                (row) -> assertThat(row.get("value"), equalTo("H436")));
+                (row) -> assertEquals("H436", row.get("value")));
     }
 
     @Test
-    public void shouldComputeSimpleSoundexEncodingOfNull() {
-        testCall(db, "RETURN apoc.text.phonetic(null) as value", (row) -> assertThat(row.get("value"), equalTo(null)));
+    void shouldComputeSimpleSoundexEncodingOfNull() {
+        testCall(db, "RETURN apoc.text.phonetic(null) as value", (row) -> assertNull(row.get("value")));
     }
 
     @Test
-    public void shouldComputeEmptySoundexEncodingForTheEmptyString() {
-        testCall(db, "RETURN apoc.text.phonetic('') as value", (row) -> assertThat(row.get("value"), equalTo("")));
+    void shouldComputeEmptySoundexEncodingForTheEmptyString() {
+        testCall(db, "RETURN apoc.text.phonetic('') as value", (row) -> assertEquals("", row.get("value")));
     }
 
     @Test
-    public void shouldComputeSoundexEncodingOfManyWords() {
+    void shouldComputeSoundexEncodingOfManyWords() {
         testCall(
                 db,
                 "RETURN apoc.text.phonetic('Hello, dear User!') as value",
-                (row) -> assertThat(row.get("value"), equalTo("H400D600U260")));
+                (row) -> assertEquals("H400D600U260", row.get("value")));
     }
 
     @Test
-    public void shouldComputeSoundexEncodingOfManyWordsEvenIfTheStringContainsSomeExtraChars() {
+    void shouldComputeSoundexEncodingOfManyWordsEvenIfTheStringContainsSomeExtraChars() {
         testCall(
                 db,
                 "RETURN apoc.text.phonetic('  ,Hello,  dear User 5!') as value",
-                (row) -> assertThat(row.get("value"), equalTo("H400D600U260")));
+                (row) -> assertEquals("H400D600U260", row.get("value")));
     }
 
     @Test
-    public void shouldComputeSoundexDifference() {
+    void shouldComputeSoundexDifference() {
         testCall(
                 db,
                 "CALL apoc.text.phoneticDelta('Hello Mr Rabbit', 'Hello Mr Ribbit')",
-                (row) -> assertThat(row.get("delta"), equalTo(4L)));
+                (row) -> assertEquals(4L, row.get("delta")));
     }
 
     @Test
-    public void shoudlComputeDoubleMetaphone() {
+    void shoudlComputeDoubleMetaphone() {
         testCall(
                 db,
                 "RETURN apoc.text.doubleMetaphone('Apoc') as value",
-                (row) -> assertThat(row.get("value"), equalTo("APK")));
+                (row) -> assertEquals("APK", row.get("value")));
     }
 
     @Test
-    public void shoudlComputeDoubleMetaphoneOfNull() {
-        testCall(
-                db,
-                "RETURN apoc.text.doubleMetaphone(NULL) as value",
-                (row) -> assertThat(row.get("value"), equalTo(null)));
+    void shouldComputeDoubleMetaphoneOfNull() {
+        testCall(db, "RETURN apoc.text.doubleMetaphone(NULL) as value", (row) -> assertNull(row.get("value")));
     }
 
     @Test
-    public void shoudlComputeDoubleMetaphoneForTheEmptyString() {
-        testCall(
-                db,
-                "RETURN apoc.text.doubleMetaphone('') as value",
-                (row) -> assertThat(row.get("value"), equalTo("")));
+    void shouldComputeDoubleMetaphoneForTheEmptyString() {
+        testCall(db, "RETURN apoc.text.doubleMetaphone('') as value", (row) -> assertEquals("", row.get("value")));
     }
 
     @Test
-    public void shouldComputeDoubleMetaphoneOfManyWords() {
+    void shouldComputeDoubleMetaphoneOfManyWords() {
         testCall(
                 db,
                 "RETURN apoc.text.doubleMetaphone('Hello, dear User!') as value    ",
-                (row) -> assertThat(row.get("value"), equalTo("HLTRASR")));
+                (row) -> assertEquals("HLTRASR", row.get("value")));
     }
 }

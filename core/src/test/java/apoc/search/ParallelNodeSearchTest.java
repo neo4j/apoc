@@ -18,36 +18,30 @@
  */
 package apoc.search;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
 import apoc.util.Util;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(createDatabasePerTest = false)
 public class ParallelNodeSearchTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void initDb() {
+    @BeforeAll
+    void initDb() {
         TestUtil.registerProcedure(db, ParallelNodeSearch.class);
-
         db.executeTransactionally(Util.readResourceFile("movies.cypher"));
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testMultiSearchNode() {
+    void testMultiSearchNode() {
         String query =
                 "call apoc.search.node('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield node as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(6L, row.get("c")));
@@ -60,7 +54,7 @@ public class ParallelNodeSearchTest {
     }
 
     @Test
-    public void testMultiSearchNodeAll() {
+    void testMultiSearchNodeAll() {
         String query =
                 "call apoc.search.nodeAll('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield node as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(6L, row.get("c")));
@@ -73,7 +67,7 @@ public class ParallelNodeSearchTest {
     }
 
     @Test
-    public void testMultiSearchNodeReduced() {
+    void testMultiSearchNodeReduced() {
         String query =
                 "call apoc.search.nodeReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield id as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(6L, row.get("c")));
@@ -86,7 +80,7 @@ public class ParallelNodeSearchTest {
     }
 
     @Test
-    public void testMultiSearchNodeAllReduced() {
+    void testMultiSearchNodeAllReduced() {
         String query =
                 "call apoc.search.nodeAllReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') yield labels as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(6L, row.get("c")));
@@ -99,7 +93,7 @@ public class ParallelNodeSearchTest {
     }
 
     @Test
-    public void testMultiSearchNodeAllReducedMapParam() {
+    void testMultiSearchNodeAllReducedMapParam() {
         String query =
                 "call apoc.search.nodeAllReduced({Person: 'name', Movie: ['title','tagline']},'CONTAINS','her') yield labels as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(6L, row.get("c")));
@@ -112,14 +106,14 @@ public class ParallelNodeSearchTest {
     }
 
     @Test
-    public void testMultiSearchNodeNumberComparison() {
+    void testMultiSearchNodeNumberComparison() {
         String query =
                 "call apoc.search.nodeAllReduced({Person: 'born', Movie: ['released']},'>',2000) yield labels as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(12L, row.get("c")));
     }
 
     @Test
-    public void testMultiSearchNodeNumberExactComparison() {
+    void testMultiSearchNodeNumberExactComparison() {
         String query =
                 "call apoc.search.nodeAllReduced({Person: 'born', Movie: ['released']},'=',2000) yield labels as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(3L, row.get("c")));

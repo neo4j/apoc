@@ -18,27 +18,26 @@
  */
 package apoc.spatial;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.result.DistancePathResult;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.*;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension()
 public class DistanceTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
     private static final String LABEL = "Point";
     private static final String LAT = "latitude";
@@ -46,18 +45,13 @@ public class DistanceTest {
     private static final String NAME = "name";
     private static final String RELATES = "RELATES";
 
-    @BeforeClass
-    public static void setup() {
+    @BeforeAll
+    void setup() {
         TestUtil.registerProcedure(db, Distance.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testSortingPathsOnDistance() {
+    void testSortingPathsOnDistance() {
         Distance distanceProc = new Distance();
         createPoints();
         int i = 0;

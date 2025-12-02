@@ -104,7 +104,7 @@ public class NodesTest {
     }
 
     @Test
-    public void isDenseWithRelType() {
+    void isDenseWithRelType() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) WITH f UNWIND range(1,100) as id CREATE (f)-[:SELF]->(f)");
 
@@ -129,7 +129,7 @@ public class NodesTest {
     }
 
     @Test
-    public void isDenseWithRelTypeUnderThreshold() {
+    void isDenseWithRelTypeUnderThreshold() {
         db.executeTransactionally(
                 "CREATE (f:Foo) CREATE (b:Bar) WITH f UNWIND range(1,49) as id CREATE (f)-[:SELF]->(f)");
 

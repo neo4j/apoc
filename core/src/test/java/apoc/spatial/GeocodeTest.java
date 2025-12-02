@@ -21,14 +21,15 @@ package apoc.spatial;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import inet.ipaddr.IPAddressString;
 import java.io.InputStream;
 import java.time.Duration;
@@ -38,14 +39,18 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import org.junit.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.internal.helpers.collection.Iterators;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class GeocodeTest {
 
     private static final String BLOCKED_ADDRESS = "127.168.0.0";
@@ -56,42 +61,47 @@ public class GeocodeTest {
     private static final String URL_FORMAT = "%s://%s/geocode/v1/json?q=PLACE&key=KEY";
     private static final String REVERSE_URL_FORMAT = "%s://%s/geocode/v1/json?q=LAT+LNG&key=KEY";
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString(BLOCKED_ADDRESS)));
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void initDb() {
-        TestUtil.registerProcedure(db, Geocode.class);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString(BLOCKED_ADDRESS)));
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void initDb() {
+        TestUtil.registerProcedure(db, Geocode.class);
     }
 
     // -- with config map
     @Test
-    public void testWrongUrlButViaOtherProvider() throws Exception {
+    void testWrongUrlButViaOtherProvider() throws Exception {
         // wrong url but doesn't fail because provider is osm, not opencage
         testGeocodeWithThrottling(
                 "osm", false, map("url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"));
     }
 
-    @Test(expected = QueryExecutionException.class)
-    public void testWrongUrlWithOpenCage() throws Exception {
+    @Test
+    void testWrongUrlWithOpenCage() throws Exception {
         // overwrite ApocConfig provider
-        testGeocodeWithThrottling(
-                "osm",
-                false,
-                map("provider", "opencage", "url", "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111"));
+        assertThrows(
+                QueryExecutionException.class,
+                () -> testGeocodeWithThrottling(
+                        "osm",
+                        false,
+                        map(
+                                "provider",
+                                "opencage",
+                                "url",
+                                "https://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY111")));
     }
 
     // -- with apoc config
 
     @Test
-    public void testGeocodeWithBlockedAddressWithApocConf() {
+    void testGeocodeWithBlockedAddressWithApocConf() {
         final String geocodeBaseConfig = Geocode.PREFIX + ".opencage";
         apocConfig().setProperty(geocodeBaseConfig + ".key", "myKey");
 
@@ -122,7 +132,7 @@ public class GeocodeTest {
     }
 
     @Test
-    public void testGeocodeWithBlockedAddressWithConfigMap() {
+    void testGeocodeWithBlockedAddressWithConfigMap() {
         Stream.of("https", "http", "ftp").forEach(protocol -> {
             final String nonBlockedUrl = String.format(URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
             final String nonBlockedReverseUrl = String.format(REVERSE_URL_FORMAT, protocol, NON_BLOCKED_ADDRESS);
@@ -170,16 +180,16 @@ public class GeocodeTest {
                 assertThrows(QueryExecutionException.class, () -> testGeocode("opencage", 100, reverseGeocode, conf));
 
         final String actualMsgErr = e.getMessage();
-        assertTrue("Actual err. message is " + actualMsgErr, actualMsgErr.contains(expectedMsgError));
+        assertTrue(actualMsgErr.contains(expectedMsgError));
     }
 
     @Test
-    public void testGeocodeOSM() throws Exception {
+    void testGeocodeOSM() throws Exception {
         testGeocodeWithThrottling("osm", false);
     }
 
     @Test
-    public void testReverseGeocodeOSM() throws Exception {
+    void testReverseGeocodeOSM() throws Exception {
         testGeocodeWithThrottling("osm", true);
     }
 
@@ -191,10 +201,8 @@ public class GeocodeTest {
             throws Exception {
         long fast = testGeocode(supplier, 100, reverseGeocode, config);
         long slow = testGeocode(supplier, 2000, reverseGeocode, config);
-        assertTrue(
-                "Fast " + supplier + " took " + fast + "ms and slow took " + slow
-                        + "ms, but expected slow to be at least twice as long",
-                (1.0 * slow / fast) > 1.2);
+        // expected slow to be at least twice as long
+        assertTrue((1.0 * slow / fast) > 1.2);
     }
 
     private long testGeocode(String provider, long throttle, boolean reverseGeocode, Map<String, Object> config)
@@ -281,17 +289,9 @@ public class GeocodeTest {
             if (result.hasNext()) {
                 Map<String, Object> row = result.next();
                 Map value = (Map) row.get("location");
-                assertNotNull("location found", value);
-                assertEquals(
-                        "Incorrect latitude found",
-                        lat,
-                        Double.parseDouble(value.get("latitude").toString()),
-                        0.1);
-                assertEquals(
-                        "Incorrect longitude found",
-                        lon,
-                        Double.parseDouble(value.get("longitude").toString()),
-                        0.1);
+                assertNotNull(value);
+                assertEquals(lat, Double.parseDouble(value.get("latitude").toString()), 0.1);
+                assertEquals(lon, Double.parseDouble(value.get("longitude").toString()), 0.1);
                 assertFalse(result.hasNext());
             }
         });
