@@ -18,6 +18,8 @@
  */
 package apoc.it.core;
 
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+
 import apoc.util.TestContainerUtil;
 import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Record;
@@ -32,6 +34,87 @@ public class MetaCommunityFeaturesTest extends AbstractDockerTestBase {
     @Test
     void schema() {
         session.run("create (:A {a:1})-[:R {r:2}]->(:B {b:3})").consume();
-        session.run("call apoc.meta.schema()").list(Record::asMap).isEmpty();
+        assertThatJson(session.run("call apoc.meta.schema()").list(Record::asMap))
+                .isEqualTo(
+                        """
+                [
+                  {
+                    "value": {
+                      "A": {
+                        "count": 1,
+                        "relationships": {
+                          "R": {
+                            "count": 0,
+                            "properties": {
+                              "r": {
+                                "existence": false,
+                                "type": "INTEGER",
+                                "array": false,
+                                "indexed": false
+                              }
+                            },
+                            "direction": "out",
+                            "labels": [
+                              "B"
+                            ]
+                          }
+                        },
+                        "type": "node",
+                        "properties": {
+                          "a": {
+                            "existence": false,
+                            "type": "INTEGER",
+                            "indexed": false,
+                            "unique": false
+                          }
+                        },
+                        "labels": []
+                      },
+                      "B": {
+                        "count": 1,
+                        "relationships": {
+                          "R": {
+                            "count": 1,
+                            "properties": {
+                              "r": {
+                                "existence": false,
+                                "type": "INTEGER",
+                                "array": false,
+                                "indexed": false
+                              }
+                            },
+                            "direction": "in",
+                            "labels": [
+                              "A"
+                            ]
+                          }
+                        },
+                        "type": "node",
+                        "properties": {
+                          "b": {
+                            "existence": false,
+                            "type": "INTEGER",
+                            "indexed": false,
+                            "unique": false
+                          }
+                        },
+                        "labels": []
+                      },
+                      "R": {
+                        "count": 1,
+                        "type": "relationship",
+                        "properties": {
+                          "r": {
+                            "existence": false,
+                            "type": "INTEGER",
+                            "array": false,
+                            "indexed": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+                """);
     }
 }
