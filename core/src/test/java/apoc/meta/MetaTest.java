@@ -438,7 +438,7 @@ public class MetaTest {
         final var stats = values.entrySet().stream()
                 .filter(e -> !"relTypesCount".equals(e.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        final var result = new HashMap<String, Object>(stats);
+        final var result = new HashMap<String, Object>(values);
         result.put("stats", stats);
         return Collections.unmodifiableMap(result);
     }
