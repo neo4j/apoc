@@ -32,19 +32,3 @@ test {
     systemProperty 'apoc-core.test.jar.path', apocJarPath
   }
 }
-
-tasks.register('copyApocJar', Copy) {
-    dependsOn(':core:shadowJar')
-    from project(':core').tasks.shadowJar.archiveFile into layout.buildDirectory.dir('test/jar')
-}
-
-test {
-    dependsOn(copyApocJar)
-    maxParallelForks = 1
-
-    doFirst {
-        def apocJarPath = layout.buildDirectory.file("test/jar/apoc-${version}-core.jar").get().asFile.absolutePath
-        println("apoc-core.test.jar.path=$apocJarPath")
-        systemProperty 'apoc-core.test.jar.path', apocJarPath
-    }
-}
