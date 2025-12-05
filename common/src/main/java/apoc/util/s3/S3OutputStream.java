@@ -39,7 +39,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
 
 public class S3OutputStream extends OutputStream {
@@ -70,10 +72,19 @@ public class S3OutputStream extends OutputStream {
         this.bucketName = bucketName;
         this.keyName = keyName;
         allocateMemory(AllocationSize.MB_5);
-        ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
-                .setNameFormat("S3-Upload-Manager-Thread-%d")
-                .setDaemon(true)
-                .build());
+
+        ExecutorService executorService = Executors.newSingleThreadExecutor(new ThreadFactory() {
+            private final ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
+            private final AtomicLong counter = new AtomicLong(0);
+
+            @Override
+            public Thread newThread(Runnable r) {
+                final var thread = defaultThreadFactory.newThread(r);
+                thread.setDaemon(true);
+                thread.setName("S3-Upload-Manager-Thread-%d".formatted(counter.getAndIncrement()));
+                return thread;
+            }
+        });
         managerFuture = executorService.submit(new S3UploadManager(s3Client, queue));
     }
 

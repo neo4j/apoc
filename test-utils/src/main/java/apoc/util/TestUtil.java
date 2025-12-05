@@ -23,11 +23,11 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
-import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -261,7 +261,7 @@ public class TestUtil {
 
     public static String readFileToString(File file, Charset charset) {
         try {
-            return Files.toString(file, charset);
+            return Files.readString(file.toPath(), charset);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

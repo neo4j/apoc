@@ -42,7 +42,6 @@ import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
-import com.google.common.collect.ImmutableMap;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.InputStreamReader;
 import java.time.Clock;
@@ -439,10 +438,9 @@ public class MetaTest {
         final var stats = values.entrySet().stream()
                 .filter(e -> !"relTypesCount".equals(e.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        return ImmutableMap.<String, Object>builder()
-                .putAll(values)
-                .put("stats", stats)
-                .build();
+        final var result = new HashMap<String, Object>(stats);
+        result.put("stats", stats);
+        return Collections.unmodifiableMap(result);
     }
 
     @Test
