@@ -58,7 +58,6 @@ dependencies {
     compileOnly group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
 
     compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
-    compileOnly group: 'com.google.guava', name: 'guava', version: '33.0.0-jre'
 
     // These dependencies affect the tests only, they will not be packaged in the resulting .jar
     testImplementation project(":common").sourceSets.test.output
