@@ -100,10 +100,7 @@ public class PathExplorer {
                             description =
                                     "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>.")
                     Object start,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                         minLevel = -1 :: INTEGER,
                         maxLevel = -1 :: INTEGER,
@@ -120,12 +117,13 @@ public class PathExplorer {
                         allowlistNodes:: LIST<NODES>,
                         denylistNodes:: LIST<NODES>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return expandConfigPrivate(start, config).map(ExpandedPathResult::new);
     }
 
-    public record SubgraphNodeResult(@Description("Nodes part of the returned subgraph.") Node node) {}
+    public record SubgraphNodeResult(
+            @Description("Nodes part of the returned subgraph.")
+            Node node) {}
 
     @NotThreadSafe
     @Procedure("apoc.path.subgraphNodes")
@@ -137,10 +135,7 @@ public class PathExplorer {
                             description =
                                     "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>`.")
                     Object start,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                         minLevel = -1 :: INTEGER,
                         maxLevel = -1 :: INTEGER,
@@ -157,8 +152,7 @@ public class PathExplorer {
                         allowlistNodes:: LIST<NODES>,
                         denylistNodes:: LIST<NODES>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         Map<String, Object> configMap = new HashMap<>(config);
         configMap.put("uniqueness", "NODE_GLOBAL");
 
@@ -173,8 +167,11 @@ public class PathExplorer {
     }
 
     public record SubgraphGraphResult(
-            @Description("Nodes part of the returned subgraph.") List<Node> nodes,
-            @Description("Relationships part of the returned subgraph.") List<Relationship> relationships) {}
+            @Description("Nodes part of the returned subgraph.")
+            List<Node> nodes,
+
+            @Description("Relationships part of the returned subgraph.")
+            List<Relationship> relationships) {}
 
     @NotThreadSafe
     @Procedure("apoc.path.subgraphAll")
@@ -186,10 +183,7 @@ public class PathExplorer {
                             description =
                                     "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>.")
                     Object start,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                         minLevel = -1 :: INTEGER,
                         maxLevel = -1 :: INTEGER,
@@ -206,8 +200,7 @@ public class PathExplorer {
                         allowlistNodes:: LIST<NODES>,
                         denylistNodes:: LIST<NODES>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         Map<String, Object> configMap = new HashMap<>(config);
         configMap.remove("optional"); // not needed, will return empty collections anyway if no results
         configMap.put("uniqueness", "NODE_GLOBAL");
@@ -244,10 +237,7 @@ public class PathExplorer {
                             description =
                                     "The node to start the algorithm from. `startNode` can be of type `STRING` (elementId()), `INTEGER` (id()), `NODE`, or `LIST<STRING | INTEGER | NODE>.")
                     Object start,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                         minLevel = -1 :: INTEGER,
                         maxLevel = -1 :: INTEGER,
@@ -264,8 +254,7 @@ public class PathExplorer {
                         allowlistNodes:: LIST<NODES>,
                         denylistNodes:: LIST<NODES>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         Map<String, Object> configMap = new HashMap<>(config);
         configMap.put("uniqueness", "NODE_GLOBAL");
 

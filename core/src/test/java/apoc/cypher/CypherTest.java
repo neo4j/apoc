@@ -492,8 +492,7 @@ public class CypherTest {
 
         assertThatThrownBy(() -> {
                     try (final var tx = db.beginTx()) {
-                        final var q =
-                                """
+                        final var q = """
                     call apoc.cypher.runMany($q, {}) yield row, result
                     return row, result, 1 / (result.x - $x) as boom
                     """;

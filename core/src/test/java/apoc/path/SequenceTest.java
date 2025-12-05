@@ -61,14 +61,12 @@ public class SequenceTest {
     public void testBasicSequence() {
         List<String> nodeRepresentations = List.of("t", "id(t)", "elementId(t)", "[t]", "[id(t)]", "[elementId(t)]");
         for (String nodeRep : nodeRepresentations) {
-            String query = String.format(
-                    """
+            String query = String.format("""
                 MATCH (t:Person {name: 'Tom Hanks'})
                 CALL apoc.path.expandConfig(%s, {sequence:'>Person, ACTED_IN>, Movie, <DIRECTED'})
                 YIELD path
                 WITH distinct last(nodes(path)) AS node
-                RETURN collect(node.name) AS names""",
-                    nodeRep);
+                RETURN collect(node.name) AS names""", nodeRep);
             TestUtil.testCall(db, query, (row) -> {
                 List<String> expectedNames = new ArrayList<>(Arrays.asList(
                         "Robert Zemeckis",

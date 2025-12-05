@@ -75,18 +75,13 @@ public class Fingerprinting {
     }
 
     @UserFunction("apoc.hashing.fingerprinting")
-    @Description(
-            """
+    @Description("""
             Calculates a MD5 checksum over a `NODE` or `RELATIONSHIP` (identical entities share the same checksum).
             Unlike `apoc.hashing.fingerprint()`, this function supports a number of config parameters.
             Unsuitable for cryptographic use-cases.""")
     public String fingerprinting(
             @Name(value = "object", description = "A node or relationship to hash.") Object thing,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         digestAlgorithm = "MD5" :: STRING,
                         strategy = "LAZY" :: STRING,
@@ -99,8 +94,7 @@ public class Fingerprinting {
                         allNodesDisallowList = [] :: LIST<STRING>,
                         allRelsAllowList = [] :: LIST<STRING>,
                         allRelsDisallowList = [] :: LIST<STRING>
-                    }""")
-                    Map<String, Object> conf) {
+                    }""") Map<String, Object> conf) {
         FingerprintingConfig config = new FingerprintingConfig(conf);
         return fingerprint(thing, config);
     }
@@ -152,8 +146,7 @@ public class Fingerprinting {
     }
 
     @UserFunction("apoc.hashing.fingerprintGraph")
-    @Description(
-            """
+    @Description("""
             Calculates a MD5 checksum over the full graph.
             This function uses in-memory data structures.
             Unsuitable for cryptographic use-cases.""")

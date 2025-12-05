@@ -391,19 +391,14 @@ public class Geocode {
                     + "This procedure returns at most one result.")
     public Stream<GeoCodeResult> geocodeOnce(
             @Name(value = "location", description = "The location to search for.") String address,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             provider = 'osm' :: STRING,
                             url :: STRING,
                             reverseUrl: :: STRING,
                             key :: STRING
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return geocode(address, 1L, false, config);
     }
 
@@ -420,19 +415,14 @@ public class Geocode {
                             description =
                                     "Whether or not to throw an exception when the maximum request quota is reached.")
                     boolean quotaException,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             provider = 'osm' :: STRING,
                             url :: STRING,
                             reverseUrl: :: STRING,
                             key :: STRING
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (address == null || address.isEmpty()) return Stream.empty();
         else {
             try {
@@ -461,19 +451,14 @@ public class Geocode {
                             description =
                                     "Whether or not to throw an exception when the maximum request quota is reached.")
                     boolean quotaException,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             provider = 'osm' :: STRING,
                             url :: STRING,
                             reverseUrl: :: STRING,
                             key :: STRING
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         try {
             return getSupplier(config).reverseGeocode(latitude, longitude, urlAccessChecker);
         } catch (IllegalStateException re) {

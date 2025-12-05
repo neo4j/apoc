@@ -116,11 +116,7 @@ public class Rename {
                             description =
                                     "The relationships to apply the new name to. If this list is empty, all relationships with the old type will be renamed.")
                     List<Relationship> rels,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         batchSize = 100000 :: INTEGER,
                         concurrency :: INTEGER,
@@ -128,8 +124,7 @@ public class Rename {
                         parallel = true :: BOOLEAN,
                         batchMode = "BATCH" :: STRING
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
         newType = Util.sanitize(newType);
         oldType = Util.sanitize(oldType);
@@ -188,11 +183,7 @@ public class Rename {
                             description =
                                     "The nodes to apply the new name to. If this list is empty, all nodes with the old property name will be renamed.")
                     List<Node> nodes,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         batchSize = 100000 :: INTEGER,
                         concurrency :: INTEGER,
@@ -200,8 +191,7 @@ public class Rename {
                         parallel = true :: BOOLEAN,
                         batchMode = "BATCH" :: STRING
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         nodes = nodes.stream().map(n -> Util.rebind(tx, n)).collect(Collectors.toList());
         oldName = Util.sanitize(oldName);
         newName = Util.sanitize(newName);
@@ -232,11 +222,7 @@ public class Rename {
                             description =
                                     "The relationships to apply the new name to. If this list is empty, all relationships with the old properties name will be renamed.")
                     List<Relationship> rels,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         batchSize = 100000 :: INTEGER,
                         concurrency :: INTEGER,
@@ -244,8 +230,7 @@ public class Rename {
                         parallel = true :: BOOLEAN,
                         batchMode = "BATCH" :: STRING
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
         newName = Util.sanitize(newName);
         oldName = Util.sanitize(oldName);
@@ -348,8 +333,7 @@ public class Rename {
         @Description("The collected error messages.")
         public Map<String, Long> errorMessages;
 
-        @Description(
-                """
+        @Description("""
                 {
                      total :: INTEGER,
                      failed :: INTEGER,
@@ -359,8 +343,7 @@ public class Rename {
                 """)
         public Map<String, Object> batch;
 
-        @Description(
-                """
+        @Description("""
                 {
                      total :: INTEGER,
                      failed :: INTEGER,

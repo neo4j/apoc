@@ -540,7 +540,9 @@ public class Meta {
                 .flatMap(x -> x.values().stream());
     }
 
-    public record MetaMapResult(@Description("Meta information represented as a map.") Map<String, Object> value) {}
+    public record MetaMapResult(
+            @Description("Meta information represented as a map.")
+            Map<String, Object> value) {}
 
     @NotThreadSafe
     @Procedure("apoc.meta.schema")
@@ -585,11 +587,7 @@ public class Meta {
     @Description(
             "Examines the full graph and returns a table of metadata with information about the `NODE` values therein.")
     public Stream<Tables4LabelsProfile.NodeTypePropertiesEntry> nodeTypeProperties(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             includeLabels = [] :: LIST<STRING>,
                             includeRels = [] :: LIST<STRING>,
@@ -598,8 +596,7 @@ public class Meta {
                             sample = 1000 :: INTEGER,
                             maxRels = 100 :: INTEGER
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         try {
             return collectTables4LabelsProfile(metaConfig).asNodeStream();
@@ -619,11 +616,7 @@ public class Meta {
     @Description(
             "Examines the full graph and returns a table of metadata with information about the `RELATIONSHIP` values therein.")
     public Stream<Tables4LabelsProfile.RelTypePropertiesEntry> relTypeProperties(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             includeLabels = [] :: LIST<STRING>,
                             includeRels = [] :: LIST<STRING>,
@@ -632,8 +625,7 @@ public class Meta {
                             sample = 1000 :: INTEGER,
                             maxRels = 100 :: INTEGER
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config);
         try {
             return collectTables4LabelsProfile(metaConfig).asRelStream();
@@ -1323,11 +1315,7 @@ public class Meta {
     @NotThreadSafe
     @Procedure("apoc.meta.subGraph")
     @Description("Examines the given sub-graph and returns a meta-graph.")
-    public Stream<GraphResult> subGraph(
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+    public Stream<GraphResult> subGraph(@Name(value = "config", description = """
             {
                 excludeLabels :: LIST<STRING>,
                 includeLabels :: LIST<STRING>,
@@ -1335,8 +1323,7 @@ public class Meta {
                 maxRels = -1 :: INTEGER,
                 sample = 1 :: INTEGER
             }
-            """)
-                    Map<String, Object> config) {
+            """) Map<String, Object> config) {
         MetaConfig metaConfig = new MetaConfig(config, false);
         return filterResultStream(
                 metaConfig.getExcludeLabels(),

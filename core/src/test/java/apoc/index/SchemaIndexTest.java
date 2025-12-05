@@ -46,8 +46,7 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
  */
 public class SchemaIndexTest {
 
-    private static final String SCHEMA_DISTINCT_COUNT_ORDERED =
-            """
+    private static final String SCHEMA_DISTINCT_COUNT_ORDERED = """
             CALL apoc.schema.properties.distinctCount($label, $key)
             YIELD label, key, value, count
             RETURN * ORDER BY label, key, value""";
@@ -73,8 +72,7 @@ public class SchemaIndexTest {
                         + ") as id CREATE (:Person {name:'name'+id, id:id, age:id % 100, address:id+'Main St.'})-[:LIVES_IN]->(city)");
 
         // dataset for fulltext / composite indexes
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (:FullTextOne {prop1: "Michael", prop2: 111}),
                     (:FullTextOne {prop1: "AA", prop2: 1}),
                     (:FullTextOne {prop1: "EE", prop2: 111}),
@@ -292,14 +290,11 @@ public class SchemaIndexTest {
     public void testDistinctWithNoPreviousNodesShouldNotHangs() {
         db.executeTransactionally("CREATE INDEX LabelNotExistent FOR (n:LabelNotExistent) ON n.prop");
 
-        testCall(
-                db,
-                """
+        testCall(db, """
                         CREATE (:LabelNotExistent {prop:2})
                         WITH *
                         CALL apoc.schema.properties.distinct("LabelNotExistent", "prop")
-                        YIELD value RETURN *""",
-                r -> assertEquals(emptyList(), r.get("value")));
+                        YIELD value RETURN *""", r -> assertEquals(emptyList(), r.get("value")));
 
         db.executeTransactionally("DROP INDEX LabelNotExistent");
     }

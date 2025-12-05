@@ -53,18 +53,13 @@ public class CoverTest {
     public void testCover() {
         List<String> nodeRepresentations = List.of("n", "id(n)", "elementId(n)");
         for (String nodeRep : nodeRepresentations) {
-            TestUtil.testCall(
-                    db,
-                    String.format(
-                            """
+            TestUtil.testCall(db, String.format("""
                             MATCH (n)
                             WITH collect(%s) AS nodes
                             CALL apoc.algo.cover(nodes)
                             YIELD rel
                             RETURN count(*) AS c
-                        """,
-                            nodeRep),
-                    (r) -> assertEquals(3L, r.get("c")));
+                        """, nodeRep), (r) -> assertEquals(3L, r.get("c")));
         }
     }
 }

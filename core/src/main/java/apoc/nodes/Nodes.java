@@ -106,17 +106,12 @@ public class Nodes {
             + "This procedure can be limited on `RELATIONSHIP` values as well.")
     public Stream<CyclesPathResult> cycles(
             @Name(value = "nodes", description = "The list of nodes to check for path cycles.") List<Node> nodes,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         maxDepth :: INTEGER,
                         relTypes = [] :: LIST<STRING>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         NodesConfig conf = new NodesConfig(config);
         final List<String> types = conf.getRelTypes();
         Stream<Path> paths = nodes.stream().flatMap(start -> {
@@ -201,7 +196,8 @@ public class Nodes {
         return Util.nodeStream((InternalTransaction) tx, ids).map(NodeResult::new);
     }
 
-    public record DeletionLongResult(@Description("The number of deleted nodes.") Long value) {}
+    public record DeletionLongResult(
+            @Description("The number of deleted nodes.") Long value) {}
 
     @Procedure(name = "apoc.nodes.delete", mode = Mode.WRITE)
     @Description("Deletes all `NODE` values with the given ids.")
@@ -263,10 +259,10 @@ public class Nodes {
 
                 int count =
                         switch (direction) {
-                            case INCOMING -> org.neo4j.internal.kernel.api.helpers.Nodes.countIncoming(
-                                    nodeCursor, typeId);
-                            case OUTGOING -> org.neo4j.internal.kernel.api.helpers.Nodes.countOutgoing(
-                                    nodeCursor, typeId);
+                            case INCOMING ->
+                                org.neo4j.internal.kernel.api.helpers.Nodes.countIncoming(nodeCursor, typeId);
+                            case OUTGOING ->
+                                org.neo4j.internal.kernel.api.helpers.Nodes.countOutgoing(nodeCursor, typeId);
                             case BOTH -> org.neo4j.internal.kernel.api.helpers.Nodes.countAll(nodeCursor, typeId);
                         };
                 if (count > 0) {
@@ -322,9 +318,14 @@ public class Nodes {
     }
 
     public record CollapsedVirtualPathResult(
-            @Description("The recently collapsed virtual node.") Node from,
-            @Description("A relationship connected to the collapsed node.") Relationship rel,
-            @Description("A node connected to the other end of the relationship.") Node to) {}
+            @Description("The recently collapsed virtual node.")
+            Node from,
+
+            @Description("A relationship connected to the collapsed node.")
+            Relationship rel,
+
+            @Description("A node connected to the other end of the relationship.")
+            Node to) {}
 
     @Procedure("apoc.nodes.collapse")
     @Description(
@@ -332,11 +333,7 @@ public class Nodes {
                     + "The `NODE` values are then combined to become one `NODE`, with all labels of the previous `NODE` values attached to it, and all `RELATIONSHIP` values pointing to it.")
     public Stream<CollapsedVirtualPathResult> collapse(
             @Name(value = "nodes", description = "The list of node values to merge.") List<Node> nodes,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         mergeRels :: BOOLEAN,
                         selfRef :: BOOLEAN,
@@ -349,8 +346,7 @@ public class Nodes {
                         relationshipSelectionStrategy = "incoming" :: ["incoming", "outgoing", "merge"]
                         properties :: ["overwrite", "discard", "combine"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
         if (nodes.size() == 1) return Stream.of(new CollapsedVirtualPathResult(nodes.get(0), null, null));
         Set<Node> nodeSet = new LinkedHashSet<>(nodes);

@@ -69,11 +69,7 @@ public class ExportJson {
     public Stream<ExportProgressInfo> all(
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -84,8 +80,7 @@ public class ExportJson {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportJson(fileName, source, new DatabaseSubGraph(tx), config);
@@ -99,11 +94,7 @@ public class ExportJson {
             @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -114,8 +105,7 @@ public class ExportJson {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         // initialize empty lists if nodes or rels are null
         nodes = nodes == null ? Collections.emptyList() : nodes;
         rels = rels == null ? Collections.emptyList() : rels;
@@ -131,11 +121,7 @@ public class ExportJson {
             @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -146,8 +132,7 @@ public class ExportJson {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
@@ -162,11 +147,7 @@ public class ExportJson {
             @Name(value = "statement", description = "The query used to collect the data for export.") String query,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -177,8 +158,7 @@ public class ExportJson {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         Map<String, Object> params = config == null
                 ? Collections.emptyMap()
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());

@@ -41,7 +41,8 @@ public class Cover {
     public Transaction tx;
 
     public record AlgoCoverRelationshipResult(
-            @Description("The relationships connected to the given nodes.") Relationship rel) {}
+            @Description("The relationships connected to the given nodes.")
+            Relationship rel) {}
 
     @Procedure("apoc.algo.cover")
     @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")

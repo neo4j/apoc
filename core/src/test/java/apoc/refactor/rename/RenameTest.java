@@ -413,8 +413,7 @@ public class RenameTest {
 
     @Test
     public void testLockException() {
-        String query =
-                """
+        String query = """
 				MERGE (account1:Account{ID: 1})
 				MERGE (account2:Account{ID: 2})
 				WITH account1, account2

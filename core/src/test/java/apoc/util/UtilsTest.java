@@ -358,59 +358,49 @@ public class UtilsTest {
         try (final var tx = db.beginTx()) {
             for (int i = 0; i < randStorables.size(); ++i) {
                 final var value = randStorables.get(i);
-                final var query =
-                        """
+                final var query = """
                         match (n:HashFunctionsAreStable)
                         return
                           apoc.util.%s([n.%s]) as hash1,
                           apoc.util.%s([$value]) as hash2,
                           apoc.util.%s($list) as hash3
-                        """
-                                .formatted(hashFunc, "p" + i, hashFunc, hashFunc);
+                        """.formatted(hashFunc, "p" + i, hashFunc, hashFunc);
                 final var params = Map.of("value", value, "list", List.of(value));
                 assertStableHash(seed, value, tx, query, params);
             }
 
-            final var mapQuery =
-                    """
+            final var mapQuery = """
                     match (n:HashFunctionsAreStable)
                     return
                       apoc.util.%s([properties(n)]) as hash1,
                       apoc.util.%s($value) as hash2
-                    """
-                            .formatted(hashFunc, hashFunc);
+                    """.formatted(hashFunc, hashFunc);
             assertStableHash(seed, randMap, tx, mapQuery, Map.of("value", List.of(randMap)));
 
             final var listCypher = IntStream.range(0, randStorables.size())
                     .mapToObj(i -> "n.p" + i)
                     .collect(Collectors.joining(","));
-            final var listQuery =
-                    """
+            final var listQuery = """
                 match (n:HashFunctionsAreStable)
                 return
                   apoc.util.%s([%s]) as hash1,
                   apoc.util.%s($value) as hash2
-                """
-                            .formatted(hashFunc, listCypher, hashFunc);
+                """.formatted(hashFunc, listCypher, hashFunc);
             assertStableHash(seed, randStorables, tx, listQuery, Map.of("value", randStorables));
 
-            final var listOfListsQuery =
-                    """
+            final var listOfListsQuery = """
                 match (n:HashFunctionsAreStable)
                 return
                   apoc.util.%s([[%s]]) as hash1,
                   apoc.util.%s([$value]) as hash2
-                """
-                            .formatted(hashFunc, listCypher, hashFunc);
+                """.formatted(hashFunc, listCypher, hashFunc);
             assertStableHash(seed, randStorables, tx, listOfListsQuery, Map.of("value", randStorables));
 
-            final var nodesHashQuery =
-                    """
+            final var nodesHashQuery = """
                 match (a:HashFunctionsAreStable)-[r]->(b:HashFunctionsAreStable)
                 return
                   apoc.util.%s([a, b, r, [a, b, r]]) as hash1
-                """
-                            .formatted(hashFunc, hashFunc);
+                """.formatted(hashFunc, hashFunc);
             assertStableHash(seed, "nodes and rels", tx, nodesHashQuery, Map.of());
         } finally {
             db.executeTransactionally("cypher runtime=slotted match (n) detach delete n");

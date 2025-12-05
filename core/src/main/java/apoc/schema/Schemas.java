@@ -113,19 +113,14 @@ public class Schemas {
     @Description("Returns all indexes and constraints information for all `NODE` labels in the database.\n"
             + "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> schemaNodesCypher5(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         labels :: LIST<STRING>,
                         excludeLabels :: LIST<STRING>,
                         relationships :: LIST<STRING>,
                         excludeRelationships :: LIST<STRING>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return indexesAndConstraintsForNode(config, false);
     }
 
@@ -135,19 +130,14 @@ public class Schemas {
     @Description("Returns all indexes and constraints information for all `NODE` labels in the database.\n"
             + "It is possible to define a set of labels to include or exclude in the config parameters.")
     public Stream<IndexConstraintNodeInfo> nodes(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         labels :: LIST<STRING>,
                         excludeLabels :: LIST<STRING>,
                         relationships :: LIST<STRING>,
                         excludeRelationships :: LIST<STRING>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return indexesAndConstraintsForNode(config, true);
     }
 
@@ -157,19 +147,14 @@ public class Schemas {
     @Description("Returns the indexes and constraints information for all the relationship types in the database.\n"
             + "It is possible to define a set of relationship types to include or exclude in the config parameters.")
     public Stream<IndexConstraintRelationshipInfo> schemaRelationshipsCypher5(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         labels :: LIST<STRING>,
                         excludeLabels :: LIST<STRING>,
                         relationships :: LIST<STRING>,
                         excludeRelationships :: LIST<STRING>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return indexesAndConstraintsForRelationships(config, false);
     }
 
@@ -179,19 +164,14 @@ public class Schemas {
     @Description("Returns the indexes and constraints information for all the relationship types in the database.\n"
             + "It is possible to define a set of relationship types to include or exclude in the config parameters.")
     public Stream<IndexConstraintRelationshipInfo> relationships(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         labels :: LIST<STRING>,
                         excludeLabels :: LIST<STRING>,
                         relationships :: LIST<STRING>,
                         excludeRelationships :: LIST<STRING>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return indexesAndConstraintsForRelationships(config, true);
     }
 

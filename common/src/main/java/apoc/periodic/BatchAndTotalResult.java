@@ -48,8 +48,7 @@ public class BatchAndTotalResult {
     @Description("A map of batch error messages paired with their corresponding error counts.")
     public final Map<String, Long> errorMessages;
 
-    @Description(
-            """
+    @Description("""
             {
                  total :: INTEGER,
                  failed :: INTEGER,
@@ -59,8 +58,7 @@ public class BatchAndTotalResult {
             """)
     public final Map<String, Object> batch;
 
-    @Description(
-            """
+    @Description("""
             {
                  total :: INTEGER,
                  failed :: INTEGER,
@@ -77,8 +75,7 @@ public class BatchAndTotalResult {
             "Parameters of failed batches. The key is the batch number as a STRING and the value is a list of batch parameters.")
     public final Map<String, List<Map<String, Object>>> failedParams;
 
-    @Description(
-            """
+    @Description("""
             {
                 nodesCreated :: INTEGER,
                 nodesDeleted :: INTEGER,

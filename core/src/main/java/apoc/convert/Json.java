@@ -217,7 +217,8 @@ public class Json {
         return JsonUtil.parse(value, path, List.class, pathOptions);
     }
 
-    public record ToTreeMapResult(@Description("The resulting tree.") Map<String, Object> value) {
+    public record ToTreeMapResult(
+            @Description("The resulting tree.") Map<String, Object> value) {
         public static final apoc.result.MapResult EMPTY = new apoc.result.MapResult(Collections.emptyMap());
 
         public static apoc.result.MapResult empty() {

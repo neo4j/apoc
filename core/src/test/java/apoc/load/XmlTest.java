@@ -166,39 +166,30 @@ public class XmlTest {
 
     @Test
     public void testBookIds() {
-        testResult(
-                db,
-                String.format(
-                        """
+        testResult(db, String.format("""
                         CALL apoc.load.xml('%s')
                         YIELD value AS catalog
                         UNWIND catalog._children AS book
                         RETURN book.id AS id
-                        """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                        """, TestUtil.getUrlFileName("xml/books.xml")), result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testFilterIntoCollection() {
         testResult(
                 db,
-                String.format(
-                        """
+                String.format("""
                         CALL apoc.load.xml('%s')
                         YIELD value AS catalog
                         UNWIND catalog._children AS book
                         RETURN
                             book.id,
                             [attr IN book._children WHERE attr._type IN ['author','title'] | [attr._type, attr._text]] AS pairs
-                        """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                result -> assertEquals(
-                        """
+                        """, TestUtil.getUrlFileName("xml/books.xml")),
+                result -> assertEquals("""
                         +----------------------------------------------------------------------------------------------------------------+
                         | book.id | pairs                                                                                                |
                         +----------------------------------------------------------------------------------------------------------------+
@@ -216,16 +207,14 @@ public class XmlTest {
                         | "bk112" | [["author","Galos, Mike"],["title","Visual Studio 7: A Comprehensive Guide"]]                        |
                         +----------------------------------------------------------------------------------------------------------------+
                         12 rows
-                        """,
-                        result.resultAsString()));
+                        """, result.resultAsString()));
     }
 
     @Test
     public void testReturnCollectionElements() {
         testResult(
                 db,
-                String.format(
-                        """
+                String.format("""
                 CALL apoc.load.xml('%s')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
@@ -233,10 +222,8 @@ public class XmlTest {
                     book.id AS id,
                     [x IN book._children WHERE x._type = 'author' | x._text] AS authors,
                     [x IN book._children WHERE x._type = 'title' | x._text] AS title
-                """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                result -> assertEquals(
-                        """
+                """, TestUtil.getUrlFileName("xml/books.xml")),
+                result -> assertEquals("""
                         +-----------------------------------------------------------------------------------------------------+
                         | id      | authors                                      | title                                      |
                         +-----------------------------------------------------------------------------------------------------+
@@ -254,112 +241,91 @@ public class XmlTest {
                         | "bk112" | ["Galos, Mike"]                              | ["Visual Studio 7: A Comprehensive Guide"] |
                         +-----------------------------------------------------------------------------------------------------+
                         12 rows
-                        """,
-                        result.resultAsString()));
+                        """, result.resultAsString()));
     }
 
     @Test
     public void testLoadXmlXpathAuthorFromBookId() {
-        testCall(
-                db,
-                String.format(
-                        """
+        testCall(db, String.format("""
                         CALL apoc.load.xml('%s', '/catalog/book[@id="bk102"]/author')
                         YIELD value AS result
-                        """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                (r) -> {
-                    assertEquals("author", ((Map) r.get("result")).get("_type"));
-                    assertEquals("Ralls, Kim", ((Map) r.get("result")).get("_text"));
-                });
+                        """, TestUtil.getUrlFileName("xml/books.xml")), (r) -> {
+            assertEquals("author", ((Map) r.get("result")).get("_type"));
+            assertEquals("Ralls, Kim", ((Map) r.get("result")).get("_text"));
+        });
     }
 
     @Test
     public void testLoadXmlXpathGenreFromBookTitle() {
-        testCall(
-                db,
-                String.format(
-                        """
+        testCall(db, String.format("""
                         CALL apoc.load.xml('%s', '/catalog/book[title="Maeve Ascendant"]/genre')
                         YIELD value AS result
-                        """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                (r) -> {
-                    assertEquals("genre", ((Map) r.get("result")).get("_type"));
-                    assertEquals("Fantasy", ((Map) r.get("result")).get("_text"));
-                });
+                        """, TestUtil.getUrlFileName("xml/books.xml")), (r) -> {
+            assertEquals("genre", ((Map) r.get("result")).get("_type"));
+            assertEquals("Fantasy", ((Map) r.get("result")).get("_text"));
+        });
     }
 
     @Test
     public void testLoadXmlXpathReturnBookFromBookTitle() {
-        testCall(
-                db,
-                String.format(
-                        """
+        testCall(db, String.format("""
                         CALL apoc.load.xml('%s', '/catalog/book[title="Maeve Ascendant"]/.')
                         YIELD value AS result
-                        """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                (r) -> {
-                    Object value = Iterables.single(r.values());
-                    assertEquals(XmlTestUtils.XML_XPATH_AS_NESTED_MAP, value);
-                });
+                        """, TestUtil.getUrlFileName("xml/books.xml")), (r) -> {
+            Object value = Iterables.single(r.values());
+            assertEquals(XmlTestUtils.XML_XPATH_AS_NESTED_MAP, value);
+        });
     }
 
     @Test
     public void testLoadXmlXpathBooKsFromGenre() {
-        testResult(
-                db,
-                String.format(
-                        """
+        testResult(db, String.format("""
                         CALL apoc.load.xml('%s', '/catalog/book[genre="Computer"]')
                         YIELD value AS result
-                        """,
-                        TestUtil.getUrlFileName("xml/books.xml")),
-                (r) -> {
-                    Map<String, Object> next = r.next();
-                    Object result = next.get("result");
-                    Map resultMap = (Map) next.get("result");
-                    Object children = resultMap.get("_children");
+                        """, TestUtil.getUrlFileName("xml/books.xml")), (r) -> {
+            Map<String, Object> next = r.next();
+            Object result = next.get("result");
+            Map resultMap = (Map) next.get("result");
+            Object children = resultMap.get("_children");
 
-                    List<Object> childrenList = (List<Object>) children;
-                    assertEquals("bk101", ((Map) result).get("id"));
-                    assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
-                    assertEquals("Gambardella, Matthew", ((Map) childrenList.get(0)).get("_text"));
-                    assertEquals("author", ((Map) childrenList.get(1)).get("_type"));
-                    assertEquals("Arciniegas, Fabio", ((Map) childrenList.get(1)).get("_text"));
-                    next = r.next();
-                    result = next.get("result");
-                    resultMap = (Map) next.get("result");
-                    children = resultMap.get("_children");
-                    childrenList = (List<Object>) children;
-                    assertEquals("bk110", ((Map) result).get("id"));
-                    assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
-                    assertEquals("O'Brien, Tim", ((Map) childrenList.get(0)).get("_text"));
-                    assertEquals("title", ((Map) childrenList.get(1)).get("_type"));
-                    assertEquals("Microsoft .NET: The Programming Bible", ((Map) childrenList.get(1)).get("_text"));
-                    next = r.next();
-                    result = next.get("result");
-                    resultMap = (Map) next.get("result");
-                    children = resultMap.get("_children");
-                    childrenList = (List<Object>) children;
-                    assertEquals("bk111", ((Map) result).get("id"));
-                    assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
-                    assertEquals("O'Brien, Tim", ((Map) childrenList.get(0)).get("_text"));
-                    assertEquals("title", ((Map) childrenList.get(1)).get("_type"));
-                    assertEquals("MSXML3: A Comprehensive Guide", ((Map) childrenList.get(1)).get("_text"));
-                    next = r.next();
-                    result = next.get("result");
-                    resultMap = (Map) next.get("result");
-                    children = resultMap.get("_children");
-                    childrenList = (List<Object>) children;
-                    assertEquals("bk112", ((Map) result).get("id"));
-                    assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
-                    assertEquals("Galos, Mike", ((Map) childrenList.get(0)).get("_text"));
-                    assertEquals("title", ((Map) childrenList.get(1)).get("_type"));
-                    assertEquals("Visual Studio 7: A Comprehensive Guide", ((Map) childrenList.get(1)).get("_text"));
-                    assertFalse(r.hasNext());
-                });
+            List<Object> childrenList = (List<Object>) children;
+            assertEquals("bk101", ((Map) result).get("id"));
+            assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
+            assertEquals("Gambardella, Matthew", ((Map) childrenList.get(0)).get("_text"));
+            assertEquals("author", ((Map) childrenList.get(1)).get("_type"));
+            assertEquals("Arciniegas, Fabio", ((Map) childrenList.get(1)).get("_text"));
+            next = r.next();
+            result = next.get("result");
+            resultMap = (Map) next.get("result");
+            children = resultMap.get("_children");
+            childrenList = (List<Object>) children;
+            assertEquals("bk110", ((Map) result).get("id"));
+            assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
+            assertEquals("O'Brien, Tim", ((Map) childrenList.get(0)).get("_text"));
+            assertEquals("title", ((Map) childrenList.get(1)).get("_type"));
+            assertEquals("Microsoft .NET: The Programming Bible", ((Map) childrenList.get(1)).get("_text"));
+            next = r.next();
+            result = next.get("result");
+            resultMap = (Map) next.get("result");
+            children = resultMap.get("_children");
+            childrenList = (List<Object>) children;
+            assertEquals("bk111", ((Map) result).get("id"));
+            assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
+            assertEquals("O'Brien, Tim", ((Map) childrenList.get(0)).get("_text"));
+            assertEquals("title", ((Map) childrenList.get(1)).get("_type"));
+            assertEquals("MSXML3: A Comprehensive Guide", ((Map) childrenList.get(1)).get("_text"));
+            next = r.next();
+            result = next.get("result");
+            resultMap = (Map) next.get("result");
+            children = resultMap.get("_children");
+            childrenList = (List<Object>) children;
+            assertEquals("bk112", ((Map) result).get("id"));
+            assertEquals("author", ((Map) childrenList.get(0)).get("_type"));
+            assertEquals("Galos, Mike", ((Map) childrenList.get(0)).get("_text"));
+            assertEquals("title", ((Map) childrenList.get(1)).get("_type"));
+            assertEquals("Visual Studio 7: A Comprehensive Guide", ((Map) childrenList.get(1)).get("_text"));
+            assertFalse(r.hasNext());
+        });
     }
 
     @Test
@@ -440,15 +406,10 @@ public class XmlTest {
 
     @Test
     public void testLoadXmlWithNextEntityRels() {
-        testCall(
-                db,
-                String.format(
-                        """
+        testCall(db, String.format("""
                         CALL apoc.import.xml('file:%s', {connectCharacters: true, filterLeadingWhitespace: true})
                         YIELD node
-                        """,
-                        FILE_SHORTENED),
-                row -> assertNotNull(row.get("node")));
+                        """, FILE_SHORTENED), row -> assertNotNull(row.get("node")));
         testResult(db, "MATCH (n) RETURN labels(n)[0] AS label, count(*) AS count", result -> {
             final Map<String, Long> resultMap =
                     result.stream().collect(Collectors.toMap(o -> (String) o.get("label"), o -> (Long) o.get("count")));
@@ -478,138 +439,106 @@ public class XmlTest {
 
     @Test
     public void testLoadXmlFromZip() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('file:src/test/resources/testload.zip!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromTar() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('file:src/test/resources/testload.tar!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromTarGz() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('file:src/test/resources/testload.tar.gz!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromTgz() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('file:src/test/resources/testload.tgz!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromZipByUrl() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('http://localhost:6363/testload.zip?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromTarByUrl() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('http://localhost:6363/testload.tar.gz?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromTarGzByUrl() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('http://localhost:6363/testload.tar.gz?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test
     public void testLoadXmlFromTgzByUrl() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.load.xml('http://localhost:6363/testload.tgz?raw=true!xml/books.xml')
                 YIELD value AS catalog
                 UNWIND catalog._children AS book
                 RETURN book.id AS id
-                """,
-                result -> {
-                    List<Object> ids = Iterators.asList(result.columnAs("id"));
-                    assertTrue(IntStream.rangeClosed(1, 12)
-                            .allMatch(value -> ids.contains(String.format("bk1%02d", value))));
-                });
+                """, result -> {
+            List<Object> ids = Iterators.asList(result.columnAs("id"));
+            assertTrue(IntStream.rangeClosed(1, 12).allMatch(value -> ids.contains(String.format("bk1%02d", value))));
+        });
     }
 
     @Test

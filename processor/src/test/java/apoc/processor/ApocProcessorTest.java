@@ -38,10 +38,7 @@ public class ApocProcessorTest {
     public void generates_signatures() {
         assert_()
                 .about(javaSource())
-                .that(
-                        JavaFileObjects.forSourceLines(
-                                "my.ApocProcedure",
-                                """
+                .that(JavaFileObjects.forSourceLines("my.ApocProcedure", """
                                 package my;
 
                                 import org.neo4j.kernel.api.QueryLanguage;
@@ -107,10 +104,7 @@ public class ApocProcessorTest {
                 .processedWith(apocProcessor)
                 .compilesWithoutError()
                 .and()
-                .generatesSources(
-                        JavaFileObjects.forSourceLines(
-                                "apoc.ApocSignatures",
-                                """
+                .generatesSources(JavaFileObjects.forSourceLines("apoc.ApocSignatures", """
                                 package apoc;
 
                                 import java.lang.String;

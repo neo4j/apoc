@@ -353,37 +353,34 @@ public class ConvertJsonTest {
 
     @Test
     public void testToJsonListOfPath() {
-        testCall(
-                db,
-                """
+        testCall(db, """
                           CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'}), q=(:Omega {alpha: 'beta'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'})
-                          WITH collect(p) AS collectP, q RETURN apoc.convert.toJson(collectP+q) AS value""",
-                (row) -> {
-                    List<String> test = List.of("Test");
-                    List<String> bar = List.of("Bar");
-                    List<String> bazBaa = List.of("Baa", "Baz");
-                    List<String> omega = List.of("Omega");
-                    List<Object> list = Util.fromJson((String) row.get("value"), List.class);
-                    assertEquals(2, list.size());
-                    List<Object> firstSubList = (List<Object>) list.get(0);
-                    List<Object> secondSubList = (List<Object>) list.get(1);
+                          WITH collect(p) AS collectP, q RETURN apoc.convert.toJson(collectP+q) AS value""", (row) -> {
+            List<String> test = List.of("Test");
+            List<String> bar = List.of("Bar");
+            List<String> bazBaa = List.of("Baa", "Baz");
+            List<String> omega = List.of("Omega");
+            List<Object> list = Util.fromJson((String) row.get("value"), List.class);
+            assertEquals(2, list.size());
+            List<Object> firstSubList = (List<Object>) list.get(0);
+            List<Object> secondSubList = (List<Object>) list.get(1);
 
-                    assertEquals(3, firstSubList.size());
-                    assertJsonNode((Map<String, Object>) firstSubList.get(0), "0", test, Map.of("foo", 7L));
-                    Map<String, Object> firstRel = (Map<String, Object>) firstSubList.get(1);
-                    assertJsonNode((Map<String, Object>) firstRel.get("start"), "0", test, Map.of("foo", 7L));
-                    assertJsonNode((Map<String, Object>) firstRel.get("end"), "1", bazBaa, Map.of("a", "b"));
-                    assertJsonRel(firstRel, "0", "TEST", null, RELATIONSHIP);
-                    assertJsonNode((Map<String, Object>) firstSubList.get(2), "1", bazBaa, Map.of("a", "b"));
+            assertEquals(3, firstSubList.size());
+            assertJsonNode((Map<String, Object>) firstSubList.get(0), "0", test, Map.of("foo", 7L));
+            Map<String, Object> firstRel = (Map<String, Object>) firstSubList.get(1);
+            assertJsonNode((Map<String, Object>) firstRel.get("start"), "0", test, Map.of("foo", 7L));
+            assertJsonNode((Map<String, Object>) firstRel.get("end"), "1", bazBaa, Map.of("a", "b"));
+            assertJsonRel(firstRel, "0", "TEST", null, RELATIONSHIP);
+            assertJsonNode((Map<String, Object>) firstSubList.get(2), "1", bazBaa, Map.of("a", "b"));
 
-                    assertEquals(3, secondSubList.size());
-                    assertJsonNode((Map<String, Object>) secondSubList.get(0), "2", omega, Map.of("alpha", "beta"));
-                    Map<String, Object> secondRel = (Map<String, Object>) secondSubList.get(1);
-                    assertJsonNode((Map<String, Object>) secondRel.get("start"), "3", bar, Map.of("one", "www"));
-                    assertJsonNode((Map<String, Object>) secondRel.get("end"), "2", omega, Map.of("alpha", "beta"));
-                    assertJsonRel(secondRel, "1", "TEST_2", Map.of("aa", "bb"), RELATIONSHIP);
-                    assertJsonNode((Map<String, Object>) secondSubList.get(2), "3", bar, Map.of("one", "www"));
-                });
+            assertEquals(3, secondSubList.size());
+            assertJsonNode((Map<String, Object>) secondSubList.get(0), "2", omega, Map.of("alpha", "beta"));
+            Map<String, Object> secondRel = (Map<String, Object>) secondSubList.get(1);
+            assertJsonNode((Map<String, Object>) secondRel.get("start"), "3", bar, Map.of("one", "www"));
+            assertJsonNode((Map<String, Object>) secondRel.get("end"), "2", omega, Map.of("alpha", "beta"));
+            assertJsonRel(secondRel, "1", "TEST_2", Map.of("aa", "bb"), RELATIONSHIP);
+            assertJsonNode((Map<String, Object>) secondSubList.get(2), "3", bar, Map.of("one", "www"));
+        });
     }
 
     @Test
@@ -445,28 +442,24 @@ public class ConvertJsonTest {
         String movies = Util.readResourceFile("movies.cypher");
         db.executeTransactionally(movies);
 
-        testCall(
-                db,
-                """
+        testCall(db, """
                         MATCH path = (k:Person {name:'Keanu Reeves'})-[*..5]-(x)
                         WITH collect(path) AS paths
                         CALL apoc.convert.toTree(paths)
                         YIELD value
-                        RETURN value""",
-                (row) -> {
-                    Map<?, ?> root = (Map<?, ?>) row.get("value");
-                    assertEquals("Person", root.get("_type"));
-                    List<Object> actedInList = (List<Object>) root.get("acted_in");
-                    assertEquals(7, actedInList.size());
-                    List<Object> innerList = (List) ((Map<String, Object>) actedInList.get(1)).get("acted_in");
-                    assertEquals(9, ((Map<String, Object>) innerList.get(0)).size());
-                });
+                        RETURN value""", (row) -> {
+            Map<?, ?> root = (Map<?, ?>) row.get("value");
+            assertEquals("Person", root.get("_type"));
+            List<Object> actedInList = (List<Object>) root.get("acted_in");
+            assertEquals(7, actedInList.size());
+            List<Object> innerList = (List) ((Map<String, Object>) actedInList.get(1)).get("acted_in");
+            assertEquals(9, ((Map<String, Object>) innerList.get(0)).size());
+        });
     }
 
     @Test
     public void testToTreeIssue2190() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (root:TreeNode {name:'root'})
                 CREATE (c0:TreeNode {name: 'c0'})
                 CREATE (c1:TreeNode {name: 'c1'})
@@ -483,22 +476,19 @@ public class ConvertJsonTest {
                 CREATE (c1)-[:CHILD {order: 0}]->(c10)
                 CREATE (c10)-[:CHILD {order: 0}]->(c100)""");
 
-        testCall(
-                db,
-                """
+        testCall(db, """
                         MATCH(root:TreeNode) WHERE root.name = "root"
                         MATCH path = (root)-[cl:CHILD*]->(c:TreeNode)
                         WITH path, [r IN relationships(path) | r.order] AS orders
                         ORDER BY orders
                         WITH COLLECT(path) AS paths
                         CALL apoc.convert.toTree(paths, true, {sortPaths: false}) YIELD value AS tree
-                        RETURN tree""",
-                (row) -> {
-                    Map tree = (Map) row.get("tree");
-                    final List<Map> child = (List<Map>) tree.get("child");
-                    final Object firstChildName = child.get(0).get("name");
-                    assertEquals("c0", firstChildName);
-                });
+                        RETURN tree""", (row) -> {
+            Map tree = (Map) row.get("tree");
+            final List<Map> child = (List<Map>) tree.get("child");
+            final Object firstChildName = child.get(0).get("name");
+            assertEquals("c0", firstChildName);
+        });
 
         db.executeTransactionally("MATCH (n:TreeNode) DETACH DELETE n");
     }
@@ -551,16 +541,14 @@ public class ConvertJsonTest {
 
     @Test
     public void testToTreeLeafNodes() {
-        String createStatement =
-                """
+        String createStatement = """
                 CREATE
                 (c1:Category {name: 'PC'}),
                 (c1)-[:subcategory {id:1}]->(c2:Category {name: 'Parts'}),
                 (c2)-[:subcategory {id:2}]->(c3:Category {name: 'CPU'})""";
         db.executeTransactionally(createStatement);
 
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -602,8 +590,7 @@ public class ConvertJsonTest {
 
     @Test
     public void testToTreeParentNodes() {
-        String createDatabase =
-                """
+        String createDatabase = """
                         CREATE (b:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd', langId: 2})-[:HAS {id: "rel1"}]->(c:Comm {id: 'a34fd608-1751-0b5d-cb38-6991297fa9c9', langId: 2}),
                         (b)-[:HAS {id: "rel2"}]->(c1:Comm {id: 'a34fd608-262b-678a-cb38-6991297fa9c8', langId: 2}),
                         (u:User {id: 'facebook|680594762097202'})-[:Flag  {id: "rel3", Created: '2018-11-21T11:22:01', FlagType: 4}]->(c1),
@@ -612,8 +599,7 @@ public class ConvertJsonTest {
                         (u1)-[:Flag {id: "rel6", Created: '2018-11-21T11:20:31', FlagType: 1}]->(c1)""";
         db.executeTransactionally(createDatabase);
 
-        String queryToGetGeneratedIds =
-                """
+        String queryToGetGeneratedIds = """
                 MATCH (n)
                 RETURN n.id as givenId, id(n) as id, elementId(n) as elementId
                 UNION
@@ -630,8 +616,7 @@ public class ConvertJsonTest {
                                         "id", row.get("id").toString(),
                                         "elementId", row.get("elementId").toString()))));
 
-        String call =
-                """
+        String call = """
                 MATCH (parent:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd'})
                 WITH parent
                 OPTIONAL MATCH childFlagPath=(parent)-[:HAS]->(:Comm)<-[:Flag]-(:User)
@@ -745,8 +730,7 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigInclude() {
         statementForConfig(db);
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -776,8 +760,7 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigExclude() {
         statementForConfig(db);
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -807,8 +790,7 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigExcludeInclude() {
         statementForConfig(db);
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -838,8 +820,7 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigOnlyInclude() {
         statementForConfig(db);
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -869,8 +850,7 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigErrorInclude() {
         statementForConfig(db);
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -887,8 +867,7 @@ public class ConvertJsonTest {
 
     @Test
     public void testToTreeDoesNotRemoveNonDuplicateRels() {
-        String createStatement =
-                """
+        String createStatement = """
             CREATE (v1:N {id: 'n21', name: 'Node 21', p2: 'node21'})
             CREATE (v2:N {id: 'n22', name: 'Node 22', p2: 'node22'})
             CREATE (v1)-[:R {prop1: 'n21->n22 [1]', prop2: 'Rel 1'}]->(v2)
@@ -896,8 +875,7 @@ public class ConvertJsonTest {
 
         db.executeTransactionally(createStatement);
 
-        String query =
-                """
+        String query = """
                 MATCH p1 = (n:N {id:'n21'})-[e1]->(m1:N)
                 WITH  COLLECT(p1) as paths
                 CALL apoc.convert.toTree(paths, false)
@@ -931,8 +909,7 @@ public class ConvertJsonTest {
     @Test
     public void testToTreeLeafNodesWithConfigErrorExclude() {
         statementForConfig(db);
-        String call =
-                """
+        String call = """
                 MATCH p=(n:Category)-[:subcategory*]->(m)
                 WHERE NOT (m)-[:subcategory]->() AND NOT ()-[:subcategory]->(n)
                 WITH COLLECT(p) AS ps
@@ -948,8 +925,7 @@ public class ConvertJsonTest {
     }
 
     private static void statementForConfig(GraphDatabaseService db) {
-        String createStatement =
-                """
+        String createStatement = """
                 CREATE
                 (c1:Category {name: 'PC', surname: 'computer'}),
                 (c1)-[:subcategory {id:1, subCat: 'gen'}]->(c2:Category {name: 'Parts'}),

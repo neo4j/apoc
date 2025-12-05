@@ -3,7 +3,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '7.1.0' apply false
     id 'maven-publish'
     id "com.github.hierynomus.license-report" version "0.16.1"
-    id "com.diffplug.spotless" version "6.22.0"
+    id "com.diffplug.spotless" version "8.1.0"
 }
 
 downloadLicenses {
@@ -48,6 +48,13 @@ repositories {
 subprojects {
     apply plugin: "com.diffplug.spotless"
     apply plugin: 'java-library'
+
+    dependencies {
+        testImplementation(platform("org.junit:junit-bom:5.14.1"))
+        testImplementation('org.junit.jupiter:junit-jupiter')
+        testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+        testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
+    }
 
     spotless {
         java {
@@ -95,6 +102,7 @@ subprojects {
         archiveClassifier = 'javadoc'
     }
     test {
+        useJUnitPlatform()
         //exclude '**/CypherProceduresClusterTest.class'//, '**/AtomicTest.class'
 
         // neo4jDockerImage system property is used in TestContainerUtil

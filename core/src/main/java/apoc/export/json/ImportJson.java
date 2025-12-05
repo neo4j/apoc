@@ -57,11 +57,7 @@ public class ImportJson {
                             value = "urlOrBinaryFile",
                             description = "The name of the file or binary data to import the data from.")
                     Object urlOrBinaryFile,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         unwindBatchSize = 5000 :: INTEGER,
                         txBatchSize = 5000 :: INTEGER,
@@ -73,8 +69,7 @@ public class ImportJson {
                         nodePropFilter = {} :: MAP,
                         relPropFilter = {} :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         ImportProgressInfo result = Util.inThread(pools, () -> {
             ImportJsonConfig importJsonConfig = new ImportJsonConfig(config);
             String file = null;

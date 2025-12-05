@@ -84,8 +84,7 @@ public class PathsToJsonTreeTest {
         */
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'})-[r: R {relName: 'r'}]->(b: B {nodeName: 'b'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -119,8 +118,7 @@ public class PathsToJsonTreeTest {
         // a:A
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -145,8 +143,7 @@ public class PathsToJsonTreeTest {
         // a:A
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'}), (b: B {nodeName: 'b'}), (c: C {nodeName: 'c'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -187,8 +184,7 @@ public class PathsToJsonTreeTest {
         */
         db.executeTransactionally("CREATE " + "(a: A {nodeName: 'a'})<-[r: R {relName: 'r'}]-(b: B {nodeName: 'b'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)<-[r]-(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -230,8 +226,7 @@ public class PathsToJsonTreeTest {
                 + "(a: A {nodeName: 'a'})<-[r1: R {relName: 'r'}]-(b: B {nodeName: 'b'}),"
                 + "(a)-[r2: R {relName: 'r'}]->(b)");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]-(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -278,8 +273,7 @@ public class PathsToJsonTreeTest {
 
         // Note this would be returning both the path (a)-[r]->(b) and (b)<-[r]-(a)
         // but we only expect a tree starting in 'a'
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]-(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -316,8 +310,7 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'})-[r1: R {relName: 'r'}]->(b: B {nodeName: 'b'})");
         db.executeTransactionally("CREATE (c: C {nodeName: 'c'})-[r2: R {relName: 'r'}]->(d: D {nodeName: 'd'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -373,8 +366,7 @@ public class PathsToJsonTreeTest {
         // The query is bidirectional in this case, so
         // we would have duplicated paths, but we do not
         // expect duplicated trees
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]-(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -426,8 +418,7 @@ public class PathsToJsonTreeTest {
                 + "(b)-[r2: R2 {relName: 'r2'}]->(c: C {nodeName: 'c'}),"
                 + "(b)-[r3: R3 {relName: 'r3'}]->(d: D {nodeName: 'd'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -489,8 +480,7 @@ public class PathsToJsonTreeTest {
                 + "(b)-[r3: R3 {relName: 'r3'}]->(d: D {nodeName: 'd'})");
 
         // The query is bidirectional in this case, we don't expect duplicated paths
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]-(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -550,8 +540,7 @@ public class PathsToJsonTreeTest {
                 + "(b)-[r2: R2 {relName: 'r2'}]->(c:C {nodeName: 'c'}),"
                 + "(b)-[r3: R3 {relName: 'r3'}]->(b)");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -607,8 +596,7 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally(
                 "CREATE (a: A {nodeName: 'a'})-[r1: R1 {relName: 'r1'}]->(b: B {nodeName: 'b'})<-[r2: R2 {relName: 'r2'}]-(c:C {nodeName: 'c'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[:R1]->(m)<-[:R2]-(o)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {sortPaths: false}) YIELD value AS tree
@@ -662,8 +650,7 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally(
                 "CREATE " + "(a: A: B {nodeName: 'a & b'})-[r: R {relName: 'r'}]->(c: C {nodeName: 'c'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.paths.toJsonTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree
@@ -701,8 +688,7 @@ public class PathsToJsonTreeTest {
         db.executeTransactionally(
                 "CREATE " + "(a: A: B {nodeName: 'a & b'})-[r: R {relName: 'r'}]->(c: C {nodeName: 'c'})");
 
-        var query =
-                """
+        var query = """
                 MATCH path = (n)-[r]->(m)
                 WITH COLLECT(path) AS paths
                 CALL apoc.convert.toTree(paths, true, {nodes: { A: ['-nodeName'] } }) YIELD value AS tree

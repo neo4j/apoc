@@ -190,8 +190,7 @@ public class ArgumentDescriptionsTest {
 
     @Test
     public void functionArgumentDescriptionsTest() throws IOException {
-        final var query =
-                """
+        final var query = """
                   SHOW FUNCTIONS YIELD
                   name, category, description, signature, isBuiltIn,
                   argumentDescription, returnDescription, aggregating,
@@ -214,8 +213,7 @@ public class ArgumentDescriptionsTest {
 
     @Test
     public void procedureArgumentDescriptionsTest() throws IOException {
-        final var query =
-                """
+        final var query = """
                   SHOW PROCEDURES YIELD
                   name, description, signature, argumentDescription,
                   returnDescription, isDeprecated, deprecatedBy

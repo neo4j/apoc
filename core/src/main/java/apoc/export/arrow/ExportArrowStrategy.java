@@ -134,12 +134,12 @@ public interface ExportArrowStrategy<IN, OUT> {
                 case "Duration":
                 case "Node":
                 case "Relationship":
-                    //                    return new Field(fieldName,
-                    // FieldType.nullable(Types.MinorType.STRUCT.getType()), null);
+                //                    return new Field(fieldName,
+                // FieldType.nullable(Types.MinorType.STRUCT.getType()), null);
                 case "Point":
                 case "Map":
-                    //                    return new Field(fieldName, FieldType.nullable(Types.MinorType.MAP.getType()),
-                    // null);
+                //                    return new Field(fieldName, FieldType.nullable(Types.MinorType.MAP.getType()),
+                // null);
                 case "DateTimeArray":
                 case "DateArray":
                 case "BooleanArray":

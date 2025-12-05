@@ -121,18 +121,13 @@ public class Xml {
                             defaultValue = "/",
                             description = "An xPath expression to select nodes from the given XML document.")
                     String path,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         failOnError = true :: BOOLEAN,
                         headers = {} :: MAP,
                         compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"]
                     }
-                    """)
-                    Map<String, Object> config,
+                    """) Map<String, Object> config,
             @Name(
                             value = "simple",
                             defaultValue = "false",
@@ -540,18 +535,15 @@ public class Xml {
         }
     }
 
-    public record ImportNodeResult(@Description("An imported node.") org.neo4j.graphdb.Node node) {}
+    public record ImportNodeResult(
+            @Description("An imported node.") org.neo4j.graphdb.Node node) {}
 
     @Procedure(mode = Mode.WRITE, value = "apoc.import.xml")
     @Description("Imports a graph from the provided XML file.")
     public Stream<ImportNodeResult> importToGraph(
             @Name(value = "urlOrBinary", description = "The name of the file or binary data to import the data from.")
                     Object urlOrBinary,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         connectCharacters = false :: BOOLEAN,
                         filterLeadingWhitespace = false :: BOOLEAN,
@@ -560,8 +552,7 @@ public class Xml {
                         relType :: STRING,
                         charactersForTag :: MAP
                     }
-                    """)
-                    Map<String, Object> config)
+                    """) Map<String, Object> config)
             throws IOException, XMLStreamException, URISyntaxException, URLAccessValidationError {
         XmlImportConfig importConfig = new XmlImportConfig(config);
         // TODO: make labels, reltypes and magic properties configurable

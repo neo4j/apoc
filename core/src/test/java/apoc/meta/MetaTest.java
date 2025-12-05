@@ -176,8 +176,7 @@ public class MetaTest {
 
     @Test
     public void testMetaGraphExtraRels() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (a:S1 {SomeName1:'aaa'})
                 CREATE (b:S2 {SomeName2:'bbb'})
                 CREATE (c:S3 {SomeName3:'ccc'})
@@ -503,70 +502,66 @@ public class MetaTest {
     public void testMetaData() {
         db.executeTransactionally("create index for (n:Movie) on (n.title)");
         db.executeTransactionally("create constraint for (a:Actor) require a.name is unique");
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (actor1:Actor {name:'Tom Hanks'})-[:ACTED_IN {roles:'Forrest'}]->(movie1:Movie {title:'Forrest Gump'}),
                 (actor2:Actor {name: 'Bruce Lee'})-[:ACTED_IN {roles:'FooBaz'}]->(movie1),
                 (actor1)-[:ACTED_IN {roles:'Movie2Role'}]->(movie2:Movie {title:'Movie2'}), (actor1)-[:ACTED_IN {roles:'Movie3Role'}]->(movie3:Movie {title:'Movie3'}),
                 (actor1)-[:DIRECTED {foo: 'first'}]->(movie2), (actor1)-[:DIRECTED {foo: 'second'}]->(:Movie {title:'Movie4'}),
                 (:Studio {name: 'Pixar'})-[:ANIMATED {bar: 'alpha'}]->(movie2)""");
-        TestUtil.testResult(
-                db,
-                """
+        TestUtil.testResult(db, """
                 CALL apoc.meta.data()
                 YIELD label, property, count, unique, index, existence, type, array, left, right, other, otherLabels, elementType
-                RETURN * ORDER BY elementType, property""",
-                (r) -> {
-                    Map<String, Object> row = r.next();
-                    assertEquals("node", row.get("elementType"));
-                    assertEquals("ACTED_IN", row.get("property"));
-                    assertEquals("Actor", row.get("label"));
-                    assertRelationshipActedInMetaData(row);
-                    row = r.next();
-                    assertEquals("node", row.get("elementType"));
-                    assertEquals("ANIMATED", row.get("property"));
-                    assertEquals("Studio", row.get("label"));
-                    assertRelationshipsAnimatedMetaData(row);
-                    row = r.next();
-                    assertEquals("node", row.get("elementType"));
-                    assertEquals("DIRECTED", row.get("property"));
-                    assertEquals("Actor", row.get("label"));
-                    assertRelationshipsDirectedMetaData(row);
-                    row = r.next();
-                    assertEquals("node", row.get("elementType"));
-                    assertPropertiesMetaData(row);
-                    row = r.next();
-                    assertEquals("node", row.get("elementType"));
-                    assertPropertiesMetaData(row);
-                    row = r.next();
-                    assertEquals("node", row.get("elementType"));
-                    assertPropertiesMetaData(row);
-                    row = r.next();
-                    assertEquals("relationship", row.get("elementType"));
-                    assertEquals("ACTED_IN", row.get("label"));
-                    assertEquals("Actor", row.get("property"));
-                    assertRelationshipActedInMetaData(row);
-                    row = r.next();
-                    assertEquals("relationship", row.get("elementType"));
-                    assertEquals("DIRECTED", row.get("label"));
-                    assertEquals("Actor", row.get("property"));
-                    assertRelationshipsDirectedMetaData(row);
-                    row = r.next();
-                    assertEquals("relationship", row.get("elementType"));
-                    assertEquals("ANIMATED", row.get("label"));
-                    assertEquals("Studio", row.get("property"));
-                    assertRelationshipsAnimatedMetaData(row);
-                    row = r.next();
-                    assertEquals("relationship", row.get("elementType"));
-                    assertPropertiesMetaData(row);
-                    row = r.next();
-                    assertEquals("relationship", row.get("elementType"));
-                    assertPropertiesMetaData(row);
-                    row = r.next();
-                    assertEquals("relationship", row.get("elementType"));
-                    assertPropertiesMetaData(row);
-                    assertFalse(r.hasNext());
-                });
+                RETURN * ORDER BY elementType, property""", (r) -> {
+            Map<String, Object> row = r.next();
+            assertEquals("node", row.get("elementType"));
+            assertEquals("ACTED_IN", row.get("property"));
+            assertEquals("Actor", row.get("label"));
+            assertRelationshipActedInMetaData(row);
+            row = r.next();
+            assertEquals("node", row.get("elementType"));
+            assertEquals("ANIMATED", row.get("property"));
+            assertEquals("Studio", row.get("label"));
+            assertRelationshipsAnimatedMetaData(row);
+            row = r.next();
+            assertEquals("node", row.get("elementType"));
+            assertEquals("DIRECTED", row.get("property"));
+            assertEquals("Actor", row.get("label"));
+            assertRelationshipsDirectedMetaData(row);
+            row = r.next();
+            assertEquals("node", row.get("elementType"));
+            assertPropertiesMetaData(row);
+            row = r.next();
+            assertEquals("node", row.get("elementType"));
+            assertPropertiesMetaData(row);
+            row = r.next();
+            assertEquals("node", row.get("elementType"));
+            assertPropertiesMetaData(row);
+            row = r.next();
+            assertEquals("relationship", row.get("elementType"));
+            assertEquals("ACTED_IN", row.get("label"));
+            assertEquals("Actor", row.get("property"));
+            assertRelationshipActedInMetaData(row);
+            row = r.next();
+            assertEquals("relationship", row.get("elementType"));
+            assertEquals("DIRECTED", row.get("label"));
+            assertEquals("Actor", row.get("property"));
+            assertRelationshipsDirectedMetaData(row);
+            row = r.next();
+            assertEquals("relationship", row.get("elementType"));
+            assertEquals("ANIMATED", row.get("label"));
+            assertEquals("Studio", row.get("property"));
+            assertRelationshipsAnimatedMetaData(row);
+            row = r.next();
+            assertEquals("relationship", row.get("elementType"));
+            assertPropertiesMetaData(row);
+            row = r.next();
+            assertEquals("relationship", row.get("elementType"));
+            assertPropertiesMetaData(row);
+            row = r.next();
+            assertEquals("relationship", row.get("elementType"));
+            assertPropertiesMetaData(row);
+            assertFalse(r.hasNext());
+        });
     }
 
     private void assertRelationshipsDirectedMetaData(Map<String, Object> row) {
@@ -775,8 +770,7 @@ public class MetaTest {
 
     @Test
     public void testIssue1861LabelAndTypeWithSameName() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (s0 :person{id:1} ) SET s0.name = 'rose'
                 CREATE (t0 :person{id:2}) SET t0.name = 'jack'
                 MERGE (s0) -[r0:person {alfa: 'beta'}] -> (t0)""");

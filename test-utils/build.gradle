@@ -36,13 +36,13 @@ dependencies {
     api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.2', withoutServers.andThen(withoutLoggers)
     api group: 'org.apache.hadoop', name: 'hadoop-minicluster', version: '3.4.2', withoutServers.andThen(withoutLoggers)
     api group: 'org.testcontainers', name: 'testcontainers', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'neo4j', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'elasticsearch', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'couchbase', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'mysql', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'postgresql', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'cassandra', version: testContainersVersion
-    api group: 'org.testcontainers', name: 'localstack', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-neo4j', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-elasticsearch', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-couchbase', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-mysql', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-postgresql', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-cassandra', version: testContainersVersion
+    api group: 'org.testcontainers', name: 'testcontainers-localstack', version: testContainersVersion
     api group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion
 
     def arrowExclusions = {

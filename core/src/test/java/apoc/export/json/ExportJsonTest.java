@@ -82,8 +82,7 @@ public class ExportJsonTest {
         TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                         CREATE (f:User {
                             name:'Adam',
                             age:42,
@@ -126,15 +125,11 @@ public class ExportJsonTest {
         for (String query : invalidQueries) {
             QueryExecutionException e = Assert.assertThrows(
                     QueryExecutionException.class,
-                    () -> TestUtil.testCall(
-                            db,
-                            """
+                    () -> TestUtil.testCall(db, """
                         CALL apoc.export.json.query(
                         $query,
                         $file
-                        )""",
-                            map("query", query, "file", filename),
-                            (r) -> {}));
+                        )""", map("query", query, "file", filename), (r) -> {}));
 
             assertError(e, INVALID_QUERY_MODE_ERROR, RuntimeException.class, "apoc.export.json.query");
         }
@@ -257,8 +252,7 @@ public class ExportJsonTest {
     @Test
     public void testExportPointMapDatetimeJson() {
         String filename = "mapPointDatetime.json";
-        String query =
-                """
+        String query = """
                 RETURN {
                     data: 1,
                     value: {
@@ -292,8 +286,7 @@ public class ExportJsonTest {
     @Test
     public void testExportPointMapDatetimeStreamJson() {
         String filename = "mapPointDatetime.json";
-        String query =
-                """
+        String query = """
                 RETURN {
                     data: 1,
                     value: {
@@ -409,8 +402,7 @@ public class ExportJsonTest {
 
     @Test
     public void testExportMapPath() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                         CREATE (
                             f:User {name:'Mike',age:78,male:true}
                         )-[:KNOWS {since: 1850}]->(
@@ -450,8 +442,7 @@ public class ExportJsonTest {
     public void testExportMapComplex() {
         String filename = "MapComplex.json";
 
-        String query =
-                """
+        String query = """
                     RETURN {
                         value:1,
                         data:[
@@ -688,8 +679,7 @@ public class ExportJsonTest {
 
     @Test
     public void testExportOfNodeIntArrays() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (test:Test {
                     intArray: [1,2,3,4],
                     boolArray: [true,false],
@@ -697,9 +687,7 @@ public class ExportJsonTest {
                 })
                 """);
 
-        TestUtil.testCall(
-                db,
-                """
+        TestUtil.testCall(db, """
                    CALL apoc.export.json.query(
                         "MATCH (test:Test) RETURN test{.intArray, .boolArray, .floatArray} AS data",
                         null,
@@ -707,15 +695,14 @@ public class ExportJsonTest {
                     )
                    YIELD data
                    RETURN data
-                """,
-                (r) -> {
-                    String data = (String) r.get("data");
-                    Map<String, Object> map = Util.fromJson(data, Map.class);
-                    Map<String, Object> arrays = (Map<String, Object>) map.get("data");
-                    assertEquals(new ArrayList<>(Arrays.asList(1L, 2L, 3L, 4L)), arrays.get("intArray"));
-                    assertEquals(new ArrayList<>(Arrays.asList(true, false)), arrays.get("boolArray"));
-                    assertEquals(new ArrayList<>(Arrays.asList(1.0, 2.0)), arrays.get("floatArray"));
-                });
+                """, (r) -> {
+            String data = (String) r.get("data");
+            Map<String, Object> map = Util.fromJson(data, Map.class);
+            Map<String, Object> arrays = (Map<String, Object>) map.get("data");
+            assertEquals(new ArrayList<>(Arrays.asList(1L, 2L, 3L, 4L)), arrays.get("intArray"));
+            assertEquals(new ArrayList<>(Arrays.asList(true, false)), arrays.get("boolArray"));
+            assertEquals(new ArrayList<>(Arrays.asList(1.0, 2.0)), arrays.get("floatArray"));
+        });
 
         db.executeTransactionally("MATCH (n:Test) DETACH DELETE n");
     }

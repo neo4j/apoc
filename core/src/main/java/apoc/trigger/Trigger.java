@@ -45,8 +45,7 @@ public class Trigger {
     public static final String NOT_ENABLED_ERROR = "Triggers have not been enabled."
             + " Set 'apoc.trigger.enabled=true' in your apoc.conf file located in the $NEO4J_HOME/conf/ directory.";
 
-    public static final String SYS_DB_NON_WRITER_ERROR =
-            """
+    public static final String SYS_DB_NON_WRITER_ERROR = """
             This instance is not allowed to write to the system database.
             Please open a session against a system database writer when using this procedure.
             """;
@@ -58,8 +57,7 @@ public class Trigger {
     public TriggerHandler triggerHandler;
 
     private void preprocessDeprecatedProcedures() {
-        final String msgDeprecation =
-                """
+        final String msgDeprecation = """
                 Please note that the current procedure is deprecated,
                 it is recommended to use the `apoc.trigger.install`, `apoc.trigger.drop`, `apoc.trigger.dropAll`, `apoc.trigger.stop`, and `apoc.trigger.start` procedures,
                 instead of, respectively, `apoc.trigger.add`, `apoc.trigger.remove`, `apoc.trigger.removeAll`, `apoc.trigger.pause`, and `apoc.trigger.resume`.""";

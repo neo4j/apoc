@@ -79,7 +79,8 @@ public class SchemaIndex {
     public TerminationGuard terminationGuard;
 
     public record SchemaListResult(
-            @Description("The list of distinct values for the given property.") List<Object> value) {}
+            @Description("The list of distinct values for the given property.")
+            List<Object> value) {}
 
     @NotThreadSafe
     @Procedure("apoc.schema.properties.distinct")

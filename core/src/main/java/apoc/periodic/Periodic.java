@@ -82,12 +82,7 @@ public class Periodic {
     @Procedure(name = "apoc.periodic.truncate", mode = Mode.SCHEMA)
     @Description(
             "Removes all entities (and optionally indexes and constraints) from the database using the `apoc.periodic.iterate` procedure.")
-    public void truncate(
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+    public void truncate(@Name(value = "config", defaultValue = "{}", description = """
             {
                 dropSchema = true :: BOOLEAN,
                 batchSize = 10000 :: INTEGER,
@@ -99,8 +94,7 @@ public class Periodic {
                 failedParams = -1 :: INTEGER,
                 planner = "DEFAULT" :: ["DEFAULT", "COST", "IDP", "DP"]
             }
-            """)
-                    Map<String, Object> config) {
+            """) Map<String, Object> config) {
 
         iterate("MATCH ()-[r]->() RETURN id(r) as id", "MATCH ()-[r]->() WHERE id(r) = id DELETE r", config);
         iterate("MATCH (n) RETURN id(n) as id", "MATCH (n) WHERE id(n) = id DELETE n", config);
@@ -340,10 +334,7 @@ public class Periodic {
                             description =
                                     "The Cypher statement to run for each item returned by the initial Cypher statement.")
                     String cypherAction,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                         batchSize = 10000 :: INTEGER,
                         parallel = false :: BOOLEAN,
@@ -354,8 +345,7 @@ public class Periodic {
                         failedParams = -1 :: INTEGER,
                         planner = "DEFAULT" :: ["DEFAULT", "COST", "IDP", "DP"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         validateQuery(cypherIterate);
 
         long batchSize = Util.toLong(config.getOrDefault("batchSize", 10000));

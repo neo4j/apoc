@@ -363,33 +363,24 @@ public class PeriodicTest {
     @Test
     public void testTerminateIterate() {
         // Calls to apoc.util.sleep needed to not overload db and keep execution alive long enough for termination.
-        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
-                db,
-                """
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(db, """
                         CALL apoc.periodic.iterate(
                           'UNWIND range(0,1000) AS id CALL apoc.util.sleep(1000) RETURN id',
                           'CALL apoc.util.sleep(1000) WITH $id AS id CREATE (:Foo {id: $id})',
                           {batchSize:1,parallel:true}
-                        )""",
-                "UNWIND range(0,1000) AS id");
-        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
-                db,
-                """
+                        )""", "UNWIND range(0,1000) AS id");
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(db, """
                         CALL apoc.periodic.iterate(
                           'UNWIND range(0,1000) AS id CALL apoc.util.sleep(1000) RETURN id',
                           'CALL apoc.util.sleep(1000) WITH $id AS id CREATE (:Foo {id: $id})',
                           {batchSize:2,iterateList:true}
-                        )""",
-                "UNWIND range(0,1000) AS id");
-        PeriodicTestUtils.testTerminateInnerPeriodicQuery(
-                db,
-                """
+                        )""", "UNWIND range(0,1000) AS id");
+        PeriodicTestUtils.testTerminateInnerPeriodicQuery(db, """
                         CALL apoc.periodic.iterate(
                           'UNWIND range(0,1000) AS id CALL apoc.util.sleep(1000) RETURN id',
                           'CALL apoc.util.sleep(1000) WITH $id AS id CREATE (:Foo {id: $id})',
                           {batchSize:2,iterateList:false}
-                        )""",
-                "UNWIND range(0,1000) AS id");
+                        )""", "UNWIND range(0,1000) AS id");
     }
 
     @Test
@@ -736,20 +727,17 @@ public class PeriodicTest {
 
     @Test
     public void testIterateWithNullRebind() {
-        testResult(
-                db,
-                """
+        testResult(db, """
                 CALL apoc.periodic.iterate(
                     "WITH {a: null, b: {c: 1}, c: [null]} as value RETURN value",
                     "RETURN 1",
                      {})
-                """,
-                result -> {
-                    Map<String, Object> row = Iterators.single(result);
-                    assertEquals(1L, row.get("batches"));
-                    assertEquals(1L, row.get("total"));
-                    assertEquals(0L, row.get("failedBatches"));
-                });
+                """, result -> {
+            Map<String, Object> row = Iterators.single(result);
+            assertEquals(1L, row.get("batches"));
+            assertEquals(1L, row.get("total"));
+            assertEquals(0L, row.get("failedBatches"));
+        });
     }
 
     @Test
@@ -882,8 +870,7 @@ public class PeriodicTest {
     @Test
     public void testMergeNodesInApocPeriodicIterate() {
         db.executeTransactionally("UNWIND range(1,1000) as i CREATE (p1:Person) RETURN 1");
-        final var query =
-                """
+        final var query = """
         CALL apoc.periodic.iterate(
           'MATCH (p:Person) RETURN p',
           'CALL apoc.refactor.mergeNodes([item in $_batch | item.p]) YIELD node RETURN node',

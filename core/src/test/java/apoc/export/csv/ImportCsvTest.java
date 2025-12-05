@@ -85,205 +85,145 @@ public class ImportCsvTest {
                     new File(BASE_URL_FILES).toPath().toAbsolutePath());
 
     final Map<String, String> testCsvs = Collections.unmodifiableMap(Stream.of(
-                    new AbstractMap.SimpleEntry<>(
-                            "array",
-                            """
+                    new AbstractMap.SimpleEntry<>("array", """
                             :ID|name:STRING[]
                             1|John;Bob;Alice
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-basic-affiliated-with",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-affiliated-with", """
                             :START_ID,:END_ID
                             1,3
                             2,4
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-basic-companies",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-companies", """
                             companyId:ID,name:STRING
                             4,Neo4j
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-basic-persons",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-persons", """
                             personId:ID,name:STRING
                             1,John
                             2,Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-basic-unis",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-basic-unis", """
                             uniId:ID,name:STRING
                             3,TU Munich
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-idspaces-affiliated-with",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-affiliated-with", """
                             :START_ID(Person),:END_ID(Organisation)
                             1,1
                             2,2
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-idspaces-companies",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-companies", """
                             companyId:ID(Organisation),name:STRING
                             2,Neo4j
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-idspaces-persons",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-persons", """
                             personId:ID(Person),name:STRING
                             1,John
                             2,Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "custom-ids-idspaces-unis",
-                            """
+                    new AbstractMap.SimpleEntry<>("custom-ids-idspaces-unis", """
                             uniId:ID(Organisation),name:STRING
                             1,TU Munich
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "id-idspaces",
-                            """
+                    new AbstractMap.SimpleEntry<>("id-idspaces", """
                             :ID(Person)|name:STRING
                             1|John
                             2|Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "id-idspaces-with-dash",
-                            """
+                    new AbstractMap.SimpleEntry<>("id-idspaces-with-dash", """
                             :ID(Person-Id)|name:STRING
                             1|John
                             2|Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "id",
-                            """
+                    new AbstractMap.SimpleEntry<>("id", """
                             id:ID|name:STRING
                             1|John
                             2|Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "csvPoint",
-                            """
+                    new AbstractMap.SimpleEntry<>("csvPoint", """
                                     :ID,location:point{crs:WGS-84}
                                     1,"{latitude:55.6121514, longitude:12.9950357}"
                                     2,"{y:51.507222, x:-0.1275}"
                                     3,"{latitude:37.554167, longitude:-122.313056, height: 100, crs:'WGS-84-3D'}"
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "nodesMultiTypes",
-                            """
+                    new AbstractMap.SimpleEntry<>("nodesMultiTypes", """
                                     :ID(MultiType-ID)|date1:datetime{timezone:Europe/Stockholm}|date2:datetime|foo:string|joined:date|active:boolean|points:int
                                     1|2018-05-10T10:30|2018-05-10T12:30|Joe Soap|2017-05-05|true|10
                                     2|2018-05-10T10:30[Europe/Berlin]|2018-05-10T12:30[Europe/Berlin]|Jane Doe|2017-08-21|true|15
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "emptyDate",
-                            """
+                    new AbstractMap.SimpleEntry<>("emptyDate", """
                                     id:ID,:LABEL,str:STRING,int:INT,date:DATE
                                     1,Lab,hello,1,2020-01-01
                                     2,Lab,world,2,2020-01-01
                                     3,Lab,,,
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "relMultiTypes",
-                            """
+                    new AbstractMap.SimpleEntry<>("relMultiTypes", """
                                     :START_ID(MultiType-ID)|:END_ID(MultiType-ID)|prop1:IGNORE|prop2:time{timezone:+02:00}[]|foo:int|time:duration[]|baz:localdatetime[]|bar:localtime[]
                                     1|2|a|15:30|1|P14DT16H12M|2020-01-01T00:00:00|11:00:00
                                     2|1|b|15:30+01:00|2|P5M1.5D|2021|12:00:00
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "id-with-duplicates",
-                            """
+                    new AbstractMap.SimpleEntry<>("id-with-duplicates", """
                             id:ID|name:STRING
                             1|John
                             1|Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "ignore-nodes",
-                            """
+                    new AbstractMap.SimpleEntry<>("ignore-nodes", """
                             :ID|firstname:STRING|lastname:IGNORE|age:INT
                             1|John|Doe|25
                             2|Jane|Doe|26
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "ignore-relationships",
-                            """
+                    new AbstractMap.SimpleEntry<>("ignore-relationships", """
                             :START_ID|:END_ID|prop1:IGNORE|prop2:INT
                             1|2|a|3
                             2|1|b|6
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "label",
-                            """
+                    new AbstractMap.SimpleEntry<>("label", """
                             :ID|:LABEL|name:STRING
                             1|Student;Employee|John
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "knows",
-                            """
+                    new AbstractMap.SimpleEntry<>("knows", """
                             :START_ID,:END_ID,since:INT
                             1,2,2016
                             10,11,2014
                             11,12,2013"""),
-                    new AbstractMap.SimpleEntry<>(
-                            "persons",
-                            """
+                    new AbstractMap.SimpleEntry<>("persons", """
                             :ID,name:STRING,speaks:STRING[]
                             1,John,"en,fr"
                             2,Jane,"en,de\""""),
-                    new AbstractMap.SimpleEntry<>(
-                            "quoted",
-                            """
+                    new AbstractMap.SimpleEntry<>("quoted", """
                             id:ID|:LABEL|name:STRING
                             '1'|'Student:Employee'|'John'
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "rel-on-ids-idspaces",
-                            """
+                    new AbstractMap.SimpleEntry<>("rel-on-ids-idspaces", """
                             :START_ID(Person)|:END_ID(Person)|since:INT
                             1|2|2016
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "rel-on-ids",
-                            """
+                    new AbstractMap.SimpleEntry<>("rel-on-ids", """
                             x:START_ID|:END_ID|since:INT
                             1|2|2016
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "rel-type",
-                            """
+                    new AbstractMap.SimpleEntry<>("rel-type", """
                             :START_ID|:END_ID|:TYPE|since:INT
                             1|2|FRIENDS_WITH|2016
                             2|1||2016
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "typeless",
-                            """
+                    new AbstractMap.SimpleEntry<>("typeless", """
                             :ID|name
                             1|John
                             2|Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "personsWithoutIdField",
-                            """
+                    new AbstractMap.SimpleEntry<>("personsWithoutIdField", """
                             name:STRING
                             John
                             Jane
                             """),
-                    new AbstractMap.SimpleEntry<>(
-                            "emptyInteger",
-                            """
+                    new AbstractMap.SimpleEntry<>("emptyInteger", """
                                     :ID(node_space_1),:LABEL,str_attribute:STRING,int_attribute:INT,int_attribute_array:INT[],double_attribute_array:FLOAT[]
                                     n1,Thing,once upon a time,1,"2;3","2.3;3.5"
                                     n2,Thing,,2,"4;5","2.6;3.6"
                                     n3,Thing,,,,
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "emptyArray",
-                            """
+                    new AbstractMap.SimpleEntry<>("emptyArray", """
                                     id:ID,:LABEL,arr:STRING[],description:STRING
                                     1,Arrays,a;b;c;d;e,normal,
                                     2,Arrays,,withNull
@@ -291,22 +231,16 @@ public class ImportCsvTest {
                                     4,Arrays,a; ;c; ;e,withBlankItem
                                     5,Arrays, ,withWhiteSpace
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "nodesWithSpecialCharInID",
-                            """
+                    new AbstractMap.SimpleEntry<>("nodesWithSpecialCharInID", """
                                     node_code:ID(node_code),:LABEL
                                     806^04^150\\\\^123456,Person
                                     2,Cat
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "relsWithSpecialCharInID",
-                            """
+                    new AbstractMap.SimpleEntry<>("relsWithSpecialCharInID", """
                                     :START_ID(node_code),:END_ID(node_code),:TYPE
                                     806^04^150\\\\^123456,2,FRIENDS_WITH
                                     """),
-                    new AbstractMap.SimpleEntry<>(
-                            "withDifferentTypes",
-                            """
+                    new AbstractMap.SimpleEntry<>("withDifferentTypes", """
                             id:ID|name:STRING|age:double|chipID:long|:LABEL
                             1|Maja|0.5|1236|Cat
                             2|Pelle|0.5|1345|Cat
@@ -937,9 +871,7 @@ public class ImportCsvTest {
         List<Long> ages = TestUtil.firstColumn(db, "MATCH (p:Person) RETURN p.age AS age ORDER BY age");
         assertTrue(ages.containsAll(List.of(25L, 26L)));
 
-        List<String> pairs = TestUtil.firstColumn(
-                db,
-                """
+        List<String> pairs = TestUtil.firstColumn(db, """
                 MATCH (p1:Person)-[k:KNOWS]->(p2:Person)
                 WHERE p1.lastname IS NULL
                   AND p2.lastname IS NULL
@@ -1036,8 +968,7 @@ public class ImportCsvTest {
     public void testRoundTripWithTypes() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
         CREATE (:Cat {
                         name: 'Maja',
                         age: 0.5,
@@ -1077,9 +1008,7 @@ public class ImportCsvTest {
                     assertEquals(0L, r.get("relationships"));
                 });
 
-        TestUtil.testResult(
-                db,
-                """
+        TestUtil.testResult(db, """
                     MATCH (n:Cat)
                     RETURN n.name AS name,
                             n.age AS age,
@@ -1089,26 +1018,23 @@ public class ImportCsvTest {
                             n.location AS location,
                             n.born AS born
                     ORDER BY name
-                """,
-                (res) -> {
-                    Map<String, Object> r = res.next();
-                    assertEquals("Maja", r.get("name"));
-                    assertEquals(0.5, r.get("age"));
-                    assertEquals(1236L, r.get("chipID"));
-                    assertEquals(true, r.get("isFluffy"));
-                    assertEquals(
-                            Values.pointValue(CoordinateReferenceSystem.WGS_84, 33.46789D, 13.1D), r.get("location"));
-                    assertEquals(LocalDate.of(2024, 5, 10), r.get("born"));
+                """, (res) -> {
+            Map<String, Object> r = res.next();
+            assertEquals("Maja", r.get("name"));
+            assertEquals(0.5, r.get("age"));
+            assertEquals(1236L, r.get("chipID"));
+            assertEquals(true, r.get("isFluffy"));
+            assertEquals(Values.pointValue(CoordinateReferenceSystem.WGS_84, 33.46789D, 13.1D), r.get("location"));
+            assertEquals(LocalDate.of(2024, 5, 10), r.get("born"));
 
-                    r = res.next();
-                    assertEquals("Pelle", r.get("name"));
-                    assertEquals(0.5, r.get("age"));
-                    assertEquals(1345L, r.get("chipID"));
-                    assertEquals(false, r.get("isFluffy"));
-                    assertEquals(
-                            Values.pointValue(CoordinateReferenceSystem.WGS_84, 33.46789D, 13.1D), r.get("location"));
-                    assertEquals(LocalDate.of(2024, 5, 10), r.get("born"));
-                });
+            r = res.next();
+            assertEquals("Pelle", r.get("name"));
+            assertEquals(0.5, r.get("age"));
+            assertEquals(1345L, r.get("chipID"));
+            assertEquals(false, r.get("isFluffy"));
+            assertEquals(Values.pointValue(CoordinateReferenceSystem.WGS_84, 33.46789D, 13.1D), r.get("location"));
+            assertEquals(LocalDate.of(2024, 5, 10), r.get("born"));
+        });
 
         db.executeTransactionally("MATCH (n:Cat) DETACH DELETE n");
     }

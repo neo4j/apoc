@@ -178,8 +178,11 @@ public class Cypher {
     }
 
     public record RowResult(
-            @Description("The row number of the run Cypher statement.") long row,
-            @Description("The result returned from the Cypher statement.") Map<String, Object> result) {}
+            @Description("The row number of the run Cypher statement.")
+            long row,
+
+            @Description("The result returned from the Cypher statement.")
+            Map<String, Object> result) {}
 
     @Procedure(name = "apoc.cypher.doIt", mode = WRITE)
     @Description(
@@ -252,7 +255,8 @@ public class Cypher {
     }
 
     public record CaseMapResult(
-            @Description("The result returned from the evaluated Cypher query.") Map<String, Object> value) {
+            @Description("The result returned from the evaluated Cypher query.")
+            Map<String, Object> value) {
         public static final CaseMapResult EMPTY = new CaseMapResult(Collections.emptyMap());
 
         public static CaseMapResult empty() {

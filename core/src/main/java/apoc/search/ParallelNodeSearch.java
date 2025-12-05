@@ -160,7 +160,8 @@ public class ParallelNodeSearch {
         return Arrays.stream(ids).mapToObj(id -> new SearchNodeResult(tx.getNodeById(id)));
     }
 
-    public record SearchNodeResult(@Description("The found node.") Node node) {}
+    public record SearchNodeResult(
+            @Description("The found node.") Node node) {}
 
     @NotThreadSafe
     @Procedure("apoc.search.node")

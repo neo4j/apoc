@@ -26,8 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class LimitedSizeInputStream extends InputStream {
-    public static final String SIZE_EXCEEDED_ERROR =
-            """
+    public static final String SIZE_EXCEEDED_ERROR = """
             The file dimension exceeded maximum size in bytes, %s,
             which is %s times the width of the original file.
             The InputStream has been blocked because the file could be a compression bomb attack.""";

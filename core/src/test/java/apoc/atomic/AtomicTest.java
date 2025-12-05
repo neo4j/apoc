@@ -504,8 +504,7 @@ public class AtomicTest {
 
     @Test
     public void testPropertyNamesWithSpecialCharacters() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
 			CREATE (p:Person {
 				`person.name`:'Tom',
 				`person.age`: 1,

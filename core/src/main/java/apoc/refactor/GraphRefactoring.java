@@ -185,17 +185,12 @@ public class GraphRefactoring {
                     + "It is possible to skip any `NODE` properties using the `skipProperties` `LIST<STRING>` via the config `MAP`.")
     public Stream<NodeRefactorResult> cloneSubgraphFromPaths(
             @Name(value = "paths", description = "The paths to be cloned.") List<Path> paths,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         standinNodes :: LIST<LIST<NODE>>,
                         skipProperties :: LIST<STRING>
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
 
         if (paths == null || paths.isEmpty()) return Stream.empty();
 
@@ -241,18 +236,13 @@ public class GraphRefactoring {
                             description =
                                     "The relationships to be cloned. If left empty all relationships between the given nodes will be cloned.")
                     List<Relationship> rels,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         standinNodes :: LIST<LIST<NODE>>,
                         skipProperties :: LIST<STRING>,
                         createNodesInNewTransactions = false :: BOOLEAN
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
 
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
 
@@ -354,7 +344,8 @@ public class GraphRefactoring {
         }
     }
 
-    public record MergedNodeResult(@Description("The merged node.") Node node) {}
+    public record MergedNodeResult(
+            @Description("The merged node.") Node node) {}
 
     /**
      * Merges the nodes onto the first node.
@@ -365,11 +356,7 @@ public class GraphRefactoring {
             + "All `RELATIONSHIP` values are merged onto that `NODE` as well.")
     public Stream<MergedNodeResult> mergeNodes(
             @Name(value = "nodes", description = "The nodes to be merged onto the first node.") List<Node> nodes,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         mergeRels :: BOOLEAN,
                         selfRef :: BOOLEAN,
@@ -382,8 +369,7 @@ public class GraphRefactoring {
                         relationshipSelectionStrategy = "incoming" :: ["incoming", "outgoing", "merge"]
                         properties :: ["overwrite", ""discard", "combine"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
         RefactorConfig conf = new RefactorConfig(config);
         Set<Node> nodesSet = new LinkedHashSet<>(nodes);
@@ -402,7 +388,8 @@ public class GraphRefactoring {
         return Stream.of(new MergedNodeResult(first));
     }
 
-    public record MergedRelationshipResult(@Description("The merged relationship.") Relationship rel) {}
+    public record MergedRelationshipResult(
+            @Description("The merged relationship.") Relationship rel) {}
 
     /**
      * Merges the relationships onto the first relationship and delete them.
@@ -413,11 +400,7 @@ public class GraphRefactoring {
     public Stream<MergedRelationshipResult> mergeRelationships(
             @Name(value = "rels", description = "The relationships to be merged onto the first relationship.")
                     List<Relationship> relationships,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         mergeRels :: BOOLEAN,
                         selfRef :: BOOLEAN,
@@ -430,8 +413,7 @@ public class GraphRefactoring {
                         relationshipSelectionStrategy = "incoming" :: ["incoming", "outgoing", "merge"]
                         properties :: ["overwrite", "discard", "combine"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (relationships == null || relationships.isEmpty()) return Stream.empty();
         Set<Relationship> relationshipsSet = new LinkedHashSet<>(relationships);
         RefactorConfig conf = new RefactorConfig(config);
@@ -622,7 +604,9 @@ public class GraphRefactoring {
 
     public record RefactorGraphResult(
             @Description("The remaining nodes.") List<Node> nodes,
-            @Description("The new connecting relationships.") List<Relationship> relationships) {}
+
+            @Description("The new connecting relationships.")
+            List<Relationship> relationships) {}
 
     @Procedure(name = "apoc.refactor.deleteAndReconnect", mode = Mode.WRITE)
     @Description("Removes the given `NODE` values from the `PATH` and reconnects the remaining `NODE` values.")
@@ -633,17 +617,12 @@ public class GraphRefactoring {
                                     "The path containing the nodes to delete and the remaining nodes to reconnect.")
                     Path path,
             @Name(value = "nodes", description = "The nodes to delete.") List<Node> nodesToRemove,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         relationshipSelectionStrategy = "incoming" :: ["incoming", "outgoing", "merge"]
                         properties :: ["overwrite", "discard", "combine"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
 
         RefactorConfig refactorConfig = new RefactorConfig(config);
         List<Node> nodes = new ArrayList<>();

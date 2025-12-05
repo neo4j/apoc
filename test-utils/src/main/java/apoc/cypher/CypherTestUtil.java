@@ -37,16 +37,14 @@ public class CypherTestUtil {
             "UNWIND range(0,3) as id \n" + "CREATE (n:Result {id:id})-[:REL {idRel: id}]->(:Other {idOther: id})";
 
     // placed in test-utils because is used by extended as well
-    public static String SET_NODE =
-            """
+    public static String SET_NODE = """
             MATCH (n:Result)-[:REL]->(:Other)
             SET n.updated = true
             RETURN n
             ORDER BY n.id;
             """;
 
-    public static String SET_AND_RETURN_QUERIES =
-            """
+    public static String SET_AND_RETURN_QUERIES = """
             MATCH (n:Result)-[:REL]->(:Other)
             SET n.updated = true
             RETURN n;

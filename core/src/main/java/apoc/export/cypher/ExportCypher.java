@@ -81,11 +81,7 @@ public class ExportCypher {
                             defaultValue = "",
                             description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -96,8 +92,7 @@ public class ExportCypher {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), false);
@@ -115,11 +110,7 @@ public class ExportCypher {
                             defaultValue = "",
                             description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -130,8 +121,7 @@ public class ExportCypher {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
         return exportCypher(
@@ -146,11 +136,7 @@ public class ExportCypher {
             @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -161,8 +147,7 @@ public class ExportCypher {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
 
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
@@ -183,11 +168,7 @@ public class ExportCypher {
                             defaultValue = "",
                             description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -198,8 +179,7 @@ public class ExportCypher {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(query);
@@ -220,11 +200,7 @@ public class ExportCypher {
                             defaultValue = "",
                             description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -235,8 +211,7 @@ public class ExportCypher {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (Util.isNullOrEmpty(fileName)) fileName = null;
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCypher(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config), true);

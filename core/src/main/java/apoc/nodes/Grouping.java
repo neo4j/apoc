@@ -109,11 +109,7 @@ public class Grouping {
                             description =
                                     "The first map specifies the node properties to aggregate with their corresponding aggregation functions, while the second map specifies the relationship properties for aggregation.")
                     List<Map<String, Object>> aggregations,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         includeRels :: STRING | LIST<STRING>
                         excludeRels :: STRING | LIST<STRING>,
@@ -124,8 +120,7 @@ public class Grouping {
                         relsPerNode = -1 :: INTEGER,
                         filter :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
 
         Set<String> labels = new HashSet<>(labelNames);
         if (labels.remove("*"))

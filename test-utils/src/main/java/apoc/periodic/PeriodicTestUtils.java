@@ -158,22 +158,23 @@ public class PeriodicTestUtils {
                 final var state = getState(periodicResult);
                 switch (state) {
                     case FAILED -> assertThat(getExceptionNow(periodicResult)).hasMessageContaining("terminated");
-                    case SUCCESS -> assertThat(getResultNow(periodicResult))
-                            .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
-                            .satisfiesAnyOf(
-                                    row -> assertThat(row).containsEntry("wasTerminated", true),
-                                    row -> assertThat(row)
-                                            .extractingByKey("batchErrors")
-                                            .asString()
-                                            .contains("terminated"),
-                                    row -> assertThat(row)
-                                            .extractingByKey("commitErrors")
-                                            .asString()
-                                            .contains("terminated"),
-                                    row -> assertThat(row)
-                                            .extractingByKey("errorMessages")
-                                            .asString()
-                                            .contains("terminated"));
+                    case SUCCESS ->
+                        assertThat(getResultNow(periodicResult))
+                                .singleElement(InstanceOfAssertFactories.map(String.class, Object.class))
+                                .satisfiesAnyOf(
+                                        row -> assertThat(row).containsEntry("wasTerminated", true),
+                                        row -> assertThat(row)
+                                                .extractingByKey("batchErrors")
+                                                .asString()
+                                                .contains("terminated"),
+                                        row -> assertThat(row)
+                                                .extractingByKey("commitErrors")
+                                                .asString()
+                                                .contains("terminated"),
+                                        row -> assertThat(row)
+                                                .extractingByKey("errorMessages")
+                                                .asString()
+                                                .contains("terminated"));
                     default -> fail("Unexpected state of periodic query execution " + state);
                 }
             });

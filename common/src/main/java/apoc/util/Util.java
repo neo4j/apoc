@@ -1185,11 +1185,8 @@ public class Util {
 
     public static ConstraintCategory getConstraintCategory(ConstraintType type) {
         return switch (type) {
-            case NODE_KEY,
-                    NODE_PROPERTY_EXISTENCE,
-                    UNIQUENESS,
-                    NODE_PROPERTY_TYPE,
-                    NODE_LABEL_EXISTENCE -> ConstraintCategory.NODE;
+            case NODE_KEY, NODE_PROPERTY_EXISTENCE, UNIQUENESS, NODE_PROPERTY_TYPE, NODE_LABEL_EXISTENCE ->
+                ConstraintCategory.NODE;
             case RELATIONSHIP_KEY,
                     RELATIONSHIP_UNIQUENESS,
                     RELATIONSHIP_PROPERTY_EXISTENCE,

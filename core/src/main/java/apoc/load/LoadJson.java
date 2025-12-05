@@ -56,18 +56,13 @@ public class LoadJson {
                             defaultValue = "",
                             description = "A JSON path expression used to extract a certain part from the list.")
                     String path,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         failOnError = true :: BOOLEAN,
                         pathOptions :: LIST<STRING>,
                         compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2"", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return JsonUtil.loadJson(
                         url, null, null, path, true, (List<String>) config.get("pathOptions"), urlAccessChecker)
                 .flatMap((value) -> {
@@ -93,18 +88,13 @@ public class LoadJson {
                             defaultValue = "",
                             description = "A JSON path expression used to extract a certain part from the list.")
                     String path,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         failOnError = true :: BOOLEAN,
                         pathOptions :: LIST<STRING>,
                         compression = "NONE" :: ["NONE", "BYTES", "GZIP", "BZIP2", "DEFLATE", "BLOCK_LZ4", "FRAMED_SNAPPY"]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         return jsonParams(urlOrKeyOrBinary, null, null, path, config);
     }
 
@@ -129,18 +119,13 @@ public class LoadJson {
                             defaultValue = "",
                             description = "A JSON path expression used to extract a certain part from the list.")
                     String path,
-            @Name(
-                            value = "config",
-                            defaultValue = "{}",
-                            description =
-                                    """
+            @Name(value = "config", defaultValue = "{}", description = """
                     {
                         failOnError = true :: BOOLEAN,
                         pathOptions :: LIST<STRING>,
                         compression = ""NONE"" :: [""NONE"", ""BYTES"", ""GZIP"", ""BZIP2"", ""DEFLATE"", ""BLOCK_LZ4"", ""FRAMED_SNAPPY”]
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         if (config == null) config = Collections.emptyMap();
         boolean failOnError = (boolean) config.getOrDefault("failOnError", true);
         String compressionAlgo = (String) config.getOrDefault(COMPRESSION, CompressionAlgo.NONE.name());

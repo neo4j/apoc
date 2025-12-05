@@ -77,13 +77,11 @@ public class ExportGraphMLTest {
     private static final String exportQueryRelOnly =
             "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN rel', $file, $config)";
 
-    private static final String exportDataWithRelOnly =
-            """
+    private static final String exportDataWithRelOnly = """
                 MATCH (start:Start)-[rel:REL]->(end:End)
                 CALL apoc.export.graphml.data([], [rel], $file, {})
                 YIELD nodes, relationships, properties RETURN *""";
-    private static final String exportDataWithStartAndRel =
-            """
+    private static final String exportDataWithStartAndRel = """
                 MATCH (start:Start)-[rel:REL]->(end:End)
                 CALL apoc.export.graphml.data([start], [rel], $file, $config)
                 YIELD nodes, relationships, properties RETURN *""";
@@ -138,8 +136,7 @@ public class ExportGraphMLTest {
     public void testRelDefinedBeforeNodes() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
-        String xml =
-                """
+        String xml = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns      http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
                   <edge id="e183" source="n27" target="n72">
@@ -1087,16 +1084,12 @@ public class ExportGraphMLTest {
         for (String query : invalidQueries) {
             QueryExecutionException e = Assert.assertThrows(
                     QueryExecutionException.class,
-                    () -> TestUtil.testCall(
-                            db,
-                            """
+                    () -> TestUtil.testCall(db, """
                         CALL apoc.export.graphml.query(
                         $query,
                         $file,
                         {}
-                        )""",
-                            map("query", query, "file", filename),
-                            (r) -> {}));
+                        )""", map("query", query, "file", filename), (r) -> {}));
 
             assertError(e, INVALID_QUERY_MODE_ERROR, RuntimeException.class, "apoc.export.graphml.query");
         }

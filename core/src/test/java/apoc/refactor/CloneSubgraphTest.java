@@ -81,8 +81,7 @@ public class CloneSubgraphTest {
         db.shutdown();
     }
 
-    private static final String cloneWithEmptyRels =
-            """
+    private static final String cloneWithEmptyRels = """
                 MATCH (rootA:Root{name:'A'})
                 CALL apoc.path.subgraphAll(rootA, {}) YIELD nodes, relationships
                 WITH
@@ -109,8 +108,7 @@ public class CloneSubgraphTest {
                   clonedRelsVerified
                 """;
 
-    private static final String cloneWithEmptyRelsMeta =
-            """
+    private static final String cloneWithEmptyRelsMeta = """
             CALL apoc.meta.stats() YIELD nodeCount, relCount, labels, relTypes as relTypesMap
             CALL db.relationshipTypes() YIELD relationshipType
             WITH nodeCount, relCount, labels, collect([relationshipType, relTypesMap['()-[:' + relationshipType + ']->()']]) as relationshipTypesColl
@@ -471,8 +469,7 @@ public class CloneSubgraphTest {
         try (final var tx = db.beginTx();
                 final var clean = tx.execute("MATCH (n) DETACH DELETE n");
                 final var create = tx.execute("CREATE (:A)-[:R{id:\"ID1\"}]->(:B)");
-                final var clone = tx.execute(
-                        """
+                final var clone = tx.execute("""
                 MATCH (n)-[r:R]->(oldB:B)
                 WITH oldB, COLLECT(DISTINCT n) AS nodes
                 CREATE (newB:B)

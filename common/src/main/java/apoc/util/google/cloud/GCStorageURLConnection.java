@@ -63,7 +63,7 @@ public class GCStorageURLConnection extends URLConnection {
                     throw new RuntimeException(
                             "You must set the env variable GOOGLE_APPLICATION_CREDENTIALS as described here: https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-java");
                 }
-                // fall through
+            // fall through
             case GCP_ENVIRONMENT:
                 storage = StorageOptions.getDefaultInstance().getService();
                 break;

@@ -102,51 +102,45 @@ public class NodesTest {
     @Test
     public void nodesGetTest() {
         db.executeTransactionally("CREATE (f:Foo), (b:Bar), (c:Car)");
-        TestUtil.testResult(
-                db,
-                """
+        TestUtil.testResult(db, """
                 MATCH (f:Foo), (b:Bar), (c:Car)
                 CALL apoc.nodes.get([elementId(f), id(b), c])
                 YIELD node
                 RETURN node
-                """,
-                (result) -> {
-                    List<Label> returnedNodeLabels = new ArrayList<>();
-                    List<Label> expectedLabels = List.of(label("Foo"), label("Bar"), label("Car"));
-                    Map<String, Object> row = result.next();
-                    ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
-                    row = result.next();
-                    ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
-                    row = result.next();
-                    ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
-                    assertFalse(result.hasNext());
-                    assertTrue(expectedLabels.containsAll(returnedNodeLabels));
-                });
+                """, (result) -> {
+            List<Label> returnedNodeLabels = new ArrayList<>();
+            List<Label> expectedLabels = List.of(label("Foo"), label("Bar"), label("Car"));
+            Map<String, Object> row = result.next();
+            ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
+            row = result.next();
+            ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
+            row = result.next();
+            ((Node) row.get("node")).getLabels().forEach(returnedNodeLabels::add);
+            assertFalse(result.hasNext());
+            assertTrue(expectedLabels.containsAll(returnedNodeLabels));
+        });
     }
 
     @Test
     public void relsGetTest() {
         db.executeTransactionally("CREATE ()-[:FOO]->(), ()-[:BAR]->(), ()-[:CAR]->()");
-        TestUtil.testResult(
-                db,
-                """
+        TestUtil.testResult(db, """
                 MATCH ()-[f:FOO]->(), ()-[b:BAR]->(), ()-[c:CAR]->()
                 CALL apoc.nodes.rels([elementId(f), id(b), c])
                 YIELD rel
                 RETURN rel
-                """,
-                (result) -> {
-                    List<RelationshipType> returnedRelTypes = new ArrayList<>();
-                    List<RelationshipType> expectedTypes = List.of(withName("FOO"), withName("BAR"), withName("CAR"));
-                    Map<String, Object> row = result.next();
-                    returnedRelTypes.add(((Relationship) row.get("rel")).getType());
-                    row = result.next();
-                    returnedRelTypes.add(((Relationship) row.get("rel")).getType());
-                    row = result.next();
-                    returnedRelTypes.add(((Relationship) row.get("rel")).getType());
-                    assertFalse(result.hasNext());
-                    assertTrue(expectedTypes.containsAll(returnedRelTypes));
-                });
+                """, (result) -> {
+            List<RelationshipType> returnedRelTypes = new ArrayList<>();
+            List<RelationshipType> expectedTypes = List.of(withName("FOO"), withName("BAR"), withName("CAR"));
+            Map<String, Object> row = result.next();
+            returnedRelTypes.add(((Relationship) row.get("rel")).getType());
+            row = result.next();
+            returnedRelTypes.add(((Relationship) row.get("rel")).getType());
+            row = result.next();
+            returnedRelTypes.add(((Relationship) row.get("rel")).getType());
+            assertFalse(result.hasNext());
+            assertTrue(expectedTypes.containsAll(returnedRelTypes));
+        });
     }
 
     @Test
@@ -264,8 +258,7 @@ public class NodesTest {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         // node with 2 'DEPENDS_ON' cycles and 1 mixed-rel-type cycle
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE (m1:Start {bar: 'alpha'}) with m1
                 CREATE (m1)-[:DEPENDS_ON {id: 0}]->(m2:Module {bar: 'one'})-[:DEPENDS_ON {id: 1}]->(m3:Module {bar: 'two'})-[:DEPENDS_ON {id: 2}]->(m1)
                 WITH m1, m2, m3
@@ -351,9 +344,7 @@ public class NodesTest {
     public void nodesDeleteTest() {
         db.executeTransactionally("CREATE (:FOO), (:BAR), (:BAZ)");
 
-        long count = TestUtil.singleResultFirstColumn(
-                db,
-                """
+        long count = TestUtil.singleResultFirstColumn(db, """
                 MATCH (foo:FOO), (bar:BAR), (baz:BAZ)
                 CALL apoc.nodes.delete([foo, id(bar), elementId(baz)],1)
                 YIELD value AS count
@@ -1118,8 +1109,7 @@ public class NodesTest {
 
     @Test
     public void testMergeVirtualNode() {
-        db.executeTransactionally(
-                """
+        db.executeTransactionally("""
                 CREATE
                 (p:Person {name: 'John'})-[:LIVES_IN]->(c:City{name:'London'}),
                 (p1:Person {name: 'Mike'})-[:LIVES_IN]->(c),
@@ -1134,23 +1124,18 @@ public class NodesTest {
 
         Set<Label> label = asSet(label("City"), label("Person"));
 
-        TestUtil.testResult(
-                db,
-                """
+        TestUtil.testResult(db, """
                 MATCH (p:Person)-[:LIVES_IN]->(c:City)
                 WITH c, c + collect(p) as subgraph
-                CALL apoc.nodes.collapse(subgraph,{properties:'discard', mergeVirtualRels:true, countMerge: true}) yield from, rel, to return from, rel, to""",
-                null,
-                result -> {
-                    Map<String, Object> map = result.next();
+                CALL apoc.nodes.collapse(subgraph,{properties:'discard', mergeVirtualRels:true, countMerge: true}) yield from, rel, to return from, rel, to""", null, result -> {
+            Map<String, Object> map = result.next();
 
-                    assertEquals(
-                            Util.map("name", "London", "count", 6), ((VirtualNode) map.get("from")).getAllProperties());
-                    assertEquals(label, labelSet((VirtualNode) map.get("from")));
-                    assertNull(map.get("rel"));
-                    assertNull(map.get("to"));
-                    assertFalse(result.hasNext());
-                });
+            assertEquals(Util.map("name", "London", "count", 6), ((VirtualNode) map.get("from")).getAllProperties());
+            assertEquals(label, labelSet((VirtualNode) map.get("from")));
+            assertNull(map.get("rel"));
+            assertNull(map.get("to"));
+            assertFalse(result.hasNext());
+        });
     }
 
     @Test

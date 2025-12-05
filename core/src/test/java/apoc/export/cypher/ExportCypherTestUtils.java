@@ -132,8 +132,7 @@ public class ExportCypherTestUtils {
             + "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:0}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:3}) MERGE (n1)-[r:IS_TEAM_MEMBER_OF]->(n2) SET r.name=\"eee\";\n"
             + ":commit\n";
 
-    protected static final String RELS_UNWIND_MULTI_RELS =
-            """
+    protected static final String RELS_UNWIND_MULTI_RELS = """
             :begin
             UNWIND [{start: {_id:0}, id: 0, end: {_id:1}, properties:{id:1}}, {start: {_id:0}, id: 1, end: {_id:1}, properties:{id:2}}, {start: {_id:0}, id: 2, end: {_id:1}, properties:{id:2}}, {start: {_id:0}, id: 3, end: {_id:1}, properties:{id:3}}, {start: {_id:0}, id: 4, end: {_id:1}, properties:{id:4}}] AS row
             MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})
@@ -154,8 +153,7 @@ public class ExportCypherTestUtils {
 
             """;
 
-    protected static final String RELS_UNWIND_UPDATE_ALL_MULTI_RELS =
-            """
+    protected static final String RELS_UNWIND_UPDATE_ALL_MULTI_RELS = """
             :begin
             UNWIND [{start: {_id:0}, id: 0, end: {_id:1}, properties:{id:1}}, {start: {_id:0}, id: 1, end: {_id:1}, properties:{id:2}}, {start: {_id:0}, id: 2, end: {_id:1}, properties:{id:2}}, {start: {_id:0}, id: 3, end: {_id:1}, properties:{id:3}}, {start: {_id:0}, id: 4, end: {_id:1}, properties:{id:4}}] AS row
             MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})

@@ -114,20 +114,22 @@ public class CsvFormat {
 
     private CSVWriter getCsvWriter(Writer writer) {
         return switch (config.isQuotes()) {
-            case ExportConfig.NO_QUOTES -> new CustomCSVWriter(
-                    writer,
-                    config.getDelimChar(),
-                    '\0', // quote char
-                    '\0', // escape char
-                    CSVWriter.DEFAULT_LINE_END,
-                    config.shouldDifferentiateNulls());
-            default -> new CustomCSVWriter(
-                    writer,
-                    config.getDelimChar(),
-                    ExportConfig.QUOTECHAR,
-                    CSVWriter.DEFAULT_ESCAPE_CHARACTER,
-                    CSVWriter.DEFAULT_LINE_END,
-                    config.shouldDifferentiateNulls());
+            case ExportConfig.NO_QUOTES ->
+                new CustomCSVWriter(
+                        writer,
+                        config.getDelimChar(),
+                        '\0', // quote char
+                        '\0', // escape char
+                        CSVWriter.DEFAULT_LINE_END,
+                        config.shouldDifferentiateNulls());
+            default ->
+                new CustomCSVWriter(
+                        writer,
+                        config.getDelimChar(),
+                        ExportConfig.QUOTECHAR,
+                        CSVWriter.DEFAULT_ESCAPE_CHARACTER,
+                        CSVWriter.DEFAULT_LINE_END,
+                        config.shouldDifferentiateNulls());
         };
     }
 
@@ -254,10 +256,12 @@ public class CsvFormat {
                         reporter.update(0, 1, r.getAllProperties().size());
                         return headerRel.stream()
                                 .map(s -> switch (s) {
-                                    case ":START_ID" -> String.valueOf(getNodeId(
-                                            threadBoundTx, r.getStartNode().getElementId()));
-                                    case ":END_ID" -> String.valueOf(getNodeId(
-                                            threadBoundTx, r.getEndNode().getElementId()));
+                                    case ":START_ID" ->
+                                        String.valueOf(getNodeId(
+                                                threadBoundTx, r.getStartNode().getElementId()));
+                                    case ":END_ID" ->
+                                        String.valueOf(getNodeId(
+                                                threadBoundTx, r.getEndNode().getElementId()));
                                     case ":TYPE" -> entrySet.getKey().name();
                                     default -> {
                                         String prop = s.split(":")[0];

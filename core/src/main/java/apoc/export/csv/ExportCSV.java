@@ -75,10 +75,7 @@ public class ExportCSV {
     public Stream<ExportProgressInfo> all(
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -91,8 +88,7 @@ public class ExportCSV {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
         return exportCsv(fileName, source, new ExportData.Database(), new ExportConfig(config, ExportFormat.CSV));
     }
@@ -105,10 +101,7 @@ public class ExportCSV {
             @Name(value = "rels", description = "A list of relationships to export.") List<Relationship> rels,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -120,8 +113,7 @@ public class ExportCSV {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config, ExportFormat.CSV);
         preventBulkImport(exportConfig);
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -135,10 +127,7 @@ public class ExportCSV {
             @Name(value = "graph", description = "The graph to export.") Map<String, Object> graph,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -151,8 +140,7 @@ public class ExportCSV {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
         String source = String.format("graph: nodes(%d), rels(%d)", nodes.size(), rels.size());
@@ -167,10 +155,7 @@ public class ExportCSV {
             @Name(value = "query", description = "The query used to collect the data for export.") String query,
             @Name(value = "file", description = "The name of the file to which the data will be exported.")
                     String fileName,
-            @Name(
-                            value = "config",
-                            description =
-                                    """
+            @Name(value = "config", description = """
                     {
                             stream = false :: BOOLEAN,
                             batchSize = 20000 :: INTEGER,
@@ -182,8 +167,7 @@ public class ExportCSV {
                             sampling = false :: BOOLEAN,
                             samplingConfig :: MAP
                     }
-                    """)
-                    Map<String, Object> config) {
+                    """) Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config, ExportFormat.CSV);
         preventBulkImport(exportConfig);
         Map<String, Object> params = config == null

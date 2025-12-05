@@ -120,11 +120,9 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     private void assertExportNodesAndRels(Map<String, Object> r) {
-        List<String> possibleNodeStatements = List.of(
-                """
+        List<String> possibleNodeStatements = List.of("""
                         UNWIND [{surname:"Jackson", name:"Matt", properties:{}}, {surname:"Snow", name:"John", properties:{}}] AS row
-                        CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;""",
-                """
+                        CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;""", """
                         UNWIND [{surname:"Snow", name:"John", properties:{}}, {surname:"Jackson", name:"Matt", properties:{}}] AS row
                         CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;""");
         String actual = (String) r.get("nodeStatements");
@@ -137,47 +135,37 @@ public class ExportCypherEnterpriseFeaturesTest {
                 .forEach(constraint -> assertTrue(
                         String.format("Constraint '%s' not in result", constraint),
                         schemaStatements.contains(constraint)));
-        assertEquals(
-                """
+        assertEquals("""
                             :begin
                             UNWIND [{start: {name:"John", surname:"Snow"}, end: {name:"Matt", surname:"Jackson"}, properties:{foo:1}}] AS row
                             MATCH (start:Person{surname: row.start.surname, name: row.start.name})
                             MATCH (end:Person{surname: row.end.surname, name: row.end.name})
                             CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
                             :commit
-                            """,
-                r.get("relationshipStatements"));
+                            """, r.get("relationshipStatements"));
     }
 
     @Test
     public void testExportDataOnlyRelWithCompoundConstraintCypherShell() {
         String fileName = "testDataCypherShellWithCompoundConstraint.cypher";
-        testCall(
-                session,
-                """
+        testCall(session, """
                 MATCH (start:Person)-[rel:KNOWS]->(end)
                 CALL apoc.export.cypher.data([], [rel], $file, $config)
-                YIELD nodes, relationships, properties RETURN *""",
-                map("file", fileName, "config", Util.map("format", "cypher-shell")),
-                (r) -> {
-                    assertExportOnlyRels(fileName);
-                });
+                YIELD nodes, relationships, properties RETURN *""", map("file", fileName, "config", Util.map("format", "cypher-shell")), (r) -> {
+            assertExportOnlyRels(fileName);
+        });
     }
 
     @Test
     public void testExportGraphOnlyRelWithCompoundConstraintCypherShell() {
         String fileName = "testGraphCypherShellWithCompoundConstraint.cypher";
-        testCall(
-                session,
-                """
+        testCall(session, """
                 MATCH (start:Person)-[rel:KNOWS]->(end)
                 WITH {nodes: [], relationships: [rel]} AS graph
                 CALL apoc.export.cypher.graph(graph, $file, $config)
-                YIELD nodes, relationships, properties RETURN *""",
-                map("file", fileName, "config", Util.map("format", "cypher-shell")),
-                (r) -> {
-                    assertExportOnlyRels(fileName);
-                });
+                YIELD nodes, relationships, properties RETURN *""", map("file", fileName, "config", Util.map("format", "cypher-shell")), (r) -> {
+            assertExportOnlyRels(fileName);
+        });
     }
 
     @Test
@@ -223,8 +211,7 @@ public class ExportCypherEnterpriseFeaturesTest {
            MATCH (end:Person{surname: row.end.surname, name: row.end.name})
            CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
         */
-        final String expected =
-                """
+        final String expected = """
                 UNWIND [{start: {name:"Phil", surname:"Meyer"}, end: {name:"Silvia", surname:"Jones"}, properties:{foo:2}}] AS row
                 MATCH (start:Person{surname: row.start.surname, name: row.start.name})
                 MATCH (end:Person{surname: row.end.surname, name: row.end.name})
@@ -254,8 +241,7 @@ public class ExportCypherEnterpriseFeaturesTest {
 
     private void assertExportOnlyRels(String fileName) {
         String actual = readFileToString(new File(importFolder, fileName));
-        final String expected =
-                """
+        final String expected = """
             :begin
             CREATE CONSTRAINT KnowsConsNotNull FOR ()-[rel:KNOWS]-() REQUIRE (rel.foo) IS NOT NULL;
             CREATE CONSTRAINT KnowsConsUnique FOR ()-[rel:KNOWS]-() REQUIRE (rel.two) IS UNIQUE;
