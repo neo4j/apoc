@@ -19,7 +19,6 @@
 package apoc.util;
 
 import static apoc.util.TestContainerUtil.Neo4jVersion;
-import static apoc.util.TestContainerUtil.Neo4jVersion.ENTERPRISE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Neo4jContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.ext.ScriptUtils;
 
 /**
@@ -177,6 +175,7 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
             String database,
             Duration timeout,
             TestContainerUtil.Neo4jVersion version) {
+        /*
         if (version == ENTERPRISE) {
             this.setWaitStrategy(Wait.forHttp("/db/" + database + "/cluster/available")
                     .withBasicCredentials(username, password)
@@ -192,6 +191,8 @@ public class Neo4jContainerExtension extends Neo4jContainer<Neo4jContainerExtens
                     Wait.forSuccessfulCommand("wget --no-verbose --tries=1 --spider localhost:7474 || exit 1")
                             .withStartupTimeout(timeout));
         }
+
+         */
 
         return this;
     }
