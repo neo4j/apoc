@@ -44,6 +44,7 @@ dependencies {
   api group: 'org.testcontainers', name: 'testcontainers-localstack', version: testContainersVersion
   api group: 'org.apache.arrow', name: 'arrow-vector', version: apacheArrowVersion
   api group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion
+  api('junit:junit:4.13.2') // TODO Remove when migrated to junit 5+
 
   implementation project(":common")
   implementation group: 'org.neo4j', name: 'neo4j-common', version: neo4jVersionEffective, classifier: "tests"

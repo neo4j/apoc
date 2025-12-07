@@ -6,6 +6,7 @@ import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestUtil;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -22,7 +23,7 @@ public abstract class AbstractDockerTestBase {
     void beforeAll() {
         // We build the project, the artifact will be placed into ./build/libs
         neo4jContainer = createNeo4jContainer(
-                List.of(TestContainerUtil.ApocPackage.CORE), !TestUtil.isRunningInCI(), neo4jEdition());
+                List.of(TestContainerUtil.ApocPackage.CORE), !TestUtil.isRunningInCI(), neo4jEdition(), null, Map.of());
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }

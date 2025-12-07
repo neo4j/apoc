@@ -66,6 +66,7 @@ subprojects {
 
   dependencies {
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation('junit:junit:4.13.2') // TODO Remove when migrated to junit 5+
     testImplementation('org.junit.jupiter:junit-jupiter')
 
     // We want the same netty version as other neo4j dependencies, are there better ways than to keep this in sync?
