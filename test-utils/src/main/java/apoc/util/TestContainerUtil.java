@@ -137,7 +137,7 @@ public class TestContainerUtil {
                 apocPackages, withLogging, Neo4jVersion.COMMUNITY, cypherVersion, withSystemProperties);
     }
 
-    private static Neo4jContainerExtension createNeo4jContainer(
+    public static Neo4jContainerExtension createNeo4jContainer(
             List<ApocPackage> apocPackages,
             boolean withLogging,
             Neo4jVersion version,

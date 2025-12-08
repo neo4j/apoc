@@ -22,7 +22,6 @@ import static apoc.export.json.ImportJsonConfig.WILDCARD_PROPS;
 
 import apoc.export.util.Reporter;
 import apoc.util.Util;
-import com.google.common.collect.Iterables;
 import java.io.Closeable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -195,8 +194,8 @@ public class JsonImporter implements Closeable {
                                     schema.getConstraints(Label.label(label)).spliterator(), false)
                             .filter(constraint -> constraint.isConstraintType(ConstraintType.UNIQUENESS)
                                     || constraint.isConstraintType(ConstraintType.NODE_KEY))
-                            .noneMatch(constraint -> Iterables.contains(constraint.getPropertyKeys(), importIdName)
-                                    && Iterables.size(constraint.getPropertyKeys()) == 1))
+                            .noneMatch(constraint -> Util.contains(constraint.getPropertyKeys(), importIdName)
+                                    && Util.size(constraint.getPropertyKeys()) == 1))
                     .findAny()
                     .orElse(null);
             if (missingConstraint != null) {
