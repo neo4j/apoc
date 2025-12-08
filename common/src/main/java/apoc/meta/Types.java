@@ -18,11 +18,6 @@
  */
 package apoc.meta;
 
-import com.google.common.primitives.Booleans;
-import com.google.common.primitives.Bytes;
-import com.google.common.primitives.Chars;
-import com.google.common.primitives.Floats;
-import com.google.common.primitives.Shorts;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -98,16 +93,26 @@ public enum Types {
             return Arrays.stream((long[]) value).boxed().toArray();
         } else if (value instanceof double[]) {
             return Arrays.stream((double[]) value).boxed().toArray();
-        } else if (value instanceof boolean[]) {
-            return Booleans.asList((boolean[]) value).toArray();
-        } else if (value instanceof float[]) {
-            return Floats.asList((float[]) value).toArray();
-        } else if (value instanceof byte[]) {
-            return Bytes.asList((byte[]) value).toArray();
-        } else if (value instanceof char[]) {
-            return Chars.asList((char[]) value).toArray();
-        } else if (value instanceof short[]) {
-            return Shorts.asList((short[]) value).toArray();
+        } else if (value instanceof boolean[] bools) {
+            final var result = new Boolean[bools.length];
+            for (int i = 0; i < bools.length; i++) result[i] = bools[i];
+            return result;
+        } else if (value instanceof float[] floats) {
+            final var result = new Float[floats.length];
+            for (int i = 0; i < floats.length; i++) result[i] = floats[i];
+            return result;
+        } else if (value instanceof byte[] bytes) {
+            final var result = new Byte[bytes.length];
+            for (int i = 0; i < bytes.length; i++) result[i] = bytes[i];
+            return result;
+        } else if (value instanceof char[] chars) {
+            final var result = new Character[chars.length];
+            for (int i = 0; i < chars.length; i++) result[i] = chars[i];
+            return result;
+        } else if (value instanceof short[] shorts) {
+            final var result = new Short[shorts.length];
+            for (int i = 0; i < shorts.length; i++) result[i] = shorts[i];
+            return result;
         }
         return value.getClass().isArray() ? (Object[]) value : ((List<Object>) value).toArray();
     }

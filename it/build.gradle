@@ -1,9 +1,5 @@
 description = 'APOC :: Integration Tests Module'
 
-test {
-    maxParallelForks = 1
-}
-
 dependencies {
     testImplementation project(':common')
     testImplementation project(':core')
@@ -13,9 +9,26 @@ dependencies {
 
     testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
     testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.10.0'
+    testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.0")
 
     configurations.all {
         exclude group: 'org.slf4j', module: 'slf4j-nop'
         exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
+}
+
+tasks.register('copyApocJar', Copy) {
+    dependsOn(':core:shadowJar')
+    from project(':core').tasks.shadowJar.archiveFile into layout.buildDirectory.dir('test/jar')
+}
+
+test {
+    dependsOn(copyApocJar)
+    maxParallelForks = 1
+
+    doFirst {
+        def apocJarPath = layout.buildDirectory.file("test/jar/apoc-${version}-core.jar").get().asFile.absolutePath
+        println("apoc-core.test.jar.path=$apocJarPath")
+        systemProperty 'apoc-core.test.jar.path', apocJarPath
     }
 }

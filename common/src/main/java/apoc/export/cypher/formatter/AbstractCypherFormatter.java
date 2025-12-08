@@ -254,12 +254,9 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
                     return new AbstractMap.SimpleImmutableEntry<>(labels, idProperties);
                 }
             };
-            Map<Map.Entry<Set<String>, Set<String>>, List<Node>> groupedData = StreamSupport.stream(
-                            com.google.common.collect.Iterables.limit(
-                                            com.google.common.collect.Iterables.skip(nodes, totalNodeCount.get()),
-                                            exportConfig.getBatchSize())
-                                    .spliterator(),
-                            true)
+            final var groupedData = StreamSupport.stream(nodes.spliterator(), false)
+                    .skip(totalNodeCount.get())
+                    .limit(exportConfig.getBatchSize())
                     .collect(Collectors.groupingByConcurrent(keyMapper));
 
             // Each loop will collect at most the batch size in nodes to process
@@ -417,12 +414,9 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
                     return key;
                 }
             };
-            Map<Map<String, Object>, List<Relationship>> groupedData = StreamSupport.stream(
-                            com.google.common.collect.Iterables.limit(
-                                            com.google.common.collect.Iterables.skip(relationship, totalRelCount.get()),
-                                            exportConfig.getBatchSize())
-                                    .spliterator(),
-                            true)
+            final var groupedData = StreamSupport.stream(relationship.spliterator(), false)
+                    .skip(totalRelCount.get())
+                    .limit(exportConfig.getBatchSize())
                     .collect(Collectors.groupingByConcurrent(keyMapper));
 
             // Each loop will collect at most the batch size in rels to process

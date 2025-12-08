@@ -35,7 +35,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Sets;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -44,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
@@ -96,9 +96,9 @@ public class ApocConfigCommandExpansionTest {
     }
 
     private void setApocConfigFilePermissions(Set<PosixFilePermission> forbidden) throws Exception {
-        Files.setPosixFilePermissions(
-                apocConfigCommandExpansionFile.toPath(),
-                Sets.union(permittedFilePermissionsForCommandExpansion, forbidden));
+        final var permissions = EnumSet.copyOf(forbidden);
+        permissions.addAll(permittedFilePermissionsForCommandExpansion);
+        Files.setPosixFilePermissions(apocConfigCommandExpansionFile.toPath(), permissions);
     }
 
     private void setApocConfigSystemProperty() {

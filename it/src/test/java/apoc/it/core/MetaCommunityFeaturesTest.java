@@ -1,0 +1,120 @@
+/*
+ * Copyright (c) "Neo4j"
+ * Neo4j Sweden AB [http://neo4j.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package apoc.it.core;
+
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
+
+import apoc.util.TestContainerUtil;
+import org.junit.jupiter.api.Test;
+import org.neo4j.driver.Record;
+
+public class MetaCommunityFeaturesTest extends AbstractDockerTestBase {
+
+    @Override
+    TestContainerUtil.Neo4jVersion neo4jEdition() {
+        return TestContainerUtil.Neo4jVersion.COMMUNITY;
+    }
+
+    @Test
+    void schema() {
+        session.run("create (:A {a:1})-[:R {r:2}]->(:B {b:3})").consume();
+        assertThatJson(session.run("call apoc.meta.schema()").list(Record::asMap))
+                .isEqualTo(
+                        """
+                [
+                  {
+                    "value": {
+                      "A": {
+                        "count": 1,
+                        "relationships": {
+                          "R": {
+                            "count": 0,
+                            "properties": {
+                              "r": {
+                                "existence": false,
+                                "type": "INTEGER",
+                                "array": false,
+                                "indexed": false
+                              }
+                            },
+                            "direction": "out",
+                            "labels": [
+                              "B"
+                            ]
+                          }
+                        },
+                        "type": "node",
+                        "properties": {
+                          "a": {
+                            "existence": false,
+                            "type": "INTEGER",
+                            "indexed": false,
+                            "unique": false
+                          }
+                        },
+                        "labels": []
+                      },
+                      "B": {
+                        "count": 1,
+                        "relationships": {
+                          "R": {
+                            "count": 1,
+                            "properties": {
+                              "r": {
+                                "existence": false,
+                                "type": "INTEGER",
+                                "array": false,
+                                "indexed": false
+                              }
+                            },
+                            "direction": "in",
+                            "labels": [
+                              "A"
+                            ]
+                          }
+                        },
+                        "type": "node",
+                        "properties": {
+                          "b": {
+                            "existence": false,
+                            "type": "INTEGER",
+                            "indexed": false,
+                            "unique": false
+                          }
+                        },
+                        "labels": []
+                      },
+                      "R": {
+                        "count": 1,
+                        "type": "relationship",
+                        "properties": {
+                          "r": {
+                            "existence": false,
+                            "type": "INTEGER",
+                            "array": false,
+                            "indexed": false
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+                """);
+    }
+}

@@ -1361,4 +1361,16 @@ public class Util {
         }
         return result;
     }
+
+    public static int size(Iterable<?> iterable) {
+        if (iterable instanceof Collection<?> c) return c.size();
+        else
+            return Math.toIntExact(
+                    StreamSupport.stream(iterable.spliterator(), false).count());
+    }
+
+    public static <T> boolean contains(Iterable<? extends T> iterable, T value) {
+        if (iterable instanceof Collection<?> c) return c.contains(value);
+        else return StreamSupport.stream(iterable.spliterator(), false).anyMatch(v -> Objects.equals(value, v));
+    }
 }
