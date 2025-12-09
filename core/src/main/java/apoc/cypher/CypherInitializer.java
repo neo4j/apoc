@@ -22,6 +22,7 @@ import static apoc.SystemPropertyKeys.database;
 
 import apoc.ApocConfig;
 import apoc.SystemLabels;
+import apoc.SystemPropertyKeys;
 import apoc.util.LogsUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
@@ -43,6 +44,7 @@ import org.neo4j.graphdb.WriteOperationsNotAllowedException;
 import org.neo4j.graphdb.event.DatabaseEventContext;
 import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.kernel.availability.AvailabilityListener;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.kernel.monitoring.DatabaseEventListeners;
 import org.neo4j.logging.Log;
@@ -113,6 +115,16 @@ public class CypherInitializer implements AvailabilityListener {
                                             apocVersion, neo4jVersion);
                                 }
                             }
+                            // Create a uniqueness constraint on system db to avoid race conditions when installing
+                            // triggers
+                            try (InternalTransaction tx = db.beginTransaction()) {
+                                tx.schema()
+                                        .constraintFor(SystemLabels.ApocTriggerMeta)
+                                        .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                        .create();
+                                tx.commit();
+                            }
+
                             databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
                         }
 

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.neo4j.graphdb.ConstraintViolationException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
@@ -138,8 +139,14 @@ public class TriggerHandlerNewProcedures {
     public static void setLastUpdate(String databaseName, Transaction tx) {
         Node node = tx.findNode(SystemLabels.ApocTriggerMeta, SystemPropertyKeys.database.name(), databaseName);
         if (node == null) {
-            node = tx.createNode(SystemLabels.ApocTriggerMeta);
-            node.setProperty(SystemPropertyKeys.database.name(), databaseName);
+            try {
+                node = tx.createNode(SystemLabels.ApocTriggerMeta);
+                node.setProperty(SystemPropertyKeys.database.name(), databaseName);
+            } catch (ConstraintViolationException e) {
+                // This can happen if two threads try to create the same node concurrently,
+                // after both having passed the null check. In this case we can ignore the failing tx.
+                return;
+            }
         }
         final long value = System.currentTimeMillis();
         node.setProperty(SystemPropertyKeys.lastUpdated.name(), value);
