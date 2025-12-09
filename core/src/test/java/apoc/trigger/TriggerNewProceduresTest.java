@@ -38,6 +38,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -207,6 +213,33 @@ public class TriggerNewProceduresTest {
                     assertEquals(name, r.get("name"));
                     assertEquals(queryTwo, r.get("query"));
                 });
+    }
+
+    @Test
+    public void testConcurrentTriggersShouldNotFail() throws ExecutionException, InterruptedException {
+        var query = "CALL apoc.trigger.install('neo4j', 'myTrigger', 'RETURN 1', {phase: 'before'})";
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
+            CountDownLatch latch = new CountDownLatch(1);
+
+            Callable<Void> task = () -> {
+                latch.await(); // wait until both threads are ready
+                testCall(sysDb, query, map(), r -> {});
+                return null;
+            };
+
+            Future<Void> f1 = executor.submit(task);
+            Future<Void> f2 = executor.submit(task);
+
+            // release both threads
+            latch.countDown();
+
+            // Will throw if anything inside the tasks failed
+            f1.get();
+            f2.get();
+
+            executor.shutdown();
+        }
     }
 
     @Test
