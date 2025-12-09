@@ -18,7 +18,7 @@
  */
 package apoc.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_KEY;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_LABEL_EXISTENCE;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_PROPERTY_EXISTENCE;
@@ -40,7 +40,7 @@ import static org.neo4j.graphdb.schema.IndexType.VECTOR;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexType;
 
@@ -52,7 +52,7 @@ public class UtilTest {
      * the apoc.schema.* procedures to work with them.
      */
     @Test
-    public void testAPOCisAwareOfAllConstraints() {
+    void testAPOCisAwareOfAllConstraints() {
         assertEquals(
                 Arrays.stream(ConstraintType.values()).collect(Collectors.toSet()),
                 Set.of(
@@ -70,7 +70,7 @@ public class UtilTest {
     }
 
     @Test
-    public void testAPOCisAwareOfAllIndexes() {
+    void testAPOCisAwareOfAllIndexes() {
         assertEquals(
                 Arrays.stream(IndexType.values()).collect(Collectors.toSet()),
                 Set.of(FULLTEXT, LOOKUP, TEXT, RANGE, POINT, VECTOR));

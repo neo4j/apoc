@@ -28,20 +28,20 @@ import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import java.util.List;
 import java.util.Map;
-import junit.framework.TestCase;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 
-public class ImportJsonEnterpriseFeaturesTest {
+class ImportJsonEnterpriseFeaturesTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true);
         neo4jContainer.start();
@@ -55,13 +55,13 @@ public class ImportJsonEnterpriseFeaturesTest {
                 session,
                 "CALL apoc.export.json.all($file,null)",
                 map("file", filename),
-                (r) -> Assert.assertTrue(r.hasNext()));
+                (r) -> Assertions.assertTrue(r.hasNext()));
 
         // Remove node so we can import it after
         session.executeWriteWithoutResult(tx -> tx.run("MATCH (n) DETACH DELETE n"));
     }
 
-    @Before
+    @BeforeEach
     public void cleanUpDb() {
         // Remove all current constraints/indexes
         session.executeWriteWithoutResult(tx -> {
@@ -78,14 +78,14 @@ public class ImportJsonEnterpriseFeaturesTest {
         session.executeWriteWithoutResult(tx -> tx.run("MATCH (n) DETACH DELETE n"));
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     @Test
-    public void shouldFailBecauseOfMissingUniqueConstraintException() {
+    void shouldFailBecauseOfMissingUniqueConstraintException() {
         session.executeWriteWithoutResult(tx -> {
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS NOT NULL");
             tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId, n.name) IS NODE KEY");
@@ -97,11 +97,11 @@ public class ImportJsonEnterpriseFeaturesTest {
                 () -> testResult(session, "CALL apoc.import.json($file, {})", map("file", filename), (result) -> {}));
 
         String expectedMsg = format(MISSING_CONSTRAINT_ERROR_MSG, "User", "neo4jImportId");
-        TestCase.assertTrue(e.getMessage().contains(expectedMsg));
+        Assertions.assertTrue(e.getMessage().contains(expectedMsg));
     }
 
     @Test
-    public void shouldWorkWithSingularNodeKeyAsConstraint() {
+    void shouldWorkWithSingularNodeKeyAsConstraint() {
         // Add unique constraint (test if single node key works)
         session.executeWriteWithoutResult(
                 tx -> tx.run("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId) IS NODE KEY"));
@@ -110,14 +110,14 @@ public class ImportJsonEnterpriseFeaturesTest {
         String filename = "all.json";
         testResult(session, "CALL apoc.import.json($file, {})", map("file", filename), (result) -> {
             Map<String, Object> r = result.next();
-            Assert.assertEquals("all.json", r.get("file"));
-            Assert.assertEquals("file", r.get("source"));
-            Assert.assertEquals("json", r.get("format"));
-            Assert.assertEquals(1L, r.get("nodes"));
-            Assert.assertEquals(0L, r.get("relationships"));
-            Assert.assertEquals(2L, r.get("properties"));
-            Assert.assertEquals(1L, r.get("rows"));
-            Assert.assertEquals(true, r.get("done"));
+            Assertions.assertEquals("all.json", r.get("file"));
+            Assertions.assertEquals("file", r.get("source"));
+            Assertions.assertEquals("json", r.get("format"));
+            Assertions.assertEquals(1L, r.get("nodes"));
+            Assertions.assertEquals(0L, r.get("relationships"));
+            Assertions.assertEquals(2L, r.get("properties"));
+            Assertions.assertEquals(1L, r.get("rows"));
+            Assertions.assertEquals(true, r.get("done"));
         });
     }
 }

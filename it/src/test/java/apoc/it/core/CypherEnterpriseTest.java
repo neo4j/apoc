@@ -37,37 +37,37 @@ import static org.junit.Assert.assertThrows;
 import apoc.util.Neo4jContainerExtension;
 import java.util.List;
 import java.util.Map;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.Value;
 
-public class CypherEnterpriseTest {
+class CypherEnterpriseTest {
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
-    @After
+    @AfterEach
     public void after() {
         session.executeWrite(tx -> tx.run("MATCH (n) DETACH DELETE n").consume());
     }
 
     @Test
-    public void testRunManyWithSetAndResults() {
+    void testRunManyWithSetAndResults() {
         String query = "CALL apoc.cypher.runMany($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_AND_RETURN_QUERIES);
 
@@ -75,7 +75,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunManyWithResults() {
+    void testRunManyWithResults() {
         String query = "CALL apoc.cypher.runMany($statement, {})";
         Map<String, Object> params = Map.of("statement", SIMPLE_RETURN_QUERIES);
 
@@ -83,7 +83,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunManyReadOnlyWithSetAndResults() {
+    void testRunManyReadOnlyWithSetAndResults() {
         String query = "CALL apoc.cypher.runManyReadOnly($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_AND_RETURN_QUERIES);
 
@@ -95,7 +95,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunManyReadOnlyWithResults() {
+    void testRunManyReadOnlyWithResults() {
         String query = "CALL apoc.cypher.runManyReadOnly($statement, {})";
         Map<String, Object> params = Map.of("statement", SIMPLE_RETURN_QUERIES);
 
@@ -103,7 +103,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunWriteWithSetAndResults() {
+    void testRunWriteWithSetAndResults() {
         String query = "CALL apoc.cypher.runWrite($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_NODE);
 
@@ -111,7 +111,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunWriteWithResults() {
+    void testRunWriteWithResults() {
         String query = "CALL apoc.cypher.runWrite($statement, {})";
         Map<String, Object> params = Map.of("statement", SIMPLE_RETURN_QUERIES);
 
@@ -119,7 +119,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testDoItWithSetAndResults() {
+    void testDoItWithSetAndResults() {
         String query = "CALL apoc.cypher.doIt($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_NODE);
 
@@ -127,7 +127,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testDoItWithResults() {
+    void testDoItWithResults() {
         String query = "CALL apoc.cypher.doIt($statement, {})";
         Map<String, Object> params = Map.of("statement", SIMPLE_RETURN_QUERIES);
 
@@ -135,7 +135,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunWithSetAndResults() {
+    void testRunWithSetAndResults() {
         String query = "CALL apoc.cypher.run($statement, {})";
         Map<String, Object> params = Map.of("statement", SET_NODE);
 
@@ -148,7 +148,7 @@ public class CypherEnterpriseTest {
     }
 
     @Test
-    public void testRunWithResults() {
+    void testRunWithResults() {
         String query = "CALL apoc.cypher.run($statement, {})";
         Map<String, Object> params = Map.of("statement", SIMPLE_RETURN_QUERIES);
 

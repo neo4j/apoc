@@ -18,8 +18,6 @@
  */
 package apoc.it.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -33,11 +31,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
-import org.junit.Test;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.stubbing.Answer;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
@@ -45,7 +43,7 @@ import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.testcontainers.containers.GenericContainer;
 
-public class UtilIT {
+class UtilIT {
     private GenericContainer httpServer;
 
     public UtilIT() throws Exception {
@@ -68,13 +66,15 @@ public class UtilIT {
 
     @AfterEach
     public void tearDown() {
-        httpServer.stop();
+        if (httpServer != null) {
+            httpServer.stop();
+        }
     }
 
     private final URL googleUrl;
 
     @Test
-    public void redirectShouldWorkWhenProtocolNotChangesWithUrlLocation() throws Exception {
+    void redirectShouldWorkWhenProtocolNotChangesWithUrlLocation() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("https://www.google.com");
 
@@ -88,11 +88,11 @@ public class UtilIT {
                 Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
 
         // then
-        assertTrue(page.contains("<title>Google</title>"));
+        Assertions.assertTrue(page.contains("<title>Google</title>"));
     }
 
     @Test
-    public void redirectWithBlockedIPsWithUrlLocation() throws Exception {
+    void redirectWithBlockedIPsWithUrlLocation() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
 
         httpServer = setUpServer("http://127.168.0.1");
@@ -102,11 +102,11 @@ public class UtilIT {
 
         IOException e = Assert.assertThrows(
                 IOException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
-        TestCase.assertTrue(e.getMessage().contains("no"));
+        Assertions.assertTrue(e.getMessage().contains("no"));
     }
 
     @Test
-    public void redirectWithProtocolUpgradeIsAllowed() throws Exception {
+    void redirectWithProtocolUpgradeIsAllowed() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("https://www.google.com");
         URL url = getServerUrl(httpServer);
@@ -118,11 +118,11 @@ public class UtilIT {
                 Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
 
         // then
-        assertTrue(page.contains("<title>Google</title>"));
+        Assertions.assertTrue(page.contains("<title>Google</title>"));
     }
 
     @Test
-    public void redirectWithProtocolDowngradeIsNotAllowed() throws IOException {
+    void redirectWithProtocolDowngradeIsNotAllowed() throws IOException {
         HttpURLConnection mockCon = mock(HttpURLConnection.class);
         when(mockCon.getResponseCode()).thenReturn(302);
         when(mockCon.getHeaderField("Location")).thenReturn("http://127.168.0.1");
@@ -130,11 +130,11 @@ public class UtilIT {
 
         RuntimeException e = Assert.assertThrows(RuntimeException.class, () -> Util.isRedirect(mockCon));
 
-        TestCase.assertTrue(e.getMessage().contains("The redirect URI has a different protocol: http://127.168.0.1"));
+        Assertions.assertTrue(e.getMessage().contains("The redirect URI has a different protocol: http://127.168.0.1"));
     }
 
     @Test
-    public void shouldFailForExceedingRedirectLimit() throws Exception {
+    void shouldFailForExceedingRedirectLimit() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("https://127.0.0.0");
         URL url = getServerUrl(httpServer);
@@ -152,7 +152,7 @@ public class UtilIT {
         IOException e = Assert.assertThrows(
                 IOException.class, () -> Util.openInputStream(finalUrl.toString(), null, null, null, mockChecker));
 
-        TestCase.assertTrue(e.getMessage().contains("Redirect limit exceeded"));
+        Assertions.assertTrue(e.getMessage().contains("Redirect limit exceeded"));
 
         for (GenericContainer server : servers) {
             server.stop();
@@ -160,7 +160,7 @@ public class UtilIT {
     }
 
     @Test
-    public void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() throws Exception {
+    void redirectShouldThrowExceptionWhenProtocolChangesWithFileLocation() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("file:/etc/passwd");
         // given
@@ -173,7 +173,7 @@ public class UtilIT {
         RuntimeException e = Assert.assertThrows(
                 RuntimeException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
 
-        assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
+        Assertions.assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());
     }
 
     private URL getServerUrl(GenericContainer httpServer) throws MalformedURLException {

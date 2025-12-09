@@ -45,8 +45,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
@@ -64,8 +64,8 @@ public class ApocConfigCommandExpansionTest {
     private static final Set<PosixFilePermission> forbiddenFilePermissionsForCommandExpansion =
             Set.of(OWNER_EXECUTE, GROUP_WRITE, GROUP_EXECUTE, OTHERS_READ, OTHERS_WRITE, OTHERS_EXECUTE);
 
-    @Before
-    public void setup() throws Exception {
+    @BeforeEach
+    void setup() throws Exception {
         InternalLogProvider logProvider = new AssertableLogProvider();
 
         Config neo4jConfig = mock(Config.class);
@@ -97,14 +97,14 @@ public class ApocConfigCommandExpansionTest {
     }
 
     @Test
-    public void testApocConfWithExpandCommands() {
+    void testApocConfWithExpandCommands() {
         apocConfig.init();
 
         assertEquals("expanded value", apocConfig.getConfig().getString("command.expansion"));
     }
 
     @Test
-    public void testApocConfWithInvalidExpandCommands() throws Exception {
+    void testApocConfWithInvalidExpandCommands() throws Exception {
         String invalidExpandLine = "command.expansion.3=$(fakeCommand 3 + 3)";
         addLineToApocConfig(invalidExpandLine);
 
@@ -117,7 +117,7 @@ public class ApocConfigCommandExpansionTest {
     }
 
     @Test
-    public void testApocConfWithWrongFilePermissions() throws Exception {
+    void testApocConfWithWrongFilePermissions() throws Exception {
         for (PosixFilePermission filePermission : forbiddenFilePermissionsForCommandExpansion) {
             setApocConfigFilePermissions(Set.of(filePermission));
 
@@ -130,7 +130,7 @@ public class ApocConfigCommandExpansionTest {
     }
 
     @Test
-    public void testApocConfWithoutExpandCommands() {
+    void testApocConfWithoutExpandCommands() {
         InternalLogProvider logProvider = new AssertableLogProvider();
 
         Config neo4jConfig = mock(Config.class);
@@ -152,7 +152,7 @@ public class ApocConfigCommandExpansionTest {
     }
 
     @Test
-    public void testMaxDecompressionRatioValidation() {
+    void testMaxDecompressionRatioValidation() {
 
         InternalLogProvider logProvider = new AssertableLogProvider();
 

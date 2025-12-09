@@ -18,33 +18,24 @@
  */
 package apoc.export.util;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.AfterClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 19.12.16
- */
+@EnterpriseDbmsExtension
 public class FormatUtilsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
+    @Inject
+    GraphDatabaseService db;
 
     @Test
-    public void formatString() {
+    void formatString() {
         assertEquals("\"\\n\"", FormatUtils.formatString("\n"));
         assertEquals("\"\\t\"", FormatUtils.formatString("\t"));
         assertEquals("\"\\\"\"", FormatUtils.formatString("\""));
@@ -56,7 +47,7 @@ public class FormatUtilsTest {
     }
 
     @Test
-    public void joinLabels() {
+    void joinLabels() {
         final String delimiter = ":";
         try (Transaction tx = db.beginTx()) {
             Node node = tx.createNode();

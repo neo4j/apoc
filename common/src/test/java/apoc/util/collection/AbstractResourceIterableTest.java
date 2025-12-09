@@ -25,8 +25,8 @@ import static apoc.util.collection.ResourceClosingIterator.newResourceIterator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,19 +36,18 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.neo4j.graphdb.Resource;
 import org.neo4j.graphdb.ResourceIterator;
 
-@RunWith(JUnitParamsRunner.class)
 public class AbstractResourceIterableTest {
+
     @Test
-    public void shouldDelegateToUnderlyingIterableForData() {
+    void shouldDelegateToUnderlyingIterableForData() {
         // Given
         final var iterableClosed = new MutableBoolean(false);
         final var iteratorClosed = new MutableBoolean(false);
@@ -75,8 +74,8 @@ public class AbstractResourceIterableTest {
         assertFalse(iterableClosed.booleanValue());
     }
 
-    @Test
-    @Parameters({"0", "1", "2", "3", "10"})
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2, 3, 10})
     public void callToIteratorShouldCreateNewIterators(int numberOfIterators) {
         // Given
         final var iterableClosed = new MutableBoolean(false);
@@ -109,7 +108,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void shouldCloseAllIteratorsIfCloseCalledOnIterable() {
+    void shouldCloseAllIteratorsIfCloseCalledOnIterable() {
         // Given
         final var iteratorsClosed = Arrays.asList(false, false, false, false);
 
@@ -137,7 +136,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void shouldCloseAllIteratorsEvenIfOnlySomeCloseCalled() {
+    void shouldCloseAllIteratorsEvenIfOnlySomeCloseCalled() {
         // Given
         final var iteratorsClosed = new MutableInt();
 
@@ -167,7 +166,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void failIteratorCreationAfterIterableClosed() {
+    void failIteratorCreationAfterIterableClosed() {
         // Given
         final var iteratorCreated = new MutableBoolean(false);
 
@@ -187,7 +186,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void shouldCloseIteratorIfCloseCalled() {
+    void shouldCloseIteratorIfCloseCalled() {
         // Given
         final var iterableClosed = new MutableBoolean(false);
         final var iteratorCreated = new MutableBoolean(false);
@@ -216,7 +215,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void shouldCloseIteratorOnForEachFailure() {
+    void shouldCloseIteratorOnForEachFailure() {
         // Given
         final var iterableClosed = new MutableBoolean(false);
         final var iteratorClosed = new MutableBoolean(false);
@@ -254,7 +253,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void shouldCloseIteratorOnForEachCompletion() {
+    void shouldCloseIteratorOnForEachCompletion() {
         // Given
         final var iterableClosed = new MutableBoolean(false);
         final var iteratorClosed = new MutableBoolean(false);
@@ -286,7 +285,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void streamShouldCloseIteratorAndIterable() {
+    void streamShouldCloseIteratorAndIterable() {
         // Given
         final var iterableClosed = new MutableBoolean(false);
         final var iteratorClosed = new MutableBoolean(false);
@@ -316,7 +315,7 @@ public class AbstractResourceIterableTest {
     }
 
     @Test
-    public void streamShouldCloseMultipleOnCompleted() {
+    void streamShouldCloseMultipleOnCompleted() {
         // Given
         final var closed = new MutableInt();
         Resource resource = closed::incrementAndGet;

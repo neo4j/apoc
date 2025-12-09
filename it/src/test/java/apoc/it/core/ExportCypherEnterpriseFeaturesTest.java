@@ -23,8 +23,6 @@ import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.EXPECTED_C
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestContainerUtil.*;
 import static apoc.util.TestUtil.readFileToString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestUtil;
@@ -35,17 +33,18 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 
-public class ExportCypherEnterpriseFeaturesTest {
+class ExportCypherEnterpriseFeaturesTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
                 .withInitScript("init_neo4j_export_csv.cypher");
@@ -53,7 +52,7 @@ public class ExportCypherEnterpriseFeaturesTest {
         session = neo4jContainer.getSession();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() {
         neo4jContainer.close();
     }
@@ -73,7 +72,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportWithCompoundConstraintCypherShell() {
+    void testExportWithCompoundConstraintCypherShell() {
         String fileName = "testCypherShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -84,7 +83,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportDataWithCompoundConstraintCypherShell() {
+    void testExportDataWithCompoundConstraintCypherShell() {
         testCall(
                 session,
                 """
@@ -96,7 +95,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportGraphWithCompoundConstraintCypherShell() {
+    void testExportGraphWithCompoundConstraintCypherShell() {
         String fileName = "testGraphCypherShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -110,7 +109,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportQueryWithCompoundConstraintCypherShell() {
+    void testExportQueryWithCompoundConstraintCypherShell() {
         String fileName = "testQueryCypherShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -128,29 +127,29 @@ public class ExportCypherEnterpriseFeaturesTest {
                         UNWIND [{surname:"Snow", name:"John", properties:{}}, {surname:"Jackson", name:"Matt", properties:{}}] AS row
                         CREATE (n:Person{surname: row.surname, name: row.name}) SET n += row.properties;""");
         String actual = (String) r.get("nodeStatements");
-        assertTrue(possibleNodeStatements.stream().anyMatch(actual::contains));
+        Assertions.assertTrue(possibleNodeStatements.stream().anyMatch(actual::contains));
         String schemaStatements = (String) r.get("schemaStatements");
         List.of(
                         "CREATE CONSTRAINT KnowsConsNotNull FOR ()-[rel:KNOWS]-() REQUIRE (rel.foo) IS NOT NULL;",
                         "CREATE CONSTRAINT PersonRequiresNamesConstraint FOR (node:Person) REQUIRE (node.name, node.surname) IS NODE KEY;",
                         "CREATE CONSTRAINT KnowsConsUnique FOR ()-[rel:KNOWS]-() REQUIRE (rel.two) IS UNIQUE;")
-                .forEach(constraint -> assertTrue(
-                        String.format("Constraint '%s' not in result", constraint),
-                        schemaStatements.contains(constraint)));
-        assertEquals(
+                .forEach(constraint -> Assertions.assertTrue(
+                        schemaStatements.contains(constraint),
+                        String.format("Constraint '%s' not in result", constraint)));
+        Assertions.assertEquals(
                 """
-                            :begin
-                            UNWIND [{start: {name:"John", surname:"Snow"}, end: {name:"Matt", surname:"Jackson"}, properties:{foo:1}}] AS row
-                            MATCH (start:Person{surname: row.start.surname, name: row.start.name})
-                            MATCH (end:Person{surname: row.end.surname, name: row.end.name})
-                            CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
-                            :commit
-                            """,
+                    :begin
+                    UNWIND [{start: {name:"John", surname:"Snow"}, end: {name:"Matt", surname:"Jackson"}, properties:{foo:1}}] AS row
+                    MATCH (start:Person{surname: row.start.surname, name: row.start.name})
+                    MATCH (end:Person{surname: row.end.surname, name: row.end.name})
+                    CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
+                    :commit
+                    """,
                 r.get("relationshipStatements"));
     }
 
     @Test
-    public void testExportDataOnlyRelWithCompoundConstraintCypherShell() {
+    void testExportDataOnlyRelWithCompoundConstraintCypherShell() {
         String fileName = "testDataCypherShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -165,7 +164,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportGraphOnlyRelWithCompoundConstraintCypherShell() {
+    void testExportGraphOnlyRelWithCompoundConstraintCypherShell() {
         String fileName = "testGraphCypherShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -181,7 +180,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportQueryOnlyRelWithCompoundConstraintCypherShell() {
+    void testExportQueryOnlyRelWithCompoundConstraintCypherShell() {
         String fileName = "testQueryCypherShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -193,7 +192,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportWithCompoundConstraintPlain() {
+    void testExportWithCompoundConstraintPlain() {
         String fileName = "testPlainFormatWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -204,7 +203,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testExportWithCompoundConstraintNeo4jShell() {
+    void testExportWithCompoundConstraintNeo4jShell() {
         String fileName = "testNeo4jShellWithCompoundConstraint.cypher";
         testCall(
                 session,
@@ -215,7 +214,7 @@ public class ExportCypherEnterpriseFeaturesTest {
     }
 
     @Test
-    public void shouldHandleTwoLabelsWithOneCompoundConstraintEach() {
+    void shouldHandleTwoLabelsWithOneCompoundConstraintEach() {
         final String query = "MATCH (a:Person:Base)-[r:KNOWS]-(b:Person) RETURN a, b, r";
         /* The bug was:
            UNWIND [{start: {name:"Phil", surname:"Meyer"}, end: {name:"Silvia", surname:"Jones"}, properties:{}}] AS row
@@ -245,7 +244,7 @@ public class ExportCypherEnterpriseFeaturesTest {
                                 .skip(1)
                                 .findFirst()
                                 .orElse(null);
-                        assertEquals(expected, unwind);
+                        Assertions.assertEquals(expected, unwind);
                     });
         } finally {
             afterTwoLabelsWithOneCompoundConstraintEach();
@@ -268,14 +267,14 @@ public class ExportCypherEnterpriseFeaturesTest {
             CREATE (start)-[r:KNOWS]->(end) SET r += row.properties;
             :commit
             """;
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     private void assertExportStatement(String expectedStatement, String fileName) {
         // The constraints are exported in arbitrary order, so we cannot assert on the entire file
         String actual = readFileToString(new File(importFolder, fileName));
         MatcherAssert.assertThat(actual, Matchers.containsString(expectedStatement));
-        EXPECTED_CONSTRAINTS.forEach(constraint ->
-                assertTrue(String.format("Constraint '%s' not in result", constraint), actual.contains(constraint)));
+        EXPECTED_CONSTRAINTS.forEach(constraint -> Assertions.assertTrue(
+                actual.contains(constraint), String.format("Constraint '%s' not in result", constraint)));
     }
 }

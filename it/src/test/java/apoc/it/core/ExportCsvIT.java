@@ -21,42 +21,37 @@ package apoc.it.core;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 import apoc.csv.CsvTestUtil;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 
-/**
- * @author as
- * @since 13.02.19
- */
-public class ExportCsvIT {
+class ExportCsvIT {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     @Test
-    public void testExportQueryCsvIssue1188() {
+    void testExportQueryCsvIssue1188() {
         String copyright = "\n"
                 + "(c) 2018 Hovsepian, Albanese, et al. \"\"ASCB(r),\"\" \"\"The American Society for Cell Biology(r),\"\" and \"\"Molecular Biology of the Cell(r)\"\" are registered trademarks of The American Society for Cell Biology.\n"
                 + "2018\n"
@@ -74,9 +69,9 @@ public class ExportCsvIT {
                 map("query", query, "config", map("stream", true)),
                 (r) -> {
                     List<String[]> csv = CsvTestUtil.toCollection(r.get("data").toString());
-                    assertEquals(2, csv.size());
-                    assertArrayEquals(new String[] {"pk", "copyright"}, csv.get(0));
-                    assertArrayEquals(new String[] {"5921569", copyright}, csv.get(1));
+                    Assertions.assertEquals(2, csv.size());
+                    Assertions.assertArrayEquals(new String[] {"pk", "copyright"}, csv.get(0));
+                    Assertions.assertArrayEquals(new String[] {"5921569", copyright}, csv.get(1));
                 });
         session.executeWrite(tx -> tx.run("MATCH (d:Document) DETACH DELETE d").consume());
     }

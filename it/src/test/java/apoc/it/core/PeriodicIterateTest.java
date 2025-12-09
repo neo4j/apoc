@@ -20,23 +20,22 @@ package apoc.it.core;
 
 import static apoc.util.TestContainerUtil.createDB;
 import static apoc.util.TestContainerUtil.dockerImageForNeo4j;
-import static org.junit.Assert.*;
-import static org.junit.Assert.fail;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import apoc.util.TestUtil;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.TransactionConfig;
 
-public class PeriodicIterateTest {
+class PeriodicIterateTest {
 
     // The Query Log is only accessible on Enterprise
     @Test
-    public void check_metadata_in_batches() {
+    void check_metadata_in_batches() {
         try {
             Neo4jContainerExtension neo4jContainer = createDB(
                             TestContainerUtil.Neo4jVersion.ENTERPRISE,
@@ -57,7 +56,7 @@ public class PeriodicIterateTest {
                     .stream()
                     .count();
             var queryLogs = neo4jContainer.queryLogs();
-            assertTrue(queryLogs.contains(
+            Assertions.assertTrue(queryLogs.contains(
                     "SET p.name='test' - {_batch: [], _count: 0} - runtime=pipelined - {shouldAppear: 'inBatches'}"));
             session.close();
             neo4jContainer.close();
@@ -65,9 +64,9 @@ public class PeriodicIterateTest {
             // if Testcontainers wasn't able to retrieve the docker image we ignore the test
             if (TestContainerUtil.isDockerImageAvailable(ex)) {
                 ex.printStackTrace();
-                fail("Should not have thrown exception when trying to start Neo4j: " + ex);
+                Assertions.fail("Should not have thrown exception when trying to start Neo4j: " + ex);
             } else if (!TestUtil.isRunningInCI()) {
-                fail("The docker image " + dockerImageForNeo4j(TestContainerUtil.Neo4jVersion.ENTERPRISE)
+                Assertions.fail("The docker image " + dockerImageForNeo4j(TestContainerUtil.Neo4jVersion.ENTERPRISE)
                         + " could not be loaded. Check whether it's available locally / in the CI. Exception:"
                         + ex);
             }

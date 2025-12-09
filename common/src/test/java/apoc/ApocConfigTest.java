@@ -26,8 +26,8 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
@@ -41,8 +41,8 @@ public class ApocConfigTest {
     private ApocConfig apocConfig;
     private File apocConfigFile;
 
-    @Before
-    public void setup() throws Exception {
+    @BeforeEach
+    void setup() throws Exception {
         InternalLogProvider logProvider = new AssertableLogProvider();
 
         Config neo4jConfig = mock(Config.class);
@@ -62,12 +62,12 @@ public class ApocConfigTest {
     }
 
     @Test
-    public void testDetermineNeo4jConfFolderDefault() {
+    void testDetermineNeo4jConfFolderDefault() {
         assertEquals(apocConfigFile.getParent(), apocConfig.determineNeo4jConfFolder());
     }
 
     @Test
-    public void testApocConfFileBeingLoaded() {
+    void testApocConfFileBeingLoaded() {
         apocConfig.init();
 
         assertEquals("bar", apocConfig.getConfig().getString("foo"));

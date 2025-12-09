@@ -29,14 +29,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 
 /*
 This test is just to verify the split of core and extended
 */
-public class ApocSplitTest {
+class ApocSplitTest {
     public static final Set<String> CORE_PROCEDURES = Set.of(
             "apoc.periodic.truncate",
             "apoc.periodic.list",
@@ -480,7 +480,7 @@ public class ApocSplitTest {
             "apoc.agg.slice");
 
     @Test
-    public void testCypher5() {
+    void testCypher5() {
         Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(
                         List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
                 .withNeo4jConfig("dbms.transaction.timeout", "60s");
@@ -497,14 +497,14 @@ public class ApocSplitTest {
                         .map(s -> s.get("name").asString())
                         .collect(Collectors.toSet());
 
-        Assert.assertEquals(CORE_PROCEDURES, procedureNames);
-        Assert.assertEquals(CORE_FUNCTIONS, functionNames);
+        Assertions.assertEquals(CORE_PROCEDURES, procedureNames);
+        Assertions.assertEquals(CORE_FUNCTIONS, functionNames);
         session.close();
         neo4jContainer.close();
     }
 
     @Test
-    public void testCypher25() {
+    void testCypher25() {
         Neo4jContainerExtension neo4jContainer = TestContainerUtil.createEnterpriseDB(
                         List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
                 .withNeo4jConfig("dbms.transaction.timeout", "60s");
@@ -527,8 +527,8 @@ public class ApocSplitTest {
         Set<String> functionsCypher25 = new HashSet<>(CORE_FUNCTIONS);
         functionsCypher25.removeAll(DEPRECATED_CORE_FUNCTIONS_5);
 
-        Assert.assertEquals(proceduresCypher25, procedureNames);
-        Assert.assertEquals(functionsCypher25, functionNames);
+        Assertions.assertEquals(proceduresCypher25, procedureNames);
+        Assertions.assertEquals(functionsCypher25, functionNames);
         session.close();
         neo4jContainer.close();
     }

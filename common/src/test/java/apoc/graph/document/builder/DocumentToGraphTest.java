@@ -18,22 +18,21 @@
  */
 package apoc.graph.document.builder;
 
-import static org.junit.Assert.assertEquals;
-
 import apoc.graph.util.GraphsConfig;
 import apoc.result.VirtualGraph;
 import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.MapUtil;
 import java.util.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 
-public class DocumentToGraphTest {
+class DocumentToGraphTest {
 
     @Test
-    public void testWithNoRoot() {
+    void testWithNoRoot() {
         Map<String, Object> map = new HashMap<>();
 
         Map<String, String> mappings = new HashMap<>();
@@ -60,29 +59,29 @@ public class DocumentToGraphTest {
         nodesIterator.next(); // skip root node
 
         VirtualNode entityNode1 = nodesIterator.next();
-        assertEquals(entityNode1.getProperty("name"), 1);
-        assertEquals(entityNode1.getProperty("type"), "Artist");
-        assertEquals(entityNode1.getLabels(), Arrays.asList(Label.label("Artist"), Label.label("Entity")));
+        Assertions.assertEquals(1, entityNode1.getProperty("name"));
+        Assertions.assertEquals("Artist", entityNode1.getProperty("type"));
+        Assertions.assertEquals(entityNode1.getLabels(), Arrays.asList(Label.label("Artist"), Label.label("Entity")));
 
         VirtualNode entityNode2 = nodesIterator.next();
-        assertEquals(entityNode2.getProperty("name"), 2);
-        assertEquals(entityNode2.getProperty("type"), "Engineer");
-        assertEquals(entityNode2.getLabels(), Arrays.asList(Label.label("Engineer"), Label.label("Entity")));
+        Assertions.assertEquals(2, entityNode2.getProperty("name"));
+        Assertions.assertEquals("Engineer", entityNode2.getProperty("type"));
+        Assertions.assertEquals(entityNode2.getLabels(), Arrays.asList(Label.label("Engineer"), Label.label("Entity")));
 
         Set<VirtualRelationship> relationships = (Set<VirtualRelationship>) s.graph.get("relationships");
         Iterator<VirtualRelationship> relationshipIterator = relationships.iterator();
 
         VirtualRelationship rel1 = relationshipIterator.next();
-        assertEquals(rel1.getType(), RelationshipType.withName("ENTITIES"));
-        assertEquals(rel1.getEndNode().getProperty("name"), 1);
+        Assertions.assertEquals(rel1.getType(), RelationshipType.withName("ENTITIES"));
+        Assertions.assertEquals(1, rel1.getEndNode().getProperty("name"));
 
         VirtualRelationship rel2 = relationshipIterator.next();
-        assertEquals(rel2.getType(), RelationshipType.withName("ENTITIES"));
-        assertEquals(rel2.getEndNode().getProperty("name"), 2);
+        Assertions.assertEquals(rel2.getType(), RelationshipType.withName("ENTITIES"));
+        Assertions.assertEquals(2, rel2.getEndNode().getProperty("name"));
     }
 
     @Test
-    public void testWithRoot() {
+    void testWithRoot() {
         Map<String, Object> map = new HashMap<>();
         map.put("idField", "uri");
 
@@ -109,21 +108,21 @@ public class DocumentToGraphTest {
         Iterator<VirtualNode> nodesIterator = nodes.iterator();
 
         VirtualNode rootNode = nodesIterator.next();
-        assertEquals(rootNode.getProperty("type"), "Article");
-        assertEquals(rootNode.getProperty("uri"), "1234");
-        assertEquals(rootNode.getLabels(), Arrays.asList(Label.label("Article")));
+        Assertions.assertEquals("Article", rootNode.getProperty("type"));
+        Assertions.assertEquals("1234", rootNode.getProperty("uri"));
+        Assertions.assertEquals(rootNode.getLabels(), List.of(Label.label("Article")));
 
         VirtualNode entityNode = nodesIterator.next();
-        assertEquals(entityNode.getProperty("name"), 1);
-        assertEquals(entityNode.getProperty("type"), "Artist");
-        assertEquals(entityNode.getLabels(), Arrays.asList(Label.label("Artist"), Label.label("Entity")));
+        Assertions.assertEquals(1, entityNode.getProperty("name"));
+        Assertions.assertEquals("Artist", entityNode.getProperty("type"));
+        Assertions.assertEquals(entityNode.getLabels(), Arrays.asList(Label.label("Artist"), Label.label("Entity")));
 
         Set<VirtualRelationship> relationships = (Set<VirtualRelationship>) s.graph.get("relationships");
         Iterator<VirtualRelationship> relationshipIterator = relationships.iterator();
 
         VirtualRelationship relationship = relationshipIterator.next();
-        assertEquals(relationship.getType(), RelationshipType.withName("ENTITIES"));
-        assertEquals(relationship.getStartNode().getProperty("uri"), "1234");
-        assertEquals(relationship.getEndNode().getProperty("name"), 1);
+        Assertions.assertEquals(relationship.getType(), RelationshipType.withName("ENTITIES"));
+        Assertions.assertEquals("1234", relationship.getStartNode().getProperty("uri"));
+        Assertions.assertEquals(1, relationship.getEndNode().getProperty("name"));
     }
 }

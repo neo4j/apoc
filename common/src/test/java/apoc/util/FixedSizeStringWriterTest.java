@@ -18,9 +18,11 @@
  */
 package apoc.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class FixedSizeStringWriterTest {
 
@@ -30,7 +32,7 @@ public class FixedSizeStringWriterTest {
         writer.write("This is");
         writer.write(" a string");
         assertEquals("This is a ", writer.toString());
-        assertTrue("Should be exceeded", writer.isExceeded());
+        assertTrue(writer.isExceeded());
     }
 
     @Test
@@ -40,7 +42,7 @@ public class FixedSizeStringWriterTest {
         writer.write(chars, 0, chars.length);
         writer.write(" a string");
         assertEquals("This is a ", writer.toString());
-        assertTrue("Should be exceeded", writer.isExceeded());
+        assertTrue(writer.isExceeded());
     }
 
     @Test
@@ -51,6 +53,6 @@ public class FixedSizeStringWriterTest {
         char[] aString = " a string".toCharArray();
         writer.write(aString, 0, 6);
         assertEquals("is a str", writer.toString());
-        assertFalse("Should not be exceeded", writer.isExceeded());
+        assertFalse(writer.isExceeded());
     }
 }

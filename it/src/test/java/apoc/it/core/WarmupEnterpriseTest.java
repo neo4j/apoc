@@ -21,24 +21,23 @@ package apoc.it.core;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 import apoc.util.TestContainerUtil;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
 import org.neo4j.driver.exceptions.ClientException;
 
-public class WarmupEnterpriseTest {
+class WarmupEnterpriseTest {
 
     @Test
-    public void testWarmupIsntAllowedWithOtherStorageEngines() {
+    void testWarmupIsntAllowedWithOtherStorageEngines() {
         final var conf = Map.of(GraphDatabaseSettings.db_format.name(), "block");
         withSession(conf, session -> {
             assertThatThrownBy(() -> testCall(session, "CYPHER 5 CALL apoc.warmup.run()", (r) -> {}))
@@ -49,18 +48,18 @@ public class WarmupEnterpriseTest {
     }
 
     @Test
-    public void testWarmupOnEnterpriseStorageEngine() {
+    void testWarmupOnEnterpriseStorageEngine() {
         final var conf = Map.of(GraphDatabaseSettings.db_format.name(), "high_limit");
         withSession(conf, session -> {
             testCall(session, "CYPHER 5 CALL apoc.warmup.run(true,true,true)", r -> {
-                assertEquals(true, r.get("indexesLoaded"));
-                assertNotEquals(0L, r.get("indexPages"));
+                Assertions.assertEquals(true, r.get("indexesLoaded"));
+                Assertions.assertNotEquals(0L, r.get("indexPages"));
             });
         });
     }
 
     @Test
-    public void testOnRecordFormatDb() {
+    void testOnRecordFormatDb() {
         withDriver(Map.of(), d -> {
             try (final var s =
                     d.session(SessionConfig.builder().withDatabase("system").build())) {
