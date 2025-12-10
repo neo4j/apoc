@@ -1,0 +1,41 @@
+---
+version: '3'
+
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+
+  set-version:
+    desc: "Update versions in gradle and readme files"
+    summary: |
+      Update versions in gradle and readme files.
+      Usage:
+        - Set individual version for apoc and neo4j:
+          set-version apoc_version=<version> neo4j_version=<version>
+        - Set same version for apoc and neo4j:
+          set-version version=<version>
+    aliases:
+      - common:set-version  # used in ci
+    preconditions:
+      - sh: test -n "{{.apoc_version}}"
+        msg: "apoc_version must be supplied (apoc_version or version)"
+      - sh: test -n "{{.neo4j_version}}"
+        msg: "neo4j_version must be supplied (neo4j_version or version)"
+    dir: "{{ .WORKDIR }}"
+    cmds:
+      - echo "Updating versions Apoc={{ .apoc_version}}, Neo4j={{ .neo4j_version }}"
+      - ./gradlew setVersion -PnewNeo4jVersion={{ .neo4j_version }} -PnewApocVersion={{ .apoc_version}}
+    vars:
+      apoc_version:  "{{ .apoc_version | default .version}}"
+      neo4j_version: "{{ .neo4j_version | default .version}}"
+
+  publish:
+    desc: "Build and publish via gradle"
+    cmd: ./gradlew publish -Pneo4jVersionOverride=${{ .neo4j_version }} \
+          {{if .gradle_init}}--init-script {{.gradle_init}}{{end}} \
+          --info
+    vars:
+      neo4j_version: "{{ .NEO4J_VERSION | default .version}}"
+      gradle_init:   "{{ .GRADLE_INIT_FILE_PATH | default \"\"}}"

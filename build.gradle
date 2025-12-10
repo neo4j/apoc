@@ -8,7 +8,7 @@ plugins {
 
 ext {
   publicDir = "${project.rootDir}"
-  neo4jVersionEffective = project.hasProperty("neo4jVersionOverride") ? project.getProperty("neo4jVersionOverride") : "2025.13.0"
+  neo4jVersionEffective = project.findProperty("neo4jVersionOverride") ?: project.findProperty("neo4jVersion")
   testContainersVersion = '2.0.2'
   apacheArrowVersion = '15.0.0'
 }
@@ -17,11 +17,32 @@ downloadLicenses {
   excludeDependencies = ['org.neo4j.*']
 }
 
+tasks.register("setVersion") {
+  def newApocVersion     = project.findProperty("newApocVersion") as String
+  def newNeo4jVersion = project.findProperty("newNeo4jVersion") as String
+  def apocBranch = newApocVersion.count('.') == 2
+    ? newApocVersion.replaceAll(/\.[^.]+$/, "")
+    : newApocVersion
+
+  doLast {
+    def propertiesFile = file("gradle.properties")
+    propertiesFile.text = propertiesFile.text
+      .replaceAll(/(?m)^apocVersion\s*=.*/, "apocVersion=${newApocVersion}")
+      .replaceAll(/(?m)^neo4jVersion\s*=.*/, "neo4jVersion=${newNeo4jVersion}")
+
+    def readmeFile = file("readme.adoc")
+    readmeFile.text = readmeFile.text
+      .replaceAll(/(?m)^:apoc-release:\s*.*/, ":apoc-release:${newApocVersion}")
+      .replaceAll(/(?m)^:neo4j-version:\s*.*/, ":neo4j-version:${newNeo4jVersion}")
+      .replaceAll(/(?m)^:branch:\s*.*/, ":branch:${apocBranch}")
+  }
+}
+
 allprojects {
   apply plugin: "com.diffplug.spotless"
 
   group = 'org.neo4j.procedure'
-  version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : '2025.13.0'
+  version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : apocVersion
   archivesBaseName = 'apoc'
   description = """neo4j-apoc-procedures"""
 
@@ -98,8 +119,8 @@ subprojects {
     // neo4jDockerImage system property is used in TestContainerUtil
     systemProperties 'user.language': 'en',
     'user.country': 'US',
-    'neo4jDockerImage': project.hasProperty("neo4jDockerEeOverride") ? project.getProperty("neo4jDockerEeOverride") : 'neo4j:2025.13.0-enterprise-debian',
-    'neo4jCommunityDockerImage': project.hasProperty("neo4jDockerCeOverride") ? project.getProperty("neo4jDockerCeOverride") : 'neo4j:2025.13.0-debian',
+    'neo4jDockerImage': project.findProperty("neo4jDockerEeOverride") ?: 'neo4j:{neo4jVersion}-enterprise-debian',
+    'neo4jCommunityDockerImage': project.findProperty("neo4jDockerCeOverride") ?: 'neo4j:{neo4jVersion}-debian',
     'coreDir': 'core',
     'testDockerBundle': project.hasProperty("testDockerBundle"),
     'org.neo4j.io.pagecache.tracing.cursor.DefaultPageCursorTracer.CHECK_REPORTED_COUNTERS': 'true' // Extra assertions in kernel
