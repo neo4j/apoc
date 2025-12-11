@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.stream.StreamSupport;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
@@ -105,11 +106,22 @@ public class CypherInitializer implements AvailabilityListener {
                             // Create a uniqueness constraint on system db to avoid race conditions when installing
                             // triggers
                             try (Transaction tx = db.beginTx()) {
-                                tx.schema()
-                                        .constraintFor(SystemLabels.ApocTriggerMeta)
-                                        .assertPropertyIsUnique(SystemPropertyKeys.database.name())
-                                        .create();
-                                tx.commit();
+                                var constraintName = "triggerConstraint";
+                                var maybeConstraint = StreamSupport.stream(
+                                                tx.schema()
+                                                        .getConstraints(SystemLabels.ApocTriggerMeta)
+                                                        .spliterator(),
+                                                false)
+                                        .filter(x -> x.getName().equals(constraintName))
+                                        .toList();
+                                if (maybeConstraint.isEmpty()) {
+                                    tx.schema()
+                                            .constraintFor(SystemLabels.ApocTriggerMeta)
+                                            .withName(constraintName)
+                                            .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                            .create();
+                                    tx.commit();
+                                }
                             }
 
                             databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
