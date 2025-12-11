@@ -22,6 +22,7 @@ import static apoc.SystemPropertyKeys.database;
 
 import apoc.ApocConfig;
 import apoc.SystemLabels;
+import apoc.SystemPropertyKeys;
 import apoc.util.LogsUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
@@ -37,6 +38,7 @@ import org.neo4j.configuration.Config;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.event.DatabaseEventContext;
 import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.kernel.availability.AvailabilityListener;
@@ -99,6 +101,17 @@ public class CypherInitializer implements AvailabilityListener {
                                                 + "The two first numbers of both versions needs to be the same.",
                                         apocVersion, neo4jVersion);
                             }
+
+                            // Create a uniqueness constraint on system db to avoid race conditions when installing
+                            // triggers
+                            try (Transaction tx = db.beginTx()) {
+                                tx.schema()
+                                        .constraintFor(SystemLabels.ApocTriggerMeta)
+                                        .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                        .create();
+                                tx.commit();
+                            }
+
                             databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
                         }
 

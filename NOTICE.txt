@@ -26,12 +26,12 @@ Third-party licenses
 --------------------
 
 Apache License, 2.0
-  jersey-client-2.43.jar
-  jersey-common-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
-  jersey-server-2.43.jar
+  jersey-client-2.46.jar
+  jersey-common-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
+  jersey-server-2.46.jar
 
 Apache-2.0
   FastInfoset-1.2.16.jar
@@ -60,12 +60,15 @@ Apache-2.0
   cassandra-driver-core-3.10.0.jar
   commons-cli-1.9.0.jar
   commons-codec-1.17.1.jar
+  commons-codec-1.19.0.jar
   commons-collections4-4.4.jar
   commons-compress-1.27.1.jar
+  commons-compress-1.28.0.jar
   commons-configuration2-2.11.0.jar
   commons-csv-1.9.0.jar
   commons-daemon-1.0.13.jar
   commons-io-2.17.0.jar
+  commons-io-2.20.0.jar
   commons-lang-2.6.jar
   commons-lang3-3.18.0.jar
   commons-logging-1.3.2.jar
@@ -76,9 +79,9 @@ Apache-2.0
   curator-client-5.2.0.jar
   curator-framework-5.2.0.jar
   curator-recipes-5.2.0.jar
-  docker-java-api-3.4.0.jar
-  docker-java-transport-3.4.0.jar
-  docker-java-transport-zerodep-3.4.0.jar
+  docker-java-api-3.7.0.jar
+  docker-java-transport-3.7.0.jar
+  docker-java-transport-zerodep-3.7.0.jar
   ehcache-3.8.2.jar
   error_prone_annotations-2.2.0.jar
   failureaccess-1.0.1.jar
@@ -124,6 +127,7 @@ Apache-2.0
   jPowerShell-3.0.jar
   jProcesses-1.6.5.jar
   jackson-annotations-2.18.0.jar
+  jackson-annotations-2.20.jar
   jackson-core-2.18.0.jar
   jackson-databind-2.18.0.jar
   jackson-dataformat-cbor-2.18.0.jar
@@ -163,6 +167,7 @@ Apache-2.0
   jffi-1.2.16.jar
   jmespath-java-1.12.643.jar
   jna-5.15.0.jar
+  jna-5.18.1.jar
   jnr-constants-0.9.9.jar
   jnr-ffi-2.1.7.jar
   joda-time-2.8.1.jar
@@ -262,10 +267,10 @@ Apache-2.0
   zookeeper-jute-3.8.4.jar
 
 BSD 2-Clause
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
 
 BSD-2-Clause
   jline-3.9.0.jar
@@ -322,10 +327,10 @@ Eclipse Distribution License - v 1.0
   jakarta.activation-api-1.2.2.jar
   jakarta.xml.bind-api-2.3.2.jar
   jaxb-runtime-2.3.2.jar
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
   stax-ex-1.8.1.jar
   txw2-2.3.2.jar
 
@@ -372,12 +377,12 @@ Eclipse Public License - v 2.0
   jakarta.annotation-api-1.3.5.jar
   jakarta.inject-2.6.1.jar
   jakarta.ws.rs-api-2.1.6.jar
-  jersey-client-2.43.jar
-  jersey-common-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
-  jersey-server-2.43.jar
+  jersey-client-2.46.jar
+  jersey-common-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
+  jersey-server-2.46.jar
   junit-jupiter-5.11.2.jar
   junit-jupiter-api-5.11.2.jar
   junit-jupiter-engine-5.11.2.jar
@@ -409,10 +414,10 @@ GPL2 w/ CPE
   jakarta.annotation-api-1.3.5.jar
   jakarta.inject-2.6.1.jar
   jakarta.ws.rs-api-2.1.6.jar
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
   osgi-resource-locator-1.0.3.jar
 
 GPL2 w/ CPE
@@ -424,34 +429,35 @@ LGPL 2.1
 
 LGPL-2.1-or-later
   jna-5.15.0.jar
+  jna-5.18.1.jar
 
 MIT
   animal-sniffer-annotations-1.17.jar
   bcpkix-jdk18on-1.79.jar
   bcprov-jdk18on-1.79.jar
   bcutil-jdk18on-1.79.jar
-  cassandra-1.20.2.jar
   checker-qual-2.5.2.jar
-  couchbase-1.20.2.jar
-  database-commons-1.20.2.jar
   duct-tape-1.0.8.jar
-  elasticsearch-1.20.2.jar
-  jdbc-1.20.2.jar
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
   jnr-x86asm-1.0.2.jar
-  localstack-1.20.2.jar
   mockito-core-5.14.1.jar
   mssql-jdbc-6.2.1.jre7.jar
-  mysql-1.20.2.jar
-  neo4j-1.20.2.jar
-  postgresql-1.20.2.jar
   reactive-streams-1.0.4.jar
   slf4j-api-2.0.11.jar
   slf4j-api-2.0.17.jar
-  testcontainers-1.20.2.jar
+  testcontainers-2.0.2.jar
+  testcontainers-cassandra-2.0.2.jar
+  testcontainers-couchbase-2.0.2.jar
+  testcontainers-database-commons-2.0.2.jar
+  testcontainers-elasticsearch-2.0.2.jar
+  testcontainers-jdbc-2.0.2.jar
+  testcontainers-localstack-2.0.2.jar
+  testcontainers-mysql-2.0.2.jar
+  testcontainers-neo4j-2.0.2.jar
+  testcontainers-postgresql-2.0.2.jar
 
 MPL 1.1
   javassist-3.30.2-GA.jar
@@ -460,36 +466,36 @@ MPL-2.0
   kiama_2.13-2.5.1.jar
 
 Modified BSD
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
-  jersey-server-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
+  jersey-server-2.46.jar
 
 Public Domain, per Creative Commons CC0
   HdrHistogram-2.1.9.jar
   aopalliance-1.0.jar
-  jersey-client-2.43.jar
-  jersey-common-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-common-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
 
 The GNU General Public License (GPL), Version 2, With Classpath Exception
-  jersey-common-2.43.jar
-  jersey-server-2.43.jar
+  jersey-common-2.46.jar
+  jersey-server-2.46.jar
 
 The Go license
   re2j-1.1.jar
 
 W3C license
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
 
 jQuery license
-  jersey-client-2.43.jar
-  jersey-container-servlet-2.43.jar
-  jersey-container-servlet-core-2.43.jar
-  jersey-hk2-2.43.jar
+  jersey-client-2.46.jar
+  jersey-container-servlet-2.46.jar
+  jersey-container-servlet-core-2.46.jar
+  jersey-hk2-2.46.jar
