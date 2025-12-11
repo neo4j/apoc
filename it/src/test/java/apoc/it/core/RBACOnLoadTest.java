@@ -23,9 +23,7 @@ import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testCallEmpty;
 import static java.util.Collections.emptyMap;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
@@ -37,15 +35,15 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
 import org.neo4j.driver.Session;
 
-public class RBACOnLoadTest {
+class RBACOnLoadTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Driver testUserDriver;
@@ -58,13 +56,13 @@ public class RBACOnLoadTest {
     private static final String userWithBoostedPrivileges = "testUserWithBoostedPrivileges";
     private static final String userPWithBoostedPrivileges = "password1234WithBoostedPrivileges";
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
                 .withNeo4jConfig("dbms.memory.heap.max_size", "1GB");
         neo4jContainer.start();
 
-        assertTrue(neo4jContainer.isRunning());
+        org.junit.jupiter.api.Assertions.assertTrue(neo4jContainer.isRunning());
         session = neo4jContainer.getSession();
 
         setupUser();
@@ -115,7 +113,7 @@ public class RBACOnLoadTest {
     }
 
     @Test
-    public void testRBACOnDeny() throws IOException {
+    void testRBACOnDeny() throws IOException {
         String url = "https://neo4j.com/docs/cypher-refcard/3.3/csv/artists.csv";
         addRBACOnLoad(url, "test");
 
@@ -147,7 +145,7 @@ public class RBACOnLoadTest {
     }
 
     @Test
-    public void testRBACOnFileDenyAll() throws IOException {
+    void testRBACOnFileDenyAll() throws IOException {
         List<String> urls = List.of(
                 "dir/file.txt",
                 "/dir/file.txt",
@@ -197,7 +195,7 @@ public class RBACOnLoadTest {
     }
 
     @Test
-    public void testRBACOnDenyGeocode() throws IOException {
+    void testRBACOnDenyGeocode() throws IOException {
         String url = "http://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY";
         String reverseUrl = "http://api.opencagedata.com/geocode/v1/json?q=LAT+LNG&key=KEY";
         addRBACOnLoad(url, "test");
@@ -231,7 +229,7 @@ public class RBACOnLoadTest {
     }
 
     @Test
-    public void testBoostedPrivilegesOverridesLoadPrivileges() throws IOException {
+    void testBoostedPrivilegesOverridesLoadPrivileges() throws IOException {
         String url = "https://neo4j.com/docs/cypher-refcard/3.3/csv/artists.csv";
         addRBACOnLoad(url, "testUserWithBoostedPrivileges");
 
@@ -239,10 +237,10 @@ public class RBACOnLoadTest {
                 testUserWithBoostedPrivilegesSession,
                 "CALL apoc.import.csv([{fileName: $url, labels: ['Artist']}], [], {})",
                 Map.of("url", url),
-                r -> assertEquals(3L, r.get("nodes")));
+                r -> org.junit.jupiter.api.Assertions.assertEquals(3L, r.get("nodes")));
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         testUserSession.close();
         testUserDriver.close();

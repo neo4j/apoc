@@ -18,11 +18,11 @@
  */
 package apoc.uuid;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.UUID;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class UuidUtilTest {
 
@@ -30,64 +30,70 @@ public class UuidUtilTest {
     public void fromHexToBase64() {
         var input = "290d6cba-ce94-455e-b59f-029cf1e395c5";
         var output = UuidUtil.fromHexToBase64(input);
-        assertThat(output).isEqualTo("KQ1sus6URV61nwKc8eOVxQ");
+        assertEquals("KQ1sus6URV61nwKc8eOVxQ", output);
     }
 
     @Test
     public void fromBase64ToHex() {
         var input = "KQ1sus6URV61nwKc8eOVxQ";
         var output = UuidUtil.fromBase64ToHex(input);
-        assertThat(output).isEqualTo("290d6cba-ce94-455e-b59f-029cf1e395c5");
+        assertEquals("290d6cba-ce94-455e-b59f-029cf1e395c5", output);
     }
 
     @Test
     public void fromBase64WithAlignmentToHex() {
         var input = "KQ1sus6URV61nwKc8eOVxQ==";
         var output = UuidUtil.fromBase64ToHex(input);
-        assertThat(output).isEqualTo("290d6cba-ce94-455e-b59f-029cf1e395c5");
+        assertEquals("290d6cba-ce94-455e-b59f-029cf1e395c5", output);
     }
 
     @Test
     public void shouldFailIfHexFormatIsWrong() {
         var input = "290d6cba-455e-b59f-029cf1e395c5";
-        assertThatCode(() -> UuidUtil.fromHexToBase64(input)).hasMessageStartingWith("Invalid UUID string");
+        IllegalArgumentException e =
+                assertThrows(IllegalArgumentException.class, () -> UuidUtil.fromHexToBase64(input));
+        assertEquals("Invalid UUID string: 290d6cba-455e-b59f-029cf1e395c5", e.getMessage());
     }
 
     @Test
     public void shouldFailIfHexFormatIsEmpty() {
         var input = "";
-        assertThatCode(() -> UuidUtil.fromHexToBase64(input)).hasMessageStartingWith("Invalid UUID string");
+        IllegalArgumentException e =
+                assertThrows(IllegalArgumentException.class, () -> UuidUtil.fromHexToBase64(input));
+        assertEquals("Invalid UUID string: ", e.getMessage());
     }
 
     @Test
     public void shouldFailIfHexFormatIsNull() {
-        assertThatCode(() -> UuidUtil.fromHexToBase64(null)).isInstanceOf(NullPointerException.class);
+        assertThrows(NullPointerException.class, () -> UuidUtil.fromHexToBase64(null));
     }
 
     @Test
     public void shouldFailIfBase64LengthIsWrong() {
         var input1 = "KQ1sus6URV61nwKc8eO=="; // wrong length
-        assertThatCode(() -> UuidUtil.fromBase64ToHex(input1))
-                .hasMessageStartingWith("Invalid UUID length. Expected 24 characters");
+        IllegalStateException e1 = assertThrows(IllegalStateException.class, () -> UuidUtil.fromBase64ToHex(input1));
+        assertEquals("Invalid UUID length. Expected 24 characters", e1.getMessage());
+
         var input2 = "Q1sus6URV61nwKc8eOVxQ"; // wrong length
-        assertThatCode(() -> UuidUtil.fromBase64ToHex(input2))
-                .hasMessageStartingWith("Invalid UUID length. Expected 22 characters");
+        IllegalStateException e2 = assertThrows(IllegalStateException.class, () -> UuidUtil.fromBase64ToHex(input2));
+        assertEquals("Invalid UUID length. Expected 22 characters", e2.getMessage());
     }
 
     @Test
     public void shouldFailIfBase64IsEmpty() {
-        assertThatCode(() -> UuidUtil.fromBase64ToHex("")).hasMessageStartingWith("Expected not empty UUID value");
+        IllegalStateException e = assertThrows(IllegalStateException.class, () -> UuidUtil.fromBase64ToHex(""));
+        assertEquals("Expected not empty UUID value", e.getMessage());
     }
 
     @Test
     public void shouldFailIfBase64IsNull() {
-        assertThatCode(() -> UuidUtil.fromBase64ToHex(null)).isInstanceOf(NullPointerException.class);
+        assertThrows(NullPointerException.class, () -> UuidUtil.fromBase64ToHex(null));
     }
 
     @Test
     public void generateBase64ForSpecificUUIDs() {
         var uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
         var uuidBase64 = UuidUtil.generateBase64Uuid(uuid);
-        assertThat(uuidBase64).isEqualTo("AAAAAAAAAAAAAAAAAAAAAA");
+        assertEquals("AAAAAAAAAAAAAAAAAAAAAA", uuidBase64);
     }
 }

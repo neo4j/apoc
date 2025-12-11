@@ -25,13 +25,13 @@ import apoc.util.MapUtil;
 import java.util.HashMap;
 import java.util.Map;
 import org.hamcrest.Matchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.Label;
 
-public class LabelBuilderTest {
+class LabelBuilderTest {
 
     @Test
-    public void firstLetterOfWordCapitalised() {
+    void firstLetterOfWordCapitalised() {
         Map<String, Object> conf = new HashMap<>();
         conf.put("mappings", MapUtil.map("$", "keyPhrase{!text,@metadata}"));
 
@@ -42,7 +42,7 @@ public class LabelBuilderTest {
     }
 
     @Test
-    public void firstLetterOfAllCapsWordCapitalised() {
+    void firstLetterOfAllCapsWordCapitalised() {
         Map<String, Object> conf = new HashMap<>();
         conf.put("mappings", MapUtil.map("$", "COMMERCIAL_ITEM{!text,@metadata}"));
 
@@ -53,7 +53,7 @@ public class LabelBuilderTest {
     }
 
     @Test
-    public void removeUnderscores() {
+    void removeUnderscores() {
         Map<String, Object> conf = new HashMap<>();
         conf.put("mappings", MapUtil.map("$", "Key_Phrase{!text,@metadata}"));
 
@@ -64,7 +64,7 @@ public class LabelBuilderTest {
     }
 
     @Test
-    public void firstLetterOfWordsCapitalised() {
+    void firstLetterOfWordsCapitalised() {
         Map<String, Object> conf = new HashMap<>();
         conf.put("mappings", MapUtil.map("$", "KeyPhrase{!text,@metadata}"));
 

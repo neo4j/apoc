@@ -23,10 +23,7 @@ import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testResult;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
@@ -41,18 +38,19 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
 
-public class TriggerClusterRoutingTest {
+class TriggerClusterRoutingTest {
     private static TestcontainersCausalCluster cluster;
     private static List<Neo4jContainerExtension> clusterMembers;
 
-    @BeforeClass
+    @BeforeAll
     public static void setupCluster() {
         cluster = TestContainerUtil.createEnterpriseCluster(
                 List.of(TestContainerUtil.ApocPackage.CORE),
@@ -64,10 +62,10 @@ public class TriggerClusterRoutingTest {
                         "apoc.trigger.enabled", "true"));
 
         clusterMembers = cluster.getClusterMembers();
-        assertEquals(3, clusterMembers.size());
+        Assertions.assertEquals(3, clusterMembers.size());
     }
 
-    @AfterClass
+    @AfterAll
     public static void bringDownCluster() {
         if (cluster != null) {
             cluster.close();
@@ -77,7 +75,7 @@ public class TriggerClusterRoutingTest {
     // TODO: fabric tests once the @SystemOnlyProcedure annotation is added to Neo4j
 
     @Test
-    public void testTriggerAddAllowedOnlyInSysLeaderMember() {
+    void testTriggerAddAllowedOnlyInSysLeaderMember() {
         final String addTrigger = "CYPHER 5 CALL apoc.trigger.add($name, 'RETURN 1', {})";
         String triggerName = randomTriggerName();
 
@@ -86,7 +84,7 @@ public class TriggerClusterRoutingTest {
     }
 
     @Test
-    public void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
+    void testTriggerRemoveAllowedOnlyInSysLeaderMember() {
         final String addTrigger = "CYPHER 5 CALL apoc.trigger.add($name, 'RETURN 1', {})";
         final String removeTrigger = "CYPHER 5 CALL apoc.trigger.remove($name)";
         String triggerName = randomTriggerName();
@@ -97,7 +95,7 @@ public class TriggerClusterRoutingTest {
     }
 
     @Test
-    public void testTriggerInstallAllowedOnlyInSysLeaderMember() {
+    void testTriggerInstallAllowedOnlyInSysLeaderMember() {
         final String installTrigger = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
         String triggerName = randomTriggerName();
         succeedsInLeader(installTrigger, triggerName, SYSTEM_DATABASE_NAME);
@@ -105,7 +103,7 @@ public class TriggerClusterRoutingTest {
     }
 
     @Test
-    public void testTriggerDropAllowedOnlyInSysLeaderMember() {
+    void testTriggerDropAllowedOnlyInSysLeaderMember() {
         final String installTrigger = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
         final String dropTrigger = "CALL apoc.trigger.drop('neo4j', $name)";
         String triggerName = randomTriggerName();
@@ -116,7 +114,7 @@ public class TriggerClusterRoutingTest {
     }
 
     @Test
-    public void testTriggerShowAllowedInAllSystemInstances() {
+    void testTriggerShowAllowedInAllSystemInstances() {
         final String installTrigger = "CALL apoc.trigger.install('neo4j', $name, 'RETURN 1', {})";
         final String showTrigger = "CALL apoc.trigger.show('neo4j')";
 
@@ -127,7 +125,7 @@ public class TriggerClusterRoutingTest {
                 if (row.get("name").equals(triggerName)) showedTrigger.set(true);
             });
 
-            assertTrue(showedTrigger.get());
+            Assertions.assertTrue(showedTrigger.get());
         };
 
         succeedsInLeader(installTrigger, triggerName, SYSTEM_DATABASE_NAME);
@@ -152,7 +150,7 @@ public class TriggerClusterRoutingTest {
                         session,
                         triggerOperation,
                         Map.of("name", triggerName),
-                        row -> assertEquals(triggerName, row.get("name")));
+                        row -> Assertions.assertEquals(triggerName, row.get("name")));
             }
         }
     }
@@ -197,9 +195,9 @@ public class TriggerClusterRoutingTest {
                                 session,
                                 triggerOperation,
                                 Map.of("name", triggerName),
-                                row -> fail("Should fail because of non writer trigger addition")));
+                                row -> Assertions.fail("Should fail because of non writer trigger addition")));
                 String errorMsg = e.getMessage();
-                assertTrue("The actual message is: " + errorMsg, errorMsg.contains(expectedError));
+                Assertions.assertTrue(errorMsg.contains(expectedError), "The actual message is: " + errorMsg);
             }
         }
     }

@@ -19,49 +19,42 @@
 package apoc.path;
 
 import static apoc.util.collection.Iterables.iterable;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.neo4j.graphdb.Direction.*;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
-import java.util.Arrays;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
 
-@RunWith(Parameterized.class)
 public class RelationshipTypeAndDirectionsTest {
 
-    @Parameters(name = "{index}: {0} -> {1}")
-    public static Iterable<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-            {null, iterable(Pair.of(null, BOTH))},
-            {"", iterable(Pair.of(null, BOTH))},
-            {">", iterable(Pair.of(null, OUTGOING))},
-            {"<", iterable(Pair.of(null, INCOMING))},
-            {"SIMPLE", iterable(Pair.of(withName("SIMPLE"), BOTH))},
-            {"SIMPLE>", iterable(Pair.of(withName("SIMPLE"), OUTGOING))},
-            {"SIMPLE<", iterable(Pair.of(withName("SIMPLE"), INCOMING))},
-            {"<SIMPLE", iterable(Pair.of(withName("SIMPLE"), INCOMING))},
-            {">SIMPLE", iterable(Pair.of(withName("SIMPLE"), OUTGOING))},
-            {"SIMPLE", iterable(Pair.of(withName("SIMPLE"), BOTH))},
-            {"TYPE1|TYPE2", iterable(Pair.of(withName("TYPE1"), BOTH), Pair.of(withName("TYPE2"), BOTH))},
-            {"TYPE1>|TYPE2<", iterable(Pair.of(withName("TYPE1"), OUTGOING), Pair.of(withName("TYPE2"), INCOMING))},
-        });
+    static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of(null, iterable(Pair.of(null, BOTH))),
+                Arguments.of("", iterable(Pair.of(null, BOTH))),
+                Arguments.of(">", iterable(Pair.of(null, OUTGOING))),
+                Arguments.of("<", iterable(Pair.of(null, INCOMING))),
+                Arguments.of("SIMPLE", iterable(Pair.of(withName("SIMPLE"), BOTH))),
+                Arguments.of("SIMPLE>", iterable(Pair.of(withName("SIMPLE"), OUTGOING))),
+                Arguments.of("SIMPLE<", iterable(Pair.of(withName("SIMPLE"), INCOMING))),
+                Arguments.of("<SIMPLE", iterable(Pair.of(withName("SIMPLE"), INCOMING))),
+                Arguments.of(">SIMPLE", iterable(Pair.of(withName("SIMPLE"), OUTGOING))),
+                Arguments.of("SIMPLE", iterable(Pair.of(withName("SIMPLE"), BOTH))),
+                Arguments.of(
+                        "TYPE1|TYPE2", iterable(Pair.of(withName("TYPE1"), BOTH), Pair.of(withName("TYPE2"), BOTH))),
+                Arguments.of(
+                        "TYPE1>|TYPE2<",
+                        iterable(Pair.of(withName("TYPE1"), OUTGOING), Pair.of(withName("TYPE2"), INCOMING))));
     }
 
-    @Parameter(value = 0)
-    public String input;
-
-    @Parameter(value = 1)
-    public Iterable<Pair<RelationshipType, Direction>> expected;
-
-    @Test
-    public void parse() {
+    @ParameterizedTest(name = "{index}: {0} -> {1}")
+    @MethodSource("data")
+    void parse(String input, Iterable<Pair<RelationshipType, Direction>> expected) {
         assertEquals(expected, RelationshipTypeAndDirections.parse(input));
     }
 }

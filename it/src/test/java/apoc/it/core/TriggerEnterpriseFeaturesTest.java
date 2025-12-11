@@ -31,11 +31,6 @@ import static apoc.util.TestContainerUtil.testCallEmpty;
 import static apoc.util.TestContainerUtil.testResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 import static org.neo4j.driver.SessionConfig.forDatabase;
@@ -44,7 +39,6 @@ import static org.neo4j.test.assertion.Assert.assertEventually;
 import apoc.SystemLabels;
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
-import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -56,10 +50,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
@@ -67,7 +62,7 @@ import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.Session;
 
-public class TriggerEnterpriseFeaturesTest {
+class TriggerEnterpriseFeaturesTest {
     private static final String FOO_DB = "foo";
     private static final String INIT_DB = "initdb";
 
@@ -77,7 +72,7 @@ public class TriggerEnterpriseFeaturesTest {
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
         final String cypherInitializer = String.format("%s.%s.0", APOC_CONFIG_INITIALIZER, SYSTEM_DATABASE_NAME);
         final String createInitDb = String.format("CREATE DATABASE %s IF NOT EXISTS", INIT_DB);
@@ -90,7 +85,7 @@ public class TriggerEnterpriseFeaturesTest {
         neo4jContainer.start();
         session = neo4jContainer.getSession();
 
-        assertTrue(neo4jContainer.isRunning());
+        Assertions.assertTrue(neo4jContainer.isRunning());
 
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
             sysSession.executeWrite(tx ->
@@ -101,14 +96,14 @@ public class TriggerEnterpriseFeaturesTest {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
-    @After
-    public void after() throws IOException, InterruptedException {
+    @AfterEach
+    public void after() {
         // drop all triggers
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
             Stream.of(DEFAULT_DATABASE_NAME, FOO_DB)
@@ -117,7 +112,7 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testTriggerShowInCorrectDatabase() {
+    void testTriggerShowInCorrectDatabase() {
         final String defaultTriggerName = UUID.randomUUID().toString();
         final String fooTriggerName = UUID.randomUUID().toString();
 
@@ -127,31 +122,31 @@ public class TriggerEnterpriseFeaturesTest {
                     sysSession,
                     "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
                     Map.of("dbName", DEFAULT_DATABASE_NAME, "name", defaultTriggerName),
-                    r -> assertEquals(defaultTriggerName, r.get("name")));
+                    r -> Assertions.assertEquals(defaultTriggerName, r.get("name")));
 
             testCall(
                     sysSession,
                     "CALL apoc.trigger.show($dbName)",
                     Map.of("dbName", DEFAULT_DATABASE_NAME),
-                    r -> assertEquals(defaultTriggerName, r.get("name")));
+                    r -> Assertions.assertEquals(defaultTriggerName, r.get("name")));
 
             // install and show in foo db
             testCall(
                     sysSession,
                     "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
                     Map.of("dbName", FOO_DB, "name", fooTriggerName),
-                    r -> assertEquals(fooTriggerName, r.get("name")));
+                    r -> Assertions.assertEquals(fooTriggerName, r.get("name")));
 
             testCall(
                     sysSession,
                     "CALL apoc.trigger.show($dbName)",
                     Map.of("dbName", FOO_DB),
-                    r -> assertEquals(fooTriggerName, r.get("name")));
+                    r -> Assertions.assertEquals(fooTriggerName, r.get("name")));
         }
     }
 
     @Test
-    public void testTriggerInstallInNewDatabase() {
+    void testTriggerInstallInNewDatabase() {
         final String fooTriggerName = UUID.randomUUID().toString();
 
         try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
@@ -159,7 +154,7 @@ public class TriggerEnterpriseFeaturesTest {
                     sysSession,
                     "call apoc.trigger.install($dbName, $name, 'UNWIND $createdNodes AS n SET n.created = true', {})",
                     Map.of("dbName", FOO_DB, "name", fooTriggerName),
-                    r -> assertEquals(fooTriggerName, r.get("name")));
+                    r -> Assertions.assertEquals(fooTriggerName, r.get("name")));
         }
 
         final String queryTriggerList = "CALL apoc.trigger.list() YIELD name WHERE name = $name RETURN name";
@@ -167,9 +162,9 @@ public class TriggerEnterpriseFeaturesTest {
             assertEventually(
                     () -> {
                         final Result res = fooDbSession.run(queryTriggerList, Map.of("name", fooTriggerName));
-                        assertTrue("Should have an element", res.hasNext());
+                        Assertions.assertTrue(res.hasNext(), "Should have an element");
                         final Record next = res.next();
-                        assertEquals(fooTriggerName, next.get("name").asString());
+                        Assertions.assertEquals(fooTriggerName, next.get("name").asString());
                         return !res.hasNext();
                     },
                     value -> value,
@@ -181,22 +176,28 @@ public class TriggerEnterpriseFeaturesTest {
             testCall(
                     fooDbSession,
                     "MATCH (n:Something) RETURN n.created AS created",
-                    r -> assertEquals(true, r.get("created")));
+                    r -> Assertions.assertEquals(true, r.get("created")));
         }
 
         // check that the trigger is correctly installed in 'foo' db only
         try (Session defaultDbSession = session(DEFAULT_DATABASE_NAME)) {
             testResult(
-                    defaultDbSession, queryTriggerList, Map.of("name", fooTriggerName), r -> assertFalse(r.hasNext()));
+                    defaultDbSession,
+                    queryTriggerList,
+                    Map.of("name", fooTriggerName),
+                    r -> Assertions.assertFalse(r.hasNext()));
 
             defaultDbSession.run("CREATE (:Something)");
 
-            testCall(defaultDbSession, "MATCH (n:Something) RETURN n.created", r -> assertNull(r.get("created")));
+            testCall(
+                    defaultDbSession,
+                    "MATCH (n:Something) RETURN n.created",
+                    r -> Assertions.assertNull(r.get("created")));
         }
     }
 
     @Test
-    public void testDeleteTriggerAfterDatabaseDeletion() {
+    void testDeleteTriggerAfterDatabaseDeletion() {
         try (Session sysSession = session(SYSTEM_DATABASE_NAME)) {
             final String dbToDelete = "todelete";
 
@@ -209,7 +210,7 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testDeleteTriggerAfterDatabaseDeletionCreatedViaCypherInit() {
+    void testDeleteTriggerAfterDatabaseDeletionCreatedViaCypherInit() {
         await("initdb exists")
                 .atMost(Duration.ofSeconds(30))
                 .pollInterval(Duration.ofSeconds(1))
@@ -237,13 +238,13 @@ public class TriggerEnterpriseFeaturesTest {
                 sysSession,
                 "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
                 Map.of("dbName", dbToDelete, "name", defaultTriggerName),
-                r -> assertEquals(defaultTriggerName, r.get("name")));
+                r -> Assertions.assertEquals(defaultTriggerName, r.get("name")));
 
         testCall(
                 sysSession,
                 "CALL apoc.trigger.show($dbName)",
                 Map.of("dbName", dbToDelete),
-                r -> assertEquals(defaultTriggerName, r.get("name")));
+                r -> Assertions.assertEquals(defaultTriggerName, r.get("name")));
 
         // drop database
         sysSession.executeWrite(tx ->
@@ -254,7 +255,7 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testNotDeleteUserDbTriggerNodeAfterDatabaseDeletion() {
+    void testNotDeleteUserDbTriggerNodeAfterDatabaseDeletion() {
         final String dbToDelete = "todelete";
 
         // create a node in the Neo4j db that looks like a trigger
@@ -275,7 +276,7 @@ public class TriggerEnterpriseFeaturesTest {
                     sysSession,
                     "CALL apoc.trigger.install($dbName, $name, 'return 1', {})",
                     Map.of("dbName", dbToDelete, "name", defaultTriggerName),
-                    r -> assertEquals(defaultTriggerName, r.get("name")));
+                    r -> Assertions.assertEquals(defaultTriggerName, r.get("name")));
 
             // drop database
             sysSession.executeWrite(tx ->
@@ -288,12 +289,12 @@ public class TriggerEnterpriseFeaturesTest {
                     defaultSession,
                     String.format("MATCH (n:%s) RETURN n.%s AS result", SystemLabels.ApocTrigger, database.name()),
                     Map.of(),
-                    r -> assertEquals(dbToDelete, r.get("result")));
+                    r -> Assertions.assertEquals(dbToDelete, r.get("result")));
         }
     }
 
     @Test
-    public void testTriggersAllowedOnlyWithAdmin() {
+    void testTriggersAllowedOnlyWithAdmin() {
 
         try (Driver userDriver =
                 GraphDatabase.driver(neo4jContainer.getBoltUrl(), AuthTokens.basic(NO_ADMIN_USER, NO_ADMIN_PWD))) {
@@ -327,7 +328,7 @@ public class TriggerEnterpriseFeaturesTest {
     }
 
     @Test
-    public void stressTest() throws InterruptedException, ExecutionException, TimeoutException {
+    void stressTest() throws InterruptedException, ExecutionException, TimeoutException {
         final var db = DEFAULT_DATABASE_NAME;
 
         try (final var sysSession = session(SYSTEM_DATABASE_NAME)) {
@@ -365,8 +366,8 @@ public class TriggerEnterpriseFeaturesTest {
                     .consume();
         }
 
-        waitForTrigger(db, "static-trigger-1");
-        waitForTrigger(db, "static-trigger-2");
+        waitForTrigger("static-trigger-1");
+        waitForTrigger("static-trigger-2");
 
         final var iterations = 200;
         final var executor = Executors.newCachedThreadPool();
@@ -394,19 +395,19 @@ public class TriggerEnterpriseFeaturesTest {
                        return n"""
                             .formatted(CreateNodes.Label);
             final var size = s.run(assertTriggerRanQuery).stream().count();
-            assertEquals(0, size);
+            Assertions.assertEquals(0, size);
 
             final var totCountQuery = """
                        match (n:%s)
                        return count(n)"""
                     .formatted(CreateNodes.Label);
             final var totCount = s.run(totCountQuery).stream().count();
-            assertTrue(totCount > 0);
+            Assertions.assertTrue(totCount > 0);
         }
     }
 
-    private void waitForTrigger(final String db, final String name) {
-        try (final var s = session(db)) {
+    private void waitForTrigger(final String name) {
+        try (final var s = session("neo4j")) {
             assertEventually(
                     () -> s.run("call apoc.trigger.list() yield name").stream()
                             .map(r -> r.get(0).asString())
@@ -419,12 +420,12 @@ public class TriggerEnterpriseFeaturesTest {
 
     private void failsWithNonAdminUser(Session session, String procName, String query) {
         try {
-            testCall(session, query, row -> fail("Should fail because of non admin user"));
+            testCall(session, query, row -> Assertions.fail("Should fail because of non admin user"));
         } catch (Exception e) {
             String actual = e.getMessage();
             final String expected = String.format(
                     "Executing admin procedure '%s' permission has not been granted for user 'nonadmin'", procName);
-            assertTrue("Actual error message is: " + actual, actual.contains(expected));
+            Assertions.assertTrue(actual.contains(expected), "Actual error message is: " + actual);
         }
     }
 

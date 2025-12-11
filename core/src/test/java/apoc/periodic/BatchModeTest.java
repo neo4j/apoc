@@ -23,11 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class BatchModeTest {
+class BatchModeTest {
     @Test
-    public void useBatchModeIfDefined() {
+    void useBatchModeIfDefined() {
         Map<String, Object> config = new HashMap<>();
         config.put("batchMode", BatchMode.BATCH_SINGLE.name());
 
@@ -36,7 +36,7 @@ public class BatchModeTest {
     }
 
     @Test
-    public void useIterateListIfBatchModeNotDefined() {
+    void useIterateListIfBatchModeNotDefined() {
         Map<String, Object> config = new HashMap<>();
         config.put("iterateList", false);
 
@@ -45,13 +45,13 @@ public class BatchModeTest {
     }
 
     @Test
-    public void batchModeByDefault() {
+    void batchModeByDefault() {
         BatchMode batchMode = BatchMode.fromConfig(new HashMap<>());
         assertEquals(BatchMode.BATCH, batchMode);
     }
 
     @Test
-    public void ignoreCaseOfBatchMode() {
+    void ignoreCaseOfBatchMode() {
         Map<String, Object> config = new HashMap<>();
         config.put("batchMode", BatchMode.BATCH_SINGLE.name().toLowerCase());
 
@@ -60,7 +60,7 @@ public class BatchModeTest {
     }
 
     @Test
-    public void throwExceptionForInvalidBatchMode() {
+    void throwExceptionForInvalidBatchMode() {
         Map<String, Object> config = new HashMap<>();
         config.put("batchMode", "random");
 

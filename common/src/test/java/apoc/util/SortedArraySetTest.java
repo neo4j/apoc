@@ -18,17 +18,17 @@
  */
 package apoc.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-/**
- * @author mh
- * @since 22.06.17
- */
 public class SortedArraySetTest {
+
     @Test
-    public void add() {
+    void add() {
         SortedArraySet<Integer> set = new SortedArraySet<>(Integer.class, 3);
         assertEquals(3, set.getCapacity());
         assertEquals(0, set.getSize());

@@ -20,8 +20,6 @@ package apoc.it.core;
 
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testResult;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;
@@ -31,21 +29,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 
-/**
- * @author as
- * @since 12.02.19
- */
-public class MetaEnterpriseFeaturesTest {
+class MetaEnterpriseFeaturesTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
         // We build the project, the artifact will be placed into ./build/libs
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
@@ -53,7 +48,7 @@ public class MetaEnterpriseFeaturesTest {
         session = neo4jContainer.getSession();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterAll() {
         session.close();
         neo4jContainer.close();
@@ -74,32 +69,32 @@ public class MetaEnterpriseFeaturesTest {
     }
 
     @Test
-    public void testNodeTypePropertiesBasic() {
+    void testNodeTypePropertiesBasic() {
         session.executeWriteWithoutResult(tx -> tx.run("CREATE CONSTRAINT FOR (f:Foo) REQUIRE (f.s) IS NOT NULL;"));
         session.executeWriteWithoutResult(
                 tx -> tx.run("CREATE (:Foo { l: 1, s: 'foo', d: datetime(), ll: ['a', 'b'], dl: [2.0, 3.0] });"));
         testResult(session, "CALL apoc.meta.nodeTypeProperties();", (r) -> {
             List<Map<String, Object>> records = gatherRecords(r);
-            assertTrue(hasRecordMatching(
+            Assertions.assertTrue(hasRecordMatching(
                     records,
                     m -> m.get("nodeType").equals(":`Foo`")
                             && ((List) m.get("nodeLabels")).get(0).equals("Foo")
                             && m.get("propertyName").equals("s")
                             && m.get("mandatory").equals(true)));
 
-            assertTrue(hasRecordMatching(
+            Assertions.assertTrue(hasRecordMatching(
                     records,
                     m -> m.get("propertyName").equals("s")
                             && ((List) m.get("propertyTypes")).get(0).equals("String")));
 
-            assertTrue(hasRecordMatching(
+            Assertions.assertTrue(hasRecordMatching(
                     records,
                     m -> m.get("nodeType").equals(":`Foo`")
                             && ((List) m.get("nodeLabels")).get(0).equals("Foo")
                             && m.get("propertyName").equals("dl")
                             && m.get("mandatory").equals(false)));
 
-            assertEquals(5, records.size());
+            Assertions.assertEquals(5, records.size());
         });
     }
 }

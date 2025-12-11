@@ -23,16 +23,16 @@ import static apoc.util.collection.ResourceClosingIterator.newResourceIterator;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.ResourceIterator;
 
-public class IterablesTest {
+class IterablesTest {
 
     @Test
-    public void count() {
+    void count() {
         // Given
         final var subjects = asList(1, 2, 3, 4, 5);
         final var iteratorClosed = new MutableBoolean(false);
@@ -54,12 +54,12 @@ public class IterablesTest {
 
         // then
         assertThat(count).isEqualTo(subjects.size());
-        assertTrue(iteratorClosed.booleanValue());
-        assertTrue(iterableClosed.booleanValue());
+        Assertions.assertTrue(iteratorClosed.booleanValue());
+        Assertions.assertTrue(iterableClosed.booleanValue());
     }
 
     @Test
-    public void firstNoItems() {
+    void firstNoItems() {
         // Given
         final var iteratorClosed = new MutableBoolean(false);
         final var iterableClosed = new MutableBoolean(false);
@@ -79,12 +79,12 @@ public class IterablesTest {
         assertThatThrownBy(() -> Iterables.first(iterable));
 
         // then
-        assertTrue(iteratorClosed.booleanValue());
-        assertTrue(iterableClosed.booleanValue());
+        Assertions.assertTrue(iteratorClosed.booleanValue());
+        Assertions.assertTrue(iterableClosed.booleanValue());
     }
 
     @Test
-    public void firstWithItems() {
+    void firstWithItems() {
         // Given
         final var subjects = asList(1, 2, 3, 4, 5);
         final var iteratorClosed = new MutableBoolean(false);
@@ -106,7 +106,7 @@ public class IterablesTest {
 
         // then
         assertThat(first).isEqualTo(1);
-        assertTrue(iteratorClosed.booleanValue());
-        assertTrue(iterableClosed.booleanValue());
+        Assertions.assertTrue(iteratorClosed.booleanValue());
+        Assertions.assertTrue(iterableClosed.booleanValue());
     }
 }

@@ -21,110 +21,107 @@ package apoc.coll;
 import static java.util.Arrays.asList;
 import static java.util.Collections.EMPTY_SET;
 import static java.util.Collections.singleton;
-import static org.junit.Assert.*;
 
-import java.util.*;
-import org.junit.Test;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-/**
- * @author mh
- * @since 10.04.16
- */
-public class SetBackedListTest {
+class SetBackedListTest {
 
     @Test
-    public void testEmptyList() {
-        SetBackedList list = new SetBackedList(EMPTY_SET);
-        assertEquals(0, list.size());
-        assertEquals(true, list.isEmpty());
-        assertEquals(false, list.contains(1));
-        assertEquals(false, list.iterator().hasNext());
-        ListIterator it = list.listIterator();
-        assertEquals(false, it.hasNext());
-        assertEquals(-1, it.previousIndex());
-        assertEquals(0, it.nextIndex());
+    void testEmptyList() {
+        var list = new SetBackedList(EMPTY_SET);
+        Assertions.assertEquals(0, list.size());
+        Assertions.assertTrue(list.isEmpty());
+        Assertions.assertFalse(list.contains(1));
+        Assertions.assertFalse(list.iterator().hasNext());
+        var it = list.listIterator();
+        Assertions.assertFalse(it.hasNext());
+        Assertions.assertEquals(-1, it.previousIndex());
+        Assertions.assertEquals(0, it.nextIndex());
     }
 
     @Test
-    public void testSingleList() {
-        SetBackedList list = new SetBackedList(singleton(1));
-        assertEquals(1, list.size());
-        assertEquals(false, list.isEmpty());
-        assertEquals(true, list.contains(1));
-        assertEquals(false, list.contains(0));
-        assertEquals(true, list.iterator().hasNext());
-        assertEquals(1, list.iterator().next());
-        ListIterator it = list.listIterator();
-        assertEquals(true, it.hasNext());
-        assertEquals(-1, it.previousIndex());
-        assertEquals(0, it.nextIndex());
-        assertEquals(1, it.next());
-        assertEquals(0, it.previousIndex());
-        assertEquals(1, it.nextIndex());
-        assertEquals(true, it.hasPrevious());
-        assertEquals(1, it.previous());
-        assertEquals(1, it.next());
-        assertEquals(false, it.hasNext());
+    void testSingleList() {
+        var list = new SetBackedList(singleton(1));
+        Assertions.assertEquals(1, list.size());
+        Assertions.assertFalse(list.isEmpty());
+        Assertions.assertTrue(list.contains(1));
+        Assertions.assertFalse(list.contains(0));
+        Assertions.assertTrue(list.iterator().hasNext());
+        Assertions.assertEquals(1, list.iterator().next());
+        var it = list.listIterator();
+        Assertions.assertTrue(it.hasNext());
+        Assertions.assertEquals(-1, it.previousIndex());
+        Assertions.assertEquals(0, it.nextIndex());
+        Assertions.assertEquals(1, it.next());
+        Assertions.assertEquals(0, it.previousIndex());
+        Assertions.assertEquals(1, it.nextIndex());
+        Assertions.assertTrue(it.hasPrevious());
+        Assertions.assertEquals(1, it.previous());
+        Assertions.assertEquals(1, it.next());
+        Assertions.assertFalse(it.hasNext());
     }
 
     @Test
-    public void testDoubleList() {
-        SetBackedList list = new SetBackedList(new LinkedHashSet<>(asList(1, 2)));
-        assertEquals(2, list.size());
-        assertEquals(false, list.isEmpty());
-        assertEquals(true, list.contains(1));
-        assertEquals(true, list.contains(2));
-        assertEquals(false, list.contains(0));
-        Iterator it = list.iterator();
-        assertEquals(true, it.hasNext());
-        assertEquals(1, it.next());
-        assertEquals(2, it.next());
-        assertEquals(false, it.hasNext());
-        ListIterator li = list.listIterator();
-        assertEquals(true, li.hasNext());
-        assertEquals(-1, li.previousIndex());
-        assertEquals(0, li.nextIndex());
-        assertEquals(1, li.next());
-        assertEquals(0, li.previousIndex());
-        assertEquals(1, li.nextIndex());
-        assertEquals(true, li.hasPrevious());
-        assertEquals(1, li.previous());
-        assertEquals(1, li.next());
-        assertEquals(true, li.hasNext());
-        assertEquals(0, li.previousIndex());
-        assertEquals(1, li.nextIndex());
-        assertEquals(2, li.next());
-        assertEquals(1, li.previousIndex());
-        assertEquals(2, li.nextIndex());
-        assertEquals(true, li.hasPrevious());
-        assertEquals(false, li.hasNext());
-        assertEquals(2, li.previous());
+    void testDoubleList() {
+        var list = new SetBackedList(new LinkedHashSet<>(asList(1, 2)));
+        Assertions.assertEquals(2, list.size());
+        Assertions.assertFalse(list.isEmpty());
+        Assertions.assertTrue(list.contains(1));
+        Assertions.assertTrue(list.contains(2));
+        Assertions.assertFalse(list.contains(0));
+        var it = list.iterator();
+        Assertions.assertTrue(it.hasNext());
+        Assertions.assertEquals(1, it.next());
+        Assertions.assertEquals(2, it.next());
+        Assertions.assertFalse(it.hasNext());
+        var li = list.listIterator();
+        Assertions.assertTrue(li.hasNext());
+        Assertions.assertEquals(-1, li.previousIndex());
+        Assertions.assertEquals(0, li.nextIndex());
+        Assertions.assertEquals(1, li.next());
+        Assertions.assertEquals(0, li.previousIndex());
+        Assertions.assertEquals(1, li.nextIndex());
+        Assertions.assertTrue(li.hasPrevious());
+        Assertions.assertEquals(1, li.previous());
+        Assertions.assertEquals(1, li.next());
+        Assertions.assertTrue(li.hasNext());
+        Assertions.assertEquals(0, li.previousIndex());
+        Assertions.assertEquals(1, li.nextIndex());
+        Assertions.assertEquals(2, li.next());
+        Assertions.assertEquals(1, li.previousIndex());
+        Assertions.assertEquals(2, li.nextIndex());
+        Assertions.assertTrue(li.hasPrevious());
+        Assertions.assertFalse(li.hasNext());
+        Assertions.assertEquals(2, li.previous());
     }
 
     @Test
-    public void testReverse() {
-        LinkedHashSet set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
-        SetBackedList list = new SetBackedList(set);
-        assertEquals(asList(1, 2, 3, 4, 5), list);
+    void testReverse() {
+        var set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
+        var list = new SetBackedList(set);
+        Assertions.assertEquals(asList(1, 2, 3, 4, 5), list);
 
-        ListIterator it = list.listIterator();
+        var it = list.listIterator();
         while (it.hasNext()) it.next();
-        List result = new ArrayList(set.size());
+        var result = new ArrayList(set.size());
         while (it.hasPrevious()) {
             result.add(it.previous());
         }
 
-        assertEquals(asList(5, 4, 3, 2, 1), result);
+        Assertions.assertEquals(asList(5, 4, 3, 2, 1), result);
     }
 
     @Test
-    public void testContains() {
-        LinkedHashSet set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
-        SetBackedList list = new SetBackedList(set);
-        assertEquals(true, list.contains(1));
-        assertEquals(true, list.contains(3));
-        assertEquals(false, list.contains(7));
-        assertEquals(false, list.containsAll(asList(1, 2, 8)));
-        assertEquals(true, list.containsAll(asList(1, 2, 5)));
+    void testContains() {
+        var set = new LinkedHashSet(asList(1, 2, 3, 4, 5));
+        var list = new SetBackedList(set);
+        Assertions.assertTrue(list.contains(1));
+        Assertions.assertTrue(list.contains(3));
+        Assertions.assertFalse(list.contains(7));
+        Assertions.assertFalse(list.containsAll(asList(1, 2, 8)));
+        Assertions.assertTrue(list.containsAll(asList(1, 2, 5)));
     }
 }

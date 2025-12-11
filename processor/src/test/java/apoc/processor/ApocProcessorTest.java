@@ -21,21 +21,16 @@ package apoc.processor;
 import static com.google.common.truth.Truth.assert_;
 import static com.google.testing.compile.JavaSourceSubjectFactory.javaSource;
 
-import com.google.testing.compile.CompilationRule;
 import com.google.testing.compile.JavaFileObjects;
 import javax.annotation.processing.Processor;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ApocProcessorTest {
-
-    @Rule
-    public CompilationRule compilationRule = new CompilationRule();
 
     Processor apocProcessor = new ApocProcessor();
 
     @Test
-    public void generates_signatures() {
+    void generates_signatures() {
         assert_()
                 .about(javaSource())
                 .that(

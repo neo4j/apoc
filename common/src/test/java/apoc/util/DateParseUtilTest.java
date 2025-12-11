@@ -19,15 +19,20 @@
 package apoc.util;
 
 import static apoc.util.DateParseUtil.dateParse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.*;
-import org.junit.Test;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import org.junit.jupiter.api.Test;
 
 public class DateParseUtilTest {
 
-    private String[] parseList = new String[] {
+    private final String[] parseList = new String[] {
         "wrongPath",
         "dd-MM-yyyy",
         "dd/MM/yyyy",
@@ -40,12 +45,12 @@ public class DateParseUtilTest {
 
     @Test
     public void dateParseTest() {
-        assertEquals(LocalDate.of(2018, 01, 01), dateParse("2018/01/01", LocalDate.class, parseList));
+        assertEquals(LocalDate.of(2018, 1, 1), dateParse("2018/01/01", LocalDate.class, parseList));
         assertEquals(
-                ZonedDateTime.of(2011, 01, 01, 12, 0, 0, 53810000, ZoneOffset.of("+01:00")),
+                ZonedDateTime.of(2011, 1, 1, 12, 0, 0, 53810000, ZoneOffset.of("+01:00")),
                 dateParse("2011-01-01T12:00:00.05381+01:00", ZonedDateTime.class, parseList));
         assertEquals(
-                LocalDateTime.of(2018, 05, 10, 12, 10), dateParse("2018-05-10 12:10", LocalDateTime.class, parseList));
+                LocalDateTime.of(2018, 5, 10, 12, 10), dateParse("2018-05-10 12:10", LocalDateTime.class, parseList));
         assertEquals(LocalTime.of(12, 10), dateParse("12 10", LocalTime.class, parseList));
         assertEquals(
                 OffsetTime.of(10, 15, 30, 0, ZoneOffset.of("+01:00")),

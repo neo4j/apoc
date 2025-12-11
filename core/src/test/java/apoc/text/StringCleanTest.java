@@ -20,58 +20,39 @@ package apoc.text;
 
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
-import java.util.Arrays;
-import java.util.Collection;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author Stefan Armbruster
- */
-@RunWith(Parameterized.class)
+@EnterpriseDbmsExtension
 public class StringCleanTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(db, Strings.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of("&N[]eo  4 #J-(3.0)  ", "neo4j30"),
+                Arguments.of("German umlaut Ä Ö Ü ä ö ü ß ", "germanumlautaeoeueaeoeuess"),
+                Arguments.of("French çÇéèêëïîôœàâæùûü", "frenchcceeeeiioœaaæuuue"));
     }
 
-    @Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-            {"&N[]eo  4 #J-(3.0)  ", "neo4j30"},
-            {"German umlaut Ä Ö Ü ä ö ü ß ", "germanumlautaeoeueaeoeuess"},
-            {"French çÇéèêëïîôœàâæùûü", "frenchcceeeeiioœaaæuuue"}
-        });
-    }
-
-    @Parameter(value = 0)
-    public String dirty;
-
-    @Parameter(value = 1)
-    public String clean;
-
-    @Test
-    public void testClean() {
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("data")
+    void testClean(String dirty, String clean) {
         testCall(
                 db,
                 "RETURN apoc.text.clean($a) AS value",

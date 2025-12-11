@@ -20,89 +20,96 @@ package apoc.processor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.neo4j.kernel.api.QueryLanguage.CYPHER_25;
 import static org.neo4j.kernel.api.QueryLanguage.CYPHER_5;
 
-import com.google.testing.compile.CompilationRule;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.processing.Messager;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementVisitor;
-import javax.lang.model.element.TypeElement;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.util.Elements;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.procedure.UserFunction;
 
 public class UserFunctionSignatureVisitorTest {
 
-    @Rule
-    public CompilationRule compilationRule = new CompilationRule();
-
+    private Elements elements;
     ElementVisitor<Map<String, List<QueryLanguage>>, Void> visitor;
 
-    TypeElement typeElement;
-
-    @Before
-    public void prepare() {
-        visitor = new SignatureVisitor(compilationRule.getElements(), mock(Messager.class));
-        typeElement = compilationRule.getElements().getTypeElement(UserFunctionSignatureVisitorTest.class.getName());
+    @BeforeEach
+    void prepare() {
+        elements = mock(Elements.class);
+        visitor = new SignatureVisitor(elements, mock(Messager.class));
     }
 
     @Test
-    public void gets_the_annotated_name_of_the_procedure() {
-        Element method = findMemberByName(typeElement, "myFunction");
+    void gets_the_annotated_name_of_the_procedure() {
+        ExecutableElement method = methodWithUserFunction("my.func", "", "ignoredName");
 
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visitExecutable(method, null);
 
         assertThat(result).isEqualTo(Map.of("my.func", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @Test
-    public void gets_the_annotated_value_of_the_procedure() {
-        Element method = findMemberByName(typeElement, "myFunction2");
+    void gets_the_annotated_value_of_the_procedure() {
+        ExecutableElement method = methodWithUserFunction("", "my.func2", "ignoredName");
 
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visitExecutable(method, null);
 
         assertThat(result).isEqualTo(Map.of("my.func2", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @Test
-    public void gets_the_annotated_name_over_value() {
-        Element method = findMemberByName(typeElement, "myFunction3");
+    void gets_the_annotated_name_over_value() {
+        ExecutableElement method = methodWithUserFunction("my.func3", "ignored", "ignoredName");
 
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visitExecutable(method, null);
 
         assertThat(result).isEqualTo(Map.of("my.func3", List.of(CYPHER_5, CYPHER_25)));
     }
 
     @Test
-    public void gets_the_default_name_of_the_procedure() {
-        Element method = findMemberByName(typeElement, "myDefaultNamedFunction");
+    void gets_the_default_name_of_the_procedure() {
+        String pkg = "apoc.processor";
+        String methodName = "myDefaultNamedFunction";
+        ExecutableElement method = methodWithoutUserFunction(pkg, methodName);
 
-        Map<String, List<QueryLanguage>> result = visitor.visit(method);
+        Map<String, List<QueryLanguage>> result = visitor.visitExecutable(method, null);
 
-        assertThat(result).isEqualTo(Map.of("apoc.processor.myDefaultNamedFunction", List.of(CYPHER_5, CYPHER_25)));
+        assertThat(result).isEqualTo(Map.of(pkg + "." + methodName, List.of(CYPHER_5, CYPHER_25)));
     }
 
-    @UserFunction(name = "my.func")
-    public static void myFunction() {}
+    private ExecutableElement methodWithUserFunction(String name, String value, String methodName) {
+        ExecutableElement method = mock(ExecutableElement.class);
+        // mock annotation
+        UserFunction annotation = mock(UserFunction.class);
+        when(annotation.name()).thenReturn(name);
+        when(annotation.value()).thenReturn(value);
+        when(method.getAnnotation(UserFunction.class)).thenReturn(annotation);
+        // simple name not used for annotated cases, but set anyway
+        Name simpleName = mock(Name.class);
+        when(simpleName.toString()).thenReturn(methodName);
+        when(method.getSimpleName()).thenReturn(simpleName);
+        return method;
+    }
 
-    @UserFunction(value = "my.func2")
-    public static void myFunction2() {}
+    private ExecutableElement methodWithoutUserFunction(String packageName, String methodName) {
+        ExecutableElement method = mock(ExecutableElement.class);
+        when(method.getAnnotation(UserFunction.class)).thenReturn(null);
+        Name simpleName = mock(Name.class);
+        when(simpleName.toString()).thenReturn(methodName);
+        when(method.getSimpleName()).thenReturn(simpleName);
 
-    @UserFunction(name = "my.func3", value = "ignored")
-    public static void myFunction3() {}
-
-    @UserFunction
-    public static void myDefaultNamedFunction() {}
-
-    private Element findMemberByName(TypeElement typeElement, String name) {
-        return compilationRule.getElements().getAllMembers(typeElement).stream()
-                .filter(e -> e.getSimpleName().contentEquals(name))
-                .findFirst()
-                .get();
+        PackageElement pkg = mock(PackageElement.class);
+        when(pkg.toString()).thenReturn(packageName);
+        when(elements.getPackageOf(method)).thenReturn(pkg);
+        return method;
     }
 }

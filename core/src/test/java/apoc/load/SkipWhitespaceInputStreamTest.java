@@ -18,23 +18,22 @@
  */
 package apoc.load;
 
-import static org.junit.Assert.*;
-
 import java.io.IOException;
 import java.io.InputStream;
 import org.apache.commons.io.IOUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class SkipWhitespaceInputStreamTest {
+class SkipWhitespaceInputStreamTest {
 
     @Test
-    public void testRemovalOfWhitespace() throws IOException {
+    void testRemovalOfWhitespace() throws IOException {
         assertFilterWhitespace("  this is a test \n   with some whitespace", "this is a test with some whitespace");
         assertFilterWhitespace("  this is a test \r\n   with some whitespace", "this is a test with some whitespace");
     }
 
     private void assertFilterWhitespace(String input, String expected) throws IOException {
         InputStream inputStream = IOUtils.toInputStream(input, "UTF-8");
-        assertEquals(expected, IOUtils.toString(new SkipWhitespaceInputStream(inputStream), "UTF-8"));
+        Assertions.assertEquals(expected, IOUtils.toString(new SkipWhitespaceInputStream(inputStream), "UTF-8"));
     }
 }

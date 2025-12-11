@@ -20,16 +20,16 @@ package apoc.util.collection;
 
 import static apoc.util.collection.CollectionTestHelper.resourceIterator;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.ResourceIterator;
 
-public class ResourceClosingIteratorTest {
+class ResourceClosingIteratorTest {
     @Test
-    public void fromResourceIterableShouldCloseParentIterable() {
+    void fromResourceIterableShouldCloseParentIterable() {
         final var iterableClosed = new MutableBoolean(false);
         final var iteratorClosed = new MutableBoolean(false);
 
@@ -51,7 +51,7 @@ public class ResourceClosingIteratorTest {
 
         // Then
         assertThat(Iterators.asList(iterator)).containsExactlyElementsOf(items);
-        assertTrue(iteratorClosed.booleanValue());
-        assertTrue(iterableClosed.booleanValue());
+        Assertions.assertTrue(iteratorClosed.booleanValue());
+        Assertions.assertTrue(iterableClosed.booleanValue());
     }
 }

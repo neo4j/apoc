@@ -19,36 +19,27 @@
 package apoc.load;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class SimpleXmlTest {
 
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] {
-            {"some text with spaces", Arrays.asList("some", " ", "text", " ", "with", " ", "spaces")},
-            {" some text with spaces", Arrays.asList(" ", "some", " ", "text", " ", "with", " ", "spaces")}
-        });
+    static Stream<Arguments> data() {
+        return Stream.of(
+                Arguments.of("some text with spaces", Arrays.asList("some", " ", "text", " ", "with", " ", "spaces")),
+                Arguments.of(
+                        " some text with spaces", Arrays.asList(" ", "some", " ", "text", " ", "with", " ", "spaces")));
     }
 
-    private String input;
-    private List<String> expected;
-
-    public SimpleXmlTest(String input, List<String> expected) {
-        this.input = input;
-        this.expected = expected;
-    }
-
-    @Test
-    public void testParseTextIntoPartsAndDelimiters() {
+    @ParameterizedTest
+    @MethodSource("data")
+    void testParseTextIntoPartsAndDelimiters(String input, List<String> expected) {
         Xml cut = new Xml();
         List<String> result = cut.parseTextIntoPartsAndDelimiters(input, Pattern.compile("\\s"));
 

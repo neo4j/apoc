@@ -23,9 +23,7 @@ import static apoc.ApocConfig.DEFAULT_MAX_DECOMPRESSION_RATIO;
 import static apoc.export.util.LimitedSizeInputStream.SIZE_EXCEEDED_ERROR;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.Neo4jContainerExtension;
@@ -44,12 +42,12 @@ import java.util.function.Consumer;
 import java.util.stream.LongStream;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Session;
 
-public class LoadCoreEnterpriseTest {
+class LoadCoreEnterpriseTest {
     private static final File directory = new File("target/import");
     public static final String COMPRESSED_JSON_FILE = "compressedFile.";
     public static final String COMPRESSED_XML_FILE = "compressedXmlFile.";
@@ -68,12 +66,12 @@ public class LoadCoreEnterpriseTest {
                 .withEnv(APOC_MAX_DECOMPRESSION_RATIO, String.valueOf(ratio));
         container.start();
 
-        assertTrue(container.isRunning());
+        org.junit.jupiter.api.Assertions.assertTrue(container.isRunning());
 
         return container;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         neo4jContainer = createNeo4jWithMaxCompressionRatio(DEFAULT_MAX_DECOMPRESSION_RATIO);
         session = neo4jContainer.getSession();
@@ -121,14 +119,14 @@ public class LoadCoreEnterpriseTest {
         FileUtils.copyFile(url, new File(TestContainerUtil.importFolder, name));
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         session.close();
         neo4jContainer.close();
     }
 
     @Test
-    public void testLoadJsonShouldPreventZipBombAttack() {
+    void testLoadJsonShouldPreventZipBombAttack() {
         RuntimeException e = assertThrows(
                 RuntimeException.class,
                 () -> testCall(
@@ -141,7 +139,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadXmlShouldPreventZipBombAttack() {
+    void testLoadXmlShouldPreventZipBombAttack() {
         RuntimeException e = assertThrows(
                 RuntimeException.class,
                 () -> testCall(
@@ -154,7 +152,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadJsonShouldPreventCompressionBombAttack() {
+    void testLoadJsonShouldPreventCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
             String fileName = COMPRESSED_JSON_FILE + algoName;
@@ -168,7 +166,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadXmlShouldPreventCompressionBombAttack() {
+    void testLoadXmlShouldPreventCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             try {
                 String algoName = algo.name();
@@ -187,7 +185,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadJsonShouldPreventBinaryCompressionBombAttack() {
+    void testLoadJsonShouldPreventBinaryCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             try {
                 String algoName = algo.name();
@@ -206,7 +204,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadXmlShouldPreventBinaryCompressionBombAttack() {
+    void testLoadXmlShouldPreventBinaryCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             String algoName = algo.name();
             String fileName = COMPRESSED_XML_FILE + algoName;
@@ -220,7 +218,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadShouldPreventZipBombAttackUtilDecompress() {
+    void testLoadShouldPreventZipBombAttackUtilDecompress() {
         loopAllCompressionAlgos(algo -> {
             try {
                 String algoName = algo.name();
@@ -239,7 +237,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testLoadWorksWithIncreasedCompressionRatio() {
+    void testLoadWorksWithIncreasedCompressionRatio() {
         Neo4jContainerExtension neo4jContainer = createNeo4jWithMaxCompressionRatio(100000);
         Session session = neo4jContainer.getSession();
 
@@ -250,7 +248,7 @@ public class LoadCoreEnterpriseTest {
                     session,
                     "CALL apoc.load.json($file, '', {compression: $compression})",
                     Map.of("file", fileName, "compression", algoName),
-                    r -> assertFalse(r.isEmpty()));
+                    r -> org.junit.jupiter.api.Assertions.assertFalse(r.isEmpty()));
         });
 
         neo4jContainer.close();
@@ -258,7 +256,7 @@ public class LoadCoreEnterpriseTest {
     }
 
     @Test
-    public void testNegativeValueDisablesZipBombProtection() {
+    void testNegativeValueDisablesZipBombProtection() {
         Neo4jContainerExtension neo4jContainer = createNeo4jWithMaxCompressionRatio(-1);
         Session session = neo4jContainer.getSession();
 
@@ -270,14 +268,14 @@ public class LoadCoreEnterpriseTest {
                 session,
                 "CALL apoc.load.json($file, '', {compression: $compression})",
                 Map.of("file", fileName, "compression", algoName),
-                r -> assertFalse(r.isEmpty()));
+                r -> org.junit.jupiter.api.Assertions.assertFalse(r.isEmpty()));
 
         neo4jContainer.close();
         session.close();
     }
 
     @Test
-    public void testLoadZipBombFailsWithNonDefaultRatio() {
+    void testLoadZipBombFailsWithNonDefaultRatio() {
         int compressionRatio = 101;
         Neo4jContainerExtension neo4jContainer = createNeo4jWithMaxCompressionRatio(compressionRatio);
         Session session = neo4jContainer.getSession();

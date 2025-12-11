@@ -20,27 +20,27 @@ package apoc.log;
 
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.TestUtil.testResult;
-import static org.junit.Assert.assertTrue;
 
 import apoc.util.TestUtil;
 import apoc.util.collection.Iterators;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 
-public class Neo4jLogStreamTest {
+class Neo4jLogStreamTest {
 
     private GraphDatabaseService db;
     private DatabaseManagementService dbManagementService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         dbManagementService = new TestDatabaseManagementServiceBuilder(
                         Paths.get("target", UUID.randomUUID().toString()).toAbsolutePath())
@@ -50,17 +50,17 @@ public class Neo4jLogStreamTest {
         TestUtil.registerProcedure(db, Neo4jLogStream.class);
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         dbManagementService.shutdown();
     }
 
     @Test
-    public void testLogStream() {
+    void testLogStream() {
         testResult(db, "CALL apoc.log.stream('debug.log')", res -> {
             final String wholeFile =
                     Iterators.stream(res.<String>columnAs("line")).collect(Collectors.joining(""));
-            assertTrue(wholeFile.contains("apoc.import.file.enabled=false"));
+            Assertions.assertTrue(wholeFile.contains("apoc.import.file.enabled=false"));
         });
     }
 }
