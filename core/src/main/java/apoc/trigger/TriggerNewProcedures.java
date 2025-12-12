@@ -109,7 +109,8 @@ public class TriggerNewProcedures {
         var query = Util.prefixQueryWithCheck(procedureCallContext, statement);
         return withUpdatingTransaction(
                 databaseName,
-                tx -> Stream.of(TriggerHandlerNewProcedures.install(databaseName, name, query, selector, params, tx)));
+                tx -> Stream.of(
+                        TriggerHandlerNewProcedures.install(db, databaseName, name, query, selector, params, tx)));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -124,7 +125,7 @@ public class TriggerNewProcedures {
         checkInSystemWriter();
 
         return withUpdatingTransaction(
-                databaseName, tx -> Stream.ofNullable(TriggerHandlerNewProcedures.drop(databaseName, name, tx)));
+                databaseName, tx -> Stream.ofNullable(TriggerHandlerNewProcedures.drop(db, databaseName, name, tx)));
     }
 
     // TODO - change with @SystemOnlyProcedure
@@ -138,7 +139,7 @@ public class TriggerNewProcedures {
         checkInSystemWriter();
 
         return withUpdatingTransaction(
-                databaseName, tx -> TriggerHandlerNewProcedures.dropAll(databaseName, tx).stream()
+                databaseName, tx -> TriggerHandlerNewProcedures.dropAll(db, databaseName, tx).stream()
                         .sorted(Comparator.comparing(i -> i.name)));
     }
 
@@ -154,7 +155,7 @@ public class TriggerNewProcedures {
         checkInSystemWriter();
 
         return withUpdatingTransaction(databaseName, tx -> {
-            final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, true, tx);
+            final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(db, databaseName, name, true, tx);
             return Stream.ofNullable(triggerInfo);
         });
     }
@@ -171,7 +172,7 @@ public class TriggerNewProcedures {
         checkInSystemWriter();
 
         return withUpdatingTransaction(databaseName, tx -> {
-            final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(databaseName, name, false, tx);
+            final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(db, databaseName, name, false, tx);
             return Stream.ofNullable(triggerInfo);
         });
     }
@@ -198,7 +199,7 @@ public class TriggerNewProcedures {
 
         // Last update time needs to be after the installation commit happened to not risk missing updates
         try (final var tx = db.beginTx()) {
-            TriggerHandlerNewProcedures.setLastUpdate(databaseName, tx);
+            TriggerHandlerNewProcedures.setLastUpdate(db, databaseName, tx);
             tx.commit();
         }
         return result;

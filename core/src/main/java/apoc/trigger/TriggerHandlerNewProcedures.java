@@ -30,9 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
+import org.neo4j.graphdb.ConstraintViolationException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
 public class TriggerHandlerNewProcedures {
     public static final String NOT_ENABLED_ERROR = "Triggers have not been enabled."
@@ -49,6 +51,7 @@ public class TriggerHandlerNewProcedures {
     }
 
     public static TriggerInfo install(
+            GraphDatabaseAPI db,
             String databaseName,
             String triggerName,
             String statement,
@@ -72,12 +75,12 @@ public class TriggerHandlerNewProcedures {
         // we'll return current trigger info
         result = fromNode(node, true);
 
-        setLastUpdate(databaseName, tx);
+        setLastUpdate(db, databaseName, tx);
 
         return result;
     }
 
-    public static TriggerInfo drop(String databaseName, String triggerName, Transaction tx) {
+    public static TriggerInfo drop(GraphDatabaseAPI db, String databaseName, String triggerName, Transaction tx) {
         final TriggerInfo[] previous = new TriggerInfo[1];
 
         getTriggerNodes(databaseName, tx, triggerName).forEachRemaining(node -> {
@@ -85,12 +88,13 @@ public class TriggerHandlerNewProcedures {
             node.delete();
         });
 
-        setLastUpdate(databaseName, tx);
+        setLastUpdate(db, databaseName, tx);
 
         return previous[0];
     }
 
-    public static TriggerInfo updatePaused(String databaseName, String name, boolean paused, Transaction tx) {
+    public static TriggerInfo updatePaused(
+            GraphDatabaseAPI db, String databaseName, String name, boolean paused, Transaction tx) {
         final TriggerInfo[] result = new TriggerInfo[1];
 
         getTriggerNodes(databaseName, tx, name).forEachRemaining(node -> {
@@ -100,12 +104,12 @@ public class TriggerHandlerNewProcedures {
             result[0] = fromNode(node, true);
         });
 
-        setLastUpdate(databaseName, tx);
+        setLastUpdate(db, databaseName, tx);
 
         return result[0];
     }
 
-    public static List<TriggerInfo> dropAll(String databaseName, Transaction tx) {
+    public static List<TriggerInfo> dropAll(GraphDatabaseAPI db, String databaseName, Transaction tx) {
         final List<TriggerInfo> previous = new ArrayList<>();
 
         getTriggerNodes(databaseName, tx).forEachRemaining(node -> {
@@ -113,7 +117,7 @@ public class TriggerHandlerNewProcedures {
             previous.add(fromNode(node, false));
             node.delete();
         });
-        setLastUpdate(databaseName, tx);
+        setLastUpdate(db, databaseName, tx);
 
         return previous;
     }
@@ -135,11 +139,28 @@ public class TriggerHandlerNewProcedures {
         return tx.findNodes(label, dbNameKey, databaseName, SystemPropertyKeys.name.name(), name);
     }
 
-    public static void setLastUpdate(String databaseName, Transaction tx) {
+    public static void setLastUpdate(GraphDatabaseAPI db, String databaseName, Transaction tx) {
+        setLastUpdate(db, databaseName, tx, 0);
+    }
+
+    public static void setLastUpdate(GraphDatabaseAPI db, String databaseName, Transaction tx, int retryNumber) {
         Node node = tx.findNode(SystemLabels.ApocTriggerMeta, SystemPropertyKeys.database.name(), databaseName);
         if (node == null) {
-            node = tx.createNode(SystemLabels.ApocTriggerMeta);
-            node.setProperty(SystemPropertyKeys.database.name(), databaseName);
+            try {
+                node = tx.createNode(SystemLabels.ApocTriggerMeta);
+                node.setProperty(SystemPropertyKeys.database.name(), databaseName);
+            } catch (ConstraintViolationException e) {
+                // This can happen if two threads try to create the same node concurrently,
+                // after both having passed the null check.
+                // In this case we retry once or otherwise ignore the failing tx.
+                if (retryNumber < 1) {
+                    try (final var newTx = db.beginTx()) {
+                        TriggerHandlerNewProcedures.setLastUpdate(db, databaseName, newTx, retryNumber + 1);
+                        newTx.commit();
+                    }
+                }
+                return;
+            }
         }
         final long value = System.currentTimeMillis();
         node.setProperty(SystemPropertyKeys.lastUpdated.name(), value);

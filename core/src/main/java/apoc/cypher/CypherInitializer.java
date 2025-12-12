@@ -22,6 +22,7 @@ import static apoc.SystemPropertyKeys.database;
 
 import apoc.ApocConfig;
 import apoc.SystemLabels;
+import apoc.SystemPropertyKeys;
 import apoc.util.LogsUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
@@ -30,6 +31,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.stream.StreamSupport;
 import org.apache.commons.configuration2.Configuration;
 import org.apache.commons.lang3.StringUtils;
 import org.neo4j.common.DependencyResolver;
@@ -43,6 +45,7 @@ import org.neo4j.graphdb.WriteOperationsNotAllowedException;
 import org.neo4j.graphdb.event.DatabaseEventContext;
 import org.neo4j.graphdb.event.DatabaseEventListener;
 import org.neo4j.kernel.availability.AvailabilityListener;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.kernel.monitoring.DatabaseEventListeners;
 import org.neo4j.logging.Log;
@@ -113,6 +116,27 @@ public class CypherInitializer implements AvailabilityListener {
                                             apocVersion, neo4jVersion);
                                 }
                             }
+                            // Create a uniqueness constraint on system db to avoid race conditions when installing
+                            // triggers
+                            try (InternalTransaction tx = db.beginTransaction()) {
+                                var constraintName = "triggerConstraint";
+                                var maybeConstraint = StreamSupport.stream(
+                                                tx.schema()
+                                                        .getConstraints(SystemLabels.ApocTriggerMeta)
+                                                        .spliterator(),
+                                                false)
+                                        .filter(x -> x.getName().equals(constraintName))
+                                        .toList();
+                                if (maybeConstraint.isEmpty()) {
+                                    tx.schema()
+                                            .constraintFor(SystemLabels.ApocTriggerMeta)
+                                            .withName(constraintName)
+                                            .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                            .create();
+                                    tx.commit();
+                                }
+                            }
+
                             databaseEventListeners.registerDatabaseEventListener(new SystemFunctionalityListener());
                         }
 

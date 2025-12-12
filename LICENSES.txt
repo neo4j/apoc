@@ -50,9 +50,9 @@ Apache-2.0
   curator-client-5.2.0.jar
   curator-framework-5.2.0.jar
   curator-recipes-5.2.0.jar
-  docker-java-api-3.4.0.jar
-  docker-java-transport-3.4.0.jar
-  docker-java-transport-zerodep-3.4.0.jar
+  docker-java-api-3.7.0.jar
+  docker-java-transport-3.7.0.jar
+  docker-java-transport-zerodep-3.7.0.jar
   ehcache-3.8.2.jar
   error_prone_annotations-2.36.0.jar
   failureaccess-1.0.3.jar
@@ -2705,28 +2705,28 @@ MIT
   bcpkix-jdk18on-1.82.jar
   bcprov-jdk18on-1.82.jar
   bcutil-jdk18on-1.82.jar
-  cassandra-1.20.2.jar
-  couchbase-1.20.2.jar
-  database-commons-1.20.2.jar
   duct-tape-1.0.8.jar
-  elasticsearch-1.20.2.jar
   java-jwt-4.5.0.jar
-  jdbc-1.20.2.jar
   jersey-client-2.46.jar
   jersey-container-servlet-2.46.jar
   jersey-container-servlet-core-2.46.jar
   jersey-hk2-2.46.jar
   jnr-x86asm-1.0.2.jar
-  localstack-1.20.2.jar
   mockito-core-5.20.0.jar
   mssql-jdbc-6.2.1.jre7.jar
-  mysql-1.20.2.jar
-  neo4j-1.20.2.jar
-  postgresql-1.20.2.jar
   reactive-streams-1.0.4.jar
   slf4j-api-2.0.11.jar
   slf4j-api-2.0.17.jar
-  testcontainers-1.20.2.jar
+  testcontainers-2.0.2.jar
+  testcontainers-cassandra-2.0.2.jar
+  testcontainers-couchbase-2.0.2.jar
+  testcontainers-database-commons-2.0.2.jar
+  testcontainers-elasticsearch-2.0.2.jar
+  testcontainers-jdbc-2.0.2.jar
+  testcontainers-localstack-2.0.2.jar
+  testcontainers-mysql-2.0.2.jar
+  testcontainers-neo4j-2.0.2.jar
+  testcontainers-postgresql-2.0.2.jar
 ------------------------------------------------------------------------------
 
 The MIT License
