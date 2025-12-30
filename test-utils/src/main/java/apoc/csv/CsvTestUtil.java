@@ -18,21 +18,21 @@
  */
 package apoc.csv;
 
-import com.fasterxml.jackson.databind.MappingIterator;
-import com.fasterxml.jackson.dataformat.csv.CsvMapper;
-import com.fasterxml.jackson.dataformat.csv.CsvParser;
+import static tools.jackson.dataformat.csv.CsvReadFeature.WRAP_AS_ARRAY;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
+import tools.jackson.dataformat.csv.CsvFactory;
+import tools.jackson.dataformat.csv.CsvMapper;
 
 public class CsvTestUtil {
 
     public static final CsvMapper CSV_MAPPER;
 
     static {
-        CSV_MAPPER = new CsvMapper();
-        CSV_MAPPER.enable(CsvParser.Feature.WRAP_AS_ARRAY);
+        CSV_MAPPER = new CsvMapper(new CsvMapper.Builder(new CsvFactory()).enable(WRAP_AS_ARRAY));
     }
 
     public static void saveCsvFile(String fileName, String content) throws IOException {
@@ -40,15 +40,8 @@ public class CsvTestUtil {
     }
 
     public static List<String[]> toCollection(String csv) {
-
-        try {
-            MappingIterator<String[]> it = CSV_MAPPER
-                    .readerFor(String[].class)
-                    //                    .with(CsvSchema.emptySchema().withHeader())
-                    .<String[]>readValues(csv.getBytes());
-            return it.readAll();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        try (final var rows = CSV_MAPPER.readerFor(String[].class).<String[]>readValues(csv.getBytes())) {
+            return rows.readAll();
         }
     }
 }

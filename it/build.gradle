@@ -8,7 +8,7 @@ dependencies {
   testImplementation project(':core').sourceSets.test.output
 
   testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
-  testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.10.0'
+  testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.11.0'
   testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.0")
 
   configurations.all {

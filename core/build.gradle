@@ -67,11 +67,11 @@ dependencies {
 
   // These will be dependencies packaged with the .jar
   implementation project(":common")
-  implementation group: 'com.opencsv', name: 'opencsv', version: '5.7.1', {
+  implementation group: 'com.opencsv', name: 'opencsv', version: '5.12.0', {
     exclude group: 'commons-beanutils', module: 'commons-beanutils'
     exclude group: 'org.apache.commons', module: 'commons-collections4'
   }
-  implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '0.7.17'
+  implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '1.3.0'
 
   def arrowExclusions = {
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
@@ -96,8 +96,8 @@ dependencies {
   testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
     exclude group: 'org.slf4j', module: 'slf4j-api'
   }
-  testImplementation 'org.assertj:assertj-core:3.26.3'
-  testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:4.1.0'
+  testImplementation 'org.assertj:assertj-core:3.27.6'
+  testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:5.1.0'
 
   configurations.all {
     exclude group: 'org.slf4j', module: 'slf4j-nop'
