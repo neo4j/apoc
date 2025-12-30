@@ -24,11 +24,10 @@ dependencies {
     exclude group: 'org.slf4j', module: 'slf4j-reload4j'
   }
 
-  api group: 'org.hamcrest', name: 'hamcrest', version: '2.2'
-  api group: 'org.hamcrest', name: 'hamcrest-library', version: '2.2'
+  api group: 'org.hamcrest', name: 'hamcrest', version: '3.0'
   api group: 'org.neo4j.community', name: 'it-test-support', version: neo4jVersionEffective // , classifier: "tests"
   api group: 'org.neo4j', name: 'log-test-utils', version: neo4jVersionEffective // , classifier: "tests"
-  api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '5.18.0'
+  api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '6.0.2'
   api group: 'org.apache.hadoop', name: 'hadoop-hdfs', version: '3.4.2', withoutServers.andThen(withoutLoggers)
   // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
   // and remove the manual licensing check for it in licenses-3rdparties.gradle
@@ -53,7 +52,7 @@ dependencies {
   implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '7.3'
   implementation group: 'org.jetbrains', name: 'annotations', version: "17.0.0"
   implementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
-  implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-csv', version: '2.15.0'
+  implementation('tools.jackson.dataformat:jackson-dataformat-csv:3.0.3')
 }
 
 
