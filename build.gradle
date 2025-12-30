@@ -10,7 +10,7 @@ ext {
   publicDir = "${project.rootDir}"
   neo4jVersionEffective = project.findProperty("neo4jVersionOverride") ?: project.findProperty("neo4jVersion")
   testContainersVersion = '2.0.2'
-  apacheArrowVersion = '15.0.0'
+  apacheArrowVersion = '18.3.0'
   guavaVersion = '33.5.0-jre'
 }
 
@@ -87,12 +87,12 @@ subprojects {
   apply plugin: 'java-library'
 
   dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation(platform("org.junit:junit-bom:5.14.1"))
     testImplementation('junit:junit:4.13.2') // TODO Remove when migrated to junit 5+
     testImplementation('org.junit.jupiter:junit-jupiter')
 
     // We want the same netty version as other neo4j dependencies, are there better ways than to keep this in sync?
-    implementation(platform('io.netty:netty-bom:4.2.7.Final'))
+    implementation(platform('io.netty:netty-bom:4.2.9.Final'))
 
     testRuntimeOnly('org.junit.platform:junit-platform-launcher')
     testRuntimeOnly('org.junit.vintage:junit-vintage-engine')
