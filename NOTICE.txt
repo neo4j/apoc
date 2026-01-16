@@ -39,7 +39,6 @@ Apache-2.0
   RoaringBitmap-0.7.17.jar
   WMI4Java-1.6.3.jar
   accessors-smart-2.5.2.jar
-  aircompressor-2.0.2.jar
   annotations-17.0.0.jar
   arrow-format-17.0.0.jar
   arrow-memory-core-17.0.0.jar
@@ -192,43 +191,43 @@ Apache-2.0
   lucene-queryparser-9.11.1.jar
   magnolia_2.13-1.1.8.jar
   metrics-core-3.2.4.jar
-  netty-all-4.1.127.Final.jar
-  netty-buffer-4.1.127.Final.jar
-  netty-codec-4.1.127.Final.jar
-  netty-codec-dns-4.1.127.Final.jar
-  netty-codec-haproxy-4.1.127.Final.jar
-  netty-codec-http-4.1.127.Final.jar
-  netty-codec-http2-4.1.127.Final.jar
-  netty-codec-memcache-4.1.127.Final.jar
-  netty-codec-mqtt-4.1.127.Final.jar
-  netty-codec-redis-4.1.127.Final.jar
-  netty-codec-smtp-4.1.127.Final.jar
-  netty-codec-socks-4.1.127.Final.jar
-  netty-codec-stomp-4.1.127.Final.jar
-  netty-codec-xml-4.1.127.Final.jar
-  netty-common-4.1.127.Final.jar
-  netty-handler-4.1.127.Final.jar
-  netty-handler-proxy-4.1.127.Final.jar
-  netty-handler-ssl-ocsp-4.1.127.Final.jar
-  netty-resolver-4.1.127.Final.jar
-  netty-resolver-dns-4.1.127.Final.jar
-  netty-resolver-dns-classes-macos-4.1.127.Final.jar
-  netty-resolver-dns-native-macos-4.1.127.Final-osx-aarch_64.jar
-  netty-resolver-dns-native-macos-4.1.127.Final-osx-x86_64.jar
+  netty-all-4.1.129.Final.jar
+  netty-buffer-4.1.129.Final.jar
+  netty-codec-4.1.129.Final.jar
+  netty-codec-dns-4.1.129.Final.jar
+  netty-codec-haproxy-4.1.129.Final.jar
+  netty-codec-http-4.1.129.Final.jar
+  netty-codec-http2-4.1.129.Final.jar
+  netty-codec-memcache-4.1.129.Final.jar
+  netty-codec-mqtt-4.1.129.Final.jar
+  netty-codec-redis-4.1.129.Final.jar
+  netty-codec-smtp-4.1.129.Final.jar
+  netty-codec-socks-4.1.129.Final.jar
+  netty-codec-stomp-4.1.129.Final.jar
+  netty-codec-xml-4.1.129.Final.jar
+  netty-common-4.1.129.Final.jar
+  netty-handler-4.1.129.Final.jar
+  netty-handler-proxy-4.1.129.Final.jar
+  netty-handler-ssl-ocsp-4.1.129.Final.jar
+  netty-resolver-4.1.129.Final.jar
+  netty-resolver-dns-4.1.129.Final.jar
+  netty-resolver-dns-classes-macos-4.1.129.Final.jar
+  netty-resolver-dns-native-macos-4.1.129.Final-osx-aarch_64.jar
+  netty-resolver-dns-native-macos-4.1.129.Final-osx-x86_64.jar
   netty-tcnative-classes-2.0.72.Final.jar
-  netty-transport-4.1.127.Final.jar
-  netty-transport-classes-epoll-4.1.127.Final.jar
-  netty-transport-classes-kqueue-4.1.127.Final.jar
-  netty-transport-native-epoll-4.1.127.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.1.127.Final-linux-riscv64.jar
-  netty-transport-native-epoll-4.1.127.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.1.127.Final.jar
-  netty-transport-native-kqueue-4.1.127.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.1.127.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.1.127.Final.jar
-  netty-transport-rxtx-4.1.127.Final.jar
-  netty-transport-sctp-4.1.127.Final.jar
-  netty-transport-udt-4.1.127.Final.jar
+  netty-transport-4.1.129.Final.jar
+  netty-transport-classes-epoll-4.1.129.Final.jar
+  netty-transport-classes-kqueue-4.1.129.Final.jar
+  netty-transport-native-epoll-4.1.129.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.1.129.Final-linux-riscv64.jar
+  netty-transport-native-epoll-4.1.129.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.1.129.Final.jar
+  netty-transport-native-kqueue-4.1.129.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.1.129.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.1.129.Final.jar
+  netty-transport-rxtx-4.1.129.Final.jar
+  netty-transport-sctp-4.1.129.Final.jar
+  netty-transport-udt-4.1.129.Final.jar
   nimbus-jose-jwt-9.37.2.jar
   objenesis-3.3.jar
   opencsv-5.7.1.jar
