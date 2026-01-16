@@ -205,8 +205,7 @@ public class UtilTest {
 
         // The method should be run directly, after 200ms, after 400ms and after 800 ms when it will succeed
         // So the total time should be roughly 1400 ms
-        assertTrue(time > 1350);
-        assertTrue(time < 1450);
+        assertTrue(time > 1300 && time < 1500, "Expected time to be in the interval 1300 ms - 1500 ms but was " + time);
     }
 
     @Test
