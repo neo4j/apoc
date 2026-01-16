@@ -156,7 +156,7 @@ subprojects {
     configurations.configureEach {
         resolutionStrategy.eachDependency { details ->
             if (details.requested.group == 'io.netty' && !details.requested.name.contains('netty-tcnative') && !details.requested.name.equals('netty')) {
-                details.useVersion '4.1.127.Final' // Use same Netty version as server
+                details.useVersion '4.1.129.Final' // Use same Netty version as server
             }
         }
     }
