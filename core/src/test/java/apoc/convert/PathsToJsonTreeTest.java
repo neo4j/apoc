@@ -35,7 +35,7 @@ import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
-@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = true, configurationCallback = "configure")
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
 public class PathsToJsonTreeTest {
 
     @Inject

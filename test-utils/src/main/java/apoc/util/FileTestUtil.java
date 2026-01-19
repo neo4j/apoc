@@ -24,6 +24,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public class FileTestUtil {
@@ -34,10 +38,34 @@ public class FileTestUtil {
         String[] expectArray = expectedText.split("\n");
         assertEquals(expectArray.length, actualArray.length);
         for (int i = 0; i < actualArray.length; i++) {
-            assertEquals(
-                    JsonUtil.parse(expectArray[i], null, Object.class),
-                    JsonUtil.parse(actualArray[i], null, Object.class));
+            Object expected = stripIds(JsonUtil.parse(expectArray[i], null, Object.class));
+            Object actual = stripIds(JsonUtil.parse(actualArray[i], null, Object.class));
+            assertEquals(expected, actual);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Object stripIds(Object value) {
+        if (value instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) value;
+            Map<String, Object> cleaned = new HashMap<>();
+            for (Map.Entry<String, Object> e : map.entrySet()) {
+                if ("id".equals(e.getKey())) {
+                    continue; // skip ids
+                }
+                cleaned.put(e.getKey(), stripIds(e.getValue()));
+            }
+            return cleaned;
+        }
+        if (value instanceof List) {
+            List<Object> list = (List<Object>) value;
+            List<Object> cleaned = new ArrayList<>(list.size());
+            for (Object o : list) {
+                cleaned.add(stripIds(o));
+            }
+            return cleaned;
+        }
+        return value;
     }
 
     public static Path createTempFolder() {

@@ -46,6 +46,7 @@ import apoc.util.ArrayBackedList;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -54,27 +55,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.InstanceOfAssertFactories;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 25.03.16
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class GraphRefactoringTest {
     public static final String CLONE_NODES_QUERY = "match (n:MyBook) with n call apoc.refactor.cloneNodes([n], true) "
             + "YIELD output, error RETURN output, error";
@@ -84,27 +82,28 @@ public class GraphRefactoringTest {
             "MATCH p=(:Start)-[r:TO_MOVE]->(:End) with r call apoc.refactor.extractNode([r], ['MyBook'], 'OUT', 'IN') "
                     + "YIELD output, error RETURN output, error";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
-                            .build(),
-                    false)
-            .withSetting(
-                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        // Ensure deterministic IDs for tests that may rely on them
+        builder.setConfig(GraphDatabaseSettings.db_format, "aligned");
+        builder.setConfig(
+                newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
+                        .build(),
+                false);
+        builder.setConfig(
+                newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
+    }
+
+    @BeforeAll
+    void setUpAll() {
         TestUtil.registerProcedure(db, GraphRefactoring.class);
     }
 
-    @After
-    public void tearDown() {
-        db.shutdown();
-    }
-
     @Test
-    public void deleteAndReconnect() {
+    void deleteAndReconnect() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {c:'d', e:'f'}]->(c:Three)-[:GAMMA]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
@@ -144,7 +143,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithTerminalNodes() {
+    void deleteAndReconnectWithTerminalNodes() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(c:Two)-[:GAMMA]->(e:Three {foo: 'bar', baz: 'baa'})");
 
@@ -183,7 +182,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectConsecutiveNodes() {
+    void deleteAndReconnectConsecutiveNodes() {
         db.executeTransactionally(
                 "CREATE (f:Alpha)-[:REL_1 {a:'b'}]->(b:Beta)-[:REL_2 {c:'d', e:'f'}]->(c:Gamma)-[:REL_3]->(d:Delta)-[:REL_4 {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Epsilon {foo: 'bar', baz: 'baa'})");
 
@@ -221,7 +220,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithIncomingRelConfig() {
+    void deleteAndReconnectWithIncomingRelConfig() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {c:'d', e:'f'}]->(c:Three)-[:GAMMA]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
@@ -253,7 +252,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithOutgoingRelConfig() {
+    void deleteAndReconnectWithOutgoingRelConfig() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {c:'d', e:'f'}]->(c:Three)-[:GAMMA]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
@@ -289,7 +288,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithMergeRelConfig() {
+    void deleteAndReconnectWithMergeRelConfig() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {a:'d', e:'f', g: 'h'}]->(c:Three)-[:GAMMA {aa: 'one'}]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
@@ -326,7 +325,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithMergeRelConfigAndPropertiesCombine() {
+    void deleteAndReconnectWithMergeRelConfigAndPropertiesCombine() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {a:'d', e:'f', g: 'h'}]->(c:Three)-[:GAMMA {aa: 'one'}]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
@@ -367,7 +366,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void deleteAndReconnectWithMergeRelConfigAndPropertiesOverride() {
+    void deleteAndReconnectWithMergeRelConfigAndPropertiesOverride() {
         db.executeTransactionally(
                 "CREATE (f:One)-[:ALPHA {a:'b'}]->(b:Two)-[:BETA {a:'d', e:'f', g: 'h'}]->(c:Three)-[:GAMMA {aa: 'one'}]->(d:Four)-[:DELTA {aa: 'bb', cc: 'dd', ee: 'ff'}]->(e:Five {foo: 'bar', baz: 'baa'})");
 
@@ -406,7 +405,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testEagernessMergeNodesFails() {
+    void testEagernessMergeNodesFails() {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.ID)");
         String id = db.executeTransactionally(
                 "CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id",
@@ -425,7 +424,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergingOfEmptyNodeListProps() {
+    void testMergingOfEmptyNodeListProps() {
         db.executeTransactionally(
                 "MERGE (t:TEST {prop: []})-[r:ACCESS {prop: 1}]->(t2:BLA )<-[r2:ACCESS {prop: 1}]-(t3:TEST {prop: []})");
         testCall(
@@ -445,7 +444,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergingOfOneEmptyNodeListProps() {
+    void testMergingOfOneEmptyNodeListProps() {
         db.executeTransactionally(
                 "MERGE (t:TEST {prop: ['hi']})-[r:ACCESS {prop: 1}]->(t2:BLA )<-[r2:ACCESS {prop: 1}]-(t3:TEST {prop: []})");
         testCall(
@@ -465,7 +464,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergingOfEmptyRelListProps() {
+    void testMergingOfEmptyRelListProps() {
         db.executeTransactionally("MERGE (t:TEST)-[r:ACCESS {prop: []}]->(t2:BLA )<-[r2:ACCESS {prop: []}]-(t3:TEST)");
         testCall(
                 db,
@@ -485,7 +484,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergingOfOneEmptyRelListProps() {
+    void testMergingOfOneEmptyRelListProps() {
         db.executeTransactionally(
                 "MERGE (t:TEST)-[r:ACCESS {prop: ['hi']}]->(t2:BLA )<-[r2:ACCESS {prop: []}]-(t3:TEST)");
         testCall(
@@ -506,7 +505,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesShouldNotFailWithSamePropKeysConstraints() {
+    void testMergeNodesShouldNotFailWithSamePropKeysConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (a:A) REQUIRE a.prop1 IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR (a:B) REQUIRE a.prop1 IS UNIQUE");
         String id = db.executeTransactionally(
@@ -527,7 +526,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesEagerAggregation() {
+    void testMergeNodesEagerAggregation() {
         String id = db.executeTransactionally(
                 "CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id ",
                 emptyMap(),
@@ -545,7 +544,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesEagerIndex() {
+    void testMergeNodesEagerIndex() {
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.ID)");
         db.executeTransactionally("CALL db.awaitIndexes()");
         String id = db.executeTransactionally(
@@ -565,7 +564,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesIndexConflict() {
+    void testMergeNodesIndexConflict() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (a:A) REQUIRE a.prop1 IS UNIQUE;");
         db.executeTransactionally("CREATE CONSTRAINT FOR (b:B) REQUIRE b.prop2 IS UNIQUE;");
         db.executeTransactionally("CALL db.awaitIndexes()");
@@ -591,7 +590,7 @@ public class GraphRefactoringTest {
     ISSUE #590
      */
     @Test
-    public void testMergeMultipleNodesRelationshipDirection() {
+    void testMergeMultipleNodesRelationshipDirection() {
         db.executeTransactionally("create (a1:ALabel {name:'a1'})-[:HAS_REL]->(b1:BLabel {name:'b1'}),"
                 + "          (a2:ALabel {name:'a2'})-[:HAS_REL]->(b2:BLabel {name:'b2'}),"
                 + "          (a3:ALabel {name:'a3'})-[:HAS_REL]->(b3:BLabel {name:'b3'}), "
@@ -611,7 +610,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesWithNonDistinct() {
+    void testMergeNodesWithNonDistinct() {
         db.executeTransactionally("create (a1:ALabel {name:'a1'})-[:HAS_REL]->(b1:BLabel {name:'b1'}),"
                 + "          (a2:ALabel {name:'a2'})-[:HAS_REL]->(b2:BLabel {name:'b2'}),"
                 + "          (a3:ALabel {name:'a3'})-[:HAS_REL]->(b3:BLabel {name:'b3'}) ");
@@ -638,7 +637,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesOneSingleNode() {
+    void testMergeNodesOneSingleNode() {
         db.executeTransactionally("create (a1:ALabel {name:'a1'})-[:HAS_REL]->(b1:BLabel {name:'b1'})");
         testCall(
                 db,
@@ -653,7 +652,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesIsTolerantForDeletedNodes() {
+    void testMergeNodesIsTolerantForDeletedNodes() {
         db.executeTransactionally("create (a1:ALabel {name:'a1'})-[:HAS_REL]->(b1:BLabel {name:'b1'}),"
                 + "(a2:ALabel {name:'a2'}), " + "(a3:ALabel {name:'a3'})-[:HAS_REL]->(b1)");
         testCall(
@@ -672,7 +671,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testExtractNode() {
+    void testExtractNode() {
         Long id = db.executeTransactionally(
                 "CREATE (f:Foo)-[rel:FOOBAR {a:1}]->(b:Bar) RETURN id(rel) as id",
                 emptyMap(),
@@ -696,7 +695,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testInvertRelationship() {
+    void testInvertRelationship() {
         long id = db.executeTransactionally(
                 "CREATE (f:Foo)-[rel:FOOBAR {a:1}]->(b:Bar) RETURN id(rel) as id",
                 emptyMap(),
@@ -715,7 +714,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testRefactorWithSameEntities() {
+    void testRefactorWithSameEntities() {
         Node node = db.executeTransactionally(
                 "CREATE (n:SingleNode) RETURN n", emptyMap(), r -> Iterators.single(r.columnAs("n")));
         testCall(
@@ -736,7 +735,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testCollapseNode() {
+    void testCollapseNode() {
         String elementId = db.executeTransactionally(
                 "CREATE (f:Foo)-[:FOO {a:1}]->(b:Bar {c:3})-[:BAR {b:2}]->(f) RETURN elementId(b) as id",
                 emptyMap(),
@@ -758,7 +757,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testNormalizeAsBoolean() {
+    void testNormalizeAsBoolean() {
         db.executeTransactionally(
                 "CREATE ({prop: 'Y', id:1}),({prop: 'Yes', id: 2}),({prop: 'NO', id: 3}),({prop: 'X', id: 4})");
 
@@ -805,17 +804,17 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testCategorizeOutgoing() {
+    void testCategorizeOutgoing() {
         categorizeWithDirection(Direction.OUTGOING);
     }
 
     @Test
-    public void testCategorizeIncoming() {
+    void testCategorizeIncoming() {
         categorizeWithDirection(Direction.INCOMING);
     }
 
     @Test
-    public void testIssue3000() {
+    void testIssue3000() {
         db.executeTransactionally(
                 """
                 CREATE (a:Person {name: 'Mark', city: 'London'})
@@ -844,7 +843,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testCloneNodes() {
+    void testCloneNodes() {
         Long nodeId = db.executeTransactionally(
                 "CREATE (f:Foo {name:'foo',age:42})-[:FB]->(:Bar) RETURN id(f) AS nodeId",
                 emptyMap(),
@@ -884,7 +883,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesWithConstraints() {
+    void testMergeNodesWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (p:Person) REQUIRE p.name IS UNIQUE");
         String id = db.executeTransactionally(
                 "CREATE (p1:Person {name:'Foo'}), (p2:Person {surname:'Bar'}) RETURN elementId(p1) as id",
@@ -903,7 +902,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesWithIngoingRelationships() {
+    void testMergeNodesWithIngoingRelationships() {
         String lisaId = db.executeTransactionally(
                 """
                         CREATE
@@ -939,7 +938,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesWithSelfRelationships() {
+    void testMergeNodesWithSelfRelationships() {
         Map<String, Object> result = db.executeTransactionally(
                 """
                         CREATE
@@ -970,7 +969,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsOverwriteEagerAggregation() {
+    void testMergeRelsOverwriteEagerAggregation() {
         String id = db.executeTransactionally(
                 """
                         Create (d:Person {name:'Daniele'})
@@ -1005,7 +1004,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsCombineEagerAggregation() {
+    void testMergeRelsCombineEagerAggregation() {
         String id = db.executeTransactionally(
                 """
                         Create (d:Person {name:'Daniele'})
@@ -1040,7 +1039,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsEagerAggregationCombineSingleValuesProperty() {
+    void testMergeRelsEagerAggregationCombineSingleValuesProperty() {
         String id = db.executeTransactionally(
                 """
                         Create (d:Person {name:'Daniele'})
@@ -1079,7 +1078,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsEagerAggregationCombineArrayDifferentValuesTypeProperties() {
+    void testMergeRelsEagerAggregationCombineArrayDifferentValuesTypeProperties() {
         String id = db.executeTransactionally(
                 """
                         Create (d:Person {name:'Daniele'})
@@ -1118,7 +1117,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesAndMergeSameRelationshipWithPropertiesConfig() {
+    void testMergeNodesAndMergeSameRelationshipWithPropertiesConfig() {
         db.executeTransactionally("create (a1:ALabel {name:'a1'})-[:HAS_REL {p:'r1'}]->(b1:BLabel {name:'b1'}),"
                 + "          (a2:ALabel {name:'a2'})-[:HAS_REL{p:'r2'}]->(b1),"
                 + "           (a3:ALabel {name:'a3'})<-[:HAS_REL{p:'r3'}]-(b1),"
@@ -1138,7 +1137,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesAndMergeSameRelationshipsAndNodes() {
+    void testMergeNodesAndMergeSameRelationshipsAndNodes() {
         db.executeTransactionally("Create (n1:ALabel {name:'a1'})," + "    (n2:ALabel {name:'a2'}),"
                 + "    (n3:BLabel {p1:'a3'}),"
                 + "     (n4:BLabel {p1:'a4'}),"
@@ -1174,7 +1173,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesAndMergeSameRelationshipsAndNodesWithoutPropertiesConfig() {
+    void testMergeNodesAndMergeSameRelationshipsAndNodesWithoutPropertiesConfig() {
         db.executeTransactionally("Create (n1:ALabel {name:'a1'})," + "    (n2:ALabel {name:'a2'}),"
                 + "    (n3:BLabel {p1:'a3'}),"
                 + "     (n4:BLabel {p1:'a4'}),"
@@ -1209,7 +1208,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsOverridePropertiesEagerAggregation() {
+    void testMergeRelsOverridePropertiesEagerAggregation() {
         String id = db.executeTransactionally(
                 """
                         Create (d:Person {name:'Daniele'})
@@ -1244,7 +1243,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesOverridePropertiesEagerAggregation() {
+    void testMergeNodesOverridePropertiesEagerAggregation() {
         String id = db.executeTransactionally(
                 "CREATE (p1:Person {ID:1}), (p2:Person {ID:2}) RETURN elementId(p1) as id ",
                 emptyMap(),
@@ -1262,7 +1261,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesOnArrayValues() {
+    void testMergeNodesOnArrayValues() {
         String id = db.executeTransactionally(
                 "CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN elementId(p1) as id ",
                 emptyMap(),
@@ -1281,7 +1280,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodesOnArrayValuesPreventTypeChange() {
+    void testMergeNodesOnArrayValuesPreventTypeChange() {
         String id = db.executeTransactionally(
                 "CREATE (p1:Person {ID:1, prop: ['foo']}), (p2:Person {ID:2, prop: ['foo']}) RETURN elementId(p1) as id ",
                 emptyMap(),
@@ -1300,7 +1299,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testRefactorCategorizeExceptionWithNoConstraint() {
+    void testRefactorCategorizeExceptionWithNoConstraint() {
         // given
         final String label = "Country";
         final String targetKey = "name";
@@ -1327,7 +1326,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testRefactorCategorizeNoDups() {
+    void testRefactorCategorizeNoDups() {
         // given
         final String label = "Country";
         final String targetKey = "name";
@@ -1359,7 +1358,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testRefactorCategoryDoesntAllowCypherInjection() {
+    void testRefactorCategoryDoesntAllowCypherInjection() {
         // given
         final String label = "Country";
         final String targetKey = "name";
@@ -1392,7 +1391,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldNotCreateSelfRelationshipsInPreExistingSelfRel() {
+    void testMergeNodeShouldNotCreateSelfRelationshipsInPreExistingSelfRel() {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (a)-[:TEST_REL {prop: 'one'}]->(a), (a)-[:TEST_REL {prop: 'two'}]->(a) WITH c CREATE (c)-[:TEST_REL]->(c);");
@@ -1420,7 +1419,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void shouldAlwaysOverrideNodePropsIfNotSetAndCombineRelPropsIfPropertyIsNull() {
+    void shouldAlwaysOverrideNodePropsIfNotSetAndCombineRelPropsIfPropertyIsNull() {
         // test case from
         // https://trello.com/c/7yO7mniS/924-s2cast-softwareapocrefactormergenodes-is-not-producing-desired-output
         final String query =
@@ -1471,7 +1470,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldNotCreateSelfRelationshipsAndCancelThePreExistingSelfRelAfterMerge() {
+    void testMergeNodeShouldNotCreateSelfRelationshipsAndCancelThePreExistingSelfRelAfterMerge() {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (a)-[:TEST_REL {prop: 'one'}]->(a), (a)-[:TEST_REL {prop: 'two'}]->(a) WITH c CREATE (c)-[:TEST_REL]->(c);");
@@ -1483,7 +1482,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldCreateSelfRelationshipsInPreExistingSelfRel() {
+    void testMergeNodeShouldCreateSelfRelationshipsInPreExistingSelfRel() {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (a)-[:TEST_REL]->(a) WITH c CREATE (c)-[:TEST_REL]->(c);");
@@ -1505,7 +1504,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldNotCancelOtherRelsWithSelfRelsTrue() {
+    void testMergeNodeShouldNotCancelOtherRelsWithSelfRelsTrue() {
         db.executeTransactionally(
                 "CREATE (a:A {a:'a'})-[:KNOWS {foo: 'bar'}]->(b:B {a:'b'})-[:KNOWS {baz: 'baa'}]->(c:C {a:'c'})\n"
                         + "WITH a,b,c CREATE (a)-[:KNOWS {self: 'rel'}]->(a) WITH a,b,c CREATE (a)-[:KNOWS {one: 'two'}]->(c) WITH c,b CREATE (c)-[:KNOWS {three: 'four'}]->(b);");
@@ -1608,7 +1607,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldNotCancelOtherRelsWithSelfRelsFalseAndSingleNode() {
+    void testMergeNodeShouldNotCancelOtherRelsWithSelfRelsFalseAndSingleNode() {
         db.executeTransactionally(
                 "CREATE (a:A {a:'a'})-[:KNOWS]->(b:B {a:'b'})-[:KNOWS]->(c:C {a:'c'})\n"
                         + "WITH a,b,c CREATE (a)-[:KNOWS]->(a) WITH a,b,c CREATE (a)-[:KNOWS]->(c) WITH c,b CREATE (c)-[:KNOWS]->(b);");
@@ -1669,7 +1668,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldNotCreateSelfRelationshipsWithCircularPath() {
+    void testMergeNodeShouldNotCreateSelfRelationshipsWithCircularPath() {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (c)-[:TEST_REL]->(a);");
@@ -1683,7 +1682,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldCreateSelfRelationshipsWithCircularPath() {
+    void testMergeNodeShouldCreateSelfRelationshipsWithCircularPath() {
         db.executeTransactionally(
                 "CREATE (a:TestNode {a:'a'})-[:TEST_REL]->(b:TestNode {a:'b'})-[:TEST_REL]->(c:TestNode {a:'c'})\n"
                         + "WITH a, c CREATE (c)-[:TEST_REL]->(a);");
@@ -1699,7 +1698,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeNodeShouldCreateSelfRelationshipsWithPathWithOtherRels() {
+    void testMergeNodeShouldCreateSelfRelationshipsWithPathWithOtherRels() {
         db.executeTransactionally("CREATE (a:One)-[:TEST_REL1]->(b:Two)-[:TEST_REL2]->(c:Three)\n"
                 + "WITH b, c CREATE (b)-[:ASD]->(q:Four), (b)-[:ZXC]->(w:Five) WITH b, c CREATE (b)-[:QWE]->(c)");
         testCall(
@@ -1727,7 +1726,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsFalseAndProduceSelfRelFalse() {
+    void testMergeRelsFalseAndProduceSelfRelFalse() {
         db.executeTransactionally("CREATE (a:A), (b:B) CREATE (a)-[:T]->(b) CREATE (a)-[:T]->(b) CREATE (a)-[:Q]->(a)");
         testCall(
                 db,
@@ -1745,7 +1744,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void testMergeRelsTrueAndProduceSelfRelFalse() {
+    void testMergeRelsTrueAndProduceSelfRelFalse() {
         db.executeTransactionally(
                 "CREATE (a:A), (b:B) CREATE (a)-[:T]->(b) CREATE (a)-[:T]->(b) CREATE (a)-[:T]->(b) CREATE (a)-[:Q]->(a)");
         testCall(
@@ -1760,7 +1759,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void issue3960WithCloneNodes() {
+    void issue3960WithCloneNodes() {
         // Any node created in cloneNodes should not be committed if the entire query fails.
         String query =
                 """
@@ -1774,14 +1773,14 @@ public class GraphRefactoringTest {
 
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
-        TestCase.assertEquals("/ by zero", except.getMessage());
+        assertTrue(except instanceof RuntimeException);
+        assertEquals("/ by zero", except.getMessage());
 
         testCall(db, "MATCH (n) RETURN count(*) AS count", r -> assertEquals(0L, r.get("count")));
     }
 
     @Test
-    public void ShouldErrorOnConstraintsFailedCommon() {
+    void ShouldErrorOnConstraintsFailedCommon() {
         db.executeTransactionally(("CREATE CONSTRAINT unique_id FOR ()-[r:HAS_PET]-() REQUIRE r.id IS UNIQUE"));
 
         String query =
@@ -1806,23 +1805,23 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void issue2797WithCloneNodes() {
+    void issue2797WithCloneNodes() {
         issue2797Common(CLONE_NODES_QUERY);
     }
 
     @Test
-    public void issue2797WithExtractNode() {
+    void issue2797WithExtractNode() {
         db.executeTransactionally("CREATE (:Start)-[r:TO_MOVE {name: 1}]->(:End)");
         issue2797Common(EXTRACT_QUERY);
     }
 
     @Test
-    public void issue2797WithCloneSubgraph() {
+    void issue2797WithCloneSubgraph() {
         issue2797Common(CLONE_SUBGRAPH_QUERY);
     }
 
     @Test
-    public void refactorToWithConstraints() {
+    void refactorToWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
         db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
         db.executeTransactionally("CALL db.awaitIndexes()");
@@ -1856,7 +1855,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void refactorToWithErrorHandling() {
+    void refactorToWithErrorHandling() {
         db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
 
         final var refactorQuery =
@@ -1901,7 +1900,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void refactorFromWithConstraints() {
+    void refactorFromWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
         db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
         db.executeTransactionally("CALL db.awaitIndexes()");
@@ -1936,7 +1935,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void refactorFromWithErrorHandling() {
+    void refactorFromWithErrorHandling() {
         db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'}), (c:C {id:'C'})");
 
         final var refactorQuery =
@@ -1983,7 +1982,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void invertWithConstraints() {
+    void invertWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT id_unique FOR ()-[r:R]-() REQUIRE r.id IS UNIQUE");
         db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'})");
         db.executeTransactionally("CALL db.awaitIndexes()");
@@ -2014,7 +2013,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void invertErrorHandling() {
+    void invertErrorHandling() {
         db.executeTransactionally("CREATE (a:A {id:'A'})-[r:R {id:'R'}]->(b:B {id:'B'})");
 
         final var invertQuery =
@@ -2056,7 +2055,7 @@ public class GraphRefactoringTest {
     }
 
     @Test
-    public void mergeNodesWithConstraints() {
+    void mergeNodesWithConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT foo_uniq FOR ()-[r:MY_REL]-() REQUIRE r.foo IS UNIQUE");
         db.executeTransactionally(
                 """

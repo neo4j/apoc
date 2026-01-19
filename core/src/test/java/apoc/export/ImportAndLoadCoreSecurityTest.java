@@ -19,8 +19,6 @@
 package apoc.export;
 
 import static apoc.export.SecurityTestUtil.ALLOWED_EXCEPTIONS;
-import static apoc.export.SecurityTestUtil.IMPORT_PROCEDURES;
-import static apoc.export.SecurityTestUtil.LOAD_PROCEDURES;
 import static apoc.export.SecurityTestUtil.cypher5OnlyProcedures;
 import static apoc.export.SecurityTestUtil.setImportFileApocConfigs;
 import static apoc.util.FileTestUtil.createTempFolder;
@@ -40,6 +38,7 @@ import apoc.load.LoadJson;
 import apoc.load.Xml;
 import apoc.util.SensitivePathGenerator;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import com.nimbusds.jose.util.Pair;
 import inet.ipaddr.IPAddressString;
 import java.io.IOException;
@@ -49,24 +48,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-@RunWith(Parameterized.class)
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class ImportAndLoadCoreSecurityTest {
     private static final Path TEMP_FOLDER = createTempFolder();
 
@@ -85,30 +83,22 @@ public class ImportAndLoadCoreSecurityTest {
     private static final String RELATIVE_URL_WITH_FILE_DOUBLE_SLASH = "file:/" + RELATIVE_URL;
     private static final String RELATIVE_URL_WITH_FILE_TRIPLE_SLASH = "file://" + RELATIVE_URL;
 
-    private final String apocProcedure;
-    private final String importMethod;
-    private final String fileName;
-
-    public ImportAndLoadCoreSecurityTest(String method, String methodArguments, String fileName) {
-        var cypherVersion = cypher5OnlyProcedures.contains(method) ? "CYPHER 5 " : "";
-        this.apocProcedure = cypherVersion + "CALL " + method + methodArguments;
-        this.importMethod = method;
-        this.fileName = fileName;
-    }
-
-    @Parameterized.Parameters(name = "Procedure: {0}{1}, fileName: {2}")
-    public static Collection<String[]> data() {
-        // transform `Pair(<KEY>, <VALUE>)` to `Pair(apoc.import.<KEY> , <VALUE>)`
-        List<Pair<String, String>> importAndLoadProcedures = IMPORT_PROCEDURES
-                .map(e -> Pair.of("apoc.import." + e.getLeft(), e.getRight()))
-                .collect(Collectors.toList());
-
-        // transform `Pair(<KEY>, <VALUE>)` to `Pair(apoc.load.<KEY> , <VALUE>)`
-        List<Pair<String, String>> loadProcedures = LOAD_PROCEDURES
-                .map(e -> Pair.of("apoc.load." + e.getLeft(), e.getRight()))
-                .toList();
-
-        importAndLoadProcedures.addAll(loadProcedures);
+    static Collection<String[]> data() {
+        // Create local copies instead of reusing streams from SecurityTestUtil to avoid reuse issues
+        List<Pair<String, String>> importAndLoadProcedures = new java.util.ArrayList<>();
+        // IMPORT procedures
+        importAndLoadProcedures.add(Pair.of("apoc.import.json", "($fileName)"));
+        importAndLoadProcedures.add(
+                Pair.of("apoc.import.csv", "([{fileName: $fileName, labels: ['Person']}], [], {})"));
+        importAndLoadProcedures.add(Pair.of("apoc.import.csv", "([], [{fileName: $fileName, type: 'KNOWS'}], {})"));
+        importAndLoadProcedures.add(Pair.of("apoc.import.graphml", "($fileName, {})"));
+        importAndLoadProcedures.add(Pair.of("apoc.import.xml", "($fileName)"));
+        // LOAD procedures
+        importAndLoadProcedures.add(Pair.of("apoc.load.json", "($fileName, '', {})"));
+        importAndLoadProcedures.add(Pair.of("apoc.load.jsonArray", "($fileName, '', {})"));
+        importAndLoadProcedures.add(Pair.of("apoc.load.jsonParams", "($fileName, {}, '')"));
+        importAndLoadProcedures.add(Pair.of("apoc.load.xml", "($fileName, '', {}, false)"));
+        importAndLoadProcedures.add(Pair.of("apoc.load.arrow", "($fileName)"));
 
         return getParameterData(importAndLoadProcedures);
     }
@@ -134,14 +124,18 @@ public class ImportAndLoadCoreSecurityTest {
                 .toList();
     }
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.load_csv_file_url_root, TEMP_FOLDER)
-            .withSetting(
-                    GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString("127.168.0.0/8")));
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.load_csv_file_url_root, TEMP_FOLDER);
+        builder.setConfig(
+                GraphDatabaseInternalSettings.cypher_ip_blocklist, List.of(new IPAddressString("127.168.0.0/8")));
+    }
+
+    @BeforeAll
+    void setUpAll() {
         Logger logger = Logger.getLogger(ImportAndLoadCoreSecurityTest.class.getName());
         logger.setLevel(Level.SEVERE);
 
@@ -157,98 +151,110 @@ public class ImportAndLoadCoreSecurityTest {
                 LoadArrow.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    static Stream<Arguments> args() {
+        return data().stream().map(arr -> {
+            String method = arr[0];
+            String methodArgs = arr[1];
+            String fileName = arr[2];
+            String cypherVersion = cypher5OnlyProcedures.contains(method) ? "CYPHER 5 " : "";
+            String apocProcedure = cypherVersion + "CALL " + method + methodArgs;
+            return Arguments.of(apocProcedure, method, fileName);
+        });
     }
 
-    @Test
-    public void testIllegalFSAccessWithDifferentApocConfs() {
+    @ParameterizedTest(name = "Procedure: {0} ({1}), fileName: {2}")
+    @MethodSource("args")
+    void testIllegalFSAccessWithDifferentApocConfs(String apocProcedure, String importMethod, String fileName) {
         // apoc.import.file.enabled=true
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=true
         setImportFileApocConfigs(true, true, true);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=true
         // apoc.import.file.use_neo4j_config=false
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(true, false, false);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=true
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(true, true, false);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=true
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(true, false, true);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=false
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(false, true, false);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=false
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=true
         setImportFileApocConfigs(false, true, true);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=false
         // apoc.import.file.use_neo4j_config=false
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(false, false, true);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
 
         // apoc.import.file.enabled=false
         // apoc.import.file.use_neo4j_config=false
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(false, false, false);
-        assertIpAddressBlocked();
+        assertIpAddressBlocked(apocProcedure);
     }
 
-    @Test
-    public void testImportFileDisabled() {
+    @ParameterizedTest(name = "Procedure: {0} ({1}), fileName: {2}")
+    @MethodSource("args")
+    void testImportFileDisabled(String apocProcedure, String importMethod, String fileName) {
         // all assertions with `apoc.import.file.enabled=false`
 
         // apoc.import.file.use_neo4j_config=false
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(false, false, false);
-        assertImportDisabled();
+        assertImportDisabled(apocProcedure, fileName);
 
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(false, true, false);
-        assertImportDisabled();
+        assertImportDisabled(apocProcedure, fileName);
 
         // apoc.import.file.use_neo4j_config=false
         // apoc.import.file.allow_read_from_filesystem=true
         setImportFileApocConfigs(false, false, true);
-        assertImportDisabled();
+        assertImportDisabled(apocProcedure, fileName);
 
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=true
         setImportFileApocConfigs(false, true, true);
-        assertImportDisabled();
+        assertImportDisabled(apocProcedure, fileName);
     }
 
-    @Test
-    public void testIllegalFSAccessWithImportAndUseNeo4jConfsEnabled() {
+    @ParameterizedTest(name = "Procedure: {0} ({1}), fileName: {2}")
+    @MethodSource("args")
+    void testIllegalFSAccessWithImportAndUseNeo4jConfsEnabled(
+            String apocProcedure, String importMethod, String fileName) {
         // apoc.import.file.enabled=true
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(true, true, false);
-        assertReadFromFsNotAllowed();
+        assertReadFromFsNotAllowed(apocProcedure, fileName);
     }
 
-    @Test
-    public void testImportOutsideDirNotAllowedWithAllApocFileConfigsEnabled() {
+    @ParameterizedTest(name = "Procedure: {0} ({1}), fileName: {2}")
+    @MethodSource("args")
+    void testImportOutsideDirNotAllowedWithAllApocFileConfigsEnabled(
+            String apocProcedure, String importMethod, String fileName) {
         // apoc.import.file.enabled=true
         // apoc.import.file.use_neo4j_config=true
         // apoc.import.file.allow_read_from_filesystem=true
@@ -258,28 +264,30 @@ public class ImportAndLoadCoreSecurityTest {
         // i.e.: `file:/../../../etc/passwd`, `file://../../../etc/passwd` and `file:///../../../etc/passwd`
         // and relative ones (like `/etc/passwd`)
         if (fileName.equals(ABSOLUTE_URL) || fileName.equals(ABSOLUTE_URL_WITH_FILE_PREFIX)) {
-            assertImportOutsideDirNotAllowed();
+            assertImportOutsideDirNotAllowed(apocProcedure, fileName);
         } else {
-            assertFileNotExists();
+            assertFileNotExists(apocProcedure, fileName);
         }
     }
 
-    @Test
-    public void testReadSensitiveFileWorksWithApocUseNeo4jConfigDisabled() {
+    @ParameterizedTest(name = "Procedure: {0} ({1}), fileName: {2}")
+    @MethodSource("args")
+    void testReadSensitiveFileWorksWithApocUseNeo4jConfigDisabled(
+            String apocProcedure, String importMethod, String fileName) {
         // all checks with `apoc.import.file.use_neo4j_config=false`
 
         // apoc.import.file.enabled=true
         // apoc.import.file.allow_read_from_filesystem=true
         setImportFileApocConfigs(true, false, true);
-        shouldRead();
+        shouldRead(apocProcedure, importMethod, fileName);
 
         // apoc.import.file.enabled=false
         // apoc.import.file.allow_read_from_filesystem=false
         setImportFileApocConfigs(true, false, false);
-        shouldRead();
+        shouldRead(apocProcedure, importMethod, fileName);
     }
 
-    private void assertIpAddressBlocked() {
+    private void assertIpAddressBlocked(String apocProcedure) {
         Stream.of("https", "http", "ftp").forEach(protocol -> {
             String url = String.format("%s://127.168.0.0/test.file", protocol);
             QueryExecutionException e = assertThrows(
@@ -292,15 +300,20 @@ public class ImportAndLoadCoreSecurityTest {
         });
     }
 
-    private void assertImportDisabled() {
-        assertFailingProcedure(ApocConfig.LOAD_FROM_FILE_ERROR, RuntimeException.class);
+    private void assertImportDisabled(String apocProcedure, String fileName) {
+        assertFailingProcedure(apocProcedure, fileName, ApocConfig.LOAD_FROM_FILE_ERROR, RuntimeException.class);
     }
 
-    private void assertReadFromFsNotAllowed() {
-        assertFailingProcedure(String.format(ERROR_READ_FROM_FS_NOT_ALLOWED, fileName), RuntimeException.class);
+    private void assertReadFromFsNotAllowed(String apocProcedure, String fileName) {
+        assertFailingProcedure(
+                apocProcedure,
+                fileName,
+                String.format(ERROR_READ_FROM_FS_NOT_ALLOWED, fileName),
+                RuntimeException.class);
     }
 
-    private void assertFailingProcedure(String expectedError, Class exceptionClass) {
+    private void assertFailingProcedure(
+            String apocProcedure, String fileName, String expectedError, Class exceptionClass) {
         final String message = apocProcedure + " should throw an exception";
 
         try {
@@ -311,11 +324,11 @@ public class ImportAndLoadCoreSecurityTest {
         }
     }
 
-    private void shouldRead() {
+    private void shouldRead(String apocProcedure, String importMethod, String fileName) {
         // the `file://../../../etc/passwd` is not found unlike the other similar urls,
         // i.e.: `file:/../../../etc/passwd`, `file:///../../../etc/passwd` and `../../../etc/passwd`
         if (fileName.equals(RELATIVE_URL_WITH_FILE_DOUBLE_SLASH)) {
-            assertFileNotExists();
+            assertFileNotExists(apocProcedure, fileName);
             return;
         }
         try {
@@ -331,11 +344,11 @@ public class ImportAndLoadCoreSecurityTest {
         }
     }
 
-    private void assertImportOutsideDirNotAllowed() {
-        assertFailingProcedure(ACCESS_OUTSIDE_DIR_ERROR, IOException.class);
+    private void assertImportOutsideDirNotAllowed(String apocProcedure, String fileName) {
+        assertFailingProcedure(apocProcedure, fileName, ACCESS_OUTSIDE_DIR_ERROR, IOException.class);
     }
 
-    private void assertFileNotExists() {
+    private void assertFileNotExists(String apocProcedure, String fileName) {
         try {
             db.executeTransactionally(apocProcedure, Map.of("fileName", fileName), Result::resultAsString);
         } catch (Exception e) {

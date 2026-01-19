@@ -24,6 +24,7 @@ import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testResult;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.result.AssertSchemaResult;
 import apoc.util.Neo4jContainerExtension;
@@ -36,7 +37,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -755,7 +755,7 @@ class SchemasEnterpriseFeaturesTest {
             tx.run("CREATE CONSTRAINT since_con FOR ()-[since:SINCE]-() REQUIRE since.year IS NOT NULL");
         });
 
-        ClientException e = Assert.assertThrows(
+        ClientException e = assertThrows(
                 ClientException.class,
                 () -> testResult(
                         session,

@@ -24,6 +24,8 @@ import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_USE_NEO4J_CONFIG;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.TestUtil.assertError;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.ApocConfig;
 import apoc.util.TestUtil;
@@ -36,8 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
-import junit.framework.TestCase;
-import org.junit.Assert;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.xml.sax.SAXParseException;
@@ -84,8 +84,8 @@ public class SecurityTestUtil {
     public static void assertPathTraversalError(
             GraphDatabaseService db, String query, Map<String, Object> params, Consumer<Map> exceptionConsumer) {
 
-        QueryExecutionException e = Assert.assertThrows(
-                QueryExecutionException.class, () -> TestUtil.testCall(db, query, params, (r) -> {}));
+        QueryExecutionException e =
+                assertThrows(QueryExecutionException.class, () -> TestUtil.testCall(db, query, params, (r) -> {}));
 
         // this consumer accept a Map.of("error", <errorMessage>, "procedure", <procedureQuery>)
         exceptionConsumer.accept(Util.map(ERROR_KEY, e, PROCEDURE_KEY, query));
@@ -126,7 +126,7 @@ public class SecurityTestUtil {
 
     private static void assertExportDisabled(
             GraphDatabaseService db, String apocProcedure, String fileName, String error) {
-        QueryExecutionException e = Assert.assertThrows(
+        QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> TestUtil.testCall(db, apocProcedure, Map.of("fileName", fileName), (r) -> {}));
 
@@ -137,8 +137,8 @@ public class SecurityTestUtil {
             GraphDatabaseService db, String apocProcedure, String fileName, File file) {
         TestUtil.testCall(db, apocProcedure, Map.of("fileName", fileName), r -> {});
 
-        TestCase.assertTrue("The file doesn't exists", file.exists());
-        TestCase.assertTrue(file.delete());
+        assertTrue(file.exists());
+        assertTrue(file.delete());
     }
 
     public static void setImportFileApocConfigs(boolean importEnabled, boolean useNeo4jConfs, boolean allowReadFromFs) {

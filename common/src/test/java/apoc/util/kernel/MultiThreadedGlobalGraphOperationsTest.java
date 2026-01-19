@@ -20,39 +20,30 @@ package apoc.util.kernel;
 
 import static apoc.util.kernel.MultiThreadedGlobalGraphOperations.BatchJobResult;
 import static apoc.util.kernel.MultiThreadedGlobalGraphOperations.forAllNodes;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.extension.Inject;
 
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
 public class MultiThreadedGlobalGraphOperationsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    private GraphDatabaseAPI db;
 
-    @BeforeClass
-    public static void beforeClass() {
-        createData();
-    }
-
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
-    private static void createData() {
+    @BeforeAll
+    void beforeClass() {
         db.executeTransactionally(
                 "UNWIND range(1,1000) as x MERGE (s{id:x}) MERGE (e{id:x+1}) merge (s)-[:REL{id:x}]->(e)");
     }
 
     @Test
-    public void shouldforAllNodesWork() {
+    void shouldWorkForAllNodes() {
         AtomicInteger counter = new AtomicInteger();
         BatchJobResult result =
                 forAllNodes(db, Executors.newFixedThreadPool(4), 10, (nodeCursor) -> counter.incrementAndGet());

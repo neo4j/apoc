@@ -18,6 +18,7 @@
  */
 package apoc.it.common;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,7 +33,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -100,7 +100,7 @@ class UtilIT {
         when(mockChecker.checkURL(url)).thenReturn(url);
         when(mockChecker.checkURL(new URL("http://127.168.0.1"))).thenThrow(new URLAccessValidationError("no"));
 
-        IOException e = Assert.assertThrows(
+        IOException e = assertThrows(
                 IOException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
         Assertions.assertTrue(e.getMessage().contains("no"));
     }
@@ -128,7 +128,7 @@ class UtilIT {
         when(mockCon.getHeaderField("Location")).thenReturn("http://127.168.0.1");
         when(mockCon.getURL()).thenReturn(new URL("https://127.0.0.0"));
 
-        RuntimeException e = Assert.assertThrows(RuntimeException.class, () -> Util.isRedirect(mockCon));
+        RuntimeException e = assertThrows(RuntimeException.class, () -> Util.isRedirect(mockCon));
 
         Assertions.assertTrue(e.getMessage().contains("The redirect URI has a different protocol: http://127.168.0.1"));
     }
@@ -149,7 +149,7 @@ class UtilIT {
         }
 
         URL finalUrl = url;
-        IOException e = Assert.assertThrows(
+        IOException e = assertThrows(
                 IOException.class, () -> Util.openInputStream(finalUrl.toString(), null, null, null, mockChecker));
 
         Assertions.assertTrue(e.getMessage().contains("Redirect limit exceeded"));
@@ -170,7 +170,7 @@ class UtilIT {
         when(neo4jConfig.get(GraphDatabaseInternalSettings.cypher_ip_blocklist)).thenReturn(Collections.emptyList());
 
         // when
-        RuntimeException e = Assert.assertThrows(
+        RuntimeException e = assertThrows(
                 RuntimeException.class, () -> Util.openInputStream(url.toString(), null, null, null, mockChecker));
 
         Assertions.assertEquals("The redirect URI has a different protocol: file:/etc/passwd", e.getMessage());

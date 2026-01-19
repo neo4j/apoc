@@ -20,46 +20,38 @@ package apoc.export;
 
 import static apoc.ApocConfig.EXPORT_TO_FILE_ERROR;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.neo4j.configuration.SettingImpl.newBuilder;
-import static org.neo4j.configuration.SettingValueParsers.BOOL;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.export.csv.ExportCSV;
 import apoc.export.cypher.ExportCypher;
 import apoc.export.json.ExportJson;
 import apoc.util.TestUtil;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension
 public class ExportStreamsStatementsTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
-                            .build(),
-                    false)
-            .withSetting(
-                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUpAll() {
         TestUtil.registerProcedure(db, ExportCSV.class, ExportCypher.class, ExportJson.class);
+    }
+
+    @BeforeEach
+    void setUpEach() {
         db.executeTransactionally(
                 "CREATE (f:User:Customer {name:'Foo', age:42})-[:BOUGHT]->(b:Product {name:'Apple Watch Series 4'})");
     }
 
-    @AfterClass
-    public static void tearDown() {
-        db.shutdown();
-    }
-
     @Test
-    public void shouldStreamCSVData() {
+    void shouldStreamCSVData() {
         String expected = String.format("\"_id\",\"_labels\",\"age\",\"name\",\"_start\",\"_end\",\"_type\"%n"
                 + "\"0\",\":Customer:User\",\"42\",\"Foo\",,,%n"
                 + "\"1\",\":Product\",\"\",\"Apple Watch Series 4\",,,%n"
@@ -69,7 +61,7 @@ public class ExportStreamsStatementsTest {
     }
 
     @Test
-    public void shouldNotExportCSVData() {
+    void shouldNotExportCSVData() {
         String statement = "CALL apoc.export.csv.all('file.csv', {})";
 
         RuntimeException e = assertThrows(RuntimeException.class, () -> TestUtil.testCall(db, statement, (res) -> {}));
@@ -80,7 +72,7 @@ public class ExportStreamsStatementsTest {
     }
 
     @Test
-    public void shouldStreamCypherStatements() {
+    void shouldStreamCypherStatements() {
         String expected = String.format(":begin%n"
                 + "CREATE CONSTRAINT UNIQUE_IMPORT_NAME FOR (node:`UNIQUE IMPORT LABEL`) REQUIRE (node.`UNIQUE IMPORT ID`) IS UNIQUE;%n"
                 + ":commit%n"
@@ -108,7 +100,7 @@ public class ExportStreamsStatementsTest {
     }
 
     @Test
-    public void shouldNotExportCypherStatements() {
+    void shouldNotExportCypherStatements() {
         String statement = "CALL apoc.export.cypher.all('file.cypher', {})";
 
         RuntimeException e = assertThrows(RuntimeException.class, () -> TestUtil.testCall(db, statement, (res) -> {}));

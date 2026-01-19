@@ -33,7 +33,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -503,18 +502,18 @@ public class AtomicTest {
 
         // ADD
         TestUtil.testCall(db, match + " CALL apoc.atomic.add(n, 'person.age', 1) " + returnStmt, (r) -> {
-            Assert.assertEquals(1L, r.get("oldValue"));
-            Assert.assertEquals(2L, r.get("newValue"));
+            assertEquals(1L, r.get("oldValue"));
+            assertEquals(2L, r.get("newValue"));
         });
         // SUBTRACT
         TestUtil.testCall(db, match + " CALL apoc.atomic.subtract(n,'person.age', 1) " + returnStmt, (r) -> {
-            Assert.assertEquals(2L, r.get("oldValue"));
-            Assert.assertEquals(1L, r.get("newValue"));
+            assertEquals(2L, r.get("oldValue"));
+            assertEquals(1L, r.get("newValue"));
         });
         // CONCAT
         TestUtil.testCall(db, match + " CALL apoc.atomic.concat(n,'person.nickname', \"my\") " + returnStmt, (r) -> {
-            Assert.assertEquals("Tom", r.get("oldValue"));
-            Assert.assertEquals("Tommy", r.get("newValue"));
+            assertEquals("Tom", r.get("oldValue"));
+            assertEquals("Tommy", r.get("newValue"));
         });
         // INSERT
         TestUtil.testCall(db, match + " CALL apoc.atomic.insert(n,'person.friends', 1, \"Ron\") " + returnStmt, (r) -> {
@@ -529,8 +528,8 @@ public class AtomicTest {
         // UPDATE
         TestUtil.testCall(
                 db, match + " CALL apoc.atomic.update(n,'person.age','n.`person.age` * 3') " + returnStmt, (r) -> {
-                    Assert.assertEquals(1L, r.get("oldValue"));
-                    Assert.assertEquals(3L, r.get("newValue"));
+                    assertEquals(1L, r.get("oldValue"));
+                    assertEquals(3L, r.get("newValue"));
                 });
     }
 }

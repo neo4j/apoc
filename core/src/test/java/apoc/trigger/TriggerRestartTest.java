@@ -18,69 +18,74 @@
  */
 package apoc.trigger;
 
-import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
+import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.trigger.TriggerTestUtil.awaitTriggerDiscovered;
+import static apoc.util.TestUtil.testCallCountEventually;
 import static apoc.util.TestUtil.waitDbsAvailable;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.TestUtil;
-import java.io.IOException;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class TriggerRestartTest {
+    GraphDatabaseService db;
+    GraphDatabaseService sysDb;
 
-    @Rule
-    public TemporaryFolder store_dir = new TemporaryFolder();
+    @Inject
+    DatabaseManagementService databaseManagementService;
 
-    private GraphDatabaseService db;
-    private GraphDatabaseService sysDb;
-    private DatabaseManagementService databaseManagementService;
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        System.setProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
+        System.setProperty("apoc.trigger.enabled", "true");
+        builder.setConfigRaw(Map.of("internal.dbms.debug.track_cursor_close", "true"));
+        builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+    }
 
-    // we cannot set via apocConfig().setProperty(apoc.trigger.refresh, ...) in `@Before`, because is too late
-    @ClassRule
-    public static final ProvideSystemProperty systemPropertyRule =
-            new ProvideSystemProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
-
-    // we cannot set via apocConfig().setProperty(apoc.trigger.enabled, ...) in `@Before`, because is too late
-    @ClassRule
-    public static final ProvideSystemProperty systemPropertyRule2 =
-            new ProvideSystemProperty(APOC_TRIGGER_ENABLED, String.valueOf(true));
-
-    @Before
-    public void setUp() throws IOException {
-        databaseManagementService =
-                new TestDatabaseManagementServiceBuilder(store_dir.getRoot().toPath()).build();
-        db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
-        sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
+    @BeforeAll
+    void beforeAll() {
+        this.sysDb = databaseManagementService.database("system");
+        this.db = databaseManagementService.database("neo4j");
         waitDbsAvailable(db, sysDb);
         TestUtil.registerProcedure(db, TriggerNewProcedures.class, Trigger.class);
     }
 
-    @After
-    public void tearDown() {
+    private void restartDb() {
+        final Path homeDir =
+                ((GraphDatabaseAPI) db).databaseLayout().getNeo4jLayout().homeDirectory();
         databaseManagementService.shutdown();
+        // Recreate DBMS with the same configuration used in the @ExtensionCallback configure()
+        // and using the same home/store directory as the currently running database
+        TestDatabaseManagementServiceBuilder builder = new TestDatabaseManagementServiceBuilder(homeDir);
+        builder.setConfigRaw(Map.of("internal.dbms.debug.track_cursor_close", "true"));
+        builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+        databaseManagementService = builder.build();
+        db = databaseManagementService.database("neo4j");
+        sysDb = databaseManagementService.database("system");
+        waitDbsAvailable(db, sysDb);
+        TestUtil.registerProcedure(db, TriggerNewProcedures.class, Trigger.class);
     }
 
-    private void restartDb() {
-        databaseManagementService.shutdown();
-        databaseManagementService =
-                new TestDatabaseManagementServiceBuilder(store_dir.getRoot().toPath()).build();
-        db = databaseManagementService.database(GraphDatabaseSettings.DEFAULT_DATABASE_NAME);
-        sysDb = databaseManagementService.database(GraphDatabaseSettings.SYSTEM_DATABASE_NAME);
-        waitDbsAvailable(db, sysDb);
+    @AfterEach
+    public void after() {
+        db.executeTransactionally("CALL apoc.trigger.removeAll()");
+        testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
     @Test
@@ -130,9 +135,15 @@ public class TriggerRestartTest {
         restartDb();
 
         db.executeTransactionally("CREATE (p:Person{id:2, trigger: 0})");
-        TestUtil.testCall(
-                db, "match (n:Person{id:1}) return n.trigger as trigger", r -> assertEquals(1L, r.get("trigger")));
-        TestUtil.testCall(
-                db, "match (n:Person{id:2}) return n.trigger as trigger", r -> assertEquals(1L, r.get("trigger")));
+        TestUtil.testCallEventually(
+                db,
+                "match (n:Person{id:1}) return n.trigger as trigger",
+                r -> assertEquals(1L, r.get("trigger")),
+                TIMEOUT);
+        TestUtil.testCallEventually(
+                db,
+                "match (n:Person{id:2}) return n.trigger as trigger",
+                r -> assertEquals(1L, r.get("trigger")),
+                TIMEOUT);
     }
 }

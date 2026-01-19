@@ -29,40 +29,48 @@ import static org.junit.Assert.assertEquals;
 import apoc.load.LoadJson;
 import apoc.load.Xml;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class LoadRelativePathTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.allow_file_urls, true)
-            .withSetting(
+    @Inject
+    GraphDatabaseService db;
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.allow_file_urls, true);
+        try {
+            builder.setConfig(
                     GraphDatabaseSettings.load_csv_file_url_root,
                     Path.of(RESOURCE.toURI()).getParent());
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static final URL RESOURCE =
             LoadRelativePathTest.class.getClassLoader().getResource("map.json");
 
-    public LoadRelativePathTest() throws URISyntaxException {}
-
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUpAll() {
         TestUtil.registerProcedure(db, LoadJson.class, Xml.class);
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeEach
+    public void setUp() {
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }
 
     // JSON

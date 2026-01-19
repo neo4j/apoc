@@ -18,21 +18,20 @@
  */
 package apoc.trigger;
 
-import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
-import static apoc.ApocConfig.apocConfig;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.Result;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
 /**
  * CYPHER 5 only; moved to extended for Cypher 25
@@ -44,27 +43,26 @@ import org.neo4j.test.rule.ImpermanentDbmsRule;
  *
  * NOTE: this test class expects every method to fail with a RuntimeException
  */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class TriggerDisabledTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+    @Inject
+    private GraphDatabaseAPI db;
 
-    @BeforeClass
-    public static void setUp() {
-        apocConfig().setProperty(APOC_TRIGGER_ENABLED, false);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+    }
+
+    @BeforeAll
+    public void setUp() {
         TestUtil.registerProcedure(db, Trigger.class);
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testTriggerDisabledList() {
+    void testTriggerDisabledList() {
+        // Expected a runtime error when running apoc.trigger.list with triggers disabled
         Exception e = assertThrows(
-                "Expected a runtime error when running apoc.trigger.list with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally(
                         "CALL apoc.trigger.list() YIELD name RETURN name", Map.of(), Result::resultAsString));
@@ -72,9 +70,9 @@ public class TriggerDisabledTest {
     }
 
     @Test
-    public void testTriggerDisabledAdd() {
+    void testTriggerDisabledAdd() {
+        // Expected a runtime error when running apoc.trigger.add with triggers disabled.
         Exception e = assertThrows(
-                "Expected a runtime error when running apoc.trigger.add with triggers disabled.",
                 RuntimeException.class,
                 () -> db.executeTransactionally(
                         "CALL apoc.trigger.add('test-trigger', 'RETURN 1', {phase: 'before'}) YIELD name RETURN name"));
@@ -82,38 +80,34 @@ public class TriggerDisabledTest {
     }
 
     @Test
-    public void testTriggerDisabledRemove() {
+    void testTriggerDisabledRemove() {
+        // Expected a runtime error when running apoc.trigger.remove with triggers disabled.
         Exception e = assertThrows(
-                "Expected a runtime error when running apoc.trigger.remove with triggers disabled.",
-                RuntimeException.class,
-                () -> db.executeTransactionally("CALL apoc.trigger.remove('test-trigger')"));
+                RuntimeException.class, () -> db.executeTransactionally("CALL apoc.trigger.remove('test-trigger')"));
         assertEquals(expectedDisabledError("apoc.trigger.remove"), e.getMessage());
     }
 
     @Test
-    public void testTriggerDisabledRemoveAll() {
-        Exception e = assertThrows(
-                "Expected a runtime error when running apoc.trigger.removeAll with triggers disabled.",
-                RuntimeException.class,
-                () -> db.executeTransactionally("CALL apoc.trigger.removeAll()"));
+    void testTriggerDisabledRemoveAll() {
+        // Expected a runtime error when running apoc.trigger.removeAll with triggers disabled.
+        Exception e =
+                assertThrows(RuntimeException.class, () -> db.executeTransactionally("CALL apoc.trigger.removeAll()"));
         assertEquals(expectedDisabledError("apoc.trigger.removeAll"), e.getMessage());
     }
 
     @Test
-    public void testTriggerDisabledResume() {
+    void testTriggerDisabledResume() {
+        // Expected a runtime error when running apoc.trigger.resume with triggers disabled.
         Exception e = assertThrows(
-                "Expected a runtime error when running apoc.trigger.resume with triggers disabled.",
-                RuntimeException.class,
-                () -> db.executeTransactionally("CALL apoc.trigger.resume('test-trigger')"));
+                RuntimeException.class, () -> db.executeTransactionally("CALL apoc.trigger.resume('test-trigger')"));
         assertEquals(expectedDisabledError("apoc.trigger.resume"), e.getMessage());
     }
 
     @Test
-    public void testTriggerDisabledPause() {
+    void testTriggerDisabledPause() {
+        // Expected a runtime error when running apoc.trigger.pause with triggers disabled.
         Exception e = assertThrows(
-                "Expected a runtime error when running apoc.trigger.pause with triggers disabled.",
-                RuntimeException.class,
-                () -> db.executeTransactionally("CALL apoc.trigger.pause('test-trigger')"));
+                RuntimeException.class, () -> db.executeTransactionally("CALL apoc.trigger.pause('test-trigger')"));
         assertEquals(expectedDisabledError("apoc.trigger.pause"), e.getMessage());
     }
 

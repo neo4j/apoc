@@ -22,9 +22,9 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.MapUtil.map;
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
@@ -32,6 +32,7 @@ import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -40,14 +41,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class ExportCsvNeo4jAdminTest {
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_TYPES_NODE = String.format(
@@ -63,7 +66,7 @@ public class ExportCsvNeo4jAdminTest {
             String.format("\":ID\";\"street\";\"name\";\"city\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_USER =
-            String.format("\":ID\";\"name\";\"age:long\";\":LABEL\"%n");
+            String.format("\":ID\";\"age:long\";\"name\";\":LABEL\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_NODE_USER1 =
             String.format("\":ID\";\"name\";\"age:long\";\"male:boolean\";\"kids\";\":LABEL\"%n");
@@ -81,7 +84,7 @@ public class ExportCsvNeo4jAdminTest {
             String.format("\"3\";\"Via Garibaldi, 7\";\"Andrea\";\"Milano\";\"Address1;Address\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_USER =
-            String.format("\"1\";\"bar\";\"42\";\"User\"%n" + "\"2\";\"\";\"12\";\"User\"%n");
+            String.format("\"1\";\"42\";\"bar\";\"User\"%n" + "\"2\";\"12\";\"\";\"User\"%n");
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_NODE_USER1 = String.format(
             "\"0\";\"foo \"\"the\"\" bar\";\"42\";\"true\";\"[\"\"a\"\",\"\"b\"\",\"\"c\"\"]\";\"User1;User\"%n");
@@ -100,16 +103,24 @@ public class ExportCsvNeo4jAdminTest {
         directory.mkdirs();
     }
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void before() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
+    }
+
+    @BeforeAll
+    void setUpAll() {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
+    }
+
+    @BeforeEach
+    void setUp() {
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally(
                 "CREATE (f:User1:User {name:'foo \"the\" bar',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
         db.executeTransactionally(
@@ -118,51 +129,46 @@ public class ExportCsvNeo4jAdminTest {
                 "CREATE (a:Types {date: date('2018-10-30'), localDateTime: localdatetime('20181030T19:32:24'), dateTime: datetime('2018-10-30T12:50:35.556+0100'), localtime: localtime('12:50:35.556'), duration: duration('P5M1DT12H'), time: time('125035.556+0100'), born_2D: point({ x: 2.3, y: 4.5 }), born_3D:point({ longitude: 56.7, latitude: 12.78, height: 100 })})");
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithCompressionNone() {
+    void testCypherExportCsvForAdminNeo4jImportWithCompressionNone() {
         String fileBaseName = "query_nodes_no_compress_and_Ext";
         String fileExpectedExt = ".csv";
         assertionTestExportForAdminNeo4jImport(CompressionAlgo.NONE, fileBaseName, fileExpectedExt);
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithCompressionNoneWithoutExtension() {
+    void testCypherExportCsvForAdminNeo4jImportWithCompressionNoneWithoutExtension() {
         String fileBaseName = "query_nodes_no_compress";
         assertionTestExportForAdminNeo4jImport(CompressionAlgo.NONE, fileBaseName, "");
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithCompressionNoneAndMultiDotInName() {
+    void testCypherExportCsvForAdminNeo4jImportWithCompressionNoneAndMultiDotInName() {
         String fileBaseName = "query_nodes.dots.in";
         String fileExpectedExt = ".name";
         assertionTestExportForAdminNeo4jImport(CompressionAlgo.NONE, fileBaseName, fileExpectedExt);
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithConfigWithCompression() {
+    void testCypherExportCsvForAdminNeo4jImportWithConfigWithCompression() {
         String fileBaseName = "query_nodes_with_csvgz_ext.csv";
         assertionTestExportForAdminNeo4jImport(GZIP, fileBaseName, GZIP_EXT);
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithCompressionAndWithoutExtension() {
+    void testCypherExportCsvForAdminNeo4jImportWithCompressionAndWithoutExtension() {
         String fileBaseName = "query_nodes_with_ext";
         assertionTestExportForAdminNeo4jImport(GZIP, fileBaseName, GZIP_EXT);
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithCompressionAndWithoutAnyExtension() {
+    void testCypherExportCsvForAdminNeo4jImportWithCompressionAndWithoutAnyExtension() {
         String fileBaseName = "query_nodes_with_no_ext";
         assertionTestExportForAdminNeo4jImport(GZIP, fileBaseName, "");
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportWithCompressionAndWithoutExtensionAndMultiDotInName() {
+    void testCypherExportCsvForAdminNeo4jImportWithCompressionAndWithoutExtensionAndMultiDotInName() {
         String fileBaseName = "query_nodes_with_ext.dots.name";
         assertionTestExportForAdminNeo4jImport(GZIP, fileBaseName, GZIP_EXT);
     }
@@ -254,17 +260,17 @@ public class ExportCsvNeo4jAdminTest {
     }
 
     @Test
-    public void testExportGraphNeo4jAdminCsvWithoutFileExt() {
+    void testExportGraphNeo4jAdminCsvWithoutFileExt() {
         testExportGraphNeo4jAdminCsvCommon("graph_with_no_ext", "");
     }
 
     @Test
-    public void testExportGraphNeo4jAdminCsvWithFileExt() {
+    void testExportGraphNeo4jAdminCsvWithFileExt() {
         testExportGraphNeo4jAdminCsvCommon("graph", ".csv");
     }
 
     @Test
-    public void testExportGraphNeo4jAdminCsvWithFileExtMultiDotInName() {
+    void testExportGraphNeo4jAdminCsvWithFileExtMultiDotInName() {
         testExportGraphNeo4jAdminCsvCommon("graph.multi.dots.name.file", ".csv");
     }
 
@@ -357,7 +363,7 @@ public class ExportCsvNeo4jAdminTest {
     }
 
     @Test
-    public void testCypherExportCsvForAdminNeo4jImportExceptionBulk() {
+    void testCypherExportCsvForAdminNeo4jImportExceptionBulk() {
         String fileName = "query_nodes.csv";
         RuntimeException e = assertThrows(
                 RuntimeException.class,
@@ -384,7 +390,7 @@ public class ExportCsvNeo4jAdminTest {
     }
 
     @Test
-    public void testExportCypherWithIdField() {
+    void testExportCypherWithIdField() {
         // given
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         final Map<String, Object> map = db.executeTransactionally(

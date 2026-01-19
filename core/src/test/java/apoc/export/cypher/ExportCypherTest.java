@@ -31,16 +31,21 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
 import apoc.HelperProcedures;
+import apoc.cypher.Cypher;
 import apoc.export.util.ExportConfig;
+import apoc.graph.Graphs;
+import apoc.schema.Schemas;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,25 +58,21 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import junit.framework.TestCase;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.export.DatabaseSubGraph;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 22.05.16
- */
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class ExportCypherTest {
     private static final String queryWithRelOnly = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN rel";
     private static final String queryWithStartAndRel = "MATCH (start:Foo)-[rel:KNOWS]->(end:Bar) RETURN start, rel";
@@ -97,35 +98,38 @@ public class ExportCypherTest {
         directory.mkdirs();
     }
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath())
-            .withSetting(
-                    newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
-                            .build(),
-                    false)
-            .withSetting(
-                    newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false)
-            // Test assertions depends on sequential ids
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
+    @Inject
+    GraphDatabaseService db;
 
-    @Rule
-    public TestName testName = new TestName();
-
-    @Before
-    public void setUp() {
-        ExportCypherTestUtils.setUp(db, testName);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) throws java.io.IOException {
+        builder.setConfig(
+                GraphDatabaseSettings.load_csv_file_url_root,
+                directory.getCanonicalFile().toPath());
+        builder.setConfig(GraphDatabaseSettings.db_format, "aligned");
+        builder.setConfig(
+                newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
+                        .build(),
+                false);
+        builder.setConfig(
+                newBuilder("internal.dbms.debug.trace_cursors", BOOL, false).build(), false);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    public void registerProcedures() {
+        TestUtil.registerProcedure(
+                db, ExportCypher.class, Graphs.class, Schemas.class, Cypher.class, HelperProcedures.class);
+    }
+
+    @BeforeEach
+    public void setUp(org.junit.jupiter.api.TestInfo testInfo) {
+        String methodName =
+                testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("");
+        ExportCypherTestUtils.setUp(db, methodName);
     }
 
     @Test
-    public void testRoundTripCypherExportAll() {
+    void testRoundTripCypherExportAll() {
         final String cypherStatements = Util.readResourceFile("exportAll.cypher");
         db.executeTransactionally("CALL apoc.cypher.runMany($statements, {})", map("statements", cypherStatements));
 
@@ -139,7 +143,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testCypherRoundTrip() {
+    void testCypherRoundTrip() {
         // Set up
         db.executeTransactionally(
                 """
@@ -191,7 +195,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testUniqueNodeLabels() {
+    void testUniqueNodeLabels() {
         // Check the unique node test doesn't fail if the node has extra non-unique constrained labels
         String createExtraNodes = "MATCH (n) SET n:EXTRA_LABEL";
         db.executeTransactionally(createExtraNodes);
@@ -205,7 +209,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherResults() {
+    void testExportAllCypherResults() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.export.cypher.all(null,{useOptimizations: { type: 'none'}, format: 'neo4j-shell'})",
@@ -216,14 +220,14 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherStreaming() {
+    void testExportAllCypherStreaming() {
         final String query =
                 "CALL apoc.export.cypher.all(null,{useOptimizations: { type: 'none'}, streamStatements:true,batchSize:3, format: 'neo4j-shell'})";
         assertExportAllCypherStreaming(CompressionAlgo.NONE, query);
     }
 
     @Test
-    public void testExportAllWithCompressionCypherStreaming() {
+    void testExportAllWithCompressionCypherStreaming() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
         final String query = "CALL apoc.export.cypher.all(null,{compression: '" + algo.name()
                 + "', useOptimizations: { type: 'none'}, streamStatements:true,batchSize:3, format: 'neo4j-shell'})";
@@ -231,7 +235,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllWithStreamingSeparatedAndCompressedFile() {
+    void testExportAllWithStreamingSeparatedAndCompressedFile() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
         final Map<String, Object> config = map(
                 "compression",
@@ -282,7 +286,7 @@ public class ExportCypherTest {
 
     // -- Whole file test -- //
     @Test
-    public void testExportAllCypherDefault() {
+    void testExportAllCypherDefault() {
         String fileName = "all.cypher";
         TestUtil.testCall(
                 db,
@@ -293,7 +297,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherForCypherShell() {
+    void testExportAllCypherForCypherShell() {
         String fileName = "all.cypher";
         TestUtil.testCall(
                 db,
@@ -304,7 +308,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherForNeo4j() {
+    void testExportQueryCypherForNeo4j() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
         TestUtil.testCall(
@@ -322,7 +326,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryOnlyRel() {
+    void testExportQueryOnlyRel() {
         final Map<String, Object> config = withoutOptimization(map("format", "neo4j-shell"));
         Map<String, Object> params = Map.of("query", queryWithRelOnly, "config", config);
         assertExportRelOnly(params, exportQuery);
@@ -332,7 +336,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryOnlyRelWithNodeOfRelsTrue() {
+    void testExportQueryOnlyRelWithNodeOfRelsTrue() {
         // check that `nodesOfRelationships: true` doesn't change the result
         final Map<String, Object> config =
                 withoutOptimization(map("format", "neo4j-shell", "nodesOfRelationships", true));
@@ -344,7 +348,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryOnlyRelAndStart() {
+    void testExportQueryOnlyRelAndStart() {
         final Map<String, Object> config = withoutOptimization(map("format", "neo4j-shell"));
         Map<String, Object> params = Map.of("query", queryWithStartAndRel, "config", config);
         assertExportWithoutEndNode(params, exportQuery);
@@ -354,7 +358,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryOnlyRelAndStartWithNodeOfRelsTrue() {
+    void testExportQueryOnlyRelAndStartWithNodeOfRelsTrue() {
         // check that with {nodesOfRelationships: true} the end node is returned as well
         final Map<String, Object> config =
                 withoutOptimization(map("format", "neo4j-shell", "nodesOfRelationships", true));
@@ -397,13 +401,13 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportCypherAdminOperationErrorMessage() {
+    void testExportCypherAdminOperationErrorMessage() {
         String filename = "test.cypher";
         List<String> invalidQueries =
                 List.of("SHOW CONSTRAINTS YIELD id, name, type RETURN *", "SHOW INDEXES YIELD id, name, type RETURN *");
 
         for (String query : invalidQueries) {
-            QueryExecutionException e = Assert.assertThrows(
+            QueryExecutionException e = assertThrows(
                     QueryExecutionException.class,
                     () -> TestUtil.testCall(
                             db,
@@ -427,7 +431,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportGraphCypher() {
+    void testExportGraphCypher() {
         String fileName = "graph.cypher";
         TestUtil.testCall(
                 db,
@@ -446,7 +450,7 @@ public class ExportCypherTest {
 
     // -- Separate files tests -- //
     @Test
-    public void testExportAllCypherNodes() {
+    void testExportAllCypherNodes() {
         String fileName = "all.cypher";
         TestUtil.testCall(
                 db,
@@ -457,7 +461,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherRelationships() {
+    void testExportAllCypherRelationships() {
         String fileName = "all.cypher";
         TestUtil.testCall(
                 db,
@@ -468,7 +472,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherSchema() {
+    void testExportAllCypherSchema() {
         String fileName = "all.cypher";
         TestUtil.testCall(
                 db,
@@ -479,7 +483,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherSchemaWithSaveIdxNames() {
+    void testExportAllCypherSchemaWithSaveIdxNames() {
         final Map<String, Object> config = new HashMap<>(ExportCypherTest.exportConfig);
         config.put("saveIndexNames", true);
         String fileName = "all.cypher";
@@ -492,7 +496,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherCleanUp() {
+    void testExportAllCypherCleanUp() {
         String fileName = "all.cypher";
         TestUtil.testCall(
                 db,
@@ -503,7 +507,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportGraphCypherNodes() {
+    void testExportGraphCypherNodes() {
         String fileName = "graph.cypher";
         TestUtil.testCall(
                 db,
@@ -517,7 +521,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportGraphCypherRelationships() {
+    void testExportGraphCypherRelationships() {
         String fileName = "graph.cypher";
         TestUtil.testCall(
                 db,
@@ -531,7 +535,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportGraphCypherSchema() {
+    void testExportGraphCypherSchema() {
         String fileName = "graph.cypher";
         TestUtil.testCall(
                 db,
@@ -545,7 +549,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportGraphCypherCleanUp() {
+    void testExportGraphCypherCleanUp() {
         String fileName = "graph.cypher";
         TestUtil.testCall(
                 db,
@@ -569,7 +573,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherPlainFormat() {
+    void testExportQueryCypherPlainFormat() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
         TestUtil.testCall(
@@ -587,7 +591,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherFormatUpdateAll() {
+    void testExportQueryCypherFormatUpdateAll() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
         TestUtil.testCall(
@@ -611,7 +615,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherFormatAddStructure() {
+    void testExportQueryCypherFormatAddStructure() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
         TestUtil.testCall(
@@ -640,7 +644,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherFormatUpdateStructure() {
+    void testExportQueryCypherFormatUpdateStructure() {
         String fileName = "all.cypher";
         String query = "MATCH (n) OPTIONAL MATCH p = (n)-[r]-(m) RETURN n,r,m";
         TestUtil.testCall(
@@ -669,7 +673,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportSchemaCypher() {
+    void testExportSchemaCypher() {
         String fileName = "onlySchema.cypher";
         TestUtil.testCall(
                 db,
@@ -680,7 +684,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportSchemaCypherWithStreamTrue() {
+    void testExportSchemaCypherWithStreamTrue() {
         Consumer<Map<String, Object>> resultAssertion = (r) -> {
             Object actual = r.get("cypherStatements");
             assertEquals(EXPECTED_ONLY_SCHEMA_CYPHER_SHELL, actual);
@@ -701,7 +705,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportSchemaCypherWithIdxNames() {
+    void testExportSchemaCypherWithIdxNames() {
         final Map<String, Object> config = new HashMap<>(ExportCypherTest.exportConfig);
         config.putAll(map("saveIndexNames", true));
         String fileName = "onlySchema.cypher";
@@ -714,7 +718,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportSchemaCypherShell() {
+    void testExportSchemaCypherShell() {
         String fileName = "onlySchema.cypher";
         TestUtil.testCall(
                 db,
@@ -729,7 +733,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportCypherNodePoint() {
+    void testExportCypherNodePoint() {
         db.executeTransactionally("CREATE (f:Test {name:'foo'," + "place2d:point({ x: 2.3, y: 4.5 }),"
                 + "place3d1:point({ x: 2.3, y: 4.5 , z: 1.2})})"
                 + "-[:FRIEND_OF {place2d:point({ longitude: 56.7, latitude: 12.78 })}]->"
@@ -751,7 +755,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportCypherNodeDate() {
+    void testExportCypherNodeDate() {
         db.executeTransactionally("CREATE (f:Test {name:'foo', " + "date:date('2018-10-30'), "
                 + "datetime:datetime('2018-10-30T12:50:35.556+0100'), "
                 + "localTime:localdatetime('20181030T19:32:24')})"
@@ -774,7 +778,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportCypherNodeTime() {
+    void testExportCypherNodeTime() {
         db.executeTransactionally("CREATE (f:Test {name:'foo', " + "local:localtime('12:50:35.556'),"
                 + "t:time('125035.556+0100')})"
                 + "-[:FRIEND_OF {t:time('125035.556+0100')}]->"
@@ -796,7 +800,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportCypherNodeDuration() {
+    void testExportCypherNodeDuration() {
         db.executeTransactionally("CREATE (f:Test {name:'foo', " + "duration:duration('P5M1.5D')})"
                 + "-[:FRIEND_OF {duration:duration('P5M1.5D')}]->"
                 + "(:Bar {duration:duration('P5M1.5D')})");
@@ -817,7 +821,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportWithAscendingLabels() {
+    void testExportWithAscendingLabels() {
         db.executeTransactionally("CREATE (f:User:User1:User0:User12 {name:'Alan'})");
         String fileName = "ascendingLabels.cypher";
         String query = "MATCH (f:User) WHERE f.name='Alan' RETURN f";
@@ -836,7 +840,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherDefaultWithUnwindBatchSizeOptimized() {
+    void testExportAllCypherDefaultWithUnwindBatchSizeOptimized() {
         String fileName = "allDefaultOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -847,7 +851,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherDefaultOptimized() {
+    void testExportAllCypherDefaultOptimized() {
         String fileName = "allDefaultOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -858,7 +862,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherDefaultSeparatedFilesOptimized() {
+    void testExportAllCypherDefaultSeparatedFilesOptimized() {
         String fileName = "allDefaultOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -872,7 +876,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherWithIfNotExistsFalseOptimized() {
+    void testExportAllCypherWithIfNotExistsFalseOptimized() {
         String fileName = "ifNotExists.cypher";
         TestUtil.testCall(
                 db,
@@ -890,7 +894,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherCypherShellWithUnwindBatchSizeOptimized() {
+    void testExportAllCypherCypherShellWithUnwindBatchSizeOptimized() {
         String fileName = "allCypherShellOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -901,7 +905,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherCypherShellOptimized() {
+    void testExportAllCypherCypherShellOptimized() {
         String fileName = "allCypherShellOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -912,7 +916,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherPlainWithUnwindBatchSizeOptimized() {
+    void testExportAllCypherPlainWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -923,7 +927,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherPlainAddStructureWithUnwindBatchSizeOptimized() {
+    void testExportAllCypherPlainAddStructureWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainAddStructureOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -934,7 +938,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherPlainUpdateStructureWithUnwindBatchSizeOptimized() {
+    void testExportAllCypherPlainUpdateStructureWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainUpdateStructureOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -952,7 +956,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherPlainUpdateAllWithUnwindBatchSizeOptimized() {
+    void testExportAllCypherPlainUpdateAllWithUnwindBatchSizeOptimized() {
         String fileName = "allPlainUpdateAllOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -963,7 +967,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOptimized() {
+    void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOptimized() {
         String fileName = "allPlainOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -974,7 +978,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherShellWithCompressionWithUnwindBatchSizeWithBatchSizeOptimized() {
+    void testExportQueryCypherShellWithCompressionWithUnwindBatchSizeWithBatchSizeOptimized() {
         final CompressionAlgo algo = CompressionAlgo.DEFLATE;
         String fileName = "allPlainOptimized.cypher.ZZ";
         TestUtil.testCall(
@@ -987,7 +991,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOddDataset() {
+    void testExportQueryCypherShellWithUnwindBatchSizeWithBatchSizeOddDataset() {
         String fileName = "allPlainOdd.cypher";
         TestUtil.testCall(
                 db,
@@ -998,7 +1002,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherShellUnwindBatchParamsWithOddDataset() {
+    void testExportQueryCypherShellUnwindBatchParamsWithOddDataset() {
         String fileName = "allPlainOdd.cypher";
         TestUtil.testCall(
                 db,
@@ -1009,7 +1013,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportWithCompressionQueryCypherShellUnwindBatchParamsWithOddDataset() {
+    void testExportWithCompressionQueryCypherShellUnwindBatchParamsWithOddDataset() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
         String fileName = "allPlainOdd.cypher.bz2";
         TestUtil.testCall(
@@ -1022,7 +1026,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportAllCypherPlainOptimized() {
+    void testExportAllCypherPlainOptimized() {
         String fileName = "queryPlainOptimized.cypher";
         TestUtil.testCall(
                 db,
@@ -1047,7 +1051,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testExportQueryCypherShellUnwindBatchParamsWithOddBatchSizeOddDataset() {
+    void testExportQueryCypherShellUnwindBatchParamsWithOddBatchSizeOddDataset() {
         db.executeTransactionally("CREATE (:Bar {name:'bar3',age:35}), (:Bar {name:'bar4',age:36})");
         String fileName = "allPlainOddNew.cypher";
         TestUtil.testCall(
@@ -1060,7 +1064,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void exportMultiTokenIndex() {
+    void exportMultiTokenIndex() {
         // given
         db.executeTransactionally("CREATE (n:TempNode {value:'value', value2:'value'})");
         db.executeTransactionally("CREATE (n:TempNode2 {value:'value', value:'value2'})");
@@ -1093,7 +1097,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldExportFulltextIndexForRelationship() {
+    void shouldExportFulltextIndexForRelationship() {
         // given
         createFullTextRelIndex();
         String query = "MATCH (t:TempNode)-[r:REL{rel_value: 'the rel value'}]->(e:TempNode2) return t,r";
@@ -1107,7 +1111,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldExportDataWithFulltextIndexForRelationship() {
+    void shouldExportDataWithFulltextIndexForRelationship() {
         createFullTextRelIndex();
         Map<String, Object> config = map("awaitForIndexes", 3000);
         TestUtil.testCall(
@@ -1124,7 +1128,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldExportGraphWithFulltextIndexForRelationship() {
+    void shouldExportGraphWithFulltextIndexForRelationship() {
         createFullTextRelIndex();
         Map<String, Object> config = map("awaitForIndexes", 3000);
         TestUtil.testCall(
@@ -1142,7 +1146,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldExportGraphWithFulltextIndexes() {
+    void shouldExportGraphWithFulltextIndexes() {
         createFullTextNodeAndRelIndex();
 
         TestUtil.testCall(
@@ -1157,7 +1161,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldExportDataWithFulltextIndexes() {
+    void shouldExportDataWithFulltextIndexes() {
         createFullTextNodeAndRelIndex();
 
         TestUtil.testCall(
@@ -1171,7 +1175,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldExportQueryWithFulltextIndexes() {
+    void shouldExportQueryWithFulltextIndexes() {
         createFullTextNodeAndRelIndex();
 
         TestUtil.testCall(
@@ -1200,7 +1204,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldNotCreateUniqueImportIdForUniqueConstraint() {
+    void shouldNotCreateUniqueImportIdForUniqueConstraint() {
         db.executeTransactionally("CREATE (n:Bar:Baz{name: 'A'})");
         String query = "MATCH (n:Baz) RETURN n";
         /* The bug was:
@@ -1226,7 +1230,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldManageBigNumbersCorrectly() {
+    void shouldManageBigNumbersCorrectly() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         db.executeTransactionally("CREATE (:Bar{name:'Foo', var1:1.416785E32}), (:Bar{name:'Bar', var1:12E4});");
         final String expected =
@@ -1248,7 +1252,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldQuotePropertyNameStartingWithDollarCharacter() {
+    void shouldQuotePropertyNameStartingWithDollarCharacter() {
         db.executeTransactionally("CREATE (n:Bar:Baz{name: 'A', `$lock`: true})");
         String query = "MATCH (n:Baz) RETURN n";
         final String expected = "UNWIND [{name:\"A\", properties:{`$lock`:true}}] AS row\n"
@@ -1269,7 +1273,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldHandleTwoLabelsWithOneUniqueConstraintEach() {
+    void shouldHandleTwoLabelsWithOneUniqueConstraintEach() {
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint1 FOR (b:Base) REQUIRE b.id IS UNIQUE");
         db.executeTransactionally("CREATE (b:Bar:Base {id:'waBfk3z', name:'barista',age:42})"
                 + "-[:KNOWS]->(f:Foo {name:'foosha', born:date('2018-10-31')})");
@@ -1305,7 +1309,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldHandleTwoLabelsWithTwoUniqueConstraintsEach() {
+    void shouldHandleTwoLabelsWithTwoUniqueConstraintsEach() {
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint1 FOR (b:Base) REQUIRE b.id IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint2 FOR (b:Base) REQUIRE b.oid IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT uniqueConstraint3 FOR (b:Bar) REQUIRE b.oname IS UNIQUE");
@@ -1336,7 +1340,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldSaveCorrectlyRelIndexesOptimized() {
+    void shouldSaveCorrectlyRelIndexesOptimized() {
         String fileName = "relIndex.cypher";
         db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
 
@@ -1349,7 +1353,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldSaveCorrectlyRelIndexesWithNameOptimized() {
+    void shouldSaveCorrectlyRelIndexesWithNameOptimized() {
         String fileName = "relIndex.cypher";
         db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
 
@@ -1368,7 +1372,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldSaveCorrectlyRelRangeIndexe() {
+    void shouldSaveCorrectlyRelRangeIndexe() {
         db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
 
         // check that `apoc.export.cypher.data`, `apoc.export.cypher.graph` and `apoc.export.cypher.query`
@@ -1405,7 +1409,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void shouldSaveCorrectlyRelRangeIndexWithName() {
+    void shouldSaveCorrectlyRelRangeIndexWithName() {
         db.executeTransactionally("CREATE RANGE INDEX rel_index_name FOR ()-[r:KNOWS]-() ON (r.since, r.foo)");
 
         // check that `apoc.export.cypher.data`, `apoc.export.cypher.graph` and `apoc.export.cypher.query`
@@ -1462,14 +1466,14 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatCreate() {
+    void testIssue2886OptimizationsNoneAndCypherFormatCreate() {
         final Map<String, Object> config = map("cypherFormat", "create");
         issue2886Common(
                 actual -> check2886FullStructureNonOptimized(actual, "create"), withoutOptimization(config), true);
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatAddStructure() {
+    void testIssue2886OptimizationsNoneAndCypherFormatAddStructure() {
         final Map<String, Object> config = map("cypherFormat", "addStructure");
         issue2886Common(
                 actual -> {
@@ -1484,7 +1488,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatUpdateStructure() {
+    void testIssue2886OptimizationsNoneAndCypherFormatUpdateStructure() {
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
         issue2886Common(
                 actual -> {
@@ -1497,20 +1501,20 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886OptimizationsNoneAndCypherFormatUpdateAll() {
+    void testIssue2886OptimizationsNoneAndCypherFormatUpdateAll() {
         final Map<String, Object> config = map("cypherFormat", "updateAll");
         issue2886Common(
                 actual -> check2886FullStructureNonOptimized(actual, "updateAll"), withoutOptimization(config), true);
     }
 
     @Test
-    public void testIssue2886CypherFormatCreate() {
+    void testIssue2886CypherFormatCreate() {
         final Map<String, Object> config = map("cypherFormat", "create");
         issue2886Common(actual -> check2886FullStructure(actual, "create"), config, true);
     }
 
     @Test
-    public void testIssue2886CypherFormatAddStructure() {
+    void testIssue2886CypherFormatAddStructure() {
         final Map<String, Object> config = map("cypherFormat", "addStructure");
         issue2886Common(
                 actual -> {
@@ -1525,7 +1529,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886CypherFormatUpdateStructure() {
+    void testIssue2886CypherFormatUpdateStructure() {
         final Map<String, Object> config = map("cypherFormat", "updateStructure");
         issue2886Common(
                 actual -> {
@@ -1538,7 +1542,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void exportInSameTransaction() {
+    void exportInSameTransaction() {
         db.executeTransactionally("CREATE (:COMMITED_NODE {p: 'node is committed'})");
         try (final var tx = db.beginTx()) {
             assertThat(tx.execute("CREATE (:`UNCOMITTED_NODE` {p: 'node not committed'})").stream())
@@ -1552,7 +1556,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testIssue2886CypherFormatUpdateAll() {
+    void testIssue2886CypherFormatUpdateAll() {
         final Map<String, Object> config = map("cypherFormat", "updateAll");
         issue2886Common(actual -> check2886FullStructure(actual, "updateAll"), config, true);
     }
@@ -1726,7 +1730,7 @@ public class ExportCypherTest {
                 assertTrue(regexMatch(
                         "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line4));
             }
-            default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            default -> TestCase.fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
     }
 
@@ -1774,7 +1778,7 @@ public class ExportCypherTest {
                         "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
                         line2));
             }
-            default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            default -> TestCase.fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
     }
 
@@ -1787,7 +1791,7 @@ public class ExportCypherTest {
             case "create" -> {
                 createOrMerge = "CREATE";
             }
-            default -> Assert.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            default -> TestCase.fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
 
         String[] lines = actual.split("[\r\n]+");
@@ -2491,7 +2495,7 @@ public class ExportCypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocCypherQuery() {
+    void testDifferentCypherVersionsApocCypherQuery() {
         db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {

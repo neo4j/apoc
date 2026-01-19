@@ -29,10 +29,10 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static java.util.Arrays.asList;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockserver.integration.ClientAndServer.startClientAndServer;
 import static org.mockserver.matchers.Times.exactly;
 import static org.mockserver.model.HttpRequest.request;
@@ -43,6 +43,7 @@ import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import java.io.File;
@@ -54,35 +55,52 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockserver.client.MockServerClient;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.model.Header;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class LoadJsonTest {
 
     private static ClientAndServer mockServer;
     private HttpServer server;
 
-    @BeforeClass
-    public static void startServer() {
+    @Inject
+    private GraphDatabaseService db;
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(GraphDatabaseSettings.memory_tracking, true);
+    }
+
+    @BeforeAll
+    void startServer() {
         mockServer = startClientAndServer(1080);
     }
 
-    @AfterClass
-    public static void stopServer() {
+    @BeforeAll
+    void beforeAll() {
+        TestUtil.registerProcedure(db, LoadJson.class);
+    }
+
+    @AfterAll
+    void stopServer() {
         mockServer.stop();
     }
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule().withSetting(GraphDatabaseSettings.memory_tracking, true);
-
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
@@ -91,7 +109,6 @@ public class LoadJsonTest {
                 .setProperty(
                         "apoc.json.simpleJson.url",
                         ClassLoader.getSystemResource("map.json").toString());
-        TestUtil.registerProcedure(db, LoadJson.class);
 
         server = HttpServer.create(new InetSocketAddress(5353), 0);
         HttpContext staticContext = server.createContext("/");
@@ -99,10 +116,9 @@ public class LoadJsonTest {
         server.start();
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         server.stop(0);
-        db.shutdown();
     }
 
     @Test
@@ -481,7 +497,7 @@ public class LoadJsonTest {
                         map("method", "POST", "Content-Type", "application/json")),
                 (row) -> {
                     Map<String, Object> value = (Map<String, Object>) row.get("value");
-                    assertFalse("value should be not empty", value.isEmpty());
+                    assertFalse(value.isEmpty());
                 });
     }
 

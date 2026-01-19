@@ -28,39 +28,50 @@ import static apoc.export.graphml.ExportGraphMLTestUtil.assertXMLEquals;
 import static apoc.export.graphml.ExportGraphMLTestUtil.setUpGraphMl;
 import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.AssertionsKt.assertNull;
 
+import apoc.HelperProcedures;
+import apoc.export.graphml.ExportGraphML;
+import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension
 public class ExportGraphMLS3Test extends S3BaseTest {
 
-    @Rule
-    public TestName testName = new TestName();
+    @Inject
+    GraphDatabaseService db;
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
-
-    @Before
-    public void setUp() {
-        setUpGraphMl(db, testName);
+    @BeforeAll
+    void setUpAll() {
+        S3BaseTest.baseBeforeClass();
+        TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class, HelperProcedures.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeEach
+    public void setUp(TestInfo testInfo) {
+        String methodName = testInfo.getTestMethod().map(m -> m.getName()).orElse("");
+        setUpGraphMl(db, methodName);
+    }
+
+    @AfterAll
+    static void teardownAll() {
+        S3BaseTest.tearDown();
     }
 
     @Test
-    public void testExportAllGraphML() {
+    void testExportAllGraphML() {
         String fileName = "all.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -72,7 +83,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphML() {
+    void testExportGraphGraphML() {
         String fileName = "graph.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -86,7 +97,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphMLTypes() {
+    void testExportGraphGraphMLTypes() {
         String fileName = "graph.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -101,7 +112,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephi() {
+    void testExportGraphGraphMLQueryGephi() {
         String fileName = "query.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -117,13 +128,13 @@ public class ExportGraphMLS3Test extends S3BaseTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXmlFileEquals(EXPECTED_TYPES_PATH, s3Url);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaption() {
+    void testExportGraphGraphMLQueryGephiWithArrayCaption() {
         String fileName = "query.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -139,13 +150,13 @@ public class ExportGraphMLS3Test extends S3BaseTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXmlFileEquals(EXPECTED_TYPES_PATH_CAPTION, s3Url);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() {
+    void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() {
         String fileName = "query.graphml";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -161,13 +172,13 @@ public class ExportGraphMLS3Test extends S3BaseTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXmlFileEquals(EXPECTED_TYPES_PATH_WRONG_CAPTION, s3Url);
     }
 
     @Test
-    public void testExportGraphmlQueryWithStringCaptionCamelCase() {
+    void testExportGraphmlQueryWithStringCaptionCamelCase() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally(
                 "CREATE (f:Foo:Foo2:Foo0 {firstName:'foo'})-[:KNOWS]->(b:Bar {name:'bar',ageNow:42}),(c:Bar {age:12,values:[1,2,3]})");
@@ -186,7 +197,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXmlFileEquals(EXPECTED_TYPES_PATH_CAMEL_CASE, s3Url);
     }
@@ -201,7 +212,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
         assertEquals(fileName, r.get("file"));
         if (r.get("source").toString().contains(":")) assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         else assertEquals("file", r.get("source"));
-        assertNull("data should be null", r.get("data"));
+        assertNull(r.get("data"));
     }
 
     private void assertCommons(Map<String, Object> r) {
@@ -209,6 +220,6 @@ public class ExportGraphMLS3Test extends S3BaseTest {
         assertEquals(1L, r.get("relationships"));
         assertEquals(8L, r.get("properties"));
         assertEquals("graphml", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+        assertTrue(((long) r.get("time")) > 0);
     }
 }

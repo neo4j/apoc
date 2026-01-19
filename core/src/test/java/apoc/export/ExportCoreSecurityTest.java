@@ -25,7 +25,8 @@ import static apoc.export.SecurityTestUtil.assertPathTraversalError;
 import static apoc.export.SecurityTestUtil.getApocProcedure;
 import static apoc.export.SecurityTestUtil.setExportFileApocConfigs;
 import static apoc.util.TestUtil.assertError;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.ApocConfig;
 import apoc.export.csv.ExportCSV;
@@ -35,31 +36,31 @@ import apoc.export.json.ExportJson;
 import apoc.util.FileUtils;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import com.nimbusds.jose.util.Pair;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-@RunWith(Enclosed.class)
+@EnterpriseDbmsExtension(configurationCallback = "configure")
 public class ExportCoreSecurityTest {
     private static final File directory = new File("target/import");
     private static final File directoryWithSamePrefix = new File("target/imported");
@@ -78,23 +79,20 @@ public class ExportCoreSecurityTest {
         directoryWithSamePrefix.mkdirs();
     }
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
-        Logger logger = Logger.getLogger(ExportCoreSecurityTest.class.getName());
-        logger.setLevel(Level.SEVERE);
-
-        TestUtil.registerProcedure(db, ExportCSV.class, ExportJson.class, ExportGraphML.class, ExportCypher.class);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void setUpAll() {
+        Logger logger = Logger.getLogger(ExportCoreSecurityTest.class.getName());
+        logger.setLevel(Level.SEVERE);
+        TestUtil.registerProcedure(db, ExportCSV.class, ExportJson.class, ExportGraphML.class, ExportCypher.class);
     }
 
     public static void setFileExport(boolean allowed) {
@@ -119,138 +117,93 @@ public class ExportCoreSecurityTest {
                 .toList();
     }
 
-    /**
-     * These test with `apoc.import.file.use_neo4j_config=true`
-     * should fail because they access a directory which isn't the configured directory
-     */
-    @RunWith(Parameterized.class)
-    public static class TestIllegalExternalFSAccess {
+    public static final Consumer<Map> EXCEPTION_OUTDIR_CONSUMER = (Map e) ->
+            assertError((Exception) e.get(ERROR_KEY), FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, (String)
+                    e.get(PROCEDURE_KEY));
+    public static final Consumer<Map> EXCEPTION_NOT_FOUND_CONSUMER = (Map e) ->
+            assertTrue(((Exception) e.get(ERROR_KEY)).getMessage().contains("test.txt (No such file or directory)"));
 
-        // these 2 consumers accept a Map.of("error", <errorMsg>, "procedure", <procedureQuery>)
-        public static final Consumer<Map> EXCEPTION_OUTDIR_CONSUMER = (Map e) -> assertError(
-                (Exception) e.get(ERROR_KEY), FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, (String)
-                        e.get(PROCEDURE_KEY));
-        public static final Consumer<Map> EXCEPTION_NOT_FOUND_CONSUMER = (Map e) -> assertTrue(
-                ((Exception) e.get(ERROR_KEY)).getMessage().contains("test.txt (No such file or directory)"));
+    private static final String case01 = "../imported/" + FILENAME;
+    private static final String case02 = "tests/../../imported/" + FILENAME;
+    private static final String case03 = "../" + FILENAME;
+    private static final String case04 = "file:../" + FILENAME;
+    private static final String case05 = "file:..//" + FILENAME;
+    public static final List<String> casesAllowed = Arrays.asList(case03, case04, case05);
+    private static final String case07 = "tests/../../" + FILENAME;
+    private static final String case08 = "tests/..//..//" + FILENAME;
+    public static final List<String> casesOutsideDir =
+            Arrays.asList(case01, case02, case03, case04, case05, case07, case08);
+    private static final String nonExistingDirectory = "__non-existing-dir__";
+    private static final String case10 =
+            "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/" + nonExistingDirectory + "/" + FILENAME;
+    private static final String case11 = String.format("file://../../../../%s/%s", nonExistingDirectory, FILENAME);
+    private static final String case12 =
+            String.format("file:///..//..//..//..//%s//core//..//%s", nonExistingDirectory, FILENAME);
+    private static final String case13 = String.format("file:///..//..//..//..//%s/%s", nonExistingDirectory, FILENAME);
+    private static final String case14 = String.format(
+            "file://" + directory.getAbsolutePath() + "//..//..//..//..//%s/%s", nonExistingDirectory, FILENAME);
+    private static final String case15 = "file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/"
+            + nonExistingDirectory + "/" + FILENAME;
+    public static final List<String> casesNotExistingDir =
+            Arrays.asList(case10, case11, case12, case13, case14, case15);
+    public static List<Pair<String, Consumer<Map>>> dataPairs;
 
-        private final String apocProcedure;
-        private final String fileName;
-        private final Consumer consumer;
+    static {
+        dataPairs = casesOutsideDir.stream()
+                .map(i -> Pair.of(i, EXCEPTION_OUTDIR_CONSUMER))
+                .collect(Collectors.toList());
 
-        public TestIllegalExternalFSAccess(
-                String exportMethod,
-                String exportMethodType,
-                String exportMethodArguments,
-                String fileName,
-                Consumer consumer) {
-            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
-            this.fileName = fileName;
-            this.consumer = consumer;
-        }
+        List<Pair<String, Consumer<Map>>> notExistingDirList = casesNotExistingDir.stream()
+                .map(i -> Pair.of(i, EXCEPTION_NOT_FOUND_CONSUMER))
+                .toList();
 
-        /*
-         * These test cases attempt to access a directory with the same prefix as the import directory. This is design to
-         * test "directoryName.startsWith" logic which is a common path traversal bug.
-         * All these tests should fail because they access a directory which isn't the configured directory
-         */
-        private static final String case01 = "../imported/" + FILENAME;
-        private static final String case02 = "tests/../../imported/" + FILENAME;
-        private static final String case03 = "../" + FILENAME;
-        private static final String case04 = "file:../" + FILENAME;
-        private static final String case05 = "file:..//" + FILENAME;
+        dataPairs.addAll(notExistingDirList);
+    }
 
-        // non-failing cases, with apoc.import.file.use_neo4j_config=false
-        public static final List<String> casesAllowed = Arrays.asList(case03, case04, case05);
+    static Stream<Arguments> illegalExternalData() {
+        return ExportCoreSecurityTest.getParameterData(dataPairs).stream()
+                .map(arr -> Arguments.of(
+                        getApocProcedure((String) arr[0], (String) arr[1], (String) arr[2]),
+                        (String) arr[3],
+                        (Consumer<Map>) arr[4]));
+    }
 
-        private static final String case07 = "tests/../../" + FILENAME;
-        private static final String case08 = "tests/..//..//" + FILENAME;
+    @ParameterizedTest(name = PARAM_NAMES)
+    @MethodSource("illegalExternalData")
+    void testsWithExportDisabled(String apocProcedure, String fileName, Consumer<Map> consumer) {
+        SecurityTestUtil.testsWithExportDisabled(db, apocProcedure, fileName);
+    }
 
-        public static final List<String> casesOutsideDir =
-                Arrays.asList(case01, case02, case03, case04, case05, case07, case08);
+    @ParameterizedTest(name = PARAM_NAMES)
+    @MethodSource("illegalExternalData")
+    void testIllegalExternalFSAccessExportWithExportAndUseNeo4jConfEnabled(
+            String apocProcedure, String fileName, Consumer<Map> consumer) {
+        // apoc.import.file.allow_read_from_filesystem=false
+        setExportFileApocConfigs(true, true, false);
+        assertPathTraversalError(db, apocProcedure, Map.of("fileName", fileName), consumer);
 
-        /*
-        All of these will resolve to a local path after normalization which will point to
-        a non-existing directory in our import folder: /apoc. Causing them to error that is
-        not found. They all attempt to exit the import folder back to the apoc folder:
-        Directory Layout: .../apoc/core/target/import
-        */
-        private static final String nonExistingDirectory = "__non-existing-dir__";
-        private static final String case10 =
-                "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/" + nonExistingDirectory + "/" + FILENAME;
-        private static final String case11 = String.format("file://../../../../%s/%s", nonExistingDirectory, FILENAME);
-        private static final String case12 =
-                String.format("file:///..//..//..//..//%s//core//..//%s", nonExistingDirectory, FILENAME);
-        private static final String case13 =
-                String.format("file:///..//..//..//..//%s/%s", nonExistingDirectory, FILENAME);
-        private static final String case14 = String.format(
-                "file://" + directory.getAbsolutePath() + "//..//..//..//..//%s/%s", nonExistingDirectory, FILENAME);
-        private static final String case15 = "file:///%252e%252e%252f%252e%252e%252f%252e%252e%252f%252e%252e%252f/"
-                + nonExistingDirectory + "/" + FILENAME;
+        // apoc.import.file.allow_read_from_filesystem=true
+        setExportFileApocConfigs(true, true, true);
+        assertPathTraversalError(db, apocProcedure, Map.of("fileName", fileName), consumer);
+    }
 
-        public static final List<String> casesNotExistingDir =
-                Arrays.asList(case10, case11, case12, case13, case14, case15);
+    @ParameterizedTest(name = PARAM_NAMES)
+    @MethodSource("illegalExternalData")
+    void testWithUseNeo4jConfDisabledExternal(String apocProcedure, String fileName, Consumer<Map> consumer) {
+        // apoc.import.file.allow_read_from_filesystem=true
+        setExportFileApocConfigs(true, false, true);
+        testWithUseNeo4jConfFalse(apocProcedure, fileName);
 
-        public static List<Pair<String, Consumer<Map>>> dataPairs;
+        // apoc.import.file.allow_read_from_filesystem=false
+        setExportFileApocConfigs(true, false, false);
+        testWithUseNeo4jConfFalse(apocProcedure, fileName);
+    }
 
-        static {
-            dataPairs = casesOutsideDir.stream()
-                    .map(i -> Pair.of(i, EXCEPTION_OUTDIR_CONSUMER))
-                    .collect(Collectors.toList());
-
-            List<Pair<String, Consumer<Map>>> notExistingDirList = casesNotExistingDir.stream()
-                    .map(i -> Pair.of(i, EXCEPTION_NOT_FOUND_CONSUMER))
-                    .toList();
-
-            dataPairs.addAll(notExistingDirList);
-        }
-
-        @Parameterized.Parameters(name = PARAM_NAMES)
-        public static Collection<Object[]> data() {
-            return ExportCoreSecurityTest.getParameterData(dataPairs);
-        }
-
-        @Test
-        public void testsWithExportDisabled() {
-            SecurityTestUtil.testsWithExportDisabled(db, apocProcedure, fileName);
-        }
-
-        @Test
-        public void testIllegalExternalFSAccessExportWithExportAndUseNeo4jConfEnabled() {
-            // all assertions with `apoc.export.file.enabled=true` and `apoc.import.file.use_neo4j_config=true`
-
-            // apoc.import.file.allow_read_from_filesystem=false
-            setExportFileApocConfigs(true, true, false);
-            assertPathTraversalError(db, apocProcedure, Map.of("fileName", fileName), consumer);
-
-            // apoc.import.file.allow_read_from_filesystem=true
-            setExportFileApocConfigs(true, true, true);
-            assertPathTraversalError(db, apocProcedure, Map.of("fileName", fileName), consumer);
-        }
-
-        @Test
-        public void testWithUseNeo4jConfDisabled() {
-            // all assertions with `apoc.export.file.enabled=true` and `apoc.import.file.use_neo4j_config=false`
-
-            // apoc.import.file.allow_read_from_filesystem=true
-            setExportFileApocConfigs(true, false, true);
-            testWithUseNeo4jConfFalse();
-
-            // apoc.import.file.allow_read_from_filesystem=false
-            setExportFileApocConfigs(true, false, false);
-            testWithUseNeo4jConfFalse();
-        }
-
-        private void testWithUseNeo4jConfFalse() {
-
-            try {
-                assertPathTraversalWithoutErrors();
-            } catch (QueryExecutionException e) {
-                EXCEPTION_NOT_FOUND_CONSUMER.accept(Util.map(ERROR_KEY, e, PROCEDURE_KEY, apocProcedure));
-            }
-        }
-
-        private void assertPathTraversalWithoutErrors() {
+    private void testWithUseNeo4jConfFalse(String apocProcedure, String fileName) {
+        try {
             SecurityTestUtil.assertPathTraversalWithoutErrors(db, apocProcedure, fileName, new File("../", FILENAME));
+        } catch (QueryExecutionException e) {
+            EXCEPTION_NOT_FOUND_CONSUMER.accept(Util.map(ERROR_KEY, e, PROCEDURE_KEY, apocProcedure));
         }
     }
 
@@ -258,143 +211,114 @@ public class ExportCoreSecurityTest {
      * These tests normalize the path to be within the import directory (or subdirectory) and make the file there.
      * Some attempt to exit the directory.
      */
-    @RunWith(Parameterized.class)
-    public static class TestPathTraversalIsNormalisedWithinDirectory {
+    public static final Consumer<Map> MAIN_DIR_CONSUMER =
+            (r) -> assertTrue(((String) r.get("file")).contains("" + FILENAME));
 
-        public static final Consumer<Map> MAIN_DIR_CONSUMER =
-                (r) -> assertTrue(((String) r.get("file")).contains("" + FILENAME));
-        public static final Consumer<Map> SUB_DIR_CONSUMER =
-                (r) -> assertTrue(((String) r.get("file")).contains("tests/" + FILENAME));
+    public static final Consumer<Map> SUB_DIR_CONSUMER =
+            (r) -> assertTrue(((String) r.get("file")).contains("tests/" + FILENAME));
 
-        private final String apocProcedure;
-        private final String fileName;
-        private final Consumer consumer;
+    /**
+     * These tests normalize the path to be within the import directory and make the file there.
+     * They result in a file being created (and deleted after).
+     */
+    private static final String caseBase = "./" + FILENAME;
 
-        public TestPathTraversalIsNormalisedWithinDirectory(
-                String exportMethod,
-                String exportMethodType,
-                String exportMethodArguments,
-                String fileName,
-                Consumer consumer) {
-            this.apocProcedure = getApocProcedure(exportMethod, exportMethodType, exportMethodArguments);
-            this.fileName = fileName;
-            this.consumer = consumer;
-        }
+    private static final String ncase01 = "file:///..//..//..//..//apoc//..//..//..//..//" + FILENAME;
+    private static final String ncase02 = "file:///..//..//..//..//apoc//..//" + FILENAME;
+    private static final String ncase03 = "file:///../import/../import//..//" + FILENAME;
+    private static final String ncase04 = "file://" + FILENAME;
+    private static final String ncase05 = "file://tests/../" + FILENAME;
+    private static final String ncase06 = "file:///tests//..//" + FILENAME;
+    private static final String ncase07 = "" + FILENAME;
+    private static final String ncase08 = "file:///..//..//..//..//" + FILENAME;
+    private static final String ncase09 = "file:///%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f/" + FILENAME;
+    public static final String ncase10 = "file:///%2e%2e%2f%2f" + FILENAME;
 
-        /*
-        These tests normalize the path to be within the import directory and make the file there.
-        They result in a file being created (and deleted after).
-        */
-        private static final String caseBase = "./" + FILENAME;
+    public static final List<String> mainDirCases = Arrays.asList(
+            caseBase, ncase01, ncase02, ncase03, ncase04, ncase05, ncase06, ncase07, ncase08, ncase09, ncase10);
 
-        private static final String case01 = "file:///..//..//..//..//apoc//..//..//..//..//" + FILENAME;
-        private static final String case02 = "file:///..//..//..//..//apoc//..//" + FILENAME;
-        private static final String case03 = "file:///../import/../import//..//" + FILENAME;
-        private static final String case04 = "file://" + FILENAME;
-        private static final String case05 = "file://tests/../" + FILENAME;
-        private static final String case06 = "file:///tests//..//" + FILENAME;
-        private static final String case07 = "" + FILENAME;
-        private static final String case08 = "file:///..//..//..//..//" + FILENAME;
-        private static final String case09 = "file:///%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f%2e%2e%2f%2f/" + FILENAME;
-        public static final String case10 = "file:///%2e%2e%2f%2f" + FILENAME;
+    /**
+     * These tests normalize the path to be within the import directory and step into a subdirectory
+     * to make the file there.
+     * They result in a file in the directory /tests being created (and deleted after).
+     */
+    private static final String ncase11 = "file:///../import/../import//..//tests/" + FILENAME;
 
-        public static final List<String> mainDirCases =
-                Arrays.asList(caseBase, case01, case02, case03, case04, case05, case06, case07, case08, case09, case10);
+    private static final String ncase12 = "file:///..//..//..//..//apoc//..//tests/" + FILENAME;
+    private static final String ncase13 = "file:///../import/../import//..//tests/../tests/" + FILENAME;
+    private static final String ncase14 = "file:///tests/" + FILENAME;
+    private static final String ncase15 = "tests/" + FILENAME;
 
-        /*
-        These tests normalize the path to be within the import directory and step into a subdirectory
-        to make the file there.
-        They result in a file in the directory /tests being created (and deleted after).
-        */
-        private static final String case11 = "file:///../import/../import//..//tests/" + FILENAME;
-        private static final String case12 = "file:///..//..//..//..//apoc//..//tests/" + FILENAME;
-        private static final String case13 = "file:///../import/../import//..//tests/../tests/" + FILENAME;
-        private static final String case14 = "file:///tests/" + FILENAME;
-        private static final String case15 = "tests/" + FILENAME;
+    public static final List<String> subDirCases = Arrays.asList(ncase11, ncase12, ncase13, ncase14, ncase15);
 
-        public static final List<String> subDirCases = Arrays.asList(case11, case12, case13, case14, case15);
+    static Stream<Arguments> traversalData() {
+        List<Pair<String, Consumer<Map>>> collect =
+                mainDirCases.stream().map(i -> Pair.of(i, MAIN_DIR_CONSUMER)).collect(Collectors.toList());
+        List<Pair<String, Consumer<Map>>> collect2 =
+                subDirCases.stream().map(i -> Pair.of(i, SUB_DIR_CONSUMER)).toList();
+        collect.addAll(collect2);
 
-        @Parameterized.Parameters(name = PARAM_NAMES)
-        public static Collection<Object[]> data() {
-            List<Pair<String, Consumer<Map>>> collect = mainDirCases.stream()
-                    .map(i -> Pair.of(i, MAIN_DIR_CONSUMER))
-                    .collect(Collectors.toList());
-            List<Pair<String, Consumer<Map>>> collect2 =
-                    subDirCases.stream().map(i -> Pair.of(i, SUB_DIR_CONSUMER)).toList();
-            collect.addAll(collect2);
-
-            return getParameterData(collect);
-        }
-
-        @Test
-        public void testPathTraversal() {
-            File dir = getDir();
-            setExportFileApocConfigs(true, true, false);
-
-            assertPathTraversalWithoutErrors(dir);
-        }
-
-        @Test
-        public void testIllegalFSAccessExport() {
-            SecurityTestUtil.testsWithExportDisabled(db, apocProcedure, fileName);
-        }
-
-        @Test
-        public void testWithUseNeo4jConfDisabled() {
-            // all assertions with `apoc.export.file.enabled=true` and `apoc.import.file.use_neo4j_config=true`
-
-            File dir = getDir();
-
-            // apoc.import.file.allow_read_from_filesystem=false
-            setExportFileApocConfigs(true, true, false);
-            assertPathTraversalWithoutErrors(dir);
-
-            // apoc.import.file.allow_read_from_filesystem=true
-            setExportFileApocConfigs(true, true, true);
-            assertPathTraversalWithoutErrors(dir);
-        }
-
-        private File getDir() {
-            if (subDirCases.contains(fileName)) {
-                return subDirectory;
-            }
-            return directory;
-        }
-
-        private void assertPathTraversalWithoutErrors(File directory) {
-            File file = new File(directory.getAbsolutePath(), FILENAME);
-            SecurityTestUtil.assertPathTraversalWithoutErrors(db, apocProcedure, fileName, file);
-        }
-
-        // tests with `apoc.import.file.use_neo4j_config=false` not implemented because the results can be different
-        // e.g. based on project folder name, so the exported file can be basically everywhere
-
+        return getParameterData(collect).stream()
+                .map(arr -> Arguments.of(
+                        getApocProcedure((String) arr[0], (String) arr[1], (String) arr[2]),
+                        (String) arr[3],
+                        (Consumer<Map>) arr[4]));
     }
 
-    public static class TestCypherSchema {
-        private final String apocProcedure = "CALL apoc.export.cypher.schema(%s)";
+    @ParameterizedTest(name = PARAM_NAMES)
+    @MethodSource("traversalData")
+    void testPathTraversal(String apocProcedure, String fileName, Consumer<Map> consumer) {
+        File dir = subDirCases.contains(fileName) ? subDirectory : directory;
+        setExportFileApocConfigs(true, true, false);
 
-        @Test
-        public void testIllegalFSAccessExportCypherSchema() {
-            setFileExport(false);
-            QueryExecutionException e = Assert.assertThrows(
-                    QueryExecutionException.class,
-                    () -> TestUtil.testCall(db, String.format(apocProcedure, "'./hello', {}"), (r) -> {}));
-            assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocProcedure);
-        }
+        File file = new File(dir.getAbsolutePath(), FILENAME);
+        SecurityTestUtil.assertPathTraversalWithoutErrors(db, apocProcedure, fileName, file);
+    }
 
-        @Test
-        public void testIllegalExternalFSAccessExportCypherSchema() {
-            setFileExport(true);
-            assertPathTraversalError(
-                    db,
-                    String.format(apocProcedure, "'../hello', {}"),
-                    Map.of(),
-                    e -> assertError(
-                            (Exception) e.get(ERROR_KEY),
-                            FileUtils.ACCESS_OUTSIDE_DIR_ERROR,
-                            IOException.class,
-                            (String) e.get(PROCEDURE_KEY)));
-        }
+    @ParameterizedTest(name = PARAM_NAMES)
+    @MethodSource("traversalData")
+    void testIllegalFSAccessExport(String apocProcedure, String fileName, Consumer<Map> consumer) {
+        SecurityTestUtil.testsWithExportDisabled(db, apocProcedure, fileName);
+    }
+
+    @ParameterizedTest(name = PARAM_NAMES)
+    @MethodSource("traversalData")
+    void testWithUseNeo4jConfDisabledNormalised(String apocProcedure, String fileName, Consumer<Map> consumer) {
+        File dir = subDirCases.contains(fileName) ? subDirectory : directory;
+        File file = new File(dir.getAbsolutePath(), FILENAME);
+
+        // apoc.import.file.allow_read_from_filesystem=false
+        setExportFileApocConfigs(true, true, false);
+        SecurityTestUtil.assertPathTraversalWithoutErrors(db, apocProcedure, fileName, file);
+
+        // apoc.import.file.allow_read_from_filesystem=true
+        setExportFileApocConfigs(true, true, true);
+        SecurityTestUtil.assertPathTraversalWithoutErrors(db, apocProcedure, fileName, file);
+    }
+
+    // tests with `apoc.import.file.use_neo4j_config=false` not implemented because results can vary by project path
+    // e.g. based on project folder name, so the exported file can be basically everywhere
+
+    private final String apocSchemaProc = "CALL apoc.export.cypher.schema(%s)";
+
+    @Test
+    void testIllegalFSAccessExportCypherSchema() {
+        setFileExport(false);
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> TestUtil.testCall(db, String.format(apocSchemaProc, "'./hello', {}"), (r) -> {}));
+        assertError(e, ApocConfig.EXPORT_TO_FILE_ERROR, RuntimeException.class, apocSchemaProc);
+    }
+
+    @Test
+    void testIllegalExternalFSAccessExportCypherSchema() {
+        setFileExport(true);
+        assertPathTraversalError(
+                db,
+                String.format(apocSchemaProc, "'../hello', {}"),
+                Map.of(),
+                e -> assertError(
+                        (Exception) e.get(ERROR_KEY), FileUtils.ACCESS_OUTSIDE_DIR_ERROR, IOException.class, (String)
+                                e.get(PROCEDURE_KEY)));
     }
 }

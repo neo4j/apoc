@@ -25,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -83,7 +82,7 @@ public class PercentilesTest {
     private static void assertSameValues(List<Double> expected, Object values) {
         List<Double> doubleValues = (List<Double>) values;
         for (int i = 0; i < expected.size(); i++) {
-            Assert.assertEquals(expected.get(i), doubleValues.get(i), 0.0001);
+            assertEquals(expected.get(i), doubleValues.get(i), 0.0001);
         }
     }
 }

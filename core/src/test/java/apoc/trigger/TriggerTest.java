@@ -18,25 +18,28 @@
  */
 package apoc.trigger;
 
-import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
+import static apoc.trigger.TriggerTestUtil.TIMEOUT;
+import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.util.MapUtil.map;
-import static apoc.util.TestUtil.testCall;
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.fail;
+import static apoc.util.TestUtil.testCallCountEventually;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.ProvideSystemProperty;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.dbms.api.DatabaseManagementService;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
@@ -44,49 +47,64 @@ import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.impl.coreapi.TransactionImpl;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
 /**
  * CYPHER 5 only; moved to extended for Cypher 25
  */
+@EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 public class TriggerTest {
+    private static final File directory = new File("target/conf");
 
-    // we cannot set via apocConfig().setProperty(apoc.trigger.enabled, ...) in `@Before`, because is too late
-    @ClassRule
-    public static final ProvideSystemProperty systemPropertyRule =
-            new ProvideSystemProperty(APOC_TRIGGER_ENABLED, String.valueOf(true));
+    @Inject
+    GraphDatabaseService db;
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+    GraphDatabaseService sysDb;
+
+    @Inject
+    DatabaseManagementService dbms;
+
+    static { //noinspection ResultOfMethodCallIgnored
+        directory.mkdirs();
+    }
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        System.setProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
+        System.setProperty("apoc.trigger.enabled", "true");
+        builder.setConfigRaw(Map.of("internal.dbms.debug.track_cursor_close", "true"));
+        builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
+    }
+
+    @BeforeAll
+    void beforeAll() {
+        start = System.currentTimeMillis();
+        this.sysDb = dbms.database("system");
+        TestUtil.registerProcedure(db, Nodes.class, Trigger.class);
+    }
+
+    @AfterEach
+    public void after() {
+        db.executeTransactionally("CALL apoc.trigger.removeAll()");
+        testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    }
 
     private long start;
 
-    @Before
-    public void setUp() {
-        start = System.currentTimeMillis();
-        TestUtil.registerProcedure(db, Trigger.class, Nodes.class);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
-    }
-
     @Test
-    public void testInstallTriggerInSystemDb() {
+    void testInstallTriggerInSystemDb() {
         // Can't add triggers for system because apoc.trigger.add is does not have the @System annotation
-        try {
-            final var system = db.getManagementService().database("system");
-            testCall(system, "CALL apoc.trigger.add('name', 'SHOW DATABASES', {})", r -> fail(""));
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains("Not a recognised system command or procedure"));
-        }
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> sysDb.executeTransactionally("CALL apoc.trigger.add('name', 'SHOW DATABASES', {})"));
+        assertTrue(e.getMessage().contains("Not a recognised system command or procedure"));
     }
 
     @Test
-    public void testListTriggers() {
+    void testListTriggers() {
         String query = "MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])";
 
         TestUtil.testCallCount(
@@ -99,7 +117,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveNode() {
+    void testRemoveNode() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)");
         db.executeTransactionally(
@@ -111,7 +129,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testIssue2247() {
+    void testIssue2247() {
         db.executeTransactionally("CREATE (n:ToBeDeleted)");
         db.executeTransactionally("CALL apoc.trigger.add('myTrig', 'RETURN 1', {phase: 'afterAsync'})");
 
@@ -121,7 +139,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveRelationship() {
+    void testRemoveRelationship() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)-[:X]->(f)");
         db.executeTransactionally(
@@ -133,7 +151,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveTrigger() {
+    void testRemoveTrigger() {
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed','RETURN 1',{}) YIELD name RETURN name", 1);
         TestUtil.testCall(db, "CALL apoc.trigger.list()", (row) -> {
             assertEquals("to-be-removed", row.get("name"));
@@ -155,7 +173,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testRemoveAllTrigger() {
+    void testRemoveAllTrigger() {
         TestUtil.testCallCount(db, "CALL apoc.trigger.removeAll()", 0);
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed-1','RETURN 1',{}) YIELD name RETURN name", 1);
         TestUtil.testCallCount(db, "CALL apoc.trigger.add('to-be-removed-2','RETURN 2',{}) YIELD name RETURN name", 1);
@@ -178,7 +196,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTimeStampTrigger() {
+    void testTimeStampTrigger() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('timestamp','UNWIND $createdNodes AS n SET n.ts = timestamp()',{})");
         db.executeTransactionally("CREATE (f:Foo)");
@@ -188,7 +206,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTxIdAfterAsync() {
+    void testTxIdAfterAsync() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('txinfo','UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime',{phase:'afterAsync'})");
         db.executeTransactionally("CREATE (f:Bar)");
@@ -203,7 +221,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTxId() {
+    void testTxId() {
         db.executeTransactionally("CREATE (f:Another)");
         db.executeTransactionally(
                 "CALL apoc.trigger.add('txinfo','UNWIND $createdNodes AS n \n" + "MATCH (a:Another) WITH a, n\n"
@@ -217,14 +235,14 @@ public class TriggerTest {
     }
 
     @Test
-    public void testMetaDataBefore() {
+    void testMetaDataBefore() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('txinfo','UNWIND $createdNodes AS n SET n.label = labels(n)[0], n += $metaData', {phase: 'before'})");
         testMetaData("MATCH (n:Bar) RETURN n");
     }
 
     @Test
-    public void testMetaDataAfter() {
+    void testMetaDataAfter() {
         db.executeTransactionally("CREATE (n:Another)");
         db.executeTransactionally(
                 "CALL apoc.trigger.add('txinfo', 'UNWIND $createdNodes AS n MATCH (a:Another) SET a.label = labels(n)[0], a += $metaData', {phase: 'after'})");
@@ -247,7 +265,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testPauseResult() {
+    void testPauseResult() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('pausedTest', 'UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime', {phase: 'after'})");
         TestUtil.testCall(db, "CALL apoc.trigger.pause('pausedTest')", (row) -> {
@@ -258,7 +276,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testPauseOnCallList() {
+    void testPauseOnCallList() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('test', 'UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime', {phase: 'after'})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
@@ -270,7 +288,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testResumeResult() {
+    void testResumeResult() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('test', 'UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime', {phase: 'after'})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
@@ -282,7 +300,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTriggerPause() {
+    void testTriggerPause() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime',{})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
@@ -295,7 +313,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testTriggerResume() {
+    void testTriggerResume() {
         db.executeTransactionally(
                 "CALL apoc.trigger.add('test','UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime',{})");
         db.executeTransactionally("CALL apoc.trigger.pause('test')");
@@ -309,7 +327,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void showThrowAnExceptionOnBrokenCypherQuery() {
+    void showThrowAnExceptionOnBrokenCypherQuery() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> db.executeTransactionally(
@@ -321,7 +339,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testCreatedRelationshipsAsync() {
+    void testCreatedRelationshipsAsync() {
         db.executeTransactionally("CREATE (:A {name: \"A\"})-[:R1]->(:Z {name: \"Z\"})");
         db.executeTransactionally("CALL apoc.trigger.add('trigger-after-async', 'UNWIND $createdRelationships AS r\n"
                 + "MATCH (a:A)-[r]->(z:Z)\n"
@@ -339,7 +357,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testDeleteRelationshipsAsync() {
+    void testDeleteRelationshipsAsync() {
         db.executeTransactionally(
                 "CREATE (a:A {name: \"A\"})-[:R1 {omega: 3}]->(z:Z {name: \"Z\"}), (a)-[:R2 {alpha: 1}]->(z)");
         final String query = "UNWIND $deletedRelationships AS r\n" + "MATCH (a)-[r1:R1]->(z)\n"
@@ -352,7 +370,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testDeleteRelationshipsAsyncWithCreationInQuery() {
+    void testDeleteRelationshipsAsyncWithCreationInQuery() {
         db.executeTransactionally(
                 "CREATE (a:A {name: \"A\"})-[:R1 {omega: 3}]->(z:Z {name: \"Z\"}), (a)-[:R2 {alpha: 1}]->(z)");
         final String query = "UNWIND $deletedRelationships AS r\n" + "CREATE (a:A)-[r1:R1 {omega: 3}]->(z)\n"
@@ -365,7 +383,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testDeleteNodesAsync() {
+    void testDeleteNodesAsync() {
         db.executeTransactionally(
                 "CREATE (a:A {name: 'A'})-[:R1 {omega: 3}]->(z:Z {name: 'Z'}), (:R2:Other {alpha: 1})");
         final String query = "UNWIND $deletedNodes AS n\n" + "MATCH (a)-[r1:R1]->(z)\n"
@@ -379,7 +397,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testDeleteNodesAsyncWithCreationQuery() {
+    void testDeleteNodesAsyncWithCreationQuery() {
         db.executeTransactionally("CREATE (:R2:Other {alpha: 1})");
         final String query = "UNWIND $deletedNodes AS n\n" + "CREATE (a:A)-[r1:R1 {omega: 3}]->(z:Z)\n"
                 + "SET a.alpha = apoc.any.property(n, \"alpha\"), r1.triggerAfterAsync = size($deletedNodes) > 0, r1.size = size($deletedNodes), r1.deleted = apoc.node.labels(n)[0] RETURN *";
@@ -409,7 +427,7 @@ public class TriggerTest {
     }
 
     @Test
-    public void testDeleteRelationships() {
+    void testDeleteRelationships() {
         db.executeTransactionally("CREATE (a:A {name: \"A\"})-[:R1]->(z:Z {name: \"Z\"}), (a)-[:R2]->(z)");
         db.executeTransactionally("CALL apoc.trigger.add('trigger-after', 'UNWIND $deletedRelationships AS r\n"
                 + "MERGE (a:AA{name: \"AA\"})\n"

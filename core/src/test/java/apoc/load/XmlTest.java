@@ -38,6 +38,7 @@ import apoc.util.TransactionTestUtil;
 import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import apoc.xml.XmlTestUtils;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import java.io.File;
@@ -51,29 +52,34 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
+@EnterpriseDbmsExtension
 public class XmlTest {
     public static final String FILE_SHORTENED =
             "src/test/resources/xml/humboldt_soemmering01_1791.TEI-P5-shortened.xml";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
     private HttpServer server;
 
-    @Before
+    @BeforeAll
+    void setUpAll() {
+        TestUtil.registerProcedure(db, Xml.class);
+    }
+
+    @BeforeEach
     public void setUp() throws IOException {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
-        TestUtil.registerProcedure(db, Xml.class);
 
         server = HttpServer.create(new InetSocketAddress(6363), 0);
         HttpContext staticContext = server.createContext("/");
@@ -81,14 +87,13 @@ public class XmlTest {
         server.start();
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         server.stop(0);
-        db.shutdown();
     }
 
     @Test
-    public void testLoadXml() {
+    void testLoadXml() {
         testCall(
                 db,
                 "CALL apoc.load.xml('file:databases.xml')",
@@ -96,13 +101,13 @@ public class XmlTest {
     }
 
     @Test
-    public void testTerminateLoadXml() {
+    void testTerminateLoadXml() {
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
         TransactionTestUtil.checkTerminationGuard(db, "CALL apoc.load.xml($file)", Map.of("file", file));
     }
 
     @Test
-    public void testLoadXmlAsStream() {
+    void testLoadXmlAsStream() {
         testResult(db, "CALL apoc.load.xml('file:databases.xml', '/parent/child')", (res) -> {
             final ResourceIterator<Map<String, Object>> value = res.columnAs("value");
             final Map<String, String> expectedFirstRow =
@@ -131,7 +136,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testMixedContent() {
+    void testMixedContent() {
         testCall(
                 db,
                 "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/mixedcontent.xml") + "')",
@@ -139,7 +144,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testMixedContentWithBinary() {
+    void testMixedContentWithBinary() {
         testCall(
                 db,
                 "CALL apoc.load.xml($data, null, $config)",
@@ -165,7 +170,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testBookIds() {
+    void testBookIds() {
         testResult(
                 db,
                 String.format(
@@ -184,7 +189,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testFilterIntoCollection() {
+    void testFilterIntoCollection() {
         testResult(
                 db,
                 String.format(
@@ -221,7 +226,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testReturnCollectionElements() {
+    void testReturnCollectionElements() {
         testResult(
                 db,
                 String.format(
@@ -259,7 +264,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlXpathAuthorFromBookId() {
+    void testLoadXmlXpathAuthorFromBookId() {
         testCall(
                 db,
                 String.format(
@@ -275,7 +280,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlXpathGenreFromBookTitle() {
+    void testLoadXmlXpathGenreFromBookTitle() {
         testCall(
                 db,
                 String.format(
@@ -291,7 +296,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlXpathReturnBookFromBookTitle() {
+    void testLoadXmlXpathReturnBookFromBookTitle() {
         testCall(
                 db,
                 String.format(
@@ -307,7 +312,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlXpathBooKsFromGenre() {
+    void testLoadXmlXpathBooKsFromGenre() {
         testResult(
                 db,
                 String.format(
@@ -363,7 +368,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlNoFailOnError() {
+    void testLoadXmlNoFailOnError() {
         testCall(
                 db,
                 "CALL apoc.load.xml('file:src/test/resources/books.xm', '', {failOnError:false}) YIELD value AS result",
@@ -374,7 +379,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlWithNextWordRels() {
+    void testLoadXmlWithNextWordRels() {
         assertThrows(
                 "usage of `createNextWordRelationships` is no longer allowed. Use `{relType:'NEXT_WORD', label:'XmlWord'}` instead.",
                 QueryExecutionException.class,
@@ -383,7 +388,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlWithNextWordRelsWithBinaryFile() {
+    void testLoadXmlWithNextWordRelsWithBinaryFile() {
         final String query = "CALL apoc.import.xml($data, $config) YIELD node";
         final String compression = CompressionAlgo.GZIP.name();
         final Map<String, Object> config = Map.of(
@@ -403,7 +408,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlWithNextWordRelsWithNewConfigOptions() {
+    void testLoadXmlWithNextWordRelsWithNewConfigOptions() {
         final String query = "CALL apoc.import.xml('file:" + FILE_SHORTENED + "', "
                 + "{relType: 'NEXT_WORD', label: 'XmlWord', filterLeadingWhitespace: true}) YIELD node";
         commonAssertionsWithNextWordRels(query, Collections.emptyMap());
@@ -439,7 +444,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlWithNextEntityRels() {
+    void testLoadXmlWithNextEntityRels() {
         testCall(
                 db,
                 String.format(
@@ -477,7 +482,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromZip() {
+    void testLoadXmlFromZip() {
         testResult(
                 db,
                 """
@@ -494,7 +499,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromTar() {
+    void testLoadXmlFromTar() {
         testResult(
                 db,
                 """
@@ -511,7 +516,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromTarGz() {
+    void testLoadXmlFromTarGz() {
         testResult(
                 db,
                 """
@@ -528,7 +533,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromTgz() {
+    void testLoadXmlFromTgz() {
         testResult(
                 db,
                 """
@@ -545,7 +550,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromZipByUrl() {
+    void testLoadXmlFromZipByUrl() {
         testResult(
                 db,
                 """
@@ -562,7 +567,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromTarByUrl() {
+    void testLoadXmlFromTarByUrl() {
         testResult(
                 db,
                 """
@@ -579,7 +584,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromTarGzByUrl() {
+    void testLoadXmlFromTarGzByUrl() {
         testResult(
                 db,
                 """
@@ -596,7 +601,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlFromTgzByUrl() {
+    void testLoadXmlFromTgzByUrl() {
         testResult(
                 db,
                 """
@@ -613,7 +618,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlSingleLineSimple() {
+    void testLoadXmlSingleLineSimple() {
         testCall(
                 db,
                 "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/singleLine.xml") + "', '/', null, true)",
@@ -623,14 +628,14 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlSingleLine() {
+    void testLoadXmlSingleLine() {
         testCall(db, "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/singleLine.xml") + "')", (row) -> {
             assertEquals(XmlTestUtils.XML_AS_SINGLE_LINE, row.get("value"));
         });
     }
 
     @Test
-    public void testParse() {
+    void testParse() {
         testCall(
                 db,
                 "WITH '<?xml version=\"1.0\"?><table><tr><td><img src=\"pix/logo-tl.gif\"></img></td></tr></table>' AS xmlString RETURN apoc.xml.parse(xmlString) AS value",
@@ -638,7 +643,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testParseWithXPath() throws Exception {
+    void testParseWithXPath() throws Exception {
         String xmlString =
                 FileUtils.readFileToString(new File("src/test/resources/xml/books.xml"), StandardCharsets.UTF_8);
         testCall(
@@ -649,7 +654,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
+    void testLoadXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(db, "CALL apoc.load.xml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "')", (r) -> {
@@ -663,7 +668,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testLoadXmlPreventBillionLaughVulnerabilityThrowsQueryExecutionException() {
+    void testLoadXmlPreventBillionLaughVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(
@@ -678,7 +683,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testXmlParsePreventXXEVulnerabilityThrowsQueryExecutionException() {
+    void testXmlParsePreventXXEVulnerabilityThrowsQueryExecutionException() {
         final var xml =
                 "<?xml version=\"1.0\"?><!DOCTYPE GVI [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>";
 
@@ -695,7 +700,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testXmlParsePreventBillionLaughsVulnerabilityThrowsQueryExecutionException() {
+    void testXmlParsePreventBillionLaughsVulnerabilityThrowsQueryExecutionException() {
         final var xml =
                 "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\"><!ENTITY lol1 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\">]><foo>&lol1;</foo>";
 
@@ -712,7 +717,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testImportXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
+    void testImportXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(db, "CALL apoc.import.xml('" + TestUtil.getUrlFileName("xml/xxe.xml") + "')", (r) -> {
@@ -726,7 +731,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testImportXmlPreventBillionLaughsVulnerabilityThrowsQueryExecutionException() {
+    void testImportXmlPreventBillionLaughsVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(
@@ -743,7 +748,7 @@ public class XmlTest {
     }
 
     @Test
-    public void testTerminateImportXml() {
+    void testTerminateImportXml() {
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
         TransactionTestUtil.checkTerminationGuard(db, "CALL apoc.import.xml($file)", Map.of("file", file));
     }
