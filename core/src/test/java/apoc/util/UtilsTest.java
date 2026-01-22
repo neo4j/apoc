@@ -45,20 +45,17 @@ import java.util.stream.IntStream;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.TestDatabaseManagementServiceBuilder;
-import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 import org.neo4j.values.storable.RandomValues;
 import org.neo4j.values.storable.ValueType;
 
-@EnterpriseDbmsExtension(configurationCallback = "configure")
+@EnterpriseDbmsExtension
 public class UtilsTest {
 
     private static final String SIMPLE_STRING = "Test";
@@ -66,12 +63,6 @@ public class UtilsTest {
 
     @Inject
     GraphDatabaseService db;
-
-    @ExtensionCallback
-    void configure(TestDatabaseManagementServiceBuilder builder) {
-        builder.setConfig(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
-                .setConfig(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE);
-    }
 
     @BeforeAll
     void setUp() {

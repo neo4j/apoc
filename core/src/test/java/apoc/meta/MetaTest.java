@@ -57,7 +57,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.neo4j.configuration.GraphDatabaseInternalSettings;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.*;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
@@ -92,8 +91,6 @@ public class MetaTest {
                                 "apoc.meta.graph.of",
                                 "apoc.meta.graphSample",
                                 "apoc.meta.subGraph"))
-                .setConfig(GraphDatabaseInternalSettings.latest_kernel_version, Byte.MAX_VALUE)
-                .setConfig(GraphDatabaseInternalSettings.latest_runtime_version, Integer.MAX_VALUE)
                 .setConfig(
                         newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
                                 .build(),
