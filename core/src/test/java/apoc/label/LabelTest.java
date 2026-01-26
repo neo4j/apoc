@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
-@EnterpriseDbmsExtension(createDatabasePerTest = false)
+@EnterpriseDbmsExtension
 class LabelTest {
 
     @Inject
@@ -42,8 +42,7 @@ class LabelTest {
     @Test
     void testVerifyNodeLabelExistence() {
 
-        db.executeTransactionally("create (a:Person{name:'Foo'})");
-
+        db.executeTransactionally("CREATE (a:Person {name:'Foo'})");
         testCall(
                 db,
                 "MATCH (a) RETURN apoc.label.exists(a, 'Person') as value",
@@ -58,8 +57,7 @@ class LabelTest {
     void testVerifyRelTypeExistence() {
 
         db.executeTransactionally(
-                "create (a:Person{name:'Foo'}), (b:Person{name:'Bar'}), (a)-[:LOVE{since:2010}]->(b)");
-
+                "CREATE (a:Person{name:'Foo'}), (b:Person{name:'Bar'}), (a)-[:LOVE{since:2010}]->(b)");
         testCall(
                 db,
                 "MATCH ()-[a]->() RETURN apoc.label.exists(a, 'LOVE') as value",

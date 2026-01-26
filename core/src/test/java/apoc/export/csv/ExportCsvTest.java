@@ -69,10 +69,6 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 import org.neo4j.test.utils.TestDirectory;
 
-/**
- * @author mh
- * @since 22.05.16
- */
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 class ExportCsvTest {
 

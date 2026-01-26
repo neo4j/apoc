@@ -25,7 +25,7 @@ public abstract class S3BaseTest {
     protected static S3Container s3Container;
 
     @BeforeAll
-    static void baseBeforeClass() {
+    public static void baseBeforeClass() {
         s3Container = new S3Container();
 
         // In test environment we skip the MD5 validation that can cause issues
@@ -34,7 +34,7 @@ public abstract class S3BaseTest {
     }
 
     @AfterAll
-    static void tearDown() {
+    public static void tearDown() {
         System.clearProperty("com.amazonaws.services.s3.disableGetObjectMD5Validation");
         System.clearProperty("com.amazonaws.sdk.disableCertChecking");
 
