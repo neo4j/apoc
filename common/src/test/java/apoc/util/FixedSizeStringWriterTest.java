@@ -24,10 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-public class FixedSizeStringWriterTest {
+class FixedSizeStringWriterTest {
 
     @Test
-    public void shouldStoreASubstring() {
+    void shouldStoreASubstring() {
         FixedSizeStringWriter writer = new FixedSizeStringWriter(10);
         writer.write("This is");
         writer.write(" a string");
@@ -36,7 +36,7 @@ public class FixedSizeStringWriterTest {
     }
 
     @Test
-    public void shouldStoreASubstring1() {
+    void shouldStoreASubstring1() {
         FixedSizeStringWriter writer = new FixedSizeStringWriter(10);
         char[] chars = "This is".toCharArray();
         writer.write(chars, 0, chars.length);
@@ -46,7 +46,7 @@ public class FixedSizeStringWriterTest {
     }
 
     @Test
-    public void shouldStoreASubstring2() {
+    void shouldStoreASubstring2() {
         FixedSizeStringWriter writer = new FixedSizeStringWriter(10);
         char[] thisIs = "This is".toCharArray();
         writer.write(thisIs, 5, thisIs.length);

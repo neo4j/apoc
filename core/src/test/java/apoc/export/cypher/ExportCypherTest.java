@@ -106,6 +106,7 @@ public class ExportCypherTest {
         builder.setConfig(
                 GraphDatabaseSettings.load_csv_file_url_root,
                 directory.getCanonicalFile().toPath());
+        // Test assertions depends on sequential ids
         builder.setConfig(GraphDatabaseSettings.db_format, "aligned");
         builder.setConfig(
                 newBuilder("internal.dbms.debug.track_cursor_close", BOOL, false)
@@ -116,13 +117,13 @@ public class ExportCypherTest {
     }
 
     @BeforeAll
-    public void registerProcedures() {
+    void registerProcedures() {
         TestUtil.registerProcedure(
                 db, ExportCypher.class, Graphs.class, Schemas.class, Cypher.class, HelperProcedures.class);
     }
 
     @BeforeEach
-    public void setUp(org.junit.jupiter.api.TestInfo testInfo) {
+    void setUp(org.junit.jupiter.api.TestInfo testInfo) {
         String methodName =
                 testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("");
         ExportCypherTestUtils.setUp(db, methodName);

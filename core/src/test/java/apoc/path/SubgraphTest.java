@@ -45,7 +45,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class SubgraphTest {
+class SubgraphTest {
 
     private Long fullGraphCount;
 

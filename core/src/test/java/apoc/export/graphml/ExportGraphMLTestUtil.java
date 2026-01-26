@@ -255,10 +255,6 @@ public class ExportGraphMLTestUtil {
     }
 
     public static void setUpGraphMl(GraphDatabaseService db, String methodName) {
-        setUpGraphMlDataOnly(db, methodName);
-    }
-
-    public static void setUpGraphMlDataOnly(GraphDatabaseService db, String methodName) {
         apocConfig()
                 .setProperty(
                         APOC_EXPORT_FILE_ENABLED,

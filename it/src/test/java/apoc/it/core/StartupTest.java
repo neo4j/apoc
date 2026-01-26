@@ -48,7 +48,7 @@ import org.neo4j.driver.Session;
 This test is just to verify if the APOC procedures and functions are correctly deployed into a Neo4j instance without any startup issue.
 If you don't have docker installed it will fail, and you can simply ignore it.
 */
-public class StartupTest {
+class StartupTest {
 
     @ParameterizedTest(name = "edition={0}")
     @EnumSource(Neo4jVersion.class)

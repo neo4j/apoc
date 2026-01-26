@@ -42,7 +42,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class TriggerRestartTest {
+class TriggerRestartTest {
     GraphDatabaseService db;
     GraphDatabaseService sysDb;
 
@@ -82,21 +82,21 @@ public class TriggerRestartTest {
     }
 
     @AfterEach
-    public void after() {
+    void after() {
         db.executeTransactionally("CALL apoc.trigger.removeAll()");
         testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
     @Test
-    public void testTriggerRunsAfterRestart() {
+    void testTriggerRunsAfterRestart() {
         final String query =
                 "CALL apoc.trigger.add('myTrigger', 'unwind $createdNodes as n set n.trigger = n.trigger + 1', {phase:'before'})";
         testTriggerWorksBeforeAndAfterRestart(db, query, Collections.emptyMap(), () -> {});
     }
 
     @Test
-    public void testTriggerViaInstallRunsAfterRestart() {
+    void testTriggerViaInstallRunsAfterRestart() {
         final String name = "myTrigger";
         final String innerQuery = "unwind $createdNodes as n set n.trigger = n.trigger + 1";
         final Map<String, Object> params = Map.of("name", name, "query", innerQuery);
@@ -107,7 +107,7 @@ public class TriggerRestartTest {
     }
 
     @Test
-    public void testTriggerViaBothAddAndInstall() {
+    void testTriggerViaBothAddAndInstall() {
         // executing both trigger add and install with the same name will not duplicate the eventListeners
         final String name = "myTrigger";
         final String innerQuery = "unwind $createdNodes as n set n.trigger = n.trigger + 1";

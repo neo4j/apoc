@@ -25,7 +25,7 @@ import com.google.testing.compile.JavaFileObjects;
 import javax.annotation.processing.Processor;
 import org.junit.jupiter.api.Test;
 
-public class ApocProcessorTest {
+class ApocProcessorTest {
 
     Processor apocProcessor = new ApocProcessor();
 

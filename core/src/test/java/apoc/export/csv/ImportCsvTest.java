@@ -71,7 +71,7 @@ import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.Values;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ImportCsvTest {
+class ImportCsvTest {
     public static final String BASE_URL_FILES = "src/test/resources/csv-inputs";
     private static final ZoneId DEFAULT_TIMEZONE = ZoneId.of("Asia/Tokyo");
 
@@ -330,7 +330,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testImportCsvLargeFile() {
+    void testImportCsvLargeFile() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
@@ -339,7 +339,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testImportCsvTerminate() {
+    void testImportCsvTerminate() {
         checkTerminationGuard(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [], $config)",
@@ -347,7 +347,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesWithIds() {
+    void testNodesWithIds() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -365,7 +365,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testImportCsvWithSkipLines() {
+    void testImportCsvWithSkipLines() {
         // skip only-header (default config)
         testSkipLine(1L, 2);
 
@@ -389,7 +389,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void issue2826WithImportCsv() {
+    void issue2826WithImportCsv() {
         db.executeTransactionally("CREATE (n:Person {name: 'John'})");
         db.executeTransactionally("CREATE CONSTRAINT unique_person FOR (n:Person) REQUIRE n.name IS UNIQUE");
 
@@ -412,7 +412,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesAndRelsWithMultiTypes() {
+    void testNodesAndRelsWithMultiTypes() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)",
@@ -486,7 +486,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesWithPoints() {
+    void testNodesWithPoints() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Point']}], [], {})",
@@ -513,7 +513,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testCallAsString() {
+    void testCallAsString() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv(" + "[{fileName: 'file:/quoted.csv', labels: ['Person']}], "
@@ -536,7 +536,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesWithIdSpaces() {
+    void testNodesWithIdSpaces() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -551,7 +551,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesWithIdSpacesWithDoubleDash() {
+    void testNodesWithIdSpacesWithDoubleDash() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -566,7 +566,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesWithIdSpacesWithTripleDash() {
+    void testNodesWithIdSpacesWithTripleDash() {
         db.executeTransactionally(
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
                 map("file", "file:///id-idspaces-with-dash.csv", "config", map("delimiter", '|')),
@@ -574,7 +574,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNodesWithIdSpacesWithDash() {
+    void testNodesWithIdSpacesWithDash() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -589,7 +589,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testCustomLabels() {
+    void testCustomLabels() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -604,7 +604,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testArray() {
+    void testArray() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -620,7 +620,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testDefaultTypedField() {
+    void testDefaultTypedField() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -635,7 +635,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testCsvWithoutIdField() {
+    void testCsvWithoutIdField() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -650,7 +650,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testCustomRelationshipTypes() {
+    void testCustomRelationshipTypes() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)",
@@ -676,7 +676,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testWithSpecialEscapes() {
+    void testWithSpecialEscapes() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'FRIENDS_WITH'}], {ignoreDuplicateNodes: true})",
@@ -696,7 +696,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testEmptyDate() {
+    void testEmptyDate() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: 'file:/emptyDate.csv', labels: ['Entity']}], [], {date: {nullValues: ['']}})",
@@ -718,7 +718,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testEmptyInteger() {
+    void testEmptyInteger() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: 'file:/emptyInteger.csv', labels: ['entity']}], [], {ignoreBlankString: true})",
@@ -746,7 +746,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testEmptyArray() {
+    void testEmptyArray() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: 'file:/emptyArray.csv', labels:[]}], [], $conf)",
@@ -779,7 +779,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testRelationshipWithoutIdSpaces() {
+    void testRelationshipWithoutIdSpaces() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)",
@@ -799,7 +799,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testRelationshipWithIdSpaces() {
+    void testRelationshipWithIdSpaces() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)",
@@ -819,7 +819,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testRelationshipWithCustomIdNames() {
+    void testRelationshipWithCustomIdNames() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv(" + "["
@@ -848,7 +848,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testRelationshipWithCustomIdNamesAndIdSpaces() {
+    void testRelationshipWithCustomIdNamesAndIdSpaces() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv(" + "["
@@ -877,7 +877,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void ignoreFieldType() {
+    void ignoreFieldType() {
         final String query =
                 "CALL apoc.import.csv([{fileName: $nodeFile, labels: ['Person']}], [{fileName: $relFile, type: 'KNOWS'}], $config)";
         final Map<String, Object> config = map(
@@ -891,7 +891,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void ignoreFieldTypeWithByteArrayFile() {
+    void ignoreFieldTypeWithByteArrayFile() {
         final Map<String, Object> config = map(
                 "nodeFile",
                 fileToBinary(new File(BASE_URL_FILES, "ignore-nodes.csv"), CompressionAlgo.GZIP.name()),
@@ -905,7 +905,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void ignoreFieldTypeWithBothBinaryAndFileUrl() throws IOException {
+    void ignoreFieldTypeWithBothBinaryAndFileUrl() throws IOException {
         FileUtils.writeByteArrayToFile(
                 new File(BASE_URL_FILES, "ignore-relationships.csv.zz"),
                 fileToBinary(new File(BASE_URL_FILES, "ignore-relationships.csv"), CompressionAlgo.DEFLATE.name()));
@@ -946,7 +946,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testNoDuplicateEndpointsCreated() {
+    void testNoDuplicateEndpointsCreated() {
         // some of the endpoints of the edges in 'knows.csv' do not exist,
         // hence this should throw an exception
         QueryExecutionException e = assertThrows(
@@ -964,7 +964,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testIgnoreDuplicateNodes() {
+    void testIgnoreDuplicateNodes() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> db.executeTransactionally(
@@ -978,7 +978,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testLoadDuplicateNodes() {
+    void testLoadDuplicateNodes() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -1000,7 +1000,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testDifferentDataTypes() {
+    void testDifferentDataTypes() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.import.csv([{fileName: $file, labels: ['Person']}], [], $config)",
@@ -1030,7 +1030,7 @@ public class ImportCsvTest {
     }
 
     @Test
-    public void testRoundTripWithTypes() {
+    void testRoundTripWithTypes() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         db.executeTransactionally(

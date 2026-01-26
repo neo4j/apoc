@@ -34,7 +34,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class DistanceTest {
+class DistanceTest {
 
     @Inject
     GraphDatabaseService db;

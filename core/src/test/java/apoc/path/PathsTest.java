@@ -33,7 +33,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(createDatabasePerTest = false)
-public class PathsTest {
+class PathsTest {
 
     @Inject
     GraphDatabaseService db;

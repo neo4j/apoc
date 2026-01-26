@@ -57,7 +57,7 @@ import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class SpatialTest {
+class SpatialTest {
 
     private static final String WRONG_PROVIDER_ERR = "wrong provider";
     private static final String URL = "http://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY";
@@ -147,7 +147,7 @@ public class SpatialTest {
     }
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         URLAccessChecker urlAccessChecker = new URLAccessChecker() {
             @Override
             public java.net.URL checkURL(java.net.URL url) throws URLAccessValidationError {

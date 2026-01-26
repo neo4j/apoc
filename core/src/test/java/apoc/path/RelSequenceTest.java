@@ -36,7 +36,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(createDatabasePerTest = false)
-public class RelSequenceTest {
+class RelSequenceTest {
 
     @Inject
     GraphDatabaseService db;

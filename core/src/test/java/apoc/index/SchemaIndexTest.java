@@ -142,7 +142,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctPropertiesOnFirstIndex() {
+    void testDistinctPropertiesOnFirstIndex() {
         testCall(
                 db,
                 "CALL apoc.schema.properties.distinct($label, $key)",
@@ -477,7 +477,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testPropertiesDistinctDoesntReturnRelIndexes() {
+    void testPropertiesDistinctDoesntReturnRelIndexes() {
         testCall(
                 db,
                 "CALL apoc.schema.properties.distinct(\"\", $key)",
@@ -486,7 +486,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctPropertiesOnSecondIndex() {
+    void testDistinctPropertiesOnSecondIndex() {
         testCall(
                 db,
                 "CALL apoc.schema.properties.distinct($label, $key)",
@@ -496,7 +496,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnFirstIndex() {
+    void testDistinctCountPropertiesOnFirstIndex() {
         String label = "Person";
         String key = "name";
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", label, "key", key), (result) -> {
@@ -506,7 +506,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnSecondIndex() {
+    void testDistinctCountPropertiesOnSecondIndex() {
         String label = "Person";
         String key = "address";
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", label, "key", key), (result) -> {
@@ -516,7 +516,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnEmptyLabel() {
+    void testDistinctCountPropertiesOnEmptyLabel() {
         String key = "name";
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "", "key", key), (result) -> {
             assertDistinctCountProperties("City", "name", List.of("London"), 1L, result);
@@ -526,7 +526,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnEmptyKey() {
+    void testDistinctCountPropertiesOnEmptyKey() {
         String label = "Person";
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", label, "key", ""), (result) -> {
             extractedPerson(result);
@@ -535,7 +535,7 @@ class SchemaIndexTest {
     }
 
     @Test
-    public void testDistinctCountPropertiesOnEmptyLabelAndEmptyKey() {
+    void testDistinctCountPropertiesOnEmptyLabelAndEmptyKey() {
         testResult(db, SCHEMA_DISTINCT_COUNT_ORDERED, map("label", "", "key", ""), (result) -> {
             assertTrue(result.hasNext());
             extractEverything(result);

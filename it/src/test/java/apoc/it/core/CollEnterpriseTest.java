@@ -30,13 +30,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.RepeatedTest;
 import org.neo4j.driver.Session;
 
-public class CollEnterpriseTest {
+class CollEnterpriseTest {
 
     private static Neo4jContainerExtension neo4jContainer;
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         // We build the project, the artifact will be placed into ./build/libs
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI());
         neo4jContainer.start();
@@ -44,13 +44,13 @@ public class CollEnterpriseTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     @RepeatedTest(50)
-    public void testMin() {
+    void testMin() {
         assertEquals(
                 1L,
                 session.run("RETURN apoc.coll.min([1,2]) as value")
@@ -73,7 +73,7 @@ public class CollEnterpriseTest {
     }
 
     @RepeatedTest(50)
-    public void testMax() {
+    void testMax() {
         assertEquals(
                 3L,
                 session.run("RETURN apoc.coll.max([1,2,3]) as value")

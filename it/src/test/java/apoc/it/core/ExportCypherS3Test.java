@@ -43,7 +43,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class ExportCypherS3Test extends S3BaseTest {
+class ExportCypherS3Test extends S3BaseTest {
 
     private static final Map<String, Object> exportConfig =
             map("useOptimizations", map("type", "none"), "separateFiles", true, "format", "neo4j-admin");

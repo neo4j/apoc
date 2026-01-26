@@ -38,7 +38,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class ExportCsvS3Test extends S3BaseTest {
+class ExportCsvS3Test extends S3BaseTest {
 
     @Inject
     GraphDatabaseService db;
@@ -46,7 +46,6 @@ public class ExportCsvS3Test extends S3BaseTest {
     @BeforeAll
     void setUpAll() {
         baseBeforeClass();
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
     }
 

@@ -36,7 +36,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
-public class PathsToJsonTreeTest {
+class PathsToJsonTreeTest {
 
     @Inject
     GraphDatabaseService db;
@@ -52,7 +52,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeSimplePath() {
+    void testToTreeSimplePath() {
         /*            r:R
               a:A --------> b:B
         */
@@ -93,7 +93,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testSingleNode() {
+    void testSingleNode() {
         // a:A
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'})");
 
@@ -120,7 +120,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testSingleDisjointNodes() {
+    void testSingleDisjointNodes() {
         // a:A
         db.executeTransactionally("CREATE (a: A {nodeName: 'a'}), (b: B {nodeName: 'b'}), (c: C {nodeName: 'c'})");
 
@@ -168,7 +168,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeSimpleReversePath() {
+    void testToTreeSimpleReversePath() {
         /*            r:R
               a:A <-------- b:B
         */
@@ -208,7 +208,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeSimpleBidirectionalPath() {
+    void testToTreeSimpleBidirectionalPath() {
         /*         r1:R
                  -------->
              a:A          b:B
@@ -267,7 +267,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeSimpleBidirectionalQuery() {
+    void testToTreeSimpleBidirectionalQuery() {
         /*         r1:R
              a:A --------> b:B
         */
@@ -309,7 +309,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeSimpleQueryDisjointPaths() {
+    void testToTreeSimpleQueryDisjointPaths() {
         /*         r1:R
              a:A --------> b:B
         */
@@ -371,7 +371,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeBidirectionalPathAndQuery() {
+    void testToTreeBidirectionalPathAndQuery() {
         /*          r1:R1         r2:R2
               a:A ---------> b:B --------> a
         */
@@ -426,7 +426,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeComplexGraph() {
+    void testToTreeComplexGraph() {
         /*          r1:R1         r2:R2
               a:A --------> b:B ------> c:C
                              |
@@ -494,7 +494,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeComplexGraphBidirectionalQuery() {
+    void testToTreeComplexGraphBidirectionalQuery() {
         /*          r1:R1         r2:R2
               a:A --------> b:B -------> c:C
                              |
@@ -563,7 +563,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeGraphWithLoops() {
+    void testToTreeGraphWithLoops() {
         /*          r1:R1          r2:R2
               a:A ---------> b:B --------> c:C
                             /  /|
@@ -630,7 +630,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testIncomingRelationships() {
+    void testIncomingRelationships() {
         /*          r1:R1         r2:R2
               a:A --------> b:B <------ c:C
         */
@@ -692,7 +692,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeMultiLabelFilters() {
+    void testToTreeMultiLabelFilters() {
         /*            r:R
               a:A:B -------> c:C
         */
@@ -733,7 +733,7 @@ public class PathsToJsonTreeTest {
     }
 
     @Test
-    public void testToTreeMultiLabelFiltersForOldProcedure() {
+    void testToTreeMultiLabelFiltersForOldProcedure() {
         /*            r:R
               a:A:B -------> c:C
         */

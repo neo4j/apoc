@@ -65,7 +65,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ImportAndLoadCoreSecurityTest {
+class ImportAndLoadCoreSecurityTest {
     private static final Path TEMP_FOLDER = createTempFolder();
 
     // base path: "../../../../etc/passwd"

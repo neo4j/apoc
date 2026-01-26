@@ -30,7 +30,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import org.junit.jupiter.api.Test;
 
-public class DateParseUtilTest {
+class DateParseUtilTest {
 
     private final String[] parseList = new String[] {
         "wrongPath",
@@ -44,7 +44,7 @@ public class DateParseUtilTest {
     };
 
     @Test
-    public void dateParseTest() {
+    void dateParseTest() {
         assertEquals(LocalDate.of(2018, 1, 1), dateParse("2018/01/01", LocalDate.class, parseList));
         assertEquals(
                 ZonedDateTime.of(2011, 1, 1, 12, 0, 0, 53810000, ZoneOffset.of("+01:00")),
@@ -58,7 +58,7 @@ public class DateParseUtilTest {
     }
 
     @Test
-    public void dateParseErrorTest() {
+    void dateParseErrorTest() {
         RuntimeException e =
                 assertThrows(RuntimeException.class, () -> dateParse("10/01/2010", LocalDateTime.class, parseList));
         assertEquals("Can't format the date with the pattern", e.getMessage());

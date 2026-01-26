@@ -32,7 +32,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class ExtractURLTest {
+class ExtractURLTest {
 
     @Inject
     GraphDatabaseService db;
@@ -137,7 +137,7 @@ public class ExtractURLTest {
     }
 
     @Test
-    public void testByCase() {
+    void testByCase() {
         for (String url : testCases.keySet()) {
             Map<String, Object> answers = testCases.get(url);
 
@@ -160,22 +160,22 @@ public class ExtractURLTest {
     /* Previous test cases matching the deprecated Extract class' requirements are below */
 
     @Test
-    public void testNull() {
+    void testNull() {
         testCall(db, "RETURN apoc.data.url(null).host AS value", row -> assertEquals(null, row.get("value")));
     }
 
     @Test
-    public void testBadString() {
+    void testBadString() {
         testCall(db, "RETURN apoc.data.url('asdsgawe4ge').host AS value", row -> assertEquals(null, row.get("value")));
     }
 
     @Test
-    public void testEmptyString() {
+    void testEmptyString() {
         testCall(db, "RETURN apoc.data.url('').host AS value", row -> assertEquals(null, row.get("value")));
     }
 
     @Test
-    public void testUrl() {
+    void testUrl() {
         testCall(
                 db,
                 "RETURN apoc.data.url('http://www.example.com/lots-of-stuff').host AS value",
@@ -183,7 +183,7 @@ public class ExtractURLTest {
     }
 
     @Test
-    public void testQueryParameter() {
+    void testQueryParameter() {
         testCall(
                 db,
                 "RETURN apoc.data.url($param).host AS value",
@@ -192,7 +192,7 @@ public class ExtractURLTest {
     }
 
     @Test
-    public void testShorthandURL() {
+    void testShorthandURL() {
         testCall(
                 db,
                 "RETURN apoc.data.url($param).host AS value",

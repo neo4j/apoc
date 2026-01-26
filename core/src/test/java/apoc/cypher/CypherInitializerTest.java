@@ -42,7 +42,7 @@ import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
-public class CypherInitializerTest {
+class CypherInitializerTest {
 
     private static void waitForInitializerBeingFinished(GraphDatabaseAPI api) {
         CypherInitializer initializer = getInitializer(api);

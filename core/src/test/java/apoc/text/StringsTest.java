@@ -53,7 +53,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class StringsTest {
+class StringsTest {
 
     @Inject
     GraphDatabaseService db;

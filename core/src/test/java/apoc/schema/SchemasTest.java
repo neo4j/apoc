@@ -89,7 +89,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCreateIndex() {
+    void testCreateIndex() {
         testCall(db, "CALL apoc.schema.assert({Foo:['bar']},null)", (r) -> {
             assertEquals("Foo", r.get("label"));
             assertEquals("bar", r.get("key"));
@@ -105,7 +105,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCreateSchema() {
+    void testCreateSchema() {
         testCall(db, "CALL apoc.schema.assert(null,{Foo:['bar']})", (r) -> {
             assertEquals("Foo", r.get("label"));
             assertEquals("bar", r.get("key"));
@@ -124,7 +124,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexWhenUsingDropExisting() {
+    void testDropIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally(
                 "CREATE FULLTEXT INDEX titlesAndDescriptions FOR (n:Movie|Book) ON EACH [n.title, n.description]");
@@ -142,7 +142,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexDoesntAffectVectorIndexes() {
+    void testDropIndexDoesntAffectVectorIndexes() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally(
                 """
@@ -168,7 +168,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexAndCreateIndexWhenUsingDropExisting() {
+    void testDropIndexAndCreateIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "CALL apoc.schema.assert({Bar:['foo']},null)", (result) -> {
             Map<String, Object> r = result.next();
@@ -190,7 +190,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRetainIndexWhenNotUsingDropExisting() {
+    void testRetainIndexWhenNotUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "CALL apoc.schema.assert({Bar:['foo', 'bar']}, null, false)", (result) -> {
             Map<String, Object> r = result.next();
@@ -218,7 +218,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropSchemaWhenUsingDropExisting() {
+    void testDropSchemaWhenUsingDropExisting() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testCall(db, "CALL apoc.schema.assert(null,null)", (r) -> {
             assertEquals("Foo", r.get("label"));
@@ -234,7 +234,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropSchemaAndCreateSchemaWhenUsingDropExisting() {
+    void testDropSchemaAndCreateSchemaWhenUsingDropExisting() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testResult(db, "CALL apoc.schema.assert(null, {Bar:['foo']})", (result) -> {
             Map<String, Object> r = result.next();
@@ -257,7 +257,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRetainSchemaWhenNotUsingDropExisting() {
+    void testRetainSchemaWhenNotUsingDropExisting() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testResult(db, "CALL apoc.schema.assert(null, {Bar:['foo', 'bar']}, false)", (result) -> {
             Map<String, Object> r = result.next();
@@ -286,12 +286,12 @@ public class SchemasTest {
     }
 
     @Test
-    public void testKeepIndex() {
+    void testKeepIndex() {
         keepIndexCommon(false);
     }
 
     @Test
-    public void testKeepIndexWithDropExisting() {
+    void testKeepIndexWithDropExisting() {
         keepIndexCommon(true);
     }
 
@@ -322,7 +322,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testKeepSchema() {
+    void testKeepSchema() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.bar IS UNIQUE");
         testResult(db, "CALL apoc.schema.assert(null,{Foo:['bar', 'foo']})", (result) -> {
             Map<String, Object> r = result.next();
@@ -346,7 +346,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexes() {
+    void testIndexes() {
         db.executeTransactionally("CREATE RANGE INDEX index1 FOR (n:Foo) ON (n.bar)");
         awaitIndexesOnline();
 
@@ -379,7 +379,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelIndex() {
+    void testRelIndex() {
         db.executeTransactionally("CREATE INDEX FOR ()-[r:KNOWS]-() ON (r.id, r.since)");
         awaitIndexesOnline();
 
@@ -401,7 +401,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexExists() {
+    void testIndexExists() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "RETURN apoc.schema.node.indexExists('Foo', ['bar'])", (result) -> {
             Map<String, Object> r = result.next();
@@ -410,7 +410,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexNotExists() {
+    void testIndexNotExists() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         testResult(db, "RETURN apoc.schema.node.indexExists('Bar', ['foo'])", (result) -> {
             Map<String, Object> r = result.next();
@@ -419,7 +419,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelationshipExists() {
+    void testRelationshipExists() {
         db.executeTransactionally("CREATE INDEX rel_index_simple FOR ()-[r:KNOWS]-() ON (r.since)");
         db.executeTransactionally("CREATE INDEX rel_index_composite FOR ()-[r:PURCHASED]-() ON (r.date, r.amount)");
         awaitIndexesOnline();
@@ -484,7 +484,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexAndUniquenessConstraintOnNode() {
+    void testIndexAndUniquenessConstraintOnNode() {
         db.executeTransactionally("CREATE INDEX foo_idx FOR (n:Foo) ON (n.foo)");
         db.executeTransactionally("CREATE CONSTRAINT bar_unique FOR (bar:Bar) REQUIRE bar.bar IS UNIQUE");
         awaitIndexesOnline();
@@ -545,7 +545,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testSchemaNodesPointIndex() {
+    void testSchemaNodesPointIndex() {
         db.executeTransactionally("CREATE POINT INDEX pointIdx FOR (n:Baz) ON (n.baz)");
 
         testResult(db, "CALL apoc.schema.nodes()", (result) -> {
@@ -564,7 +564,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelUniquenessConstraintIsKeptAndDropped() {
+    void testRelUniquenessConstraintIsKeptAndDropped() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[knows:KNOWS]-() REQUIRE knows.since IS UNIQUE");
         awaitIndexesOnline();
@@ -599,7 +599,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropCompoundIndexWhenUsingDropExisting() {
+    void testDropCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert(null,null,true)", (result) -> {
@@ -616,7 +616,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropCompoundIndexAndRecreateWithDropExisting() {
+    void testDropCompoundIndexAndRecreateWithDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testCall(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null,true)", (r) -> {
@@ -632,7 +632,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDoesntDropCompoundIndexWhenSupplyingSameCompoundIndex() {
+    void testDoesntDropCompoundIndexWhenSupplyingSameCompoundIndex() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null,false)", (result) -> {
@@ -649,7 +649,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCompoundIndexDoesntAllowCypherInjection() {
+    void testCompoundIndexDoesntAllowCypherInjection() {
         awaitIndexesOnline();
         testResult(
                 db,
@@ -670,12 +670,12 @@ public class SchemasTest {
         This is only for 3.2+
     */
     @Test
-    public void testKeepCompoundIndex() {
+    void testKeepCompoundIndex() {
         testKeepCompoundCommon(false);
     }
 
     @Test
-    public void testKeepCompoundIndexWithDropExisting() {
+    void testKeepCompoundIndexWithDropExisting() {
         testKeepCompoundCommon(true);
     }
 
@@ -707,7 +707,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropIndexAndCreateCompoundIndexWhenUsingDropExisting() {
+    void testDropIndexAndCreateCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         awaitIndexesOnline();
         testResult(db, "CALL apoc.schema.assert({Bar:[['foo','bar']]},null)", (result) -> {
@@ -730,7 +730,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testAssertWithFullTextIndexes() {
+    void testAssertWithFullTextIndexes() {
         db.executeTransactionally(
                 "CREATE FULLTEXT INDEX fullIdxNode FOR (n:Moon|Blah) ON EACH [n.weightProp, n.anotherProp]");
         db.executeTransactionally(
@@ -772,7 +772,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testDropCompoundIndexAndCreateCompoundIndexWhenUsingDropExisting() {
+    void testDropCompoundIndexAndCreateCompoundIndexWhenUsingDropExisting() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar,n.baa)");
         awaitIndexesOnline();
         testCall(db, "CALL apoc.schema.assert({Foo:[['bar','baa']]},null)", (r) -> {
@@ -792,7 +792,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexesOneLabel() {
+    void testIndexesOneLabel() {
         db.executeTransactionally("CREATE RANGE INDEX index1 FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally("CREATE RANGE INDEX index2 FOR (n:Bar) ON (n.foo)");
         db.executeTransactionally("CREATE TEXT INDEX index3 FOR (n:Person) ON (n.name)");
@@ -836,7 +836,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexesMoreLabels() {
+    void testIndexesMoreLabels() {
         db.executeTransactionally("CREATE RANGE INDEX index1 FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally("CREATE RANGE INDEX index2 FOR (n:Bar) ON (n.foo)");
         db.executeTransactionally("CREATE TEXT INDEX index3 FOR (n:Person) ON (n.name)");
@@ -893,13 +893,13 @@ public class SchemasTest {
     }
 
     @Test
-    public void testSchemaNodesExclude() {
+    void testSchemaNodesExclude() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (book:Book) REQUIRE book.isbn IS UNIQUE");
         testResult(db, "CALL apoc.schema.nodes({excludeLabels:['Book']})", (result) -> assertFalse(result.hasNext()));
     }
 
     @Test
-    public void testIndexesLabelsAndExcludeLabelsValuatedShouldFail() {
+    void testIndexesLabelsAndExcludeLabelsValuatedShouldFail() {
         db.executeTransactionally("CREATE INDEX FOR (n:Foo) ON (n.bar)");
         db.executeTransactionally("CREATE INDEX FOR (n:Bar) ON (n.foo)");
         db.executeTransactionally("CREATE INDEX FOR (n:Person) ON (n.name)");
@@ -914,7 +914,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelationshipConstraintsArentReturnedInNodesCheck() {
+    void testRelationshipConstraintsArentReturnedInNodesCheck() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS UNIQUE");
         awaitIndexesOnline();
 
@@ -922,7 +922,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testConstraintsRelationshipsAndExcludeRelationshipsValuatedShouldFail() {
+    void testConstraintsRelationshipsAndExcludeRelationshipsValuatedShouldFail() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.day IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
 
@@ -934,7 +934,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testUniqueRelationshipConstraint() {
+    void testUniqueRelationshipConstraint() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         awaitIndexesOnline();
 
@@ -970,7 +970,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCypher5Vs25RelNaming() {
+    void testCypher5Vs25RelNaming() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT gemTest FOR ()-[for:FOR]-() REQUIRE for.year IS UNIQUE");
         db.executeTransactionally("CREATE LOOKUP INDEX rel_type_lookup_index FOR ()-[r]-() ON EACH type(r)");
@@ -1015,7 +1015,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testCypher5Vs25NodeNaming() {
+    void testCypher5Vs25NodeNaming() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (book:Book) REQUIRE book.isbn IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT gemTest FOR (library:Library) REQUIRE library.name IS UNIQUE");
         db.executeTransactionally("CREATE LOOKUP INDEX node_label_lookup_index FOR (n) ON EACH labels(n)");
@@ -1055,7 +1055,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testMultipleUniqueRelationshipConstraints() {
+    void testMultipleUniqueRelationshipConstraints() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[knows:KNOW]-() REQUIRE knows.how IS UNIQUE");
@@ -1110,7 +1110,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testLookupIndexes() {
+    void testLookupIndexes() {
         db.executeTransactionally("CREATE LOOKUP INDEX node_label_lookup_index FOR (n) ON EACH labels(n)");
         db.executeTransactionally("CREATE LOOKUP INDEX rel_type_lookup_index FOR ()-[r]-() ON EACH type(r)");
         awaitIndexesOnline();
@@ -1152,7 +1152,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testIndexesWithMultipleLabelsAndRelTypes() {
+    void testIndexesWithMultipleLabelsAndRelTypes() {
         final String idxName = "fullIdxNode";
         db.executeTransactionally(String.format(
                 "CREATE FULLTEXT INDEX %s FOR (n:Blah|Moon) ON EACH [n.weightProp, n.anotherProp]", idxName));
@@ -1216,7 +1216,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testNodeConstraintExists() {
+    void testNodeConstraintExists() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT userId FOR (user:User) REQUIRE user.id IS UNIQUE");
         awaitIndexesOnline();
@@ -1227,7 +1227,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testNodeConstraintDoesntExist() {
+    void testNodeConstraintDoesntExist() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT userId FOR (user:User) REQUIRE user.id IS UNIQUE");
         awaitIndexesOnline();
@@ -1238,7 +1238,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testNodeDoesntCheckRelationshipConstraintExist() {
+    void testNodeDoesntCheckRelationshipConstraintExist() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
         awaitIndexesOnline();
@@ -1249,7 +1249,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelationshipConstraintExists() {
+    void testRelationshipConstraintExists() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
         awaitIndexesOnline();
@@ -1260,7 +1260,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelationshipConstraintDoesntExist() {
+    void testRelationshipConstraintDoesntExist() {
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[since:SINCE]-() REQUIRE since.year IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
         awaitIndexesOnline();
@@ -1274,7 +1274,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testRelationshipDoesntCheckNodesConstraintExist() {
+    void testRelationshipDoesntCheckNodesConstraintExist() {
         db.executeTransactionally("CREATE CONSTRAINT personName FOR (person:Person) REQUIRE person.name IS UNIQUE");
         db.executeTransactionally("CREATE CONSTRAINT FOR ()-[like:LIKED]-() REQUIRE like.when IS UNIQUE");
         awaitIndexesOnline();
@@ -1285,7 +1285,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testSchemaNodesWithFailedIndex() {
+    void testSchemaNodesWithFailedIndex() {
         // create property which will cause an index failure
         String largeProp = Util.readResourceFile("movies.cypher");
         db.executeTransactionally("CREATE (n:LabelTest {prop: $largeProp})", Map.of("largeProp", largeProp));
@@ -1322,7 +1322,7 @@ public class SchemasTest {
     }
 
     @Test
-    public void testSchemaRelationshipsWithFailedIndex() {
+    void testSchemaRelationshipsWithFailedIndex() {
         // create property which will cause an index failure
         String largeProp = Util.readResourceFile("movies.cypher");
         db.executeTransactionally(

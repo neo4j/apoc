@@ -38,7 +38,7 @@ import org.neo4j.test.extension.Inject;
  * Test path expanders with node filters (where we already have the nodes that will be used for the allowlist, denylist, endnodes, and terminator nodes
  */
 @EnterpriseDbmsExtension(createDatabasePerTest = false)
-public class NodeFilterTest {
+class NodeFilterTest {
 
     @Inject
     GraphDatabaseService db;
@@ -54,7 +54,7 @@ public class NodeFilterTest {
     }
 
     @AfterEach
-    public void removeOtherLabels() {
+    void removeOtherLabels() {
         db.executeTransactionally(
                 "OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
     }

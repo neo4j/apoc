@@ -29,7 +29,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(createDatabasePerTest = false)
-public class LabelTest {
+class LabelTest {
 
     @Inject
     GraphDatabaseService db;
@@ -40,7 +40,7 @@ public class LabelTest {
     }
 
     @Test
-    public void testVerifyNodeLabelExistence() {
+    void testVerifyNodeLabelExistence() {
 
         db.executeTransactionally("create (a:Person{name:'Foo'})");
 
@@ -55,7 +55,7 @@ public class LabelTest {
     }
 
     @Test
-    public void testVerifyRelTypeExistence() {
+    void testVerifyRelTypeExistence() {
 
         db.executeTransactionally(
                 "create (a:Person{name:'Foo'}), (b:Person{name:'Bar'}), (a)-[:LOVE{since:2010}]->(b)");

@@ -51,7 +51,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ExportCsvNeo4jAdminTest {
+class ExportCsvNeo4jAdminTest {
 
     private static final String EXPECTED_NEO4J_ADMIN_IMPORT_HEADER_TYPES_NODE = String.format(
             "\":ID\";\"born_2D:point\";\"born_3D:point\";\"localtime:localtime\";\"time:time\";\"dateTime:datetime\";\"localDateTime:localdatetime\";\"date:date\";\"duration:duration\";\":LABEL\"%n");
@@ -114,7 +114,6 @@ public class ExportCsvNeo4jAdminTest {
 
     @BeforeAll
     void setUpAll() {
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
     }
 

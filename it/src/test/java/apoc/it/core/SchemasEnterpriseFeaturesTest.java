@@ -51,21 +51,21 @@ class SchemasEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     // coherently with SchemasTest we remove all indexes/constraints before (e.g. to get rid of lookup indexes)
     @BeforeEach
-    public void removeAllConstraints() {
+    void removeAllConstraints() {
         session.executeWriteWithoutResult(tx -> {
             final List<String> constraints = tx.run("SHOW CONSTRAINTS YIELD name")
                     .list(i -> i.get("name").asString());

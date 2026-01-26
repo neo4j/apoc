@@ -45,7 +45,7 @@ import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class FingerprintingTest {
+class FingerprintingTest {
 
     @Inject
     GraphDatabaseService db;
@@ -56,7 +56,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void fingerprintScalars() {
+    void fingerprintScalars() {
 
         String hashOfAString = TestUtil.singleResultFirstColumn(db, "return apoc.hashing.fingerprint('some string');");
         assertEquals("5AC749FBEEC93607FC28D666BE85E73A", hashOfAString);
@@ -75,7 +75,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void fingerprintMap() {
+    void fingerprintMap() {
         Map<String, Object> params = map("string", "some string", "boolean", true, "long", 123l, "double", 1234.456d);
         String hashOfAMap = TestUtil.singleResultFirstColumn(
                 db, "return apoc.hashing.fingerprint($map);", singletonMap("map", params));
@@ -83,7 +83,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void fingerprintNodeWithArrayProperty() {
+    void fingerprintNodeWithArrayProperty() {
         db.executeTransactionally(
                 "CREATE (:Person{name:'ABC',emails:['aa@bb.de', 'cc@dd.ee'], integers:[1,2,3], floats:[0.9,1.1]})");
         String value = TestUtil.singleResultFirstColumn(db, "MATCH (n) RETURN apoc.hashing.fingerprint(n) AS hash");
@@ -92,7 +92,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void fingerprintRelationships() {
+    void fingerprintRelationships() {
         db.executeTransactionally("CREATE (:Person{name:'ABC'})-[:KNOWS{since:12345}]->(:Person{name:'DEF'})");
 
         String value =
@@ -103,17 +103,17 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void fingerprintGraph() {
+    void fingerprintGraph() {
         compareGraph("CREATE (:Person{name:'ABC'})-[:KNOWS{since:12345}]->(:Person{name:'DEF'})", EMPTY_LIST, true);
     }
 
     @Test
-    public void fingerprintGraphShouldFailUponDifferentProperties() {
+    void fingerprintGraphShouldFailUponDifferentProperties() {
         compareGraph("CREATE (:Person{name:'ABC', created:timestamp()})", EMPTY_LIST, false);
     }
 
     @Test
-    public void fingerprintGraphShouldNotFailWithEqualsNodes() {
+    void fingerprintGraphShouldNotFailWithEqualsNodes() {
         db.executeTransactionally("CREATE (:Person{name:'ABC'}), (:Person{name:'ABC'})");
         String valueAfter = TestUtil.singleResultFirstColumn(db, "return apoc.hashing.fingerprintGraph()");
         db.executeTransactionally("CREATE (:Person{name:'ABC'}), (:Person{name:'ABC'})");
@@ -125,12 +125,12 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void testExcludes() {
+    void testExcludes() {
         compareGraph("CREATE (:Person{name:'ABC', created:timestamp()})", singletonList("created"), true);
     }
 
     @Test
-    public void fingerprintByteArray() {
+    void fingerprintByteArray() {
         byte[] byteArray = "hello, world".getBytes();
 
         db.executeTransactionally("CREATE (n:NodeTest {value: $value})", Map.of("value", byteArray));
@@ -147,7 +147,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void testFingerprintingNodeConf() {
+    void testFingerprintingNodeConf() {
         db.executeTransactionally(
                 "CREATE (:Person{name:'Andrea',emails:['aa@bb.de', 'cc@dd.ee'], integers:[1,2,3], floats:[0.9,1.1]})");
         String all = TestUtil.singleResultFirstColumn(
@@ -176,7 +176,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void testFingerprintingRelConf() {
+    void testFingerprintingRelConf() {
         db.executeTransactionally("CREATE (p1:Person{name:'Andrea'}), (p2:Person{name:'Stefan'}), "
                 + "(p1)-[:KNOWS{since: 2014, where: 'Stackoverflow'}]->(p2)");
         String all = TestUtil.singleResultFirstColumn(
@@ -198,7 +198,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void testFingerprintingMapConf() {
+    void testFingerprintingMapConf() {
         db.executeTransactionally(
                 "CREATE (p1:Person{name:'Andrea', surname:'Santurbano'}), (p2:Person{name:'Stefan', surname:'Armbruster'}), "
                         + "(pr:Product{sku: 'Nintendo Switch'}), "
@@ -214,7 +214,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void testFingerprintingWithLazyEvaluation() {
+    void testFingerprintingWithLazyEvaluation() {
         db.executeTransactionally(
                 "CREATE (p1:Person{name:'Andrea', surname:'Santurbano'}), (p2:Person{name:'Stefan', surname:'Armbruster'}), "
                         + "(pr:Product{sku: 'Nintendo Switch'}), "
@@ -238,7 +238,7 @@ public class FingerprintingTest {
     }
 
     @Test
-    public void testConfigExceptionOnTheSameLabels() {
+    void testConfigExceptionOnTheSameLabels() {
         db.executeTransactionally(
                 "CREATE (p1:Person{name:'Andrea', surname:'Santurbano'}), (p2:Person{name:'Stefan', surname:'Armbruster'}), "
                         + "(pr:Product{sku: 'Nintendo Switch'}), "

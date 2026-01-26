@@ -72,7 +72,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testJsonPath() {
+    void testJsonPath() {
         // -- json.path
         testCall(
                 db,
@@ -145,7 +145,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testJsonPathWithMapFunctions() {
+    void testJsonPathWithMapFunctions() {
         // apoc.convert.getJsonPropertyMap and apoc.convert.fromJsonMap must fail with "ALWAYS_RETURN_LIST" because
         // should return a Map.
         final Map<String, String> expectedMap = Map.of("_id", "772col2");
@@ -185,13 +185,13 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonList() {
+    void testToJsonList() {
         testCall(
                 db, "RETURN apoc.convert.toJson([1,2,3]) as value", (row) -> assertEquals("[1,2,3]", row.get("value")));
     }
 
     @Test
-    public void testToJsonMap() {
+    void testToJsonMap() {
         testCall(
                 db,
                 "RETURN apoc.convert.toJson({a:42,b:\"foo\",c:[1,2,3]}) as value",
@@ -199,7 +199,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonNode() {
+    void testToJsonNode() {
         testCall(db, "CREATE (a:Test {foo: 7}) RETURN apoc.convert.toJson(a) AS value", (row) -> {
             Map<String, Object> valueAsMap = Util.readMap((String) row.get("value"));
             assertJsonNode(valueAsMap, "0", List.of("Test"), Map.of("foo", 7L));
@@ -207,7 +207,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonWithNullValues() {
+    void testToJsonWithNullValues() {
         testCall(db, "RETURN apoc.convert.toJson({a: null, b: 'myString', c: [1,'2',null]}) as value", (row) -> {
             final Map<String, Object> value = Util.fromJson((String) row.get("value"), Map.class);
             assertNull(value.get("a"));
@@ -218,7 +218,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonNodeWithoutLabel() {
+    void testToJsonNodeWithoutLabel() {
         testCall(db, "CREATE (a {pippo:'pluto'}) RETURN apoc.convert.toJson(a) AS value", (row) -> {
             Map<String, Object> valueAsMap = Util.readMap((String) row.get("value"));
             assertJsonNode(valueAsMap, "0", null, Map.of("pippo", "pluto"));
@@ -226,7 +226,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonCollectNodes() {
+    void testToJsonCollectNodes() {
         db.executeTransactionally(
                 "CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place: point({x: 56.7, y: 12.78, z: 1.1, crs: 'wgs-84-3d'})}),(b:User {name:'Jim',age:42}),(c:User {age:12}),(d:User),(e {pippo:'pluto'})");
         String query = "MATCH (u) RETURN apoc.convert.toJson(collect(u)) as list";
@@ -269,7 +269,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonProperties() {
+    void testToJsonProperties() {
         testCall(
                 db,
                 "CREATE (a:Test {foo: 7}) RETURN apoc.convert.toJson(properties(a)) AS value",
@@ -277,7 +277,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonMapOfNodes() {
+    void testToJsonMapOfNodes() {
         testCall(
                 db,
                 "CREATE (a:Test {foo: 7}), (b:Test {bar: 9}) RETURN apoc.convert.toJson({one: a, two: b}) AS value",
@@ -291,7 +291,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonRel() {
+    void testToJsonRel() {
         final var query =
                 """
                 CREATE (f:User {name:'Adam'})-[rel:KNOWS {since: 1993.1, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42})
@@ -326,7 +326,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonPath() {
+    void testToJsonPath() {
         final var query =
                 """
                 CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baz {a:'b'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www', two:2, three: localdatetime('2020-01-01')})
@@ -406,7 +406,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonListOfPath() {
+    void testToJsonListOfPath() {
         final var query =
                 """
                 CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'}), q=(:Omega {alpha: 'beta'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'})
@@ -489,7 +489,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testFromJsonList() {
+    void testFromJsonList() {
         testCall(
                 db,
                 "RETURN apoc.convert.fromJsonList('[1,2,3]') as value",
@@ -501,7 +501,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testFromJsonMap() {
+    void testFromJsonMap() {
         testCall(db, "RETURN apoc.convert.fromJsonMap('{\"a\":42,\"b\":\"foo\",\"c\":[1,2,3]}')  as value", (row) -> {
             Map value = (Map) row.get("value");
             assertEquals(42L, value.get("a"));
@@ -511,7 +511,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testSetJsonProperty() {
+    void testSetJsonProperty() {
         testCall(
                 db,
                 "CREATE (n) WITH n CALL apoc.convert.setJsonProperty(n, 'json', [1,2,3]) RETURN n",
@@ -519,7 +519,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testGetJsonProperty() {
+    void testGetJsonProperty() {
         testCall(
                 db,
                 "CREATE (n {json:'[1,2,3]'}) RETURN apoc.convert.getJsonProperty(n, 'json') AS value",
@@ -531,7 +531,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testGetJsonPropertyMap() {
+    void testGetJsonPropertyMap() {
         testCall(
                 db,
                 "CREATE (n {json:'{a:[1,2,3]}'}) RETURN apoc.convert.getJsonProperty(n, 'json') as value",
@@ -543,7 +543,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeIssue1685() {
+    void testToTreeIssue1685() {
         String movies = Util.readResourceFile("movies.cypher");
         db.executeTransactionally(movies);
 
@@ -567,7 +567,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeIssue2190() {
+    void testToTreeIssue2190() {
         db.executeTransactionally(
                 """
                 CREATE (root:TreeNode {name:'root'})
@@ -608,7 +608,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTree() {
+    void testToTree() {
         testCall(
                 db,
                 """
@@ -629,7 +629,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeUpperCaseRels() {
+    void testToTreeUpperCaseRels() {
         testCall(
                 db,
                 """
@@ -650,7 +650,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testTreeOfEmptyList() {
+    void testTreeOfEmptyList() {
         testCall(db, "CYPHER 5 CALL apoc.convert.toTree([]) YIELD value RETURN value", (row) -> {
             Map root = (Map) row.get("value");
             assertTrue(root.isEmpty());
@@ -658,7 +658,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodes() {
+    void testToTreeLeafNodes() {
         String createStatement =
                 """
                 CREATE
@@ -694,7 +694,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonMapSortingProperties() {
+    void testToJsonMapSortingProperties() {
         testCall(
                 db,
                 "WITH {b:8, d:3, a:2, E: 12, C:9} as map RETURN apoc.convert.toSortedJsonMap(map, false) as value",
@@ -702,7 +702,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToJsonMapSortingPropertiesIgnoringCase() {
+    void testToJsonMapSortingPropertiesIgnoringCase() {
         testCall(
                 db,
                 "WITH {b:8, d:3, a:2, E: 12, C:9} as map RETURN apoc.convert.toSortedJsonMap(map) as value",
@@ -710,7 +710,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeParentNodes() {
+    void testToTreeParentNodes() {
         String createDatabase =
                 """
                         CREATE (b:Bib {id: '57523a6f-fda9-4a61-c4f6-08d47cdcf0cd', langId: 2})-[:HAS {id: "rel1"}]->(c:Comm {id: 'a34fd608-1751-0b5d-cb38-6991297fa9c9', langId: 2}),
@@ -822,7 +822,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodesWithConfigInclude() {
+    void testToTreeLeafNodesWithConfigInclude() {
         statementForConfig(db);
         String call =
                 """
@@ -854,7 +854,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodesWithConfigExclude() {
+    void testToTreeLeafNodesWithConfigExclude() {
         statementForConfig(db);
         String call =
                 """
@@ -886,7 +886,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodesWithConfigExcludeInclude() {
+    void testToTreeLeafNodesWithConfigExcludeInclude() {
         statementForConfig(db);
         String call =
                 """
@@ -918,7 +918,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodesWithConfigOnlyInclude() {
+    void testToTreeLeafNodesWithConfigOnlyInclude() {
         statementForConfig(db);
         String call =
                 """
@@ -950,7 +950,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodesWithConfigErrorInclude() {
+    void testToTreeLeafNodesWithConfigErrorInclude() {
         statementForConfig(db);
         String call =
                 """
@@ -970,7 +970,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeDoesNotRemoveNonDuplicateRels() {
+    void testToTreeDoesNotRemoveNonDuplicateRels() {
         String createStatement =
                 """
             CREATE (v1:N {id: 'n21', name: 'Node 21', p2: 'node21'})
@@ -1014,7 +1014,7 @@ public class ConvertJsonTest {
     }
 
     @Test
-    public void testToTreeLeafNodesWithConfigErrorExclude() {
+    void testToTreeLeafNodesWithConfigErrorExclude() {
         statementForConfig(db);
         String call =
                 """

@@ -40,7 +40,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class ImportCsvLdbcTest {
+class ImportCsvLdbcTest {
 
     private final String postfix = ".csv";
 
@@ -173,7 +173,7 @@ public class ImportCsvLdbcTest {
     }
 
     @Test
-    public void testLdbc() {
+    void testLdbc() {
         final List<Map<String, Object>> nodes = new ArrayList<>();
         for (final Map.Entry<String, List<String>> nodeCsv : nodeCsvTypes.entrySet()) {
             final String fileName = nodeCsv.getKey();

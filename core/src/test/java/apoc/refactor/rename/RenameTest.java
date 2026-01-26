@@ -47,7 +47,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class RenameTest {
+class RenameTest {
 
     @Inject
     GraphDatabaseService db;

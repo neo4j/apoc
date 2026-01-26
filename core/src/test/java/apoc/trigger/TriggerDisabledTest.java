@@ -44,7 +44,7 @@ import org.neo4j.test.extension.Inject;
  * NOTE: this test class expects every method to fail with a RuntimeException
  */
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class TriggerDisabledTest {
+class TriggerDisabledTest {
 
     @Inject
     private GraphDatabaseAPI db;
@@ -55,7 +55,7 @@ public class TriggerDisabledTest {
     }
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Trigger.class);
     }
 

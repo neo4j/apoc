@@ -34,7 +34,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class ExportStreamsStatementsTest {
+class ExportStreamsStatementsTest {
 
     @Inject
     GraphDatabaseService db;

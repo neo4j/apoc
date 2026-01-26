@@ -41,7 +41,7 @@ import org.neo4j.test.extension.Inject;
 import org.neo4j.values.storable.DurationValue;
 
 @EnterpriseDbmsExtension()
-public class GroupingTest {
+class GroupingTest {
 
     @Inject
     GraphDatabaseService db;

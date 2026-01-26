@@ -18,10 +18,7 @@
  */
 package apoc.export.graphml;
 
-import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
-import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.EXPORT_TO_FILE_ERROR;
-import static apoc.ApocConfig.apocConfig;
 import static apoc.export.graphml.ExportGraphMLTestUtil.*;
 import static apoc.util.BinaryTestUtil.fileToBinary;
 import static apoc.util.BinaryTestUtil.getDecompressedData;
@@ -75,7 +72,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ExportGraphMLTest {
+class ExportGraphMLTest {
     private static final String exportQueryStartAndRel =
             "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN start, rel', $file, $config)";
     private static final String exportQueryRelOnly =
@@ -104,14 +101,12 @@ public class ExportGraphMLTest {
     @BeforeAll
     void setUpAll() {
         TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class, HelperProcedures.class);
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
     }
 
     @BeforeEach
-    public void setUp(TestInfo testInfo) {
+    void setUp(TestInfo testInfo) {
         String methodName = testInfo.getTestMethod().map(Method::getName).orElse(testInfo.getDisplayName());
-        setUpGraphMlDataOnly(db, methodName);
+        setUpGraphMl(db, methodName);
     }
 
     @ExtensionCallback

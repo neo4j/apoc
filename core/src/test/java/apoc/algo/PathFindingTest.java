@@ -37,7 +37,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class PathFindingTest {
+class PathFindingTest {
 
     private static final String SETUP_MISSING_PROPERTY = "CREATE " + "(a:Loc{name:'A'}), "
             + "(b:Loc{name:'B'}), "
@@ -69,7 +69,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testAStar() {
+    void testAStar() {
         db.executeTransactionally(SETUP_GEO);
         testResult(
                 db,
@@ -80,7 +80,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testAStarConfig() {
+    void testAStarConfig() {
         db.executeTransactionally(SETUP_GEO);
         testResult(
                 db,
@@ -91,7 +91,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testAStarConfigWithPoint() {
+    void testAStarConfigWithPoint() {
         db.executeTransactionally(SETUP_GEO);
         testResult(
                 db,
@@ -102,7 +102,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testDijkstra() {
+    void testDijkstra() {
         db.executeTransactionally(SETUP_SIMPLE);
         testCall(
                 db,
@@ -125,7 +125,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testDijkstraMultipleShortest() {
+    void testDijkstraMultipleShortest() {
         db.executeTransactionally(SETUP_SIMPLE);
         testResult(
                 db,
@@ -142,7 +142,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testAllSimplePaths() {
+    void testAllSimplePaths() {
         db.executeTransactionally(SETUP_MISSING_PROPERTY);
         testResult(
                 db,
@@ -163,7 +163,7 @@ public class PathFindingTest {
     }
 
     @Test
-    public void testAllSimplePathResults() {
+    void testAllSimplePathResults() {
         db.executeTransactionally(SETUP_MISSING_PROPERTY);
         testResult(
                 db,

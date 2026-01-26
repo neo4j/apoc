@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.procedure.UserFunction;
 
-public class UserFunctionSignatureVisitorTest {
+class UserFunctionSignatureVisitorTest {
 
     private Elements elements;
     ElementVisitor<Map<String, List<QueryLanguage>>, Void> visitor;

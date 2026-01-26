@@ -46,7 +46,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class UtilTest {
+class UtilTest {
 
     @Inject
     GraphDatabaseService db;

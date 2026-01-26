@@ -39,7 +39,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class MergeTest {
+class MergeTest {
 
     @Inject
     GraphDatabaseService db;

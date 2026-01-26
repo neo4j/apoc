@@ -31,7 +31,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class BitwiseOperationsTest {
+class BitwiseOperationsTest {
 
     @Inject
     GraphDatabaseService db;
@@ -49,7 +49,7 @@ public class BitwiseOperationsTest {
     }
 
     @Test
-    public void testOperations() {
+    void testOperations() {
         int a = 0b0011_1100;
         int b = 0b0000_1101;
         testOperation("&", 12L, a, b);
@@ -63,7 +63,7 @@ public class BitwiseOperationsTest {
     }
 
     @Test
-    public void testOperations2() {
+    void testOperations2() {
         int a = 0b0011_1100;
         int b = 2;
         testOperation("<<", 240L, a, b);

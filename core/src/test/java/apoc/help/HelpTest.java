@@ -35,7 +35,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(createDatabasePerTest = false)
-public class HelpTest {
+class HelpTest {
 
     @Inject
     GraphDatabaseService db;
@@ -46,7 +46,7 @@ public class HelpTest {
     }
 
     @Test
-    public void infoCypher5() {
+    void infoCypher5() {
         TestUtil.testCall(db, "CYPHER 5 CALL apoc.help($text)", map("text", "bitwise"), (row) -> {
             assertEquals("function", row.get("type"));
             assertEquals("apoc.bitwise.op", row.get("name"));
@@ -80,7 +80,7 @@ public class HelpTest {
     }
 
     @Test
-    public void infoCypher25() {
+    void infoCypher25() {
         TestUtil.testCall(db, "CYPHER 25 CALL apoc.help($text)", map("text", "bitwise"), (row) -> {
             assertEquals("function", row.get("type"));
             assertEquals("apoc.bitwise.op", row.get("name"));
@@ -108,7 +108,7 @@ public class HelpTest {
     }
 
     @Test
-    public void indicateCore() {
+    void indicateCore() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.help($text)",

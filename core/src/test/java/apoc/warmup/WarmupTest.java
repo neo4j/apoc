@@ -38,7 +38,7 @@ import org.neo4j.test.extension.Inject;
  * CYPHER 5 only; moved to extended for Cypher 25
  */
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class WarmupTest {
+class WarmupTest {
 
     @Inject
     private DatabaseManagementService dbms;
@@ -49,16 +49,17 @@ public class WarmupTest {
     @ExtensionCallback
     void configure(TestDatabaseManagementServiceBuilder builder) {
         builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
+                //  Procedure is only supported on record storage databases
                 .setConfig(GraphDatabaseSettings.db_format, "aligned");
     }
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         prepareData(db);
     }
 
     @Test
-    public void testWarmup() {
+    void testWarmup() {
         TestUtil.testCall(db, "CALL apoc.warmup.run()", r -> {
             assertEquals(4L, r.get("nodesTotal"));
             assertNotEquals(0L, r.get("nodePages"));
@@ -68,7 +69,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupProperties() {
+    void testWarmupProperties() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true)", r -> {
             assertEquals(true, r.get("propertiesLoaded"));
             assertNotEquals(0L, r.get("propPages"));
@@ -76,7 +77,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupDynamicProperties() {
+    void testWarmupDynamicProperties() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true,true)", r -> {
             assertEquals(true, r.get("propertiesLoaded"));
             assertEquals(true, r.get("dynamicPropertiesLoaded"));
@@ -85,7 +86,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupIndexes() {
+    void testWarmupIndexes() {
         TestUtil.testCall(db, "CALL apoc.warmup.run(true,true,true)", r -> {
             assertEquals(true, r.get("indexesLoaded"));
             assertNotEquals(0L, r.get("indexPages"));
@@ -93,7 +94,7 @@ public class WarmupTest {
     }
 
     @Test
-    public void testWarmupOnDifferentStorageEngines() {
+    void testWarmupOnDifferentStorageEngines() {
         testWarmupOnDifferentStorageEnginesParameterized("standard");
         testWarmupOnDifferentStorageEnginesParameterized("aligned");
     }
@@ -143,10 +144,12 @@ public class WarmupTest {
 
     private static void prepareData(GraphDatabaseService database) {
         TestUtil.registerProcedure(database, Warmup.class);
+        // Create enough nodes and relationships to span 2 pages
         database.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.foo IS UNIQUE");
         database.executeTransactionally(
                 "UNWIND range(1, 300) AS i CREATE (n:Foo {foo:i})-[:KNOWS {bar:2}]->(m {foobar:3, array:range(1,100)})");
-
+        // Delete all relationships and their nodes, but ones with the minimum and maximum relationship ids, so
+        // they still span 2 pages
         database.executeTransactionally(
                 "MATCH ()-[r:KNOWS]->() WITH [min(id(r)), max(id(r))] AS ids MATCH (n)-[r:KNOWS]->(m) WHERE NOT id(r) IN ids DELETE n, m, r");
     }

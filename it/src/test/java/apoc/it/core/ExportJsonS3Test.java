@@ -42,7 +42,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class ExportJsonS3Test extends S3BaseTest {
+class ExportJsonS3Test extends S3BaseTest {
     private static final File directoryExpected = new File(
             Objects.requireNonNull(ExportJsonS3Test.class.getClassLoader().getResource("exportJSON"))
                     .getFile());
@@ -54,12 +54,11 @@ public class ExportJsonS3Test extends S3BaseTest {
     void setUpAll() {
         // Initialize S3 test container and APOC config
         S3BaseTest.baseBeforeClass();
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportJson.class, Graphs.class);
     }
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally(
                 "CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");

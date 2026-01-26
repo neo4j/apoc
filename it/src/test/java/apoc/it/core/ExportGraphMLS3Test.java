@@ -48,7 +48,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class ExportGraphMLS3Test extends S3BaseTest {
+class ExportGraphMLS3Test extends S3BaseTest {
 
     @Inject
     GraphDatabaseService db;
@@ -60,7 +60,7 @@ public class ExportGraphMLS3Test extends S3BaseTest {
     }
 
     @BeforeEach
-    public void setUp(TestInfo testInfo) {
+    void setUp(TestInfo testInfo) {
         String methodName = testInfo.getTestMethod().map(m -> m.getName()).orElse("");
         setUpGraphMl(db, methodName);
     }

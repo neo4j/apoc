@@ -123,6 +123,11 @@ public class ExportCoreSecurityTest {
     public static final Consumer<Map> EXCEPTION_NOT_FOUND_CONSUMER = (Map e) ->
             assertTrue(((Exception) e.get(ERROR_KEY)).getMessage().contains("test.txt (No such file or directory)"));
 
+    /*
+     * These test cases attempt to access a directory with the same prefix as the import directory. This is design to
+     * test "directoryName.startsWith" logic which is a common path traversal bug.
+     * All these tests should fail because they access a directory which isn't the configured directory
+     */
     private static final String case01 = "../imported/" + FILENAME;
     private static final String case02 = "tests/../../imported/" + FILENAME;
     private static final String case03 = "../" + FILENAME;
@@ -133,6 +138,12 @@ public class ExportCoreSecurityTest {
     private static final String case08 = "tests/..//..//" + FILENAME;
     public static final List<String> casesOutsideDir =
             Arrays.asList(case01, case02, case03, case04, case05, case07, case08);
+    /*
+    All of these will resolve to a local path after normalization which will point to
+    a non-existing directory in our import folder: /apoc. Causing them to error that is
+    not found. They all attempt to exit the import folder back to the apoc folder:
+    Directory Layout: .../apoc/core/target/import
+    */
     private static final String nonExistingDirectory = "__non-existing-dir__";
     private static final String case10 =
             "file://%2e%2e%2f%2e%2e%2f%2e%2e%2f%2e%2e%2f/" + nonExistingDirectory + "/" + FILENAME;
@@ -168,6 +179,12 @@ public class ExportCoreSecurityTest {
                         (Consumer<Map>) arr[4]));
     }
 
+    /*
+    All of these will resolve to a local path after normalization which will point to
+    a non-existing directory in our import folder: /apoc. Causing them to error that is
+    not found. They all attempt to exit the import folder back to the apoc folder:
+    Directory Layout: .../apoc/core/target/import
+    */
     @ParameterizedTest(name = PARAM_NAMES)
     @MethodSource("illegalExternalData")
     void testsWithExportDisabled(String apocProcedure, String fileName, Consumer<Map> consumer) {

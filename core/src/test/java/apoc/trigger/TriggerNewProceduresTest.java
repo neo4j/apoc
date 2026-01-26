@@ -67,7 +67,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class TriggerNewProceduresTest {
+class TriggerNewProceduresTest {
     private static final File directory = new File("target/conf");
 
     @Inject
@@ -96,7 +96,7 @@ public class TriggerNewProceduresTest {
     }
 
     @AfterEach
-    public void after() {
+    void after() {
         sysDb.executeTransactionally("CALL apoc.trigger.dropAll('neo4j')");
         testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
@@ -107,7 +107,7 @@ public class TriggerNewProceduresTest {
     //
 
     @Test
-    public void testListTriggers() {
+    void testListTriggers() {
         String name = "count-removals";
         String query = "MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])";
         testCallCount(
@@ -125,7 +125,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testRemoveNode() {
+    void testRemoveNode() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)");
         final String name = "count-removals";
@@ -140,7 +140,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testRemoveNode2() {
+    void testRemoveNode2() {
         db.executeTransactionally("CREATE (f:Foo {prop: 1})");
 
         String name = "access-removed-node";
@@ -165,7 +165,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testDropStopAndStartNotExistentTrigger() {
+    void testDropStopAndStartNotExistentTrigger() {
         testCallEmpty(
                 sysDb,
                 "CALL apoc.trigger.stop('neo4j', $name)",
@@ -183,7 +183,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testOverwriteTrigger() {
+    void testOverwriteTrigger() {
         final String name = UUID.randomUUID().toString();
 
         String queryOne = "RETURN 111";
@@ -235,7 +235,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testIssue2247() {
+    void testIssue2247() {
         db.executeTransactionally("CREATE (n:ToBeDeleted)");
         final String name = "myTrig";
         final String query = "RETURN 1";
@@ -250,7 +250,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testRemoveRelationship() {
+    void testRemoveRelationship() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)-[:X]->(f)");
 
@@ -265,7 +265,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testRemoveRelationship2() {
+    void testRemoveRelationship2() {
         db.executeTransactionally("CREATE (f:Foo)-[:X {prop: 1}]->(f)");
 
         String name = "access-removed-rels";
@@ -287,7 +287,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testRemoveTrigger() {
+    void testRemoveTrigger() {
         testCallCount(sysDb, "CALL apoc.trigger.install('neo4j', 'to-be-removed','RETURN 1',{})", 1);
         testCallEventually(
                 db,
@@ -310,7 +310,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testRemoveAllTrigger() {
+    void testRemoveAllTrigger() {
         testCallCount(sysDb, "CALL apoc.trigger.dropAll('neo4j')", 0);
         testCallCountEventually(db, "call apoc.trigger.list", 0, TIMEOUT);
 
@@ -336,7 +336,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTimeStampTrigger() {
+    void testTimeStampTrigger() {
         String name = "timestamp";
         String query = "UNWIND $createdNodes AS n SET n.ts = timestamp()";
         sysDb.executeTransactionally(
@@ -348,7 +348,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTxId() {
+    void testTxId() {
         final long start = System.currentTimeMillis();
         db.executeTransactionally("CREATE (f:Another)");
         final String name = "txinfo";
@@ -371,7 +371,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTxIdWithRelationshipsAndAfter() {
+    void testTxIdWithRelationshipsAndAfter() {
         db.executeTransactionally("CREATE (:RelationshipCounter {count:0})");
         String name = UUID.randomUUID().toString();
 
@@ -394,7 +394,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTxIdWithRelationshipsAndAfterAsync() {
+    void testTxIdWithRelationshipsAndAfterAsync() {
         testTxIdWithRelationshipsCommon("afterAsync");
 
         testCallEventually(db, "MATCH (n:RelationshipCounter) RETURN n", this::testTxIdWithRelsAssertionsCommon, 10);
@@ -408,7 +408,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTxIdWithRelationshipsAndBefore() {
+    void testTxIdWithRelationshipsAndBefore() {
         testTxIdWithRelationshipsCommon("before");
 
         testCall(db, "MATCH (n:RelationshipCounter) RETURN n", r -> {
@@ -437,14 +437,14 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testMetaDataBefore() {
+    void testMetaDataBefore() {
         String triggerQuery = "UNWIND $createdNodes AS n SET n.label = labels(n)[0], n += $metaData";
         String matchQuery = "MATCH (n:Bar) RETURN n";
         testMetaData(triggerQuery, "before", matchQuery);
     }
 
     @Test
-    public void testMetaDataAfter() {
+    void testMetaDataAfter() {
         db.executeTransactionally("CREATE (n:Another)");
         String triggerQuery = "UNWIND $createdNodes AS n MATCH (a:Another) SET a.label = labels(n)[0], a += $metaData";
         String matchQuery = "MATCH (n:Another) RETURN n";
@@ -473,7 +473,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testPauseResult() {
+    void testPauseResult() {
         String name = "pausedTest";
         String query = "UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime";
         sysDb.executeTransactionally(
@@ -488,7 +488,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testPauseOnCallList() {
+    void testPauseOnCallList() {
         String name = "test";
         String query = "UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime";
         sysDb.executeTransactionally(
@@ -509,7 +509,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testResumeResult() {
+    void testResumeResult() {
         String name = "test";
         String query = "UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime";
         sysDb.executeTransactionally(
@@ -528,7 +528,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTriggerPause() {
+    void testTriggerPause() {
         String name = "test";
         String query = "UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime";
         sysDb.executeTransactionally(
@@ -547,7 +547,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTriggerResume() {
+    void testTriggerResume() {
         String name = "test";
         String query = "UNWIND $createdNodes AS n SET n.txId = $transactionId, n.txTime = $commitTime";
         sysDb.executeTransactionally(
@@ -569,7 +569,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testCreatedRelationshipsAsync() {
+    void testCreatedRelationshipsAsync() {
         db.executeTransactionally("CREATE (:A {name: \"A\"})-[:R1]->(:Z {name: \"Z\"})");
         String name = "trigger-after-async";
         final String query =
@@ -595,7 +595,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testDeleteRelationshipsAsync() {
+    void testDeleteRelationshipsAsync() {
         db.executeTransactionally(
                 "CREATE (a:A {name: \"A\"})-[:R1 {omega: 3}]->(z:Z {name: \"Z\"}), (a)-[:R2 {alpha: 1}]->(z)");
         String name = "trigger-after-async-1";
@@ -614,7 +614,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testDeleteRelationshipsAsyncWithCreationInQuery() {
+    void testDeleteRelationshipsAsyncWithCreationInQuery() {
         db.executeTransactionally(
                 "CREATE (a:A {name: \"A\"})-[:R1 {omega: 3}]->(z:Z {name: \"Z\"}), (a)-[:R2 {alpha: 1}]->(z)");
         String name = "trigger-after-async-2";
@@ -632,7 +632,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testDeleteNodesAsync() {
+    void testDeleteNodesAsync() {
         db.executeTransactionally(
                 "CREATE (a:A {name: 'A'})-[:R1 {omega: 3}]->(z:Z {name: 'Z'}), (:R2:Other {alpha: 1})");
         String name = "trigger-after-async-3";
@@ -652,7 +652,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testDeleteNodesAsyncWithCreationQuery() {
+    void testDeleteNodesAsyncWithCreationQuery() {
         db.executeTransactionally("CREATE (:R2:Other {alpha: 1})");
         String name = "trigger-after-async-4";
         final String query =
@@ -683,7 +683,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testDeleteRelationships() {
+    void testDeleteRelationships() {
         db.executeTransactionally("CREATE (a:A {name: \"A\"})-[:R1]->(z:Z {name: \"Z\"}), (a)-[:R2]->(z)");
         String name = "trigger-after-async-3";
         final String query =
@@ -714,17 +714,17 @@ public class TriggerNewProceduresTest {
     //
 
     @Test
-    public void testTriggerShouldNotCauseCascadeTransactionWithPhaseBefore() {
+    void testTriggerShouldNotCauseCascadeTransactionWithPhaseBefore() {
         testCascadeTransactionCommon("before");
     }
 
     @Test
-    public void testTriggerShouldNotCauseCascadeTransactionWithPhaseAfter() {
+    void testTriggerShouldNotCauseCascadeTransactionWithPhaseAfter() {
         testCascadeTransactionCommon("after");
     }
 
     @Test
-    public void testTriggerShouldNotCauseCascadeTransactionWithPhaseAfterAsync() {
+    void testTriggerShouldNotCauseCascadeTransactionWithPhaseAfterAsync() {
         testCascadeTransactionCommon("afterAsync");
     }
 
@@ -761,7 +761,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testTriggerShow() {
+    void testTriggerShow() {
         String name = "test-show1";
         String name2 = "test-show2";
         String query = "MATCH (c:TestShow) SET c.count = 1";
@@ -795,7 +795,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testInstallTriggerInUserDb() {
+    void testInstallTriggerInUserDb() {
         try {
             testCall(
                     db,
@@ -807,7 +807,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testShowTriggerInUserDb() {
+    void testShowTriggerInUserDb() {
         try {
             testCall(db, "CALL apoc.trigger.show('neo4j')", r -> fail("Should fail because of user db execution"));
         } catch (QueryExecutionException e) {
@@ -816,7 +816,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testInstallTriggerInNotExistentDb() {
+    void testInstallTriggerInNotExistentDb() {
         final String dbName = "nonexistent";
         try {
             testCall(
@@ -830,7 +830,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testInstallTriggerInSystemDb() {
+    void testInstallTriggerInSystemDb() {
         try {
             testCall(sysDb, "CALL apoc.trigger.install('system', 'name', 'SHOW DATABASES', {})", r -> fail(""));
         } catch (RuntimeException e) {
@@ -839,7 +839,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testEventualConsistency() {
+    void testEventualConsistency() {
         long count = 0L;
         final String name = UUID.randomUUID().toString();
         final String query = "UNWIND $createdNodes AS n SET n.count = " + count;
@@ -869,7 +869,7 @@ public class TriggerNewProceduresTest {
     }
 
     @Test
-    public void testCypherVersions() {
+    void testCypherVersions() {
         int id = 0;
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             String name = "cypher-versions-" + id;

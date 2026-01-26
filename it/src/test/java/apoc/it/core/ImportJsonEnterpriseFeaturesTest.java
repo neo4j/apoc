@@ -42,7 +42,7 @@ class ImportJsonEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
@@ -62,7 +62,7 @@ class ImportJsonEnterpriseFeaturesTest {
     }
 
     @BeforeEach
-    public void cleanUpDb() {
+    void cleanUpDb() {
         // Remove all current constraints/indexes
         session.executeWriteWithoutResult(tx -> {
             final List<String> constraints = tx.run("SHOW CONSTRAINTS YIELD name")
@@ -79,7 +79,7 @@ class ImportJsonEnterpriseFeaturesTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }

@@ -71,7 +71,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ExportJsonTest {
+class ExportJsonTest {
 
     private static final String DEFLATE_EXT = ".zz";
     private static final File directory = new File("target/import");
@@ -93,10 +93,7 @@ public class ExportJsonTest {
     }
 
     @BeforeEach
-    public void setup() {
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
-        db.executeTransactionally("MATCH (n) DETACH DELETE n");
+    void setup() {
         db.executeTransactionally(
                 """
                         CREATE (f:User {

@@ -38,7 +38,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class GraphAggregationTest {
+class GraphAggregationTest {
 
     @Inject
     GraphDatabaseService db;
@@ -49,7 +49,7 @@ public class GraphAggregationTest {
     }
 
     @Test
-    public void testGraph() {
+    void testGraph() {
         db.executeTransactionally(
                 "CREATE (a:A {id:'a'})-[:AB {id:'ab'}]->(b:B {id:'b'})-[:BC {id:'bc'}]->(c:C {id:'c'}),(a)-[:AC {id:'ac'}]->(c)");
 

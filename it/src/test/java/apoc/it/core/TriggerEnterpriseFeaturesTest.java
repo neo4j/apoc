@@ -73,7 +73,7 @@ class TriggerEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         final String cypherInitializer = String.format("%s.%s.0", APOC_CONFIG_INITIALIZER, SYSTEM_DATABASE_NAME);
         final String createInitDb = String.format("CREATE DATABASE %s IF NOT EXISTS", INIT_DB);
 
@@ -97,13 +97,13 @@ class TriggerEnterpriseFeaturesTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     @AfterEach
-    public void after() {
+    void after() {
         // drop all triggers
         try (Session sysSession = neo4jContainer.getDriver().session(forDatabase(SYSTEM_DATABASE_NAME))) {
             Stream.of(DEFAULT_DATABASE_NAME, FOO_DB)

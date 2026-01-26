@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +47,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class ExpandPathTest {
+class ExpandPathTest {
 
     @Inject
     GraphDatabaseService db;
@@ -68,12 +67,6 @@ public class ExpandPathTest {
             tx.execute(bigbrother);
             tx.commit();
         }
-    }
-
-    @AfterEach
-    void removeOtherLabels() {
-        db.executeTransactionally(
-                "OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
     }
 
     @Test

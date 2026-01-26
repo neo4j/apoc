@@ -57,7 +57,7 @@ import org.neo4j.test.extension.Inject;
  * CYPHER 5 only; moved to extended for Cypher 25
  */
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ExportArrowSecurityTest {
+class ExportArrowSecurityTest {
     public static final File directory = new File("target/import");
     public static final File directoryWithSamePrefix = new File("target/imported");
     public static final File subDirectory = new File("target/import/tests");

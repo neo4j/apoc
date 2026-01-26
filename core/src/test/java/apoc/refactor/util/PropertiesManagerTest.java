@@ -38,7 +38,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class PropertiesManagerTest {
+class PropertiesManagerTest {
 
     @Inject
     GraphDatabaseService db;

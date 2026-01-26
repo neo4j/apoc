@@ -47,7 +47,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class CollTest {
+class CollTest {
 
     @Inject
     GraphDatabaseService db;
@@ -76,7 +76,7 @@ public class CollTest {
     public static final Map<String, String> MAP_WITH_BETA = Map.of("something", "beta");
 
     @Test
-    public void testRunningTotal() {
+    void testRunningTotal() {
         testCall(
                 db,
                 "RETURN apoc.coll.runningTotal([1,2,3,4,5.5,1]) as value",
@@ -84,7 +84,7 @@ public class CollTest {
     }
 
     @Test
-    public void testStandardDeviation() {
+    void testStandardDeviation() {
         testCall(
                 db,
                 "RETURN apoc.coll.stdev([10, 12, 23, 23, 16, 23, 21, 16]) as value",
@@ -100,7 +100,7 @@ public class CollTest {
     }
 
     @Test
-    public void testZip() {
+    void testZip() {
         testCall(db, "RETURN apoc.coll.zip([1,2,3],[4,5]) as value", (row) -> {
             Object value = row.get("value");
             List<List<Long>> expected = asList(asList(1L, 4L), asList(2L, 5L), asList(3L, null));
@@ -109,7 +109,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPairs() {
+    void testPairs() {
         testCall(
                 db,
                 "RETURN apoc.coll.pairs([1,2,3]) as value",
@@ -117,7 +117,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPairsMin() {
+    void testPairsMin() {
         testCall(
                 db,
                 "RETURN apoc.coll.pairsMin([1,2,3]) as value",
@@ -125,13 +125,13 @@ public class CollTest {
     }
 
     @Test
-    public void testPairsMinListResult() {
+    void testPairsMinListResult() {
         testCall(
                 db, "RETURN apoc.coll.pairsMin([1,2,3])[0][0] as result", (row) -> assertEquals(1L, row.get("result")));
     }
 
     @Test
-    public void testToSet() {
+    void testToSet() {
         testCall(
                 db,
                 "RETURN apoc.coll.toSet([1,2,1,3]) as value",
@@ -139,12 +139,12 @@ public class CollTest {
     }
 
     @Test
-    public void testSum() {
+    void testSum() {
         testCall(db, "RETURN apoc.coll.sum([1,2,3]) as value", (row) -> assertEquals(6D, row.get("value")));
     }
 
     @Test
-    public void testAvg() {
+    void testAvg() {
         testCall(
                 db,
                 "RETURN apoc.coll.avg([1.4,2,3.2]) as value",
@@ -152,20 +152,20 @@ public class CollTest {
     }
 
     @Test
-    public void testMin() {
+    void testMin() {
         testCall(db, "RETURN apoc.coll.min([1,2]) as value", (row) -> assertEquals(1L, row.get("value")));
         testCall(db, "RETURN apoc.coll.min([1,2,3]) as value", (row) -> assertEquals(1L, row.get("value")));
         testCall(db, "RETURN apoc.coll.min([0.5,1,2.3]) as value", (row) -> assertEquals(0.5D, row.get("value")));
     }
 
     @Test
-    public void testMax() {
+    void testMax() {
         testCall(db, "RETURN apoc.coll.max([1,2,3]) as value", (row) -> assertEquals(3L, row.get("value")));
         testCall(db, "RETURN apoc.coll.max([0.5,1,2.3]) as value", (row) -> assertEquals(2.3D, row.get("value")));
     }
 
     @Test
-    public void testMaxDate() {
+    void testMaxDate() {
         testCall(
                 db,
                 "RETURN apoc.coll.max([date('2020-04-01'), date('2020-03-01')]) as value",
@@ -183,7 +183,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPartitionProcedure() {
+    void testPartitionProcedure() {
         testResult(db, "CALL apoc.coll.partition([1,2,3,4,5],2)", (result) -> {
             Map<String, Object> row = result.next();
             assertEquals(asList(1L, 2L), row.get("value"));
@@ -196,7 +196,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPartitionFunction() {
+    void testPartitionFunction() {
         testResult(db, "UNWIND apoc.coll.partition([1,2,3,4,5],2) AS value RETURN value", (result) -> {
             Map<String, Object> row = result.next();
             assertEquals(asList(1L, 2L), row.get("value"));
@@ -209,12 +209,12 @@ public class CollTest {
     }
 
     @Test
-    public void testSumLongs() {
+    void testSumLongs() {
         testCall(db, "RETURN apoc.coll.sumLongs([1,2,3]) AS value", (row) -> assertEquals(6L, row.get("value")));
     }
 
     @Test
-    public void testSort() {
+    void testSort() {
         testCall(
                 db,
                 "RETURN apoc.coll.sort([3,2,1]) as value",
@@ -222,12 +222,12 @@ public class CollTest {
     }
 
     @Test
-    public void testIN() {
+    void testIN() {
         testCall(db, "RETURN apoc.coll.contains([1,2,3],1) AS value", (res) -> assertEquals(true, res.get("value")));
     }
 
     @Test
-    public void testIndexOf() {
+    void testIndexOf() {
         testCall(db, "RETURN apoc.coll.indexOf([1,2,3],1) AS value", r -> assertEquals(0L, r.get("value")));
         testCall(db, "RETURN apoc.coll.indexOf([1,2,3],2) AS value", r -> assertEquals(1L, r.get("value")));
         testCall(db, "RETURN apoc.coll.indexOf([1,2,3],3) AS value", r -> assertEquals(2L, r.get("value")));
@@ -237,7 +237,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIndexOfWithCollections() {
+    void testIndexOfWithCollections() {
         db.executeTransactionally(QUERY_WITH_ARRAY);
         testCall(
                 db,
@@ -246,7 +246,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSplit() {
+    void testSplit() {
         testResult(db, "CALL apoc.coll.split([1,2,3,2,4,5],2)", r -> {
             assertEquals(asList(1L), r.next().get("value"));
             assertEquals(asList(3L), r.next().get("value"));
@@ -273,7 +273,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSplitOfWithBothHardcodedAndEntityTypes() {
+    void testSplitOfWithBothHardcodedAndEntityTypes() {
         db.executeTransactionally(QUERY_WITH_ARRAY);
         testResult(
                 db,
@@ -302,7 +302,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRemoveWithBothHardcodedAndEntityTypes() {
+    void testRemoveWithBothHardcodedAndEntityTypes() {
         db.executeTransactionally(QUERY_WITH_ARRAY);
         testCall(
                 db,
@@ -320,7 +320,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCollToSetWithBothHardcodedAndEntityTypes() {
+    void testCollToSetWithBothHardcodedAndEntityTypes() {
         db.executeTransactionally(QUERY_WITH_ARRAY);
 
         testCall(db, QUERY_WITH_MIXED_TYPES + "RETURN apoc.coll.toSet(collection) AS value", row -> {
@@ -334,7 +334,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSet() {
+    void testSet() {
         testCall(db, "RETURN apoc.coll.set(null,0,4) AS value", r -> assertNull(r.get("value")));
         testCall(
                 db,
@@ -363,7 +363,7 @@ public class CollTest {
     }
 
     @Test
-    public void testInsert() {
+    void testInsert() {
         testCall(db, "RETURN apoc.coll.insert(null,0,4) AS value", r -> assertNull(r.get("value")));
         testCall(
                 db,
@@ -392,7 +392,7 @@ public class CollTest {
     }
 
     @Test
-    public void testInsertList() {
+    void testInsertList() {
         testCall(db, "RETURN apoc.coll.insertAll(null,0,[4,5,6]) AS value", r -> assertNull(r.get("value")));
         testCall(
                 db,
@@ -421,7 +421,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRemove() {
+    void testRemove() {
         testCall(db, "RETURN apoc.coll.remove(null,0,0) AS value", r -> assertNull(r.get("value")));
         testCall(
                 db,
@@ -444,7 +444,7 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsAll() {
+    void testContainsAll() {
         testCall(
                 db,
                 "RETURN apoc.coll.containsAll([1,2,3],[1,2]) AS value",
@@ -484,7 +484,7 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsAllOfWithCollections() {
+    void testContainsAllOfWithCollections() {
         db.executeTransactionally(QUERY_WITH_ARRAY);
 
         testCall(
@@ -504,7 +504,7 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsAllSorted() {
+    void testContainsAllSorted() {
         testCall(
                 db,
                 "RETURN apoc.coll.containsAllSorted([1,2,3],[1,2]) AS value",
@@ -528,7 +528,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIsEqualCollection() {
+    void testIsEqualCollection() {
         testCall(
                 db,
                 "RETURN apoc.coll.isEqualCollection([1,2,3],[1,2,3]) AS value",
@@ -592,7 +592,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIN2() {
+    void testIN2() {
         int elements = 1_000_000;
         ArrayList<Long> list = new ArrayList<>(elements);
         for (long i = 0; i < elements; i++) {
@@ -609,7 +609,7 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsSorted() {
+    void testContainsSorted() {
         int elements = 1_000_000;
         ArrayList<Long> list = new ArrayList<>(elements);
         for (long i = 0; i < elements; i++) {
@@ -626,7 +626,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortNodes() {
+    void testSortNodes() {
         testCall(
                 db,
                 "CREATE (n {name:'foo'}),(m {name:'bar'}) WITH n,m RETURN apoc.coll.sortNodes([n,m], 'name') AS nodes",
@@ -638,7 +638,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortNodesReverse() {
+    void testSortNodesReverse() {
         testCall(
                 db,
                 "CREATE (n {name:'foo'}),(m {name:'bar'}) WITH n,m RETURN apoc.coll.sortNodes([n,m], '^name') AS nodes",
@@ -650,7 +650,7 @@ public class CollTest {
     }
 
     @Test
-    public void testElements() {
+    void testElements() {
         testCall(
                 db,
                 "CREATE p=(n {name:'foo'})-[r:R]->(n) WITH n,r,p CALL apoc.coll.elements([0,null,n,r,p,42,3.14,true,[42],{a:42},13], 9,1) YIELD elements,_1,_7,_10,_2n,_3r,_4p,_5i,_5f,_6i,_6f,_7b,_8l,_9m RETURN *",
@@ -672,7 +672,7 @@ public class CollTest {
     }
 
     @Test
-    public void testListsOnNodes() {
+    void testListsOnNodes() {
         testCall(
                 db,
                 """
@@ -697,7 +697,7 @@ public class CollTest {
     }
 
     @Test
-    public void testListsOnRelationships() {
+    void testListsOnRelationships() {
         testCall(
                 db,
                 """
@@ -722,7 +722,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMaps() {
+    void testSortMaps() {
         testCall(db, "RETURN apoc.coll.sortMaps([{name:'foo'},{name:'bar'}], 'name') as maps", (row) -> {
             List<Map> nodes = (List<Map>) row.get("maps");
             assertEquals("foo", nodes.get(0).get("name"));
@@ -731,7 +731,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMapsMulti() {
+    void testSortMapsMulti() {
         testCall(
                 db,
                 "RETURN apoc.coll.sortMulti([{name:'foo'},{name:'bar',age:32},{name:'bar',age:42}], ['^name','age'],1,1) as maps",
@@ -744,7 +744,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMapsCount() {
+    void testSortMapsCount() {
 
         testCall(
                 db,
@@ -760,7 +760,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSortMapsCountReverse() {
+    void testSortMapsCountReverse() {
 
         testCall(
                 db,
@@ -776,7 +776,7 @@ public class CollTest {
     }
 
     @Test
-    public void testSetOperations() {
+    void testSetOperations() {
         testCall(
                 db,
                 "RETURN apoc.coll.union([1,2],[3,2]) AS value",
@@ -809,7 +809,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIntersectionWithJsonMap() {
+    void testIntersectionWithJsonMap() {
         testCall(
                 db,
                 "WITH apoc.convert.fromJsonMap('{\"numbers\":[1,2]}') as set1, [2,3] as set2\n"
@@ -819,7 +819,7 @@ public class CollTest {
     }
 
     @Test
-    public void testIntersectionWithJsonMapDouble() {
+    void testIntersectionWithJsonMapDouble() {
         testCall(
                 db,
                 "WITH apoc.convert.fromJsonMap('{\"numbers\":[1.2,2.3]}') as set1, [2.3,3.4] as set2\n"
@@ -829,7 +829,7 @@ public class CollTest {
     }
 
     @Test
-    public void testShuffleOnNullAndEmptyList() {
+    void testShuffleOnNullAndEmptyList() {
         testCall(
                 db,
                 "RETURN apoc.coll.shuffle([]) as value",
@@ -842,7 +842,7 @@ public class CollTest {
     }
 
     @Test
-    public void testShuffle() {
+    void testShuffle() {
         // with 10k elements, very remote chance of randomly getting same order
         int elements = 10_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -862,7 +862,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemOnNullAndEmptyList() {
+    void testRandomItemOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.randomItem([]) as value", (row) -> {
             Object result = row.get("value");
             assertEquals(null, result);
@@ -875,7 +875,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItem() {
+    void testRandomItem() {
         testCall(db, "RETURN apoc.coll.randomItem([1,2,3,4,5]) as value", (row) -> {
             Long result = (Long) row.get("value");
             assertTrue(result >= 1 && result <= 5);
@@ -883,7 +883,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemsOnNullAndEmptyList() {
+    void testRandomItemsOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.randomItems([], 5) as value", (row) -> {
             List<Object> result = (List<Object>) row.get("value");
             assertTrue(result.isEmpty());
@@ -906,7 +906,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItems() {
+    void testRandomItems() {
         // with 100k elements, very remote chance of randomly getting same order
         int elements = 100_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -926,7 +926,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemsLargerThanOriginal() {
+    void testRandomItemsLargerThanOriginal() {
         // with 10k elements, very remote chance of randomly getting same order
         int elements = 10_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -946,7 +946,7 @@ public class CollTest {
     }
 
     @Test
-    public void testRandomItemsLargerThanOriginalAllowingRepick() {
+    void testRandomItemsLargerThanOriginalAllowingRepick() {
         // with 100k elements, very remote chance of randomly getting same order
         int elements = 100_000;
         ArrayList<Long> original = new ArrayList<>(elements);
@@ -965,13 +965,13 @@ public class CollTest {
     }
 
     @Test
-    public void testContainsDuplicatesOnNullAndEmptyList() {
+    void testContainsDuplicatesOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.containsDuplicates([]) AS value", r -> assertEquals(false, r.get("value")));
         testCall(db, "RETURN apoc.coll.containsDuplicates(null) AS value", r -> assertEquals(false, r.get("value")));
     }
 
     @Test
-    public void testContainsDuplicates() {
+    void testContainsDuplicates() {
         testCall(
                 db,
                 "RETURN apoc.coll.containsDuplicates([1,2,3,9,7,5]) AS value",
@@ -983,7 +983,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDuplicatesOnNullAndEmptyList() {
+    void testDuplicatesOnNullAndEmptyList() {
         testCall(
                 db,
                 "RETURN apoc.coll.duplicates([]) as value",
@@ -995,7 +995,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDuplicates() {
+    void testDuplicates() {
         testCall(
                 db,
                 "RETURN apoc.coll.duplicates([1,2,1,3,2,5,2,3,1,2]) as value",
@@ -1003,7 +1003,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDuplicatesWithCountOnNullAndEmptyList() {
+    void testDuplicatesWithCountOnNullAndEmptyList() {
         testCall(
                 db,
                 "RETURN apoc.coll.duplicatesWithCount([]) as value",
@@ -1015,7 +1015,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDuplicatesWithCount() {
+    void testDuplicatesWithCount() {
         testCall(db, "RETURN apoc.coll.duplicatesWithCount([1,2,1,3,2,5,2,3,1,2]) as value", (row) -> {
             Map<Long, Long> expectedMap = new HashMap<>(3);
             expectedMap.put(1l, 3l);
@@ -1040,7 +1040,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFrequenciesOnNullAndEmptyList() {
+    void testFrequenciesOnNullAndEmptyList() {
         testCall(
                 db,
                 "RETURN apoc.coll.frequencies([]) as value",
@@ -1052,7 +1052,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFrequencies() {
+    void testFrequencies() {
         testCall(db, "RETURN apoc.coll.frequencies([1,2,1,3,2,5,2,3,1,2]) as value", (row) -> {
             Map<Long, Long> expectedMap = new HashMap<>(4);
             expectedMap.put(1l, 3l);
@@ -1078,7 +1078,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFrequenciesAsMapAsMap() {
+    void testFrequenciesAsMapAsMap() {
         testCall(
                 db,
                 "RETURN apoc.coll.frequenciesAsMap([]) as value",
@@ -1120,13 +1120,13 @@ public class CollTest {
     }
 
     @Test
-    public void testOccurrencesOnNullAndEmptyList() {
+    void testOccurrencesOnNullAndEmptyList() {
         testCall(db, "RETURN apoc.coll.occurrences([], 5) as value", (row) -> assertEquals(0l, row.get("value")));
         testCall(db, "RETURN apoc.coll.occurrences(null, 5) as value", (row) -> assertEquals(0l, row.get("value")));
     }
 
     @Test
-    public void testOccurrences() {
+    void testOccurrences() {
         testCall(
                 db,
                 "RETURN apoc.coll.occurrences([1,2,1,3,2,5,2,3,1,2], 1) as value",
@@ -1150,7 +1150,7 @@ public class CollTest {
     }
 
     @Test
-    public void testFlatten() {
+    void testFlatten() {
         testCall(
                 db,
                 "RETURN apoc.coll.flatten([[1,2],[3,4],[4],[5,6,7]]) as value",
@@ -1158,7 +1158,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWith0() {
+    void testCombinationsWith0() {
         testCall(
                 db,
                 "RETURN apoc.coll.combinations([1,2,3,4,5], 0) as value",
@@ -1166,7 +1166,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithNegative() {
+    void testCombinationsWithNegative() {
         testCall(
                 db,
                 "RETURN apoc.coll.combinations([1,2,3,4,5], -1) as value",
@@ -1174,7 +1174,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithEmptyCollection() {
+    void testCombinationsWithEmptyCollection() {
         testCall(
                 db,
                 "RETURN apoc.coll.combinations([], 0) as value",
@@ -1182,7 +1182,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithNullCollection() {
+    void testCombinationsWithNullCollection() {
         testCall(
                 db,
                 "RETURN apoc.coll.combinations(null, 0) as value",
@@ -1190,7 +1190,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithTooLargeSelect() {
+    void testCombinationsWithTooLargeSelect() {
         testCall(
                 db,
                 "RETURN apoc.coll.combinations([1,2,3,4,5], 6) as value",
@@ -1198,7 +1198,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithListSizeSelect() {
+    void testCombinationsWithListSizeSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], 5) as value", (row) -> {
             List<List<Object>> result = new ArrayList<>();
             result.add(asList(1l, 2l, 3l, 4l, 5l));
@@ -1207,7 +1207,7 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithSingleSelect() {
+    void testCombinationsWithSingleSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4,5], 3) as value", (row) -> {
             List<List<Object>> result = new ArrayList<>();
             result.add(asList(1l, 2l, 3l));
@@ -1225,14 +1225,14 @@ public class CollTest {
     }
 
     @Test
-    public void testCombinationsWithMinSelectGreaterThanMax() {
+    void testCombinationsWithMinSelectGreaterThanMax() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4], 3, 2) as value", (row) -> {
             assertEquals(Collections.emptyList(), row.get("value"));
         });
     }
 
     @Test
-    public void testCombinationsWithMinAndMaxSelect() {
+    void testCombinationsWithMinAndMaxSelect() {
         testCall(db, "RETURN apoc.coll.combinations([1,2,3,4], 2, 3) as value", (row) -> {
             List<List<Object>> result = new ArrayList<>();
             result.add(asList(1l, 2l));
@@ -1251,7 +1251,7 @@ public class CollTest {
     }
 
     @Test
-    public void testVerifyAllValuesAreDifferent() {
+    void testVerifyAllValuesAreDifferent() {
         testCall(db, "RETURN apoc.coll.different([1, 2, 3]) as value", (row) -> {
             assertEquals(true, row.get("value"));
         });
@@ -1264,7 +1264,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursNodes() {
+    void testDropNeighboursNodes() {
         db.executeTransactionally("CREATE (n:Person {name:'Foo'}) " + "CREATE (b:Person {name:'Bar'}) "
                 + "CREATE (n)-[:KNOWS]->(n)-[:LIVES_WITH]->(n)");
         testResult(
@@ -1277,7 +1277,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursNumbers() {
+    void testDropNeighboursNumbers() {
         testResult(
                 db,
                 "WITH [1,2,3,4,4,5,6,6,4,7] AS values RETURN apoc.coll.dropDuplicateNeighbors(values) as value",
@@ -1288,7 +1288,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursStrings() {
+    void testDropNeighboursStrings() {
         testResult(
                 db,
                 "WITH ['a','a','hello','hello','hello','foo','bar','apoc','apoc!','hello'] AS values RETURN apoc.coll.dropDuplicateNeighbors(values) as value",
@@ -1300,7 +1300,7 @@ public class CollTest {
     }
 
     @Test
-    public void testDropNeighboursDifferentTypes() {
+    void testDropNeighboursDifferentTypes() {
         testResult(
                 db,
                 "WITH ['a','a',1,1,'hello','foo','bar','apoc','apoc!',1] AS values RETURN apoc.coll.dropDuplicateNeighbors(values) as value",
@@ -1312,14 +1312,14 @@ public class CollTest {
     }
 
     @Test
-    public void testFill() {
+    void testFill() {
         testResult(db, "RETURN apoc.coll.fill('abc',2) as value", (row) -> {
             assertEquals(asList("abc", "abc"), row.next().get("value"));
         });
     }
 
     @Test
-    public void testSortText() {
+    void testSortText() {
         testCall(
                 db,
                 "RETURN apoc.coll.sortText(['b', 'a']) as value",
@@ -1331,7 +1331,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPairWithOffsetFn() {
+    void testPairWithOffsetFn() {
         testCall(
                 db,
                 "RETURN apoc.coll.pairWithOffset([1,2,3,4], 2) AS value",
@@ -1345,7 +1345,7 @@ public class CollTest {
     }
 
     @Test
-    public void testPairWithOffset() {
+    void testPairWithOffset() {
         testResult(db, "CALL apoc.coll.pairWithOffset([1,2,3,4], 2)", (result) -> {
             assertEquals(asList(1L, 3L), result.next().get("value"));
             assertEquals(asList(2L, 4L), result.next().get("value"));
@@ -1364,7 +1364,7 @@ public class CollTest {
 
     // Tests for issues with different types of lists/arrays
     @Test
-    public void testApocCollOccurrences() {
+    void testApocCollOccurrences() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1378,7 +1378,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollContains() {
+    void testApocCollContains() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1392,7 +1392,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollContainsDuplicates() {
+    void testApocCollContainsDuplicates() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1406,7 +1406,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollDifferent() {
+    void testApocCollDifferent() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1420,7 +1420,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollDropDuplicateNeighbors() {
+    void testApocCollDropDuplicateNeighbors() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1434,7 +1434,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollDuplicates() {
+    void testApocCollDuplicates() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1448,7 +1448,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollDuplicatesWithCount() {
+    void testApocCollDuplicatesWithCount() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1469,7 +1469,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollFrequencies() {
+    void testApocCollFrequencies() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1490,7 +1490,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollFrequenciesAsMap() {
+    void testApocCollFrequenciesAsMap() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1508,7 +1508,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollIsEqualCollection() {
+    void testApocCollIsEqualCollection() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1522,7 +1522,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollIsEqualSubtract() {
+    void testApocCollIsEqualSubtract() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1536,7 +1536,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollIsEqualContainsAll() {
+    void testApocCollIsEqualContainsAll() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1550,7 +1550,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollIsEqualToSet() {
+    void testApocCollIsEqualToSet() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1564,7 +1564,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollUnion() {
+    void testApocCollUnion() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1578,7 +1578,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollIntersection() {
+    void testApocCollIntersection() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """
@@ -1592,7 +1592,7 @@ public class CollTest {
     }
 
     @Test
-    public void testApocCollDisjunction() {
+    void testApocCollDisjunction() {
         db.executeTransactionally("CREATE (:Test {someArray: [true, false, true]})");
         String query =
                 """

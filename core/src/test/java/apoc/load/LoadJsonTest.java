@@ -72,7 +72,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class LoadJsonTest {
+class LoadJsonTest {
 
     private static ClientAndServer mockServer;
     private HttpServer server;
@@ -101,7 +101,7 @@ public class LoadJsonTest {
     }
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
         apocConfig().setProperty("apoc.json.zip.url", "http://localhost:5353/testload.zip?raw=true!person.json");
@@ -117,12 +117,12 @@ public class LoadJsonTest {
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         server.stop(0);
     }
 
     @Test
-    public void testLoadJson() {
+    void testLoadJson() {
         URL url = ClassLoader.getSystemResource("map.json");
         testCall(
                 db,
@@ -132,7 +132,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadMultiJsonWithBinary() {
+    void testLoadMultiJsonWithBinary() {
         testResult(
                 db,
                 "CYPHER 5 CALL apoc.load.jsonParams($url, null, null, null, $config)",
@@ -148,7 +148,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadMultiJson() {
+    void testLoadMultiJson() {
         URL url = ClassLoader.getSystemResource("multi.json");
         testResult(
                 db,
@@ -172,7 +172,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadMultiJsonPaths() {
+    void testLoadMultiJsonPaths() {
         URL url = ClassLoader.getSystemResource("multi.json");
         testResult(
                 db,
@@ -182,7 +182,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonPath() {
+    void testLoadJsonPath() {
         URL url = ClassLoader.getSystemResource("map.json");
         testCall(
                 db,
@@ -192,7 +192,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonPathRoot() {
+    void testLoadJsonPathRoot() {
         URL url = ClassLoader.getSystemResource("map.json");
         testCall(
                 db,
@@ -202,7 +202,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonWithPathOptions() {
+    void testLoadJsonWithPathOptions() {
         URL url = ClassLoader.getSystemResource("columns.json");
 
         // -- load.json
@@ -246,7 +246,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonArrayPath() {
+    void testLoadJsonArrayPath() {
         URL url = ClassLoader.getSystemResource("map.json");
         testCall(
                 db,
@@ -256,7 +256,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonArrayPathRoot() {
+    void testLoadJsonArrayPathRoot() {
         URL url = ClassLoader.getSystemResource("map.json");
         testCall(
                 db,
@@ -266,7 +266,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonStackOverflow() {
+    void testLoadJsonStackOverflow() {
         String url =
                 "https://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&tagged=neo4j&site=stackoverflow&filter=!5-i6Zw8Y)4W7vpy91PMYsKM-k9yzEsSC1_Uxlf";
         testCall(
@@ -282,7 +282,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonNoFailOnError() {
+    void testLoadJsonNoFailOnError() {
         String url = "file.json";
         testResult(
                 db,
@@ -292,7 +292,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonZip() {
+    void testLoadJsonZip() {
         URL url = ClassLoader.getSystemResource("testload.zip");
         testCall(db, "CALL apoc.load.json($url)", map("url", url.toString() + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -303,7 +303,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonTar() {
+    void testLoadJsonTar() {
         URL url = ClassLoader.getSystemResource("testload.tar");
         testCall(db, "CALL apoc.load.json($url)", map("url", url.toString() + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -314,7 +314,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonTarGz() {
+    void testLoadJsonTarGz() {
         URL url = ClassLoader.getSystemResource("testload.tar.gz");
         testCall(db, "CALL apoc.load.json($url)", map("url", url.toString() + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -325,7 +325,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonTgz() {
+    void testLoadJsonTgz() {
         URL url = ClassLoader.getSystemResource("testload.tgz");
         testCall(db, "CALL apoc.load.json($url)", map("url", url.toString() + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -336,7 +336,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonZipByUrl() throws Exception {
+    void testLoadJsonZipByUrl() throws Exception {
         URL url = new URL("http://localhost:5353/testload.zip?raw=true");
         testCall(db, "CALL apoc.load.json($url)", map("url", url + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -347,7 +347,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonTarByUrl() throws Exception {
+    void testLoadJsonTarByUrl() throws Exception {
         URL url = new URL("http://localhost:5353/testload.tar?raw=true");
         testCall(db, "CALL apoc.load.json($url)", map("url", url + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -358,7 +358,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonTarGzByUrl() throws Exception {
+    void testLoadJsonTarGzByUrl() throws Exception {
         URL url = new URL("http://localhost:5353/testload.tar.gz?raw=true");
         testCall(db, "CALL apoc.load.json($url)", map("url", url + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -369,7 +369,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonTgzByUrl() throws Exception {
+    void testLoadJsonTgzByUrl() throws Exception {
         URL url = new URL("http://localhost:5353/testload.tgz?raw=true");
         testCall(db, "CALL apoc.load.json($url)", map("url", url + "!person.json"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
@@ -380,7 +380,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonZipByUrlInConfigFile() {
+    void testLoadJsonZipByUrlInConfigFile() {
         testCall(db, "CALL apoc.load.json($key)", map("key", "zip"), (row) -> {
             Map<String, Object> r = (Map<String, Object>) row.get("value");
             assertEquals("Michael", r.get("name"));
@@ -390,7 +390,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonByUrlInConfigFile() {
+    void testLoadJsonByUrlInConfigFile() {
 
         testCall(
                 db,
@@ -400,7 +400,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonByUrlInConfigFileWrongKey() {
+    void testLoadJsonByUrlInConfigFileWrongKey() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(db, "CALL apoc.load.json($key)", map("key", "foo"), Result::hasNext));
@@ -412,7 +412,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonWithAuth() throws Exception {
+    void testLoadJsonWithAuth() throws Exception {
         String userPass = "user:password";
         String token = Util.encodeUserColonPassToBase64(userPass);
         Map<String, String> responseBody = Map.of("result", "message");
@@ -433,7 +433,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonParamsWithAuth() throws Exception {
+    void testLoadJsonParamsWithAuth() throws Exception {
         String userPass = "user:password";
         String token = Util.encodeUserColonPassToBase64(userPass);
         Map<String, String> responseBody = Map.of("result", "message");
@@ -469,7 +469,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void testLoadJsonParams() {
+    void testLoadJsonParams() {
         new MockServerClient("localhost", 1080)
                 .when(
                         request()
@@ -502,7 +502,7 @@ public class LoadJsonTest {
     }
 
     @Test
-    public void shouldTerminateLoadJson() {
+    void shouldTerminateLoadJson() {
         URL url = ClassLoader.getSystemResource("exportJSON/testTerminate.json");
         checkTerminationGuard(db, "CALL apoc.load.json($file)", Map.of("file", url.toString()));
     }

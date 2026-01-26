@@ -113,7 +113,7 @@ import org.neo4j.test.extension.Inject;
 This test is just to verify the differences between Cypher 5 and Cypher 25 for APOC Core
 */
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
-public class ApocVersionsTest {
+class ApocVersionsTest {
 
     @Inject
     GraphDatabaseService db;

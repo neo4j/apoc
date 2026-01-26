@@ -62,7 +62,7 @@ import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class XmlTest {
+class XmlTest {
     public static final String FILE_SHORTENED =
             "src/test/resources/xml/humboldt_soemmering01_1791.TEI-P5-shortened.xml";
 
@@ -77,7 +77,7 @@ public class XmlTest {
     }
 
     @BeforeEach
-    public void setUp() throws IOException {
+    void setUp() throws IOException {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
 
@@ -88,7 +88,7 @@ public class XmlTest {
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         server.stop(0);
     }
 

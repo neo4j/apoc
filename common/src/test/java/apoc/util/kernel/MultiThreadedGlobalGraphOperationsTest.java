@@ -31,7 +31,7 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
-public class MultiThreadedGlobalGraphOperationsTest {
+class MultiThreadedGlobalGraphOperationsTest {
 
     @Inject
     private GraphDatabaseAPI db;

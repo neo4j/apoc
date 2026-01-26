@@ -49,20 +49,20 @@ class CypherEnterpriseTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     @AfterEach
-    public void after() {
+    void after() {
         session.executeWrite(tx -> tx.run("MATCH (n) DETACH DELETE n").consume());
     }
 

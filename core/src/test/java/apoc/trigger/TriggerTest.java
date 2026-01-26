@@ -19,7 +19,6 @@
 package apoc.trigger;
 
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
-import static apoc.trigger.TriggerTestUtil.TRIGGER_DEFAULT_REFRESH;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCallCountEventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,13 +28,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import apoc.nodes.Nodes;
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
-import java.io.File;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
@@ -55,8 +54,7 @@ import org.neo4j.test.extension.Inject;
  * CYPHER 5 only; moved to extended for Cypher 25
  */
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class TriggerTest {
-    private static final File directory = new File("target/conf");
+class TriggerTest {
 
     @Inject
     GraphDatabaseService db;
@@ -66,13 +64,8 @@ public class TriggerTest {
     @Inject
     DatabaseManagementService dbms;
 
-    static { //noinspection ResultOfMethodCallIgnored
-        directory.mkdirs();
-    }
-
     @ExtensionCallback
     void configure(TestDatabaseManagementServiceBuilder builder) {
-        System.setProperty("apoc.trigger.refresh", String.valueOf(TRIGGER_DEFAULT_REFRESH));
         System.setProperty("apoc.trigger.enabled", "true");
         builder.setConfigRaw(Map.of("internal.dbms.debug.track_cursor_close", "true"));
         builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5);
@@ -85,8 +78,13 @@ public class TriggerTest {
         TestUtil.registerProcedure(db, Nodes.class, Trigger.class);
     }
 
+    @BeforeEach
+    void beforeEach() {
+        start = System.currentTimeMillis();
+    }
+
     @AfterEach
-    public void after() {
+    void after() {
         db.executeTransactionally("CALL apoc.trigger.removeAll()");
         testCallCountEventually(db, "CALL apoc.trigger.list", 0, TIMEOUT);
         db.executeTransactionally("MATCH (n) DETACH DELETE n");

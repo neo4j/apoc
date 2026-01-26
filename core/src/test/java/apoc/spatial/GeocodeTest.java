@@ -51,7 +51,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class GeocodeTest {
+class GeocodeTest {
 
     private static final String BLOCKED_ADDRESS = "127.168.0.0";
     private static final String NON_BLOCKED_ADDRESS = "localhost";

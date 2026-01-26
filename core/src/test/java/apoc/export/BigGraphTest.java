@@ -51,7 +51,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class BigGraphTest {
+class BigGraphTest {
     private static final File directory = new File("target/import");
 
     static { //noinspection ResultOfMethodCallIgnored
@@ -91,37 +91,37 @@ public class BigGraphTest {
     }
 
     @Test
-    public void testTerminateExportCsv() {
+    void testTerminateExportCsv() {
         checkTerminationGuard(db, "CALL apoc.export.csv.all('testTerminate.csv',{bulkImport: true})");
     }
 
     @Test
-    public void testTerminateExportGraphMl() {
+    void testTerminateExportGraphMl() {
         checkTerminationGuard(db, "CALL apoc.export.graphml.all('testTerminate.graphml', {})");
     }
 
     @Test
-    public void testTerminateExportCypher() {
+    void testTerminateExportCypher() {
         checkTerminationGuard(db, "CALL apoc.export.cypher.all('testTerminate.cypher',{})");
     }
 
     @Test
-    public void testTerminateExportJson() {
+    void testTerminateExportJson() {
         checkTerminationGuard(db, "CALL apoc.export.json.all('testTerminate.json',{})");
     }
 
     @Test
-    public void testTerminateRenameNodeProp() {
+    void testTerminateRenameNodeProp() {
         checkTerminationGuard(db, "CALL apoc.refactor.rename.nodeProperty('name', 'nameTwo')");
     }
 
     @Test
-    public void testTerminateRenameType() {
+    void testTerminateRenameType() {
         checkTerminationGuard(db, 50L, "CALL apoc.refactor.rename.type('DIRECTED', 'DIRECTED_TWO')");
     }
 
     @Test
-    public void testTerminateRefactorProcs() {
+    void testTerminateRefactorProcs() {
         List<Node> nodes = db.executeTransactionally(
                 "MATCH (n:Person) RETURN collect(n) as nodes",
                 Collections.emptyMap(),

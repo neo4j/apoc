@@ -72,7 +72,7 @@ class LoadCoreEnterpriseTest {
     }
 
     @BeforeAll
-    public static void beforeClass() {
+    static void beforeClass() {
         neo4jContainer = createNeo4jWithMaxCompressionRatio(DEFAULT_MAX_DECOMPRESSION_RATIO);
         session = neo4jContainer.getSession();
 
@@ -120,7 +120,7 @@ class LoadCoreEnterpriseTest {
     }
 
     @AfterAll
-    public static void afterClass() {
+    static void afterClass() {
         session.close();
         neo4jContainer.close();
     }

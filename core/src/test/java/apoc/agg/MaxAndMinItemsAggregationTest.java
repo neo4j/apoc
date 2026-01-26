@@ -32,12 +32,12 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
-public class MaxAndMinItemsAggregationTest {
+class MaxAndMinItemsAggregationTest {
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, MaxAndMinItems.class);
 
         db.executeTransactionally(Util.readResourceFile("movies.cypher"));
@@ -46,7 +46,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testBasicMax() {
+    void testBasicMax() {
         testCall(
                 db,
                 "UNWIND RANGE(0,10) as value " + "WITH apoc.agg.maxItems(value, value) as maxResult "
@@ -68,7 +68,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testBasicMin() {
+    void testBasicMin() {
         testCall(
                 db,
                 "UNWIND RANGE(0,10) as value " + "WITH apoc.agg.minItems(value, value) as minResult "
@@ -90,7 +90,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMaxWithGrouping() {
+    void testMaxWithGrouping() {
         /** comparing to:
          * MATCH (p:Person)
          * WHERE p.born <= 1974
@@ -115,7 +115,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMinWithGrouping() {
+    void testMinWithGrouping() {
         /** comparing to:
          * MATCH (p:Person)
          * WHERE p.born >= 1930
@@ -141,7 +141,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMaxWithLimitedGrouping() {
+    void testMaxWithLimitedGrouping() {
         /** comparing to:
          * MATCH (p:Person)
          * WHERE p.born <= 1974
@@ -168,7 +168,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMinWithLimitedGrouping() {
+    void testMinWithLimitedGrouping() {
         /** comparing to:
          * MATCH (p:Person)
          * WHERE p.born >= 1930
@@ -193,7 +193,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMaxWithNullValuesProducesNoResults() {
+    void testMaxWithNullValuesProducesNoResults() {
         testCall(
                 db,
                 "MATCH (p:Person) " + "WITH apoc.agg.maxItems(p, p.doesNotExist) as maxResult "
@@ -207,7 +207,7 @@ public class MaxAndMinItemsAggregationTest {
     }
 
     @Test
-    public void testMinWithNullValuesProducesNoResults() {
+    void testMinWithNullValuesProducesNoResults() {
         testCall(
                 db,
                 "MATCH (p:Person) " + "WITH apoc.agg.minItems(p, p.doesNotExist) as minResult "

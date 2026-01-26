@@ -45,7 +45,7 @@ import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class CloneSubgraphTest {
+class CloneSubgraphTest {
     private static final String STANDIN_SYNTAX_EXCEPTION_MSG = "Expected pair of nodes but got";
 
     @Inject

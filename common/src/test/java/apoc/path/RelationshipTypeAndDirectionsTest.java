@@ -31,7 +31,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.RelationshipType;
 
-public class RelationshipTypeAndDirectionsTest {
+class RelationshipTypeAndDirectionsTest {
 
     static Stream<Arguments> data() {
         return Stream.of(

@@ -43,7 +43,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class LoadRelativePathTest {
+class LoadRelativePathTest {
 
     @Inject
     GraphDatabaseService db;
@@ -69,13 +69,13 @@ public class LoadRelativePathTest {
     }
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }
 
     // JSON
     @Test
-    public void testLoadRelativePathJson() {
+    void testLoadRelativePathJson() {
         String url = "file:/map.json";
         testCall(
                 db,
@@ -86,7 +86,7 @@ public class LoadRelativePathTest {
 
     // XML
     @Test
-    public void testLoadRelativePathXml() {
+    void testLoadRelativePathXml() {
         testCall(
                 db,
                 "CALL apoc.load.xml('file:///xml/databases.xml')", //  YIELD value RETURN value
