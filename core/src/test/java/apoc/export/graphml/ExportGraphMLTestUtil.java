@@ -253,4 +253,19 @@ public class ExportGraphMLTestUtil {
         db.executeTransactionally(
                 "CREATE (f:Foo:Foo2:Foo0 {name:'foo', born:Date('2018-10-10'), place:point({ longitude: 56.7, latitude: 12.78, height: 100 })})-[:KNOWS]->(b:Bar {name:'bar',age:42, place:point({ longitude: 56.7, latitude: 12.78})}),(c:Bar {age:12,values:[1,2,3]})");
     }
+
+    public static void setUpGraphMl(GraphDatabaseService db, String methodName) {
+        apocConfig()
+                .setProperty(
+                        APOC_EXPORT_FILE_ENABLED,
+                        Boolean.toString(methodName == null || !methodName.endsWith("WithNoExportConfig")));
+        apocConfig()
+                .setProperty(
+                        APOC_IMPORT_FILE_ENABLED,
+                        Boolean.toString(methodName == null || !methodName.endsWith("WithNoImportConfig")));
+        apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
+
+        db.executeTransactionally(
+                "CREATE (f:Foo:Foo2:Foo0 {name:'foo', born:Date('2018-10-10'), place:point({ longitude: 56.7, latitude: 12.78, height: 100 })})-[:KNOWS]->(b:Bar {name:'bar',age:42, place:point({ longitude: 56.7, latitude: 12.78})}),(c:Bar {age:12,values:[1,2,3]})");
+    }
 }

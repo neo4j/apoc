@@ -31,17 +31,17 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class StatisticsTest {
+class StatisticsTest {
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Statistics.class);
     }
 
     @Test
-    public void testStatistics() {
+    void testStatistics() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.statistics(value) as p", (row) -> {
             assertEquals(
                     map(
@@ -83,7 +83,7 @@ public class StatisticsTest {
     }
 
     @Test
-    public void testStatisticsDouble() {
+    void testStatisticsDouble() {
         testCall(db, "UNWIND [0,1,1,2.0,2,2,3] as value RETURN apoc.agg.statistics(value,[0.5,0.95]) as p", (row) -> {
             assertEquals(
                     map(
@@ -108,7 +108,7 @@ public class StatisticsTest {
     }
 
     @Test
-    public void testStatisticsDoubleMinMax() {
+    void testStatisticsDoubleMinMax() {
         testCall(db, "UNWIND [0.123,0.234] as value RETURN apoc.agg.statistics(value,[0.05,0.5,0.95]) as p", (row) -> {
             Map<String, Number> stats = (Map<String, Number>) row.get("p");
             assertEquals(0.234D, stats.get("max"));

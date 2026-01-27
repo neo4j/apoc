@@ -69,7 +69,7 @@ import org.neo4j.test.extension.Inject;
 
 @SuppressWarnings("unchecked")
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class GraphsTest {
+class GraphsTest {
 
     private static final Map<String, Object> graph = map("name", "test", "properties", map("answer", 42L));
 
@@ -115,7 +115,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromData() {
+    void testFromData() {
         TestUtil.testCall(
                 db,
                 "MATCH (n)-[r]->(m) CALL apoc.graph.fromData([n,m],[r],'test',{answer:42}) YIELD graph RETURN *",
@@ -123,7 +123,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromPath() {
+    void testFromPath() {
         TestUtil.testCall(
                 db,
                 "MATCH path = (n)-[r]->(m) CALL apoc.graph.fromPath(path,'test',{answer:42}) YIELD graph RETURN *",
@@ -131,7 +131,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromPaths() {
+    void testFromPaths() {
         // given
         final Map<String, Object> myGraph = map("name", "test", "properties", map("answer", 42L));
         db.executeTransactionally(
@@ -157,12 +157,12 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDB() {
+    void testFromDB() {
         TestUtil.testCall(db, " CALL apoc.graph.fromDB('test',{answer:42})", r -> assertEquals(graph, r.get("graph")));
     }
 
     @Test
-    public void testFromCypher() {
+    void testFromCypher() {
         TestUtil.testCall(
                 db,
                 "CALL apoc.graph.fromCypher('MATCH (n)-[r]->(m) RETURN *',null,'test',{answer:42}) YIELD graph RETURN *",
@@ -170,7 +170,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocument() throws Exception {
+    void testFromDocument() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -219,7 +219,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentWithCustomRelName() throws Exception {
+    void testFromDocumentWithCustomRelName() throws Exception {
         Map<String, Object> artistGenesisMap = map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 2L, "title", "From Genesis to Revelation");
@@ -260,7 +260,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentVirtual() throws Exception {
+    void testFromDocumentVirtual() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -303,7 +303,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromArrayOfDocumentsVirtual() throws Exception {
+    void testFromArrayOfDocumentsVirtual() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -372,7 +372,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromArrayOfDocuments() throws Exception {
+    void testFromArrayOfDocuments() throws Exception {
         Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -452,7 +452,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentVirtualWithCustomIdAndLabel() throws Exception {
+    void testFromDocumentVirtualWithCustomIdAndLabel() throws Exception {
         Map<String, Object> genesisMap = Util.map("myCustomType", "artist", "name", "Genesis", "myCustomId", 1L);
         Map<String, Object> albumMap = Util.map(
                 "myCustomType",
@@ -505,7 +505,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentVirtualWithDuplicates() throws Exception {
+    void testFromDocumentVirtualWithDuplicates() throws Exception {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -547,7 +547,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentWithDuplicates() throws Exception {
+    void testFromDocumentWithDuplicates() throws Exception {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumMap =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -598,7 +598,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testCreateVirtualSimpleNodeWithErrorId() throws Exception {
+    void testCreateVirtualSimpleNodeWithErrorId() throws Exception {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis");
         try {
             TestUtil.testCall(
@@ -616,7 +616,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testValidateDocument() throws Exception {
+    void testValidateDocument() throws Exception {
         List<Object> list = Arrays.asList(
                 Util.map("type", "artist", "name", "Daft Punk"),
                 Util.map("id", 1, "type", "artist", "name", "Daft Punk"),
@@ -653,7 +653,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testValidateDocumentWithCutErrorFormatter() {
+    void testValidateDocumentWithCutErrorFormatter() {
         String json =
                 "{\"quiz\":{\"sport\":{\"q1\":{\"question\":\"Which one is correct team name in NBA?\",\"options\":[\"New York Bulls\",\"Los Angeles Kings\",\"Golden State Warriros\",\"Huston Rocket\"],\"answer\":\"Huston Rocket\"}},\"maths\":{\"q1\":{\"question\":\"5 + 7 = ?\",\"options\":[\"10\",\"11\",\"12\",\"13\"],\"answer\":\"12\"},\"q2\":{\"question\":\"12 - 8 = ?\",\"options\":[\"1\",\"2\",\"3\",\"4\"],\"answer\":\"4\"}}}}";
 
@@ -691,7 +691,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentWithReusedEntity() throws Exception {
+    void testFromDocumentWithReusedEntity() throws Exception {
         Map<String, Object> productMap = Util.map("id", 1L, "type", "Console", "name", "Nintendo Switch");
         Map<String, Object> johnMap = Util.map("id", 1L, "type", "User", "name", "John");
         Map<String, Object> janeMap = Util.map("id", 2L, "type", "User", "name", "Jane");
@@ -762,7 +762,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentWithNestedStructure() {
+    void testFromDocumentWithNestedStructure() {
         Map<String, Object> jamesMap = Util.map("id", 1L, "type", "Father", "name", "James");
         Map<String, Object> johnMap = Util.map("id", 2L, "type", "Father", "name", "John");
         Map<String, Object> robertMap = Util.map("id", 1L, "type", "Person", "name", "Robert");
@@ -817,7 +817,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testFromDocumentWithReusedEntityToGraph() throws Exception {
+    void testFromDocumentWithReusedEntityToGraph() throws Exception {
         Map<String, Object> productMap = Util.map("id", 1L, "type", "Console", "name", "Nintendo Switch");
         Map<String, Object> johnMap = Util.map("id", 1L, "type", "User", "name", "John");
         Map<String, Object> janeMap = Util.map("id", 2L, "type", "User", "name", "Jane");
@@ -852,7 +852,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testCreateVirtualSimpleNodeWithErrorType() throws Exception {
+    void testCreateVirtualSimpleNodeWithErrorType() throws Exception {
         Map<String, Object> genesisMap = Util.map("id", 1L, "name", "Genesis");
         try {
             TestUtil.testCall(
@@ -869,7 +869,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testCreateVirtualSimpleNode() throws Exception {
+    void testCreateVirtualSimpleNode() throws Exception {
         Map<String, Object> genesisMap = Util.map("id", 1L, "type", "artist", "name", "Genesis");
         TestUtil.testResult(
                 db,
@@ -889,7 +889,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testCreateVirtualSimpleNodeFromCypherMap() {
+    void testCreateVirtualSimpleNodeFromCypherMap() {
         Map<String, Object> genesisMap = Util.map("id", 1L, "type", "artist", "name", "Genesis");
         TestUtil.testResult(
                 db, "CALL apoc.graph.fromDocument($json) yield graph", Util.map("json", genesisMap), result -> {
@@ -906,7 +906,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testCreateVirtualSimpleNodeFromCypherList() {
+    void testCreateVirtualSimpleNodeFromCypherList() {
         Map<String, Object> genesisMap = Util.map("id", 1L, "type", "artist", "name", "Genesis");
         Map<String, Object> daftPunkMap = Util.map("id", 2L, "type", "artist", "name", "Daft Punk");
         TestUtil.testResult(
@@ -932,7 +932,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testCreateVirtualNodeArray() throws Exception {
+    void testCreateVirtualNodeArray() throws Exception {
         Map<String, Object> genesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> album1Map =
                 Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
@@ -981,7 +981,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void shouldCreatePrimitiveArray() throws Exception {
+    void shouldCreatePrimitiveArray() throws Exception {
         Map<String, Object> genesisMap = Util.map(
                 "type",
                 "artist",
@@ -1015,7 +1015,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void shouldFindDuplicatesWithValidation() {
+    void shouldFindDuplicatesWithValidation() {
         Map<String, Object> child = Util.map("key", "childKey");
         List<Map<String, Object>> data = Arrays.asList(
                 Util.map("key", "value", "key1", "Foo"), // index 0
@@ -1097,7 +1097,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void shouldCreateTheGraphMappingObjectAccordingToThePattern() {
+    void shouldCreateTheGraphMappingObjectAccordingToThePattern() {
         GraphsConfig.GraphMapping mapping = GraphsConfig.GraphMapping.from("Person{*,@sizes}");
         assertEquals(List.of("sizes"), mapping.getValueObjects());
         assertEquals(Collections.emptyList(), mapping.getProperties());
@@ -1114,7 +1114,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void shouldCreateFlattenValueObjectAndNewNodes() {
+    void shouldCreateFlattenValueObjectAndNewNodes() {
         String[] strings = {"foo", "bar"};
         Map<String, Object> book1 = map("title", "Flow My Tears, the Policeman Said", "released", 1974);
         Map<String, Object> book2 = map("title", "The man in the High Castle", "released", 1962);
@@ -1201,7 +1201,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testDeeplyNestedStructures() throws IOException {
+    void testDeeplyNestedStructures() throws IOException {
         String json = IOUtils.toString(
                 this.getClass().getClassLoader().getResourceAsStream("deeplyNestedObject.json"),
                 StandardCharsets.UTF_8);
@@ -1242,7 +1242,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testIncludeMappingsAsProperties() {
+    void testIncludeMappingsAsProperties() {
         Map<String, Object> json = map(
                 "id",
                 1,
@@ -1302,7 +1302,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testValidationCustomIdAsProperties() {
+    void testValidationCustomIdAsProperties() {
         Map<String, Object> json = map(
                 "id",
                 1,
@@ -1364,7 +1364,7 @@ public class GraphsTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocCsvQuery() {
+    void testDifferentCypherVersionsApocCsvQuery() {
         db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {

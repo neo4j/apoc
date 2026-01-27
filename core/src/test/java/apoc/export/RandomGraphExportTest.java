@@ -44,7 +44,7 @@ import org.neo4j.test.extension.RandomExtension;
 
 @ExtendWith(RandomExtension.class)
 @ImpermanentEnterpriseDbmsExtension
-public class RandomGraphExportTest {
+class RandomGraphExportTest {
     @Inject
     DatabaseManagementService dbms;
 

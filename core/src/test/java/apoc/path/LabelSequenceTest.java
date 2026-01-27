@@ -35,7 +35,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
-public class LabelSequenceTest {
+class LabelSequenceTest {
 
     @Inject
     GraphDatabaseService db;

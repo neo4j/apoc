@@ -36,7 +36,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class ConvertTest {
+class ConvertTest {
 
     @Inject
     GraphDatabaseService db;
@@ -47,7 +47,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToMap() {
+    void testToMap() {
         testCall(
                 db,
                 "return apoc.convert.toMap($a) as value",
@@ -63,7 +63,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToList() {
+    void testToList() {
         testCall(
                 db, "return apoc.convert.toList($a) as value", map("a", null), r -> assertEquals(null, r.get("value")));
         testCall(
@@ -89,7 +89,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToNode() {
+    void testToNode() {
         testCall(
                 db,
                 "CREATE (n) WITH [n] as x RETURN apoc.convert.toNode(x[0]) as node",
@@ -98,7 +98,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToRelationship() {
+    void testToRelationship() {
         testCall(
                 db,
                 "CREATE (n)-[r:KNOWS]->(m) WITH [r] as x RETURN apoc.convert.toRelationship(x[0]) AS rel",
@@ -107,7 +107,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToSet() {
+    void testToSet() {
         testCall(db, "return apoc.convert.toSet($a) as value", map("a", null), r -> assertEquals(null, r.get("value")));
         testCall(
                 db,
@@ -132,7 +132,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToNodeList() {
+    void testToNodeList() {
         testCall(db, "CREATE (n) WITH [n] as x RETURN apoc.convert.toNodeList(x) as nodes", r -> {
             assertEquals(true, r.get("nodes") instanceof List);
             List<Node> nodes = (List<Node>) r.get("nodes");
@@ -141,7 +141,7 @@ public class ConvertTest {
     }
 
     @Test
-    public void testToRelationshipList() {
+    void testToRelationshipList() {
         testCall(
                 db, "CREATE (n)-[r:KNOWS]->(m) WITH [r] as x  RETURN apoc.convert.toRelationshipList(x) as rels", r -> {
                     assertEquals(true, r.get("rels") instanceof List);

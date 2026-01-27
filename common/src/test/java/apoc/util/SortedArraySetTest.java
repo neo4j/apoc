@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 
 import org.junit.jupiter.api.Test;
 
-public class SortedArraySetTest {
+class SortedArraySetTest {
 
     @Test
     void add() {

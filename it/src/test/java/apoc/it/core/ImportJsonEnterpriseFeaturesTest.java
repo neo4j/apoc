@@ -23,12 +23,12 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testResult;
 import static java.lang.String.format;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;
 import java.util.List;
 import java.util.Map;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -42,7 +42,7 @@ class ImportJsonEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
@@ -62,7 +62,7 @@ class ImportJsonEnterpriseFeaturesTest {
     }
 
     @BeforeEach
-    public void cleanUpDb() {
+    void cleanUpDb() {
         // Remove all current constraints/indexes
         session.executeWriteWithoutResult(tx -> {
             final List<String> constraints = tx.run("SHOW CONSTRAINTS YIELD name")
@@ -79,7 +79,7 @@ class ImportJsonEnterpriseFeaturesTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
@@ -92,7 +92,7 @@ class ImportJsonEnterpriseFeaturesTest {
         });
 
         String filename = "all.json";
-        Exception e = Assert.assertThrows(
+        Exception e = assertThrows(
                 Exception.class,
                 () -> testResult(session, "CALL apoc.import.json($file, {})", map("file", filename), (result) -> {}));
 

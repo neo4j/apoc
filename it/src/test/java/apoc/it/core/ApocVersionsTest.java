@@ -94,39 +94,45 @@ import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.version.Version;
 import apoc.warmup.Warmup;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
 /*
 This test is just to verify the differences between Cypher 5 and Cypher 25 for APOC Core
 */
-public class ApocVersionsTest {
+@ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
+class ApocVersionsTest {
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.procedure_unrestricted,
-                    List.of(
-                            "apoc.nodes.link",
-                            "apoc.node.relationship.exists",
-                            "apoc.nodes.connected",
-                            "apoc.nodes.isDense",
-                            "apoc.schema.nodes",
-                            "apoc.schema.relationship"));
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) {
+        builder.setConfig(
+                GraphDatabaseSettings.procedure_unrestricted,
+                List.of(
+                        "apoc.nodes.link",
+                        "apoc.node.relationship.exists",
+                        "apoc.nodes.connected",
+                        "apoc.nodes.isDense",
+                        "apoc.schema.nodes",
+                        "apoc.schema.relationship"));
+    }
+
+    @BeforeAll
+    void setUp() {
         TestUtil.registerProcedure(
                 db,
                 ArabicRoman.class,
@@ -227,7 +233,7 @@ public class ApocVersionsTest {
             Set.of("apoc.create.uuid", "apoc.map.setEntry", "apoc.text.regreplace", "apoc.text.levenshteinDistance");
 
     @Test
-    public void test() {
+    void test() {
         Set<String> deprecatedProcedureNames5 = db.executeTransactionally(
                 "CYPHER 5 SHOW PROCEDURES YIELD name, isDeprecated WHERE name STARTS WITH 'apoc' AND isDeprecated RETURN name",
                 Map.of(),
@@ -238,8 +244,8 @@ public class ApocVersionsTest {
                 Map.of(),
                 r -> r.stream().map(row -> row.get("name").toString()).collect(Collectors.toSet()));
 
-        Assert.assertEquals(DEPRECATED_CORE_PROCEDURES_5, deprecatedProcedureNames5);
-        Assert.assertEquals(DEPRECATED_CORE_FUNCTIONS_5, deprecatedFunctionNames5);
+        Assertions.assertEquals(DEPRECATED_CORE_PROCEDURES_5, deprecatedProcedureNames5);
+        Assertions.assertEquals(DEPRECATED_CORE_FUNCTIONS_5, deprecatedFunctionNames5);
 
         Set<String> procedureNames = db.executeTransactionally(
                 "CYPHER 25 SHOW PROCEDURES YIELD name WHERE name STARTS WITH 'apoc' RETURN name",
@@ -257,12 +263,7 @@ public class ApocVersionsTest {
         Set<String> functionsCypher25 = new HashSet<>(CORE_FUNCTIONS);
         functionsCypher25.removeAll(DEPRECATED_CORE_FUNCTIONS_5);
 
-        Assert.assertEquals(proceduresCypher25, procedureNames);
-        Assert.assertEquals(functionsCypher25, functionNames);
-    }
-
-    @After
-    public void teardown() {
-        db.shutdown();
+        Assertions.assertEquals(proceduresCypher25, procedureNames);
+        Assertions.assertEquals(functionsCypher25, functionNames);
     }
 }

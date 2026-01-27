@@ -29,18 +29,18 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class ProductAggregationTest {
+class ProductAggregationTest {
 
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Product.class);
     }
 
     @Test
-    public void testProduct() {
+    void testProduct() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.product(value) as p", (row) -> {
             assertEquals(0D, row.get("p"));
         });

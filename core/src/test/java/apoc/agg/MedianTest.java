@@ -29,17 +29,17 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class MedianTest {
+class MedianTest {
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Median.class);
     }
 
     @Test
-    public void testMedian() {
+    void testMedian() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.median(value) as p", (row) -> {
             assertEquals(null, row.get("p"));
         });

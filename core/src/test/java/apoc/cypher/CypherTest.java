@@ -72,7 +72,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
-public class CypherTest {
+class CypherTest {
 
     @Inject
     GraphDatabaseService db;
@@ -98,17 +98,17 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunWrite() {
+    void testRunWrite() {
         runWriteAndDoItCommons("runWrite");
     }
 
     @Test
-    public void testDoIt() {
+    void testDoIt() {
         runWriteAndDoItCommons("doIt");
     }
 
     @Test
-    public void testRunSchema() {
+    void testRunSchema() {
         testCallEmpty(
                 db,
                 "CALL apoc.cypher.runSchema('CREATE INDEX test FOR (w:TestOne) ON (w.name)',{})",
@@ -125,7 +125,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRun() {
+    void testRun() {
         testCall(
                 db,
                 "CALL apoc.cypher.run('RETURN $a + 7 AS b',{a:3})",
@@ -133,7 +133,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunNullParams() {
+    void testRunNullParams() {
         testCall(
                 db,
                 "CALL apoc.cypher.run('RETURN 42 AS b',null)",
@@ -141,7 +141,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunNoParams() {
+    void testRunNoParams() {
         testCall(
                 db,
                 "CALL apoc.cypher.run('RETURN 42 AS b',{})",
@@ -149,7 +149,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunVariable() {
+    void testRunVariable() {
         testCall(
                 db,
                 "CALL apoc.cypher.run('RETURN a + 7 AS b',{a:3})",
@@ -157,7 +157,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunFirstColumnSingle() {
+    void testRunFirstColumnSingle() {
         testCall(
                 db,
                 "RETURN apoc.cypher.runFirstColumnSingle('RETURN a + 7 AS b', {a: 3}) AS s",
@@ -165,7 +165,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunFirstColumnMany() {
+    void testRunFirstColumnMany() {
         testCall(
                 db,
                 "RETURN apoc.cypher.runFirstColumnMany('UNWIND range(1,a) AS id RETURN id', {a: 3}) AS s",
@@ -173,7 +173,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunFirstColumnBugCompiled() {
+    void testRunFirstColumnBugCompiled() {
         TestUtil.singleResultFirstColumn(
                 db,
                 "CREATE (m:Movie  {title:'MovieA'})<-[:ACTED_IN]-(p:Person {name:'PersonA'})-[:ACTED_IN]->(m2:Movie {title:'MovieB'}) RETURN m");
@@ -188,7 +188,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testSingular() {
+    void testSingular() {
         int size = 10_000;
         testResult(
                 db,
@@ -203,7 +203,7 @@ public class CypherTest {
 
     @Timeout(9000)
     @Test
-    public void testWithTimeout() {
+    void testWithTimeout() {
         assertFalse(db.executeTransactionally(
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10000)', null, $timeout)",
                 singletonMap("timeout", 100),
@@ -211,7 +211,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithInvalidQuerySyntax() {
+    void testRunTimeboxedWithInvalidQuerySyntax() {
         final String query = "CYPHER 25 CALL apoc.cypher.runTimeboxed('RETUN 0', null, 20000, {failOnError: true})";
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
@@ -220,7 +220,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithInvalidQueries() {
+    void testRunTimeboxedWithInvalidQueries() {
         final String query = "CYPHER 25 CALL apoc.cypher.runTimeboxed('RETURN 1/0', null, 20000, {failOnError: true})";
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
@@ -229,7 +229,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithSuccessStatus() {
+    void testRunTimeboxedWithSuccessStatus() {
         // this query throws an error because 1/0
         final String innerQuery = "RETURN 1 AS a";
         final String query =
@@ -251,7 +251,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithErrorReported() {
+    void testRunTimeboxedWithErrorReported() {
         // this query throws an error because 1/0
         final String innerQuery = "RETURN 1/0 AS a";
         final String query =
@@ -269,7 +269,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithErrorReportedAfterSomeSuccesses() {
+    void testRunTimeboxedWithErrorReportedAfterSomeSuccesses() {
         // this query throws an error because 1/0
         final String innerQuery = "UNWIND [1, 1, 0] AS i RETURN 1/i AS a";
         final String query =
@@ -297,7 +297,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithTerminationReported() {
+    void testRunTimeboxedWithTerminationReported() {
         final String innerQuery = "CALL apoc.util.sleep(10999) RETURN 0";
         final String query =
                 "CYPHER 25 CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout, {appendStatusRow: true})";
@@ -316,7 +316,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithTerminationInnerTransaction1() {
+    void testRunTimeboxedWithTerminationInnerTransaction1() {
         // this query throws an error because 1/0
         final String innerQuery = "RETURN 1/0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, $timeout)";
@@ -330,7 +330,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunTimeboxedWithTerminationInnerTransaction() {
+    void testRunTimeboxedWithTerminationInnerTransaction() {
         final String innerLongQuery = "CALL apoc.util.sleep(10999) RETURN 0";
         final String query = "CALL apoc.cypher.runTimeboxed($innerQuery, null, 99999)";
 
@@ -358,7 +358,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunMany() {
+    void testRunMany() {
         final Map<String, Object> map = map("name", "John", "name2", "Doe");
         testResult(
                 db,
@@ -387,7 +387,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testRunManyReadOnlyShouldFail() {
+    void testRunManyReadOnlyShouldFail() {
         final Map<String, Object> map = map("name", "John", "name2", "Doe");
         db.executeTransactionally(
                 "CALL apoc.cypher.runManyReadOnly('" + "CREATE (n:Node {name:$name});\n"
@@ -406,7 +406,7 @@ public class CypherTest {
     }
 
     @Test
-    public void shouldTimeboxedReturnAllResultsSoFar() {
+    void shouldTimeboxedReturnAllResultsSoFar() {
         db.executeTransactionally(Util.readResourceFile("movies.cypher"));
 
         long start = System.currentTimeMillis();
@@ -423,7 +423,7 @@ public class CypherTest {
 
     @Timeout(9000)
     @Test
-    public void shouldTooLongTimeboxBeNotHarmful() {
+    void shouldTooLongTimeboxBeNotHarmful() {
         assertFalse(db.executeTransactionally(
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10)', null, $timeout)",
                 singletonMap("timeout", 10000),
@@ -431,12 +431,12 @@ public class CypherTest {
     }
 
     @Test
-    public void testSimpleWhenIfCondition() {
+    void testSimpleWhenIfCondition() {
         testCall(db, "CALL apoc.when(true, 'RETURN 7 AS b')", r -> assertEquals(7L, ((Map) r.get("value")).get("b")));
     }
 
     @Test
-    public void testSimpleWhenElseCondition() {
+    void testSimpleWhenElseCondition() {
         testCall(
                 db,
                 "CALL apoc.when(false, 'RETURN 7 AS b') YIELD value RETURN value",
@@ -444,7 +444,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testWhenIfCondition() {
+    void testWhenIfCondition() {
         testCall(
                 db,
                 "CALL apoc.when(true, 'RETURN $a + 7 AS b', 'RETURN $a AS b',{a:3})",
@@ -452,7 +452,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testWhenElseCondition() {
+    void testWhenElseCondition() {
         testCall(
                 db,
                 "CALL apoc.when(false, 'RETURN $a + 7 AS b', 'RETURN $a AS b',{a:3})",
@@ -460,7 +460,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDoWhenIfCondition() {
+    void testDoWhenIfCondition() {
         testCall(
                 db,
                 "CALL apoc.do.when(true, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName',{})",
@@ -471,7 +471,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDoWhenElseCondition() {
+    void testDoWhenElseCondition() {
         testCall(
                 db,
                 "CALL apoc.do.when(false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName',{})",
@@ -482,7 +482,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testCase() {
+    void testCase() {
         testCall(
                 db,
                 "CALL apoc.case([false, 'RETURN $a + 7 AS b', false, 'RETURN $a AS b', true, 'RETURN $a + 4 AS b', false, 'RETURN $a + 1 AS b'], 'RETURN $a + 10 AS b', {a:3})",
@@ -490,7 +490,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testCaseElseCondition() {
+    void testCaseElseCondition() {
         testCall(
                 db,
                 "CALL apoc.case([false, 'RETURN $a + 7 AS b', false, 'RETURN $a AS b', false, 'RETURN $a + 4 AS b'], 'RETURN $a + 10 AS b', {a:3})",
@@ -498,7 +498,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testSimpleCase() {
+    void testSimpleCase() {
         testCall(
                 db,
                 "CALL apoc.case([false, 'RETURN 3 + 7 AS b', false, 'RETURN 3 AS b', true, 'RETURN 3 + 4 AS b'])",
@@ -506,7 +506,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testSimpleCaseElseCondition() {
+    void testSimpleCaseElseCondition() {
         testCall(
                 db,
                 "CALL apoc.case([false, 'RETURN 3 + 7 AS b', false, 'RETURN 3 AS b', false, 'RETURN 3 + 4 AS b'], 'RETURN 3 + 10 AS b')",
@@ -514,7 +514,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testCaseDo() {
+    void testCaseDo() {
         testCall(
                 db,
                 "CALL apoc.do.case([false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', true, 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName'], 'CREATE (c:Node{name:\"C\"}) RETURN c.name AS cName',{})",
@@ -526,7 +526,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testCaseDoElseCondition() {
+    void testCaseDoElseCondition() {
         testCall(
                 db,
                 "CALL apoc.do.case([false, 'CREATE (a:Node{name:\"A\"}) RETURN a.name AS aName', false, 'CREATE (b:Node{name:\"B\"}) RETURN b.name AS bName'], 'CREATE (c:Node{name:\"C\"}) RETURN c.name AS cName',{})",
@@ -558,7 +558,7 @@ public class CypherTest {
     }
 
     @Test
-    public void runManyCloseTransactionsWithRandomFailures() {
+    void runManyCloseTransactionsWithRandomFailures() {
         final var rnd = new Random();
         final var seed = rnd.nextLong();
         rnd.setSeed(seed);
@@ -616,7 +616,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocCase() {
+    void testDifferentCypherVersionsApocCase() {
         // Test if case
         for (String procName : List.of("case", "do.case")) {
             for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
@@ -649,7 +649,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocWhen() {
+    void testDifferentCypherVersionsApocWhen() {
         // Test if case
         for (String procName : List.of("when", "do.when")) {
             for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
@@ -682,7 +682,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocDoIt() {
+    void testDifferentCypherVersionsApocDoIt() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCall(
                     db,
@@ -697,7 +697,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRun() {
+    void testDifferentCypherVersionsApocRun() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCall(
                     db,
@@ -712,7 +712,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunMany() {
+    void testDifferentCypherVersionsApocRunMany() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testResult(
                     db,
@@ -735,7 +735,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunManyReadOnly() {
+    void testDifferentCypherVersionsApocRunManyReadOnly() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testResult(
                     db,
@@ -758,7 +758,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunTimeboxed() {
+    void testDifferentCypherVersionsApocRunTimeboxed() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCall(
                     db,
@@ -773,7 +773,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunWrite() {
+    void testDifferentCypherVersionsApocRunWrite() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCall(
                     db,
@@ -788,7 +788,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunFirstColumnSingle() {
+    void testDifferentCypherVersionsApocRunFirstColumnSingle() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCall(
                     db,
@@ -803,7 +803,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunFirstColumnMany() {
+    void testDifferentCypherVersionsApocRunFirstColumnMany() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCall(
                     db,
@@ -818,7 +818,7 @@ public class CypherTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocRunSchema() {
+    void testDifferentCypherVersionsApocRunSchema() {
         // This doesn't return anything, so just check it doesn't error :)
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             testCallEmpty(

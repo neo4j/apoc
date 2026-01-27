@@ -22,41 +22,45 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import apoc.export.csv.ExportCSV;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.Map;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-public class ExportCsvS3Test extends S3BaseTest {
+@EnterpriseDbmsExtension
+class ExportCsvS3Test extends S3BaseTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUpAll() {
         baseBeforeClass();
-
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         TestUtil.registerProcedure(db, ExportCSV.class, Graphs.class);
+    }
+
+    @BeforeEach
+    void setUp() {
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally(
                 "CREATE (f:User1:User {name:'foo',age:42,male:true,kids:['a','b','c']})-[:KNOWS]->(b:User {name:'bar',age:42}),(c:User {age:12})");
         db.executeTransactionally(
                 "CREATE (f:Address1:Address {name:'Andrea', city: 'Milano', street:'Via Garibaldi, 7'})-[:NEXT_DELIVERY]->(a:Address {name: 'Bar Sport'}), (b:Address {street: 'via Benni'})");
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
+    @AfterAll
+    static void teardownAll() {
+        S3BaseTest.tearDown();
     }
 
     private static final String EXPECTED_QUERY_NODES = String.format("\"u\"%n"
@@ -105,7 +109,7 @@ public class ExportCsvS3Test extends S3BaseTest {
                     + ",,,,,,,,3,4,NEXT_DELIVERY%n");
 
     @Test
-    public void testExportAllCsvS3() {
+    void testExportAllCsvS3() {
         String fileName = "all.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -114,7 +118,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCsvS3WithQuotes() {
+    void testExportAllCsvS3WithQuotes() {
         String fileName = "all.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -126,7 +130,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCsvS3WithoutQuotes() {
+    void testExportAllCsvS3WithoutQuotes() {
         String fileName = "all1.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -138,7 +142,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllCsvS3NeededQuotes() {
+    void testExportAllCsvS3NeededQuotes() {
         String fileName = "all2.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -150,7 +154,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCsv() {
+    void testExportGraphCsv() {
         String fileName = "graph.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -165,7 +169,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphCsvWithoutQuotes() {
+    void testExportGraphCsvWithoutQuotes() {
         String fileName = "graph1.csv";
         String s3Url = s3Container.getUrl(fileName);
         TestUtil.testCall(
@@ -179,7 +183,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCsv() {
+    void testExportQueryCsv() {
         String fileName = "query.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
@@ -192,7 +196,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryCsvWithoutQuotes() {
+    void testExportQueryCsvWithoutQuotes() {
         String fileName = "query1.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
@@ -207,7 +211,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesCsv() {
+    void testExportQueryNodesCsv() {
         String fileName = "query_nodes.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u";
@@ -220,7 +224,7 @@ public class ExportCsvS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesCsvParams() {
+    void testExportQueryNodesCsvParams() {
         String fileName = "query_nodes1.csv";
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) WHERE u.age > $age return u";

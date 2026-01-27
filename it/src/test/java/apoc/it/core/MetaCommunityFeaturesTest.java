@@ -24,7 +24,7 @@ import apoc.util.TestContainerUtil;
 import org.junit.jupiter.api.Test;
 import org.neo4j.driver.Record;
 
-public class MetaCommunityFeaturesTest extends AbstractDockerTestBase {
+class MetaCommunityFeaturesTest extends AbstractDockerTestBase {
 
     @Override
     TestContainerUtil.Neo4jVersion neo4jEdition() {

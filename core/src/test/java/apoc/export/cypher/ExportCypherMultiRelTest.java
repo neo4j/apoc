@@ -56,7 +56,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
-public class ExportCypherMultiRelTest {
+class ExportCypherMultiRelTest {
     @Inject
     GraphDatabaseService db;
 
@@ -90,14 +90,14 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void updateAllOptimizationNone() {
+    void updateAllOptimizationNone() {
         testsCommon(
                 NODES_MULTI_RELS + SCHEMA_WITH_UNIQUE_IMPORT_ID + RELS_MULTI_RELS + CLEANUP_SMALL_BATCH,
                 withoutOptimization(map("cypherFormat", "updateAll")));
     }
 
     @Test
-    public void createOptimizationNone() {
+    void createOptimizationNone() {
         testsCommon(
                 NODES_MULTI_REL_CREATE
                         + SCHEMA_WITH_UNIQUE_IMPORT_ID
@@ -107,7 +107,7 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void addStructureOptimizationNone() {
+    void addStructureOptimizationNone() {
         testsCommon(
                 NODES_MULTI_RELS_ADD_STRUCTURE
                         + SCHEMA_UPDATE_STRUCTURE_MULTI_REL
@@ -117,7 +117,7 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void updateStructureOptimizationNone() {
+    void updateStructureOptimizationNone() {
         testsCommon(
                 ":begin\n:commit\n" + SCHEMA_UPDATE_STRUCTURE_MULTI_REL + RELSUPDATE_STRUCTURE_2
                         + CLEANUP_SMALL_BATCH_ONLY_RELS,
@@ -126,7 +126,7 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void updateAllWithOptimization() {
+    void updateAllWithOptimization() {
         testsCommon(
                 SCHEMA_WITH_UNIQUE_IMPORT_ID + NODES_UNWIND_UPDATE_STRUCTURE + RELS_UNWIND_UPDATE_ALL_MULTI_RELS + "\n"
                         + CLEANUP_SMALL_BATCH,
@@ -134,14 +134,14 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void createWithOptimization() {
+    void createWithOptimization() {
         testsCommon(
                 SCHEMA_WITH_UNIQUE_IMPORT_ID + NODES_UNWIND + RELS_UNWIND_MULTI_RELS + CLEANUP_SMALL_BATCH,
                 withOptimizationSmallBatch(map("cypherFormat", "create")));
     }
 
     @Test
-    public void addStructureWithOptimization() {
+    void addStructureWithOptimization() {
         testsCommon(
                 SCHEMA_UPDATE_STRUCTURE_MULTI_REL
                         + NODES_UNWIND_ADD_STRUCTURE
@@ -151,7 +151,7 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void addStructureWithOptimizationAndWithoutNodeCleanup() {
+    void addStructureWithOptimizationAndWithoutNodeCleanup() {
         testsCommon(
                 SCHEMA_UPDATE_STRUCTURE_MULTI_REL
                         + NODES_UNWIND_ADD_STRUCTURE
@@ -162,7 +162,7 @@ public class ExportCypherMultiRelTest {
     }
 
     @Test
-    public void updateStructureWithOptimization() {
+    void updateStructureWithOptimization() {
         testsCommon(
                 SCHEMA_UPDATE_STRUCTURE_MULTI_REL + RELS_UNWIND_UPDATE_ALL_MULTI_RELS + CLEANUP_SMALL_BATCH_ONLY_RELS,
                 withOptimizationSmallBatch(map("cypherFormat", "updateStructure")),

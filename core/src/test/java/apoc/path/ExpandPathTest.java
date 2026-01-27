@@ -28,6 +28,7 @@ import apoc.util.MapUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -35,26 +36,29 @@ import java.util.List;
 import java.util.Map;
 import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-public class ExpandPathTest {
+@EnterpriseDbmsExtension
+class ExpandPathTest {
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void setUpAll() {
         TestUtil.registerProcedure(db, PathExplorer.class);
+    }
+
+    @BeforeEach
+    void setUpEach() {
         String movies = Util.readResourceFile("movies.cypher");
         String bigbrother =
                 "MATCH (per:Person) MERGE (bb:BigBrother {name : 'Big Brother' })  MERGE (bb)-[:FOLLOWS]->(per)";
@@ -65,19 +69,8 @@ public class ExpandPathTest {
         }
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
-    @After
-    public void removeOtherLabels() {
-        db.executeTransactionally(
-                "OPTIONAL MATCH (c:Western) REMOVE c:Western WITH DISTINCT 1 as ignore OPTIONAL MATCH (c:Denylist) REMOVE c:Denylist");
-    }
-
     @Test
-    public void testExplorePathAnyRelTypeTest() {
+    void testExplorePathAnyRelTypeTest() {
         List<String> nodeRepresentations = List.of("m", "id(m)", "elementId(m)", "[m]", "[id(m)]", "[elementId(m)]");
         for (String nodeRep : nodeRepresentations) {
             TestUtil.testCall(
@@ -103,14 +96,14 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testExplorePathRelationshipsTest() {
+    void testExplorePathRelationshipsTest() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'<ACTED_IN|PRODUCED>|FOLLOWS','',0,2) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(11L, row.get("c")));
     }
 
     @Test
-    public void testExplorePathLabelAllowListTest() {
+    void testExplorePathLabelAllowListTest() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,'ACTED_IN|PRODUCED|FOLLOWS','+Person|+Movie',0,3) yield path return count(*) as c";
         TestUtil.testCall(
@@ -118,14 +111,14 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testExplorePathLabelDenyListTest() {
+    void testExplorePathLabelDenyListTest() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expand(m,null,'-BigBrother',0,2) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(44L, row.get("c")));
     }
 
     @Test
-    public void testExplorePathWithTerminationLabel() {
+    void testExplorePathWithTerminationLabel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -142,14 +135,14 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testExplorePathWithFilterStartNodeFalseIgnoresLabelFilter() {
+    void testExplorePathWithFilterStartNodeFalseIgnoresLabelFilter() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Person', maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(9L, row.get("c")));
     }
 
     @Test
-    public void testExplorePathWithLimitReturnsLimitedResults() {
+    void testExplorePathWithLimitReturnsLimitedResults() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Christian Bale', 'Tom Cruise'] SET c:Western");
 
@@ -169,7 +162,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testExplorePathWithEndNodeLabel() {
+    void testExplorePathWithEndNodeLabel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -188,7 +181,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testExplorePathWithEndNodeLabelAndLimit() {
+    void testExplorePathWithEndNodeLabelAndLimit() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman', 'Christian Bale'] SET c:Western");
 
@@ -210,7 +203,7 @@ public class ExpandPathTest {
     // label filter precedence tests
 
     @Test
-    public void testDenylistBeforeAllowlist() {
+    void testDenylistBeforeAllowlist() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -225,7 +218,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testDenylistBeforeTerminationFilter() {
+    void testDenylistBeforeTerminationFilter() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -240,7 +233,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testDenylistBeforeEndNodeFilter() {
+    void testDenylistBeforeEndNodeFilter() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -255,7 +248,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testTerminationFilterBeforeAllowlist() {
+    void testTerminationFilterBeforeAllowlist() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman', 'Christian Bale'] SET c:Western");
 
@@ -273,7 +266,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testTerminationFilterBeforeEndNodeFilter() {
+    void testTerminationFilterBeforeEndNodeFilter() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -290,7 +283,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testEndNodeFilterAsAllowlist() {
+    void testEndNodeFilterAsAllowlist() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -309,7 +302,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testLimitPlaysNiceWithMinLevel() {
+    void testLimitPlaysNiceWithMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -326,7 +319,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testTerminationFilterDoesNotPruneBelowMinLevel() {
+    void testTerminationFilterDoesNotPruneBelowMinLevel() {
         db.executeTransactionally("MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western");
 
         TestUtil.testResult(
@@ -343,25 +336,21 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testFilterStartNodeFalseDoesNotFilterStartNodeWhenBelowMinLevel() {
+    void testFilterStartNodeFalseDoesNotFilterStartNodeWhenBelowMinLevel() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Person', minLevel:1, maxLevel:2, filterStartNode:false}) yield path return count(*) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(8L, row.get("c")));
     }
 
     @Test
-    public void testOptionalExpandConfigWithNoResultsYieldsNull() {
+    void testOptionalExpandConfigWithNoResultsYieldsNull() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Agent', minLevel:1, maxLevel:2, filterStartNode:false, optional:true}) YIELD path RETURN path";
-        TestUtil.testResult(db, query, (result) -> {
-            assertTrue(result.hasNext());
-            Map<String, Object> row = result.next();
-            assertEquals(null, row.get("path"));
-        });
+        TestUtil.testCall(db, query, (row) -> assertEquals(null, row.get("path")));
     }
 
     @Test
-    public void testFilterStartNodeDefaultsToFalse() {
+    void testFilterStartNodeDefaultsToFalse() {
         // was default true prior to 3.2.x
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.expandConfig(m,{labelFilter:'+Person'}) yield path return count(*) as c";
@@ -369,7 +358,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testCompoundLabelMatchesOnlyNodeWithBothLabels() {
+    void testCompoundLabelMatchesOnlyNodeWithBothLabels() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Eastwood");
 
@@ -388,7 +377,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testCompoundLabelWorksInDenylist() {
+    void testCompoundLabelWorksInDenylist() {
         db.executeTransactionally(
                 "MATCH (c:Person) WHERE c.name in ['Clint Eastwood', 'Gene Hackman'] SET c:Western WITH c WHERE c.name = 'Clint Eastwood' SET c:Denylist");
 
@@ -406,7 +395,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesWorksWithAllowList() {
+    void testSubgraphNodesWorksWithAllowList() {
         TestUtil.testResult(
                 db,
                 """
@@ -427,7 +416,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesWithDifferentNodeInputs() {
+    void testSubgraphNodesWithDifferentNodeInputs() {
         List<String> nodeRepresentations = List.of("k", "id(k)", "elementId(k)", "[k]", "[id(k)]", "[elementId(k)]");
         for (String nodeRep : nodeRepresentations) {
             TestUtil.testResult(
@@ -453,7 +442,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesAllowListTakesPriority() {
+    void testSubgraphNodesAllowListTakesPriority() {
         TestUtil.testResult(
                 db,
                 """
@@ -476,7 +465,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesWorksWithDeprecatedAllowList() {
+    void testSubgraphNodesWorksWithDeprecatedAllowList() {
         TestUtil.testResult(
                 db,
                 """
@@ -497,7 +486,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesWorksWithDenyList() {
+    void testSubgraphNodesWorksWithDenyList() {
         TestUtil.testResult(
                 db,
                 """
@@ -518,7 +507,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesDenyListTakesPriority() {
+    void testSubgraphNodesDenyListTakesPriority() {
         TestUtil.testResult(
                 db,
                 """
@@ -541,7 +530,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testSubgraphNodesWorksWithDeprecatedDenyList() {
+    void testSubgraphNodesWorksWithDeprecatedDenyList() {
         TestUtil.testResult(
                 db,
                 """
@@ -562,7 +551,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testRelationshipFilterWorksWithoutTypeOutgoing() {
+    void testRelationshipFilterWorksWithoutTypeOutgoing() {
         TestUtil.testResult(
                 db,
                 "MATCH (k:Person {name:'Keanu Reeves'}) "
@@ -586,7 +575,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testRelationshipFilterWorksWithoutTypeIncoming() {
+    void testRelationshipFilterWorksWithoutTypeIncoming() {
         TestUtil.testResult(
                 db,
                 "MATCH (k:Person {name:'Keanu Reeves'}) "
@@ -599,7 +588,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testLabelWithSpecialChar() {
+    void testLabelWithSpecialChar() {
         db.executeTransactionally(
                 """
 						CREATE (n:`http://example.com/abc#Object` {one: 'alpha'}) WITH n
@@ -632,7 +621,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testCompoundLabelWithSpecialChar() {
+    void testCompoundLabelWithSpecialChar() {
         db.executeTransactionally(
                 """
 						CREATE (n:`http://compound.example/abc#Object` {one: 'alpha'}) WITH n
@@ -664,7 +653,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testLabelWithTwoDots() {
+    void testLabelWithTwoDots() {
         db.executeTransactionally("CREATE (n:Multiple:End)-[:REL]->(o:`foo:bar` {two: 'beta'})");
 
         String labelFilter = "foo:bar";
@@ -698,7 +687,7 @@ public class ExpandPathTest {
     }
 
     @Test
-    public void testShouldFailOnInvalidUniqueness() {
+    void testShouldFailOnInvalidUniqueness() {
         String statement =
                 """
                                 MATCH (k:Person {name:'Keanu Reeves'})

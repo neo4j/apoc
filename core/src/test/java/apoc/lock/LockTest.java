@@ -39,7 +39,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class LockTest {
+class LockTest {
 
     @Inject
     GraphDatabaseService db;

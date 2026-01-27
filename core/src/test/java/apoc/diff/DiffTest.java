@@ -36,13 +36,13 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
-public class DiffTest {
+class DiffTest {
 
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Diff.class, Create.class);
 
         try (Transaction tx = db.beginTx()) {
@@ -64,7 +64,7 @@ public class DiffTest {
     }
 
     @Test
-    public void nodesWithList() {
+    void nodesWithList() {
         final List<String> list = List.of("tomatoes", "bread", "cookies");
         TestUtil.testCall(
                 db,
@@ -87,7 +87,7 @@ public class DiffTest {
     }
 
     @Test
-    public void nodesSame() {
+    void nodesSame() {
         Map<String, Object> result = db.executeTransactionally(
                 "MATCH (node:Node1) RETURN apoc.diff.nodes(node, node) as diff",
                 new HashMap<>(),
@@ -110,7 +110,7 @@ public class DiffTest {
     }
 
     @Test
-    public void nodesDiffering() {
+    void nodesDiffering() {
         Map<String, Object> result = db.executeTransactionally(
                 "MATCH (leftNode:Node2), (rightNode:Node3) RETURN apoc.diff.nodes(leftNode, rightNode) as diff",
                 new HashMap<>(),
@@ -138,7 +138,7 @@ public class DiffTest {
     }
 
     @Test
-    public void shouldBeDiffWithVirtualNodes() {
+    void shouldBeDiffWithVirtualNodes() {
         String query = "WITH apoc.create.vNode(['Node2'], {prop1: 'val1', prop2: 2, prop4: 'four'}) AS nodeA, "
                 + "apoc.create.vNode(['Node3'], {prop1: 'val1', prop3: '3', prop4: 'for'}) AS nodeB "
                 + "RETURN apoc.diff.nodes(nodeA, nodeB) as diff";
@@ -167,7 +167,7 @@ public class DiffTest {
     }
 
     @Test
-    public void shouldBeSameWithVirtualNodes() {
+    void shouldBeSameWithVirtualNodes() {
         String query = "WITH apoc.create.vNode(['Node1'], {prop1: 'val1', prop2: 2}) AS node "
                 + "RETURN apoc.diff.nodes(node, node) as diff";
         Map<String, Object> result =

@@ -44,7 +44,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.neo4j.graphdb.Resource;
 import org.neo4j.graphdb.ResourceIterator;
 
-public class AbstractResourceIterableTest {
+class AbstractResourceIterableTest {
 
     @Test
     void shouldDelegateToUnderlyingIterableForData() {

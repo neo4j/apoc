@@ -19,52 +19,33 @@
 package apoc.cypher;
 
 import static apoc.ApocConfig.APOC_CONFIG_INITIALIZER;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 import apoc.ApocExtensionFactory;
-import apoc.test.EnvSettingRule;
-import apoc.test.annotations.Env;
-import apoc.test.annotations.EnvSetting;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Collections;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.RuleChain;
+import java.util.Map;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-public class CypherInitializerTest {
+class CypherInitializerTest {
 
-    public DbmsRule dbmsRule = new ImpermanentDbmsRule();
-
-    @Rule
-    public RuleChain ruleChain = new EnvSettingRule().around(dbmsRule);
-
-    @Before
-    public void waitForInitializerBeingFinished() {
-        // we need at least on APOC proc being registered in finished CypherInitializers
-        TestUtil.registerProcedure(dbmsRule, Utils.class);
-
-        waitForInitializerBeingFinished(SYSTEM_DATABASE_NAME);
-        waitForInitializerBeingFinished(DEFAULT_DATABASE_NAME);
-    }
-
-    @After
-    public void teardown() {
-        dbmsRule.shutdown();
-    }
-
-    private void waitForInitializerBeingFinished(String dbName) {
-        CypherInitializer initializer = getInitializer(dbName);
+    private static void waitForInitializerBeingFinished(GraphDatabaseAPI api) {
+        CypherInitializer initializer = getInitializer(api);
         while (!initializer.isFinished()) {
             try {
                 Thread.sleep(10);
@@ -75,12 +56,19 @@ public class CypherInitializerTest {
         }
     }
 
+    void configureAll(TestDatabaseManagementServiceBuilder builder) {
+        // Ensure no initializer is configured via system properties
+        System.clearProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME);
+        System.clearProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0");
+        System.clearProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".1");
+        System.clearProperty(APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME);
+        builder.setConfigRaw(Map.of("server.config.strict_validation.enabled", "false"));
+    }
+
     /**
-     * get a reference to CypherInitializer for diagnosis. This needs to use reflection.
-     * @return
+     * get a reference to CypherInitializer for diagnosis.
      */
-    private CypherInitializer getInitializer(String dbName) {
-        var api = ((GraphDatabaseAPI) (dbmsRule.getManagementService().database(dbName)));
+    private static CypherInitializer getInitializer(GraphDatabaseAPI api) {
         var apoc = api.getDependencyResolver().resolveDependency(ApocExtensionFactory.ApocLifecycle.class);
         var listeners = apoc.getRegisteredListeners();
         for (AvailabilityListener listener : listeners) {
@@ -91,55 +79,201 @@ public class CypherInitializerTest {
         throw new IllegalStateException("found no cypher initializer");
     }
 
-    @Test
-    @Env
-    public void noInitializerWorks() {
-        expectNodeCount(0);
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class NoInitializer {
+        @Inject
+        GraphDatabaseService db;
+
+        @Inject
+        DatabaseManagementService dbms;
+
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            configureAll(builder);
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) dbms.database(SYSTEM_DATABASE_NAME));
+        }
+
+        @Test
+        public void noInitializerWorks() {
+            expectNodeCount(0);
+        }
+
+        private void expectNodeCount(long i) {
+            assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
     }
 
-    @Test
-    @Env({@EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME, value = "")})
-    public void emptyInitializerWorks() {
-        expectNodeCount(0);
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class EmptyInitializer {
+        @Inject
+        GraphDatabaseService db;
+
+        @Inject
+        DatabaseManagementService dbms;
+
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME, "");
+            configureAll(builder);
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) dbms.database(SYSTEM_DATABASE_NAME));
+        }
+
+        @Test
+        public void emptyInitializerWorks() {
+            expectNodeCount(0);
+        }
+
+        private void expectNodeCount(long i) {
+            assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
     }
 
-    @Test
-    @Env({@EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME, value = "create()")})
-    public void singleInitializerWorks() {
-        expectNodeCount(1);
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class SingleInitializer {
+        @Inject
+        GraphDatabaseService db;
+
+        @Inject
+        DatabaseManagementService dbms;
+
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            configureAll(builder);
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0", "create()");
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) dbms.database(SYSTEM_DATABASE_NAME));
+        }
+
+        @Test
+        public void singleInitializerWorks() {
+            expectNodeCount(1);
+        }
+
+        private void expectNodeCount(long i) {
+            assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
     }
 
-    @Test
-    @Env({ // this only creates 2 nodes if the statements run in same order
-        @EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0", value = "create()"),
-        @EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".1", value = "match (n) create ()")
-    })
-    public void multipleInitializersWorks() {
-        expectNodeCount(2);
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class MultipleInitializers {
+        @Inject
+        GraphDatabaseService db;
+
+        @Inject
+        DatabaseManagementService dbms;
+
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            configureAll(builder);
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0", "create()");
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".1", "match (n) create ()");
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) dbms.database(SYSTEM_DATABASE_NAME));
+        }
+
+        @Test
+        public void multipleInitializersWorks() {
+            expectNodeCount(2);
+        }
+
+        private void expectNodeCount(long i) {
+            assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
     }
 
-    @Test
-    @Env({ // this only creates 1 node since the first statement doesn't do anything
-        @EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0", value = "match (n) create ()"),
-        @EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".1", value = "create()")
-    })
-    public void multipleInitializersWorks2() {
-        expectNodeCount(1);
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class MultipleInitializers2 {
+        @Inject
+        GraphDatabaseService db;
+
+        @Inject
+        DatabaseManagementService dbms;
+
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            configureAll(builder);
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0", "match (n) create ()");
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".1", "create()");
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) dbms.database(SYSTEM_DATABASE_NAME));
+        }
+
+        @Test
+        public void multipleInitializersWorks2() {
+            expectNodeCount(1);
+        }
+
+        private void expectNodeCount(long i) {
+            assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
     }
 
-    @Test
-    @Env({ // this only creates 2 nodes if the statements run in same order
-        @EnvSetting(
-                key = APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME,
-                value = "create user dummy set password 'abcd1234'")
-    })
-    public void databaseSpecificInitializersForSystem() {
-        GraphDatabaseService systemDb = dbmsRule.getManagementService().database(SYSTEM_DATABASE_NAME);
-        long numberOfUsers = systemDb.executeTransactionally("show users", Collections.emptyMap(), Iterators::count);
-        assertEquals(2l, numberOfUsers);
-    }
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class SystemDatabaseInitializers {
+        @Inject
+        DatabaseManagementService dbms;
 
-    private void expectNodeCount(long i) {
-        assertEquals(i, TestUtil.count(dbmsRule, "match (n) return n"));
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            configureAll(builder);
+            System.setProperty(
+                    APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME, "create user dummy set password 'abcd1234'");
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            // register any APOC procedure to ensure initializers can see at least one APOC proc
+            GraphDatabaseService db = dbms.database(DEFAULT_DATABASE_NAME);
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) dbms.database(SYSTEM_DATABASE_NAME));
+        }
+
+        @Test
+        public void databaseSpecificInitializersForSystem() {
+            GraphDatabaseService systemDb = dbms.database(SYSTEM_DATABASE_NAME);
+            long numberOfUsers =
+                    systemDb.executeTransactionally("show users", Collections.emptyMap(), Iterators::count);
+            assertEquals(2L, numberOfUsers);
+        }
     }
 }

@@ -44,7 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexType;
 
-public class UtilTest {
+class UtilTest {
 
     /**
      * If any new constraints or indexes are added, this test will fail.

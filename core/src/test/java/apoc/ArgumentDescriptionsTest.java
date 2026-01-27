@@ -116,7 +116,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ArgumentDescriptionsTest {
+class ArgumentDescriptionsTest {
     private final ObjectMapper json = new ObjectMapper();
 
     @Inject

@@ -72,7 +72,7 @@ import org.neo4j.values.storable.PointValue;
 import org.neo4j.values.storable.Values;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class ImportJsonTest {
+class ImportJsonTest {
 
     private static final long NODES_BIG_JSON = 16L;
     private static final long RELS_BIG_JSON = 4L;
@@ -97,12 +97,12 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllJsonWithoutImportId() {
+    void shouldImportAllJsonWithoutImportId() {
         shouldImportAllCommon(map("cleanup", true), 8, 0L);
     }
 
     @Test
-    public void shouldImportAllJson() {
+    void shouldImportAllJson() {
         shouldImportAllCommon(Collections.emptyMap(), 9, 1L);
     }
 
@@ -123,7 +123,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void testImportOfPointValues() {
+    void testImportOfPointValues() {
         db.executeTransactionally(
                 "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Earthquake) REQUIRE n.neo4jImportId IS UNIQUE");
 
@@ -169,7 +169,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void testInvalidPointValues() {
+    void testInvalidPointValues() {
         db.executeTransactionally(
                 "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Earthquake) REQUIRE n.neo4jImportId IS UNIQUE");
 
@@ -187,7 +187,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllJsonWithPropertyMappings() {
+    void shouldImportAllJsonWithPropertyMappings() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS UNIQUE");
         // given
         String filename = "all.json";
@@ -252,7 +252,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportNodesWithoutLabels() throws Exception {
+    void shouldImportNodesWithoutLabels() throws Exception {
         // given
         String filename = "nodes_without_labels.json";
         Map<String, Object> jsonMap = JsonUtil.OBJECT_MAPPER.readValue(new File(directory, filename), Map.class);
@@ -284,7 +284,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldTerminateImportWhenTransactionIsTimedOut() {
+    void shouldTerminateImportWhenTransactionIsTimedOut() {
 
         createConstraints(List.of("Stream", "User", "Game", "Team", "Language"));
 
@@ -296,7 +296,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllNodesAndRelsWithFilterAll() {
+    void shouldImportAllNodesAndRelsWithFilterAll() {
         createConstraints(List.of("FirstLabel", "Stream", "User", "Game", "Team", "Language", "$User", "$Stream"));
         assertEntities(0L, 0L);
 
@@ -325,7 +325,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllNodesAndRelsWithLabelAndRelTypeFilter() {
+    void shouldImportAllNodesAndRelsWithLabelAndRelTypeFilter() {
         createConstraints(List.of("FirstLabel", "Stream", "User", "Game", "Team", "Language", "$User", "$Stream"));
         assertEntities(0L, 0L);
 
@@ -384,7 +384,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllNodesAndRels() {
+    void shouldImportAllNodesAndRels() {
         createConstraints(List.of("FirstLabel", "Stream", "User", "Game", "Team", "Language", "$User", "$Stream"));
         assertEntities(0L, 0L);
 
@@ -399,7 +399,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldFailBecauseOfMissingSecondConstraintException() {
+    void shouldFailBecauseOfMissingSecondConstraintException() {
         String customId = "customId";
         createConstraints(List.of("FirstLabel", "Stream", "Game", "$User"), customId);
         assertEntities(0L, 0L);
@@ -422,7 +422,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldFailBecauseOfMissingUniquenessConstraintException() {
+    void shouldFailBecauseOfMissingUniquenessConstraintException() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE (n.neo4jImportId, n.name) IS UNIQUE;");
         assertEntities(0L, 0L);
 
@@ -436,7 +436,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldImportAllJsonFromBinary() {
+    void shouldImportAllJsonFromBinary() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS UNIQUE");
 
         TestUtil.testCall(
@@ -453,7 +453,7 @@ public class ImportJsonTest {
     }
 
     @Test
-    public void shouldTerminateImportJson() {
+    void shouldTerminateImportJson() {
         createConstraints(List.of("Movie", "Other", "Person"));
         checkTerminationGuard(db, "CALL apoc.import.json('testTerminate.json',{})");
     }

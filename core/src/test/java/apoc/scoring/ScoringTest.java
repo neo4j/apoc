@@ -28,7 +28,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class ScoringTest {
+class ScoringTest {
 
     @Inject
     GraphDatabaseService db;

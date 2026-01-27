@@ -54,7 +54,7 @@ import org.neo4j.test.extension.Inject;
  * CYPHER 5 only; moved to extended for Cypher 25
  */
 @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
-public class ArrowTest {
+class ArrowTest {
 
     private static final File directory = new File("target/arrow import");
 
@@ -168,7 +168,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testStreamRoundtripArrowQuery() {
+    void testStreamRoundtripArrowQuery() {
         // given - when
         final String returnQuery = "RETURN 1 AS intData," + "'a' AS stringData,"
                 + "true AS boolData,"
@@ -208,7 +208,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testFileRoundtripArrowQuery() {
+    void testFileRoundtripArrowQuery() {
         // given - when
         final String returnQuery = "RETURN 1 AS intData," + "'a' AS stringData,"
                 + "true AS boolData,"
@@ -248,7 +248,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testStreamRoundtripArrowGraph() {
+    void testStreamRoundtripArrowGraph() {
         // given - when
         final byte[] byteArray = db.executeTransactionally(
                 "CALL apoc.graph.fromDB('neo4j',{}) yield graph "
@@ -278,7 +278,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testFileRoundtripArrowGraph() {
+    void testFileRoundtripArrowGraph() {
         // given - when
         String file = db.executeTransactionally(
                 "CALL apoc.graph.fromDB('neo4j',{}) yield graph "
@@ -297,12 +297,12 @@ public class ArrowTest {
     }
 
     @Test
-    public void testStreamRoundtripArrowAll() {
+    void testStreamRoundtripArrowAll() {
         testStreamRoundtripAllCommon();
     }
 
     @Test
-    public void testStreamRoundtripArrowAllWithImportExportConfsDisabled() {
+    void testStreamRoundtripArrowAllWithImportExportConfsDisabled() {
         // disable both export and import configs
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, false);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, false);
@@ -328,7 +328,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testFileRoundtripArrowAll() {
+    void testFileRoundtripArrowAll() {
         // given - when
         String file = db.executeTransactionally(
                 "CALL apoc.export.arrow.all('all_test.arrow') YIELD file", Map.of(), this::extractFileName);
@@ -343,7 +343,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testStreamVolumeArrowAll() {
+    void testStreamVolumeArrowAll() {
         // given - when
         db.executeTransactionally("UNWIND range(0, 10000 - 1) AS id CREATE (n:ArrowNode{id:id})");
 
@@ -368,7 +368,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testFileVolumeArrowAll() {
+    void testFileVolumeArrowAll() {
         // given - when
         db.executeTransactionally("UNWIND range(0, 10000 - 1) AS id CREATE (:ArrowNode{id:id})");
 
@@ -392,7 +392,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testArrowCorrectBatchCount() {
+    void testArrowCorrectBatchCount() {
         // given - when
         db.executeTransactionally("UNWIND range(0, 10000 - 1) AS id CREATE (:ArrowNode{id:id})");
 
@@ -413,7 +413,7 @@ public class ArrowTest {
     }
 
     @Test
-    public void testValidNonStorableQuery() {
+    void testValidNonStorableQuery() {
         final List<byte[]> list = db.executeTransactionally(
                 "CALL apoc.export.arrow.stream.query($query) YIELD value AS byteArray ",
                 Map.of("query", "RETURN [1, true, 2.3, null, { name: 'Dave' }] AS array"),

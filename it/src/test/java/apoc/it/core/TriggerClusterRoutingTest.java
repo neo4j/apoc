@@ -51,7 +51,7 @@ class TriggerClusterRoutingTest {
     private static List<Neo4jContainerExtension> clusterMembers;
 
     @BeforeAll
-    public static void setupCluster() {
+    static void setupCluster() {
         cluster = TestContainerUtil.createEnterpriseCluster(
                 List.of(TestContainerUtil.ApocPackage.CORE),
                 3,
@@ -66,7 +66,7 @@ class TriggerClusterRoutingTest {
     }
 
     @AfterAll
-    public static void bringDownCluster() {
+    static void bringDownCluster() {
         if (cluster != null) {
             cluster.close();
         }

@@ -82,7 +82,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
-public class PeriodicTest {
+class PeriodicTest {
     public static class MockLogger {
         @Context
         public Log log;
@@ -108,7 +108,7 @@ public class PeriodicTest {
     }
 
     @BeforeAll
-    public void initDb() {
+    void initDb() {
         TestUtil.registerProcedure(
                 db,
                 Periodic.class,
@@ -128,7 +128,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testRepeatWithVoidProcedure() {
+    void testRepeatWithVoidProcedure() {
         String logVal = "repeatVoid";
         String query =
                 "CALL apoc.periodic.repeat('repeat-1', 'CALL apoc.mockLog($logVal)', 1, {params: {logVal: $logVal}})";
@@ -136,7 +136,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testRepeatWithErroringQueryProcedure() {
+    void testRepeatWithErroringQueryProcedure() {
         String logVal = "continuesAfterError";
         String query =
                 """
@@ -167,7 +167,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testRepeatWithVoidProcedureAndReturn() {
+    void testRepeatWithVoidProcedureAndReturn() {
         String logVal = "repeatVoidWithReturn";
         String query =
                 "CALL apoc.periodic.repeat('repeat-2', 'CALL apoc.mockLog($logVal) RETURN 1', 1, {params: {logVal: $logVal}})";
@@ -175,7 +175,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSubmitWithVoidProcedure() {
+    void testSubmitWithVoidProcedure() {
         String logVal = "submitVoid";
         String query =
                 "CALL apoc.periodic.submit('submit-1', 'CALL apoc.mockLog($logVal) RETURN 1', {params: {logVal: $logVal}})";
@@ -183,7 +183,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSubmitWithVoidProcedureAndReturn() {
+    void testSubmitWithVoidProcedureAndReturn() {
         String logVal = "submitVoidWithReturn";
         String query =
                 "CALL apoc.periodic.submit('submit-2', 'CALL apoc.mockLog($logVal)', {params: {logVal: $logVal}})";
@@ -206,7 +206,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSubmitStatement() throws Exception {
+    void testSubmitStatement() throws Exception {
         String callList =
                 "CALL apoc.periodic.list() YIELD name, done, cancelled, delay, rate WHERE name = 'foo2' RETURN *";
         // force pre-caching the queryplan => higher probability to get a result in the last assertion
@@ -236,13 +236,13 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSubmitWithSchemaOperation() {
+    void testSubmitWithSchemaOperation() {
         String errMessage = "Supported query types for the operation are [READ_ONLY, WRITE, READ_WRITE]";
         testSchemaOperationCommon("CREATE INDEX periodicIdx FOR (n:Bar) ON (n.first_name, n.last_name)", errMessage);
     }
 
     @Test
-    public void testSubmitWithSchemaProcedure() {
+    void testSubmitWithSchemaProcedure() {
         String errMessage = "Supported inner procedure modes for the operation are [READ, WRITE, DEFAULT]";
         testSchemaOperationCommon("CALL apoc.schema.assert({}, {})", errMessage);
 
@@ -271,7 +271,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSubmitStatementWithParams() throws Exception {
+    void testSubmitStatementWithParams() throws Exception {
         String callList =
                 "CALL apoc.periodic.list() YIELD name, done, cancelled, delay, rate WHERE name = 'foo' RETURN *";
         // force pre-caching the queryplan => higher probability to get a result in the last assertion
@@ -304,7 +304,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testApplyPlanner() {
+    void testApplyPlanner() {
         assertEquals("CYPHER 5 RETURN 1", Util.applyPlanner("RETURN 1", Util.Planner.DEFAULT, "5"));
         assertEquals(
                 "CYPHER 5 planner=cost MATCH (n:cypher) RETURN n",
@@ -334,7 +334,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testSlottedRuntime() {
+    void testSlottedRuntime() {
         // Positive Tests
         assertEquals(
                 "CYPHER 5 runtime=slotted MATCH (n:cypher) RETURN n",
@@ -363,7 +363,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testTerminateCommit() {
+    void testTerminateCommit() {
         PeriodicTestUtils.testTerminateInnerPeriodicQuery(
                 db,
                 // This query never finish
@@ -382,7 +382,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testPeriodicCommitWithoutLimitShouldFail() {
+    void testPeriodicCommitWithoutLimitShouldFail() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> db.executeTransactionally("CALL apoc.periodic.commit('return 0')"));
@@ -390,7 +390,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testRunDown() {
+    void testRunDown() {
         db.executeTransactionally(
                 "UNWIND range(1,$count) AS id CREATE (n:Person {id:id})", MapUtil.map("count", RUNDOWN_COUNT));
 
@@ -411,7 +411,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testPeriodicIterateErrors() {
+    void testPeriodicIterateErrors() {
         testResult(
                 db,
                 "CALL apoc.periodic.iterate('UNWIND range(0,99) as id RETURN id', 'CREATE null', {batchSize:10,iterateList:true})",
@@ -446,7 +446,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testTerminateIterate() {
+    void testTerminateIterate() {
         // Calls to apoc.util.sleep needed to not overload db and keep execution alive long enough for termination.
         PeriodicTestUtils.testTerminateInnerPeriodicQuery(
                 db,
@@ -478,7 +478,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testWithTerminationInnerTransaction() {
+    void testWithTerminationInnerTransaction() {
         // terminating the apoc.util.sleep should instantly terminate the periodic query without any creation
         final String innerLongQuery = "CALL apoc.util.sleep(20999) RETURN 0";
         final String query =
@@ -508,7 +508,7 @@ public class PeriodicTest {
      * java.nio.channels.ClosedChannelException upon db.shutdown
      */
     @Test
-    public void terminateIterateShouldNotFailonShutdown() throws Exception {
+    void terminateIterateShouldNotFailonShutdown() throws Exception {
 
         long totalNumberOfNodes = 100000;
         int batchSizeCreate = 10000;
@@ -554,7 +554,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIteratePrefixGiven() {
+    void testIteratePrefixGiven() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(
@@ -573,7 +573,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterate() {
+    void testIterate() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(
@@ -592,7 +592,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateWithQueryPlanner() {
+    void testIterateWithQueryPlanner() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         String cypherIterate = "match (p:Person) return p";
@@ -626,7 +626,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateUpdateStats() {
+    void testIterateUpdateStats() {
         testResult(
                 db,
                 "CALL apoc.periodic.iterate(" + "'UNWIND range(1, 100) AS x RETURN x', "
@@ -688,7 +688,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIteratePrefix() {
+    void testIteratePrefix() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(
@@ -707,7 +707,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIteratePassThroughBatch() {
+    void testIteratePassThroughBatch() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(
@@ -726,7 +726,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateBatch() {
+    void testIterateBatch() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(
@@ -745,7 +745,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateBatchPrefix() {
+    void testIterateBatchPrefix() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
 
         testResult(
@@ -764,7 +764,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateWithReportingFailed() {
+    void testIterateWithReportingFailed() {
         testResult(
                 db,
                 "CALL apoc.periodic.iterate('UNWIND range(-5, 5) AS x RETURN x', 'return sum(1000/x)', {batchSize:3, failedParams:9999})",
@@ -787,7 +787,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateRetries() {
+    void testIterateRetries() {
         testResult(
                 db, "CALL apoc.periodic.iterate('return 1', 'CREATE (n {prop: 1/$_retry})', {retries:1})", result -> {
                     Map<String, Object> row = Iterators.single(result);
@@ -798,7 +798,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateFail() {
+    void testIterateFail() {
         db.executeTransactionally("UNWIND range(1,100) AS x CREATE (:Person{name:'Person_'+x})");
         testResult(
                 db,
@@ -820,7 +820,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateWithNullRebind() {
+    void testIterateWithNullRebind() {
         testResult(
                 db,
                 """
@@ -838,7 +838,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testCountdown() {
+    void testCountdown() {
         int startValue = 3;
         int rate = 1;
 
@@ -862,7 +862,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testRepeatParams() {
+    void testRepeatParams() {
         db.executeTransactionally(
                 "CALL apoc.periodic.repeat('repeat-params', 'MERGE (person:Person {name: $nameValue})', 2, {params: {nameValue: 'John Doe'}} ) YIELD name RETURN name");
         try {
@@ -890,34 +890,34 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testCommitFail() {
+    void testCommitFail() {
         final String query =
                 "CALL apoc.periodic.commit('UNWIND range(0,1000) as id WITH id CREATE (::Foo {id: id}) limit 1000', {})";
         testCypherFail(query);
     }
 
     @Test
-    public void testSubmitFail() {
+    void testSubmitFail() {
         final String query = "CALL apoc.periodic.submit('foo1','create (::Foo)')";
         testCypherFail(query);
     }
 
     @Test
-    public void testRepeatFail() {
+    void testRepeatFail() {
         final String query =
                 "CALL apoc.periodic.repeat('repeat-params', 'MERGE (person:Person {name: $nameValue})', 2, {params: {nameValue: 'John Doe'}}) YIELD name RETURN nam";
         testCypherFail(query);
     }
 
     @Test
-    public void testCountdownFail() {
+    void testCountdownFail() {
         final String query =
                 "CALL apoc.periodic.countdown('decrement', 'MATCH (counter:Counter) SET counter.c == counter.c - 1 RETURN counter.c as count', 1)";
         testCypherFail(query);
     }
 
     @Test
-    public void testIterateQueryFail() {
+    void testIterateQueryFail() {
         final String query = "CALL apoc.periodic.iterate('UNWIND range(0, 1000) as id RETURN ids', "
                 + "'WITH $id as id CREATE (:Foo {id: $id})', "
                 + "{batchSize:1,parallel:true})";
@@ -925,7 +925,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateQueryFailInvalidConcurrency() {
+    void testIterateQueryFailInvalidConcurrency() {
         final String query = "CALL apoc.periodic.iterate('UNWIND range(0, 10) AS x RETURN x', " + "'RETURN x', "
                 + "{concurrency:0 ,parallel:true})";
 
@@ -934,7 +934,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testIterateQueryFailInvalidBatchSize() {
+    void testIterateQueryFailInvalidBatchSize() {
         final String query = "CALL apoc.periodic.iterate('UNWIND range(0, 10) AS x RETURN x', " + "'RETURN x', "
                 + "{batchSize:0 ,parallel:true})";
 
@@ -945,7 +945,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testTruncate() {
+    void testTruncate() {
         createDatasetForTruncate();
 
         TestUtil.testCallEmpty(db, "CALL apoc.periodic.truncate", Collections.emptyMap());
@@ -957,7 +957,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testTruncateWithDropSchema() {
+    void testTruncateWithDropSchema() {
         createDatasetForTruncate();
 
         TestUtil.testCallEmpty(db, "CALL apoc.periodic.truncate({dropSchema: true})", Collections.emptyMap());
@@ -965,7 +965,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testMergeNodesInApocPeriodicIterate() {
+    void testMergeNodesInApocPeriodicIterate() {
         db.executeTransactionally("UNWIND range(1,1000) as i CREATE (p1:Person) RETURN 1");
         final var query =
                 """
@@ -1044,7 +1044,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocPeriodicCommit() {
+    void testDifferentCypherVersionsApocPeriodicCommit() {
         int id = 0;
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
@@ -1060,7 +1060,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocPeriodicCountdown() throws InterruptedException {
+    void testDifferentCypherVersionsApocPeriodicCountdown() throws InterruptedException {
         int id = 0;
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
@@ -1077,7 +1077,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocPeriodicIterate() {
+    void testDifferentCypherVersionsApocPeriodicIterate() {
         db.executeTransactionally("CREATE (:CYPHER_5 {id: -1}), (:CYPHER_25 {id: -1})");
         int id = 0;
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
@@ -1094,7 +1094,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocPeriodicRepeat() throws InterruptedException {
+    void testDifferentCypherVersionsApocPeriodicRepeat() throws InterruptedException {
         int id = 0;
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
@@ -1112,7 +1112,7 @@ public class PeriodicTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocPeriodicSubmit() throws InterruptedException {
+    void testDifferentCypherVersionsApocPeriodicSubmit() throws InterruptedException {
         int id = 0;
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(

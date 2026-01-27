@@ -33,10 +33,10 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 
-public class VirtualNodeTest {
+class VirtualNodeTest {
 
     @Test
-    public void shouldCreateVirtualNode() {
+    void shouldCreateVirtualNode() {
         Map<String, Object> props = Util.map("key", "value");
         Label[] labels = {Label.label("Test")};
         VirtualNode vn = new VirtualNode(labels, props);
@@ -48,7 +48,7 @@ public class VirtualNodeTest {
     }
 
     @Test
-    public void shouldCreateVirtualNodeWithRelationshipsTo() {
+    void shouldCreateVirtualNodeWithRelationshipsTo() {
         Map<String, Object> startProps = Util.map("key", "value");
         Label[] startLabels = {Label.label("Test")};
         VirtualNode start = new VirtualNode(startLabels, startProps);
@@ -86,7 +86,7 @@ public class VirtualNodeTest {
     }
 
     @Test
-    public void shouldCreateVirtualNodeWithRelationshipsFrom() {
+    void shouldCreateVirtualNodeWithRelationshipsFrom() {
         Map<String, Object> startProps = Util.map("key", "value");
         Label[] startLabels = {Label.label("Test")};
         VirtualNode start = new VirtualNode(startLabels, startProps);
@@ -124,7 +124,7 @@ public class VirtualNodeTest {
     }
 
     @Test
-    public void testVirtualNodesEqualEachOther() {
+    void testVirtualNodesEqualEachOther() {
         VirtualNode node1 = new VirtualNode(1L);
         VirtualNode node2 = new VirtualNode(2L);
 

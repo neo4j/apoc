@@ -24,10 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-public class CypherIsVersionDifferentTest {
+class CypherIsVersionDifferentTest {
 
     @Test
-    public void shouldReturnFalseOnlyWithCompatibleVersion() {
+    void shouldReturnFalseOnlyWithCompatibleVersion() {
         assertTrue(isVersionDifferent("3.5", "4.4.0.2"));
         assertTrue(isVersionDifferent("5_0", "4.4.0.2"));
         assertFalse(isVersionDifferent("3.5.12", "3.5.0.9"));

@@ -30,7 +30,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension
-public class CollAggregationTest {
+class CollAggregationTest {
     @Inject
     GraphDatabaseService db;
 
@@ -40,7 +40,7 @@ public class CollAggregationTest {
     }
 
     @Test
-    public void testNth() {
+    void testNth() {
         testCall(
                 db,
                 "UNWIND RANGE(0,10) as value RETURN apoc.agg.nth(value, 0) as first, apoc.agg.nth(value, 3) as third,apoc.agg.nth(value, -1) as last",
@@ -52,7 +52,7 @@ public class CollAggregationTest {
     }
 
     @Test
-    public void testFirst() {
+    void testFirst() {
         testCall(
                 db,
                 "UNWIND RANGE(0,10) as value RETURN apoc.agg.first(value) as first",
@@ -64,7 +64,7 @@ public class CollAggregationTest {
     }
 
     @Test
-    public void testLast() {
+    void testLast() {
         testCall(
                 db,
                 "UNWIND RANGE(0,10) as value RETURN apoc.agg.last(value) as last",
@@ -76,7 +76,7 @@ public class CollAggregationTest {
     }
 
     @Test
-    public void testSlice() {
+    void testSlice() {
         testCall(
                 db,
                 "UNWIND RANGE(0,10) as value RETURN apoc.agg.slice(value,1,3) as slice",

@@ -56,7 +56,7 @@ import org.neo4j.values.storable.RandomValues;
 import org.neo4j.values.storable.ValueType;
 
 @EnterpriseDbmsExtension
-public class UtilsTest {
+class UtilsTest {
 
     private static final String SIMPLE_STRING = "Test";
     private static final String COMPLEX_STRING = "Mätrix II 哈哈\uD83D\uDE04123";

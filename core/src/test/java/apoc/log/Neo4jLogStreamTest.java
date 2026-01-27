@@ -41,7 +41,7 @@ class Neo4jLogStreamTest {
     private DatabaseManagementService dbManagementService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         dbManagementService = new TestDatabaseManagementServiceBuilder(
                         Paths.get("target", UUID.randomUUID().toString()).toAbsolutePath())
                 .build();
@@ -51,7 +51,7 @@ class Neo4jLogStreamTest {
     }
 
     @AfterEach
-    public void teardown() {
+    void teardown() {
         dbManagementService.shutdown();
     }
 

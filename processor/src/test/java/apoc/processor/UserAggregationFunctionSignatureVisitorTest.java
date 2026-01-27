@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.procedure.UserAggregationFunction;
 
-public class UserAggregationFunctionSignatureVisitorTest {
+class UserAggregationFunctionSignatureVisitorTest {
 
     private Elements elements;
     ElementVisitor<Map<String, List<QueryLanguage>>, Void> visitor;

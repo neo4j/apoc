@@ -31,7 +31,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class TemporalProceduresTest {
+class TemporalProceduresTest {
     @Inject
     GraphDatabaseService db;
 

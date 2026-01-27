@@ -55,7 +55,7 @@ import org.neo4j.logging.InternalLogProvider;
 import org.neo4j.logging.internal.SimpleLogService;
 import org.neo4j.procedure.impl.GlobalProceduresRegistry;
 
-public class ApocConfigCommandExpansionTest {
+class ApocConfigCommandExpansionTest {
 
     private ApocConfig apocConfig;
     private File apocConfigCommandExpansionFile;

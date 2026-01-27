@@ -25,25 +25,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class PercentilesTest {
+class PercentilesTest {
 
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Percentiles.class);
     }
 
     @Test
-    public void testPercentiles() {
+    void testPercentiles() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.percentiles(value) as p", (row) -> {
             assertEquals(asList(null, null, null, null, null, null), row.get("p"));
         });
@@ -62,7 +61,7 @@ public class PercentilesTest {
     }
 
     @Test
-    public void testPercentilesDoubles() {
+    void testPercentilesDoubles() {
         testCall(db, "UNWIND [] as value RETURN apoc.agg.percentiles(value) as p", (row) -> {
             assertEquals(asList(null, null, null, null, null, null), row.get("p"));
         });
@@ -83,7 +82,7 @@ public class PercentilesTest {
     private static void assertSameValues(List<Double> expected, Object values) {
         List<Double> doubleValues = (List<Double>) values;
         for (int i = 0; i < expected.size(); i++) {
-            Assert.assertEquals(expected.get(i), doubleValues.get(i), 0.0001);
+            assertEquals(expected.get(i), doubleValues.get(i), 0.0001);
         }
     }
 }

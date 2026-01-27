@@ -22,11 +22,11 @@ import static apoc.util.TestContainerUtil.createDB;
 import static apoc.util.TestContainerUtil.dockerImageForNeo4j;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import apoc.ApocSignatures;
 import apoc.util.Neo4jContainerExtension;
@@ -40,31 +40,19 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.neo4j.driver.Session;
 
 /*
 This test is just to verify if the APOC procedures and functions are correctly deployed into a Neo4j instance without any startup issue.
 If you don't have docker installed it will fail, and you can simply ignore it.
 */
-@RunWith(Parameterized.class)
-public class StartupTest {
+class StartupTest {
 
-    @Parameterized.Parameters(name = "edition={0}")
-    public static Neo4jVersion[] allEditions() {
-        return Neo4jVersion.values();
-    }
-
-    private Neo4jVersion version;
-
-    public StartupTest(Neo4jVersion version) {
-        this.version = version;
-    }
-
-    @Test
-    public void check_basic_deployment() {
+    @ParameterizedTest(name = "edition={0}")
+    @EnumSource(Neo4jVersion.class)
+    public void check_basic_deployment(Neo4jVersion version) {
         try {
             Neo4jContainerExtension neo4jContainer = createDB(
                             version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
@@ -97,7 +85,7 @@ public class StartupTest {
             assertFalse(startupLog.contains("SLF4J: No SLF4J providers were found"));
             assertFalse(startupLog.contains("SLF4J: Failed to load class \"org.slf4j.impl.StaticLoggerBinder\""));
             assertFalse(startupLog.contains("SLF4J: Class path contains multiple SLF4J providers"));
-            assertOnCompatibilityWarning(startupLog);
+            assertOnCompatibilityWarning(startupLog, version);
             session.close();
             neo4jContainer.close();
         } catch (Exception ex) {
@@ -113,8 +101,9 @@ public class StartupTest {
         }
     }
 
-    @Test
-    public void check_versions_are_compatible() {
+    @ParameterizedTest(name = "edition={0}")
+    @EnumSource(Neo4jVersion.class)
+    public void check_versions_are_compatible(Neo4jVersion version) {
         try {
             Neo4jContainerExtension neo4jContainer = createDB(
                     version,
@@ -125,7 +114,7 @@ public class StartupTest {
             neo4jContainer.start();
 
             String startupLog = neo4jContainer.getLogs();
-            assertOnCompatibilityWarning(startupLog);
+            assertOnCompatibilityWarning(startupLog, version);
 
             neo4jContainer.close();
         } catch (Exception ex) {
@@ -140,8 +129,9 @@ public class StartupTest {
         }
     }
 
-    @Test
-    public void check_cypherInitializer_waits_for_systemDb_to_be_available() {
+    @ParameterizedTest(name = "edition={0}")
+    @EnumSource(Neo4jVersion.class)
+    public void check_cypherInitializer_waits_for_systemDb_to_be_available(Neo4jVersion version) {
         // we check that with apoc-core jar and all extra-dependencies jars every procedure/function is detected
         assumeTrue(version == Neo4jVersion.ENTERPRISE);
         Neo4jContainerExtension neo4jContainer = createDB(version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
@@ -185,8 +175,9 @@ public class StartupTest {
         }
     }
 
-    @Test
-    public void compare_with_sources_cypher5() {
+    @ParameterizedTest(name = "edition={0}")
+    @EnumSource(Neo4jVersion.class)
+    public void compare_with_sources_cypher5(Neo4jVersion version) {
         try {
             Neo4jContainerExtension neo4jContainer = createDB(
                             version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
@@ -218,8 +209,9 @@ public class StartupTest {
         }
     }
 
-    @Test
-    public void compare_with_sources_cypher25() {
+    @ParameterizedTest(name = "edition={0}")
+    @EnumSource(Neo4jVersion.class)
+    public void compare_with_sources_cypher25(Neo4jVersion version) {
         try {
             Neo4jContainerExtension neo4jContainer = createDB(
                             version, List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
@@ -253,7 +245,7 @@ public class StartupTest {
         }
     }
 
-    private void assertOnCompatibilityWarning(String startupLog) {
+    private void assertOnCompatibilityWarning(String startupLog, Neo4jVersion version) {
         // The Neo4j version is usually bumped before the APOC version,
         // so sometimes versions are technically incompatible when we test
         final String neo4jDockerVersion = dockerImageForNeo4j(version);

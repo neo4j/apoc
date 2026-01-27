@@ -33,7 +33,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension
-public class StringCleanTest {
+class StringCleanTest {
 
     @Inject
     GraphDatabaseService db;

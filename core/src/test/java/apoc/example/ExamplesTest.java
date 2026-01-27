@@ -28,18 +28,18 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class ExamplesTest {
+class ExamplesTest {
 
     @Inject
     GraphDatabaseService db;
 
     @BeforeAll
-    public void setUp() {
+    void setUp() {
         TestUtil.registerProcedure(db, Examples.class);
     }
 
     @Test
-    public void testMovies() {
+    void testMovies() {
         TestUtil.testCall(db, "CALL apoc.example.movies", r -> {
             assertEquals("movies.cypher", r.get("file"));
             assertEquals(169L, r.get("nodes"));

@@ -33,7 +33,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Assert;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -43,7 +42,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class AtomicTest {
+class AtomicTest {
     @Inject
     GraphDatabaseService db;
 
@@ -53,7 +52,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testAddAndSubInteger() {
+    void testAddAndSubInteger() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom'})");
         try (Transaction tx = db.beginTx()) {
             final Node node = tx.getAllNodes().stream().findFirst().orElse(null);
@@ -73,7 +72,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testAddAndSubFloat() {
+    void testAddAndSubFloat() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom'})");
         try (Transaction tx = db.beginTx()) {
             final Node node = tx.getAllNodes().stream().findFirst().orElse(null);
@@ -95,7 +94,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testAddLong() {
+    void testAddLong() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: 40}) CREATE (a:Person {name:'Anne',age: 22})");
         testCall(
@@ -108,7 +107,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testAddLongRelationship() {
+    void testAddLongRelationship() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: 40}) CREATE (p)-[:KNOWS{since:1965}]->(c)");
         TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'})-[r:KNOWS]-(c) RETURN r;");
@@ -123,7 +122,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testAddDouble() {
+    void testAddDouble() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: " + 35d
                 + "}) CREATE (a:Person {name:'Anne',age: 22})");
         testCall(
@@ -136,7 +135,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testSubLong() {
+    void testSubLong() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: 35}) CREATE (a:Person {name:'Anne',age: 22})");
         testCall(
@@ -149,7 +148,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testSubLongRelationship() {
+    void testSubLongRelationship() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: 40}) CREATE (p)-[:KNOWS{since:1965}]->(c)");
         testCall(
@@ -163,7 +162,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcat() {
+    void testConcat() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 35})");
         testCall(
                 db,
@@ -175,7 +174,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcatRelationship() {
+    void testConcatRelationship() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Angelo',age: 22}) CREATE (c:Company {name:'Larus'}) CREATE (p)-[:WORKS_FOR{role:\"software dev\"}]->(c)");
         testCall(
@@ -190,7 +189,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testRemoveArrayValueLong() {
+    void testRemoveArrayValueLong() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
         testCall(
                 db,
@@ -203,7 +202,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testRemoveFirstElementArrayValueLong() {
+    void testRemoveFirstElementArrayValueLong() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
         testCall(
                 db,
@@ -215,7 +214,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testRemoveLastElementArrayValueLong() {
+    void testRemoveLastElementArrayValueLong() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
         testCall(
                 db,
@@ -227,7 +226,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testRemoveLastItemArray() {
+    void testRemoveLastItemArray() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40]})");
         testCall(
                 db,
@@ -239,7 +238,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testRemoveOutOfArrayIndex() {
+    void testRemoveOutOfArrayIndex() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: [40,50,60]})");
 
         QueryExecutionException e = assertThrows(
@@ -255,7 +254,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testRemoveEmptyArray() {
+    void testRemoveEmptyArray() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: []})");
 
         QueryExecutionException e = assertThrows(
@@ -271,7 +270,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testInsertArrayValueLong() {
+    void testInsertArrayValueLong() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40})");
         testCall(
                 db,
@@ -283,7 +282,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testInsertArrayValueLongRelationship() {
+    void testInsertArrayValueLongRelationship() {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom',age: 40}) CREATE (c:Person {name:'John',age: 40}) CREATE (p)-[:KNOWS{since:[40,50,60]}]->(c)");
         testCall(
@@ -297,7 +296,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testUpdateNode() {
+    void testUpdateNode() {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',salary1: 1800, salary2:1500})");
         testCall(
                 db,
@@ -309,7 +308,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testUpdateRel() {
+    void testUpdateRel() {
         db.executeTransactionally("CREATE (t:Person {name:'Tom'})-[:KNOWS {forYears:5}]->(m:Person {name:'Mary'})");
         testCall(
                 db,
@@ -322,7 +321,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcurrentAdd() throws Exception {
+    void testConcurrentAdd() throws Exception {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40})");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
@@ -346,7 +345,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcurrentSubtract() throws Exception {
+    void testConcurrentSubtract() throws Exception {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40})");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
@@ -370,7 +369,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcurrentConcat() throws Exception {
+    void testConcurrentConcat() throws Exception {
         Long nodeId =
                 TestUtil.singleResultFirstColumn(db, "CREATE (n:Person {name:'Tom', age: 40}) RETURN id(n) AS id;");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
@@ -397,7 +396,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcurrentInsert() throws InterruptedException {
+    void testConcurrentInsert() throws InterruptedException {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',age: 40})");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
@@ -423,7 +422,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcurrentRemove() throws InterruptedException {
+    void testConcurrentRemove() throws InterruptedException {
         db.executeTransactionally(
                 "CREATE (p:Person {name:'Tom',age: [40,50,60]}) CREATE (c:Person {name:'John',age: 40}) CREATE (a:Person {name:'Anne',age: 22})");
         TestUtil.singleResultFirstColumn(db, "MATCH (n:Person {name:'Tom'}) return n;");
@@ -463,7 +462,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testConcurrentUpdate() throws Exception {
+    void testConcurrentUpdate() throws Exception {
         db.executeTransactionally("CREATE (p:Person {name:'Tom',salary1: 100, salary2: 100})");
         ExecutorService executorService = Executors.newFixedThreadPool(2);
 
@@ -487,7 +486,7 @@ public class AtomicTest {
     }
 
     @Test
-    public void testPropertyNamesWithSpecialCharacters() {
+    void testPropertyNamesWithSpecialCharacters() {
         db.executeTransactionally(
                 """
 			CREATE (p:Person {
@@ -503,18 +502,18 @@ public class AtomicTest {
 
         // ADD
         TestUtil.testCall(db, match + " CALL apoc.atomic.add(n, 'person.age', 1) " + returnStmt, (r) -> {
-            Assert.assertEquals(1L, r.get("oldValue"));
-            Assert.assertEquals(2L, r.get("newValue"));
+            assertEquals(1L, r.get("oldValue"));
+            assertEquals(2L, r.get("newValue"));
         });
         // SUBTRACT
         TestUtil.testCall(db, match + " CALL apoc.atomic.subtract(n,'person.age', 1) " + returnStmt, (r) -> {
-            Assert.assertEquals(2L, r.get("oldValue"));
-            Assert.assertEquals(1L, r.get("newValue"));
+            assertEquals(2L, r.get("oldValue"));
+            assertEquals(1L, r.get("newValue"));
         });
         // CONCAT
         TestUtil.testCall(db, match + " CALL apoc.atomic.concat(n,'person.nickname', \"my\") " + returnStmt, (r) -> {
-            Assert.assertEquals("Tom", r.get("oldValue"));
-            Assert.assertEquals("Tommy", r.get("newValue"));
+            assertEquals("Tom", r.get("oldValue"));
+            assertEquals("Tommy", r.get("newValue"));
         });
         // INSERT
         TestUtil.testCall(db, match + " CALL apoc.atomic.insert(n,'person.friends', 1, \"Ron\") " + returnStmt, (r) -> {
@@ -529,8 +528,8 @@ public class AtomicTest {
         // UPDATE
         TestUtil.testCall(
                 db, match + " CALL apoc.atomic.update(n,'person.age','n.`person.age` * 3') " + returnStmt, (r) -> {
-                    Assert.assertEquals(1L, r.get("oldValue"));
-                    Assert.assertEquals(3L, r.get("newValue"));
+                    assertEquals(1L, r.get("oldValue"));
+                    assertEquals(3L, r.get("newValue"));
                 });
     }
 }

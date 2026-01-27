@@ -28,33 +28,37 @@ import apoc.result.RelationshipResult;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
 import org.hamcrest.Description;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-public class SubgraphTest {
+@EnterpriseDbmsExtension
+class SubgraphTest {
 
-    private static Long fullGraphCount;
+    private Long fullGraphCount;
 
-    @ClassRule
-    public static DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @BeforeClass
-    public static void setUp() {
+    @BeforeAll
+    void registerProcedure() {
         TestUtil.registerProcedure(db, PathExplorer.class, Cover.class);
+    }
+
+    @BeforeEach
+    void setUpEach() {
         String movies = Util.readResourceFile("movies.cypher");
         String bigbrother =
                 "MATCH (per:Person) MERGE (bb:BigBrother {name : 'Big Brother' })  MERGE (bb)-[:FOLLOWS]->(per)";
@@ -64,7 +68,7 @@ public class SubgraphTest {
             tx.commit();
         }
 
-        String getCounts = "match (n) \n" + "return count(n) as graphCount";
+        String getCounts = "MATCH (n) RETURN count(n) AS graphCount";
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(getCounts);
 
@@ -73,23 +77,15 @@ public class SubgraphTest {
         }
     }
 
-    @AfterClass
-    public static void teardown() {
-        db.shutdown();
-    }
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
     @Test
-    public void testFullSubgraphShouldContainAllNodes() {
+    void testFullSubgraphShouldContainAllNodes() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphNodes(m,{}) yield node return count(distinct node) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount, row.get("cnt")));
     }
 
     @Test
-    public void testSubgraphWithMaxDepthShouldContainExpectedNodes() {
+    void testSubgraphWithMaxDepthShouldContainExpectedNodes() {
         String controlQuery =
                 "MATCH (m:Movie {title: 'The Matrix'})-[*0..3]-(subgraphNode) return collect(distinct subgraphNode) as subgraph";
         List<NodeResult> subgraph;
@@ -108,7 +104,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphWithLabelFilterShouldContainExpectedNodes() {
+    void testSubgraphWithLabelFilterShouldContainExpectedNodes() {
         String controlQuery =
                 "MATCH path = (:Person {name: 'Keanu Reeves'})-[*0..3]-(subgraphNode) where all(node in nodes(path) where node:Person) return collect(distinct subgraphNode) as subgraph";
         List<NodeResult> subgraph;
@@ -127,7 +123,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphWithRelationshipFilterShouldContainExpectedNodes() {
+    void testSubgraphWithRelationshipFilterShouldContainExpectedNodes() {
         String controlQuery =
                 "MATCH path = (:Person {name: 'Keanu Reeves'})-[:ACTED_IN*0..3]-(subgraphNode) return collect(distinct subgraphNode) as subgraph";
         List<NodeResult> subgraph;
@@ -146,19 +142,17 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testOptionalSubgraphNodesShouldReturnNull() {
+    void testOptionalSubgraphNodesShouldReturnNull() {
         String query = "MATCH (k:Person {name: 'Keanu Reeves'}) "
                 + "CALL apoc.path.subgraphNodes(k,{labelFilter:'+nonExistent', maxLevel:3, optional:true, filterStartNode:true}) yield node "
                 + "return node";
-        TestUtil.testResult(db, query, (result) -> {
-            assertTrue(result.hasNext());
-            Map<String, Object> row = result.next();
+        TestUtil.testCall(db, query, (row) -> {
             assertEquals(null, row.get("node"));
         });
     }
 
     @Test
-    public void testSubgraphAllShouldContainExpectedNodesAndRels() {
+    void testSubgraphAllShouldContainExpectedNodesAndRels() {
         String controlQuery =
                 """
 				MATCH path = (:Person {name: 'Keanu Reeves'})-[*0..3]-(subgraphNode)
@@ -195,7 +189,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testOptionalSubgraphAllWithNoResultsShouldReturnEmptyLists() {
+    void testOptionalSubgraphAllWithNoResultsShouldReturnEmptyLists() {
         String query = "MATCH (k:Person {name: 'Keanu Reeves'}) "
                 + "CALL apoc.path.subgraphAll(k,{labelFilter:'+nonExistent', maxLevel:3, optional:true, filterStartNode:true}) yield nodes, relationships "
                 + "return nodes as subgraphNodes, relationships as subgraphRelationships";
@@ -209,7 +203,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphAllWithNoResultsShouldReturnEmptyLists() {
+    void testSubgraphAllWithNoResultsShouldReturnEmptyLists() {
         String query = "MATCH (k:Person {name: 'Keanu Reeves'}) "
                 + "CALL apoc.path.subgraphAll(k,{labelFilter:'+nonExistent', maxLevel:3, filterStartNode:true}) yield nodes, relationships "
                 + "return nodes as subgraphNodes, relationships as subgraphRelationships";
@@ -223,7 +217,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphNodesWorksWithAllowList() {
+    void testSubgraphNodesWorksWithAllowList() {
         TestUtil.testResult(
                 db,
                 """
@@ -245,7 +239,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphNodesWithDifferentNodeInputs() {
+    void testSubgraphNodesWithDifferentNodeInputs() {
         List<String> nodeRepresentations = List.of("k", "id(k)", "elementId(k)", "[k]", "[id(k)]", "[elementId(k)]");
         for (String nodeRep : nodeRepresentations) {
             TestUtil.testResult(
@@ -272,7 +266,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphAllAllowListTakesPriority() {
+    void testSubgraphAllAllowListTakesPriority() {
         TestUtil.testResult(
                 db,
                 """
@@ -296,7 +290,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphAllWorksWithDeprecatedAllowList() {
+    void testSubgraphAllWorksWithDeprecatedAllowList() {
         TestUtil.testResult(
                 db,
                 """
@@ -318,7 +312,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphAllWorksWithDenyList() {
+    void testSubgraphAllWorksWithDenyList() {
         TestUtil.testResult(
                 db,
                 """
@@ -340,7 +334,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphAllDenyListTakesPriority() {
+    void testSubgraphAllDenyListTakesPriority() {
         TestUtil.testResult(
                 db,
                 """
@@ -364,7 +358,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphAllWorksWithDeprecatedDenyList() {
+    void testSubgraphAllWorksWithDeprecatedDenyList() {
         TestUtil.testResult(
                 db,
                 """
@@ -386,7 +380,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeShouldHaveOnlyOnePathToEachNode() {
+    void testSpanningTreeShouldHaveOnlyOnePathToEachNode() {
         String controlQuery =
                 "MATCH (m:Movie {title: 'The Matrix'})-[*0..4]-(subgraphNode) return collect(distinct subgraphNode) as subgraph";
         List<NodeResult> subgraph;
@@ -413,19 +407,17 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testOptionalSpanningTreeWithNoResultsShouldReturnNull() {
+    void testOptionalSpanningTreeWithNoResultsShouldReturnNull() {
         String query = "MATCH (k:Person {name: 'Keanu Reeves'}) "
                 + "CALL apoc.path.spanningTree(k,{labelFilter:'+nonExistent', maxLevel:3, optional:true, filterStartNode:true}) yield path "
                 + "return path";
-        TestUtil.testResult(db, query, (result) -> {
-            assertTrue(result.hasNext());
-            Map<String, Object> row = result.next();
+        TestUtil.testCall(db, query, (row) -> {
             assertEquals(null, row.get("path"));
         });
     }
 
     @Test
-    public void testOptionalSubgraphWithResultsShouldYieldExpectedResults() {
+    void testOptionalSubgraphWithResultsShouldYieldExpectedResults() {
         String controlQuery =
                 "MATCH (m:Movie {title: 'The Matrix'})-[*0..3]-(subgraphNode) return collect(distinct subgraphNode) as subgraph";
         List<NodeResult> subgraph;
@@ -444,79 +436,87 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSubgraphNodesAllowsMinLevel0() {
+    void testSubgraphNodesAllowsMinLevel0() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphNodes(m,{minLevel:0}) yield node return count(distinct node) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount, row.get("cnt")));
     }
 
     @Test
-    public void testSubgraphNodesAllowsMinLevel1() {
+    void testSubgraphNodesAllowsMinLevel1() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphNodes(m,{minLevel:1}) yield node return count(distinct node) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount - 1, row.get("cnt")));
     }
 
     @Test
-    public void testSubgraphNodesErrorsAboveMinLevel1() {
-        thrown.expect(QueryExecutionException.class);
-        thrown.expect(new RootCauseMatcher<>(
-                IllegalArgumentException.class, "minLevel can only be 0 or 1 in subgraphNodes()"));
-        TestUtil.singleResultFirstColumn(
-                db,
-                "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphNodes(m,{minLevel:2}) yield node return count(distinct node) as cnt");
+    void testSubgraphNodesErrorsAboveMinLevel1() {
+        Throwable ex = org.junit.jupiter.api.Assertions.assertThrows(
+                QueryExecutionException.class,
+                () -> TestUtil.singleResultFirstColumn(
+                        db,
+                        "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphNodes(m,{minLevel:2}) yield node return count(distinct node) as cnt"));
+        MatcherAssert.assertThat(
+                ex,
+                new RootCauseMatcher<>(
+                        IllegalArgumentException.class, "minLevel can only be 0 or 1 in subgraphNodes()"));
     }
 
     @Test
-    public void testSubgraphAllAllowsMinLevel0() {
+    void testSubgraphAllAllowsMinLevel0() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphAll(m,{minLevel:0}) yield nodes return size(nodes) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount, row.get("cnt")));
     }
 
     @Test
-    public void testSubgraphAllAllowsMinLevel1() {
+    void testSubgraphAllAllowsMinLevel1() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphAll(m,{minLevel:1}) yield nodes return size(nodes) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount - 1, row.get("cnt")));
     }
 
     @Test
-    public void testSubgraphAllErrorsAboveMinLevel1() {
-        thrown.expect(QueryExecutionException.class);
-        thrown.expect(
+    void testSubgraphAllErrorsAboveMinLevel1() {
+        Throwable ex = org.junit.jupiter.api.Assertions.assertThrows(
+                QueryExecutionException.class,
+                () -> TestUtil.singleResultFirstColumn(
+                        db,
+                        "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphAll(m,{minLevel:2}) yield nodes return size(nodes) as cnt"));
+        MatcherAssert.assertThat(
+                ex,
                 new RootCauseMatcher<>(IllegalArgumentException.class, "minLevel can only be 0 or 1 in subgraphAll()"));
-        TestUtil.singleResultFirstColumn(
-                db,
-                "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.subgraphAll(m,{minLevel:2}) yield nodes return size(nodes) as cnt");
     }
 
     @Test
-    public void testSpanningTreeAllowsMinLevel0() {
+    void testSpanningTreeAllowsMinLevel0() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.spanningTree(m,{minLevel:0}) yield path return count(distinct path) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount, row.get("cnt")));
     }
 
     @Test
-    public void testSpanningTreeAllowsMinLevel1() {
+    void testSpanningTreeAllowsMinLevel1() {
         String query =
                 "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.spanningTree(m,{minLevel:1}) yield path return count(distinct path) as cnt";
         TestUtil.testCall(db, query, (row) -> assertEquals(fullGraphCount - 1, row.get("cnt")));
     }
 
     @Test
-    public void testSpanningTreeErrorsAboveMinLevel1() {
-        thrown.expect(QueryExecutionException.class);
-        thrown.expect(new RootCauseMatcher<>(
-                IllegalArgumentException.class, "minLevel can only be 0 or 1 in spanningTree()"));
-        TestUtil.singleResultFirstColumn(
-                db,
-                "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.spanningTree(m,{minLevel:2}) yield path return count(distinct path) as cnt");
+    void testSpanningTreeErrorsAboveMinLevel1() {
+        Throwable ex = org.junit.jupiter.api.Assertions.assertThrows(
+                QueryExecutionException.class,
+                () -> TestUtil.singleResultFirstColumn(
+                        db,
+                        "MATCH (m:Movie {title: 'The Matrix'}) CALL apoc.path.spanningTree(m,{minLevel:2}) yield path return count(distinct path) as cnt"));
+        MatcherAssert.assertThat(
+                ex,
+                new RootCauseMatcher<>(
+                        IllegalArgumentException.class, "minLevel can only be 0 or 1 in spanningTree()"));
     }
 
     @Test
-    public void testSpanningTreeWithAllowList() {
+    void testSpanningTreeWithAllowList() {
         TestUtil.testCall(
                 db,
                 """
@@ -530,7 +530,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeWithDifferentNodeInputs() {
+    void testSpanningTreeWithDifferentNodeInputs() {
         List<String> nodeRepresentations = List.of("m", "id(m)", "elementId(m)", "[m]", "[id(m)]", "[elementId(m)]");
         for (String nodeRep : nodeRepresentations) {
             TestUtil.testCall(
@@ -549,7 +549,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeWithAllowListTakesPriority() {
+    void testSpanningTreeWithAllowListTakesPriority() {
         TestUtil.testCall(
                 db,
                 """
@@ -565,7 +565,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeWithDeprecatedAllowListStillWorks() {
+    void testSpanningTreeWithDeprecatedAllowListStillWorks() {
         TestUtil.testCall(
                 db,
                 """
@@ -579,7 +579,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeWithDenyList() {
+    void testSpanningTreeWithDenyList() {
         TestUtil.testCall(
                 db,
                 """
@@ -593,7 +593,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeWithDenyListTakesPriority() {
+    void testSpanningTreeWithDenyListTakesPriority() {
         TestUtil.testCall(
                 db,
                 """
@@ -609,7 +609,7 @@ public class SubgraphTest {
     }
 
     @Test
-    public void testSpanningTreeWithDeprecatedDenyListStillWorks() {
+    void testSpanningTreeWithDeprecatedDenyListStillWorks() {
         TestUtil.testCall(
                 db,
                 """

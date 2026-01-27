@@ -36,7 +36,7 @@ import org.neo4j.logging.InternalLogProvider;
 import org.neo4j.logging.internal.SimpleLogService;
 import org.neo4j.procedure.impl.GlobalProceduresRegistry;
 
-public class ApocConfigTest {
+class ApocConfigTest {
 
     private ApocConfig apocConfig;
     private File apocConfigFile;

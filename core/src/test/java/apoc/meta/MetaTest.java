@@ -71,7 +71,7 @@ import org.neo4j.values.storable.TimeValue;
 import org.neo4j.values.storable.Values;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class MetaTest {
+class MetaTest {
 
     @Inject
     GraphDatabaseService db;

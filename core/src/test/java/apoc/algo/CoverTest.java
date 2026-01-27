@@ -29,7 +29,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class CoverTest {
+class CoverTest {
 
     @Inject
     GraphDatabaseService db;
@@ -40,7 +40,7 @@ public class CoverTest {
     }
 
     @Test
-    public void testCover() {
+    void testCover() {
         db.executeTransactionally("CREATE (a)-[:X]->(b)-[:X]->(c)-[:X]->(d)");
         List<String> nodeRepresentations = List.of("n", "id(n)", "elementId(n)");
         for (String nodeRep : nodeRepresentations) {

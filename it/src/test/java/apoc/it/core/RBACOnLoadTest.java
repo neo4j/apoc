@@ -57,7 +57,7 @@ class RBACOnLoadTest {
     private static final String userPWithBoostedPrivileges = "password1234WithBoostedPrivileges";
 
     @BeforeAll
-    public static void beforeClass() {
+    static void beforeClass() {
         neo4jContainer = createEnterpriseDB(List.of(TestContainerUtil.ApocPackage.CORE), true)
                 .withNeo4jConfig("dbms.memory.heap.max_size", "1GB");
         neo4jContainer.start();
@@ -241,7 +241,7 @@ class RBACOnLoadTest {
     }
 
     @AfterAll
-    public static void afterClass() {
+    static void afterClass() {
         testUserSession.close();
         testUserDriver.close();
         testUserWithBoostedPrivilegesDriver.close();

@@ -62,7 +62,7 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(configurationCallback = "configure")
-public class NodesTest {
+class NodesTest {
 
     private static final List<String> FIRST_ALPHA_CYCLE_PROPS = List.of("alpha", "one", "two", "alpha");
     private static final List<String> SECOND_ALPHA_CYCLE_PROPS = List.of("alpha", "seven", "eight", "alpha");

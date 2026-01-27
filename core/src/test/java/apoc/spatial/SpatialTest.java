@@ -19,21 +19,23 @@
 package apoc.spatial;
 
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
+import static apoc.ApocConfig.APOC_IMPORT_FILE_USE_NEO4J_CONFIG;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCallCount;
 import static apoc.util.TestUtil.testCallEmpty;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.date.Date;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
+import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.net.URL;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -41,25 +43,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.Procedure;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.extension.Inject;
 
-public class SpatialTest {
+@ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class SpatialTest {
 
     private static final String WRONG_PROVIDER_ERR = "wrong provider";
     private static final String URL = "http://api.opencagedata.com/geocode/v1/json?q=PLACE&key=KEY";
     private static final String REVERSE_URL = "http://api.opencagedata.com/geocode/v1/json?q=LAT+LNG&key=KEY";
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
     private Map<String, Map<String, Object>> eventNodes = new LinkedHashMap<>();
     private Map<String, Map<String, Object>> spaceNodes = new LinkedHashMap<>();
@@ -141,8 +146,8 @@ public class SpatialTest {
         }
     }
 
-    @Before
-    public void setUp() {
+    @BeforeAll
+    void setUp() {
         URLAccessChecker urlAccessChecker = new URLAccessChecker() {
             @Override
             public java.net.URL checkURL(java.net.URL url) throws URLAccessValidationError {
@@ -153,6 +158,7 @@ public class SpatialTest {
         TestUtil.registerProcedure(db, Date.class);
         TestUtil.registerProcedure(db, MockGeocode.class);
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
+        apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
         URL url = ClassLoader.getSystemResource("spatial.json");
         Map tests = (Map)
                 JsonUtil.loadJson(url.toString(), urlAccessChecker).findFirst().orElse(null);
@@ -163,9 +169,13 @@ public class SpatialTest {
         MockGeocode.reverseGeocodeResults = (Map<String, Map>) tests.get("reverseGeocode");
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @AfterEach
+    void tearDown() {
+        // reset provider-related configs between tests to avoid cross-test interference
+        apocConfig().getConfig().clearProperty(Geocode.PREFIX + ".provider");
+        apocConfig().getConfig().clearProperty(Geocode.PREFIX + ".opencage.key");
+        apocConfig().getConfig().clearProperty(Geocode.PREFIX + ".url");
+        apocConfig().getConfig().clearProperty(Geocode.PREFIX + ".reverseUrl");
     }
 
     private void addEventData(Map<String, Object> event) {
@@ -173,7 +183,7 @@ public class SpatialTest {
         int created =
                 db.executeTransactionally("CREATE (e:Event $params)", params, result -> result.getQueryStatistics()
                         .getNodesCreated());
-        assertEquals("Expected a node to be created", 1, created);
+        assertEquals(1, created);
         String name = event.get("name").toString();
         if (!event.containsKey("toofar")) {
             spaceNodes.put(name, event);
@@ -185,13 +195,13 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleGeocode() {
+    void testSimpleGeocode() {
         final Map<String, Object> config = Collections.emptyMap();
         geocodeOnceCommon(config);
     }
 
     @Test
-    public void testGeocodeOpencageWrongUrlFormat() {
+    void testGeocodeOpencageWrongUrlFormat() {
         // with provider different from osm/google we have to explicit an url correctly formatted (i.e. with 'PLACE'
         // string)
         final Map<String, Object> conf = map("provider", "opencage", "url", "wrongUrl", "reverseUrl", REVERSE_URL);
@@ -201,7 +211,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testGeocodeOpencageMissingKey() {
+    void testGeocodeOpencageMissingKey() {
         // with provider (via config map) different from osm/google we have to explicit the key
         final Map<String, Object> conf = map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL);
 
@@ -210,7 +220,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testGeocodeOpencageMissingKeyViaApocConfig() {
+    void testGeocodeOpencageMissingKeyViaApocConfig() {
         // with provider(via apocConfig()) different from osm/google we have to explicit the key
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "something");
         final Map<String, Object> conf = map("url", URL, "reverseUrl", REVERSE_URL);
@@ -220,7 +230,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleGeocodeViaApocConfig() {
+    void testSimpleGeocodeViaApocConfig() {
         // Missing key but doesn't fail because provider is google via ApocConfig, not opencage like
         // testGeocodeOpencageMissingKey
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "google");
@@ -229,7 +239,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleGeocodeOpencageOverwiteApocConfigs() {
+    void testSimpleGeocodeOpencageOverwiteApocConfigs() {
         // the key is defined in apocConfig()
         // the url and provider are in both apocConfig() and config map, but the second ones win
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "anotherOne");
@@ -239,7 +249,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleGeocodeWithWrongProvider() {
+    void testSimpleGeocodeWithWrongProvider() {
         // just to make sure that the spatial.json is well implemented
         // we pass a well-formatted url, reverse url and key but an incorrect provider
         final Map<String, Object> config =
@@ -250,14 +260,14 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleGeocodeOpencage() {
+    void testSimpleGeocodeOpencage() {
         final Map<String, Object> config =
                 map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL, "key", "myOwnMockKey");
         geocodeOnceCommon(config);
     }
 
     @Test
-    public void testSimpleGeocodeGoogle() {
+    void testSimpleGeocodeGoogle() {
         final Map<String, Object> config = map("provider", "google");
         geocodeOnceCommon(config);
     }
@@ -272,7 +282,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testGeocodePointAndDistance() {
+    void testGeocodePointAndDistance() {
         String query = "WITH point({latitude: 48.8582532, longitude: 2.294287}) AS eiffel\n" + "MATCH (a:Event) \n"
                 + "WHERE a.address IS NOT NULL \n"
                 + "CALL apoc.spatial.geocodeOnce(a.address) YIELD location \n"
@@ -285,7 +295,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testGraphRefactoring() {
+    void testGraphRefactoring() {
         String refactorQuery = "MATCH (a:Event) \n" + "WHERE a.address IS NOT NULL AND a.latitude IS NULL \n"
                 + "WITH a LIMIT 1000\n"
                 + "CALL apoc.spatial.geocodeOnce(a.address) YIELD location \n"
@@ -303,7 +313,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testAllTheThings() {
+    void testAllTheThings() {
         String query = "WITH apoc.date.parse('2016-06-01 00:00:00','h') as due_date,\n"
                 + "     point({latitude: 48.8582532, longitude: 2.294287}) as eiffel\n"
                 + "MATCH (e:Event)\n"
@@ -322,27 +332,26 @@ public class SpatialTest {
         testResult(db, query, res -> {
             int left = expectedCount;
             while (left > 0) {
-                assertTrue(
-                        "Expected " + expectedCount + " results, but got only " + (expectedCount - left),
-                        res.hasNext());
+                assertTrue(res.hasNext());
                 Map<String, Object> result = res.next();
-                assertTrue("Event should have 'event' property", result.containsKey("event"));
+                // "Event should have 'event' property"
+                assertTrue(result.containsKey("event"));
                 String name = (String) result.get("event");
-                assertTrue("Event '" + name + "' was not expected", spaceTimeNodes.containsKey(name));
+                assertTrue(spaceTimeNodes.containsKey(name));
                 left--;
             }
-            assertFalse("Expected " + expectedCount + " results, but there are more ", res.hasNext());
+            assertFalse(res.hasNext());
         });
     }
 
     @Test
-    public void testSimpleReverseGeocode() {
+    void testSimpleReverseGeocode() {
         final Map<String, Object> config = map();
         reverseGeocodeCommon(config);
     }
 
     @Test
-    public void testReverseGeocodeOpencageWrongUrlFormat() {
+    void testReverseGeocodeOpencageWrongUrlFormat() {
         // with provider different from osm/google we have to explicit an url correctly formatted (i.e. with 'PLACE'
         // string)
         final Map<String, Object> conf = map("provider", "opencage", "url", "wrongUrl", "reverseUrl", REVERSE_URL);
@@ -352,16 +361,15 @@ public class SpatialTest {
     }
 
     @Test
-    public void testReverseGeocodeOpencageMissingKey() {
+    void testReverseGeocodeOpencageMissingKey() {
         // with provider (via config map) different from osm/google we have to explicit the key
         final Map<String, Object> conf = map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL);
-
-        RuntimeException e = assertThrows(RuntimeException.class, () -> reverseGeocodeCommon(conf));
+        QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> reverseGeocodeCommon(conf));
         assertTrue(e.getMessage().contains("Missing 'key' for geocode provider"));
     }
 
     @Test
-    public void testReverseGeocodeOpencageMissingKeyViaApocConfig() {
+    void testReverseGeocodeOpencageMissingKeyViaApocConfig() {
         // with provider(via apocConfig()) different from osm/google we have to explicit the key
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "something");
         final Map<String, Object> conf = map("url", URL, "reverseUrl", REVERSE_URL);
@@ -371,7 +379,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleReverseGeocodeViaApocConfig() {
+    void testSimpleReverseGeocodeViaApocConfig() {
         // Missing key but doesn't fail because provider is google via ApocConfig, not opencage like
         // testGeocodeOpencageMissingKey
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "google");
@@ -380,7 +388,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleReverseGeocodeOpencageOverwiteApocConfigs() {
+    void testSimpleReverseGeocodeOpencageOverwiteApocConfigs() {
         // the key is defined in apocConfig()
         // the url and provider are in both apocConfig() and config map, but the second ones win
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "anotherOne");
@@ -390,7 +398,7 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleReverseGeocodeWithWrongProvider() {
+    void testSimpleReverseGeocodeWithWrongProvider() {
         // just to make sure that the spatial.json is well implemented
         final Map<String, Object> config =
                 map("provider", "incorrect", "url", URL, "reverseUrl", REVERSE_URL, "key", "myOwnMockKey");
@@ -400,14 +408,14 @@ public class SpatialTest {
     }
 
     @Test
-    public void testSimpleReverseGeocodeOpencage() {
+    void testSimpleReverseGeocodeOpencage() {
         final Map<String, Object> config =
                 map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL, "key", "myOwnMockKey");
         reverseGeocodeCommon(config);
     }
 
     @Test
-    public void testSimpleReverseGeocodeGoogle() {
+    void testSimpleReverseGeocodeGoogle() {
         final Map<String, Object> config = map("provider", "google");
         reverseGeocodeCommon(config);
     }
@@ -422,12 +430,12 @@ public class SpatialTest {
     }
 
     @Test
-    public void testNullAddressErrorGeocodeOnce() {
+    void testNullAddressErrorGeocodeOnce() {
         testCallEmpty(db, "CALL apoc.spatial.geocodeOnce(null)", emptyMap());
     }
 
     @Test
-    public void testNullAddressErrorGeocodeShouldFail() {
+    void testNullAddressErrorGeocodeShouldFail() {
         testCallEmpty(db, "CALL apoc.spatial.geocode(null,1)", emptyMap());
     }
 }

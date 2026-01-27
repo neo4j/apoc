@@ -28,52 +28,51 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 
 import apoc.HelperProcedures;
+import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.CompressionConfig;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.io.FileWriter;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-/**
- * @author mh
- * @since 22.05.16
- */
-public class ExportGraphMLTest {
+@EnterpriseDbmsExtension(configurationCallback = "configure")
+class ExportGraphMLTest {
     private static final String exportQueryStartAndRel =
             "CALL apoc.export.graphml.query('MATCH (start:Start)-[rel:REL]->(end:End) RETURN start, rel', $file, $config)";
     private static final String exportQueryRelOnly =
@@ -90,30 +89,32 @@ public class ExportGraphMLTest {
                 CALL apoc.export.graphml.data([start], [rel], $file, $config)
                 YIELD nodes, relationships, properties RETURN *""";
 
-    @Rule
-    public TestName testName = new TestName();
+    @Inject
+    GraphDatabaseService db;
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(GraphDatabaseSettings.memory_tracking, true)
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath());
-
-    private static File directory = new File("target/import");
+    private static final File directory = new File("target/import");
 
     static { //noinspection ResultOfMethodCallIgnored
         directory.mkdirs();
     }
 
-    @Before
-    public void setUp() {
-        setUpGraphMl(db, testName);
+    @BeforeAll
+    void setUpAll() {
+        TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class, HelperProcedures.class);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeEach
+    void setUp(TestInfo testInfo) {
+        String methodName = testInfo.getTestMethod().map(Method::getName).orElse(testInfo.getDisplayName());
+        setUpGraphMl(db, methodName);
+    }
+
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) throws Exception {
+        builder.setConfig(
+                GraphDatabaseSettings.load_csv_file_url_root,
+                directory.getCanonicalFile().toPath());
+        builder.setConfig(GraphDatabaseSettings.memory_tracking, true);
     }
 
     private String testWithUnknownDefault =
@@ -139,7 +140,7 @@ public class ExportGraphMLTest {
 
     // The element: <default xml:space="preserve"/> should be skipped
     @Test
-    public void testImportGraphMLWithUnknownDefaultKey() throws Exception {
+    void testImportGraphMLWithUnknownDefaultKey() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "test.graphml");
@@ -159,7 +160,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLIssue() throws Exception {
+    void testImportGraphMLIssue() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "import.graphml");
@@ -179,7 +180,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testRelDefinedBeforeNodes() throws Exception {
+    void testRelDefinedBeforeNodes() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         String xml =
@@ -234,7 +235,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testRoundtripInvalidUnicode() {
+    void testRoundtripInvalidUnicode() {
         String fileName = new File(directory, "allUnicode.graphml").getAbsolutePath();
         final String query = "CALL apoc.export.graphml.all($file, null)";
 
@@ -243,7 +244,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testRoundtripInvalidUnicodeWithExportQuery() {
+    void testRoundtripInvalidUnicodeWithExportQuery() {
         String file = new File(directory, "allQuery.graphml").getAbsolutePath();
         // trello issue case: https://trello.com/c/6GboqUau/1070-s3cast-software-issue-with-apocimportgraphml
         final String query =
@@ -278,7 +279,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportInvalidUnicodeFile() {
+    void testImportInvalidUnicodeFile() {
         final String file =
                 ClassLoader.getSystemResource("fileWithUnicode.graphml").toString();
         testImportInvalidUnicode(file);
@@ -305,7 +306,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testRoundTripWithSeparatedImport() {
+    void testRoundTripWithSeparatedImport() {
         Map<String, Object> exportConfig = map("useTypes", true);
 
         Map<String, Object> importConfig = map(
@@ -317,7 +318,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportSeparatedFilesWithCustomId() {
+    void testImportSeparatedFilesWithCustomId() {
         Map<String, Object> exportConfig =
                 map("useTypes", true, "source", map("id", "name"), "target", map("id", "age"));
 
@@ -407,7 +408,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLLargeFile() {
+    void testImportGraphMLLargeFile() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
@@ -422,13 +423,13 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLTerminate() {
+    void testImportGraphMLTerminate() {
         final String file = ClassLoader.getSystemResource("largeFile.graphml").toString();
         checkTerminationGuard(db, 5L, "CALL apoc.import.graphml($file,{readLabels:true})", map("file", file));
     }
 
     @Test
-    public void testImportGraphMLWithEdgeWithoutDataKeys() throws Exception {
+    void testImportGraphMLWithEdgeWithoutDataKeys() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "import.graphml");
@@ -446,20 +447,19 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void issue2797WithImportGraphMl() {
+    void issue2797WithImportGraphMl() {
         db.executeTransactionally("CREATE (n:FOO {name: 'foo'})");
         db.executeTransactionally("CREATE CONSTRAINT unique_foo FOR (n:FOO) REQUIRE n.name IS UNIQUE");
-        try {
-            TestUtil.testCall(
-                    db,
-                    "CALL apoc.import.graphml($file, {readLabels:true})",
-                    map("file", new File(directory, "importNodeEdges.graphml").getAbsolutePath()),
-                    (r) -> fail());
-        } catch (Exception e) {
-            String expected = "Failed to invoke procedure `apoc.import.graphml`: "
-                    + "Caused by: IndexEntryConflictException{propertyValues=( String(\"foo\") ), addedEntityId=-1, existingEntityId=3}";
-            assertEquals(expected, e.getMessage());
-        }
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> TestUtil.testCall(
+                        db,
+                        "CALL apoc.import.graphml($file, {readLabels:true})",
+                        map("file", new File(directory, "importNodeEdges.graphml").getAbsolutePath()),
+                        (r) -> {}));
+        String expected = "Failed to invoke procedure `apoc.import.graphml`: "
+                + "Caused by: IndexEntryConflictException{propertyValues=( String(\"foo\") ), addedEntityId=-1, existingEntityId=3}";
+        assertEquals(expected, e.getMessage());
 
         // should return only 1 node due to constraint exception
         TestUtil.testCall(
@@ -471,7 +471,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLWithoutCharactersDataKeys() throws Exception {
+    void testImportGraphMLWithoutCharactersDataKeys() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "import.graphml");
@@ -508,7 +508,7 @@ public class ExportGraphMLTest {
             + "</graphml>";
 
     @Test
-    public void testImportDefaultRelationship() throws Exception {
+    void testImportDefaultRelationship() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "import_no_rel_types.graphml");
@@ -525,7 +525,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLWithNoImportConfig() {
+    void testImportGraphMLWithNoImportConfig() {
         File output = new File(directory, "all.graphml");
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
@@ -535,14 +535,14 @@ public class ExportGraphMLTest {
                         map("file", output.getAbsolutePath()),
                         (r) -> assertResults(output, r, "database")));
         Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
+        assertInstanceOf(RuntimeException.class, except);
         assertEquals(
                 "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf",
                 except.getMessage());
     }
 
     @Test
-    public void testImportGraphMLNodeEdge() throws Exception {
+    void testImportGraphMLNodeEdge() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "importNodeEdges.graphml");
@@ -557,7 +557,7 @@ public class ExportGraphMLTest {
     // There was a bug that some programs export valid graphml files with NaN strings, we do support
     // NAN in Cypher, so no reason to error badly on them.
     @Test
-    public void testNumbersThatAreNaN() throws Exception {
+    void testNumbersThatAreNaN() throws Exception {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         File output = new File(directory, "gemTest.graphml");
@@ -602,7 +602,7 @@ public class ExportGraphMLTest {
             assertEquals(absolutePath, r.get("file"));
             assertEquals("file", r.get("source"));
             assertEquals("graphml", r.get("format"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+            assertTrue(((long) r.get("time")) > 0);
         });
 
         TestUtil.testCall(db, "MATCH (a)-[rel:RELATED]->(b) RETURN a, rel, b", null, (r) -> {
@@ -618,7 +618,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphMLNodeEdgeWithBinary() {
+    void testImportGraphMLNodeEdgeWithBinary() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
 
         commonAssertionImportNodeEdge(
@@ -635,7 +635,7 @@ public class ExportGraphMLTest {
             assertEquals(isBinary, r.get("file"));
             assertEquals(isBinary == null ? "binary" : "file", r.get("source"));
             assertEquals("graphml", r.get("format"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+            assertTrue(((long) r.get("time")) > 0);
         });
 
         TestUtil.testCall(db, "MATCH (foo:FOO)-[rel:EDGE_LABEL]->(bar:BAR) RETURN foo, rel, bar", null, (r) -> {
@@ -668,7 +668,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportDataGraphML() {
+    void testExportDataGraphML() {
         db.executeTransactionally("MATCH (n) DETACH DELETE n");
         db.executeTransactionally("CREATE (p:Person {name: 'Foo'})");
         db.executeTransactionally("CREATE (p:Person {name: 'Bar'})");
@@ -689,7 +689,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportAllGraphML() {
+    void testExportAllGraphML() {
         File output = new File(directory, "all.graphml");
         TestUtil.testCall(
                 db,
@@ -700,7 +700,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportAllGraphMLWithCompression() {
+    void testExportAllGraphMLWithCompression() {
         final CompressionAlgo algo = CompressionAlgo.DEFLATE;
         File output = new File(directory, "all.graphml.zz");
         TestUtil.testCall(
@@ -712,7 +712,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testGraphMlRoundtrip() {
+    void testGraphMlRoundtrip() {
         final CompressionAlgo algo = CompressionAlgo.NONE;
         File output = new File(directory, "all.graphml.zz");
         final Map<String, Object> params = map(
@@ -753,7 +753,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphML() {
+    void testExportGraphGraphML() {
         File output = new File(directory, "graph.graphml");
         TestUtil.testCall(
                 db,
@@ -766,7 +766,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLTypes() {
+    void testExportGraphGraphMLTypes() {
         File output = new File(directory, "graph.graphml");
         TestUtil.testCall(
                 db,
@@ -780,7 +780,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLTypesWithNoExportConfig() {
+    void testExportGraphGraphMLTypesWithNoExportConfig() {
         File output = new File(directory, "all.graphml");
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
@@ -790,12 +790,12 @@ public class ExportGraphMLTest {
                         map("file", output.getAbsolutePath()),
                         (r) -> assertResults(output, r, "database")));
         Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
+        assertTrue(except instanceof RuntimeException);
         assertEquals(EXPORT_TO_FILE_ERROR, except.getMessage());
     }
 
     @Test
-    public void testImportAndExport() throws Exception {
+    void testImportAndExport() throws Exception {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         File output = new File(directory, "graphEmpty.graphml");
         db.executeTransactionally("CREATE (n:Test {name : '', limit : 3}) RETURN n");
@@ -835,11 +835,11 @@ public class ExportGraphMLTest {
         if (r.get("source").toString().contains(":")) assertEquals("database: nodes(1), rels(0)", r.get("source"));
         else assertEquals("file", r.get("source"));
         assertEquals("graphml", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+        assertTrue(((long) r.get("time")) > 0);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephi() {
+    void testExportGraphGraphMLQueryGephi() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(
                 db,
@@ -854,13 +854,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH);
     }
 
     @Test
-    public void testExportOnlyRel() {
+    void testExportOnlyRel() {
         db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
 
         Map<String, Object> params = Map.of("config", Map.of());
@@ -873,7 +873,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportOnlyRelWithNodesOfRelsTrue() {
+    void testExportOnlyRelWithNodesOfRelsTrue() {
         db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
 
         Map<String, Object> params = Map.of("config", Map.of("nodesOfRelationships", true));
@@ -887,7 +887,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportStartAndRel() {
+    void testExportStartAndRel() {
         db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
 
         Map<String, Object> params = Map.of("config", Map.of());
@@ -900,7 +900,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportStartAndRelWithNodesOfRelsTrue() {
+    void testExportStartAndRelWithNodesOfRelsTrue() {
         db.executeTransactionally("CREATE (:Start {startId: 1})-[:REL {foo: 'bar'}]->(:End {endId: '1'})");
 
         // check that with the `nodesOfRelationships` the end node is returned as well
@@ -955,7 +955,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaption() {
+    void testExportGraphGraphMLQueryGephiWithArrayCaption() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(
                 db,
@@ -970,13 +970,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAPTION);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() {
+    void testExportGraphGraphMLQueryGephiWithArrayCaptionWrong() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(
                 db,
@@ -991,13 +991,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_WRONG_CAPTION);
     }
 
     @Test
-    public void testExportAllGraphMLTinker() {
+    void testExportAllGraphMLTinker() {
         File output = new File(directory, "all.graphml");
         TestUtil.testCall(
                 db,
@@ -1008,7 +1008,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphGraphMLQueryTinkerPop() {
+    void testExportGraphGraphMLQueryTinkerPop() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(
                 db,
@@ -1023,13 +1023,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAPTION_TINKER);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryTinkerPopWithArrayCaption() {
+    void testExportGraphGraphMLQueryTinkerPopWithArrayCaption() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(
                 db,
@@ -1044,13 +1044,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAPTION_TINKER);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryTinkerPopWithArrayCaptionWrong() {
+    void testExportGraphGraphMLQueryTinkerPopWithArrayCaptionWrong() {
         File output = new File(directory, "query.graphml");
         TestUtil.testCall(
                 db,
@@ -1065,13 +1065,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAPTION_TINKER);
     }
 
     @Test
-    public void testExportGraphGraphMLQueryGephiWithStringCaption() {
+    void testExportGraphGraphMLQueryGephiWithStringCaption() {
         File output = new File(directory, "query.graphml");
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
@@ -1081,12 +1081,12 @@ public class ExportGraphMLTest {
                         map("file", output.getAbsolutePath()),
                         (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
+        assertTrue(except instanceof RuntimeException);
         assertEquals("Only array of Strings are allowed!", except.getMessage());
     }
 
     @Test
-    public void testExportGraphmlQueryWithStringCaptionCamelCase() {
+    void testExportGraphmlQueryWithStringCaptionCamelCase() {
         db.executeTransactionally("MATCH (n) detach delete (n)");
         db.executeTransactionally(
                 "CREATE (f:Foo:Foo2:Foo0 {firstName:'foo'})-[:KNOWS]->(b:Bar {name:'bar',ageNow:42}),(c:Bar {age:12,values:[1,2,3]})");
@@ -1104,13 +1104,13 @@ public class ExportGraphMLTest {
                         assertEquals("statement" + ": nodes(2), rels(1)", r.get("source"));
                     else assertEquals("file", r.get("source"));
                     assertEquals("graphml", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+                    assertTrue(((long) r.get("time")) > 0);
                 });
         assertXMLEquals(output, EXPECTED_TYPES_PATH_CAMEL_CASE);
     }
 
     @Test
-    public void testImportGraphmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
+    void testImportGraphmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(
@@ -1125,7 +1125,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testImportGraphmlPreventBillionLaughVulnerabilityThrowsQueryExecutionException() {
+    void testImportGraphmlPreventBillionLaughVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testResult(
@@ -1146,7 +1146,7 @@ public class ExportGraphMLTest {
         assertEquals(output.getAbsolutePath(), r.get("file"));
         if (r.get("source").toString().contains(":")) assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         else assertEquals("file", r.get("source"));
-        assertNull("data should be null", r.get("data"));
+        assertNull(r.get("data"));
     }
 
     private void assertCommons(Map<String, Object> r) {
@@ -1154,18 +1154,18 @@ public class ExportGraphMLTest {
         assertEquals(1L, r.get("relationships"));
         assertEquals(8L, r.get("properties"));
         assertEquals("graphml", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) > 0);
+        assertTrue(((long) r.get("time")) > 0);
     }
 
     private void assertStreamResults(Map<String, Object> r, final String source) {
         assertCommons(r);
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
-        assertNull("file should be null", r.get("file"));
-        assertNotNull("data should be not null", r.get("data"));
+        assertNull(r.get("file"));
+        assertNotNull(r.get("data"));
     }
 
     @Test
-    public void testExportAllGraphMLStream() {
+    void testExportAllGraphMLStream() {
         TestUtil.testCall(db, "CALL apoc.export.graphml.all(null, {stream: true})", (r) -> {
             assertStreamResults(r, "database");
             assertXMLEquals(r.get("data"), EXPECTED_FALSE);
@@ -1173,7 +1173,7 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportAllGraphMLStreamWithCompression() {
+    void testExportAllGraphMLStreamWithCompression() {
         final CompressionAlgo algo = CompressionAlgo.BZIP2;
         TestUtil.testCall(
                 db,
@@ -1186,13 +1186,13 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testExportGraphmlAdminOperationErrorMessage() {
+    void testExportGraphmlAdminOperationErrorMessage() {
         String filename = "test.xml";
         List<String> invalidQueries =
                 List.of("SHOW CONSTRAINTS YIELD id, name, type RETURN *", "SHOW INDEXES YIELD id, name, type RETURN *");
 
         for (String query : invalidQueries) {
-            QueryExecutionException e = Assert.assertThrows(
+            QueryExecutionException e = assertThrows(
                     QueryExecutionException.class,
                     () -> TestUtil.testCall(
                             db,
@@ -1210,15 +1210,14 @@ public class ExportGraphMLTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocGraphmlQuery() {
+    void testDifferentCypherVersionsApocGraphmlQuery() {
         db.executeTransactionally("CREATE (:Test {prop: 'CYPHER_5'}), (:Test {prop: 'CYPHER_25'})");
 
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
                     "%s CALL apoc.export.graphml.query('%s MATCH (n:Test {prop: apoc.cypherVersion() }) RETURN n LIMIT 1', null, { stream:true }) YIELD data RETURN data",
                     cypherVersion.outerVersion, cypherVersion.innerVersion);
-            testCall(
-                    db, query, r -> TestCase.assertTrue(r.get("data").toString().contains(cypherVersion.result)));
+            testCall(db, query, r -> assertTrue(r.get("data").toString().contains(cypherVersion.result)));
         }
     }
 }

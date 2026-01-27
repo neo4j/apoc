@@ -45,7 +45,7 @@ class ExportCypherEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), !TestUtil.isRunningInCI())
                 .withInitScript("init_neo4j_export_csv.cypher");
         neo4jContainer.start();
@@ -53,7 +53,7 @@ class ExportCypherEnterpriseFeaturesTest {
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         neo4jContainer.close();
     }
 

@@ -44,7 +44,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
-public class CreateTest {
+class CreateTest {
 
     public static final Label PERSON = Label.label("Person");
 
@@ -57,7 +57,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateNode() {
+    void testCreateNode() {
         testCall(db, "CALL apoc.create.node(['Person'],{name:'John'})", (row) -> {
             Node node = (Node) row.get("node");
             assertTrue(node.hasLabel(label("Person")));
@@ -66,7 +66,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateNodeWithArrayProps() {
+    void testCreateNodeWithArrayProps() {
         testCall(db, "CALL apoc.create.node(['Person'],{name:['John','Doe'],kids:[],age:[32,10]})", (row) -> {
             Node node = (Node) row.get("node");
             assertTrue(node.hasLabel(label("Person")));
@@ -77,7 +77,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateAddLabel() {
+    void testCreateAddLabel() {
         testResult(
                 db,
                 """
@@ -98,7 +98,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateSetLabel() {
+    void testCreateSetLabel() {
         testResult(
                 db,
                 """
@@ -119,7 +119,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateRemoveLabel() {
+    void testCreateRemoveLabel() {
         testResult(
                 db,
                 """
@@ -140,7 +140,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetProperty() {
+    void testSetProperty() {
         testResult(
                 db,
                 """
@@ -161,7 +161,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testRemoveProperty() {
+    void testRemoveProperty() {
         testResult(
                 db,
                 """
@@ -199,7 +199,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testRemoveRelProperty() {
+    void testRemoveRelProperty() {
         testResult(
                 db,
                 """
@@ -237,7 +237,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetRelProperties() {
+    void testSetRelProperties() {
         testResult(
                 db,
                 """
@@ -264,7 +264,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetRelProperty() {
+    void testSetRelProperty() {
         testResult(
                 db,
                 """
@@ -284,7 +284,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testSetProperties() {
+    void testSetProperties() {
         testResult(
                 db,
                 """
@@ -308,7 +308,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualNode() {
+    void testVirtualNode() {
         testCall(db, "CALL apoc.create.vNode(['Person'],{name:'John'})", (row) -> {
             Node node = (Node) row.get("node");
             assertTrue(node.hasLabel(label("Person")));
@@ -317,7 +317,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualNodeFunction() {
+    void testVirtualNodeFunction() {
         testCall(db, "RETURN apoc.create.vNode(['Person'],{name:'John'}) as node", (row) -> {
             Node node = (Node) row.get("node");
             assertTrue(node.hasLabel(label("Person")));
@@ -326,7 +326,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateNodes() {
+    void testCreateNodes() {
         testResult(db, "CALL apoc.create.nodes(['Person'],[{name:'John'},{name:'Jane'}])", (res) -> {
             Node node = (Node) res.next().get("node");
             assertTrue(node.hasLabel(PERSON));
@@ -339,7 +339,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateRelationship() {
+    void testCreateRelationship() {
         testCall(
                 db,
                 "CREATE (n),(m) WITH n,m CALL apoc.create.relationship(n,'KNOWS',{since:2010}, m) YIELD rel RETURN rel",
@@ -351,7 +351,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateVirtualRelationship() {
+    void testCreateVirtualRelationship() {
         testCall(
                 db,
                 "CREATE (n),(m) WITH n,m CALL apoc.create.vRelationship(n,'KNOWS',{since:2010}, m) YIELD rel RETURN rel",
@@ -363,7 +363,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreateVirtualRelationshipFunction() {
+    void testCreateVirtualRelationshipFunction() {
         testCall(
                 db,
                 "CREATE (n),(m) WITH n,m RETURN apoc.create.vRelationship(n,'KNOWS',{since:2010}, m) AS rel",
@@ -375,7 +375,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testCreatePattern() {
+    void testCreatePattern() {
         testCall(
                 db,
                 "CALL apoc.create.virtualPath(['Person'],{name:'John'},'KNOWS',{since:2010},['Person'],{name:'Jane'})",
@@ -393,7 +393,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualFromNodeFunction() {
+    void testVirtualFromNodeFunction() {
         testCall(
                 db,
                 """
@@ -411,7 +411,7 @@ public class CreateTest {
     }
 
     @Test
-    public void test2VirtualFromNodesHaveUniqueIDs() {
+    void test2VirtualFromNodesHaveUniqueIDs() {
         testCall(
                 db,
                 """
@@ -440,7 +440,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualFromSameNodesHaveUniqueIDs() {
+    void testVirtualFromSameNodesHaveUniqueIDs() {
         testResult(
                 db,
                 """
@@ -467,7 +467,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualFromNodeFunctionWithWrapping() {
+    void testVirtualFromNodeFunctionWithWrapping() {
         testCall(
                 db,
                 """
@@ -485,7 +485,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualFromNodeShouldNotEditOriginalOne() {
+    void testVirtualFromNodeShouldNotEditOriginalOne() {
         db.executeTransactionally("CREATE (n:Person {name:'toUpdate'})");
 
         testCall(
@@ -521,7 +521,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testClonePathShouldNotEditOriginalOne() {
+    void testClonePathShouldNotEditOriginalOne() {
         db.executeTransactionally("CREATE (n:Person {name:'toUpdate'})-[:MY_REL]->(:Another {alpha: 0})");
         testCall(
                 db,
@@ -581,7 +581,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testClonePathWithMixedDirectionRelationships() {
+    void testClonePathWithMixedDirectionRelationships() {
         // rel `:b` is to the left, rel `d` is to the right
         db.executeTransactionally("CREATE (:a {id: 1})<-[:b {id: 10}]-(:c {id: 2})-[:d {id: 20}]->(:e {id: 3})");
 
@@ -611,7 +611,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testClonePathShouldNotDuplicateRelsWithMultipaths() {
+    void testClonePathShouldNotDuplicateRelsWithMultipaths() {
         // create path with single rels
         db.executeTransactionally(
                 """
@@ -643,7 +643,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testVirtualPath() {
+    void testVirtualPath() {
         db.executeTransactionally(
                 "CREATE p=(a:Test {foo: 7})-[:TEST]->(b:Baa:Baz {a:'b'})<-[:TEST_2 {aa:'bb'}]-(:Bar {one:'www'}), \n"
                         + "q=(:Omega {alpha: 'beta'})<-[:TEST_3 {aa:'ccc'}]-(:Bar {one:'jjj'})");
@@ -710,7 +710,7 @@ public class CreateTest {
     }
 
     @Test
-    public void testValidationNodes() {
+    void testValidationNodes() {
         assertionsError(ERROR_NODE_NULL, "RETURN apoc.create.virtual.fromNode(null, ['name']) as node");
         assertionsError(
                 ERROR_START_NODE_NULL,

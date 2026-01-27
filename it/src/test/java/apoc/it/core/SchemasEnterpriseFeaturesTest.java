@@ -24,6 +24,7 @@ import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testResult;
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.result.AssertSchemaResult;
 import apoc.util.Neo4jContainerExtension;
@@ -36,7 +37,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,21 +51,21 @@ class SchemasEnterpriseFeaturesTest {
     private static Session session;
 
     @BeforeAll
-    public static void beforeAll() {
+    static void beforeAll() {
         neo4jContainer = createEnterpriseDB(List.of(ApocPackage.CORE), true);
         neo4jContainer.start();
         session = neo4jContainer.getSession();
     }
 
     @AfterAll
-    public static void afterAll() {
+    static void afterAll() {
         session.close();
         neo4jContainer.close();
     }
 
     // coherently with SchemasTest we remove all indexes/constraints before (e.g. to get rid of lookup indexes)
     @BeforeEach
-    public void removeAllConstraints() {
+    void removeAllConstraints() {
         session.executeWriteWithoutResult(tx -> {
             final List<String> constraints = tx.run("SHOW CONSTRAINTS YIELD name")
                     .list(i -> i.get("name").asString());
@@ -755,7 +755,7 @@ class SchemasEnterpriseFeaturesTest {
             tx.run("CREATE CONSTRAINT since_con FOR ()-[since:SINCE]-() REQUIRE since.year IS NOT NULL");
         });
 
-        ClientException e = Assert.assertThrows(
+        ClientException e = assertThrows(
                 ClientException.class,
                 () -> testResult(
                         session,

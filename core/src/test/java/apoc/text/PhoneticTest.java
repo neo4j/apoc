@@ -30,7 +30,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension()
-public class PhoneticTest {
+class PhoneticTest {
 
     @Inject
     GraphDatabaseService db;

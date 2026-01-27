@@ -69,12 +69,8 @@ import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 import org.neo4j.test.utils.TestDirectory;
 
-/**
- * @author mh
- * @since 22.05.16
- */
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
-public class ExportCsvTest {
+class ExportCsvTest {
 
     private static final String EXPECTED_QUERY_NODES = String.format("\"u\"%n"
             + "\"{\"\"id\"\":0,\"\"labels\"\":[\"\"User\"\",\"\"User1\"\"],\"\"properties\"\":{\"\"name\"\":\"\"foo\"\",\"\"age\"\":42,\"\"male\"\":true,\"\"kids\"\":[\"\"a\"\",\"\"b\"\",\"\"c\"\"]}}\"%n"
@@ -591,7 +587,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportInvalidQuoteValue() {
+    void testExportInvalidQuoteValue() {
         assertThatThrownBy(() -> {
                     String fileName = "all.csv";
                     testCall(
@@ -605,7 +601,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void textExportWithTypes() {
+    void textExportWithTypes() {
         db.executeTransactionally(
                 "CREATE (n:TestNode) SET n = {valFloat:toFloat(123), name:'NodeName', valInt:5, dateVal: date('2024-11-01')};");
         testCall(
@@ -635,7 +631,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsvCompressed() throws Exception {
+    void testExportAllCsvCompressed() throws Exception {
         final CompressionAlgo compressionAlgo = DEFLATE;
         String fileName = "all.csv.zz";
         testCall(
@@ -647,7 +643,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testConsistentQuotingAlways() throws Exception {
+    void testConsistentQuotingAlways() throws Exception {
         // All in one file
         String fileName1 = "allOneFileAlways.csv";
         testCall(
@@ -682,7 +678,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testConsistentQuotingIfNeeded() throws Exception {
+    void testConsistentQuotingIfNeeded() throws Exception {
         // All in one file
         String fileName1 = "allOneFileIfNeeded.csv";
         testCall(
@@ -718,7 +714,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testConsistentQuotingIfNeededDifferentiateNulls() throws Exception {
+    void testConsistentQuotingIfNeededDifferentiateNulls() throws Exception {
         // All in one file
         String fileName1 = "allOneFileIfNeeded.csv";
         testCall(
@@ -761,7 +757,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testConsistentQuotingNone() throws Exception {
+    void testConsistentQuotingNone() throws Exception {
         // All in one file
         String fileName1 = "allOneFileNone.csv";
         testCall(
@@ -797,7 +793,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCsvRoundTrip() {
+    void testCsvRoundTrip() {
         db.executeTransactionally(
                 "CREATE (f:Roundtrip {name:'foo',age:42,male:true,kids:['a','b','c']}),(b:Roundtrip {name:'bar',age:42}),(c:Roundtrip {age:12})");
 
@@ -833,7 +829,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCsvBackslashes() {
+    void testCsvBackslashes() {
         db.executeTransactionally("CREATE (n:Test {name: 'Test', value: '{\"new\":\"4\\'10\\\\\\\"\"}'})");
 
         String fileName = "test.csv.quotes.csv";
@@ -861,7 +857,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCsvQueryWithDifferentiatedNulls() throws Exception {
+    void testCsvQueryWithDifferentiatedNulls() throws Exception {
         Map<String, String> differentiateNulls = Map.of(
                 "none", EXPECTED_QUERY_DIFFERENTIATE_NULLS_NONE,
                 "ifNeeded", EXPECTED_QUERY_DIFFERENTIATE_NULLS_IF_NEEDED,
@@ -896,7 +892,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCsvDataWithDifferentiatedNulls() throws Exception {
+    void testCsvDataWithDifferentiatedNulls() throws Exception {
         Map<String, String> differentiateNulls = Map.of(
                 "none", EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE,
                 "ifNeeded", EXPECTED_DATA_DIFFERENTIATE_NULLS_IF_NEEDED,
@@ -937,7 +933,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCsvGraphWithDifferentiatedNulls() throws Exception {
+    void testCsvGraphWithDifferentiatedNulls() throws Exception {
         Map<String, String> differentiateNulls = Map.of(
                 "none", EXPECTED_DATA_DIFFERENTIATE_NULLS_NONE,
                 "ifNeeded", EXPECTED_DATA_DIFFERENTIATE_NULLS_IF_NEEDED,
@@ -977,7 +973,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCsvAllWithDifferentiatedNulls() throws Exception {
+    void testCsvAllWithDifferentiatedNulls() throws Exception {
         Map<String, String> differentiateNulls = Map.of(
                 "none", EXPECTED_ALL_NONE_2,
                 "ifNeeded", EXPECTED_ALL_DIFFERENTIATE_NULLS_IF_NEEDED,
@@ -1012,19 +1008,19 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsv() throws Exception {
+    void testExportAllCsv() throws Exception {
         String fileName = "all.csv";
         testExportCsvAllCommon(fileName);
     }
 
     @Test
-    public void testExportAllCsvWithDotInName() throws Exception {
+    void testExportAllCsvWithDotInName() throws Exception {
         String fileName = "all.with.dot.filename.csv";
         testExportCsvAllCommon(fileName);
     }
 
     @Test
-    public void testExportAllCsvWithoutExtension() throws Exception {
+    void testExportAllCsvWithoutExtension() throws Exception {
         String fileName = "all";
         testExportCsvAllCommon(fileName);
     }
@@ -1039,7 +1035,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsvWithSample() throws Exception {
+    void testExportAllCsvWithSample() throws Exception {
         db.executeTransactionally(
                 "CREATE (:User:Sample {`last:Name`:'Galilei'}), (:User:Sample {address:'Universe'}),\n"
                         + "(:User:Sample {foo:'bar'})-[:KNOWS {one: 'two', three: 'four'}]->(:User:Sample {baz:'baa', foo: true})");
@@ -1070,7 +1066,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsvWithQuotes() throws Exception {
+    void testExportAllCsvWithQuotes() throws Exception {
         String fileName = "all.csv";
         testCall(
                 db,
@@ -1081,7 +1077,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsvWithoutQuotes() throws Exception {
+    void testExportAllCsvWithoutQuotes() throws Exception {
         String fileName = "all.csv";
         testCall(
                 db,
@@ -1092,7 +1088,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsvNeededQuotes() throws Exception {
+    void testExportAllCsvNeededQuotes() throws Exception {
         String fileName = "all.csv";
         testCall(
                 db,
@@ -1103,7 +1099,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportGraphCsv() throws Exception {
+    void testExportGraphCsv() throws Exception {
         String fileName = "graph.csv";
         testCall(
                 db,
@@ -1117,7 +1113,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportGraphCsvWithoutQuotes() throws Exception {
+    void testExportGraphCsvWithoutQuotes() throws Exception {
         String fileName = "graph.csv";
         testCall(
                 db,
@@ -1130,7 +1126,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportQueryCsv() throws Exception {
+    void testExportQueryCsv() throws Exception {
         String fileName = "query.csv";
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         testCall(db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
@@ -1142,7 +1138,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportQueryCsvWithoutQuotes() throws Exception {
+    void testExportQueryCsvWithoutQuotes() throws Exception {
         String fileName = "query.csv";
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         testCall(
@@ -1159,7 +1155,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportCsvAdminOperationErrorMessage() {
+    void testExportCsvAdminOperationErrorMessage() {
         String filename = "test.csv";
         List<String> invalidQueries =
                 List.of("SHOW CONSTRAINTS YIELD id, name, type RETURN *", "SHOW INDEXES YIELD id, name, type RETURN *");
@@ -1183,7 +1179,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportQueryNodesCsv() throws Exception {
+    void testExportQueryNodesCsv() throws Exception {
         String fileName = "query_nodes.csv";
         String query = "MATCH (u:User) return u";
         testCall(db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
@@ -1195,7 +1191,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportQueryNodesCsvParams() throws Exception {
+    void testExportQueryNodesCsvParams() throws Exception {
         String fileName = "query_nodes.csv";
         String query = "MATCH (u:User) WHERE u.age > $age return u";
         testCall(
@@ -1242,13 +1238,13 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportAllCsvStreaming() {
+    void testExportAllCsvStreaming() {
         String statement = "CALL apoc.export.csv.all(null,{stream:true,batchSize:2})";
         assertExportStreaming(statement, NONE);
     }
 
     @Test
-    public void testExportAllCsvStreamingCompressed() {
+    void testExportAllCsvStreamingCompressed() {
         final CompressionAlgo algo = GZIP;
         String statement =
                 "CALL apoc.export.csv.all(null, {compression: '" + algo.name() + "',stream:true,batchSize:2})";
@@ -1329,7 +1325,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCypherCsvStreaming() {
+    void testCypherCsvStreaming() {
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         StringBuilder sb = new StringBuilder();
         testResult(
@@ -1341,7 +1337,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCypherCsvStreamingWithoutQuotes() {
+    void testCypherCsvStreamingWithoutQuotes() {
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         StringBuilder sb = new StringBuilder();
         testResult(
@@ -1379,7 +1375,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCypherCsvStreamingWithAlwaysQuotes() {
+    void testCypherCsvStreamingWithAlwaysQuotes() {
         String query = "MATCH (a:Address) return a.name, a.city, a.street, labels(a)";
         StringBuilder sb = new StringBuilder();
         testResult(
@@ -1392,7 +1388,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCypherCsvStreamingWithNeededQuotes() {
+    void testCypherCsvStreamingWithNeededQuotes() {
         String query = "MATCH (a:Address) return a.name, a.city, a.street, labels(a)";
         StringBuilder sb = new StringBuilder();
         testResult(
@@ -1405,7 +1401,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testCypherCsvStreamingWithNoneQuotes() {
+    void testCypherCsvStreamingWithNoneQuotes() {
         String query = "MATCH (a:Address) return a.name, a.city, a.street, labels(a)";
         StringBuilder sb = new StringBuilder();
         testResult(
@@ -1418,7 +1414,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportQueryCsvIssue1188() {
+    void testExportQueryCsvIssue1188() {
         String copyright = "\n"
                 + "(c) 2018 Hovsepian, Albanese, et al. \"\"ASCB(r),\"\" \"\"The American Society for Cell Biology(r),\"\" and \"\"Molecular Biology of the Cell(r)\"\" are registered trademarks of The American Society for Cell Biology.\n"
                 + "2018\n"
@@ -1443,7 +1439,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testExportWgsPoint() {
+    void testExportWgsPoint() {
         db.executeTransactionally(
                 "CREATE (p:Position {place: point({latitude: 12.78, longitude: 56.7, height: 1.1})})");
 
@@ -1487,7 +1483,7 @@ public class ExportCsvTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocCsvQuery() {
+    void testDifferentCypherVersionsApocCsvQuery() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
                     "%s CALL apoc.export.csv.query('%s RETURN apoc.cypherVersion() AS version', null, { stream:true }) YIELD data RETURN data",

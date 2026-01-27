@@ -18,13 +18,13 @@
  */
 package apoc.util.s3;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
 public abstract class S3BaseTest {
     protected static S3Container s3Container;
 
-    @BeforeClass
+    @BeforeAll
     public static void baseBeforeClass() {
         s3Container = new S3Container();
 
@@ -33,7 +33,7 @@ public abstract class S3BaseTest {
         System.setProperty("com.amazonaws.sdk.disableCertChecking", "true");
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         System.clearProperty("com.amazonaws.services.s3.disableGetObjectMD5Validation");
         System.clearProperty("com.amazonaws.sdk.disableCertChecking");

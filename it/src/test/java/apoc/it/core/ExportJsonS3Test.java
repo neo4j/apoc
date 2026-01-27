@@ -30,39 +30,47 @@ import apoc.export.json.ExportJson;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
 import apoc.util.s3.S3BaseTest;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.util.Map;
 import java.util.Objects;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.test.extension.Inject;
 
-public class ExportJsonS3Test extends S3BaseTest {
+@EnterpriseDbmsExtension
+class ExportJsonS3Test extends S3BaseTest {
     private static final File directoryExpected = new File(
             Objects.requireNonNull(ExportJsonS3Test.class.getClassLoader().getResource("exportJSON"))
                     .getFile());
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule();
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setUp() {
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
+    @BeforeAll
+    void setUpAll() {
+        // Initialize S3 test container and APOC config
+        S3BaseTest.baseBeforeClass();
         TestUtil.registerProcedure(db, ExportJson.class, Graphs.class);
+    }
+
+    @BeforeEach
+    void setUp() {
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
         db.executeTransactionally(
                 "CREATE (f:User {name:'Adam',age:42,male:true,kids:['Sam','Anna','Grace'], born:localdatetime('2015185T19:32:24'), place:point({latitude: 13.1, longitude: 33.46789})})-[:KNOWS {since: 1993, bffSince: duration('P5M1.5D')}]->(b:User {name:'Jim',age:42}),(c:User {age:12})");
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @AfterAll
+    static void teardownAll() {
+        S3BaseTest.tearDown();
     }
 
     @Test
-    public void testExportAllJson() {
+    void testExportAllJson() {
         String filename = "all.json";
         String s3Url = s3Container.getUrl(filename);
 
@@ -75,7 +83,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportPointMapDatetimeJson() {
+    void testExportPointMapDatetimeJson() {
         String filename = "mapPointDatetime.json";
         String s3Url = s3Container.getUrl(filename);
         String query =
@@ -96,7 +104,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportListNode() {
+    void testExportListNode() {
         String filename = "listNode.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) RETURN COLLECT(u) as list";
@@ -110,7 +118,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportListRel() {
+    void testExportListRel() {
         String filename = "listRel.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) as list";
@@ -124,7 +132,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportListPath() {
+    void testExportListPath() {
         String filename = "listPath.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) as list";
@@ -138,7 +146,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportMap() {
+    void testExportMap() {
         String filename = "MapNode.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User)-[r:KNOWS]->(d:User) RETURN u {.*}, d {.*}, r {.*}";
@@ -152,7 +160,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportMapPath() {
+    void testExportMapPath() {
         db.executeTransactionally(
                 "CREATE (f:User {name:'Mike',age:78,male:true})-[:KNOWS {since: 1850}]->(b:User {name:'John',age:18}),(c:User {age:39})");
         String filename = "MapPath.json";
@@ -168,7 +176,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportMapRel() {
+    void testExportMapRel() {
         String filename = "MapRel.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel {.*}";
@@ -182,7 +190,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportMapComplex() {
+    void testExportMapComplex() {
         String filename = "MapComplex.json";
         String s3Url = s3Container.getUrl(filename);
         String query =
@@ -197,7 +205,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportGraphJson() {
+    void testExportGraphJson() {
         String filename = "graph.json";
         String s3Url = s3Container.getUrl(filename);
 
@@ -212,7 +220,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryJson() {
+    void testExportQueryJson() {
         String filename = "query.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
@@ -226,7 +234,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesJson() {
+    void testExportQueryNodesJson() {
         String filename = "query_nodes.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) return u";
@@ -240,7 +248,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryTwoNodesJson() {
+    void testExportQueryTwoNodesJson() {
         String filename = "query_two_nodes.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) return u, l";
@@ -254,7 +262,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesJsonParams() {
+    void testExportQueryNodesJsonParams() {
         String filename = "query_nodes_param.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (u:User) WHERE u.age > $age return u";
@@ -273,7 +281,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryNodesJsonCount() {
+    void testExportQueryNodesJsonCount() {
         String filename = "query_nodes_count.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH (n) return count(n)";
@@ -287,7 +295,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportData() {
+    void testExportData() {
         String filename = "data.json";
         String s3Url = s3Container.getUrl(filename);
 
@@ -307,7 +315,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportDataPath() {
+    void testExportDataPath() {
         String filename = "query_nodes_path.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel]->(u2:User) return u, rel, u2, p, u.name";
@@ -320,7 +328,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllWithWriteNodePropertiesJson() {
+    void testExportAllWithWriteNodePropertiesJson() {
         String filename = "query_withNodeProps_withRelProps.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
@@ -339,7 +347,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllWithDefaultWriteNodePropertiesJson() {
+    void testExportAllWithDefaultWriteNodePropertiesJson() {
         String filename = "query_withNodeProps_withRelProps.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
@@ -354,7 +362,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportAllWithoutWriteNodePropertiesJson() {
+    void testExportAllWithoutWriteNodePropertiesJson() {
         String filename = "query_withoutNodeProps_withoutRelProps.json";
         String s3Url = s3Container.getUrl(filename);
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel";
@@ -373,7 +381,7 @@ public class ExportJsonS3Test extends S3BaseTest {
     }
 
     @Test
-    public void testExportQueryOrderJson() {
+    void testExportQueryOrderJson() {
         db.executeTransactionally("CREATE (f:User12:User1:User0:User {name:'Alan'})");
         String filename = "query_node_labels.json";
         String s3Url = s3Container.getUrl(filename);

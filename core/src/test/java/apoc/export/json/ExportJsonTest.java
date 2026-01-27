@@ -39,6 +39,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.HelperProcedures;
 import apoc.graph.Graphs;
@@ -47,6 +48,7 @@ import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import com.google.common.io.Resources;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,20 +57,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import junit.framework.TestCase;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.ResourceIterator;
-import org.neo4j.test.rule.DbmsRule;
-import org.neo4j.test.rule.ImpermanentDbmsRule;
+import org.neo4j.test.TestDatabaseManagementServiceBuilder;
+import org.neo4j.test.extension.ExtensionCallback;
+import org.neo4j.test.extension.Inject;
 
-public class ExportJsonTest {
+@EnterpriseDbmsExtension(configurationCallback = "configure")
+class ExportJsonTest {
 
     private static final String DEFLATE_EXT = ".zz";
     private static final File directory = new File("target/import");
@@ -77,19 +80,20 @@ public class ExportJsonTest {
         directory.mkdirs();
     }
 
-    @Rule
-    public DbmsRule db = new ImpermanentDbmsRule()
-            .withSetting(
-                    GraphDatabaseSettings.load_csv_file_url_root,
-                    directory.toPath().toAbsolutePath())
-            // Run with aligned format to get sequential ids (assertions depends on this)
-            .withSetting(GraphDatabaseSettings.db_format, "aligned");
+    @Inject
+    GraphDatabaseService db;
 
-    @Before
-    public void setup() {
-        TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class, HelperProcedures.class);
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
-        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
+    @ExtensionCallback
+    void configure(TestDatabaseManagementServiceBuilder builder) throws IOException {
+        builder.setConfig(
+                GraphDatabaseSettings.load_csv_file_url_root,
+                directory.getCanonicalFile().toPath());
+        // Run with aligned format to get sequential ids (assertions depends on this)
+        builder.setConfig(GraphDatabaseSettings.db_format, "aligned");
+    }
+
+    @BeforeEach
+    void setup() {
         db.executeTransactionally(
                 """
                         CREATE (f:User {
@@ -109,13 +113,15 @@ public class ExportJsonTest {
                         """);
     }
 
-    @After
-    public void teardown() {
-        db.shutdown();
+    @BeforeAll
+    void setUpAll() {
+        TestUtil.registerProcedure(db, ExportJson.class, ImportJson.class, Graphs.class, HelperProcedures.class);
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
+        apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
     }
 
     @Test
-    public void testExportAllJson() {
+    void testExportAllJson() {
         String filename = "all.json";
         TestUtil.testCall(
                 db,
@@ -126,13 +132,13 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportJsonAdminOperationErrorMessage() {
+    void testExportJsonAdminOperationErrorMessage() {
         String filename = "test.json";
         List<String> invalidQueries =
                 List.of("SHOW CONSTRAINTS YIELD id, name, type RETURN *", "SHOW INDEXES YIELD id, name, type RETURN *");
 
         for (String query : invalidQueries) {
-            QueryExecutionException e = Assert.assertThrows(
+            QueryExecutionException e = assertThrows(
                     QueryExecutionException.class,
                     () -> TestUtil.testCall(
                             db,
@@ -149,7 +155,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testJsonRoundtrip() {
+    void testJsonRoundtrip() {
         db.executeTransactionally("CREATE CONSTRAINT FOR (n:User) REQUIRE n.neo4jImportId IS UNIQUE;");
         String filename = "all.json.gzip";
         final Map<String, Object> params =
@@ -183,7 +189,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJsonArray() {
+    void testExportAllJsonArray() {
         String filename = "all_array.json";
         TestUtil.testCall(
                 db,
@@ -194,7 +200,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJsonFields() {
+    void testExportAllJsonFields() {
         String filename = "all_fields.json";
         TestUtil.testCall(
                 db,
@@ -205,7 +211,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJsonIdAsKeys() {
+    void testExportAllJsonIdAsKeys() {
         String filename = "all_id_as_keys.json";
         TestUtil.testCall(
                 db,
@@ -216,7 +222,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJsonStream() {
+    void testExportAllJsonStream() {
         TestUtil.testCall(db, "CALL apoc.export.json.all(null, {stream: true})", (r) -> {
             assertStreamResults(r, "database");
             assertThat(r.get("data").toString().lines())
@@ -225,7 +231,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJsonStreamWithFormatConfig() {
+    void testExportAllJsonStreamWithFormatConfig() {
         Map.of(
                         Format.JSON_LINES.name(),
                         "all.json",
@@ -249,7 +255,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllJsonStreamWithCompression() {
+    void testExportAllJsonStreamWithCompression() {
         final CompressionAlgo algo = FRAMED_SNAPPY;
         String expectedFile = "all.json";
         String filename = expectedFile + ".sz";
@@ -265,7 +271,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportPointMapDatetimeJson() {
+    void testExportPointMapDatetimeJson() {
         String filename = "mapPointDatetime.json";
         String query =
                 """
@@ -300,7 +306,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportPointMapDatetimeStreamJson() {
+    void testExportPointMapDatetimeStreamJson() {
         String filename = "mapPointDatetime.json";
         String query =
                 """
@@ -336,7 +342,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportListNode() {
+    void testExportListNode() {
         String filename = "listNode.json";
 
         String query = "MATCH (u:User) RETURN COLLECT(u) AS list";
@@ -350,7 +356,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportListNodeWithCompression() {
+    void testExportListNodeWithCompression() {
         String query = "MATCH (u:User) RETURN COLLECT(u) AS list";
         final CompressionAlgo algo = DEFLATE;
         String expectedFile = "listNode.json";
@@ -371,7 +377,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportListRel() {
+    void testExportListRel() {
         String filename = "listRel.json";
 
         String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) AS list";
@@ -387,7 +393,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportListPath() {
+    void testExportListPath() {
         String filename = "listPath.json";
 
         String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) AS list";
@@ -403,7 +409,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMap() {
+    void testExportMap() {
         String filename = "MapNode.json";
 
         String query = "MATCH (u:User)-[r:KNOWS]->(d:User) RETURN u {.*}, d {.*}, r {.*}";
@@ -419,7 +425,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMapPath() {
+    void testExportMapPath() {
         db.executeTransactionally(
                 """
                         CREATE (
@@ -443,7 +449,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMapRel() {
+    void testExportMapRel() {
         String filename = "MapRel.json";
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel {.*}";
 
@@ -458,7 +464,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportMapComplex() {
+    void testExportMapComplex() {
         String filename = "MapComplex.json";
 
         String query =
@@ -492,7 +498,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportGraphJson() {
+    void testExportGraphJson() {
         String filename = "graph.json";
         TestUtil.testCall(
                 db,
@@ -505,7 +511,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryJson() {
+    void testExportQueryJson() {
         String filename = "query.json";
         String query = "MATCH (u:User) RETURN u.age, u.name, u.male, u.kids, labels(u)";
         TestUtil.testCall(
@@ -519,7 +525,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryNodesJson() {
+    void testExportQueryNodesJson() {
         String filename = "query_nodes.json";
         String query = "MATCH (u:User) RETURN u";
         TestUtil.testCall(
@@ -533,7 +539,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryTwoNodesJson() {
+    void testExportQueryTwoNodesJson() {
         String filename = "query_two_nodes.json";
         String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) RETURN u, l";
         TestUtil.testCall(
@@ -548,7 +554,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryNodesJsonParams() {
+    void testExportQueryNodesJsonParams() {
         String filename = "query_nodes_param.json";
         String query = "MATCH (u:User) WHERE u.age > $age RETURN u";
         TestUtil.testCall(
@@ -565,7 +571,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryNodesJsonCount() {
+    void testExportQueryNodesJsonCount() {
         String filename = "query_nodes_count.json";
         String query = "MATCH (n) RETURN count(n)";
         TestUtil.testCall(
@@ -579,7 +585,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportData() {
+    void testExportData() {
         String filename = "data.json";
         TestUtil.testCall(
                 db,
@@ -598,7 +604,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportDataWithNodeAndRelProps() {
+    void testExportDataWithNodeAndRelProps() {
         var filenames = Map.of(
                 "", "data_withNodeProps_withRelProps.json",
                 "writeRelationshipProperties:true", "data_withNodeProps_withRelProps.json",
@@ -634,7 +640,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportDataPath() {
+    void testExportDataPath() {
         String filename = "query_nodes_path.json";
         String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN u, rel, u2, p, u.name";
         TestUtil.testCall(
@@ -646,7 +652,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryWithWriteNodePropertiesJson() {
+    void testExportQueryWithWriteNodePropertiesJson() {
         var filenames = Map.of(
                 "", "query_withNodeProps_withRelProps.json",
                 "writeRelationshipProperties:true", "query_withNodeProps_withRelProps.json",
@@ -683,7 +689,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportAllWithWriteNodePropertiesJson() {
+    void testExportAllWithWriteNodePropertiesJson() {
         var filenames = Map.of(
                 "", "all_withNodeProps_withRelProps.json",
                 "writeRelationshipProperties:true", "all_withNodeProps_withRelProps.json",
@@ -710,7 +716,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportGraphWithWriteNodePropertiesJson() {
+    void testExportGraphWithWriteNodePropertiesJson() {
         var filenames = Map.of(
                 "", "all_withNodeProps_withRelProps.json",
                 "writeRelationshipProperties:true", "all_withNodeProps_withRelProps.json",
@@ -742,7 +748,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportQueryOrderJson() {
+    void testExportQueryOrderJson() {
         db.executeTransactionally("CREATE (f:User12:User1:User0:User {name:'Alan'})");
         String filename = "query_node_labels.json";
         String query = "MATCH (u:User) WHERE u.name='Alan' RETURN u";
@@ -758,7 +764,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportWgsPoint() {
+    void testExportWgsPoint() {
         db.executeTransactionally(
                 "CREATE (p:Position {place: point({latitude: 12.78, longitude: 56.7, height: 1.1})})");
 
@@ -779,7 +785,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testExportOfNodeIntArrays() {
+    void testExportOfNodeIntArrays() {
         db.executeTransactionally(
                 """
                 CREATE (test:Test {
@@ -844,7 +850,7 @@ public class ExportJsonTest {
     }
 
     @Test
-    public void testDifferentCypherVersionsApocJsonQuery() {
+    void testDifferentCypherVersionsApocJsonQuery() {
         for (HelperProcedures.CypherVersionCombinations cypherVersion : HelperProcedures.cypherVersions) {
             var query = String.format(
                     "%s CALL apoc.export.json.query('%s RETURN apoc.cypherVersion() AS version', null, { stream:true }) YIELD data RETURN data",
