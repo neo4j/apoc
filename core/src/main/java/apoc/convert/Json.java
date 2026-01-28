@@ -225,6 +225,7 @@ public class Json {
         }
     }
 
+    @Deprecated
     @Procedure(value = "apoc.convert.toTree", deprecatedBy = "apoc.paths.toJsonTree")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description(
