@@ -60,7 +60,7 @@ public class DegreeDistribution {
         private transient AtomicHistogram histogram;
 
         public void computeDegree(NodeCursor nodeCursor) {
-            int degree = DegreeUtil.degree(nodeCursor, type, direction);
+            long degree = DegreeUtil.degree(nodeCursor, type, direction);
             record(degree);
         }
 
