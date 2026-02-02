@@ -26,7 +26,7 @@ import org.neo4j.internal.kernel.api.helpers.Nodes;
 
 public class DegreeUtil {
 
-    public static int degree(NodeCursor nodeCursor, int relType, Direction direction) {
+    public static long degree(NodeCursor nodeCursor, int relType, Direction direction) {
 
         switch (direction) {
             case INCOMING:

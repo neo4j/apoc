@@ -132,7 +132,7 @@ public class NodesRestricted {
                 int typeId = tokenRead.relationshipType(pair.getLeft().name());
                 Direction direction = pair.getRight();
 
-                int count =
+                long count =
                         switch (direction) {
                             case INCOMING -> org.neo4j.internal.kernel.api.helpers.Nodes.countIncoming(
                                     nodeCursor, typeId);
