@@ -19,10 +19,27 @@ javadoc {
   options.addStringOption('Xdoclint:none', '-quiet')
 }
 
+test {
+  jvmArgs += [
+          "--add-opens",
+          "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+          "--add-opens",
+          "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+          "--add-opens",
+          "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+          "--add-opens",
+          "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+          "--add-opens",
+          "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED"
+  ]
+}
+
 dependencies {
   implementation group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective   // mandatory to run @ServiceProvider based META-INF code generation
   api 'com.squareup:javapoet:1.13.0'
   testImplementation 'com.google.testing.compile:compile-testing:0.19'
+  testImplementation group: 'com.google.truth', name: 'truth', version: '1.4.5'
+  testImplementation group: 'com.google.guava', name: 'guava', version: guavaVersion
   testImplementation 'org.assertj:assertj-core:3.26.3'
   testImplementation 'org.mockito:mockito-core:4.2.0'
 }
