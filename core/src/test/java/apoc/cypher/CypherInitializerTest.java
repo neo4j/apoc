@@ -24,18 +24,21 @@ import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAM
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 import apoc.ApocExtensionFactory;
+import apoc.SystemLabels;
 import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
@@ -102,12 +105,27 @@ class CypherInitializerTest {
         }
 
         @Test
-        public void noInitializerWorks() {
+        void noInitializerWorks() {
             expectNodeCount(0);
         }
 
         private void expectNodeCount(long i) {
             assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
+
+        @Test
+        void noInitializerHasSystemConstraint() {
+            GraphDatabaseService systemDb = dbms.database(SYSTEM_DATABASE_NAME);
+            try (Transaction tx = systemDb.beginTx()) {
+                var triggerConstraints = StreamSupport.stream(
+                                tx.schema()
+                                        .getConstraints(SystemLabels.ApocTriggerMeta)
+                                        .spliterator(),
+                                false)
+                        .filter(x -> x.getName().equals("triggerConstraint"))
+                        .toList();
+                assertEquals(1, triggerConstraints.size());
+            }
         }
     }
 
@@ -135,7 +153,7 @@ class CypherInitializerTest {
         }
 
         @Test
-        public void emptyInitializerWorks() {
+        void emptyInitializerWorks() {
             expectNodeCount(0);
         }
 
@@ -168,12 +186,27 @@ class CypherInitializerTest {
         }
 
         @Test
-        public void singleInitializerWorks() {
+        void singleInitializerWorks() {
             expectNodeCount(1);
         }
 
         private void expectNodeCount(long i) {
             assertEquals(i, TestUtil.count(db, "match (n) return n"));
+        }
+
+        @Test
+        void singleInitializerHasSystemConstraint() {
+            GraphDatabaseService systemDb = dbms.database(SYSTEM_DATABASE_NAME);
+            try (Transaction tx = systemDb.beginTx()) {
+                var triggerConstraints = StreamSupport.stream(
+                                tx.schema()
+                                        .getConstraints(SystemLabels.ApocTriggerMeta)
+                                        .spliterator(),
+                                false)
+                        .filter(x -> x.getName().equals("triggerConstraint"))
+                        .toList();
+                assertEquals(1, triggerConstraints.size());
+            }
         }
     }
 
@@ -236,7 +269,7 @@ class CypherInitializerTest {
         }
 
         @Test
-        public void multipleInitializersWorks2() {
+        void multipleInitializersWorks2() {
             expectNodeCount(1);
         }
 
@@ -269,7 +302,7 @@ class CypherInitializerTest {
         }
 
         @Test
-        public void databaseSpecificInitializersForSystem() {
+        void databaseSpecificInitializersForSystem() {
             GraphDatabaseService systemDb = dbms.database(SYSTEM_DATABASE_NAME);
             long numberOfUsers =
                     systemDb.executeTransactionally("show users", Collections.emptyMap(), Iterators::count);
