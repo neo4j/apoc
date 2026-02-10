@@ -1,16 +1,34 @@
 [
     {
+        "neo4j": "2026.01.4",
+        "neo4jVersion": "2026.01.4",
+        "apoc": "2026.01.4",
+        "version": "2026.01.4",
+        "url": "https://github.com/neo4j/apoc/releases/2026.01.4",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/2026.01.4",
+        "jar": "https://github.com/neo4j/apoc/releases/download/2026.01.4/apoc-2026.01.4-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/2026.01.4/apoc-2026.01.4-core.jar",
+        "sha1": "15627cb248cfe4bb6cecd296532c612d5dfff89f",
+        "sha256": "78811a1f6819f6955e5d3a79d0cc94c62a16c62c7c3e10beb73fb6672ea1933b",
+        "md5": "3eb0705fcf5b906eeb5005692c9635f7",
+        "config": {
+            "+:dbms.security.procedures.unrestricted": [
+                "apoc.*"
+            ]
+        }
+    },
+    {
         "neo4j": "2026.01.3",
         "neo4jVersion": "2026.01.3",
-        "apoc": "2026.01.3",
-        "version": "2026.01.3",
-        "url": "https://github.com/neo4j/apoc/releases/2026.01.3",
-        "homepageUrl": "https://github.com/neo4j/apoc/releases/2026.01.3",
-        "jar": "https://github.com/neo4j/apoc/releases/download/2026.01.3/apoc-2026.01.3-core.jar",
-        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/2026.01.3/apoc-2026.01.3-core.jar",
-        "sha1": "e8340784e83930634a68c7131e2c1e632d448b89",
-        "sha256": "374e83fdce8a54a79e2cb3de854f878a6f09453e71a3cb6f51846d998e8c97df",
-        "md5": "f79d97950964169da6dc56b0ca5bb095",
+        "apoc": "2026.01.4",
+        "version": "2026.01.4",
+        "url": "https://github.com/neo4j/apoc/releases/2026.01.4",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/2026.01.4",
+        "jar": "https://github.com/neo4j/apoc/releases/download/2026.01.4/apoc-2026.01.4-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/2026.01.4/apoc-2026.01.4-core.jar",
+        "sha1": "15627cb248cfe4bb6cecd296532c612d5dfff89f",
+        "sha256": "78811a1f6819f6955e5d3a79d0cc94c62a16c62c7c3e10beb73fb6672ea1933b",
+        "md5": "3eb0705fcf5b906eeb5005692c9635f7",
         "config": {
             "+:dbms.security.procedures.unrestricted": [
                 "apoc.*"
