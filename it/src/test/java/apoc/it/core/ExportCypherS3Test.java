@@ -21,7 +21,8 @@ package apoc.it.core;
 import static apoc.export.cypher.ExportCypherTest.ExportCypherResults.*;
 import static apoc.util.Util.map;
 import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.HelperProcedures;
 import apoc.cypher.Cypher;
@@ -244,7 +245,7 @@ class ExportCypherS3Test extends S3BaseTest {
         assertEquals(fileName, r.get("file"));
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     @Test
@@ -592,7 +593,7 @@ class ExportCypherS3Test extends S3BaseTest {
                     assertEquals(2L, r.get("properties"));
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("cypher", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+                    assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
                 });
         assertStringFileEquals(EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND, s3Url);
     }
@@ -671,7 +672,7 @@ class ExportCypherS3Test extends S3BaseTest {
         assertEquals(fileName, r.get("file"));
         assertEquals("database" + ": nodes(7), rels(2)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     private void assertResultsOdd(String fileName, Map<String, Object> r) {
@@ -681,6 +682,6 @@ class ExportCypherS3Test extends S3BaseTest {
         assertEquals(fileName, r.get("file"));
         assertEquals("database" + ": nodes(7), rels(1)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 }

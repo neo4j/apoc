@@ -19,10 +19,10 @@
 package apoc.path;
 
 import static apoc.util.Util.labelStrings;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.MapUtil;
 import apoc.util.TestUtil;
@@ -717,6 +717,6 @@ class ExpandPathTest {
         assertEquals(Map.of("one", "alpha"), allProperties);
         Map<String, Object> allPropertiesEnd = nodes.get(1).getAllProperties();
         String beta = (String) allPropertiesEnd.get("two");
-        assertTrue("Property `two` has value " + beta, List.of("beta", "gamma").contains(beta));
+        assertTrue(List.of("beta", "gamma").contains(beta));
     }
 }

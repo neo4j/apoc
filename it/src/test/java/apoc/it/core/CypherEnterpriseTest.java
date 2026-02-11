@@ -32,7 +32,7 @@ import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testCallEmpty;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.util.Neo4jContainerExtension;
 import java.util.List;

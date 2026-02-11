@@ -24,7 +24,8 @@ import static apoc.util.FileTestUtil.assertStreamEquals;
 import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.assertS3KeyEventually;
 import static apoc.util.s3.S3TestUtil.readS3FileToString;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.export.json.ExportJson;
 import apoc.graph.Graphs;
@@ -96,7 +97,7 @@ class ExportJsonS3Test extends S3BaseTest {
                         + "localTime('12:50:35.556') as localTime";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(7)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(7)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -110,7 +111,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User) RETURN COLLECT(u) as list";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -124,7 +125,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User)-[rel:KNOWS]->(u2:User) RETURN COLLECT(rel) as list";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -138,7 +139,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH p = (u:User)-[rel]->(u2:User) RETURN COLLECT(p) as list";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -152,7 +153,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User)-[r:KNOWS]->(d:User) RETURN u {.*}, d {.*}, r {.*}";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(3)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(3)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -168,7 +169,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH path = (u:User)-[rel:KNOWS]->(u2:User) RETURN {key:path} as map, 'Kate' as name";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(2)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(2)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -182,7 +183,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH p = (u:User)-[rel:KNOWS]->(u2:User) RETURN rel {.*}";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -197,7 +198,7 @@ class ExportJsonS3Test extends S3BaseTest {
                 "RETURN {value:1, data:[10,'car',null, point({ longitude: 56.7, latitude: 12.78 }), point({ longitude: 56.7, latitude: 12.78, height: 8 }), point({ x: 2.3, y: 4.5 }), point({ x: 2.3, y: 4.5, z: 2 }),date('2018-10-10'), datetime('2018-10-18T14:21:40.004Z'), localdatetime({ year:1984, week:10, dayOfWeek:3, hour:12, minute:31, second:14, millisecond: 645 }), {x:1, y:[1,2,3,{age:10}]}]} as key";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -226,7 +227,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(5)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -240,7 +241,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User) return u";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -254,7 +255,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) return u, l";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(2)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(2)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -272,8 +273,7 @@ class ExportJsonS3Test extends S3BaseTest {
                 "CALL apoc.export.json.query($query,$s3,{params:{age:10}})",
                 map("s3", s3Url, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -287,7 +287,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (n) return count(n)";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -338,8 +338,7 @@ class ExportJsonS3Test extends S3BaseTest {
                 "CALL apoc.export.json.query($query,$s3,{writeNodeProperties:true})",
                 map("s3", s3Url, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -354,7 +353,7 @@ class ExportJsonS3Test extends S3BaseTest {
 
         // default value for writeNodeProperties is true
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3,{})", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -372,8 +371,7 @@ class ExportJsonS3Test extends S3BaseTest {
                 "CALL apoc.export.json.query($query,$s3,{writeNodeProperties:false})",
                 map("s3", s3Url, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -388,7 +386,7 @@ class ExportJsonS3Test extends S3BaseTest {
         String query = "MATCH (u:User) WHERE u.name='Alan' RETURN u";
 
         TestUtil.testCall(db, "CALL apoc.export.json.query($query,$s3)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("json", r.get("format"));
         });
@@ -409,6 +407,6 @@ class ExportJsonS3Test extends S3BaseTest {
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         assertEquals(filename, r.get("file"));
         assertEquals("json", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 }

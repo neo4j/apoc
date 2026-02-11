@@ -24,7 +24,7 @@ import static apoc.load.relative.LoadXmlResult.StringXmlNestedMap;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.load.LoadJson;
 import apoc.load.Xml;

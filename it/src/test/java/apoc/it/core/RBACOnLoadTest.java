@@ -23,7 +23,7 @@ import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testCallEmpty;
 import static java.util.Collections.emptyMap;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil;

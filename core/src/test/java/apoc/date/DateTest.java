@@ -22,7 +22,10 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static java.util.Objects.isNull;
 import static java.util.stream.Collectors.toList;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.temporal.TemporalProcedures;
 import apoc.util.TestUtil;

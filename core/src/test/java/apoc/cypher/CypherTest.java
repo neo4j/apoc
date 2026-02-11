@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -56,7 +57,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import junit.framework.TestCase;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -215,8 +215,8 @@ class CypherTest {
         final String query = "CYPHER 25 CALL apoc.cypher.runTimeboxed('RETUN 0', null, 20000, {failOnError: true})";
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
-        TestCase.assertTrue(except.getMessage().contains("Invalid input 'RETUN'"));
+        assertInstanceOf(RuntimeException.class, except);
+        assertTrue(except.getMessage().contains("Invalid input 'RETUN'"));
     }
 
     @Test
@@ -224,8 +224,8 @@ class CypherTest {
         final String query = "CYPHER 25 CALL apoc.cypher.runTimeboxed('RETURN 1/0', null, 20000, {failOnError: true})";
         QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (r) -> {}));
         Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
-        TestCase.assertTrue(except.getMessage().contains("The inner query errored with: / by zero"));
+        assertInstanceOf(RuntimeException.class, except);
+        assertTrue(except.getMessage().contains("The inner query errored with: / by zero"));
     }
 
     @Test

@@ -21,10 +21,10 @@ package apoc.graph;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static java.util.Arrays.asList;
-import static junit.framework.TestCase.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 
 import apoc.HelperProcedures;

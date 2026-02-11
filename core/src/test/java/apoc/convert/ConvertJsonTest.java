@@ -28,6 +28,7 @@ import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -37,7 +38,6 @@ import apoc.util.Util;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
-import junit.framework.TestCase;
 import net.javacrumbs.jsonunit.core.Option;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.util.Arrays;
@@ -964,7 +964,7 @@ public class ConvertJsonTest {
             testResult(db, call, Result::close);
         } catch (QueryExecutionException e) {
             Throwable except = ExceptionUtils.getRootCause(e);
-            TestCase.assertTrue(except instanceof RuntimeException);
+            assertTrue(except instanceof RuntimeException);
             assertEquals("Only include or exclude attribute are possible!", except.getMessage());
         }
     }
@@ -1028,7 +1028,7 @@ public class ConvertJsonTest {
             testResult(db, call, Result::close);
         } catch (QueryExecutionException e) {
             Throwable except = ExceptionUtils.getRootCause(e);
-            TestCase.assertTrue(except instanceof RuntimeException);
+            assertInstanceOf(RuntimeException.class, except);
             assertEquals("Only include or exclude attribute are possible!", except.getMessage());
         }
     }

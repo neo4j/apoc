@@ -25,9 +25,9 @@ import static apoc.util.FileTestUtil.createTempFolder;
 import static apoc.util.FileUtils.ACCESS_OUTSIDE_DIR_ERROR;
 import static apoc.util.FileUtils.ERROR_READ_FROM_FS_NOT_ALLOWED;
 import static apoc.util.TestUtil.testCall;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import apoc.ApocConfig;
 import apoc.export.csv.ImportCsv;
@@ -337,9 +337,7 @@ class ImportAndLoadCoreSecurityTest {
             if (ALLOWED_EXCEPTIONS.containsKey(importMethod)) {
                 Class<?> rootCause = ExceptionUtils.getRootCause(e).getClass();
                 Class<?> classException = ALLOWED_EXCEPTIONS.get(importMethod);
-                assertTrue(
-                        "The procedure throws an exception with class " + rootCause + " instead of " + classException,
-                        classException.isAssignableFrom(rootCause));
+                assertTrue(classException.isAssignableFrom(rootCause));
             }
         }
     }

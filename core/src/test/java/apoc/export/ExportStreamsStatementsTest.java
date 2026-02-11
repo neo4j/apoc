@@ -19,7 +19,7 @@
 package apoc.export;
 
 import static apoc.ApocConfig.EXPORT_TO_FILE_ERROR;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.export.csv.ExportCSV;

@@ -21,10 +21,10 @@ package apoc.util;
 import static apoc.util.TestUtil.printFullStackTrace;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.dockerjava.api.exception.NotFoundException;
 import java.io.BufferedReader;
@@ -269,11 +269,11 @@ public class TestContainerUtil {
             Session session, String call, Map<String, Object> params, Consumer<Map<String, Object>> consumer) {
         testResult(session, call, params, (res) -> {
             try {
-                assertNotNull("result should be not null", res);
-                assertTrue("result should be not empty", res.hasNext());
+                assertNotNull(res);
+                assertTrue(res.hasNext()); // result should be not empty
                 Map<String, Object> row = res.next();
                 consumer.accept(row);
-                assertFalse("result should not have next", res.hasNext());
+                assertFalse(res.hasNext()); // result should not have next
             } catch (Throwable t) {
                 printFullStackTrace(t);
                 throw t;
@@ -327,11 +327,11 @@ public class TestContainerUtil {
             Session session, String call, Map<String, Object> params, Consumer<Map<String, Object>> consumer) {
         testResultInReadTransaction(session, call, params, (res) -> {
             try {
-                assertNotNull("result should be not null", res);
-                assertTrue("result should be not empty", res.hasNext());
+                assertNotNull(res); // result should be not null
+                assertTrue(res.hasNext()); // result should be not empty
                 Map<String, Object> row = res.next();
                 consumer.accept(row);
-                assertFalse("result should not have next", res.hasNext());
+                assertFalse(res.hasNext()); // result should not have next
             } catch (Throwable t) {
                 printFullStackTrace(t);
                 throw t;

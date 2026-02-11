@@ -23,7 +23,7 @@ import static apoc.trigger.TriggerNewProcedures.TRIGGER_NOT_ROUTED_ERROR;
 import static apoc.util.TestContainerUtil.testCall;
 import static apoc.util.TestContainerUtil.testResult;
 import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAME;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 

@@ -22,17 +22,18 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_ENABLED;
 import static apoc.ApocConfig.APOC_IMPORT_FILE_USE_NEO4J_CONFIG;
 import static apoc.ApocConfig.apocConfig;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.xmlunit.diff.ElementSelectors.byName;
 
 import apoc.HelperProcedures;
 import apoc.graph.Graphs;
 import apoc.util.TestUtil;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.xml.namespace.QName;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.TestInfo;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.DefaultNodeMatcher;
@@ -234,20 +235,18 @@ public class ExportGraphMLTestUtil {
                 }))
                 .build();
 
-        assertFalse(myDiff.toString(), myDiff.hasDifferences());
+        assertFalse(myDiff.hasDifferences(), myDiff.toString());
     }
 
-    public static void setUpGraphMl(GraphDatabaseService db, TestName testName) {
+    public static void setUpGraphMl(GraphDatabaseService db, TestInfo testInfo) {
         TestUtil.registerProcedure(db, ExportGraphML.class, Graphs.class, HelperProcedures.class);
 
+        String methodName = testInfo.getTestMethod().map(Method::getName).orElse(testInfo.getDisplayName());
+
         apocConfig()
-                .setProperty(
-                        APOC_EXPORT_FILE_ENABLED,
-                        Boolean.toString(!testName.getMethodName().endsWith("WithNoExportConfig")));
+                .setProperty(APOC_EXPORT_FILE_ENABLED, Boolean.toString(!methodName.endsWith("WithNoExportConfig")));
         apocConfig()
-                .setProperty(
-                        APOC_IMPORT_FILE_ENABLED,
-                        Boolean.toString(!testName.getMethodName().endsWith("WithNoImportConfig")));
+                .setProperty(APOC_IMPORT_FILE_ENABLED, Boolean.toString(!methodName.endsWith("WithNoImportConfig")));
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
 
         db.executeTransactionally(
