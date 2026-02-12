@@ -173,7 +173,7 @@ public class TestUtil {
             Exception e, String errorMessage, Class<? extends Exception> exceptionType, String apocProcedure) {
         final Throwable rootCause = ExceptionUtils.getRootCause(e);
         assertTrue(exceptionType.isInstance(rootCause));
-        assertEquals(apocProcedure + " should throw the following message ", errorMessage, rootCause.getMessage());
+        assertEquals(errorMessage, rootCause.getMessage());
     }
 
     public static void testResult(GraphDatabaseService db, String call, Consumer<Result> resultConsumer) {
