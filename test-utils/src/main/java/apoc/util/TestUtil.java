@@ -18,7 +18,11 @@
  */
 package apoc.util;
 
-import static org.junit.Assert.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 import apoc.util.collection.Iterables;
@@ -99,10 +103,10 @@ public class TestUtil {
     }
 
     public static void testCallAssertions(Result res, Consumer<Map<String, Object>> consumer) {
-        assertTrue("Should have an element", res.hasNext());
+        assertTrue(res.hasNext()); // Should have an element
         Map<String, Object> row = res.next();
         consumer.accept(row);
-        assertFalse("Should not have a second element", res.hasNext());
+        assertFalse(res.hasNext()); // Should not have a second element
     }
 
     public static void printFullStackTrace(Throwable e) {
@@ -124,7 +128,7 @@ public class TestUtil {
     }
 
     public static void testCallEmpty(GraphDatabaseService db, String call, Map<String, Object> params) {
-        testResult(db, call, params, (res) -> assertFalse("Expected no results", res.hasNext()));
+        testResult(db, call, params, (res) -> assertFalse(res.hasNext())); // Expected no results
     }
 
     public static long count(GraphDatabaseService db, String cypher, Map<String, Object> params) {
@@ -142,7 +146,7 @@ public class TestUtil {
     public static void testCallCount(
             GraphDatabaseService db, String call, Map<String, Object> params, final int expected) {
         long count = count(db, call, params);
-        assertEquals("expected " + expected + " results, got " + count, (long) expected, count);
+        assertEquals(expected, count);
     }
 
     public static void testFail(GraphDatabaseService db, String call, Class<? extends Exception> t) {
@@ -161,20 +165,15 @@ public class TestUtil {
                 found |= t.isInstance(inner);
                 inner = inner.getCause();
             } while (inner != null && inner.getCause() != inner);
-            assertTrue(
-                    "Didn't fail with " + t.getSimpleName() + " but "
-                            + e.getClass().getSimpleName() + " " + e.getMessage(),
-                    found);
+            assertTrue(found);
         }
     }
 
     public static void assertError(
             Exception e, String errorMessage, Class<? extends Exception> exceptionType, String apocProcedure) {
         final Throwable rootCause = ExceptionUtils.getRootCause(e);
-        assertTrue(
-                apocProcedure + " should throw an instance of " + exceptionType.getSimpleName(),
-                exceptionType.isInstance(rootCause));
-        assertEquals(apocProcedure + " should throw the following message ", errorMessage, rootCause.getMessage());
+        assertTrue(exceptionType.isInstance(rootCause));
+        assertEquals(errorMessage, rootCause.getMessage());
     }
 
     public static void testResult(GraphDatabaseService db, String call, Consumer<Result> resultConsumer) {

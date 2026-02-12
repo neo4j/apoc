@@ -23,7 +23,7 @@ import static apoc.ApocConfig.DEFAULT_MAX_DECOMPRESSION_RATIO;
 import static apoc.export.util.LimitedSizeInputStream.SIZE_EXCEEDED_ERROR;
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
 import static apoc.util.TestContainerUtil.testCall;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.Neo4jContainerExtension;

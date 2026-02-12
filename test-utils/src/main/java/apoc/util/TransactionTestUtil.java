@@ -22,10 +22,10 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static java.util.Collections.emptyMap;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
 import java.util.Map;
@@ -62,9 +62,7 @@ public class TransactionTestUtil {
             fail("Should fail because of TransactionFailureException");
         } catch (Exception e) {
             final String msg = e.getMessage();
-            assertTrue(
-                    "Actual message is: " + msg,
-                    Stream.of("terminated", "failed", "closed").anyMatch(msg::contains));
+            assertTrue(Stream.of("terminated", "failed", "closed").anyMatch(msg::contains));
         }
 
         lastTransactionChecks(db, timeout, query, startTimeMs);
@@ -90,10 +88,8 @@ public class TransactionTestUtil {
         final var reasonableFactor = 5;
         double timePassedDouble = (System.currentTimeMillis() - startTimeMs) / 1000.0;
 
-        assertTrue(
-                "The transaction hasn't been terminated before the given timeout time (" + timeout + "), but after "
-                        + timePassedDouble + " seconds",
-                timePassedDouble <= (timeout * reasonableFactor));
+        // The transaction hasn't been terminated before the given timeout time
+        assertTrue(timePassedDouble <= (timeout * reasonableFactor));
     }
 
     public static void checkTransactionNotInList(GraphDatabaseService db, String query) {

@@ -19,7 +19,7 @@
 package apoc.periodic;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.test.assertion.Assert.awaitUntilAsserted;
 
 import java.util.Locale;

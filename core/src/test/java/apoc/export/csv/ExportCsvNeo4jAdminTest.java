@@ -22,9 +22,9 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.MapUtil.map;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.graph.Graphs;
 import apoc.util.BinaryTestUtil;
@@ -188,7 +188,7 @@ class ExportCsvNeo4jAdminTest {
                     assertEquals(9L, r.get("rows"));
                     assertEquals(2L, r.get("relationships"));
                     assertEquals(20L, r.get("properties"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+                    assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
                 });
 
         String file = dir.getParent() + File.separator;
@@ -385,7 +385,7 @@ class ExportCsvNeo4jAdminTest {
         assertEquals("graph: nodes(7), rels(2)", r.get("source"));
         assertEquals(fileName, r.get("file"));
         assertEquals("csv", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     @Test
@@ -414,7 +414,7 @@ class ExportCsvNeo4jAdminTest {
                     assertEquals(3L, r.get("rows"));
                     assertEquals(1L, r.get("relationships"));
                     assertEquals(5L, r.get("properties"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+                    assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
 
                     String file = dir.getParent() + File.separator;
                     String expectedNodesLarus = String.format(

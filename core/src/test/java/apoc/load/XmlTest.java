@@ -26,11 +26,11 @@ import static apoc.util.CompressionConfig.COMPRESSION;
 import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.*;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
@@ -380,8 +380,9 @@ class XmlTest {
 
     @Test
     void testLoadXmlWithNextWordRels() {
+        // "usage of `createNextWordRelationships` is no longer allowed. Use `{relType:'NEXT_WORD', label:'XmlWord'}`
+        // instead.",
         assertThrows(
-                "usage of `createNextWordRelationships` is no longer allowed. Use `{relType:'NEXT_WORD', label:'XmlWord'}` instead.",
                 QueryExecutionException.class,
                 () -> db.executeTransactionally("call apoc.import.xml('file:" + FILE_SHORTENED + "', "
                         + "{createNextWordRelationships: true, filterLeadingWhitespace: true}) yield node"));

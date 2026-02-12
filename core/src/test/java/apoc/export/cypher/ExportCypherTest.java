@@ -27,11 +27,12 @@ import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static apoc.util.Util.map;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 
@@ -57,7 +58,6 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import junit.framework.TestCase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -268,9 +268,9 @@ public class ExportCypherTest {
             assertEquals(3L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(5L, r.get("properties"));
-            assertNull("Should get file", r.get("file"));
+            assertNull(r.get("file")); // Should get file
             assertEquals("cypher", r.get("format"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("cypherStatements")));
             r = res.next();
             assertEquals(3L, r.get("batchSize"));
@@ -279,7 +279,7 @@ public class ExportCypherTest {
             assertEquals(4L, r.get("rows"));
             assertEquals(1L, r.get("relationships"));
             assertEquals(6L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("cypherStatements")));
         });
         assertEquals(EXPECTED_NEO4J_SHELL.replace("LIMIT 20000", "LIMIT 3"), sb.toString());
@@ -570,7 +570,7 @@ public class ExportCypherTest {
         assertEquals(fileName, r.get("file"));
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     @Test
@@ -951,7 +951,7 @@ public class ExportCypherTest {
                     assertEquals(2L, r.get("properties"));
                     assertEquals(fileName, r.get("file"));
                     assertEquals("cypher", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+                    assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
                 });
         assertEquals(EXPECTED_PLAIN_UPDATE_STRUCTURE_UNWIND, readFile(fileName));
     }
@@ -1040,15 +1040,13 @@ public class ExportCypherTest {
                     assertEquals(fileName, r.get("file"));
                     assertEquals("statement: nodes(4), rels(2)", r.get("source"));
                     assertEquals("cypher", r.get("format"));
-                    assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+                    assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
                 });
         String actual = readFile(fileName);
-        assertTrue(
-                "expected generated output ",
-                EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED.equals(actual)
-                        || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2.equals(actual)
-                        || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3.equals(actual)
-                        || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4.equals(actual));
+        assertTrue(EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED.equals(actual)
+                || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED2.equals(actual)
+                || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED3.equals(actual)
+                || EXPECTED_QUERY_CYPHER_SHELL_OPTIMIZED4.equals(actual));
     }
 
     @Test
@@ -1731,7 +1729,7 @@ public class ExportCypherTest {
                 assertTrue(regexMatch(
                         "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line4));
             }
-            default -> TestCase.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            default -> fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
     }
 
@@ -1779,7 +1777,7 @@ public class ExportCypherTest {
                         "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
                         line2));
             }
-            default -> TestCase.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            default -> fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
     }
 
@@ -1792,7 +1790,7 @@ public class ExportCypherTest {
             case "create" -> {
                 createOrMerge = "CREATE";
             }
-            default -> TestCase.fail(String.format("Unexpected cypher format %s", cypherFormat));
+            default -> fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
 
         String[] lines = actual.split("[\r\n]+");
@@ -1845,7 +1843,7 @@ public class ExportCypherTest {
         assertEquals(fileName, r.get("file"));
         assertEquals("database" + ": nodes(7), rels(2)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     private void assertResultsOdd(String fileName, Map<String, Object> r) {
@@ -1855,7 +1853,7 @@ public class ExportCypherTest {
         assertEquals(fileName, r.get("file"));
         assertEquals("database" + ": nodes(7), rels(1)", r.get("source"));
         assertEquals("cypher", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     public static class ExportCypherResults {
@@ -2506,8 +2504,7 @@ public class ExportCypherTest {
             testCall(
                     db,
                     query,
-                    r -> TestCase.assertTrue(
-                            r.get("cypherStatements").toString().contains(cypherVersion.result)));
+                    r -> assertTrue(r.get("cypherStatements").toString().contains(cypherVersion.result)));
         }
     }
 }

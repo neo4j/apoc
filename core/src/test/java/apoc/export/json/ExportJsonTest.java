@@ -34,12 +34,12 @@ import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.HelperProcedures;
 import apoc.graph.Graphs;
@@ -56,7 +56,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import junit.framework.TestCase;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -296,8 +295,7 @@ class ExportJsonTest {
                 """;
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(7)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(7)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                     assertFileEquals(filename);
@@ -334,8 +332,7 @@ class ExportJsonTest {
                 "CALL apoc.export.json.query($query, null, {stream: true})",
                 map("file", filename, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(7)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(7)")); // Should get statement
                     assertThat(r.get("data").toString().lines())
                             .zipSatisfy(readResourceLines("exportJSON/mapPointDatetime.json"), jsonEquals);
                 });
@@ -371,7 +368,7 @@ class ExportJsonTest {
     }
 
     private void assertionsListNode(String filename, Map<String, Object> r) {
-        assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+        assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
         assertEquals(filename, r.get("file"));
         assertEquals("json", r.get("format"));
     }
@@ -384,8 +381,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -400,8 +396,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -416,8 +411,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(3)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(3)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -440,8 +434,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(2)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(2)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -455,8 +448,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -489,8 +481,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -516,8 +507,7 @@ class ExportJsonTest {
         String query = "MATCH (u:User) RETURN u.age, u.name, u.male, u.kids, labels(u)";
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(5)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -530,8 +520,7 @@ class ExportJsonTest {
         String query = "MATCH (u:User) RETURN u";
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -544,8 +533,7 @@ class ExportJsonTest {
         String query = "MATCH (u:User{name:'Adam'}), (l:User{name:'Jim'}) RETURN u, l";
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(2)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(2)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -562,8 +550,7 @@ class ExportJsonTest {
                 "CALL apoc.export.json.query($query,$file,{params:{age:10}})",
                 map("file", filename, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -576,8 +563,7 @@ class ExportJsonTest {
         String query = "MATCH (n) RETURN count(n)";
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -678,9 +664,7 @@ class ExportJsonTest {
                     "CALL apoc.export.json.query($query,$file,{%s})".formatted(config),
                     map("file", filename, "query", query),
                     (r) -> {
-                        assertTrue(
-                                "Should get statement",
-                                r.get("source").toString().contains("statement: cols(1)"));
+                        assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                         assertEquals(filename, r.get("file"));
                         assertEquals("json", r.get("format"));
                     });
@@ -755,8 +739,7 @@ class ExportJsonTest {
 
         TestUtil.testCall(
                 db, "CALL apoc.export.json.query($query,$file)", map("file", filename, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(filename, r.get("file"));
                     assertEquals("json", r.get("format"));
                 });
@@ -825,7 +808,7 @@ class ExportJsonTest {
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
         assertEquals(filename, r.get("file"));
         assertEquals("json", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     private void assertFileEquals(String fileName, CompressionAlgo algo) {
@@ -843,10 +826,10 @@ class ExportJsonTest {
         assertEquals(1L, r.get("relationships"));
         assertEquals(11L, r.get("properties"));
         assertEquals(source + ": nodes(3), rels(1)", r.get("source"));
-        assertNull("file should be null", r.get("file"));
-        assertNotNull("data should be not null", r.get("data"));
+        assertNull(r.get("file")); // file should be null
+        assertNotNull(r.get("data")); // data should be not null
         assertEquals("json", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     @Test
@@ -855,8 +838,7 @@ class ExportJsonTest {
             var query = String.format(
                     "%s CALL apoc.export.json.query('%s RETURN apoc.cypherVersion() AS version', null, { stream:true }) YIELD data RETURN data",
                     cypherVersion.outerVersion, cypherVersion.innerVersion);
-            testCall(
-                    db, query, r -> TestCase.assertTrue(r.get("data").toString().contains(cypherVersion.result)));
+            testCall(db, query, r -> assertTrue(r.get("data").toString().contains(cypherVersion.result)));
         }
     }
 

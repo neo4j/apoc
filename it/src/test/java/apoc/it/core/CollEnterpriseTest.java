@@ -19,7 +19,7 @@
 package apoc.it.core;
 
 import static apoc.util.TestContainerUtil.createEnterpriseDB;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import apoc.util.Neo4jContainerExtension;
 import apoc.util.TestContainerUtil.ApocPackage;

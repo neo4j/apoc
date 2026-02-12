@@ -21,7 +21,8 @@ package apoc.export.cypher;
 import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 
-import org.junit.rules.TestName;
+import java.lang.reflect.Method;
+import org.junit.jupiter.api.TestInfo;
 import org.neo4j.graphdb.GraphDatabaseService;
 
 public class ExportCypherTestUtils {
@@ -30,8 +31,10 @@ public class ExportCypherTestUtils {
     private static final String ODD = "OddDataset";
     private static final String ROUND_TRIP = "RoundTrip";
 
-    public static void setUp(GraphDatabaseService db, TestName testName) {
-        setUp(db, testName.getMethodName());
+    public static void setUp(GraphDatabaseService db, TestInfo testInfo) {
+        // Prefer the actual method name; fall back to display name if not present
+        String methodName = testInfo.getTestMethod().map(Method::getName).orElse(testInfo.getDisplayName());
+        setUp(db, methodName);
     }
 
     public static void setUp(GraphDatabaseService db, String methodName) {

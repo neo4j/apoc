@@ -18,7 +18,9 @@
  */
 package apoc.algo;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.collection.Iterables;
 import java.util.List;
@@ -40,7 +42,7 @@ public class AlgoUtil {
                     + "CREATE (f)-[:DIRECT {dist:393.15*1000}]->(h)";
 
     public static void assertAStarResult(Result r) {
-        assertEquals(true, r.hasNext());
+        assertTrue(r.hasNext());
         Map<String, Object> row = r.next();
         assertEquals(697, ((Number) row.get("weight")).intValue() / 1000);
         Path path = (Path) row.get("path");
@@ -49,6 +51,6 @@ public class AlgoUtil {
         assertEquals("München", nodes.get(0).getProperty("name"));
         assertEquals("Frankfurt", nodes.get(1).getProperty("name"));
         assertEquals("Hamburg", nodes.get(2).getProperty("name"));
-        assertEquals(false, r.hasNext());
+        assertFalse(r.hasNext());
     }
 }

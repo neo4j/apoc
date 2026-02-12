@@ -51,8 +51,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import junit.framework.TestCase;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -497,12 +495,6 @@ class ImportJsonTest {
             assertEquals(33.46789D, props.get("place.longitude"));
             assertFalse(props.containsKey("place"));
         }
-    }
-
-    private void assertRootMessage(String expectedMsg, Exception e) {
-        Throwable except = ExceptionUtils.getRootCause(e);
-        TestCase.assertTrue(except instanceof RuntimeException);
-        assertEquals(expectedMsg, except.getMessage());
     }
 
     private void createConstraints(List<String> labels, String customId) {

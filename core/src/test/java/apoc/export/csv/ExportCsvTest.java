@@ -31,13 +31,13 @@ import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.Util.INVALID_QUERY_MODE_ERROR;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static junit.framework.TestCase.assertTrue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.HelperProcedures;
 import apoc.csv.CsvTestUtil;
@@ -1130,7 +1130,7 @@ class ExportCsvTest {
         String fileName = "query.csv";
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         testCall(db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(5)")); // Should get statement
             assertEquals(fileName, r.get("file"));
             assertEquals("csv", r.get("format"));
         });
@@ -1146,8 +1146,7 @@ class ExportCsvTest {
                 "CALL apoc.export.csv.query($query,$file,{quotes: false})",
                 map("file", fileName, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(5)")); // Should get statement
                     assertEquals(fileName, r.get("file"));
                     assertEquals("csv", r.get("format"));
                 });
@@ -1183,7 +1182,7 @@ class ExportCsvTest {
         String fileName = "query_nodes.csv";
         String query = "MATCH (u:User) return u";
         testCall(db, "CALL apoc.export.csv.query($query,$file,null)", map("file", fileName, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(fileName, r.get("file"));
             assertEquals("csv", r.get("format"));
         });
@@ -1199,8 +1198,7 @@ class ExportCsvTest {
                 "CALL apoc.export.csv.query($query,$file,{params:{age:10}})",
                 map("file", fileName, "query", query),
                 (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(fileName, r.get("file"));
                     assertEquals("csv", r.get("format"));
                 });
@@ -1234,7 +1232,7 @@ class ExportCsvTest {
     private void assertCsvCommon(String fileName, Map<String, Object> r) {
         assertEquals(fileName, r.get("file"));
         assertEquals("csv", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 
     @Test
@@ -1261,9 +1259,9 @@ class ExportCsvTest {
             assertEquals(2L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(6L, r.get("properties"));
-            assertNull("Should get file", r.get("file"));
+            assertNull(r.get("file")); // Should get file
             assertEquals("csv", r.get("format"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1272,7 +1270,7 @@ class ExportCsvTest {
             assertEquals(4L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(10L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1281,7 +1279,7 @@ class ExportCsvTest {
             assertEquals(6L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(12L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1290,7 +1288,7 @@ class ExportCsvTest {
             assertEquals(8L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(16L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1299,7 +1297,7 @@ class ExportCsvTest {
             assertEquals(10L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(19L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1308,7 +1306,7 @@ class ExportCsvTest {
             assertEquals(12L, r.get("rows"));
             assertEquals(2L, r.get("relationships"));
             assertEquals(19L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1317,7 +1315,7 @@ class ExportCsvTest {
             assertEquals(13L, r.get("rows"));
             assertEquals(3L, r.get("relationships"));
             assertEquals(22L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(getDecompressedData(algo, r.get("data")));
             res.close();
         });
@@ -1358,9 +1356,9 @@ class ExportCsvTest {
             assertEquals(2L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(10L, r.get("properties"));
-            assertNull("Should get file", r.get("file"));
+            assertNull(r.get("file")); // Should get file
             assertEquals("csv", r.get("format"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(r.get("data"));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1369,7 +1367,7 @@ class ExportCsvTest {
             assertEquals(3L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(15L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(r.get("data"));
         };
     }
@@ -1466,9 +1464,9 @@ class ExportCsvTest {
             assertEquals(2L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(8L, r.get("properties"));
-            assertNull("Should get file", r.get("file"));
+            assertNull(r.get("file")); // Should get file
             assertEquals("csv", r.get("format"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(r.get("data"));
             r = res.next();
             assertEquals(2L, r.get("batchSize"));
@@ -1477,7 +1475,7 @@ class ExportCsvTest {
             assertEquals(3L, r.get("rows"));
             assertEquals(0L, r.get("relationships"));
             assertEquals(12L, r.get("properties"));
-            assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+            assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
             sb.append(r.get("data"));
         };
     }

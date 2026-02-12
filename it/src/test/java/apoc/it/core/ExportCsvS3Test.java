@@ -22,7 +22,8 @@ import static apoc.ApocConfig.APOC_EXPORT_FILE_ENABLED;
 import static apoc.ApocConfig.apocConfig;
 import static apoc.util.MapUtil.map;
 import static apoc.util.s3.S3TestUtil.assertStringFileEquals;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.export.csv.ExportCSV;
 import apoc.graph.Graphs;
@@ -188,7 +189,7 @@ class ExportCsvS3Test extends S3BaseTest {
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         TestUtil.testCall(db, "CALL apoc.export.csv.query($query,$s3,null)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(5)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("csv", r.get("format"));
         });
@@ -202,8 +203,7 @@ class ExportCsvS3Test extends S3BaseTest {
         String query = "MATCH (u:User) return u.age, u.name, u.male, u.kids, labels(u)";
         TestUtil.testCall(
                 db, "CALL apoc.export.csv.query($query,$s3,{quotes: false})", map("s3", s3Url, "query", query), (r) -> {
-                    assertTrue(
-                            "Should get statement", r.get("source").toString().contains("statement: cols(5)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(5)")); // Should get statement
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("csv", r.get("format"));
                 });
@@ -216,7 +216,7 @@ class ExportCsvS3Test extends S3BaseTest {
         String s3Url = s3Container.getUrl(fileName);
         String query = "MATCH (u:User) return u";
         TestUtil.testCall(db, "CALL apoc.export.csv.query($query,$s3,null)", map("s3", s3Url, "query", query), (r) -> {
-            assertTrue("Should get statement", r.get("source").toString().contains("statement: cols(1)"));
+            assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
             assertEquals(s3Url, r.get("file"));
             assertEquals("csv", r.get("format"));
         });
@@ -233,7 +233,7 @@ class ExportCsvS3Test extends S3BaseTest {
                 "CALL apoc.export.csv.query($query,$s3,{params:{age:10}})",
                 map("s3", s3Url, "query", query),
                 (r) -> {
-                    assertTrue("Should s3 statement", r.get("source").toString().contains("statement: cols(1)"));
+                    assertTrue(r.get("source").toString().contains("statement: cols(1)")); // Should get statement
                     assertEquals(s3Url, r.get("file"));
                     assertEquals("csv", r.get("format"));
                 });
@@ -247,6 +247,6 @@ class ExportCsvS3Test extends S3BaseTest {
         assertEquals(source + ": nodes(6), rels(2)", r.get("source"));
         assertEquals(fileName, r.get("file"));
         assertEquals("csv", r.get("format"));
-        assertTrue("Should get time greater than 0", ((long) r.get("time")) >= 0);
+        assertTrue(((long) r.get("time")) >= 0); // Should get time greater than 0
     }
 }
