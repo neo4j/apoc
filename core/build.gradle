@@ -92,6 +92,7 @@ dependencies {
   // These dependencies affect the tests only, they will not be packaged in the resulting .jar
   testImplementation project(":common").sourceSets.test.output
   testImplementation project(':test-utils')
+  testImplementation platform("org.neo4j:arrow-bom:$neo4jVersionEffective")
   testImplementation "com.neo4j:enterprise-it-test-support:$neo4jVersionEffective"
   compileOnly group: 'com.google.guava', name: 'guava', version: guavaVersion
   testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
