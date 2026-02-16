@@ -21,62 +21,75 @@ package apoc.util.s3;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
 import apoc.util.Util;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.io.File;
+import java.net.URI;
 import org.testcontainers.containers.localstack.LocalStackContainer;
 import org.testcontainers.utility.DockerImageName;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 public class S3Container implements AutoCloseable {
     private static final String S3_BUCKET_NAME = "test-bucket";
     private final LocalStackContainer localstack;
-    private final AmazonS3 s3;
+    private final S3Client s3;
 
     public S3Container() {
         localstack = new LocalStackContainer(DockerImageName.parse("localstack/localstack:1.2.0")).withServices(S3);
         localstack.addExposedPorts(4566);
         localstack.start();
 
-        s3 = AmazonS3ClientBuilder.standard()
-                .withEndpointConfiguration(getEndpointConfiguration())
-                .withCredentials(getCredentialsProvider())
+        s3 = S3Client.builder()
+                .endpointOverride(localstack.getEndpoint())
+                .region(Region.of(localstack.getRegion()))
+                .credentialsProvider(getCredentialsProvider())
+                .forcePathStyle(true)
                 .build();
-        s3.createBucket(S3_BUCKET_NAME);
+        s3.createBucket(CreateBucketRequest.builder().bucket(S3_BUCKET_NAME).build());
     }
 
     public void close() {
         Util.close(localstack);
     }
 
-    public AwsClientBuilder.EndpointConfiguration getEndpointConfiguration() {
-        return new AwsClientBuilder.EndpointConfiguration(
-                localstack.getEndpoint().toString(), localstack.getRegion());
+    public URI getEndpoint() {
+        return localstack.getEndpoint();
     }
 
-    public AWSCredentialsProvider getCredentialsProvider() {
-        return new AWSStaticCredentialsProvider(
-                new BasicAWSCredentials(localstack.getAccessKey(), localstack.getSecretKey()));
+    public String getRegion() {
+        return localstack.getRegion();
+    }
+
+    public StaticCredentialsProvider getCredentialsProvider() {
+        return StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(localstack.getAccessKey(), localstack.getSecretKey()));
     }
 
     public String getUrl(String key) {
+        AwsCredentials credentials = getCredentialsProvider().resolveCredentials();
         return String.format(
                 "s3://%s.%s/%s/%s?accessKey=%s&secretKey=%s",
-                getEndpointConfiguration().getSigningRegion(),
-                getEndpointConfiguration().getServiceEndpoint().replace("http://", ""),
+                getRegion(),
+                getEndpoint().toString().replace("http://", ""),
                 S3_BUCKET_NAME,
                 key,
-                getCredentialsProvider().getCredentials().getAWSAccessKeyId(),
-                getCredentialsProvider().getCredentials().getAWSSecretKey());
+                credentials.accessKeyId(),
+                credentials.secretAccessKey());
     }
 
     @SuppressWarnings("unused") // used from extended
     public String putFile(String fileName) {
         final File file = new File(fileName);
-        s3.putObject(S3_BUCKET_NAME, file.getName(), file);
+        s3.putObject(
+                PutObjectRequest.builder()
+                        .bucket(S3_BUCKET_NAME)
+                        .key(file.getName())
+                        .build(),
+                file.toPath());
         return getUrl(file.getName());
     }
 }

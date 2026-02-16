@@ -21,68 +21,88 @@ package apoc.util.s3;
 import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 
 import apoc.util.StreamConnection;
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.BasicSessionCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Objects;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
 public class S3Aws {
 
-    AmazonS3 s3Client;
+    S3Client s3Client;
 
     public S3Aws(S3Params s3Params, String region) {
 
-        AWSCredentialsProvider credentialsProvider =
+        AwsCredentialsProvider credentialsProvider =
                 getCredentialsProvider(s3Params.getAccessKey(), s3Params.getSecretKey(), s3Params.getSessionToken());
 
-        AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard();
-        builder.withCredentials(credentialsProvider)
-                .withClientConfiguration(S3URLConnection.buildClientConfig())
-                .withPathStyleAccessEnabled(true);
+        S3ClientBuilder builder = S3Client.builder();
+        builder.credentialsProvider(credentialsProvider)
+                .overrideConfiguration(S3URLConnection.buildClientOverrideConfig())
+                .forcePathStyle(true)
+                .serviceConfiguration(S3Configuration.builder()
+                        .chunkedEncodingEnabled(false)
+                        .checksumValidationEnabled(false)
+                        .build());
 
         region = Objects.nonNull(region) ? region : s3Params.getRegion();
         String endpoint = s3Params.getEndpoint();
         if (Objects.nonNull(endpoint)) {
-            builder.withEndpointConfiguration(
-                    new AwsClientBuilder.EndpointConfiguration(s3Params.getEndpoint(), region));
+            URI endpointUri;
+            if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
+                String protocol = S3URLConnection.getConfiguredProtocol();
+                endpointUri = URI.create(protocol + "://" + endpoint);
+            } else {
+                endpointUri = URI.create(endpoint);
+            }
+            builder.endpointOverride(endpointUri);
+            if (region != null) {
+                builder.region(Region.of(region));
+            }
         } else if (Objects.nonNull(region)) {
-            builder.withRegion(region);
+            builder.region(Region.of(region));
         }
 
         s3Client = builder.build();
     }
 
-    public AmazonS3 getClient() {
+    public S3Client getClient() {
         return s3Client;
     }
 
     public StreamConnection getS3AwsInputStream(S3Params s3Params) {
 
-        S3Object s3Object = s3Client.getObject(s3Params.getBucket(), s3Params.getKey());
-        ObjectMetadata metadata = s3Object.getObjectMetadata();
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(s3Params.getBucket())
+                .key(s3Params.getKey())
+                .build();
+        ResponseInputStream<GetObjectResponse> response = s3Client.getObject(getObjectRequest);
+        GetObjectResponse metadata = response.response();
         return new StreamConnection() {
             @Override
             public InputStream getInputStream() {
-                return toLimitedIStream(s3Object.getObjectContent(), getLength());
+                return toLimitedIStream(response, getLength());
             }
 
             @Override
             public String getEncoding() {
-                return metadata.getContentEncoding();
+                return metadata.contentEncoding();
             }
 
             @Override
             public long getLength() {
-                return metadata.getContentLength();
+                return metadata.contentLength();
             }
 
             @Override
@@ -92,18 +112,18 @@ public class S3Aws {
         };
     }
 
-    private static AWSCredentialsProvider getCredentialsProvider(
+    private static AwsCredentialsProvider getCredentialsProvider(
             final String accessKey, final String secretKey, final String sessionToken) {
 
         if (Objects.nonNull(accessKey) && !accessKey.isEmpty() && Objects.nonNull(secretKey) && !secretKey.isEmpty()) {
-            final AWSCredentials credentials;
+            final AwsCredentials credentials;
             if (Objects.isNull(sessionToken) || sessionToken.isEmpty()) {
-                credentials = new BasicAWSCredentials(accessKey, secretKey);
+                credentials = AwsBasicCredentials.create(accessKey, secretKey);
             } else {
-                credentials = new BasicSessionCredentials(accessKey, secretKey, sessionToken);
+                credentials = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
             }
-            return new AWSStaticCredentialsProvider(credentials);
+            return StaticCredentialsProvider.create(credentials);
         }
-        return new DefaultAWSCredentialsProviderChain();
+        return DefaultCredentialsProvider.create();
     }
 }

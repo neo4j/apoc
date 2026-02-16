@@ -12,6 +12,7 @@ ext {
   testContainersVersion = '2.0.2'
   apacheArrowVersion = '18.3.0'
   guavaVersion = '33.5.0-jre'
+  awsSdkVersion = '2.34.0'
 }
 
 downloadLicenses {

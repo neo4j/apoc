@@ -18,22 +18,16 @@
  */
 package apoc.util.s3;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CompleteMultipartUploadRequest;
-import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
-import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
-import com.amazonaws.services.s3.model.PartETag;
-import com.amazonaws.services.s3.model.UploadPartRequest;
-import com.amazonaws.services.s3.model.UploadPartResult;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,6 +37,15 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.Nonnull;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
 public class S3OutputStream extends OutputStream {
     private volatile boolean isDone = false;
@@ -59,13 +62,13 @@ public class S3OutputStream extends OutputStream {
 
     // Extra constructor to allow user to overwrite maxWaitTimeMinutes.
     S3OutputStream(
-            @Nonnull AmazonS3 s3Client, @Nonnull String bucketName, @Nonnull String keyName, int maxWaitTimeMinutes)
+            @Nonnull S3Client s3Client, @Nonnull String bucketName, @Nonnull String keyName, int maxWaitTimeMinutes)
             throws IOException {
         this(s3Client, bucketName, keyName);
         this.maxWaitTimeMinutes = maxWaitTimeMinutes;
     }
 
-    S3OutputStream(@Nonnull AmazonS3 s3Client, @Nonnull String bucketName, @Nonnull String keyName) throws IOException {
+    S3OutputStream(@Nonnull S3Client s3Client, @Nonnull String bucketName, @Nonnull String keyName) throws IOException {
         if (bucketName.isEmpty() || keyName.isEmpty()) {
             throw new InvalidParameterException("Bucket and/or key pass to S3OutputStream is empty.");
         }
@@ -181,10 +184,10 @@ public class S3OutputStream extends OutputStream {
             synchronized (managerFuture) {
                 managerFuture.get();
             }
-        } catch (InterruptedException | ExecutionException e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
+        } catch (ExecutionException e) {
+            throw new RuntimeException("S3 multipart upload failed", e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -213,11 +216,10 @@ public class S3OutputStream extends OutputStream {
     }
 
     public class S3UploadManager implements Runnable {
-        private final AmazonS3 s3Client;
+        private final S3Client s3Client;
         private final String uploadId;
         private final BlockingQueue<S3UploadData> queue;
-        private final List<PartETag> partETags = new ArrayList<>();
-        private final InitiateMultipartUploadResult initResponse;
+        private final List<CompletedPart> completedParts = new CopyOnWriteArrayList<>();
         private final ExecutorService executorService = Executors.newFixedThreadPool(
                 S3UploadConstants.MAX_THREAD_COUNT,
                 new ThreadFactoryBuilder()
@@ -225,11 +227,15 @@ public class S3OutputStream extends OutputStream {
                         .setDaemon(true)
                         .build());
 
-        S3UploadManager(@Nonnull final AmazonS3 s3Client, @Nonnull final BlockingQueue<S3UploadData> queue) {
+        S3UploadManager(@Nonnull final S3Client s3Client, @Nonnull final BlockingQueue<S3UploadData> queue) {
             this.s3Client = s3Client;
             this.queue = queue;
-            initResponse = s3Client.initiateMultipartUpload(new InitiateMultipartUploadRequest(bucketName, keyName));
-            uploadId = initResponse.getUploadId();
+            CreateMultipartUploadResponse initResponse =
+                    s3Client.createMultipartUpload(CreateMultipartUploadRequest.builder()
+                            .bucket(bucketName)
+                            .key(keyName)
+                            .build());
+            uploadId = initResponse.uploadId();
         }
 
         @Override
@@ -254,8 +260,17 @@ public class S3OutputStream extends OutputStream {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-            s3Client.completeMultipartUpload(
-                    new CompleteMultipartUploadRequest(bucketName, keyName, initResponse.getUploadId(), partETags));
+            List<CompletedPart> sortedParts = completedParts.stream()
+                    .sorted(Comparator.comparingInt(CompletedPart::partNumber))
+                    .toList();
+            s3Client.completeMultipartUpload(CompleteMultipartUploadRequest.builder()
+                    .bucket(bucketName)
+                    .key(keyName)
+                    .uploadId(uploadId)
+                    .multipartUpload(CompletedMultipartUpload.builder()
+                            .parts(sortedParts)
+                            .build())
+                    .build());
         }
 
         public class Uploader implements Runnable {
@@ -269,17 +284,20 @@ public class S3OutputStream extends OutputStream {
 
             @Override
             public void run() {
-                // Upload the part and add the part to the tags.
-                final UploadPartRequest uploadPartRequest = new UploadPartRequest()
-                        .withBucketName(bucketName)
-                        .withKey(keyName)
-                        .withUploadId(uploadId)
-                        .withPartNumber(partNumber)
-                        .withInputStream(s3UploadData.getStream())
-                        .withPartSize(s3UploadData.getSize())
-                        .withLastPart(s3UploadData.getIsLast());
-                final UploadPartResult result = s3Client.uploadPart(uploadPartRequest);
-                partETags.add(result.getPartETag());
+                UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
+                        .bucket(bucketName)
+                        .key(keyName)
+                        .uploadId(uploadId)
+                        .partNumber(partNumber)
+                        .contentLength((long) s3UploadData.getSize())
+                        .build();
+                UploadPartResponse result = s3Client.uploadPart(
+                        uploadPartRequest,
+                        RequestBody.fromInputStream(s3UploadData.getStream(), s3UploadData.getSize()));
+                completedParts.add(CompletedPart.builder()
+                        .partNumber(partNumber)
+                        .eTag(result.eTag())
+                        .build());
 
                 // Notify main thread that memory that was given is no longer in use.
                 synchronized (totalMemoryLock) {
