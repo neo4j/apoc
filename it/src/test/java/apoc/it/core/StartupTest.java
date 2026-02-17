@@ -192,8 +192,12 @@ class StartupTest {
                                 "CYPHER 5 CALL apoc.help('') YIELD core, type, name WHERE core = true and type = 'procedure' RETURN name")
                         .list(record -> record.get("name").asString());
 
-                assertEquals(sorted(ApocSignatures.PROCEDURES_CYPHER_5), procedureNames);
-                assertEquals(sorted(ApocSignatures.FUNCTIONS_CYPHER_5), functionNames);
+                assertEquals(
+                        filterOptionalSignatures(sorted(ApocSignatures.PROCEDURES_CYPHER_5)),
+                        filterOptionalSignatures(procedureNames));
+                assertEquals(
+                        filterOptionalSignatures(sorted(ApocSignatures.FUNCTIONS_CYPHER_5)),
+                        filterOptionalSignatures(functionNames));
             }
 
             neo4jContainer.close();
@@ -287,5 +291,14 @@ class StartupTest {
 
     private List<String> sorted(List<String> signatures) {
         return signatures.stream().sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * Filters out procedures/functions that depend on optional (compileOnly) runtime dependencies
+     * such as Apache Arrow, which may or may not be available in the Neo4j container at runtime.
+     * By filtering both expected and actual lists, the comparison is stable regardless of the environment.
+     */
+    private List<String> filterOptionalSignatures(List<String> signatures) {
+        return signatures.stream().filter(name -> !name.contains(".arrow")).collect(Collectors.toList());
     }
 }
