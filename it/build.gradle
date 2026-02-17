@@ -9,7 +9,7 @@ dependencies {
 
   testImplementation platform("io.grpc:grpc-bom:1.78.0")
   testImplementation "com.neo4j:enterprise-it-test-support:$neo4jVersionEffective"
-  testImplementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.643'
+  testImplementation group: 'software.amazon.awssdk', name: 's3', version: awsSdkVersion
   testImplementation group: 'org.xmlunit', name: 'xmlunit-core', version: '2.11.0'
   testImplementation("net.javacrumbs.json-unit:json-unit-assertj:5.1.0")
 

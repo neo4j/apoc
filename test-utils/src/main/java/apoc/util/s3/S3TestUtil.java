@@ -20,16 +20,18 @@ package apoc.util.s3;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.S3Object;
-import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import com.amazonaws.util.IOUtils;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import org.neo4j.test.assertion.Assert;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
 /**
  * Utility class for testing Amazon S3 related functionality.
@@ -41,22 +43,25 @@ public class S3TestUtil {
      * @param s3Url String containing url to S3 bucket.
      * @return the s3 string object
      */
-    public static String readS3FileToString(String s3Url) throws AmazonClientException {
+    public static String readS3FileToString(String s3Url) throws SdkException {
         try {
-            S3Object s3object = getS3Object(s3Url);
-            S3ObjectInputStream inputStream = s3object.getObjectContent();
-            return IOUtils.toString(inputStream);
+            ResponseInputStream<GetObjectResponse> response = getS3Object(s3Url);
+            return new String(response.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static S3Object getS3Object(String s3Url) throws MalformedURLException, AmazonClientException {
+    public static ResponseInputStream<GetObjectResponse> getS3Object(String s3Url)
+            throws MalformedURLException, SdkException {
         S3Params s3Params = S3ParamsExtractor.extract(new URL(s3Url));
         S3Aws s3Aws = new S3Aws(s3Params, s3Params.getRegion());
-        AmazonS3 s3Client = s3Aws.getClient();
+        S3Client s3Client = s3Aws.getClient();
 
-        return s3Client.getObject(s3Params.getBucket(), s3Params.getKey());
+        return s3Client.getObject(GetObjectRequest.builder()
+                .bucket(s3Params.getBucket())
+                .key(s3Params.getKey())
+                .build());
     }
 
     public static void assertStringFileEquals(String expected, String s3Url) {
@@ -72,11 +77,8 @@ public class S3TestUtil {
                     try {
                         runnable.run();
                         return true;
-                    } catch (AmazonClientException e) {
-                        if (e.getMessage().contains("The specified key does not exist")) {
-                            return false;
-                        }
-                        throw e;
+                    } catch (NoSuchKeyException e) {
+                        return false;
                     }
                 },
                 v -> v,

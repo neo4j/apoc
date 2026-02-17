@@ -19,11 +19,11 @@
 package apoc.util.s3;
 
 import apoc.util.Util;
-import com.amazonaws.regions.Regions;
 import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 import java.util.Objects;
+import software.amazon.awssdk.regions.Region;
 
 public class S3ParamsExtractor {
 
@@ -101,9 +101,9 @@ public class S3ParamsExtractor {
         if (Objects.nonNull(endpoint)) {
 
             // Look for endpoint contains region
-            for (Regions r : Regions.values()) {
-                if (endpoint.toLowerCase().contains(r.getName().toLowerCase())) {
-                    region = r.getName().toLowerCase();
+            for (Region r : Region.regions()) {
+                if (endpoint.toLowerCase().contains(r.id().toLowerCase())) {
+                    region = r.id().toLowerCase();
                     break;
                 }
             }
