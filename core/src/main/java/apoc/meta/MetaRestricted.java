@@ -32,7 +32,6 @@ import apoc.util.CollectionUtils;
 import apoc.util.MapUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
-import com.google.common.collect.Sets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -488,7 +487,8 @@ public class MetaRestricted {
 
         Map<String, Object> relationships = collectRelationshipsMetaData(metaStats, metaData);
         Map<String, Object> nodes = collectNodesMetaData(metaStats, metaData, relationships);
-        final Collection<String> commonKeys = Sets.intersection(nodes.keySet(), relationships.keySet());
+        final Set<String> commonKeys = new HashSet<>(nodes.keySet());
+        commonKeys.retainAll(relationships.keySet());
         if (!commonKeys.isEmpty()) {
             relationships = relationships.entrySet().stream()
                     .map(e -> {
