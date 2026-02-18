@@ -105,6 +105,7 @@ dependencies {
   configurations.all {
     exclude group: 'org.slf4j', module: 'slf4j-nop'
     exclude group: 'ch.qos.logback', module: 'logback-classic'
+    exclude group: 'io.airlift', module: 'aircompressor' // CVE-2025-67721 - no fix available, unreachable
   }
 }
 
