@@ -94,6 +94,18 @@ subprojects {
     implementation(platform('io.netty:netty-bom:4.2.9.Final'))
 
     testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+
+    constraints {
+      implementation('com.nimbusds:nimbus-jose-jwt:9.37.4') {
+        because 'CVE-2025-53864'
+      }
+      implementation('org.apache.avro:avro:1.11.5') {
+        because 'CVE-2025-33042'
+      }
+      implementation('com.google.guava:guava:33.5.0-jre') {
+        because 'CVE-2020-8908, CVE-2023-2976'
+      }
+    }
   }
 
   java {

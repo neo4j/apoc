@@ -54,6 +54,11 @@ dependencies {
   implementation('tools.jackson.dataformat:jackson-dataformat-csv:3.0.3')
 }
 
+configurations.configureEach {
+  exclude group: 'io.airlift', module: 'aircompressor' // CVE-2025-67721 - no fix available, unreachable
+  exclude group: 'commons-lang', module: 'commons-lang' // CVE-2025-48924 - no fix for v2, use commons-lang3
+  exclude group: 'org.jsonschema2pojo', module: 'jsonschema2pojo-core' // CVE-2025-3588 - no fix available
+}
 
 publishing {
   repositories {
