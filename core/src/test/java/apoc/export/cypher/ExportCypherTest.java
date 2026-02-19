@@ -1676,7 +1676,7 @@ public class ExportCypherTest {
 
     private void check2886UpdateNodeStructure(
             String line1, String line2, String line3, String line4, String createOrMerge, String setCommand) {
-        assertTrue(regexMatch("UNWIND [{_id:\\d, properties:{}}, {_id:\\d, properties:{}}] AS row", line1));
+        assertTrue(regexMatch("UNWIND [{_id:\\d+, properties:{}}, {_id:\\d+, properties:{}}] AS row", line1));
         assertEquals(
                 String.format(
                         "%s (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row._id}) %s n += row.properties SET n:Project;",
@@ -1684,10 +1684,10 @@ public class ExportCypherTest {
                 line2);
 
         assertTrue(regexMatch(
-                        "UNWIND [{_id:\\d, properties:{name:\"First\"}}, {_id:\\d, properties:{name:\"Second\"}}] AS row",
+                        "UNWIND [{_id:\\d+, properties:{name:\"First\"}}, {_id:\\d+, properties:{name:\"Second\"}}] AS row",
                         line3)
                 || regexMatch(
-                        "UNWIND [{_id:\\d, properties:{name:\"Second\"}}, {_id:\\d, properties:{name:\"First\"}}] AS row",
+                        "UNWIND [{_id:\\d+, properties:{name:\"Second\"}}, {_id:\\d+, properties:{name:\"First\"}}] AS row",
                         line3));
         assertEquals(
                 String.format(
@@ -1701,33 +1701,35 @@ public class ExportCypherTest {
         switch (cypherFormat) {
             case "create" -> {
                 assertTrue(regexMatch(
-                        "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"First\", `UNIQUE IMPORT ID`:\\d});", line1));
-                assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line2));
+                        "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"First\", `UNIQUE IMPORT ID`:\\d+});", line1));
+                assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d+});", line2));
                 assertTrue(regexMatch(
-                        "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"Second\", `UNIQUE IMPORT ID`:\\d});", line3));
-                assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d});", line4));
+                        "CREATE (:Person:`UNIQUE IMPORT LABEL` {name:\"Second\", `UNIQUE IMPORT ID`:\\d+});", line3));
+                assertTrue(regexMatch("CREATE (:Project:`UNIQUE IMPORT LABEL` {`UNIQUE IMPORT ID`:\\d+});", line4));
             }
             case "updateAll" -> {
                 assertTrue(regexMatch(
-                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"First\", n:Person;",
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) SET n.name=\"First\", n:Person;",
                         line1));
-                assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line2));
+                assertTrue(
+                        regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) SET n:Project;", line2));
                 assertTrue(regexMatch(
-                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n.name=\"Second\", n:Person;",
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) SET n.name=\"Second\", n:Person;",
                         line3));
-                assertTrue(regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) SET n:Project;", line4));
+                assertTrue(
+                        regexMatch("MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) SET n:Project;", line4));
             }
             case "addStructure" -> {
                 assertTrue(regexMatch(
-                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"First\", n:Person;",
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) ON CREATE SET n.name=\"First\", n:Person;",
                         line1));
                 assertTrue(regexMatch(
-                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line2));
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) ON CREATE SET n:Project;", line2));
                 assertTrue(regexMatch(
-                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n.name=\"Second\", n:Person;",
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) ON CREATE SET n.name=\"Second\", n:Person;",
                         line3));
                 assertTrue(regexMatch(
-                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) ON CREATE SET n:Project;", line4));
+                        "MERGE (n:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) ON CREATE SET n:Project;", line4));
             }
             default -> fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
@@ -1736,10 +1738,10 @@ public class ExportCypherTest {
     private void check2886UpdateRelStructure(
             String line1, String line2, String line3, String line4, String createOrMerge) {
         assertTrue(regexMatch(
-                        "UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}] AS row",
+                        "UNWIND [{start: {_id:\\d+}, end: {_id:\\d+}, properties:{id:1}}, {start: {_id:\\d+}, end: {_id:\\d+}, properties:{id:2}}] AS row",
                         line1)
                 || regexMatch(
-                        "UNWIND [{start: {_id:\\d}, end: {_id:\\d}, properties:{id:2}}, {start: {_id:\\d}, end: {_id:\\d}, properties:{id:1}}] AS row",
+                        "UNWIND [{start: {_id:\\d+}, end: {_id:\\d+}, properties:{id:2}}, {start: {_id:\\d+}, end: {_id:\\d+}, properties:{id:1}}] AS row",
                         line1));
 
         assertEquals("MATCH (start:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`: row.start._id})", line2);
@@ -1755,26 +1757,26 @@ public class ExportCypherTest {
         switch (cypherFormat) {
             case "create", "addStructure" -> {
                 assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);",
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) CREATE (n1)-[r:WORKS_FOR {id:1}]->(n2);",
                         line1));
                 assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);",
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) CREATE (n1)-[r:WORKS_FOR {id:2}]->(n2);",
                         line2));
             }
             case "updateAll" -> {
                 assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=1;",
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=1;",
                         line1));
                 assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=2;",
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) SET r.id=2;",
                         line2));
             }
             case "updateStructure" -> {
                 assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;",
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;",
                         line1));
                 assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
                         line2));
             }
             default -> fail(String.format("Unexpected cypher format %s", cypherFormat));
@@ -1817,6 +1819,7 @@ public class ExportCypherTest {
     private boolean regexMatch(String regex, String actual) {
         Pattern SPECIAL_REGEX_CHARS = Pattern.compile("[^A-Za-z0-9\\\\d\\n\\r\\s]");
         String escapedRegex = SPECIAL_REGEX_CHARS.matcher(regex).replaceAll("\\\\$0");
+        escapedRegex = escapedRegex.replace("\\d\\+", "\\d+");
         Pattern pattern = Pattern.compile(escapedRegex);
         Matcher matcher = pattern.matcher(actual);
         return matcher.matches();
