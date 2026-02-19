@@ -44,6 +44,10 @@ dependencies {
   testImplementation 'org.mockito:mockito-core:5.21.0'
 }
 
+configurations.configureEach {
+  exclude group: 'io.airlift', module: 'aircompressor' // CVE-2025-67721 - no fix available, unreachable
+}
+
 publishing {
   repositories {
     maven {
