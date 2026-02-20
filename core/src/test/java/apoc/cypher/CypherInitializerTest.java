@@ -190,6 +190,16 @@ class CypherInitializerTest {
             expectNodeCount(1);
         }
 
+        @Test
+        void singleInitializerIsAppliedOnEachRestart() {
+            dbms.shutdownDatabase(db.databaseName());
+            dbms.startDatabase(db.databaseName());
+            db = dbms.database(DEFAULT_DATABASE_NAME);
+
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            expectNodeCount(2);
+        }
+
         private void expectNodeCount(long i) {
             assertEquals(i, TestUtil.count(db, "match (n) return n"));
         }
