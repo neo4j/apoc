@@ -118,24 +118,34 @@ public class CypherInitializer implements AvailabilityListener {
                             }
                             // Create a uniqueness constraint on system db to avoid race conditions when installing
                             // triggers
-                            try (InternalTransaction tx = db.beginTransaction()) {
-                                // Only try to add constraint if the db is writable (i.e. we are on the cluster leader)
-                                if (tx.securityContext().mode().allowsSchemaWrites()) {
-                                    var constraintName = "triggerConstraint";
-                                    var maybeConstraint = StreamSupport.stream(
-                                                    tx.schema()
-                                                            .getConstraints(SystemLabels.ApocTriggerMeta)
-                                                            .spliterator(),
-                                                    false)
-                                            .filter(x -> x.getName().equals(constraintName))
-                                            .toList();
-                                    if (maybeConstraint.isEmpty()) {
-                                        tx.schema()
-                                                .constraintFor(SystemLabels.ApocTriggerMeta)
-                                                .withName(constraintName)
-                                                .assertPropertyIsUnique(SystemPropertyKeys.database.name())
-                                                .create();
-                                        tx.commit();
+                            // Retry 3 times on each cluster member to decrease the likelihood of there being no leader
+                            int counter = 0;
+                            boolean constraintCreated = false;
+
+                            while (counter < 3 && !constraintCreated) {
+                                try (InternalTransaction tx = db.beginTransaction()) {
+                                    counter++;
+
+                                    // Only try to add constraint if the db is writable (i.e. we are on the cluster
+                                    // leader)
+                                    if (tx.securityContext().mode().allowsSchemaWrites()) {
+                                        var constraintName = "triggerConstraint";
+                                        var maybeConstraint = StreamSupport.stream(
+                                                        tx.schema()
+                                                                .getConstraints(SystemLabels.ApocTriggerMeta)
+                                                                .spliterator(),
+                                                        false)
+                                                .filter(x -> x.getName().equals(constraintName))
+                                                .toList();
+                                        if (maybeConstraint.isEmpty()) {
+                                            tx.schema()
+                                                    .constraintFor(SystemLabels.ApocTriggerMeta)
+                                                    .withName(constraintName)
+                                                    .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                                    .create();
+                                            tx.commit();
+                                            constraintCreated = true;
+                                        }
                                     }
                                 }
                             }
