@@ -190,16 +190,6 @@ class CypherInitializerTest {
             expectNodeCount(1);
         }
 
-        @Test
-        void singleInitializerIsAppliedOnEachRestart() {
-            dbms.shutdownDatabase(db.databaseName());
-            dbms.startDatabase(db.databaseName());
-            db = dbms.database(DEFAULT_DATABASE_NAME);
-
-            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
-            expectNodeCount(2);
-        }
-
         private void expectNodeCount(long i) {
             assertEquals(i, TestUtil.count(db, "match (n) return n"));
         }
@@ -217,6 +207,43 @@ class CypherInitializerTest {
                         .toList();
                 assertEquals(1, triggerConstraints.size());
             }
+        }
+    }
+
+    @Nested
+    @ImpermanentEnterpriseDbmsExtension(createDatabasePerTest = false, configurationCallback = "configure")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    class SingleInitializerRestart {
+        @Inject
+        GraphDatabaseService db;
+
+        @Inject
+        DatabaseManagementService dbms;
+
+        @ExtensionCallback
+        void configure(TestDatabaseManagementServiceBuilder builder) {
+            configureAll(builder);
+            System.setProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0", "create()");
+        }
+
+        @BeforeAll
+        void beforeAll() {
+            TestUtil.registerProcedure(db, Utils.class);
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+        }
+
+        @Test
+        void singleInitializerIsAppliedOnEachRestart() {
+            dbms.shutdownDatabase(db.databaseName());
+            dbms.startDatabase(db.databaseName());
+            db = dbms.database(DEFAULT_DATABASE_NAME);
+
+            waitForInitializerBeingFinished((GraphDatabaseAPI) db);
+            expectNodeCount(2);
+        }
+
+        private void expectNodeCount(long i) {
+            assertEquals(i, TestUtil.count(db, "match (n) return n"));
         }
     }
 

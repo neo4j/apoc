@@ -144,8 +144,8 @@ public class CypherInitializer implements AvailabilityListener {
                                                     .assertPropertyIsUnique(SystemPropertyKeys.database.name())
                                                     .create();
                                             tx.commit();
-                                            constraintCreated = true;
                                         }
+                                        constraintCreated = true;
                                     }
                                 }
                             }
