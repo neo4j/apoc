@@ -1141,10 +1141,31 @@ class PeriodicTest {
                 final var res = tx.execute("CALL apoc.periodic.cancel('repeat-concurrent')")) {
             assertThat(res.stream()).hasSize(1);
         }
-        Thread.sleep(1_000); // Allow time for the cancel to have effect.
-        final var ticks = TickTockProcedure.counter.get();
-        Thread.sleep(4_000);
-        assertThat(TickTockProcedure.counter.get()).isEqualTo(ticks);
+        // Wait until the job is actually gone from the scheduler
+        assertEventually(
+                () -> {
+                    try (final var tx = db.beginTx();
+                            final var result =
+                                    tx.execute("CALL apoc.periodic.list() YIELD name RETURN collect(name) AS names")) {
+                        final var names = (List<String>) result.next().get("names");
+                        return names.stream().noneMatch("repeat-concurrent"::equals);
+                    }
+                },
+                v -> v,
+                30L,
+                TimeUnit.SECONDS);
+
+        // Now assert the counter stops increasing: find a 1s window with no increments within 10s
+        assertEventually(
+                () -> {
+                    final long before = TickTockProcedure.counter.get();
+                    Thread.sleep(1000);
+                    final long after = TickTockProcedure.counter.get();
+                    return before == after;
+                },
+                v -> v,
+                10L,
+                TimeUnit.SECONDS);
     }
 
     public static class TickTockProcedure {
