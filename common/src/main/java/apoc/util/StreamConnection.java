@@ -24,6 +24,7 @@ import apoc.export.util.CountingInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
 import java.util.zip.DeflaterInputStream;
@@ -61,7 +62,7 @@ public interface StreamConnection {
         }
     }
 
-    static class UrlStreamConnection implements StreamConnection {
+    class UrlStreamConnection implements StreamConnection {
         private final URLConnection con;
 
         public UrlStreamConnection(URLConnection con) {
@@ -70,6 +71,11 @@ public interface StreamConnection {
 
         @Override
         public InputStream getInputStream() throws IOException {
+            if (con instanceof HttpURLConnection httpConn && httpConn.getResponseCode() >= 400) {
+                // return ErrorStream as a RuntimeException
+                String errMsg = new String(httpConn.getErrorStream().readAllBytes());
+                throw new RuntimeException("Error during HTTP call:\n" + errMsg);
+            }
             return toLimitedIStream(con.getInputStream(), getLength());
         }
 

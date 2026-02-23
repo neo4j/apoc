@@ -28,6 +28,7 @@ import static apoc.util.TestUtil.*;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -43,6 +44,7 @@ import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -619,6 +621,29 @@ class XmlTest {
     }
 
     @Test
+    void testImportXmlFromUrlHttpErrorReturnsHelpfulMessage() {
+        final String errorBody = "{\"message\":\"Something went wrong\"}";
+        server.createContext("/bad-xml", exchange -> {
+            byte[] bytes = errorBody.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(400, bytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+        });
+
+        QueryExecutionException ex = assertThrows(
+                QueryExecutionException.class,
+                () -> db.executeTransactionally(
+                        "CALL apoc.import.xml($url) YIELD node RETURN count(node) AS c",
+                        Map.of("url", "http://localhost:6363/bad-xml")));
+
+        String rootMsg = ExceptionUtils.getRootCauseMessage(ex);
+        assertTrue(rootMsg.contains("Error during HTTP call:"));
+        assertTrue(rootMsg.contains(errorBody));
+    }
+
+    @Test
     void testLoadXmlSingleLineSimple() {
         testCall(
                 db,
@@ -664,8 +689,8 @@ class XmlTest {
                 }));
 
         Throwable except = ExceptionUtils.getRootCause(e);
-        assertTrue(except instanceof RuntimeException);
-        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+        assertInstanceOf(RuntimeException.class, except);
+        assertEquals("XML documents with a DOCTYPE are not allowed.", except.getMessage());
     }
 
     @Test
@@ -679,8 +704,8 @@ class XmlTest {
                         }));
 
         Throwable except = ExceptionUtils.getRootCause(e);
-        assertTrue(except instanceof RuntimeException);
-        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+        assertInstanceOf(RuntimeException.class, except);
+        assertEquals("XML documents with a DOCTYPE are not allowed.", except.getMessage());
     }
 
     @Test
@@ -696,8 +721,8 @@ class XmlTest {
                 }));
 
         Throwable except = ExceptionUtils.getRootCause(e);
-        assertTrue(except instanceof RuntimeException);
-        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+        assertInstanceOf(RuntimeException.class, except);
+        assertEquals("XML documents with a DOCTYPE are not allowed.", except.getMessage());
     }
 
     @Test
@@ -713,8 +738,8 @@ class XmlTest {
                 }));
 
         Throwable except = ExceptionUtils.getRootCause(e);
-        assertTrue(except instanceof RuntimeException);
-        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+        assertInstanceOf(RuntimeException.class, except);
+        assertEquals("XML documents with a DOCTYPE are not allowed.", except.getMessage());
     }
 
     @Test
@@ -727,8 +752,8 @@ class XmlTest {
                 }));
 
         Throwable except = ExceptionUtils.getRootCause(e);
-        assertTrue(except instanceof RuntimeException);
-        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+        assertInstanceOf(RuntimeException.class, except);
+        assertEquals("XML documents with a DOCTYPE are not allowed.", except.getMessage());
     }
 
     @Test
@@ -744,8 +769,8 @@ class XmlTest {
                         }));
 
         Throwable except = ExceptionUtils.getRootCause(e);
-        assertTrue(except instanceof RuntimeException);
-        assertEquals(except.getMessage(), "XML documents with a DOCTYPE are not allowed.");
+        assertInstanceOf(RuntimeException.class, except);
+        assertEquals("XML documents with a DOCTYPE are not allowed.", except.getMessage());
     }
 
     @Test
