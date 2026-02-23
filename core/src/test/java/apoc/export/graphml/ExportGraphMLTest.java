@@ -678,11 +678,15 @@ class ExportGraphMLTest {
         File output = new File(directory, "data.graphml");
         TestUtil.testCall(
                 db,
-                "MATCH (person:Person) \n" + "WHERE person.name STARTS WITH \"F\"\n"
-                        + "WITH collect(person) as people\n"
-                        + "CALL apoc.export.graphml.data(people, [], $file, {})\n"
-                        + "YIELD file, source, format, nodes, relationships, properties, time, rows, batchSize, batches, done, data\n"
-                        + "RETURN *",
+                """
+                        WITH COLLECT {
+                            MATCH (person:Person)
+                            WHERE person.name STARTS WITH "F"
+                            RETURN person ORDER BY person.name
+                        } AS people
+                        CALL apoc.export.graphml.data(people, [], $file, {})
+                        YIELD file, source, format, nodes, relationships, properties, time, rows, batchSize, batches, done, data
+                        RETURN *""",
                 map("file", output.getAbsolutePath()),
                 (r) -> assertEquals(2L, r.get("nodes")));
         assertXMLEquals(output, EXPECTED_DATA);
