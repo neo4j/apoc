@@ -118,12 +118,16 @@ class TriggerTest {
     void testRemoveNode() {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)");
-        db.executeTransactionally(
-                "CALL apoc.trigger.add('count-removals','MATCH (c:Counter) SET c.count = c.count + size([f IN $deletedNodes WHERE id(f) > 0])',{})");
+        final String triggerQuery = "MATCH (c:Counter) SET c.count = c.count + size($deletedNodes)";
+        db.executeTransactionally("CALL apoc.trigger.add('count-removals', $query, {})", map("$query", triggerQuery));
+
+        // Wait for trigger
+        TriggerTestUtil.awaitTriggerDiscovered(db, "count-removals", triggerQuery);
+
         db.executeTransactionally("MATCH (f:Foo) DELETE f");
-        TestUtil.testCall(db, "MATCH (c:Counter) RETURN c.count as count", (row) -> {
-            assertEquals(1L, row.get("count"));
-        });
+
+        TestUtil.testCallEventually(
+                db, "MATCH (c:Counter) RETURN c.count as count", (row) -> assertEquals(1L, row.get("count")), TIMEOUT);
     }
 
     @Test
