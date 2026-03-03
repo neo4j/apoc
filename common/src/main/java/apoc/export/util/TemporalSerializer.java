@@ -33,6 +33,6 @@ public class TemporalSerializer extends JsonSerializer<TemporalAccessor> {
             jsonGenerator.writeNull();
         } else {
             jsonGenerator.writeString(value.toString());
-        } 
+        }
     }
 }
