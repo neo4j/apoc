@@ -31,7 +31,8 @@ public class TemporalSerializer extends JsonSerializer<TemporalAccessor> {
             throws IOException {
         if (value == null) {
             jsonGenerator.writeNull();
-        }
-        jsonGenerator.writeString(value.toString());
+        } else {
+            jsonGenerator.writeString(value.toString());
+        } 
     }
 }
