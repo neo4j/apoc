@@ -378,5 +378,10 @@
         "sha1": "15627cb248cfe4bb6cecd296532c612d5dfff89f",
         "sha256": "78811a1f6819f6955e5d3a79d0cc94c62a16c62c7c3e10beb73fb6672ea1933b",
         "md5": "3eb0705fcf5b906eeb5005692c9635f7"
+    },
+    "2026.02.2": {
+        "sha1": "71dd29309b461fea995789872c4e5714d8b9f261",
+        "sha256": "8524fc7a401ce4ea97e20dbba10644c23a83b306f37a7f7d74821d2dca5e96b5",
+        "md5": "8b12e1d5d412d7e10fa14cf8fb10bcbd"
     }
 }
