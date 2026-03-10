@@ -51,7 +51,7 @@ dependencies {
   implementation group: 'org.gradle', name: 'gradle-tooling-api', version: '7.3'
   implementation group: 'org.jetbrains', name: 'annotations', version: "17.0.0"
   implementation group: 'software.amazon.awssdk', name: 's3', version: awsSdkVersion
-  implementation('tools.jackson.dataformat:jackson-dataformat-csv:3.0.3')
+  implementation('tools.jackson.dataformat:jackson-dataformat-csv:3.1.0')
 }
 
 configurations.configureEach {
