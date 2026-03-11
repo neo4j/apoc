@@ -106,6 +106,18 @@ subprojects {
       implementation('com.google.guava:guava:33.5.0-jre') {
         because 'CVE-2020-8908, CVE-2023-2976'
       }
+      implementation('org.apache.zookeeper:zookeeper:3.8.6') {
+        because 'CVE-2026-24308'
+      }
+      implementation('com.fasterxml.jackson.core:jackson-core:2.21.1') {
+        because 'GHSA-72hv-8253-57qq'
+      }
+      implementation('tools.jackson.core:jackson-core:2.21.1') {
+        because 'GHSA-72hv-8253-57qq'
+      }
+      implementation('org.eclipse.jetty:jetty-server:12.0.32') {
+        because 'CVE-2026-1605'
+      }
     }
   }
 
