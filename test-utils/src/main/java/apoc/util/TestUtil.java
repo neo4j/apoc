@@ -29,6 +29,8 @@ import apoc.util.collection.Iterables;
 import apoc.util.collection.Iterators;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -167,6 +169,47 @@ public class TestUtil {
             } while (inner != null && inner.getCause() != inner);
             assertTrue(found);
         }
+    }
+
+    public static void testErrorMessageContains(
+            GraphDatabaseService db, String call, String errorMessage, String nonFailMessage) {
+        testErrorMessageContains(db, call, null, errorMessage, nonFailMessage);
+    }
+
+    public static void testErrorMessageContains(
+            GraphDatabaseService db,
+            String call,
+            Map<String, Object> params,
+            String errorMessage,
+            String nonFailMessage) {
+        try {
+            testCall(db, call, params, r -> fail(nonFailMessage));
+        } catch (RuntimeException e) {
+            assertExceptionMessageContains(e, errorMessage);
+        }
+    }
+
+    public static void assertExceptionMessageContains(RuntimeException e, String errorMessage) {
+        if (!e.getMessage().contains(errorMessage))
+            fail(String.format(
+                    """
+                Error message not as expected.
+
+                Message is expected to contain:
+                %s
+
+                Actual message:
+                %s
+
+                Stracktrace:
+
+                %s
+                """,
+                    errorMessage, e.getMessage(), new StringWriter() {
+                        {
+                            e.printStackTrace(new PrintWriter(this));
+                        }
+                    }));
     }
 
     public static void assertError(
