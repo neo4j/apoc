@@ -27,7 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.neo4j.internal.helpers.collection.MapUtil.map;
 import static org.neo4j.test.assertion.Assert.assertEventually;
 
@@ -56,7 +55,6 @@ import org.junit.jupiter.api.Test;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
@@ -796,46 +794,37 @@ class TriggerNewProceduresTest {
 
     @Test
     void testInstallTriggerInUserDb() {
-        try {
-            testCall(
-                    db,
-                    "CALL apoc.trigger.install('neo4j', 'userDb', 'RETURN 1',{})",
-                    r -> fail("Should fail because of user db execution"));
-        } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains(TRIGGER_NOT_ROUTED_ERROR));
-        }
+        testErrorMessageContains(
+                db,
+                "CALL apoc.trigger.install('neo4j', 'userDb', 'RETURN 1',{})",
+                TRIGGER_NOT_ROUTED_ERROR,
+                "Should fail because of user db execution");
     }
 
     @Test
     void testShowTriggerInUserDb() {
-        try {
-            testCall(db, "CALL apoc.trigger.show('neo4j')", r -> fail("Should fail because of user db execution"));
-        } catch (QueryExecutionException e) {
-            assertTrue(e.getMessage().contains(NON_SYS_DB_ERROR));
-        }
+        testErrorMessageContains(
+                db, "CALL apoc.trigger.show('neo4j')", NON_SYS_DB_ERROR, "Should fail because of user db execution");
     }
 
     @Test
     void testInstallTriggerInNotExistentDb() {
         final String dbName = "nonexistent";
-        try {
-            testCall(
-                    sysDb,
-                    "CALL apoc.trigger.install($dbName, 'dbNotFound', 'SHOW DATABASES', {})",
-                    Map.of("dbName", dbName),
-                    r -> fail(""));
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains(String.format(DB_NOT_FOUND_ERROR, dbName)));
-        }
+        testErrorMessageContains(
+                sysDb,
+                "CALL apoc.trigger.install($dbName, 'dbNotFound', 'SHOW DATABASES', {})",
+                Map.of("dbName", dbName),
+                String.format(DB_NOT_FOUND_ERROR, dbName),
+                "Should fail because of target not found");
     }
 
     @Test
     void testInstallTriggerInSystemDb() {
-        try {
-            testCall(sysDb, "CALL apoc.trigger.install('system', 'name', 'SHOW DATABASES', {})", r -> fail(""));
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().contains(TRIGGER_BAD_TARGET_ERROR));
-        }
+        testErrorMessageContains(
+                sysDb,
+                "CALL apoc.trigger.install('system', 'name', 'SHOW DATABASES', {})",
+                TRIGGER_BAD_TARGET_ERROR,
+                "Should fail because of system db target");
     }
 
     @Test

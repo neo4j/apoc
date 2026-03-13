@@ -20,6 +20,7 @@ package apoc.trigger;
 
 import static apoc.trigger.TriggerTestUtil.TIMEOUT;
 import static apoc.util.MapUtil.map;
+import static apoc.util.TestUtil.assertExceptionMessageContains;
 import static apoc.util.TestUtil.testCallCountEventually;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -98,7 +99,7 @@ class TriggerTest {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> sysDb.executeTransactionally("CALL apoc.trigger.add('name', 'SHOW DATABASES', {})"));
-        assertTrue(e.getMessage().contains("Not a recognised system command or procedure"));
+        assertExceptionMessageContains(e, "The following unsupported clauses were used: CALL apoc.trigger.add.");
     }
 
     @Test
