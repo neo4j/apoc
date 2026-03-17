@@ -1772,9 +1772,11 @@ public class ExportCypherTest {
                         line2));
             }
             case "updateStructure" -> {
-                assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;",
-                        line1));
+                assertTrue(
+                        regexMatch(
+                                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;",
+                                line1),
+                        "line1: %s is not matching regex".formatted(line1));
                 assertTrue(regexMatch(
                         "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
                         line2));
