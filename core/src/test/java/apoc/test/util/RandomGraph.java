@@ -55,7 +55,10 @@ public class RandomGraph {
                         INT32_VECTOR,
                         INT64_VECTOR,
                         FLOAT,
-                        CHAR -> false;
+                        CHAR,
+                        // TODO: remove UUID and UUID_ARRAY here once they are properly supported in Cypher
+                        UUID,
+                        UUID_ARRAY -> false;
                 default -> true;
             })
             .toList();
