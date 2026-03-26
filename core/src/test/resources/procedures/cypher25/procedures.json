@@ -680,6 +680,114 @@
       }
     ]
   },
+
+  {
+    "isDeprecated": true,
+    "signature": "apoc.periodic.iterate(cypherIterate :: STRING, cypherAction :: STRING, config :: MAP) :: (batches :: INTEGER, total :: INTEGER, timeTaken :: INTEGER, committedOperations :: INTEGER, failedOperations :: INTEGER, failedBatches :: INTEGER, retries :: INTEGER, errorMessages :: MAP, batch :: MAP, operations :: MAP, wasTerminated :: BOOLEAN, failedParams :: MAP, updateStatistics :: MAP)",
+    "name": "apoc.periodic.iterate",
+    "description": "Runs the second statement for each item returned by the first statement.\nThis procedure returns the number of batches and the total number of processed rows.",
+    "returnDescription": [
+      {
+        "name": "batches",
+        "description": "The total number of batches.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "total",
+        "description": "The number of processed input rows.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "timeTaken",
+        "description": "The duration taken in seconds.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "committedOperations",
+        "description": "The number of successful inner queries (actions).",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "failedOperations",
+        "description": "The number of failed inner queries (actions).",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "failedBatches",
+        "description": "The number of failed batches.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "retries",
+        "description": "The number of retries.",
+        "isDeprecated": false,
+        "type": "INTEGER"
+      },
+      {
+        "name": "errorMessages",
+        "description": "A map of batch error messages paired with their corresponding error counts.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "batch",
+        "description": "{\n     total :: INTEGER,\n     failed :: INTEGER,\n     committed :: INTEGER,\n     errors :: MAP\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "operations",
+        "description": "{\n     total :: INTEGER,\n     failed :: INTEGER,\n     committed :: INTEGER,\n     errors :: MAP\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "wasTerminated",
+        "description": "If the transaction was terminated before completion.",
+        "isDeprecated": false,
+        "type": "BOOLEAN"
+      },
+      {
+        "name": "failedParams",
+        "description": "Parameters of failed batches. The key is the batch number as a STRING and the value is a list of batch parameters.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "updateStatistics",
+        "description": "{\n    nodesCreated :: INTEGER,\n    nodesDeleted :: INTEGER,\n    relationshipsCreated :: INTEGER,\n    relationshipsDeleted :: INTEGER,\n    propertiesSet :: INTEGER,\n    labelsAdded :: INTEGER,\n    labelsRemoved :: INTEGER\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ],
+    "deprecatedBy": "Cypher's CALL {...} IN TRANSACTIONS.",
+    "argumentDescription": [
+      {
+        "name": "cypherIterate",
+        "description": "The first Cypher statement to be run.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "cypherAction",
+        "description": "The Cypher statement to run for each item returned by the initial Cypher statement.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "config",
+        "description": "{\n    batchSize = 10000 :: INTEGER,\n    parallel = false :: BOOLEAN,\n    retries = 0 :: INTEGER,\n    batchMode = \"BATCH\" :: STRING,\n    params = {} :: MAP,\n    concurrency :: INTEGER,\n    failedParams = -1 :: INTEGER,\n    planner = \"DEFAULT\" :: [\"DEFAULT\", \"COST\", \"IDP\", \"DP\"]\n}\n",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ]
+  },
   {
     "isDeprecated": false,
     "signature": "apoc.periodic.repeat(name :: STRING, statement :: STRING, rate :: INTEGER, config = {} :: MAP) :: (name :: STRING, delay :: INTEGER, rate :: INTEGER, done :: BOOLEAN, cancelled :: BOOLEAN)",
