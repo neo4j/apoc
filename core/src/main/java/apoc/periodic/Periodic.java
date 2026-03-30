@@ -342,14 +342,41 @@ public class Periodic {
         return info;
     }
 
-    /**
-     * Invoke cypherAction in batched transactions being fed from cypherIteration running in main thread
-     * @param cypherIterate
-     * @param cypherAction
-     */
     @Procedure(name = "apoc.periodic.iterate", mode = Mode.WRITE)
     @Description("Runs the second statement for each item returned by the first statement.\n"
             + "This procedure returns the number of batches and the total number of processed rows.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Stream<BatchAndTotalResult> iterateCypher5(
+            @Name(value = "cypherIterate", description = "The first Cypher statement to be run.") String cypherIterate,
+            @Name(
+                            value = "cypherAction",
+                            description =
+                                    "The Cypher statement to run for each item returned by the initial Cypher statement.")
+                    String cypherAction,
+            @Name(
+                            value = "config",
+                            description =
+                                    """
+            {
+                batchSize = 10000 :: INTEGER,
+                parallel = false :: BOOLEAN,
+                retries = 0 :: INTEGER,
+                batchMode = "BATCH" :: STRING,
+                params = {} :: MAP,
+                concurrency :: INTEGER,
+                failedParams = -1 :: INTEGER,
+                planner = "DEFAULT" :: ["DEFAULT", "COST", "IDP", "DP"]
+            }
+            """)
+                    Map<String, Object> config) {
+        return iterate(cypherIterate, cypherAction, config);
+    }
+
+    @Procedure(name = "apoc.periodic.iterate", mode = Mode.WRITE, deprecatedBy = "Cypher's CALL {...} IN TRANSACTIONS.")
+    @Description("Runs the second statement for each item returned by the first statement.\n"
+            + "This procedure returns the number of batches and the total number of processed rows.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public Stream<BatchAndTotalResult> iterate(
             @Name(value = "cypherIterate", description = "The first Cypher statement to be run.") String cypherIterate,
             @Name(
