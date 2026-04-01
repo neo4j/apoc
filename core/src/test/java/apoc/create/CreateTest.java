@@ -485,6 +485,106 @@ class CreateTest {
     }
 
     @Test
+    void testVirtualFromNodeWithAdditionalLabels() {
+        testCall(
+                db,
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent', born: 1974} )
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { additionalLabels: ['Suspect', 'Highlighted'] }) AS node
+                        """,
+                (row) -> {
+                    Node node = (Node) row.get("node");
+
+                    assertTrue(node.hasLabel(label("Person")));
+                    assertTrue(node.hasLabel(label("Suspect")));
+                    assertTrue(node.hasLabel(label("Highlighted")));
+                    assertEquals("Vincent", node.getProperty("name"));
+                    assertNull(node.getProperty("born"));
+                });
+    }
+
+    @Test
+    void testVirtualFromNodeWithAdditionalProperties() {
+        testCall(
+                db,
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent', born: 1974} )
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { additionalProperties: { flagged: true, score: 42 } }) AS node
+                        """,
+                (row) -> {
+                    Node node = (Node) row.get("node");
+
+                    assertTrue(node.hasLabel(label("Person")));
+                    assertEquals("Vincent", node.getProperty("name"));
+                    assertEquals(true, node.getProperty("flagged"));
+                    assertEquals(42L, node.getProperty("score"));
+                    assertNull(node.getProperty("born"));
+                });
+    }
+
+    @Test
+    void testVirtualFromNodeWithAdditionalLabelsAndProperties() {
+        testCall(
+                db,
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent', born: 1974} )
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], {
+                            wrapNodeIds: true,
+                            additionalLabels: ['Fraud'],
+                            additionalProperties: { risk: 'high' }
+                        }) AS node
+                        """,
+                (row) -> {
+                    Node node = (Node) row.get("node");
+
+                    assertTrue(node.hasLabel(label("Person")));
+                    assertTrue(node.hasLabel(label("Fraud")));
+                    assertTrue(node.getId() >= 0);
+                    assertEquals("Vincent", node.getProperty("name"));
+                    assertEquals("high", node.getProperty("risk"));
+                    assertNull(node.getProperty("born"));
+                });
+    }
+
+    @Test
+    void testVirtualFromNodeWithEmptyAdditionalLabelsAndProperties() {
+        testCall(
+                db,
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent', born: 1974} )
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { additionalLabels: [], additionalProperties: {} }) AS node
+                        """,
+                (row) -> {
+                    Node node = (Node) row.get("node");
+
+                    assertTrue(node.hasLabel(label("Person")));
+                    assertEquals(1, Iterables.count(node.getLabels()));
+                    assertEquals("Vincent", node.getProperty("name"));
+                    assertNull(node.getProperty("born"));
+                });
+    }
+
+    @Test
+    void testVirtualFromNodeAdditionalPropertyOverwritesCopied() {
+        testCall(
+                db,
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent', born: 1974} )
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { additionalProperties: { name: 'Override' } }) AS node
+                        """,
+                (row) -> {
+                    Node node = (Node) row.get("node");
+
+                    assertEquals("Override", node.getProperty("name"));
+                });
+    }
+
+    @Test
     void testVirtualFromNodeShouldNotEditOriginalOne() {
         db.executeTransactionally("CREATE (n:Person {name:'toUpdate'})");
 
@@ -707,6 +807,28 @@ class CreateTest {
         assertEquals("TEST_2", secondRel.getType().name());
         assertEquals(Map.of("aa", "bb"), secondRel.getAllProperties());
         assertFalse(rels.hasNext());
+    }
+
+    @Test
+    void testVirtualFromNodeWithInvalidAdditionalLabelsType() {
+        assertionsError(
+                "additionalLabels must be a LIST<STRING>, but was: String",
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent'})
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { additionalLabels: 'notAList' }) AS node
+                        """);
+    }
+
+    @Test
+    void testVirtualFromNodeWithInvalidAdditionalPropertiesType() {
+        assertionsError(
+                "additionalProperties must be a MAP, but was: String",
+                """
+                        CYPHER 25
+                        CREATE (n:Person{name:'Vincent'})
+                        RETURN apoc.create.virtual.fromNode(n, ['name'], { additionalProperties: 'notAMap' }) AS node
+                        """);
     }
 
     @Test

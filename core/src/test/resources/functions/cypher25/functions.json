@@ -612,6 +612,38 @@
     ]
   },
   {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.create.virtual.fromNode(node :: NODE, propertyNames :: LIST<STRING>, config = {} :: MAP) :: NODE",
+    "name": "apoc.create.virtual.fromNode",
+    "description": "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.",
+    "returnDescription": "NODE",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "node",
+        "description": "The node to generate a virtual node from.",
+        "isDeprecated": false,
+        "type": "NODE"
+      },
+      {
+        "name": "propertyNames",
+        "description": "The properties to copy to the virtual node.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "config",
+        "description": "{ wrapNodeIds = false :: BOOLEAN, additionalLabels = [] :: LIST<STRING>, additionalProperties = {} :: MAP }",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value={}, type=MAP}",
+        "type": "MAP"
+      }
+    ]
+  },
+  {
     "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.date.convertFormat(temporal :: STRING, currentFormat :: STRING, convertTo = yyyy-MM-dd :: STRING) :: STRING",
