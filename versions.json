@@ -1,5 +1,23 @@
 [
     {
+        "neo4j": "2026.03.1",
+        "neo4jVersion": "2026.03.1",
+        "apoc": "2026.03.1",
+        "version": "2026.03.1",
+        "url": "https://github.com/neo4j/apoc/releases/2026.03.1",
+        "homepageUrl": "https://github.com/neo4j/apoc/releases/2026.03.1",
+        "jar": "https://github.com/neo4j/apoc/releases/download/2026.03.1/apoc-2026.03.1-core.jar",
+        "downloadUrl": "https://github.com/neo4j/apoc/releases/download/2026.03.1/apoc-2026.03.1-core.jar",
+        "sha1": "1ec91706048adacbe15fe2e1eb200dc2a01870aa",
+        "sha256": "12bb33963a50a942a960a5f9912a4d348c6628081297d5e73d46d4017ca686ab",
+        "md5": "ab70ed5633a52facce4b75825ad290f9",
+        "config": {
+            "+:dbms.security.procedures.unrestricted": [
+                "apoc.*"
+            ]
+        }
+    },
+    {
         "neo4j": "2026.02.3",
         "neo4jVersion": "2026.02.3",
         "apoc": "2026.02.3",
