@@ -53,7 +53,7 @@ runs:
 
     - name: Add reaction on pushed changes
       if: ${{ success() && steps.git-check.outputs.modified == 'true' }}
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@67dcc547d311b736a8e6c5c236542148a47adc3d # v2
       with:
         token: ${{ inputs.SERVICE_ACCOUNT_PAT }}
         repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
@@ -62,7 +62,7 @@ runs:
 
     - name: Add reaction when no update is needed
       if: ${{ success() && steps.git-check.outputs.modified == 'false' }}
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@67dcc547d311b736a8e6c5c236542148a47adc3d # v2
       with:
         token: ${{ inputs.SERVICE_ACCOUNT_PAT }}
         repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
@@ -79,7 +79,7 @@ runs:
       env:
         GRADLE_COMMAND: ${{ inputs.gradle-command }}
       if: ${{ !success() }}
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@67dcc547d311b736a8e6c5c236542148a47adc3d # v2
       with:
         token: ${{ inputs.SERVICE_ACCOUNT_PAT }}
         repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
@@ -91,7 +91,7 @@ runs:
 
     - name: Report failure to original comment with a reaction
       if: ${{ !success() }}
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@67dcc547d311b736a8e6c5c236542148a47adc3d # v2
       with:
         token: ${{ inputs.SERVICE_ACCOUNT_PAT }}
         repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
