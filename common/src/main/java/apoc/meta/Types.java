@@ -34,6 +34,7 @@ import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.spatial.Point;
 import org.neo4j.values.storable.DurationValue;
+import org.neo4j.values.storable.UUIDValue;
 import org.neo4j.values.storable.VectorValue;
 
 public enum Types {
@@ -57,7 +58,8 @@ public enum Types {
     LOCAL_DATE_TIME,
     TIME,
     DURATION,
-    VECTOR;
+    VECTOR,
+    UUID;
 
     private String typeOfList = "ANY";
 
@@ -179,6 +181,9 @@ public enum Types {
         // They should be using Cypher anyway
         if (VectorValue.class.isAssignableFrom(type)) {
             return VECTOR;
+        }
+        if (UUIDValue.class.isAssignableFrom(type) || java.util.UUID.class.isAssignableFrom(type)) {
+            return UUID;
         }
         return ANY;
     }

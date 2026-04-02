@@ -98,7 +98,11 @@ class MetaTest {
                 .setConfig(
                         newBuilder("internal.dbms.debug.trace_cursors", BOOL, false)
                                 .build(),
-                        false);
+                        false)
+                .setConfigRaw(Map.of(
+                        "internal.dbms.latest_runtime_version", "2147483647",
+                        "internal.dbms.latest_kernel_version", "254",
+                        "internal.dbms.uuid_type_enabled", "true"));
     }
 
     @BeforeAll
@@ -356,6 +360,8 @@ class MetaTest {
                 "a",
                 "BOOLEAN",
                 true,
+                "UUID",
+                UUID.randomUUID(),
                 "NULL",
                 null);
         TestUtil.testCall(db, "RETURN apoc.meta.cypher.types($param) AS value", singletonMap("param", param), row -> {
@@ -394,6 +400,25 @@ class MetaTest {
                             .formatted(type),
                     row -> assertEquals(true, row.get("value")));
         }
+    }
+
+    @Test
+    void testUUIDTypes() {
+        TestUtil.testCall(
+                db,
+                """
+                            CYPHER 25
+                            WITH UUID() AS v
+                            RETURN apoc.meta.cypher.type(v) AS value""",
+                row -> assertEquals("VECTOR", row.get("value")));
+
+        TestUtil.testCall(
+                db,
+                """
+                            CYPHER 25
+                            WITH UUID() AS v
+                            RETURN apoc.meta.cypher.isType(v, "VECTOR") AS value""",
+                row -> assertEquals(true, row.get("value")));
     }
 
     private void testIsTypeName(Object value, String type) {
@@ -1747,6 +1772,40 @@ class MetaTest {
                         rec.get("propertyTypes"));
                 assertEquals(6L, rec.get("propertyObservations"));
                 assertEquals(6L, rec.get("totalObservations"));
+                assertEquals(false, rec.get("mandatory"));
+            }
+        });
+    }
+
+    @Test
+    void testUUIDTypesOnProperties() {
+        db.executeTransactionally("CYPHER 25 CREATE (:Foo { z: UUID(1, 2) });");
+        TestUtil.testResult(db, "CALL apoc.meta.nodeTypeProperties()", r -> {
+            List<Map<String, Object>> records = gatherRecords(r);
+            assertEquals(1, records.size());
+            for (Map<String, Object> rec : records) {
+                assertEquals(":`Foo`", rec.get("nodeType"));
+                assertEquals(List.of("Foo"), rec.get("nodeLabels"));
+                assertEquals("z", rec.get("propertyName"));
+                assertEquals(List.of("UUID"), rec.get("propertyTypes"));
+                assertEquals(1L, rec.get("propertyObservations"));
+                assertEquals(1L, rec.get("totalObservations"));
+                assertEquals(false, rec.get("mandatory"));
+            }
+        });
+
+        db.executeTransactionally("CYPHER 25 CREATE (:A)-[:Foo { z: UUID(1, 2) }]->(:B);");
+        TestUtil.testResult(db, "CALL apoc.meta.relTypeProperties()", r -> {
+            List<Map<String, Object>> records = gatherRecords(r);
+            assertEquals(1, records.size());
+            for (Map<String, Object> rec : records) {
+                assertEquals(":`Foo`", rec.get("relType"));
+                assertEquals(List.of("A"), rec.get("sourceNodeLabels"));
+                assertEquals(List.of("B"), rec.get("targetNodeLabels"));
+                assertEquals("z", rec.get("propertyName"));
+                assertEquals(List.of("UUID"), rec.get("propertyTypes"));
+                assertEquals(1L, rec.get("propertyObservations"));
+                assertEquals(1L, rec.get("totalObservations"));
                 assertEquals(false, rec.get("mandatory"));
             }
         });
