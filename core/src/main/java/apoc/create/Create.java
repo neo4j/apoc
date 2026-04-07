@@ -411,15 +411,61 @@ public class Create {
     }
 
     @UserFunction("apoc.create.virtual.fromNode")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description(
             "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.")
-    public Node virtualFromNodeFunction(
+    public Node virtualFromNodeFunctionCypher5(
             @Name(value = "node", description = "The node to generate a virtual node from.") Node node,
             @Name(value = "propertyNames", description = "The properties to copy to the virtual node.")
                     List<String> propertyNames,
             @Name(value = "config", defaultValue = "{}", description = "{ wrapNodeIds = false :: BOOLEAN }")
                     Map<String, Object> config) {
         return new VirtualNode(node, propertyNames, Util.toBoolean(config.get("wrapNodeIds")));
+    }
+
+    @UserFunction("apoc.create.virtual.fromNode")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
+    @Description(
+            "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.")
+    public Node virtualFromNodeFunction(
+            @Name(value = "node", description = "The node to generate a virtual node from.") Node node,
+            @Name(value = "propertyNames", description = "The properties to copy to the virtual node.")
+                    List<String> propertyNames,
+            @Name(
+                            value = "config",
+                            defaultValue = "{}",
+                            description =
+                                    "{ wrapNodeIds = false :: BOOLEAN, additionalLabels = [] :: LIST<STRING>, additionalProperties = {} :: MAP }")
+                    Map<String, Object> config) {
+        VirtualNode virtualNode = new VirtualNode(node, propertyNames, Util.toBoolean(config.get("wrapNodeIds")));
+
+        Object labelsValue = config.get("additionalLabels");
+        if (labelsValue != null) {
+            if (!(labelsValue instanceof List<?> labels)) {
+                throw new IllegalArgumentException("additionalLabels must be a LIST<STRING>, but was: "
+                        + labelsValue.getClass().getSimpleName());
+            }
+            for (Object l : labels) {
+                if (l instanceof String labelName) {
+                    virtualNode.addLabel(Label.label(labelName));
+                }
+            }
+        }
+
+        Object propsValue = config.get("additionalProperties");
+        if (propsValue != null) {
+            if (!(propsValue instanceof Map<?, ?> props)) {
+                throw new IllegalArgumentException("additionalProperties must be a MAP, but was: "
+                        + propsValue.getClass().getSimpleName());
+            }
+            props.forEach((key, value) -> {
+                if (key instanceof String propertyName) {
+                    virtualNode.setProperty(propertyName, value);
+                }
+            });
+        }
+
+        return virtualNode;
     }
 
     @Procedure("apoc.create.vNodes")
