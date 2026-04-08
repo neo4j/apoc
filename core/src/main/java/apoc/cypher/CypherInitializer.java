@@ -39,10 +39,12 @@ import org.neo4j.configuration.Config;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.event.DatabaseEventContext;
 import org.neo4j.graphdb.event.DatabaseEventListener;
+import org.neo4j.internal.kernel.api.security.LoginContext;
+import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.availability.AvailabilityListener;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.kernel.monitoring.DatabaseEventListeners;
 import org.neo4j.logging.Log;
@@ -105,22 +107,35 @@ public class CypherInitializer implements AvailabilityListener {
 
                             // Create a uniqueness constraint on system db to avoid race conditions when installing
                             // triggers
-                            try (Transaction tx = db.beginTx()) {
-                                var constraintName = "triggerConstraint";
-                                var maybeConstraint = StreamSupport.stream(
-                                                tx.schema()
-                                                        .getConstraints(SystemLabels.ApocTriggerMeta)
-                                                        .spliterator(),
-                                                false)
-                                        .filter(x -> x.getName().equals(constraintName))
-                                        .toList();
-                                if (maybeConstraint.isEmpty()) {
-                                    tx.schema()
-                                            .constraintFor(SystemLabels.ApocTriggerMeta)
-                                            .withName(constraintName)
-                                            .assertPropertyIsUnique(SystemPropertyKeys.database.name())
-                                            .create();
-                                    tx.commit();
+                            // Retry 3 times on each cluster member to decrease the likelihood of there being no leader
+                            int counter = 0;
+                            boolean constraintCreated = false;
+
+                            while (counter < 3 && !constraintCreated) {
+                                counter++;
+                                try (InternalTransaction tx = db.beginTransaction(
+                                        KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
+                                    // Only try to add constraint if the db is writable (i.e. we are on the cluster
+                                    // leader)
+                                    if (tx.securityContext().mode().allowsSchemaWrites()) {
+                                        var constraintName = "triggerConstraint";
+                                        var maybeConstraint = StreamSupport.stream(
+                                                        tx.schema()
+                                                                .getConstraints(SystemLabels.ApocTriggerMeta)
+                                                                .spliterator(),
+                                                        false)
+                                                .filter(x -> x.getName().equals(constraintName))
+                                                .toList();
+                                        if (maybeConstraint.isEmpty()) {
+                                            tx.schema()
+                                                    .constraintFor(SystemLabels.ApocTriggerMeta)
+                                                    .withName(constraintName)
+                                                    .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                                    .create();
+                                            tx.commit();
+                                        }
+                                        constraintCreated = true;
+                                    }
                                 }
                             }
 
