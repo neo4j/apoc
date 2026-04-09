@@ -24,6 +24,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.DEFAULT_DATABASE_NAM
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 import apoc.ApocExtensionFactory;
+import apoc.SystemLabels;
 import apoc.test.EnvSettingRule;
 import apoc.test.annotations.Env;
 import apoc.test.annotations.EnvSetting;
@@ -31,12 +32,14 @@ import apoc.util.TestUtil;
 import apoc.util.Utils;
 import apoc.util.collection.Iterators;
 import java.util.Collections;
+import java.util.stream.StreamSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.availability.AvailabilityListener;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.rule.DbmsRule;
@@ -98,6 +101,22 @@ public class CypherInitializerTest {
     }
 
     @Test
+    @Env
+    public void noInitializerHasSystemConstraint() {
+        GraphDatabaseService systemDb = dbmsRule.getManagementService().database(SYSTEM_DATABASE_NAME);
+        try (Transaction tx = systemDb.beginTx()) {
+            var triggerConstraints = StreamSupport.stream(
+                            tx.schema()
+                                    .getConstraints(SystemLabels.ApocTriggerMeta)
+                                    .spliterator(),
+                            false)
+                    .filter(x -> x.getName().equals("triggerConstraint"))
+                    .toList();
+            assertEquals(1, triggerConstraints.size());
+        }
+    }
+
+    @Test
     @Env({@EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME, value = "")})
     public void emptyInitializerWorks() {
         expectNodeCount(0);
@@ -107,6 +126,22 @@ public class CypherInitializerTest {
     @Env({@EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME, value = "create()")})
     public void singleInitializerWorks() {
         expectNodeCount(1);
+    }
+
+    @Test
+    @Env({@EnvSetting(key = APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME, value = "create()")})
+    public void singleInitializerHasSystemConstraint() {
+        GraphDatabaseService systemDb = dbmsRule.getManagementService().database(SYSTEM_DATABASE_NAME);
+        try (Transaction tx = systemDb.beginTx()) {
+            var triggerConstraints = StreamSupport.stream(
+                            tx.schema()
+                                    .getConstraints(SystemLabels.ApocTriggerMeta)
+                                    .spliterator(),
+                            false)
+                    .filter(x -> x.getName().equals("triggerConstraint"))
+                    .toList();
+            assertEquals(1, triggerConstraints.size());
+        }
     }
 
     @Test
