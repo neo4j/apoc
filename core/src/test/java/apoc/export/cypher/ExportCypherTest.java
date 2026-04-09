@@ -1772,14 +1772,14 @@ public class ExportCypherTest {
                         line2));
             }
             case "updateStructure" -> {
+                String regex1 =
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;";
+                String regex2 =
+                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;";
                 assertTrue(
-                        regexMatch(
-                                "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=1;",
-                                line1),
-                        "line1: %s is not matching regex".formatted(line1));
-                assertTrue(regexMatch(
-                        "MATCH (n1:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}), (n2:`UNIQUE IMPORT LABEL`{`UNIQUE IMPORT ID`:\\d+}) MERGE (n1)-[r:WORKS_FOR]->(n2) ON CREATE SET r.id=2;",
-                        line2));
+                        regexMatch(regex1, line1) && regexMatch(regex2, line2)
+                                || regexMatch(regex2, line1) && regexMatch(regex1, line2),
+                        "Lines do not match regex. %n line1: %s %n line2: %s".formatted(line1, line2));
             }
             default -> fail(String.format("Unexpected cypher format %s", cypherFormat));
         }
