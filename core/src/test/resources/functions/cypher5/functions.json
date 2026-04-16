@@ -1242,6 +1242,101 @@
     ]
   },
   {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.text.indexOf(text :: STRING, lookup :: STRING, from = 0 :: INTEGER, to = -1 :: INTEGER) :: INTEGER",
+    "name": "apoc.text.indexOf",
+    "description": "Returns the first occurrence of the lookup `STRING` in the given `STRING`, or -1 if not found.",
+    "returnDescription": "INTEGER",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "text",
+        "description": "The string to search for the lookup string in.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "lookup",
+        "description": "The lookup string to search for in the given string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "from",
+        "description": "The index at which to start the search.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=0, type=INTEGER}",
+        "type": "INTEGER"
+      },
+      {
+        "name": "to",
+        "description": "The index at which to stop the search.",
+        "isDeprecated": false,
+        "default": "DefaultParameterValue{value=-1, type=INTEGER}",
+        "type": "INTEGER"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.text.join(texts :: LIST<STRING>, delimiter :: STRING) :: STRING",
+    "name": "apoc.text.join",
+    "description": "Joins the given `STRING` values using the given delimiter.",
+    "returnDescription": "STRING",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "texts",
+        "description": "The list of strings to be concatenated using the given delimiter.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "delimiter",
+        "description": "The given delimiter to join the given strings with.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.text.replace(text :: STRING, regex :: STRING, replacement :: STRING) :: STRING",
+    "name": "apoc.text.replace",
+    "description": "Finds and replaces all matches found by the given regular expression with the given replacement.",
+    "returnDescription": "STRING",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "text",
+        "description": "The string to be modified.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "regex",
+        "description": "The regular expression pattern to replace in the original string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "replacement",
+        "description": "The value to be inserted in the original string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
     "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.text.levenshteinDistance(text1 :: STRING, text2 :: STRING) :: INTEGER",

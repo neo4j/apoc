@@ -76,6 +76,21 @@ public class Strings {
 
     @UserFunction("apoc.text.indexOf")
     @Description("Returns the first occurrence of the lookup `STRING` in the given `STRING`, or -1 if not found.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public Long indexOfCypher5(
+            final @Name(value = "text", description = "The string to search for the lookup string in.") String text,
+            final @Name(value = "lookup", description = "The lookup string to search for in the given string.") String
+                            lookup,
+            final @Name(value = "from", defaultValue = "0", description = "The index at which to start the search.")
+                    long from,
+            @Name(value = "to", defaultValue = "-1", description = "The index at which to stop the search.") long to) {
+        return indexOf(text, lookup, from, to);
+    }
+
+    @UserFunction(name = "apoc.text.indexOf", deprecatedBy = "Cypher's `string.indexOf` function.")
+    @Description("Returns the first occurrence of the lookup `STRING` in the given `STRING`, or -1 if not found.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public Long indexOf(
             final @Name(value = "text", description = "The string to search for the lookup string in.") String text,
             final @Name(value = "lookup", description = "The lookup string to search for in the given string.") String
@@ -116,6 +131,22 @@ public class Strings {
 
     @UserFunction("apoc.text.replace")
     @Description("Finds and replaces all matches found by the given regular expression with the given replacement.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public String replaceCypher5(
+            final @Name(value = "text", description = "The string to be modified.") String text,
+            final @Name(
+                            value = "regex",
+                            description = "The regular expression pattern to replace in the original string.") String
+                            regex,
+            final @Name(value = "replacement", description = "The value to be inserted in the original string.") String
+                            replacement) {
+        return regreplace(text, regex, replacement);
+    }
+
+    @UserFunction(name = "apoc.text.replace", deprecatedBy = "Cypher's `string.regexReplace` function.")
+    @Description("Finds and replaces all matches found by the given regular expression with the given replacement.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public String replace(
             final @Name(value = "text", description = "The string to be modified.") String text,
             final @Name(
@@ -260,6 +291,25 @@ public class Strings {
 
     @UserFunction("apoc.text.join")
     @Description("Joins the given `STRING` values using the given delimiter.")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    public String joinCypher5(
+            final @Name(
+                            value = "texts",
+                            description = "The list of strings to be concatenated using the given delimiter.") List<
+                                    String>
+                            texts,
+            final @Name(value = "delimiter", description = "The given delimiter to join the given strings with.") String
+                            delimiter) {
+        if (texts == null || delimiter == null) {
+            return null;
+        }
+        return String.join(delimiter, texts);
+    }
+
+    @UserFunction(name = "apoc.text.join", deprecatedBy = "Cypher's `string.join` function.")
+    @Description("Joins the given `STRING` values using the given delimiter.")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     public String join(
             final @Name(
                             value = "texts",
