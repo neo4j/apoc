@@ -44,6 +44,9 @@ public class ImportCsv {
     @Context
     public URLAccessChecker urlAccessChecker;
 
+    @Context
+    public TerminationGuard terminationGuard;
+
     @Procedure(name = "apoc.import.csv", mode = Mode.SCHEMA)
     @Description("Imports `NODE` and `RELATIONSHIP` values with the given labels and types from the provided CSV file.")
     public Stream<ImportProgressInfo> importCsv(
@@ -86,7 +89,7 @@ public class ImportCsv {
             final CsvLoaderConfig clc = CsvLoaderConfig.from(config);
             final ProgressReporter reporter =
                     new ProgressReporter(null, null, new ImportProgressInfo(file, source, "csv"));
-            final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log, urlAccessChecker);
+            final CsvEntityLoader loader = new CsvEntityLoader(clc, reporter, log, urlAccessChecker, terminationGuard);
 
             final Map<String, Map<String, String>> idMapping = new HashMap<>();
             for (Map<String, Object> node : nodes) {

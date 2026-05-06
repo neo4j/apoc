@@ -25,6 +25,7 @@ import apoc.load.CSVResult;
 import apoc.load.Mapping;
 import apoc.load.util.Results;
 import apoc.util.FileUtils;
+import apoc.util.Util;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.RFC4180ParserBuilder;
@@ -38,6 +39,7 @@ import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.graphdb.security.URLAccessValidationError;
 import org.neo4j.logging.Log;
+import org.neo4j.procedure.TerminationGuard;
 
 public class CsvEntityLoader {
 
@@ -45,16 +47,23 @@ public class CsvEntityLoader {
     private final ProgressReporter reporter;
     private final Log log;
     private final URLAccessChecker urlAccessChecker;
+    private final TerminationGuard terminationGuard;
 
     /**
      * @param clc configuration object
      * @param reporter
      */
-    public CsvEntityLoader(CsvLoaderConfig clc, ProgressReporter reporter, Log log, URLAccessChecker urlAccessChecker) {
+    public CsvEntityLoader(
+            CsvLoaderConfig clc,
+            ProgressReporter reporter,
+            Log log,
+            URLAccessChecker urlAccessChecker,
+            TerminationGuard terminationGuard) {
         this.clc = clc;
         this.reporter = reporter;
         this.log = log;
         this.urlAccessChecker = urlAccessChecker;
+        this.terminationGuard = terminationGuard;
     }
 
     /**
@@ -112,7 +121,9 @@ public class CsvEntityLoader {
             AtomicInteger lineNo = new AtomicInteger();
             BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
             try {
-                csv.forEach(line -> {
+                final Iterator<String[]> lineIterator = csv.iterator();
+                while (lineIterator.hasNext() && !Util.transactionIsTerminated(terminationGuard)) {
+                    final String[] line = lineIterator.next();
                     lineNo.getAndIncrement();
 
                     final EnumSet<Results> results = EnumSet.of(Results.map);
@@ -133,7 +144,7 @@ public class CsvEntityLoader {
                     // we either fail the loading process or skip it depending on the 'ignore duplicate nodes' setting
                     if (idField.isPresent() && idspaceIdMapping.containsKey(nodeCsvId)) {
                         if (clc.getIgnoreDuplicateNodes()) {
-                            return;
+                            continue;
                         } else {
                             throw new IllegalStateException("Duplicate node with id " + nodeCsvId + " found on line "
                                     + lineNo + "\n" + Arrays.toString(line));
@@ -179,7 +190,7 @@ public class CsvEntityLoader {
                     }
                     btx.increment();
                     reporter.update(1, 0, props++);
-                });
+                }
                 btx.doCommit();
             } catch (RuntimeException e) {
                 btx.rollback();
@@ -244,7 +255,9 @@ public class CsvEntityLoader {
                 AtomicInteger lineNo = new AtomicInteger();
                 BatchTransaction btx = new BatchTransaction(db, clc.getBatchSize(), reporter);
                 try {
-                    csv.forEach(line -> {
+                    final Iterator<String[]> lineIterator = csv.iterator();
+                    while (lineIterator.hasNext() && !Util.transactionIsTerminated(terminationGuard)) {
+                        final String[] line = lineIterator.next();
                         lineNo.getAndIncrement();
 
                         final EnumSet<Results> results = EnumSet.of(Results.map);
@@ -296,7 +309,7 @@ public class CsvEntityLoader {
                         }
                         btx.increment();
                         reporter.update(0, 1, props);
-                    });
+                    }
                     btx.doCommit();
                 } catch (RuntimeException e) {
                     btx.rollback();
