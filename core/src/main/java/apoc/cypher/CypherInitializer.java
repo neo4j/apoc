@@ -126,8 +126,6 @@ public class CypherInitializer implements AvailabilityListener {
                                 try (InternalTransaction tx = db.beginTransaction()) {
                                     counter++;
 
-                                    // Only try to add constraint if the db is writable (i.e. we are on the cluster
-                                    // leader)
                                     if (tx.securityContext().mode().allowsSchemaWrites()) {
                                         var constraintName = "triggerConstraint";
                                         var maybeConstraint = StreamSupport.stream(
@@ -138,12 +136,22 @@ public class CypherInitializer implements AvailabilityListener {
                                                 .filter(x -> x.getName().equals(constraintName))
                                                 .toList();
                                         if (maybeConstraint.isEmpty()) {
-                                            tx.schema()
-                                                    .constraintFor(SystemLabels.ApocTriggerMeta)
-                                                    .withName(constraintName)
-                                                    .assertPropertyIsUnique(SystemPropertyKeys.database.name())
-                                                    .create();
-                                            tx.commit();
+                                            try {
+                                                tx.schema()
+                                                        .constraintFor(SystemLabels.ApocTriggerMeta)
+                                                        .withName(constraintName)
+                                                        .assertPropertyIsUnique(SystemPropertyKeys.database.name())
+                                                        .create();
+                                                tx.commit();
+                                            } catch (Exception e) {
+                                                if (!e.getMessage()
+                                                        .contains(
+                                                                "No write operations are allowed directly on this database. Writes must pass through the leader. The role of this server is: FOLLOWER")) {
+                                                    throw e;
+                                                }
+                                                // else swallow error, it seems clusters can show they allow writes even
+                                                // when they don't
+                                            }
                                         }
                                         constraintCreated = true;
                                     }
