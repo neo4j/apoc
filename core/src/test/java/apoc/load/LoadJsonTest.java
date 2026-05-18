@@ -267,18 +267,13 @@ class LoadJsonTest {
 
     @Test
     void testLoadJsonStackOverflow() {
-        String url =
-                "https://api.stackexchange.com/2.2/questions?pagesize=10&order=desc&sort=creation&tagged=neo4j&site=stackoverflow&filter=!5-i6Zw8Y)4W7vpy91PMYsKM-k9yzEsSC1_Uxlf";
-        testCall(
-                db,
-                "CALL apoc.load.json($url)",
-                map("url", url), // 'file:map.json' YIELD value RETURN value
-                (row) -> {
-                    Map<String, Object> value = (Map<String, Object>) row.get("value");
-                    assertFalse(value.isEmpty());
-                    List<Map<String, Object>> items = (List<Map<String, Object>>) value.get("items");
-                    assertEquals(10, items.size());
-                });
+        String url = "http://localhost:5353/stackoverflow.json";
+        testCall(db, "CALL apoc.load.json($url)", map("url", url), (row) -> {
+            Map<String, Object> value = (Map<String, Object>) row.get("value");
+            assertFalse(value.isEmpty());
+            List<Map<String, Object>> items = (List<Map<String, Object>>) value.get("items");
+            assertEquals(10, items.size());
+        });
     }
 
     @Test
