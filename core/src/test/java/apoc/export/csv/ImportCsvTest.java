@@ -37,8 +37,10 @@ import apoc.csv.CsvTestUtil;
 import apoc.util.CompressionAlgo;
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import com.sun.net.httpserver.HttpServer;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -53,6 +55,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
@@ -74,6 +77,9 @@ import org.neo4j.values.storable.Values;
 class ImportCsvTest {
     public static final String BASE_URL_FILES = "src/test/resources/csv-inputs";
     private static final ZoneId DEFAULT_TIMEZONE = ZoneId.of("Asia/Tokyo");
+
+    private HttpServer localServer;
+    private int localServerPort;
 
     @Inject
     GraphDatabaseService db;
@@ -327,6 +333,33 @@ class ImportCsvTest {
 
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_EXPORT_FILE_ENABLED, true);
+
+        localServer = HttpServer.create(new InetSocketAddress(0), 0);
+        localServer.createContext("/waf-challenge.csv", exchange -> {
+            exchange.getResponseHeaders().set("Content-Length", "0");
+            exchange.sendResponseHeaders(202, -1);
+            exchange.getResponseBody().close();
+        });
+        localServer.start();
+        localServerPort = localServer.getAddress().getPort();
+    }
+
+    @AfterAll
+    void tearDown() {
+        if (localServer != null) {
+            localServer.stop(0);
+        }
+    }
+
+    @Test
+    void testImportCsvWithWafChallenge() {
+        // AWS WAF returns 202 with content-length: 0 for bot challenges aka "Are you human?"
+        String url = "http://localhost:" + localServerPort + "/waf-challenge.csv";
+        TestUtil.testCall(
+                db,
+                "CALL apoc.import.csv([{fileName: $url, labels: ['Test']}], [], {})",
+                Map.of("url", url),
+                r -> assertEquals(0L, r.get("nodes")));
     }
 
     @Test
