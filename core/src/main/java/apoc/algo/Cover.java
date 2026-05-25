@@ -50,8 +50,7 @@ public class Cover {
     @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")
     public Stream<AlgoCoverRelationshipResult> coverCypher5(
             @Name(value = "nodes", description = "The nodes to look for connected relationships on.") Object nodes) {
-        Set<Node> nodeSet = Util.nodeStream((InternalTransaction) tx, nodes).collect(Collectors.toSet());
-        return coverNodes(nodeSet).map(AlgoCoverRelationshipResult::new);
+        return coverStream(nodes);
     }
 
     @Deprecated
@@ -60,6 +59,10 @@ public class Cover {
     @Description("Returns all `RELATIONSHIP` values connecting the given set of `NODE` values.")
     public Stream<AlgoCoverRelationshipResult> cover(
             @Name(value = "nodes", description = "The nodes to look for connected relationships on.") Object nodes) {
+        return coverStream(nodes);
+    }
+
+    private Stream<AlgoCoverRelationshipResult> coverStream(Object nodes) {
         Set<Node> nodeSet = Util.nodeStream((InternalTransaction) tx, nodes).collect(Collectors.toSet());
         return coverNodes(nodeSet).map(AlgoCoverRelationshipResult::new);
     }
