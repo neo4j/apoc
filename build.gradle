@@ -118,6 +118,15 @@ subprojects {
       implementation('org.eclipse.jetty:jetty-server:12.0.32') {
         because 'CVE-2026-1605'
       }
+      implementation('org.bouncycastle:bcprov-jdk18on:1.84') {
+        because 'enforce minimum version across all transitive sources'
+      }
+      implementation('org.bouncycastle:bcpkix-jdk18on:1.84') {
+        because 'enforce minimum version across all transitive sources'
+      }
+      implementation('org.bouncycastle:bcutil-jdk18on:1.84') {
+        because 'enforce minimum version across all transitive sources'
+      }
     }
   }
 
