@@ -1,0 +1,748 @@
+{
+  "items": [
+    {
+      "tags": [
+        "neo4j",
+        "cypher"
+      ],
+      "answers": [
+        {
+          "comments": [
+            {
+              "owner": {
+                "reputation": 11,
+                "user_id": 32720160,
+                "user_type": "registered",
+                "profile_image": "https://www.gravatar.com/avatar/f1f657e6144de27335f563b96025e89e?s=256&d=identicon&r=PG&f=y&so-version=2",
+                "display_name": "Calciumm502",
+                "link": "https://stackoverflow.com/users/32720160/calciumm502"
+              },
+              "edited": false,
+              "score": 0,
+              "creation_date": 1778579480,
+              "post_id": 79939846,
+              "comment_id": 141058434,
+              "link": "https://stackoverflow.com/questions/79939835/how-to-concatenate-the-results-of-a-cypher-query/79939846#comment141058434_79939846"
+            }
+          ],
+          "tags": [],
+          "owner": {
+            "reputation": 1611,
+            "user_id": 2258090,
+            "user_type": "registered",
+            "profile_image": "https://i.sstatic.net/g8J8h.jpg?s=256",
+            "display_name": "Finbar Good",
+            "link": "https://stackoverflow.com/users/2258090/finbar-good"
+          },
+          "comment_count": 1,
+          "down_vote_count": 0,
+          "up_vote_count": 1,
+          "is_accepted": false,
+          "score": 1,
+          "last_activity_date": 1778578145,
+          "creation_date": 1778578145,
+          "answer_id": 79939846,
+          "question_id": 79939835,
+          "share_link": "https://stackoverflow.com/a/79939846",
+          "body_markdown": "Yes. For example, using `,` as a delimiter you could change your `RETURN` as follows:\r\n\r\n\r\n```cypher\r\nMATCH (n:Node)\r\nWHERE n.O127_H6_E2348_69_193637c_0_node is NOT NULL\r\nORDER BY n.O127_H6_E2348_69_193637c_0_node\r\nMATCH (s:Sequence)\r\n  WHERE s.name = n.name\r\nRETURN \r\n  rtrim(reduce(acc = &#39;&#39;, seq IN collect(s.sequence) | acc + seq + &#39;,&#39;), &#39;,&#39;) \r\n    AS result\r\n```\r\nThis uses:\r\n- [collect](https://neo4j.com/docs/cypher-manual/current/functions/aggregating/#functions-collect): collapses the s.sequence values from each row into a list\r\n- [reduce](https://neo4j.com/docs/cypher-manual/current/functions/list/#functions-reduce): transforms that list into a string with the reduction function\r\n- [rtrim](https://neo4j.com/docs/cypher-manual/current/functions/string/#functions-rtrim): removes the stray delimiter added to the end",
+          "link": "https://stackoverflow.com/questions/79939835/how-to-concatenate-the-results-of-a-cypher-query/79939846#79939846",
+          "title": "How to concatenate the results of a cypher query?"
+        }
+      ],
+      "owner": {
+        "reputation": 11,
+        "user_id": 32720160,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/f1f657e6144de27335f563b96025e89e?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Calciumm502",
+        "link": "https://stackoverflow.com/users/32720160/calciumm502"
+      },
+      "last_editor": {
+        "reputation": 124205,
+        "user_id": 3001761,
+        "user_type": "registered",
+        "profile_image": "https://i.sstatic.net/feZwC.jpg?s=256",
+        "display_name": "jonrsharpe",
+        "link": "https://stackoverflow.com/users/3001761/jonrsharpe"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": true,
+      "view_count": 85,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 1,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1778578145,
+      "creation_date": 1778576817,
+      "last_edit_date": 1778577085,
+      "question_id": 79939835,
+      "share_link": "https://stackoverflow.com/q/79939835",
+      "body_markdown": "I run the following cypher query that gives me ordered strings as an output :   \r\n```\r\nmatch(n:Node)\r\n\r\nwhere n.O127_H6_E2348_69_193637c_0_node is NOT NULL\r\n\r\nORDER BY n.O127_H6_E2348_69_193637c_0_node\r\n\r\nMATCH (s:Sequence)\r\n\r\nwhere s.name = n.name\r\n\r\nreturn s.sequence\r\n```\r\n  \r\nI would like to concatenate the results in one large string (in the same order, to have the full sequence). Is it possible directly in cypher?",
+      "link": "https://stackoverflow.com/questions/79939835/how-to-concatenate-the-results-of-a-cypher-query",
+      "title": "How to concatenate the results of a cypher query?"
+    },
+    {
+      "tags": [
+        "neo4j"
+      ],
+      "comments": [
+        {
+          "owner": {
+            "reputation": 71,
+            "user_id": 9397755,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/10f2b035856eef2b59c02267e3ee9e63?s=256&d=identicon&r=PG",
+            "display_name": "Jennifer Reif",
+            "link": "https://stackoverflow.com/users/9397755/jennifer-reif"
+          },
+          "edited": false,
+          "score": 0,
+          "creation_date": 1776712333,
+          "post_id": 79917304,
+          "comment_id": 141042531,
+          "link": "https://stackoverflow.com/questions/79917304/neo4j-full-text-search-extremely-slow-on-large-dataset-300m-nodes#comment141042531_79917304"
+        }
+      ],
+      "owner": {
+        "reputation": 11,
+        "user_id": 32564524,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/57124811cfe4276d8604c2f56b9bb5df?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Mateus Alc&#226;ntara",
+        "link": "https://stackoverflow.com/users/32564524/mateus-alc%c3%a2ntara"
+      },
+      "comment_count": 1,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": false,
+      "view_count": 44,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 1,
+      "answer_count": 0,
+      "score": 1,
+      "last_activity_date": 1774895316,
+      "creation_date": 1774895316,
+      "question_id": 79917304,
+      "share_link": "https://stackoverflow.com/q/79917304",
+      "body_markdown": "I&#39;m working with a graph containing around 300 million nodes of a single label (Person). I have created a full-text index on the name property to handle text searches.\r\n\r\nMy goal is simply to get the total count of people matching a very common name (e.g., &quot;PEDRO&quot;). However, my query is extremely slow and often results in timeouts.\r\n\r\nHere is the query I am using:\r\n\r\n```cypher\r\nCALL db.index.fulltext.queryNodes(&quot;pessoa_nome_fulltext&quot;, &quot;PEDRO&quot;) YIELD node\r\nRETURN count(node) AS total_matches;\r\n```\r\n\r\nWhat&#39;s causing this problem? What do I need to do in order to fix it?\r\n",
+      "link": "https://stackoverflow.com/questions/79917304/neo4j-full-text-search-extremely-slow-on-large-dataset-300m-nodes",
+      "title": "Neo4j Full-Text Search extremely slow on large dataset (300M nodes)"
+    },
+    {
+      "tags": [
+        "python",
+        "windows",
+        "docker",
+        "neo4j"
+      ],
+      "comments": [
+        {
+          "owner": {
+            "reputation": 166179,
+            "user_id": 10008173,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/bc86d913c15f3b126673faa654e9668c?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "David Maze",
+            "link": "https://stackoverflow.com/users/10008173/david-maze"
+          },
+          "edited": false,
+          "score": 0,
+          "creation_date": 1769906400,
+          "post_id": 79880191,
+          "comment_id": 140965397,
+          "link": "https://stackoverflow.com/questions/79880191/neo4j-graphacademy-docker-installlation-error-on-windows-modulenotfounderror-n#comment140965397_79880191"
+        },
+        {
+          "owner": {
+            "reputation": 166179,
+            "user_id": 10008173,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/bc86d913c15f3b126673faa654e9668c?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "David Maze",
+            "link": "https://stackoverflow.com/users/10008173/david-maze"
+          },
+          "edited": false,
+          "score": 0,
+          "creation_date": 1769906404,
+          "post_id": 79880191,
+          "comment_id": 140965398,
+          "link": "https://stackoverflow.com/questions/79880191/neo4j-graphacademy-docker-installlation-error-on-windows-modulenotfounderror-n#comment140965398_79880191"
+        },
+        {
+          "owner": {
+            "reputation": 35,
+            "user_id": 8365285,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/27bc25c8504ac5d64db909dcdb9b4b0c?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "rnoftz",
+            "link": "https://stackoverflow.com/users/8365285/rnoftz"
+          },
+          "reply_to_user": {
+            "reputation": 166179,
+            "user_id": 10008173,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/bc86d913c15f3b126673faa654e9668c?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "David Maze",
+            "link": "https://stackoverflow.com/users/10008173/david-maze"
+          },
+          "edited": false,
+          "score": 0,
+          "creation_date": 1769944327,
+          "post_id": 79880191,
+          "comment_id": 140965682,
+          "link": "https://stackoverflow.com/questions/79880191/neo4j-graphacademy-docker-installlation-error-on-windows-modulenotfounderror-n#comment140965682_79880191"
+        }
+      ],
+      "answers": [
+        {
+          "comments": [
+            {
+              "owner": {
+                "reputation": 35,
+                "user_id": 8365285,
+                "user_type": "registered",
+                "profile_image": "https://www.gravatar.com/avatar/27bc25c8504ac5d64db909dcdb9b4b0c?s=256&d=identicon&r=PG&f=y&so-version=2",
+                "display_name": "rnoftz",
+                "link": "https://stackoverflow.com/users/8365285/rnoftz"
+              },
+              "edited": false,
+              "score": 0,
+              "creation_date": 1769977836,
+              "post_id": 79880614,
+              "comment_id": 140966176,
+              "link": "https://stackoverflow.com/questions/79880191/neo4j-graphacademy-docker-installlation-error-on-windows-modulenotfounderror-n/79880614#comment140966176_79880614"
+            }
+          ],
+          "tags": [],
+          "owner": {
+            "reputation": 91,
+            "user_id": 9335303,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/c8d3c1350d24814b549e1e2e906f4a31?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "Jeremy Adams",
+            "link": "https://stackoverflow.com/users/9335303/jeremy-adams"
+          },
+          "comment_count": 1,
+          "down_vote_count": 0,
+          "up_vote_count": 1,
+          "is_accepted": true,
+          "score": 1,
+          "last_activity_date": 1769967240,
+          "creation_date": 1769967240,
+          "answer_id": 79880614,
+          "question_id": 79880191,
+          "share_link": "https://stackoverflow.com/a/79880614",
+          "body_markdown": "```\r\n# Start your image with a node base image\r\nFROM python\r\n# The /app directory should act as the main application directory\r\nWORKDIR /app\r\n# Copy the app package and package-lock.json file\r\nCOPY . /app\r\n\r\n# Install neo4j package including driver\r\nRUN pip install neo4j\r\n\r\n# Start the app using serve command\r\nCMD [ &quot;python&quot;, &quot;app.py&quot; ]\r\n```\r\n\r\n```\r\n$ docker build . -t test\r\n\r\n# empty db\r\n\r\n$ docker run --network=&quot;host&quot; test:latest\r\nThis is testing\r\n11:30\r\n0\r\n\r\n# I added movie data via browser to the db\r\n\r\n$ docker run --network=&quot;host&quot; test:latest\r\nThis is testing\r\n11:30\r\n171\r\n```\r\n\r\nYou need to get to the docker host network vs the bridge network.  \r\nhttps://stackoverflow.com/questions/24319662/from-inside-of-a-docker-container-how-do-i-connect-to-the-localhost-of-the-mach",
+          "link": "https://stackoverflow.com/questions/79880191/neo4j-graphacademy-docker-installlation-error-on-windows-modulenotfounderror-n/79880614#79880614",
+          "title": "Neo4j GraphAcademy Docker Installlation Error on Windows: ModuleNotFoundError: No module named neo4j"
+        }
+      ],
+      "owner": {
+        "reputation": 35,
+        "user_id": 8365285,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/27bc25c8504ac5d64db909dcdb9b4b0c?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "rnoftz",
+        "link": "https://stackoverflow.com/users/8365285/rnoftz"
+      },
+      "last_editor": {
+        "reputation": 845,
+        "user_id": 6723659,
+        "user_type": "registered",
+        "accept_rate": 86,
+        "profile_image": "https://i.sstatic.net/ze6n1.jpg?s=256",
+        "display_name": "Nick",
+        "link": "https://stackoverflow.com/users/6723659/nick"
+      },
+      "comment_count": 3,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": true,
+      "view_count": 73,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 1,
+      "accepted_answer_id": 79880614,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1769967240,
+      "creation_date": 1769888361,
+      "last_edit_date": 1769948127,
+      "question_id": 79880191,
+      "share_link": "https://stackoverflow.com/q/79880191",
+      "body_markdown": "I&#39;m trying to get a container running Python to connect to my Neo4j container in Docker.\r\n\r\nI&#39;m following the steps in the Neo4j GraphAcademy Python Installation tutorial (&lt;https://neo4j.com/docs/python-manual/current/install/&gt;) and Getting Started with Docker tutorial (&lt;https://neo4j.com/docs/operations-manual/current/docker/introduction/&gt;).  In Windows 10 on the Docker Desktop, I&#39;m getting an error when starting my container in Docker.  \r\n  \r\nI started by uninstalling/deleting all previous python and neo4j versions.  As well as deleting any environment variables associated with them.  I&#39;ve downloaded the latest versions of Python and Neo4j.  I&#39;ve installed the Python driver and installed the Neo4j image for Docker.\r\n\r\nThe Neo4j image starts with no problem in Docker.  The Neo4j browser opens and logs me in (using the default credentials per the tutorial).  The Docker starter image runs without issue as ewll.  I&#39;ve created very rudimentary Dockerfile and app.py files.\r\n\r\nI put &#39;print&#39; commands in the app.py file, so that I can see that the container is using my app.py file.\r\n\r\nAny guidance is greatly appreciated.\r\n\r\n\\--- pip freeze ---\r\n\r\nneo4j==6.1.0\r\n\r\npytz==2025.2\r\n\r\n\\--- User environment variables added to PATH ---\r\n\r\n...\\\\Python314\\\\Scripts\\\\\r\n\r\n...\\\\Python314\\\\Launcher\\\\\r\n\r\n...\\\\Python314\\\\  \r\n\r\n\\--- System environment variables - NEO4J_HOME ---\r\n\r\n...\\\\...\\neo4j-community-2025.11.2-windows\\\\\r\n\r\n  \r\n\\--- Dockerfile ---\r\n```\r\n\\# Start your image with a node base image\r\n\r\nFROM python\r\n\r\n\\# The /app directory should act as the main application directory\r\n\r\nWORKDIR /app\r\n\r\n\\# Copy the app package and package-lock.json file\r\n\r\nCOPY . /app\r\n\r\n\\# Start the app using serve command\r\n\r\nCMD \\[ &quot;python&quot;, &quot;app.py&quot; \\]\r\n\r\n```\r\n\r\n\\--- app.py ---\r\n\r\n```\r\nprint(&quot;This is testing&quot;)\r\nprint(&quot;11:30&quot;)\r\nfrom neo4j import GraphDatabase\r\n\r\ndriver = GraphDatabase.driver(\r\n  &quot;neo4j://localhost:7687&quot;,       # (1)\r\n  auth=(&quot;neo4j&quot;, &quot;##########&quot;) # (2)\r\n)\r\n\r\ndriver.verify_connectivity()\r\n\r\nrecords, summary, keys = driver.execute_query( # (1)\r\n    &quot;RETURN COUNT {()} AS count&quot;\r\n)\r\n\r\n# Get the first record\r\nfirst = records[0]      # (2)\r\n\r\n# Print the count entry\r\nprint(first[&quot;count&quot;])   # (3)\r\n```\r\n\r\n\r\n\\--- Error ---\r\n\r\n\r\n```\r\nThis is testing\r\n\r\n11:30\r\n\r\nTraceback (most recent call last):\r\n\r\n  File &quot;/app/app.py&quot;, line 3, in &lt;module&gt;\r\n\r\n    from neo4j import GraphDatabase\r\n\r\nModuleNotFoundError: No module named &#39;neo4j&#39;\r\n```",
+      "link": "https://stackoverflow.com/questions/79880191/neo4j-graphacademy-docker-installlation-error-on-windows-modulenotfounderror-n",
+      "title": "Neo4j GraphAcademy Docker Installlation Error on Windows: ModuleNotFoundError: No module named neo4j"
+    },
+    {
+      "tags": [
+        "neo4j",
+        "graphql"
+      ],
+      "owner": {
+        "reputation": 77,
+        "user_id": 5613830,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/a6130c7024e8aece0796d3fd2d00c301?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "Student2792",
+        "link": "https://stackoverflow.com/users/5613830/student2792"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": false,
+      "view_count": 44,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 0,
+      "answer_count": 0,
+      "score": 0,
+      "last_activity_date": 1769115510,
+      "creation_date": 1769115510,
+      "question_id": 79874115,
+      "share_link": "https://stackoverflow.com/q/79874115",
+      "body_markdown": "I have a Docker Compose setup with Redis, Neo4j, and a Node.js service. This setup used to work, but now Docker refuses to start my web container because the Neo4j container is marked as unhealthy.\r\n\r\nDocker error:\r\n\r\n```dependency failed to start: container hierarchy-service-neo4j-1 is unhealthy```\r\n\r\n\r\nWhen I try to start the web container manually, I get this error:\r\n```\r\nNeo4jError: Failed to connect to server.\r\nPlease ensure that your database is listening on the correct host and port\r\nand that you have compatible encryption settings both on Neo4j server and driver.\r\nNote that the default encryption setting has changed in Neo4j 4.0.\r\n\r\nCaused by: connect ECONNREFUSED 172.18.0.3:7687\r\n```\r\n\r\nDocker compose file:\r\n```\r\nservices:\r\n  redis:\r\n    image: redis/redis-stack\r\n    ports:\r\n      - &quot;6380:6380&quot;\r\n    environment:\r\n      REDIS_ARGS: --appendonly yes --port 6380\r\n    volumes:\r\n      - ./redisdata:/data\r\n    restart: always\r\n\r\n  neo4j:\r\n    image: neo4j:latest\r\n    ports:\r\n      - &quot;7474:7474&quot;\r\n      - &quot;7687:7687&quot;\r\n    environment:\r\n      - NEO4J_AUTH=neo4j/password\r\n      - NEO4J_PLUGINS=[&quot;apoc&quot;]\r\n    volumes:\r\n      - ./neo4j_db/data:/data\r\n      - ./neo4j_db/logs:/logs\r\n    restart: always\r\n    healthcheck:\r\n      test: wget http://localhost:7474 || exit 1\r\n      interval: 1s\r\n      timeout: 10s\r\n      retries: 20\r\n      start_period: 3s\r\n\r\n  web:\r\n    build:\r\n      context: .\r\n      dockerfile: Dockerfile\r\n    depends_on:\r\n      redis:\r\n        condition: service_started\r\n      neo4j:\r\n        condition: service_healthy\r\n    ports:\r\n      - &quot;4001:4001&quot;\r\n    env_file:\r\n      - .env\r\n    environment:\r\n      - REDIS_URL=redis://redis:6380\r\n      - NEO4J_URI=bolt://neo4j:7687\r\n```\r\n\r\nWhat is the correct way to debug and fix this?",
+      "link": "https://stackoverflow.com/questions/79874115/docker-compose-neo4j-container-is-unhealthy-and-app-fails-with-econnrefused-on-b",
+      "title": "Docker Compose Neo4j container is unhealthy and app fails with ECONNREFUSED on Bolt port 7687"
+    },
+    {
+      "tags": [
+        "database",
+        "elasticsearch",
+        "neo4j",
+        "cypher",
+        "full-text-search"
+      ],
+      "owner": {
+        "reputation": 1,
+        "user_id": 32116662,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/a23de98ab4503b4f79d38a75dc6132d5?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "yo brr",
+        "link": "https://stackoverflow.com/users/32116662/yo-brr"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": false,
+      "view_count": 143,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 0,
+      "answer_count": 0,
+      "score": 0,
+      "last_activity_date": 1775759769,
+      "creation_date": 1766992661,
+      "question_id": 79856598,
+      "share_link": "https://stackoverflow.com/q/79856598",
+      "body_markdown": "here i got :\r\n\r\n- **Elasticsearch** stores most of the searchable / document-like data (text fields, city, etc.)\r\n\r\n- **Neo4j** stores relationships and some entity attributes (e.g., gender, graph connections)\r\n\r\nEach entity exists in both systems and is linked by a shared `eid`.\r\n\r\nCurrently, I query Elasticsearch using `apoc.es.getRaw()` from Neo4j to retrieve matching documents, then match the returned `eid`s back to Neo4j nodes for further filtering and graph traversal.\r\n\r\n**The problem:**  \r\nSome filters exist only in Neo4j (e.g., `gender`), while others exist only in Elasticsearch (e.g., `city`).  \r\nFor example, when searching for **“males living in Shiraz”**, Elasticsearch may return thousands of documents for `city = Shiraz`, but only a small subset match `gender = male` in Neo4j. This results in inefficient queries because large ES result sets must be processed just to find a small valid subset.\r\n\r\n**Question:**  \r\nIs there any recommended or established pattern to efficiently handle this kind of cross-database filtering between Neo4j and Elasticsearch?\r\n\r\nSpecifically:\r\n\r\n- Is there a way to push Neo4j filters into Elasticsearch queries?\r\n\r\n- Are there known architectural patterns for “joining” or synchronizing filters between the two systems?\r\n\r\n- How do people typically avoid scanning large Elasticsearch result sets when part of the filter logic lives in Neo4j?\r\n\r\nps : I am aware that real-time joins are not natively supported ",
+      "link": "https://stackoverflow.com/questions/79856598/efficient-search-across-elasticsearch-and-neo4j-without-pulling-large-result-set",
+      "title": "Efficient Search Across Elasticsearch and Neo4j Without Pulling Large Result Sets"
+    },
+    {
+      "tags": [
+        "database",
+        "graph",
+        "neo4j",
+        "cypher",
+        "neo4j-desktop"
+      ],
+      "answers": [
+        {
+          "tags": [],
+          "owner": {
+            "reputation": 311,
+            "user_id": 1820471,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/926ee773dc9fce7219f479e33b0d2c95?s=256&d=identicon&r=PG",
+            "display_name": "Capo Mestre",
+            "link": "https://stackoverflow.com/users/1820471/capo-mestre"
+          },
+          "comment_count": 0,
+          "down_vote_count": 0,
+          "up_vote_count": 0,
+          "is_accepted": false,
+          "score": 0,
+          "last_activity_date": 1764327643,
+          "creation_date": 1764327643,
+          "answer_id": 79832486,
+          "question_id": 79831981,
+          "share_link": "https://stackoverflow.com/a/79832486",
+          "body_markdown": "The solution:\r\n\r\nNeo4j Desktop version 2 is only compatible with Neo4j v5 and newer.\r\n\r\nNeo4j Desktop version 1 should be instead downloaded from [https://neo4j.com/deployment-center/?desktop-gdb](https://neo4j.com/deployment-center/?desktop-gdb &quot;https://neo4j.com/deployment-center/?desktop-gdb&quot;)&#160;. Then creating a project with a DBMS with version 4.3.6 solved the issue.\r\n\r\n  \r\nMore details here: https://reactome.org/dev/graph-database/neo4j-desktop",
+          "link": "https://stackoverflow.com/questions/79831981/neo4j-has-issues-with-loading-reactome-graph-database/79832486#79832486",
+          "title": "Neo4j has issues with loading Reactome Graph Database"
+        },
+        {
+          "tags": [],
+          "owner": {
+            "reputation": 11336,
+            "user_id": 9690090,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/65ff21259cfecb89c52daf873a478e65?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "Gwang-Jin Kim",
+            "link": "https://stackoverflow.com/users/9690090/gwang-jin-kim"
+          },
+          "comment_count": 0,
+          "down_vote_count": 0,
+          "up_vote_count": 0,
+          "is_accepted": false,
+          "score": 0,
+          "last_activity_date": 1766332017,
+          "creation_date": 1766332017,
+          "answer_id": 79852321,
+          "question_id": 79831981,
+          "share_link": "https://stackoverflow.com/a/79852321",
+          "body_markdown": "On which OS are you working right now? Windows? MacOS? Linux?\r\n\r\nDo you have Docker already installed and running?\r\n\r\nBecause with Docker, it would just a one-liner to have reactome Graph Database running with Docker:\r\n\r\n```\r\ndocker run -p 7474:7474 -p 7687:7687 \\\r\n  -e NEO4J_dbms_memory_heap_maxSize=8g \\\r\n  public.ecr.aws/reactome/graphdb:latest\r\n```",
+          "link": "https://stackoverflow.com/questions/79831981/neo4j-has-issues-with-loading-reactome-graph-database/79852321#79852321",
+          "title": "Neo4j has issues with loading Reactome Graph Database"
+        }
+      ],
+      "owner": {
+        "reputation": 311,
+        "user_id": 1820471,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/926ee773dc9fce7219f479e33b0d2c95?s=256&d=identicon&r=PG",
+        "display_name": "Capo Mestre",
+        "link": "https://stackoverflow.com/users/1820471/capo-mestre"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": false,
+      "view_count": 73,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 1,
+      "answer_count": 2,
+      "score": 1,
+      "last_activity_date": 1766332017,
+      "creation_date": 1764265921,
+      "question_id": 79831981,
+      "share_link": "https://stackoverflow.com/q/79831981",
+      "body_markdown": "I have been trying to start exploring the Reactome Graph Database today following the instructions given at https://reactome.org/dev/graph-database#GetStarted\r\n\r\nI have installed Neo4j Desktop 2 (version 2.0.5)\r\nI have installed Java Runtime Environment v.25\r\nMacOS version 26.1\r\n\r\nI have downloaded from Reactome the file: \r\nreactome.graphdb.dump\r\n\r\nI have also a folder:\r\ngraph.db\r\n\r\nIn Neo4j Desktop, I have created an instance called ‘Reactome&#39;, and opened/imported the database from the dump-file.\r\n\r\nIn a newly created Neo4j data folder, I have located the file ’neo4j.conf’ and added the following lines there:\r\n\r\n```\r\ndbms.default_database=reactome.graphdb\r\n\r\ndbms.recovery.fail_on_missing_files=false\r\n\r\nunsupported.dbms.tx_log.fail_on_corrupted_log_files=false\r\n```\r\n\r\nI have made sure that both the dump-file and the folder graph.db are in the subfolder &#39;path/to/neo4j/data/databases/&#39;\r\n\r\nWhen I try to explore the Reactome Graph Database in Neo4j Desktop App, I get the following error:\r\n\r\n```Please reload the application, if the problem persist please contact Neo4j Support. Error: {&quot;type&quot;:&quot;ERROR.NODATABASEACCESS”}```\r\n\r\nimage.png\r\n\r\nI have also tried the Web Browser (Safari) by going to the link:\r\nhttp://localhost:7474/browser/\r\n\r\nThe Reactome.graphdb seems to have been recognized as judged from the top bar of the page, where I can also see the version of Cypher (v.5):\r\n\r\nimage.png\r\n\r\nHere is the screenshot of the upper half of the browser page, where the error can be seen too when trying to run a Cypher query:\r\n\r\nimage.png\r\n[![enter image description here][1]][1]\r\n\r\n\r\nI am writing to you because essentially I am not sure what else I can try, and therefore heavily relying on your support.\r\n\r\nAny input would be appreciated.\r\n\r\n\r\n  [1]: https://i.sstatic.net/lbOlV79F.png",
+      "link": "https://stackoverflow.com/questions/79831981/neo4j-has-issues-with-loading-reactome-graph-database",
+      "title": "Neo4j has issues with loading Reactome Graph Database"
+    },
+    {
+      "tags": [
+        "neo4j",
+        "cypher",
+        "nodes"
+      ],
+      "owner": {
+        "reputation": 41,
+        "user_id": 15893957,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/e7b0e236852159647280879f0a68ee74?s=256&d=identicon&r=PG&f=y&so-version=2",
+        "display_name": "ShirMarom13",
+        "link": "https://stackoverflow.com/users/15893957/shirmarom13"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": false,
+      "view_count": 89,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 0,
+      "answer_count": 0,
+      "score": 0,
+      "last_activity_date": 1763902735,
+      "creation_date": 1763902735,
+      "question_id": 79827880,
+      "share_link": "https://stackoverflow.com/q/79827880",
+      "body_markdown": "I&#39;ve been trying to find the best (easiest to adjust and modify, and most efficient) way to implement and find an OR relation between Neo4j graph relations.\r\n\r\nFor reference - my Neo4j DB can contain **millions** of nodes and relations.\r\n\r\nFor example, I want to see the results attached here:\r\n\r\n![example graph](https://i.sstatic.net/8HWZM5TK.png &quot;example query&quot;)\r\n\r\n`[s:School]-[:HAS]-&gt;(c:Classroom)-[:CONTAINS]-&gt;(w:Whiteboard) AND (c)-[:CONTAINS]-&gt;(t:Table)`\r\n\r\nOR\r\n\r\n`[s:School]-[:HAS]-&gt;(g:Gym)-[:CONTAINS]-&gt;(f:Football)`\r\n\r\nI&#39;ve come up with this query that seems to work, but it seems to have a couple of issues (correct me if i&#39;m wrong):\r\n\r\n```\r\n// Part 1: Filter all relevant schools\r\nMATCH (s:School)\r\nWHERE\r\n  (\r\n    EXISTS {\r\n       MATCH (s)-[:HAS]-&gt;(c:Classroom)\r\n       MATCH (c)-[:CONTAINS]-&gt;(w:Whiteboard)\r\n       MATCH (c)-[:HAS]-&gt;(t:Table)\r\n    }\r\n    \r\n    OR \r\n\r\n    EXISTS {\r\n        MATCH (s)-[:HAS]-&gt;(g:Gym)&lt;-[:CONTAINS]-(f:Football)\r\n        }\r\n    }\r\n  )\r\n\r\n// Part 2: Stitch all relevant paths to return all the nodes and relations besides schools\r\n\r\nWITH s,\r\n\r\n  [p = (s)-[:HAS]-&gt;(:Gym)&lt;-[:CONTAINS]-(:Football) \r\n   WHERE all(n in nodes(p) WHERE n.temp IS NULL OR NOT n.temp) | p] AS gym_paths,\r\n\r\n  [p = (s)-[:HAS]-&gt;(c:Classroom)-[:CONTAINS]-&gt;(:Whiteboard) \r\n   WHERE EXISTS { MATCH (c)-[:CONTAINS]-&gt;(:Table) }\r\n   AND all(n in nodes(p) WHERE n.temp IS NULL OR NOT n.temp) | p] AS classroom_whiteboard_paths,\r\n\r\n  [p = (s)-[:HAS]-&gt;(c:Classroom)-[:CONTAINS]-&gt;(:Table)\r\n   WHERE EXISTS { MATCH (c)-[:CONTAINS]-&gt;(:Whiteboard) }\r\n   AND all(n in nodes(p) WHERE n.temp IS NULL OR NOT n.temp) | p] AS classroom_table_paths\r\n\r\nWITH s, (gym_paths + classroom_whiteboard_paths + classroom_table_paths) AS all_paths\r\n\r\nUNWIND all_paths AS path\r\nRETURN s, path\r\n```\r\n\r\n1. The initial match (of schools) can return thousands and even ten thousands of results. The DB must find all possible paths for a single `School` node, collect them into an in-memory list variable, and only then proceed to the next step - which has a high memory cost.\r\n\r\n2. The database may be calculating the same underlying path patterns multiple times: once in the first part for filtering, and again in the second part for stitching.\r\n\r\n3. Placing a `WHERE EXISTS` inside a list comprehension forces the database to perform the expensive existence check for every potential path before deciding whether to include it in the list.\r\n\r\nOn the other hand, it seems that using UNION might also be problematic in terms of scalability and also performance -the more OR relations we add to the query (and we currently don&#39;t plan on limiting the number of OR a query can include, but we might if we have no better option), the more complex it becomes.\r\n\r\nAny idea and/or approach is welcome.\r\n\r\nThanks!",
+      "link": "https://stackoverflow.com/questions/79827880/cypher-best-practice-to-find-or-between-relations",
+      "title": "Cypher - best practice to find OR between relations"
+    },
+    {
+      "tags": [
+        "java",
+        "neo4j",
+        "spring-data-neo4j"
+      ],
+      "answers": [
+        {
+          "tags": [],
+          "owner": {
+            "reputation": 8297,
+            "user_id": 2650436,
+            "user_type": "registered",
+            "accept_rate": 80,
+            "profile_image": "https://www.gravatar.com/avatar/34ecacd077244d141a23c46ea094df5c?s=256&d=identicon&r=PG",
+            "display_name": "meistermeier",
+            "link": "https://stackoverflow.com/users/2650436/meistermeier"
+          },
+          "comment_count": 0,
+          "down_vote_count": 0,
+          "up_vote_count": 0,
+          "is_accepted": false,
+          "score": 0,
+          "last_activity_date": 1764150332,
+          "creation_date": 1764150332,
+          "answer_id": 79830532,
+          "question_id": 79827307,
+          "share_link": "https://stackoverflow.com/a/79830532",
+          "body_markdown": "First of all: Spring Data Neo4j only works with the `@Node` entities for repositories and `Neo4jTemplate` operations. The `@RelationshipProperties` are not meant to be fetched on their own but e.g. via an `Airport` in you case.   \r\nAs far as I can see the `Airport` class is also missing a `@Relationship` (or two for both directions) definition completely. For now just assume that you have a definition like\r\n\r\n```java\r\n@Relationship(type = &quot;LINE&quot;, direction = Relationship.Direction.INCOMING)\r\nList&lt;Line&gt; incomingFlights;\r\n@Relationship(type = &quot;LINE&quot;, direction = Relationship.Direction.OUTGOING)\r\nList&lt;Line&gt; outgoingFlights;\r\n```\r\n\r\nThen you would use an `AirportRepository` to fetch the `Airports` and iterate over their `Lines`.  \r\nIf you&#39;re really just interested in the `Lines` w/o any information about start and end node, I would suggest using the `Neo4jClient` which is also part of Spring Data Neo4j but is unaware of the metamodel defined via the annotations.\r\n\r\n```java\r\nneo4jClient.query(&quot;&quot;&quot;\r\n\t   MATCH (origin:Airport)-[r:LINE]-&gt;(destination:Airport)\r\n\t   WHERE id(origin) &lt; id(destination)\r\n\t   RETURN r, destination\t\r\n\t\t&quot;&quot;&quot;)\r\n\t\t.fetchAs(Line.class)\r\n\t\t.mappedBy((typeSystem, record) -&gt; {\r\n\t\t\tvar lineRelationship = record.get(&quot;r&quot;).asRelationship();\r\n\t\t\t// populate and return line\r\n\t\t})\r\n\t\t.all();\r\n```\r\n\r\nI am explicitly ignoring the `destination` in this example because if you would also be interested in this, you could use a `AirportRepository extends Neo4jRepository&lt;Airport, Long&gt;` and your Java object graph traversal with the returned `Airport` .  \r\nLast but not least, if you want to put this query into an `AirportRepository`, you should not return `r, destination` but `collect(r), destination`. This will create an array to attach to the destination airport for each record. The original query will yield a record for each line/destination combination and thus leave you in the end with just a single `Line` (SDN will overwrite the relationships in the Java collection with the last record)",
+          "link": "https://stackoverflow.com/questions/79827307/get-a-list-of-relationships-from-neo4j-repository-using-spring/79830532#79830532",
+          "title": "Get a list of relationships from Neo4J repository using Spring"
+        }
+      ],
+      "owner": {
+        "reputation": 1,
+        "user_id": 15498699,
+        "user_type": "registered",
+        "profile_image": "https://www.gravatar.com/avatar/e02aa7043d9c1b8d820b04a4d0b43d70?s=256&d=identicon&r=PG",
+        "display_name": "Quaky",
+        "link": "https://stackoverflow.com/users/15498699/quaky"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": false,
+      "view_count": 76,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 0,
+      "answer_count": 1,
+      "score": 0,
+      "last_activity_date": 1764150332,
+      "creation_date": 1763813465,
+      "question_id": 79827307,
+      "share_link": "https://stackoverflow.com/q/79827307",
+      "body_markdown": "I started learning the development of REST API using Spring and Neo4J. I am unable to understand how Repositories work, even I looked to the documentation.\r\n\r\nI have Airport node and LINE relationship. There are stored both-way lines between two airports in the Neo4J databse. I would like to obtain all relationships between all airports. How can I do that? I tried this query. It returns correct number of instances of Line class, but all attributes are null. What am I doing wrong?\r\n\r\nThis is `AirportNode` class:\r\n\r\n```Java\r\n@Node(&quot;Airport&quot;)\r\n@NoArgsConstructor\r\n@AllArgsConstructor\r\n@Getter\r\n@Setter\r\npublic class AirportNode implements Serializable {\r\n\r\n    /**\r\n     * The unique identifier for the airport node in Neo4J.\r\n     */\r\n    @Id\r\n    @GeneratedValue\r\n    private Long id;\r\n\r\n    /**\r\n     * The relational database ID corresponding to this airport.\r\n     * This links the Neo4j node to its counterpart in a relational database.\r\n     */\r\n    @Property(&quot;relational_id&quot;)\r\n    private Long relationalId;\r\n\r\n    /**\r\n     * IATA code of the airport (3-letter code).\r\n     * This is a unique identifier for the airport according to the International Air Transport Association standard.\r\n     */\r\n    @Property(&quot;code&quot;)\r\n    private String code;\r\n\r\n    @Property(&quot;name&quot;)\r\n    private String name;\r\n\r\n    @Property(&quot;country&quot;)\r\n    private String country;\r\n\r\n    @Property(&quot;zone&quot;)\r\n    private String zone;\r\n\r\n    @Property(&quot;latitude&quot;)\r\n    private Double latitude;\r\n\r\n    @Property(&quot;longitude&quot;)\r\n    private Double longitude;\r\n/// Getters, Setters, ctors\r\n}\r\n```\r\n\r\nThis is `Line` class:\r\n\r\n```Java\r\n@RelationshipProperties\r\n@Getter\r\n@Setter\r\npublic class Line {\r\n\r\n    /**\r\n     * The unique identifier for this relationship in Neo4J.\r\n     */\r\n    @Id\r\n    @GeneratedValue\r\n    private Long id;\r\n\r\n    /**\r\n     * The destination airport that this line connects to.\r\n     */\r\n    @TargetNode\r\n    private AirportNode destination;\r\n\r\n    @Property(name=&quot;distance&quot;)\r\n    private Double distance;\r\n\r\n    @Property(name=&quot;relational_id&quot;)\r\n    private Long relationalId;\r\n\r\n// getters, setters, ctors\r\n}\r\n```\r\n\r\nThis is the `LineRepository` with the query:\r\n\r\n```Java\r\npublic interface LineRepository extends Neo4JRepository&lt;Line, Long&gt; {\r\n    @Query(&quot;&quot;&quot;\r\n        MATCH (origin:Airport)-[r:LINE]-&gt;(destination:Airport)\r\n        WHERE id(origin) &lt; id(destination)\r\n        RETURN r, destination\r\n    &quot;&quot;&quot;)\r\n    List&lt;Line&gt; findAllLines();\r\n}\r\n```",
+      "link": "https://stackoverflow.com/questions/79827307/get-a-list-of-relationships-from-neo4j-repository-using-spring",
+      "title": "Get a list of relationships from Neo4J repository using Spring"
+    },
+    {
+      "tags": [
+        "neo4j",
+        "cypher"
+      ],
+      "answers": [
+        {
+          "comments": [
+            {
+              "owner": {
+                "reputation": 166,
+                "user_id": 12794739,
+                "user_type": "registered",
+                "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+                "display_name": "AFatNiBBa",
+                "link": "https://stackoverflow.com/users/12794739/afatnibba"
+              },
+              "edited": false,
+              "score": 0,
+              "creation_date": 1763075387,
+              "post_id": 79819491,
+              "comment_id": 140853346,
+              "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge/79819491#comment140853346_79819491"
+            },
+            {
+              "owner": {
+                "reputation": 1611,
+                "user_id": 2258090,
+                "user_type": "registered",
+                "profile_image": "https://i.sstatic.net/g8J8h.jpg?s=256",
+                "display_name": "Finbar Good",
+                "link": "https://stackoverflow.com/users/2258090/finbar-good"
+              },
+              "reply_to_user": {
+                "reputation": 166,
+                "user_id": 12794739,
+                "user_type": "registered",
+                "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+                "display_name": "AFatNiBBa",
+                "link": "https://stackoverflow.com/users/12794739/afatnibba"
+              },
+              "edited": false,
+              "score": 1,
+              "creation_date": 1763117415,
+              "post_id": 79819491,
+              "comment_id": 140853979,
+              "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge/79819491#comment140853979_79819491"
+            },
+            {
+              "owner": {
+                "reputation": 166,
+                "user_id": 12794739,
+                "user_type": "registered",
+                "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+                "display_name": "AFatNiBBa",
+                "link": "https://stackoverflow.com/users/12794739/afatnibba"
+              },
+              "edited": false,
+              "score": 0,
+              "creation_date": 1763148289,
+              "post_id": 79819491,
+              "comment_id": 140854887,
+              "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge/79819491#comment140854887_79819491"
+            },
+            {
+              "owner": {
+                "reputation": 1611,
+                "user_id": 2258090,
+                "user_type": "registered",
+                "profile_image": "https://i.sstatic.net/g8J8h.jpg?s=256",
+                "display_name": "Finbar Good",
+                "link": "https://stackoverflow.com/users/2258090/finbar-good"
+              },
+              "reply_to_user": {
+                "reputation": 166,
+                "user_id": 12794739,
+                "user_type": "registered",
+                "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+                "display_name": "AFatNiBBa",
+                "link": "https://stackoverflow.com/users/12794739/afatnibba"
+              },
+              "edited": false,
+              "score": 0,
+              "creation_date": 1763395892,
+              "post_id": 79819491,
+              "comment_id": 140858646,
+              "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge/79819491#comment140858646_79819491"
+            },
+            {
+              "owner": {
+                "reputation": 166,
+                "user_id": 12794739,
+                "user_type": "registered",
+                "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+                "display_name": "AFatNiBBa",
+                "link": "https://stackoverflow.com/users/12794739/afatnibba"
+              },
+              "edited": false,
+              "score": 0,
+              "creation_date": 1763656892,
+              "post_id": 79819491,
+              "comment_id": 140864751,
+              "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge/79819491#comment140864751_79819491"
+            }
+          ],
+          "tags": [],
+          "owner": {
+            "reputation": 1611,
+            "user_id": 2258090,
+            "user_type": "registered",
+            "profile_image": "https://i.sstatic.net/g8J8h.jpg?s=256",
+            "display_name": "Finbar Good",
+            "link": "https://stackoverflow.com/users/2258090/finbar-good"
+          },
+          "last_editor": {
+            "reputation": 1611,
+            "user_id": 2258090,
+            "user_type": "registered",
+            "profile_image": "https://i.sstatic.net/g8J8h.jpg?s=256",
+            "display_name": "Finbar Good",
+            "link": "https://stackoverflow.com/users/2258090/finbar-good"
+          },
+          "comment_count": 5,
+          "down_vote_count": 0,
+          "up_vote_count": 2,
+          "is_accepted": true,
+          "score": 2,
+          "last_activity_date": 1763117375,
+          "last_edit_date": 1763117375,
+          "creation_date": 1763073045,
+          "answer_id": 79819491,
+          "question_id": 79819364,
+          "share_link": "https://stackoverflow.com/a/79819491",
+          "body_markdown": "In order to create three relationships connecting three existing nodes to a new node with label `W` — but only if those nodes are not already so connected — you can do it using `CREATE`:\r\n```lang-cypher\r\nMATCH (a:X { id: 1 }), (b:Y { id: 2 }), (c:Z { id: 4 })\r\n  WHERE NOT EXISTS { (a)-[:HAS]-&gt;(d:W)&lt;-[:HAS]-(b), (d)&lt;-[:HAS]-(c) }\r\nCREATE (a)-[:HAS]-&gt;(d:W)&lt;-[:HAS]-(b), (d)&lt;-[:HAS]-(c)\r\n```\r\nIf the pattern in `NOT EXISTS` already exists, then `MATCH` produces no rows for `CREATE` to execute over i.e. nothing is created. ",
+          "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge/79819491#79819491",
+          "title": "How to specify more than two relationships to the same node in a `MERGE`"
+        }
+      ],
+      "owner": {
+        "reputation": 166,
+        "user_id": 12794739,
+        "user_type": "registered",
+        "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+        "display_name": "AFatNiBBa",
+        "link": "https://stackoverflow.com/users/12794739/afatnibba"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": true,
+      "view_count": 98,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 2,
+      "accepted_answer_id": 79819491,
+      "answer_count": 1,
+      "score": 2,
+      "last_activity_date": 1763117375,
+      "creation_date": 1763062708,
+      "question_id": 79819364,
+      "share_link": "https://stackoverflow.com/q/79819364",
+      "body_markdown": "I have this situation\r\n```cypher\r\nCREATE (a:X { id: 1 })\r\nCREATE (b:Y { id: 2 })\r\nCREATE (c:Z { id: 3 })\r\nCREATE (:Z { id: 4 })\r\nCREATE (a)-[:HAS]-&gt;(d:W { id: 5 })&lt;-[:HAS]-(b)\r\nCREATE (c)-[:HAS]-&gt;(d)\r\n```\r\n[![Initial situation][1]][1]\r\n\r\nAnd I want to run this query\r\n```cypher\r\nMATCH (a:X { id: 1 })\r\nMATCH (b:Y { id: 2 })\r\nMATCH (c:Z { id: 4 }) // The one with no relationships yet\r\nMERGE (a)-[:HAS]-&gt;(d:W)&lt;-[:HAS]-(b), (d)&lt;-[:HAS]-(c)\r\nON CREATE SET d.id = 6\r\n```\r\nThe problem is that I&#39;m not allowed to put more than one path in a single `MERGE`, how can I do this?\r\n\r\nThis is the result I want to achieve\r\n\r\n[![Expected result][2]][2]\r\n\r\nNotice that I can&#39;t just do this\r\n```cypher\r\nMATCH (a:X { id: 1 })\r\nMATCH (b:Y { id: 2 })\r\nMATCH (c:Z { id: 4 })\r\nMERGE (a)-[:HAS]-&gt;(d:W)&lt;-[:HAS]-(b) // This path already exists, but it uses the other `Z`\r\nON CREATE SET d.id = 6\r\nMERGE (d)&lt;-[:HAS]-(c) // Separate merge\r\n```\r\nBecause the result would be\r\n\r\n[![What I don&#39;t want][3]][3]\r\n\r\n\r\n  [1]: https://i.sstatic.net/9ncPFLqK.png\r\n  [2]: https://i.sstatic.net/Ae3Rg48J.png\r\n  [3]: https://i.sstatic.net/7AnLy7Ye.png",
+      "link": "https://stackoverflow.com/questions/79819364/how-to-specify-more-than-two-relationships-to-the-same-node-in-a-merge",
+      "title": "How to specify more than two relationships to the same node in a `MERGE`"
+    },
+    {
+      "tags": [
+        "neo4j",
+        "cypher"
+      ],
+      "answers": [
+        {
+          "tags": [],
+          "owner": {
+            "reputation": 56,
+            "user_id": 31871396,
+            "user_type": "registered",
+            "profile_image": "https://www.gravatar.com/avatar/62df1bb179ed9b3a091f4125ea357921?s=256&d=identicon&r=PG&f=y&so-version=2",
+            "display_name": "Hannes Voigt",
+            "link": "https://stackoverflow.com/users/31871396/hannes-voigt"
+          },
+          "comment_count": 0,
+          "down_vote_count": 0,
+          "up_vote_count": 5,
+          "is_accepted": true,
+          "score": 5,
+          "last_activity_date": 1763037932,
+          "creation_date": 1763037932,
+          "answer_id": 79818882,
+          "question_id": 79818753,
+          "share_link": "https://stackoverflow.com/a/79818882",
+          "body_markdown": "**TL;DR** It is correct behavior. The two aggregations are not the same, since the first is without a grouping key and the second is with a grouping key.\r\n\r\n# UNWIND and COLLECT semantics\r\n\r\nTwo things:\r\n\r\n1. `UNWIND list AS elt` removes a row who&#39;s `list` is the empty list\r\n\r\n2. `COLLECT(elt)` produce the empty list, if there are no rows in the table that get aggregated.\r\n\r\nNotice how the behavior is symmetric. One operation if the inverse of the other.\r\n\r\n```\r\nCYPHER 25\r\nLET list = [1, 2, 3]\r\nUNWIND list AS elt\r\nRETURN COLLECT(elt) AS list\r\n```\r\n\r\nproduces the same list that is initially set in `LET` — empty or not.\r\n\r\nBTW: In Cypher 5 it is the same:\r\n\r\n```\r\nCYPHER 5\r\nWITH [1, 2, 3] AS list\r\nUNWIND list AS elt\r\nRETURN COLLECT(elt) AS list\r\n```\r\n\r\nNote that `UNWIND` and `COUNT` have the same symmetry.\r\n\r\n# Aggregation with and without grouping keys\r\n\r\nIn aggregation, there are two possible situations:\r\n\r\n1. If there are no grouping keys, then you get a total aggregate of the whole table\r\n\r\n2. If there are grouping keys, then you get an aggregate per group\r\n\r\nGrouping keys are all columns without an aggregation function in the projection expression, i.e. in\r\n\r\n```\r\nWITH la, collect(b) AS lb\r\n```\r\n\r\n`la` is a grouping key.\r\n\r\nA group is constituted by all row that have the same value in all grouping key columns. Consequently, there has to be at least one row to constitute a group and hence groups can&#39;t be empty.\r\n\r\nSo, the `COLLECT` in an aggregation with grouping keys never aggregate over an empty table, since groups are never empty. The whole table may be empty, but that just means that there are no groups at all. Consequently, `COLLECT` never produces an empty list in an aggregation with grouping keys. `COLLECT` can only produce an empty list in a total aggregation.\r\n\r\nSimilarly and by the very same argument, `COUNT` never produces `0` in an aggregation with grouping keys and `COUNT` can only produce an empty list in a total aggregation.\r\n\r\nFor total aggregation the group behavior can be simulated with a constant grouping key, e.g.:\r\n\r\n```\r\nCYPHER 25\r\nUNWIND [] AS elt\r\nRETURN 1 AS _foo, COLLECT(elt) AS list\r\n```\r\n\r\nSimulating the total behavior for groups, requires collecting the group values and unwinding them in a subquery like this:\r\n\r\n```\r\nCYPHER 25\r\nUNWIND [{a: 1, b: 2}, {a: 1, b: 3}, {a: 2, b: null}] AS row\r\nWITH row.a AS a, row.b AS b\r\n// here after the table looks like this:\r\n// ╒═╤════╕\r\n// │a│b   │\r\n// ╞═╪════╡\r\n// │1│2   │\r\n// ├─┼────┤\r\n// │1│3   │\r\n// ├─┼────┤\r\n// │2│null│\r\n// └─┴────┘\r\n//\r\nWITH a, COLLECT(b) AS bs // collect the group\r\nCALL (bs) {\r\n  UNWIND bs AS b // unwind in the subquery\r\n  RETURN COLLECT(b) AS bCol, COUNT(b) AS bCnt\r\n}\r\nRETURN a, bCol, bCnt\r\n```\r\n\r\nand the result is\r\n\r\n```\r\n╒═╤══════╤════╕\r\n│a│bCol  │bCnt│\r\n╞═╪══════╪════╡\r\n│1│[2, 3]│2   │\r\n├─┼──────┼────┤\r\n│2│[]    │0   │ // &lt;-- empty list out of collect for a group\r\n└─┴──────┴────┘\r\n```\r\n\r\nThe above also shows that this works likewise for `COUNT`.\r\n\r\n# CALL subqueries\r\n\r\nBy wrapping UNWIND and the aggregation into a subquery, they get &quot;insulated&quot; from the cardinality of outer driving table. A subquery is executed once for every row. \r\n\r\nHence, in\r\n\r\n```\r\nCALL () {\r\n  UNWIND [1,2,3] AS a\r\n  RETURN collect(a) AS la\r\n}\r\nCALL () {\r\n  UNWIND [4,5,6] AS b\r\n  RETURN collect(b) AS lb\r\n}\r\nRETURN la, lb\r\n```\r\n\r\nboth subqueries start on a single row (like every top-level query starts with a single row and no columns, aka unit table). Further, the aggregations in both subqueries do not have a grouping key, i.e. the crucial difference in the original query is gone.",
+          "link": "https://stackoverflow.com/questions/79818753/why-doesnt-this-neo4j-query-return-anything-when-the-second-list-is-empty/79818882#79818882",
+          "title": "Why doesn&#39;t this Neo4j query return anything when the second list is empty?"
+        }
+      ],
+      "owner": {
+        "reputation": 166,
+        "user_id": 12794739,
+        "user_type": "registered",
+        "profile_image": "https://lh3.googleusercontent.com/a-/AAuE7mBooQ8qS_p4zWSvsnqOj37myuTJaXCAl8CXYkhWnA=k-s256",
+        "display_name": "AFatNiBBa",
+        "link": "https://stackoverflow.com/users/12794739/afatnibba"
+      },
+      "comment_count": 0,
+      "delete_vote_count": 0,
+      "close_vote_count": 0,
+      "is_answered": true,
+      "view_count": 77,
+      "favorite_count": 0,
+      "down_vote_count": 0,
+      "up_vote_count": 1,
+      "accepted_answer_id": 79818882,
+      "answer_count": 1,
+      "score": 1,
+      "last_activity_date": 1763037932,
+      "creation_date": 1763030818,
+      "question_id": 79818753,
+      "share_link": "https://stackoverflow.com/q/79818753",
+      "body_markdown": "If I run this query\r\n```cypher\r\nUNWIND [1,2,3] AS a\r\nWITH collect(a) AS la\r\nUNWIND [4,5,6] AS b\r\nWITH la, collect(b) AS lb\r\nRETURN la, lb\r\n```\r\nI get this result\r\n\r\n| la | lb |\r\n|:-:|:-:|\r\n| [1, 2, 3] | [4, 5, 6] |\r\n\r\nIf I change the FIRST list to `[]`, I get this\r\n\r\n| la | lb |\r\n|:-:|:-:|\r\n| [] | [4, 5, 6] |\r\n\r\nBUT if I change the SECOND one to `[]` (Even if the first one is still `[1, 2, 3]`), I don&#39;t get anything.\r\n\r\nWhy am I not getting this result instead?\r\n\r\n| la | lb |\r\n|:-:|:-:|\r\n| [1, 2, 3] | [] |\r\n\r\nI can fix this edge case by using sub-queries\r\n```cypher\r\nCALL () {\r\n  UNWIND [1,2,3] AS a\r\n  RETURN collect(a) AS la\r\n}\r\nCALL () {\r\n  UNWIND [4,5,6] AS b\r\n  RETURN collect(b) AS lb\r\n}\r\nRETURN la, lb\r\n```\r\nBut I still don&#39;t see why it behaves this way, is it a bug, or is it intentional?",
+      "link": "https://stackoverflow.com/questions/79818753/why-doesnt-this-neo4j-query-return-anything-when-the-second-list-is-empty",
+      "title": "Why doesn&#39;t this Neo4j query return anything when the second list is empty?"
+    }
+  ],
+  "has_more": true,
+  "quota_max": 300,
+  "quota_remaining": 297
+}
