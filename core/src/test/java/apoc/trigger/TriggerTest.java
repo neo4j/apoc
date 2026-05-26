@@ -120,7 +120,7 @@ class TriggerTest {
         db.executeTransactionally("CREATE (:Counter {count:0})");
         db.executeTransactionally("CREATE (f:Foo)");
         final String triggerQuery = "MATCH (c:Counter) SET c.count = c.count + size($deletedNodes)";
-        db.executeTransactionally("CALL apoc.trigger.add('count-removals', $query, {})", map("$query", triggerQuery));
+        db.executeTransactionally("CALL apoc.trigger.add('count-removals', $query, {})", map("query", triggerQuery));
 
         // Wait for trigger
         TriggerTestUtil.awaitTriggerDiscovered(db, "count-removals", triggerQuery);

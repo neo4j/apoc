@@ -336,7 +336,7 @@ public class CsvEntityLoader {
     private static String readFirstLine(CountingReader reader) throws IOException {
         String line = "";
         int i;
-        while ((i = reader.read()) != 0) {
+        while ((i = reader.read()) != -1) {
             char c = (char) i;
             if (c == '\n') break;
             line += c;

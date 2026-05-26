@@ -230,7 +230,7 @@ class RBACOnLoadTest {
 
     @Test
     void testBoostedPrivilegesOverridesLoadPrivileges() throws IOException {
-        String url = "https://neo4j.com/docs/cypher-refcard/3.3/csv/artists.csv";
+        String url = "https://data.neo4j.com/bands/artists.csv";
         addRBACOnLoad(url, "testUserWithBoostedPrivileges");
 
         testCall(
