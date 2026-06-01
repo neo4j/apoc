@@ -67,6 +67,11 @@ dependencies {
 
   // These will be dependencies packaged with the .jar
   implementation project(":common")
+  implementation(group: 'org.neo4j', name: 'neo4j-graph-algo', version: neo4jVersionEffective) {
+    exclude group: 'org.neo4j', module: 'neo4j-cypher-runtime-util'
+    exclude group: 'org.neo4j', module: 'neo4j-util'
+    exclude group: 'org.neo4j', module: 'neo4j-kernel'
+  }
   implementation group: 'com.opencsv', name: 'opencsv', version: '5.12.0', {
     exclude group: 'commons-beanutils', module: 'commons-beanutils'
     exclude group: 'org.apache.commons', module: 'commons-collections4'
@@ -87,7 +92,6 @@ dependencies {
   compileOnly group: 'org.apache.arrow', name: 'arrow-memory-netty', version: apacheArrowVersion, arrowExclusions
 
   compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
-  compileOnly group: 'org.neo4j', name: 'neo4j-graph-algo', version: neo4jVersionEffective
   compileOnly group: 'com.google.guava', name: 'guava', version: guavaVersion
 
   // These dependencies affect the tests only, they will not be packaged in the resulting .jar
@@ -100,7 +104,6 @@ dependencies {
   testImplementation group: 'org.mock-server', name: 'mockserver-netty', version: '5.15.0', {
     exclude group: 'org.slf4j', module: 'slf4j-api'
   }
-  testImplementation group: 'org.neo4j', name: 'neo4j-graph-algo', version: neo4jVersionEffective
   testImplementation 'org.assertj:assertj-core:3.27.6'
   testImplementation 'net.javacrumbs.json-unit:json-unit-assertj:5.1.0'
 
