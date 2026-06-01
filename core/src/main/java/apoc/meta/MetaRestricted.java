@@ -759,7 +759,7 @@ public class MetaRestricted {
                                         "direction",
                                         "out",
                                         "count",
-                                        metaItem.rightCount,
+                                        metaItem.leftCount,
                                         "labels",
                                         metaItem.other,
                                         "properties",

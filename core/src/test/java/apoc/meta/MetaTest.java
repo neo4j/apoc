@@ -36,6 +36,7 @@ import static org.neo4j.driver.Values.isoDuration;
 import static org.neo4j.graphdb.traversal.Evaluators.toDepth;
 
 import apoc.HelperProcedures;
+import apoc.example.Examples;
 import apoc.graph.Graphs;
 import apoc.nodes.Nodes;
 import apoc.util.MapUtil;
@@ -104,7 +105,13 @@ class MetaTest {
     @BeforeAll
     void setUp() {
         TestUtil.registerProcedure(
-                db, Meta.class, MetaRestricted.class, Graphs.class, Nodes.class, HelperProcedures.class);
+                db,
+                Meta.class,
+                MetaRestricted.class,
+                Graphs.class,
+                Nodes.class,
+                HelperProcedures.class,
+                Examples.class);
     }
 
     public static boolean hasRecordMatching(List<Map<String, Object>> records, Map<String, Object> record) {
@@ -664,6 +671,39 @@ class MetaTest {
         assertEquals(left, row.get("left"));
         assertEquals(right, row.get("right"));
         assertEquals(type.name(), row.get("type"));
+    }
+
+    @Test
+    void testMetaSchemaOutgoingRelCountBug() {
+        db.executeTransactionally("CALL apoc.example.movies()");
+        testCall(db, "CALL apoc.meta.schema()", (row) -> {
+            Map<String, Object> schema = (Map<String, Object>) row.get("value");
+
+            Map<String, Object> actorRels =
+                    (Map<String, Object>) ((Map<String, Object>) schema.get("Person")).get("relationships");
+            Map<String, Object> movieRels =
+                    (Map<String, Object>) ((Map<String, Object>) schema.get("Movie")).get("relationships");
+
+            assertRelationship(actorRels, "DIRECTED", "out", 44);
+            assertRelationship(actorRels, "ACTED_IN", "out", 172);
+            assertRelationship(actorRels, "REVIEWED", "out", 8);
+            assertRelationship(actorRels, "PRODUCED", "out", 14);
+            assertRelationship(actorRels, "WROTE", "out", 9);
+
+            assertRelationship(movieRels, "DIRECTED", "in", 44);
+            assertRelationship(movieRels, "ACTED_IN", "in", 172);
+            assertRelationship(movieRels, "REVIEWED", "in", 8);
+            assertRelationship(movieRels, "PRODUCED", "in", 14);
+            assertRelationship(movieRels, "WROTE", "in", 9);
+        });
+    }
+
+    private void assertRelationship(Map<String, Object> relationships, String relType, String direction, long count) {
+        Map<String, Object> rel = (Map<String, Object>) relationships.get(relType);
+
+        assertNotNull(rel, "Relationship " + relType + " should not be null");
+        assertEquals(direction, rel.get("direction"));
+        assertEquals(count, (long) rel.get("count"));
     }
 
     @Test
