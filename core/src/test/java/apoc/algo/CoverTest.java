@@ -24,11 +24,12 @@ import apoc.util.TestUtil;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
-@ImpermanentEnterpriseDbmsExtension()
+@ImpermanentEnterpriseDbmsExtension
 class CoverTest {
 
     @Inject
@@ -37,6 +38,11 @@ class CoverTest {
     @BeforeAll
     void beforeAll() {
         TestUtil.registerProcedure(db, Cover.class);
+    }
+
+    @BeforeEach
+    void setUp() {
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 
     @Test
@@ -57,5 +63,103 @@ class CoverTest {
                             nodeRep),
                     (r) -> assertEquals(3L, r.get("c")));
         }
+    }
+
+    @Test
+    void testCoverEmpty() {
+        TestUtil.testCall(
+                db, "CALL apoc.algo.cover([]) YIELD rel RETURN count(*) AS c", r -> assertEquals(0L, r.get("c")));
+    }
+
+    @Test
+    void testCoverSingleNode() {
+        db.executeTransactionally("CREATE (:Single)");
+        TestUtil.testCall(
+                db,
+                """
+                    MATCH (n:Single)
+                    WITH collect(n) AS nodes
+                    CALL apoc.algo.cover(nodes)
+                    YIELD rel
+                    RETURN count(*) AS c
+                """,
+                r -> assertEquals(0L, r.get("c")));
+    }
+
+    @Test
+    void testCoverDisconnectedNodes() {
+        db.executeTransactionally("CREATE (:Disco), (:Disco)");
+        TestUtil.testCall(
+                db,
+                """
+                        MATCH (n:Disco)
+                        WITH collect(n) AS nodes
+                        CALL apoc.algo.cover(nodes)
+                        YIELD rel
+                        RETURN count(*) AS c
+                    """,
+                r -> assertEquals(0L, r.get("c")));
+    }
+
+    @Test
+    void testCoverSelfLoop() {
+        db.executeTransactionally("CREATE (a:SelfLoop)-[:X]->(a)");
+        TestUtil.testCall(
+                db,
+                """
+                        MATCH (n:SelfLoop)
+                        WITH collect(n) AS nodes
+                        CALL apoc.algo.cover(nodes)
+                        YIELD rel RETURN count(*) AS c
+                    """,
+                r -> assertEquals(1L, r.get("c")));
+    }
+
+    @Test
+    void testCoverMultipleRelTypes() {
+        db.executeTransactionally("CREATE (a:Multi)-[:X]->(b:Multi)-[:Y]->(c:Multi)");
+        TestUtil.testCall(
+                db,
+                """
+                        MATCH (n:Multi)
+                        WITH collect(n) AS nodes
+                        CALL apoc.algo.cover(nodes)
+                        YIELD rel
+                        RETURN count(*) AS c
+                    """,
+                r -> assertEquals(2L, r.get("c")));
+    }
+
+    @Test
+    void testCoverIncomingRelationship() {
+        // relationship points a<-b; cover finds it via b's outgoing rels when both nodes are in the set
+        db.executeTransactionally("CREATE (a:Incoming)<-[:X]-(b:Incoming)");
+        TestUtil.testCall(
+                db,
+                """
+                    MATCH (n:Incoming)
+                    WITH collect(n) AS nodes
+                    CALL apoc.algo.cover(nodes)
+                    YIELD rel
+                    RETURN count(*) AS c
+                   """,
+                r -> assertEquals(1L, r.get("c")));
+    }
+
+    @Test
+    void testCoverSubset() {
+        // chain of 3; passing only the first two nodes should return only the relationship between them
+        db.executeTransactionally("CREATE (:Sub {id: 1})-[:X]->(:Sub {id: 2})-[:X]->(:Sub {id: 3})");
+        TestUtil.testCall(
+                db,
+                """
+                    MATCH (n:Sub)
+                    WHERE n.id IN [1, 2]
+                    WITH collect(n) AS nodes
+                    CALL apoc.algo.cover(nodes)
+                    YIELD rel
+                    RETURN count(*) AS c
+                """,
+                r -> assertEquals(1L, r.get("c")));
     }
 }

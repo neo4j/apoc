@@ -18,7 +18,7 @@
  */
 package apoc.algo;
 
-import static apoc.algo.PathFindingUtils.buildPathExpander;
+import static apoc.algo.CorePathFindingUtils.buildPathExpander;
 
 import apoc.result.PathResult;
 import apoc.result.WeightedPathResult;
@@ -27,8 +27,16 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.neo4j.graphalgo.*;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphalgo.BasicEvaluationContext;
+import org.neo4j.graphalgo.CommonEvaluators;
+import org.neo4j.graphalgo.EstimateEvaluator;
+import org.neo4j.graphalgo.GraphAlgoFactory;
+import org.neo4j.graphalgo.PathFinder;
+import org.neo4j.graphalgo.WeightedPath;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -94,7 +102,7 @@ public class PathFinding {
         String pointPropertyName = (String) config.get("pointPropName");
         final EstimateEvaluator<Double> estimateEvaluator;
         if (pointPropertyName != null) {
-            estimateEvaluator = new PathFindingUtils.GeoEstimateEvaluatorPointCustom(pointPropertyName);
+            estimateEvaluator = new CorePathFindingUtils.GeoEstimateEvaluatorPointCustom(pointPropertyName);
         } else {
             String latPropertyName = config.getOrDefault("y", "latitude").toString();
             String lonPropertyName = config.getOrDefault("x", "longitude").toString();
