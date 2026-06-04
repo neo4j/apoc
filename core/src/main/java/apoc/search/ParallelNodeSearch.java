@@ -309,9 +309,9 @@ public class ParallelNodeSearch {
         public final Map<String, Object> values;
 
         public NodeReducedResult(long id, List<String> labels, Map<String, Object> val) {
-            this.labels = labels;
             this.id = id;
-            this.values = val;
+            this.labels = new ArrayList<>(labels);
+            this.values = new HashMap<>(val);
         }
     }
 }
