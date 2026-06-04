@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -120,5 +121,60 @@ class ParallelNodeSearchTest {
         query =
                 "call apoc.search.nodeAllReduced({Person: 'born', Movie: ['released']},'exact',2000) yield labels as n return count(n) as c";
         TestUtil.testCall(db, query, (row) -> assertEquals(3L, row.get("c")));
+    }
+
+    @Test
+    void testMultiSearchReduced() {
+        String query =
+                "CALL apoc.search.multiSearchReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','CONTAINS','her') YIELD id RETURN count(id) AS c";
+        TestUtil.testCall(db, query, (row) -> assertEquals(6L, row.get("c")));
+        query =
+                "CALL apoc.search.multiSearchReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','STARTS WITH','Tom') YIELD values RETURN count(values) AS c";
+        TestUtil.testCall(db, query, (row) -> assertEquals(4L, row.get("c")));
+        query =
+                "CALL apoc.search.multiSearchReduced('{Person: \"name\",Movie: [\"title\",\"tagline\"]}','ENDS WITH','s') YIELD labels RETURN count(labels) AS c";
+        TestUtil.testCall(db, query, (row) -> assertEquals(29L, row.get("c")));
+    }
+
+    @Test
+    void testMultiSearchReducedMergesMultiplePropertyMatches() {
+        db.executeTransactionally("CREATE (:SearchTest {alpha: 'hello world', beta: 'hello there'})");
+        try {
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.search.multiSearchReduced({SearchTest: ['alpha', 'beta']}, 'contains', 'hello')"
+                            + " YIELD labels, values RETURN labels, values",
+                    row -> {
+                        assertEquals(java.util.List.of("SearchTest"), row.get("labels"));
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> values = (Map<String, Object>) row.get("values");
+                        assertEquals(2, values.size());
+                        assertEquals("hello world", values.get("alpha"));
+                        assertEquals("hello there", values.get("beta"));
+                    });
+        } finally {
+            db.executeTransactionally("MATCH (n:SearchTest) DELETE n");
+        }
+    }
+
+    @Test
+    void testNodeReducedMergesMultiplePropertyMatches() {
+        db.executeTransactionally("CREATE (:SearchTest {alpha: 'hello world', beta: 'hello there'})");
+        try {
+            TestUtil.testCall(
+                    db,
+                    "CALL apoc.search.nodeReduced({SearchTest: ['alpha', 'beta']}, 'contains', 'hello')"
+                            + " YIELD labels, values RETURN labels, values",
+                    row -> {
+                        assertEquals(java.util.List.of("SearchTest"), row.get("labels"));
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> values = (Map<String, Object>) row.get("values");
+                        assertEquals(2, values.size());
+                        assertEquals("hello world", values.get("alpha"));
+                        assertEquals("hello there", values.get("beta"));
+                    });
+        } finally {
+            db.executeTransactionally("MATCH (n:SearchTest) DELETE n");
+        }
     }
 }
