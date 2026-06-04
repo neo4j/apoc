@@ -105,7 +105,7 @@ class ExportArrowSecurityTest {
             (Map e) -> assertTrue(((Exception) e.get(ERROR_KEY)).getMessage().contains("outside the import directory"));
 
     // Illegal external FS access cases
-    private static final String FILENAME = ExportCoreSecurityTest.FILENAME;
+    private static final String FILENAME = "arrow-my-test.txt";
     private static final String PARAM_NAMES = ExportCoreSecurityTest.PARAM_NAMES;
 
     private static final String case01 = "../imported/" + FILENAME;
