@@ -35,12 +35,12 @@ public class CountingInputStream extends FilterInputStream implements SizeCounte
     private final long total;
     private long count = 0;
 
-    public CountingInputStream(InputStream stream, long total) {
+    public CountingInputStream(InputStream stream, long total) throws IOException {
         super(toBufferedStream(stream, total));
         this.total = total;
     }
 
-    private static BufferedInputStream toBufferedStream(InputStream stream, long total) {
+    private static BufferedInputStream toBufferedStream(InputStream stream, long total) throws IOException {
         final BOMInputStream bomInputStream = new BOMInputStream(stream);
 
         InputStream sizeInputStream = toLimitedIStream(bomInputStream, total);
