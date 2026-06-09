@@ -48,6 +48,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -86,6 +87,12 @@ public class ExportCoreSecurityTest {
     void configure(TestDatabaseManagementServiceBuilder builder) {
         builder.setConfig(
                 GraphDatabaseSettings.load_csv_file_url_root, directory.toPath().toAbsolutePath());
+    }
+
+    @AfterEach
+    void tearDown() {
+        ApocConfig.apocConfig().setProperty(ApocConfig.APOC_EXPORT_FILE_ENABLED, false);
+        ApocConfig.apocConfig().setProperty(ApocConfig.APOC_IMPORT_FILE_USE_NEO4J_CONFIG, true);
     }
 
     @BeforeAll
@@ -329,7 +336,7 @@ public class ExportCoreSecurityTest {
 
     @Test
     void testIllegalExternalFSAccessExportCypherSchema() {
-        setFileExport(true);
+        setExportFileApocConfigs(true, true, false);
         assertPathTraversalError(
                 db,
                 String.format(apocSchemaProc, "'../hello', {}"),
