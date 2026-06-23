@@ -44,7 +44,7 @@ class MetaCommunityFeaturesTest extends AbstractDockerTestBase {
                         "count": 1,
                         "relationships": {
                           "R": {
-                            "count": 0,
+                            "count": 1,
                             "properties": {
                               "r": {
                                 "existence": false,
