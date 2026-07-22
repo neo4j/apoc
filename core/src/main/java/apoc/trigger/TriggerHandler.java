@@ -361,10 +361,11 @@ public class TriggerHandler extends LifecycleAdapter implements TransactionEvent
 
         return Util.withBackOffRetries(
                 () -> {
-                    Transaction tx = apocConfig.getSystemDb().beginTx();
-                    T result = action.apply(tx);
-                    tx.commit();
-                    return result;
+                    try (Transaction tx = apocConfig.getSystemDb().beginTx()) {
+                        T result = action.apply(tx);
+                        tx.commit();
+                        return result;
+                    }
                 },
                 timeout,
                 upperTimeout,

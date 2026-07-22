@@ -147,6 +147,25 @@ class CoverTest {
     }
 
     @Test
+    void testCoverDoesNotLeakCursorsUnderLimit() {
+        // A hub node with many outgoing relationships: a Cypher LIMIT short-circuits apoc.algo.cover's lazy
+        // stream while a relationship cursor is mid-iteration. Before the fix this leaked the cursor and the
+        // commit failed with "Not all allocated cursors were returned".
+        db.executeTransactionally("CREATE (h:Hub) FOREACH (i IN range(1, 20) | CREATE (h)-[:X]->(:Leaf))");
+        TestUtil.testResult(
+                db,
+                """
+                MATCH (n)
+                WITH collect(n) AS nodes
+                CALL apoc.algo.cover(nodes)
+                YIELD rel
+                RETURN rel
+                LIMIT 1
+                """,
+                result -> assertEquals(1L, result.stream().count()));
+    }
+
+    @Test
     void testCoverSubset() {
         // chain of 3; passing only the first two nodes should return only the relationship between them
         db.executeTransactionally("CREATE (:Sub {id: 1})-[:X]->(:Sub {id: 2})-[:X]->(:Sub {id: 3})");

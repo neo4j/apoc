@@ -107,9 +107,10 @@ public class MultiStatementCypherSubGraphExporter {
                 artificialUniqueNodes += countArtificialUniqueNodes(graph.getNodes());
                 // In this code path an artificial relationship property is added for each relationship
                 if (exportConfig.isMultipleRelationshipsWithType()) {
-                    artificialUniqueRels += StreamSupport.stream(
-                                    graph.getRelationships().spliterator(), false)
-                            .count();
+                    try (ResourceIterable<Relationship> rels = graph.getRelationships()) {
+                        artificialUniqueRels +=
+                                StreamSupport.stream(rels.spliterator(), false).count();
+                    }
                 }
                 exportSchema(schemaWriter, config);
                 reporter.update(0, 0, 0);
@@ -162,10 +163,12 @@ public class MultiStatementCypherSubGraphExporter {
 
     private long appendNodes(PrintWriter out, int batchSize, Reporter reporter) {
         long count = 0;
-        for (Node node : graph.getNodes()) {
-            if (count > 0 && count % batchSize == 0) restart(out);
-            count++;
-            appendNode(out, node, reporter);
+        try (ResourceIterable<Node> nodes = graph.getNodes()) {
+            for (Node node : nodes) {
+                if (count > 0 && count % batchSize == 0) restart(out);
+                count++;
+                appendNode(out, node, reporter);
+            }
         }
         return count;
     }
@@ -207,10 +210,12 @@ public class MultiStatementCypherSubGraphExporter {
 
     private long appendRelationships(PrintWriter out, int batchSize, Reporter reporter) {
         long count = 0;
-        for (Relationship rel : graph.getRelationships()) {
-            if (count > 0 && count % batchSize == 0) restart(out);
-            count++;
-            appendRelationship(out, rel, reporter);
+        try (ResourceIterable<Relationship> rels = graph.getRelationships()) {
+            for (Relationship rel : rels) {
+                if (count > 0 && count % batchSize == 0) restart(out);
+                count++;
+                appendRelationship(out, rel, reporter);
+            }
         }
         return count;
     }
@@ -437,8 +442,10 @@ public class MultiStatementCypherSubGraphExporter {
 
     public long countArtificialUniqueNodes(ResourceIterable<Node> n) {
         long artificialUniques = 0;
-        for (Node node : n) {
-            artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
+        try (n) {
+            for (Node node : n) {
+                artificialUniques = getArtificialUniqueNodes(node, artificialUniques);
+            }
         }
         return artificialUniques;
     }

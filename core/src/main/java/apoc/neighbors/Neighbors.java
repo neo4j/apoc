@@ -22,6 +22,7 @@ import static apoc.path.RelationshipTypeAndDirections.parse;
 import static apoc.util.Util.getNodeElementId;
 import static apoc.util.Util.getNodeId;
 
+import apoc.util.collection.Iterables;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,17 +41,17 @@ public class Neighbors {
     @Context
     public Transaction tx;
 
-    private Iterable<Relationship> getRelationshipsByTypeAndDirection(
+    private ResourceIterable<Relationship> getRelationshipsByTypeAndDirection(
             Node node, Pair<RelationshipType, Direction> typesAndDirection) {
         // as policy if both elements in the pair are null we return an empty result
         if (typesAndDirection.getLeft() == null) {
             return typesAndDirection.getRight() == null
-                    ? Collections.emptyList()
+                    ? Iterables.asResourceIterable(Collections.<Relationship>emptyList())
                     : node.getRelationships(typesAndDirection.getRight());
         }
         if (typesAndDirection.getRight() == null) {
             return typesAndDirection.getLeft() == null
-                    ? Collections.emptyList()
+                    ? Iterables.asResourceIterable(Collections.<Relationship>emptyList())
                     : node.getRelationships(typesAndDirection.getLeft());
         }
         return node.getRelationships(typesAndDirection.getRight(), typesAndDirection.getLeft());
@@ -90,9 +91,11 @@ public class Neighbors {
 
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-            for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                nextB.addLong(
-                        getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+            try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                for (Relationship r : rels) {
+                    nextB.addLong(getNodeId(
+                            (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                }
             }
         }
 
@@ -106,9 +109,12 @@ public class Neighbors {
                 nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                 node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                    for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        nextA.add(getNodeId(
-                                (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                    try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                        for (Relationship r : rels) {
+                            nextA.add(getNodeId(
+                                    (InternalTransaction) tx,
+                                    r.getOtherNode(node).getElementId()));
+                        }
                     }
                 }
             }
@@ -124,10 +130,12 @@ public class Neighbors {
                     nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                     node = tx.getNodeByElementId(nodeElementId);
                     for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                        for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                            nextB.add(getNodeId(
-                                    (InternalTransaction) tx,
-                                    r.getOtherNode(node).getElementId()));
+                        try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                            for (Relationship r : rels) {
+                                nextB.add(getNodeId(
+                                        (InternalTransaction) tx,
+                                        r.getOtherNode(node).getElementId()));
+                            }
                         }
                     }
                 }
@@ -178,9 +186,11 @@ public class Neighbors {
         List<Pair<RelationshipType, Direction>> typesAndDirections = parse(types);
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-            for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                nextB.add(
-                        getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+            try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                for (Relationship r : rels) {
+                    nextB.add(getNodeId(
+                            (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                }
             }
         }
 
@@ -194,9 +204,12 @@ public class Neighbors {
                 nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                 node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                    for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        nextA.add(getNodeId(
-                                (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                    try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                        for (Relationship r : rels) {
+                            nextA.add(getNodeId(
+                                    (InternalTransaction) tx,
+                                    r.getOtherNode(node).getElementId()));
+                        }
                     }
                 }
             }
@@ -212,10 +225,12 @@ public class Neighbors {
                     nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                     node = tx.getNodeByElementId(nodeElementId);
                     for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                        for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                            nextB.add(getNodeId(
-                                    (InternalTransaction) tx,
-                                    r.getOtherNode(node).getElementId()));
+                        try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                            for (Relationship r : rels) {
+                                nextB.add(getNodeId(
+                                        (InternalTransaction) tx,
+                                        r.getOtherNode(node).getElementId()));
+                            }
                         }
                     }
                 }
@@ -270,9 +285,11 @@ public class Neighbors {
         List<Pair<RelationshipType, Direction>> typesAndDirections = parse(types);
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-            for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(
-                        getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+            try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                for (Relationship r : rels) {
+                    seen[0].add(getNodeId(
+                            (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                }
             }
         }
 
@@ -282,9 +299,12 @@ public class Neighbors {
                 nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                 node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                    for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(getNodeId(
-                                (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                    try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                        for (Relationship r : rels) {
+                            seen[i].add(getNodeId(
+                                    (InternalTransaction) tx,
+                                    r.getOtherNode(node).getElementId()));
+                        }
                     }
                 }
             }
@@ -333,9 +353,11 @@ public class Neighbors {
         List<Pair<RelationshipType, Direction>> typesAndDirections = parse(types);
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-            for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(
-                        getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+            try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                for (Relationship r : rels) {
+                    seen[0].add(getNodeId(
+                            (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                }
             }
         }
 
@@ -345,9 +367,12 @@ public class Neighbors {
                 nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                 node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                    for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(getNodeId(
-                                (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                    try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                        for (Relationship r : rels) {
+                            seen[i].add(getNodeId(
+                                    (InternalTransaction) tx,
+                                    r.getOtherNode(node).getElementId()));
+                        }
                     }
                 }
             }
@@ -394,9 +419,11 @@ public class Neighbors {
         List<Pair<RelationshipType, Direction>> typesAndDirections = parse(types);
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-            for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(
-                        getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+            try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                for (Relationship r : rels) {
+                    seen[0].add(getNodeId(
+                            (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                }
             }
         }
 
@@ -406,9 +433,12 @@ public class Neighbors {
                 nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                 node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                    for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(getNodeId(
-                                (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                    try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                        for (Relationship r : rels) {
+                            seen[i].add(getNodeId(
+                                    (InternalTransaction) tx,
+                                    r.getOtherNode(node).getElementId()));
+                        }
                     }
                 }
             }
@@ -457,9 +487,11 @@ public class Neighbors {
         List<Pair<RelationshipType, Direction>> typesAndDirections = parse(types);
         // First Hop
         for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-            for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                seen[0].add(
-                        getNodeId((InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+            try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                for (Relationship r : rels) {
+                    seen[0].add(getNodeId(
+                            (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                }
             }
         }
 
@@ -469,9 +501,12 @@ public class Neighbors {
                 nodeElementId = getNodeElementId((InternalTransaction) tx, iterator.next());
                 node = tx.getNodeByElementId(nodeElementId);
                 for (Pair<RelationshipType, Direction> pair : typesAndDirections) {
-                    for (Relationship r : getRelationshipsByTypeAndDirection(node, pair)) {
-                        seen[i].add(getNodeId(
-                                (InternalTransaction) tx, r.getOtherNode(node).getElementId()));
+                    try (ResourceIterable<Relationship> rels = getRelationshipsByTypeAndDirection(node, pair)) {
+                        for (Relationship r : rels) {
+                            seen[i].add(getNodeId(
+                                    (InternalTransaction) tx,
+                                    r.getOtherNode(node).getElementId()));
+                        }
                     }
                 }
             }

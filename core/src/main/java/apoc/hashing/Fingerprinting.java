@@ -36,6 +36,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
@@ -174,14 +175,17 @@ public class Fingerprinting {
                 FingerprintingConfig.FingerprintStrategy.EAGER.toString()));
         return withMessageDigest(config, messageDigest -> {
             // step 1: load all nodes, calc their hash and map them to id
-            Map<Long, String> idToNodeHash = tx.getAllNodes().stream()
-                    .collect(Collectors.toMap(
-                            Node::getId,
-                            node -> fingerprint(node, config),
-                            (aLong, aLong2) -> {
-                                throw new RuntimeException();
-                            },
-                            () -> new TreeMap<>()));
+            Map<Long, String> idToNodeHash;
+            try (ResourceIterable<Node> allNodes = tx.getAllNodes()) {
+                idToNodeHash = allNodes.stream()
+                        .collect(Collectors.toMap(
+                                Node::getId,
+                                node -> fingerprint(node, config),
+                                (aLong, aLong2) -> {
+                                    throw new RuntimeException();
+                                },
+                                () -> new TreeMap<>()));
+            }
 
             // step 2: build inverse map
             final Map<String, List<Long>> nodeHashToId = idToNodeHash.entrySet().stream()
@@ -194,14 +198,16 @@ public class Fingerprinting {
             nodeHashToId.forEach((hash, ids) -> ids.forEach(id -> {
                 messageDigest.update(hash.getBytes());
                 Node node = tx.getNodeById(id);
-                List<EndNodeRelationshipHashTuple> endNodeRelationshipHashTuples = StreamSupport.stream(
-                                node.getRelationships(Direction.OUTGOING).spliterator(), false)
-                        .map(relationship -> {
-                            String endNodeHash = idToNodeHash.get(relationship.getEndNodeId());
-                            String relationshipHash = fingerprint(relationship, excludedPropertyKeys);
-                            return new EndNodeRelationshipHashTuple(endNodeHash, relationshipHash);
-                        })
-                        .collect(Collectors.toList());
+                List<EndNodeRelationshipHashTuple> endNodeRelationshipHashTuples;
+                try (ResourceIterable<Relationship> nodeRels = node.getRelationships(Direction.OUTGOING)) {
+                    endNodeRelationshipHashTuples = StreamSupport.stream(nodeRels.spliterator(), false)
+                            .map(relationship -> {
+                                String endNodeHash = idToNodeHash.get(relationship.getEndNodeId());
+                                String relationshipHash = fingerprint(relationship, excludedPropertyKeys);
+                                return new EndNodeRelationshipHashTuple(endNodeHash, relationshipHash);
+                            })
+                            .collect(Collectors.toList());
+                }
 
                 endNodeRelationshipHashTuples.stream().sorted().forEach(endNodeRelationshipHashTuple -> {
                     messageDigest.update(

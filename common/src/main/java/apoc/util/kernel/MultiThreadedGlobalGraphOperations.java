@@ -117,24 +117,39 @@ public class MultiThreadedGlobalGraphOperations {
             try (InternalTransaction tx =
                     db.beginTransaction(KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
                 KernelTransaction ktx = tx.kernelTransaction();
-                ktx.acquireStatement();
-                ExecutionContext executionContext = ktx.createExecutionContext();
-                try (NodeCursor cursor = cursorAllocator.apply(ktx)) {
-                    while (scan.reservePartition(cursor, executionContext)) {
-                        // Branch out so that all available threads will get saturated
-                        executorService.submit(new BatchJob(
-                                scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
-                        executorService.submit(new BatchJob(
-                                scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
-                        while (processAndReport(cursor)) {
-                            // just continue processing...
+                try (var statement = ktx.acquireStatement()) {
+                    ExecutionContext executionContext = ktx.createExecutionContext();
+                    try (NodeCursor cursor = cursorAllocator.apply(ktx)) {
+                        while (scan.reservePartition(cursor, executionContext)) {
+                            // Branch out so that all available threads will get saturated
+                            executorService.submit(new BatchJob(
+                                    scan,
+                                    batchSize,
+                                    db,
+                                    consumer,
+                                    result,
+                                    cursorAllocator,
+                                    executorService,
+                                    processing));
+                            executorService.submit(new BatchJob(
+                                    scan,
+                                    batchSize,
+                                    db,
+                                    consumer,
+                                    result,
+                                    cursorAllocator,
+                                    executorService,
+                                    processing));
+                            while (processAndReport(cursor)) {
+                                // just continue processing...
+                            }
                         }
                     }
+                    tx.commit();
+                    executionContext.complete();
+                    executionContext.close();
+                    return null;
                 }
-                tx.commit();
-                executionContext.complete();
-                executionContext.close();
-                return null;
             } finally {
                 result.batches.incrementAndGet();
                 processing.decrementAndGet();

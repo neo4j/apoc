@@ -39,6 +39,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResultTransformer;
 
 /**
@@ -53,8 +54,10 @@ public class MetaInformation {
             SubGraph graph, GraphDatabaseService db, ExportConfig config) {
         if (!config.isSampling()) {
             Map<String, Class> propTypes = new LinkedHashMap<>();
-            for (Node node : graph.getNodes()) {
-                updateKeyTypes(propTypes, node);
+            try (ResourceIterable<Node> nodes = graph.getNodes()) {
+                for (Node node : nodes) {
+                    updateKeyTypes(propTypes, node);
+                }
             }
             return propTypes;
         }
@@ -71,8 +74,10 @@ public class MetaInformation {
             SubGraph graph, GraphDatabaseService db, ExportConfig config) {
         if (!config.isSampling()) {
             Map<String, Class> propTypes = new LinkedHashMap<>();
-            for (Relationship relationship : graph.getRelationships()) {
-                updateKeyTypes(propTypes, relationship);
+            try (ResourceIterable<Relationship> relationships = graph.getRelationships()) {
+                for (Relationship relationship : relationships) {
+                    updateKeyTypes(propTypes, relationship);
+                }
             }
             return propTypes;
         }

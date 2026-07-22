@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.procedure.Description;
 
 /**
@@ -43,16 +44,24 @@ public class VirtualGraph {
                 "name",
                 name,
                 "nodes",
-                nodes instanceof Set
-                        ? nodes
-                        : StreamSupport.stream(nodes.spliterator(), false).collect(Collectors.toSet()),
+                toGraphCollection(nodes),
                 "relationships",
-                relationships instanceof Set
-                        ? relationships
-                        : StreamSupport.stream(relationships.spliterator(), false)
-                                .collect(Collectors.toSet()),
+                toGraphCollection(relationships),
                 "properties",
                 properties);
+    }
+
+    private static <T> Object toGraphCollection(Iterable<T> iterable) {
+        if (iterable instanceof Set) {
+            return iterable;
+        }
+        if (iterable instanceof ResourceIterable) {
+            try (ResourceIterable<T> resourceIterable = (ResourceIterable<T>) iterable) {
+                return StreamSupport.stream(resourceIterable.spliterator(), false)
+                        .collect(Collectors.toSet());
+            }
+        }
+        return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toSet());
     }
 
     public Collection<Node> nodes() {

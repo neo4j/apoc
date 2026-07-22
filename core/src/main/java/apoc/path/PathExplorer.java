@@ -403,8 +403,12 @@ public class PathExplorer {
         Stream<Path> optionalStream;
         Iterator<Path> itr = stream.iterator();
         if (itr.hasNext()) {
-            optionalStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(itr, 0), false);
+            // Preserve the source stream's onClose (which closes the underlying Traverser cursor); the
+            // re-wrapped stream would otherwise drop it and leak the traversal cursor under a LIMIT.
+            optionalStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(itr, 0), false)
+                    .onClose(stream::close);
         } else {
+            stream.close();
             List<Path> listOfNull = new ArrayList<>();
             listOfNull.add(null);
             optionalStream = listOfNull.stream();

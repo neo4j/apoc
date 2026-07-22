@@ -219,6 +219,29 @@ class GraphsTest {
     }
 
     @Test
+    void testFromDocumentDoesNotLeakCursorsWhenNodesAlreadyExist() throws Exception {
+        Map<String, Object> artistGenesisMap = Util.map("type", "artist", "name", "Genesis", "id", 1L);
+        Map<String, Object> albumGenesisMap =
+                Util.map("type", "album", "producer", "Jonathan King", "id", 1L, "title", "From Genesis to Revelation");
+        Map<String, Object> doc = new HashMap<>() {
+            {
+                putAll(artistGenesisMap);
+                put("albums", List.of(albumGenesisMap));
+            }
+        };
+        Map<String, Object> params =
+                Util.map("json", JsonUtil.OBJECT_MAPPER.writeValueAsString(doc), "config", Util.map("write", true));
+
+        db.executeTransactionally("CALL apoc.graph.fromDocument($json, $config) yield graph RETURN graph", params);
+        TestUtil.testResult(
+                db,
+                "CALL apoc.graph.fromDocument($json, $config) yield graph RETURN graph",
+                params,
+                result -> assertTrue(result.hasNext()));
+        db.executeTransactionally("MATCH p = (a:Artist)-[r:ALBUMS]->(b:Album) detach delete p");
+    }
+
+    @Test
     void testFromDocumentWithCustomRelName() throws Exception {
         Map<String, Object> artistGenesisMap = map("type", "artist", "name", "Genesis", "id", 1L);
         Map<String, Object> albumGenesisMap =

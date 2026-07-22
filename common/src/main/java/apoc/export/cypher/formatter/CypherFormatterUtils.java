@@ -32,6 +32,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.values.storable.DurationValue;
 import org.neo4j.values.storable.Value;
 import org.neo4j.values.storable.Values;
@@ -163,12 +164,11 @@ public class CypherFormatterUtils {
      * Returns true if there exists no other relationship with the same start node, end node and type
      */
     public static boolean isUniqueRelationship(Relationship rel) {
-        return StreamSupport.stream(
-                        rel.getStartNode()
-                                .getRelationships(Direction.OUTGOING, rel.getType())
-                                .spliterator(),
-                        false)
-                .noneMatch(r -> !r.equals(rel) && r.getEndNode().equals(rel.getEndNode()));
+        try (ResourceIterable<Relationship> rels =
+                rel.getStartNode().getRelationships(Direction.OUTGOING, rel.getType())) {
+            return StreamSupport.stream(rels.spliterator(), false)
+                    .noneMatch(r -> !r.equals(rel) && r.getEndNode().equals(rel.getEndNode()));
+        }
     }
 
     // ---- properties ----

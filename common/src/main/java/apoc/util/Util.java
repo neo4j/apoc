@@ -990,17 +990,20 @@ public class Util {
 
     public static Node mergeNode(
             Transaction tx, Label primaryLabel, Label addtionalLabel, Pair<String, Object>... pairs) {
-        Node node = Iterators.singleOrNull(tx.findNodes(primaryLabel, pairs[0].getLeft(), pairs[0].getRight()).stream()
-                .filter(n -> addtionalLabel == null || n.hasLabel(addtionalLabel))
-                .filter(n -> {
-                    for (int i = 1; i < pairs.length; i++) {
-                        if (!Objects.deepEquals(pairs[i].getRight(), n.getProperty(pairs[i].getLeft(), null))) {
-                            return false;
+        Node node;
+        try (ResourceIterator<Node> nodes = tx.findNodes(primaryLabel, pairs[0].getLeft(), pairs[0].getRight())) {
+            node = Iterators.singleOrNull(nodes.stream()
+                    .filter(n -> addtionalLabel == null || n.hasLabel(addtionalLabel))
+                    .filter(n -> {
+                        for (int i = 1; i < pairs.length; i++) {
+                            if (!Objects.deepEquals(pairs[i].getRight(), n.getProperty(pairs[i].getLeft(), null))) {
+                                return false;
+                            }
                         }
-                    }
-                    return true;
-                })
-                .iterator());
+                        return true;
+                    })
+                    .iterator());
+        }
         if (node == null) {
             Label[] labels =
                     addtionalLabel == null ? new Label[] {primaryLabel} : new Label[] {primaryLabel, addtionalLabel};

@@ -35,6 +35,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 
 public class DocumentToGraph {
@@ -377,12 +379,14 @@ public class DocumentToGraph {
         }
 
         public Node getOrCreateRealNode(Label[] labels, Map<String, Object> idValues) {
-            return Stream.of(labels)
-                    .map(label -> tx.findNodes(label, idValues))
-                    .filter(it -> it.hasNext())
-                    .map(it -> it.next())
-                    .findFirst()
-                    .orElseGet(() -> tx.createNode(labels));
+            for (Label label : labels) {
+                try (ResourceIterator<Node> it = tx.findNodes(label, idValues)) {
+                    if (it.hasNext()) {
+                        return it.next();
+                    }
+                }
+            }
+            return tx.createNode(labels);
         }
 
         public Node getOrCreateVirtualNode(
@@ -399,13 +403,15 @@ public class DocumentToGraph {
                             Map<String, Object> ids = filterNodeIdProperties(n, idValues);
                             return idValues.equals(ids);
                         }
-                        return StreamSupport.stream(n.getRelationships().spliterator(), false)
-                                .anyMatch(r -> {
-                                    Node otherNode = r.getOtherNode(n);
-                                    Map<String, Object> ids = filterNodeIdProperties(otherNode, idValues);
-                                    return Stream.of(labels).anyMatch(label -> otherNode.hasLabel(label))
-                                            && idValues.equals(ids);
-                                });
+                        try (ResourceIterable<Relationship> rels = n.getRelationships()) {
+                            return StreamSupport.stream(rels.spliterator(), false)
+                                    .anyMatch(r -> {
+                                        Node otherNode = r.getOtherNode(n);
+                                        Map<String, Object> ids = filterNodeIdProperties(otherNode, idValues);
+                                        return Stream.of(labels).anyMatch(label -> otherNode.hasLabel(label))
+                                                && idValues.equals(ids);
+                                    });
+                        }
                     })
                     .findFirst()
                     .orElseGet(() -> new VirtualNode(labels, Collections.emptyMap()));

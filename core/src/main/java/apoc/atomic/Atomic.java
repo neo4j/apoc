@@ -33,6 +33,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.neo4j.exceptions.Neo4jException;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.NotFoundException;
+import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.*;
@@ -288,7 +289,10 @@ public class Atomic {
                     String statement = "WITH $container AS n WITH n SET n." + Util.sanitize(property, true) + "="
                             + operation + ";";
                     Map<String, Object> properties = MapUtil.map("container", entity);
-                    return context.tx.execute(Util.prefixQuery(procedureCallContext, statement), properties);
+                    try (Result result =
+                            context.tx.execute(Util.prefixQuery(procedureCallContext, statement), properties)) {
+                        return result.resultAsString();
+                    }
                 },
                 retryAttempts);
 
