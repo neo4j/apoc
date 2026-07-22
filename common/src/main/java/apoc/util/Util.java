@@ -1339,32 +1339,30 @@ public class Util {
     }
 
     public static <T> T withBackOffRetries(Supplier<T> func, long initialTimeout, long upperTimeout, Log log) {
-        T result = null;
         var startTime = System.currentTimeMillis();
         var timeout = initialTimeout;
-        var lastTry = startTime - timeout;
 
         while (true) {
-            var timeStamp = System.currentTimeMillis();
-            if (timeStamp - lastTry >= timeout) {
-                try {
-                    result = func.get();
-                    break;
-                } catch (Exception e) {
-                    if (timeout >= upperTimeout) {
-                        Long totalTime = (System.currentTimeMillis() - startTime) / 1000;
-                        if (log.isDebugEnabled()) {
-                            log.debug(String.format(
-                                    "Got %s: %s after %s seconds.", e.getClass(), e.getMessage(), totalTime));
-                        }
-                        throw e;
+            try {
+                return func.get();
+            } catch (Exception e) {
+                if (timeout >= upperTimeout) {
+                    Long totalTime = (System.currentTimeMillis() - startTime) / 1000;
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                                String.format("Got %s: %s after %s seconds.", e.getClass(), e.getMessage(), totalTime));
                     }
+                    throw e;
                 }
-                lastTry = timeStamp;
                 timeout *= 2;
+                try {
+                    Thread.sleep(timeout);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
             }
         }
-        return result;
     }
 
     public static String getCypherVersionString(ProcedureCallContext procedureCallContext) {

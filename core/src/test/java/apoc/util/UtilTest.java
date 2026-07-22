@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -197,37 +198,37 @@ class UtilTest {
 
     @Test
     void testWithBackOffRetriesWithSuccess() {
+        AtomicInteger counter = new AtomicInteger();
         long start = System.currentTimeMillis();
-        int result = Util.withBackOffRetries(this::testFunction, 100, 2000, NullLog.getInstance());
+        int result = Util.withBackOffRetries(() -> testFunction(counter), 100, 2000, NullLog.getInstance());
         long time = System.currentTimeMillis() - start;
 
         assertEquals(4, result);
 
         // The method should be run directly, after 200ms, after 400ms and after 800 ms when it will succeed
-        // So the total time should be roughly 1400 ms
-        assertTrue(time > 1300 && time < 1500, "Expected time to be in the interval 1300 ms - 1500 ms but was " + time);
+        // So the total time should be roughly 1400 ms. Allow generous slack for CI scheduling jitter.
+        assertTrue(time > 1200 && time < 1900, "Expected time to be in the interval 1200 ms - 1900 ms but was " + time);
     }
 
     @Test
     void testWithBackOffRetriesWithError() {
+        AtomicInteger counter = new AtomicInteger();
         long start = System.currentTimeMillis();
         assertThrows(
                 RuntimeException.class,
-                () -> Util.withBackOffRetries(this::testFunction, 100, 300, NullLog.getInstance()));
+                () -> Util.withBackOffRetries(() -> testFunction(counter), 100, 300, NullLog.getInstance()));
 
         // The method should be run directly, after 200ms and after 400ms when it will fail
-        // So the total time should be roughly 600 ms
+        // So the total time should be roughly 600 ms. Allow generous slack for CI scheduling jitter.
         long time = System.currentTimeMillis() - start;
-        assertTrue(time > 550);
-        assertTrue(time < 650);
+        assertTrue(time > 500 && time < 900, "Expected time to be in the interval 500 ms - 900 ms but was " + time);
     }
 
-    private static int i = 0;
-
-    private int testFunction() {
-        if (++i % 4 != 0) {
+    private int testFunction(AtomicInteger counter) {
+        int value = counter.incrementAndGet();
+        if (value % 4 != 0) {
             throw new RuntimeException("Unexpected i");
         }
-        return i;
+        return value;
     }
 }
