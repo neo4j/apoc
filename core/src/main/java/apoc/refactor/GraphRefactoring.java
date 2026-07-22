@@ -101,12 +101,17 @@ public class GraphRefactoring {
             @Name(value = "relType", description = "The name of the resulting relationship type.") String type) {
         return Util.nodeStream((InternalTransaction) tx, nodes).map((node) -> {
             UpdatedRelationshipResult result = new UpdatedRelationshipResult(node.getId());
-            try {
-                Iterable<Relationship> outRels = node.getRelationships(Direction.OUTGOING);
-                Iterable<Relationship> inRels = node.getRelationships(Direction.INCOMING);
+            try (ResourceIterable<Relationship> outRels = node.getRelationships(Direction.OUTGOING);
+                    ResourceIterable<Relationship> inRels = node.getRelationships(Direction.INCOMING)) {
                 if (node.getDegree(Direction.OUTGOING) == 1 && node.getDegree(Direction.INCOMING) == 1) {
-                    Relationship outRel = outRels.iterator().next();
-                    Relationship inRel = inRels.iterator().next();
+                    Relationship outRel;
+                    Relationship inRel;
+                    try (ResourceIterator<Relationship> it = outRels.iterator()) {
+                        outRel = it.next();
+                    }
+                    try (ResourceIterator<Relationship> it = inRels.iterator()) {
+                        inRel = it.next();
+                    }
                     Relationship newRel = inRel.getStartNode()
                             .createRelationshipTo(outRel.getEndNode(), RelationshipType.withName(type));
                     newRel = copyProperties(node, copyProperties(inRel, copyProperties(outRel, newRel)));
@@ -829,11 +834,14 @@ public class GraphRefactoring {
             return Stream.empty();
         }
 
-        BiFunction<Node, Direction, Relationship> filterRel =
-                (node, direction) -> stream(node.getRelationships(direction).spliterator(), false)
+        BiFunction<Node, Direction, Relationship> filterRel = (node, direction) -> {
+            try (ResourceIterable<Relationship> relIt = node.getRelationships(direction)) {
+                return stream(relIt.spliterator(), false)
                         .filter(rels::contains)
                         .findFirst()
                         .orElse(null);
+            }
+        };
 
         nodesToRemove.forEach(node -> {
             Relationship relationshipIn = filterRel.apply(node, Direction.INCOMING);
@@ -879,7 +887,10 @@ public class GraphRefactoring {
                 rels.removeAll(List.of(relationshipIn, relationshipOut));
             }
 
-            tx.execute(Util.prefixQuery(procedureCallContext, "WITH $node as n DETACH DELETE n"), Map.of("node", node));
+            try (Result deleteResult = tx.execute(
+                    Util.prefixQuery(procedureCallContext, "WITH $node as n DETACH DELETE n"), Map.of("node", node))) {
+                // write-only query: nothing to consume, just ensure the statement/cursors are closed
+            }
             nodes.remove(node);
         });
 
@@ -963,24 +974,26 @@ public class GraphRefactoring {
     }
 
     private void copyRelationships(Node source, Node target, boolean delete, boolean createNewSelfRel) {
-        for (Relationship rel : source.getRelationships()) {
-            var startNode = rel.getStartNode();
-            var endNode = rel.getEndNode();
+        try (ResourceIterable<Relationship> rels = source.getRelationships()) {
+            for (Relationship rel : rels) {
+                var startNode = rel.getStartNode();
+                var endNode = rel.getEndNode();
 
-            if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId())) {
-                if (delete) rel.delete();
-            } else {
-                if (startNode.getElementId().equals(source.getElementId())) startNode = target;
-                if (endNode.getElementId().equals(source.getElementId())) endNode = target;
+                if (!createNewSelfRel && startNode.getElementId().equals(endNode.getElementId())) {
+                    if (delete) rel.delete();
+                } else {
+                    if (startNode.getElementId().equals(source.getElementId())) startNode = target;
+                    if (endNode.getElementId().equals(source.getElementId())) endNode = target;
 
-                final var type = rel.getType();
-                final var properties = rel.getAllProperties();
+                    final var type = rel.getType();
+                    final var properties = rel.getAllProperties();
 
-                // Delete first to avoid breaking constraints.
-                if (delete) rel.delete();
+                    // Delete first to avoid breaking constraints.
+                    if (delete) rel.delete();
 
-                final var newRel = startNode.createRelationshipTo(endNode, type);
-                properties.forEach(newRel::setProperty);
+                    final var newRel = startNode.createRelationshipTo(endNode, type);
+                    properties.forEach(newRel::setProperty);
+                }
             }
         }
     }
