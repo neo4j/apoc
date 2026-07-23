@@ -286,12 +286,6 @@ class MetaTest {
             Relationship rel = node.createRelationshipTo(node, RelationshipType.withName("FOO"));
             testTypeName(node, "NODE");
             testTypeName(rel, "RELATIONSHIP");
-            // This iterator is not closed properly and is unused
-            // Path path = tx.traversalDescription()
-            //         .evaluator(toDepth(1))
-            //         .traverse(node)
-            //         .iterator()
-            //         .next();
             // TODO PATH FAILS              testTypeName(path, "PATH");
             tx.rollback();
         }
@@ -327,12 +321,6 @@ class MetaTest {
             Relationship rel = node.createRelationshipTo(node, RelationshipType.withName("FOO"));
             testIsTypeName(node, "NODE");
             testIsTypeName(rel, "RELATIONSHIP");
-            // This iterator is not closed properly and is unused
-            // Path path = tx.traversalDescription()
-            //         .evaluator(toDepth(1))
-            //         .traverse(node)
-            //         .iterator()
-            //         .next();
             // TODO PATH FAILS            testIsTypeName(path, "PATH");
             tx.rollback();
         }
