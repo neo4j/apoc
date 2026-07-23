@@ -32,23 +32,25 @@ public class RefactorUtil {
     public static void mergeRelationshipsWithSameTypeAndDirection(
             Node node, RefactorConfig config, Direction dir, List<String> excludeRelIds) {
         for (RelationshipType type : node.getRelationshipTypes()) {
-            StreamSupport.stream(node.getRelationships(dir, type).spliterator(), false)
-                    .filter(rel -> !excludeRelIds.contains(rel.getElementId()))
-                    .collect(Collectors.groupingBy(rel -> Pair.of(rel.getStartNode(), rel.getEndNode())))
-                    .values()
-                    .stream()
-                    .filter(list -> !list.isEmpty())
-                    .forEach(list -> {
-                        Relationship first = list.get(0);
-                        if (isSelfRel(first) && !config.isCreatingNewSelfRel()) {
-                            list.forEach(Relationship::delete);
-                        } else {
-                            for (int i = 1; i < list.size(); i++) {
-                                Relationship relationship = list.get(i);
-                                mergeRels(relationship, first, true, config);
+            try (ResourceIterable<Relationship> relationships = node.getRelationships(dir, type)) {
+                StreamSupport.stream(relationships.spliterator(), false)
+                        .filter(rel -> !excludeRelIds.contains(rel.getElementId()))
+                        .collect(Collectors.groupingBy(rel -> Pair.of(rel.getStartNode(), rel.getEndNode())))
+                        .values()
+                        .stream()
+                        .filter(list -> !list.isEmpty())
+                        .forEach(list -> {
+                            Relationship first = list.get(0);
+                            if (isSelfRel(first) && !config.isCreatingNewSelfRel()) {
+                                list.forEach(Relationship::delete);
+                            } else {
+                                for (int i = 1; i < list.size(); i++) {
+                                    Relationship relationship = list.get(i);
+                                    mergeRels(relationship, first, true, config);
+                                }
                             }
-                        }
-                    });
+                        });
+            }
         }
     }
 

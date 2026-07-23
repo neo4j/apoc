@@ -219,23 +219,25 @@ public class Tables4LabelsProfile {
             int out = n.getDegree(type, Direction.OUTGOING);
             if (out == 0) continue;
 
-            for (Relationship r : n.getRelationships(Direction.OUTGOING, type)) {
-                Iterable relStartNode = r.getStartNode().getLabels();
-                Iterable relEndNode = r.getEndNode().getLabels();
+            try (ResourceIterable<Relationship> rels = n.getRelationships(Direction.OUTGOING, type)) {
+                for (Relationship r : rels) {
+                    Iterable relStartNode = r.getStartNode().getLabels();
+                    Iterable relEndNode = r.getEndNode().getLabels();
 
-                String relIdentifier = labelJoin(relStartNode) + "###" + labelJoin(relEndNode) + "###" + typeName;
+                    String relIdentifier = labelJoin(relStartNode) + "###" + labelJoin(relEndNode) + "###" + typeName;
 
-                PropertyContainerProfile localRelProfile = getRelProfile(relIdentifier);
-                long seenSoFar = sawRel(relIdentifier);
-                boolean isNode = false;
+                    PropertyContainerProfile localRelProfile = getRelProfile(relIdentifier);
+                    long seenSoFar = sawRel(relIdentifier);
+                    boolean isNode = false;
 
-                if (seenSoFar > config.getMaxRels()) {
-                    // We've seen more than the maximum sample size for this rel, so
-                    // we don't need to keep looking.
-                    continue;
+                    if (seenSoFar > config.getMaxRels()) {
+                        // We've seen more than the maximum sample size for this rel, so
+                        // we don't need to keep looking.
+                        continue;
+                    }
+
+                    localRelProfile.observe(r, isNode);
                 }
-
-                localRelProfile.observe(r, isNode);
             }
         }
     }

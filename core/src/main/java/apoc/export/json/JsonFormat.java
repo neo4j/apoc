@@ -190,8 +190,22 @@ public class JsonFormat {
 
     private void writeNodes(Iterable<Node> nodes, Reporter reporter, JsonGenerator jsonGenerator, ExportConfig config)
             throws IOException {
-        for (Node node : nodes) {
-            writeNode(reporter, jsonGenerator, node, config);
+        try {
+            for (Node node : nodes) {
+                writeNode(reporter, jsonGenerator, node, config);
+            }
+        } finally {
+            closeIfResource(nodes);
+        }
+    }
+
+    private static void closeIfResource(Object o) {
+        if (o instanceof AutoCloseable ac) {
+            try {
+                ac.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -217,8 +231,12 @@ public class JsonFormat {
     private void writeRels(
             Iterable<Relationship> rels, Reporter reporter, JsonGenerator jsonGenerator, ExportConfig config)
             throws IOException {
-        for (Relationship rel : rels) {
-            writeRel(reporter, jsonGenerator, rel, config);
+        try {
+            for (Relationship rel : rels) {
+                writeRel(reporter, jsonGenerator, rel, config);
+            }
+        } finally {
+            closeIfResource(rels);
         }
     }
 

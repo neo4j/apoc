@@ -241,27 +241,29 @@ public class Grouping {
                                 node = Util.rebind(txInThread, node);
                                 NodeKey startKey = entry.getKey();
                                 VirtualNode v1 = virtualNodes.get(startKey);
-                                for (Relationship rel : node.getRelationships(Direction.OUTGOING)) {
-                                    if (includeRels != null
-                                            && !includeRels.contains(
-                                                    rel.getType().name())) continue;
-                                    Node endNode = rel.getEndNode();
-                                    for (NodeKey endKey : keysFor(endNode, labels, keys)) {
-                                        VirtualNode v2 = virtualNodes.get(endKey);
-                                        if (v2 == null) continue;
-                                        if (!selfRels && startKey.equals(endKey)) continue;
-                                        virtualRels.compute(new RelKey(startKey, endKey, rel), (rk, vRel) -> {
-                                            if (vRel == null) vRel = v1.createRelationshipTo(v2, rel.getType());
-                                            if (!relAggNames.isEmpty()) {
-                                                aggregate(
-                                                        vRel,
-                                                        relAggNames,
-                                                        relAggKeys.length > 0
-                                                                ? rel.getProperties(relAggKeys)
-                                                                : Collections.emptyMap());
-                                            }
-                                            return vRel;
-                                        });
+                                try (ResourceIterable<Relationship> rels = node.getRelationships(Direction.OUTGOING)) {
+                                    for (Relationship rel : rels) {
+                                        if (includeRels != null
+                                                && !includeRels.contains(
+                                                        rel.getType().name())) continue;
+                                        Node endNode = rel.getEndNode();
+                                        for (NodeKey endKey : keysFor(endNode, labels, keys)) {
+                                            VirtualNode v2 = virtualNodes.get(endKey);
+                                            if (v2 == null) continue;
+                                            if (!selfRels && startKey.equals(endKey)) continue;
+                                            virtualRels.compute(new RelKey(startKey, endKey, rel), (rk, vRel) -> {
+                                                if (vRel == null) vRel = v1.createRelationshipTo(v2, rel.getType());
+                                                if (!relAggNames.isEmpty()) {
+                                                    aggregate(
+                                                            vRel,
+                                                            relAggNames,
+                                                            relAggKeys.length > 0
+                                                                    ? rel.getProperties(relAggKeys)
+                                                                    : Collections.emptyMap());
+                                                }
+                                                return vRel;
+                                            });
+                                        }
                                     }
                                 }
                             }

@@ -58,6 +58,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.security.AuthorizationViolationException;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
@@ -202,12 +203,16 @@ public class CsvFormat {
 
     private void writeAllBulkImport(
             InternalTransaction threadBoundTx, SubGraph graph, Reporter reporter, ExportFileManager writer) {
-        Map<Iterable<Label>, List<Node>> objectNodes = StreamSupport.stream(
-                        graph.getNodes().spliterator(), false)
-                .collect(Collectors.groupingBy(Node::getLabels));
-        Map<RelationshipType, List<Relationship>> objectRels = StreamSupport.stream(
-                        graph.getRelationships().spliterator(), false)
-                .collect(Collectors.groupingBy(Relationship::getType));
+        Map<Iterable<Label>, List<Node>> objectNodes;
+        try (ResourceIterable<Node> nodes = graph.getNodes()) {
+            objectNodes =
+                    StreamSupport.stream(nodes.spliterator(), false).collect(Collectors.groupingBy(Node::getLabels));
+        }
+        Map<RelationshipType, List<Relationship>> objectRels;
+        try (ResourceIterable<Relationship> rels = graph.getRelationships()) {
+            objectRels = StreamSupport.stream(rels.spliterator(), false)
+                    .collect(Collectors.groupingBy(Relationship::getType));
+        }
         writeNodesBulkImport(threadBoundTx, reporter, writer, objectNodes);
         writeRelsBulkImport(threadBoundTx, reporter, writer, objectRels);
     }
@@ -358,15 +363,17 @@ public class CsvFormat {
             boolean keepNulls) {
         String[] row = new String[cols];
         int nodes = 0;
-        for (Node node : graph.getNodes()) {
-            row[0] = String.valueOf(getNodeId(threadBoundTx, node.getElementId()));
-            row[1] = getLabelsString(node);
-            collectProps(nodePropTypes, node, reporter, row, 2, keepNulls);
-            out.writeNext(row, applyQuotesToAll);
-            nodes++;
-            if (batchSize == -1 || nodes % batchSize == 0) {
-                reporter.update(nodes, 0, 0);
-                nodes = 0;
+        try (ResourceIterable<Node> nodeIterable = graph.getNodes()) {
+            for (Node node : nodeIterable) {
+                row[0] = String.valueOf(getNodeId(threadBoundTx, node.getElementId()));
+                row[1] = getLabelsString(node);
+                collectProps(nodePropTypes, node, reporter, row, 2, keepNulls);
+                out.writeNext(row, applyQuotesToAll);
+                nodes++;
+                if (batchSize == -1 || nodes % batchSize == 0) {
+                    reporter.update(nodes, 0, 0);
+                    nodes = 0;
+                }
             }
         }
         if (nodes > 0) {
@@ -401,18 +408,20 @@ public class CsvFormat {
             boolean keepNull) {
         String[] row = new String[cols];
         int rels = 0;
-        for (Relationship rel : graph.getRelationships()) {
-            row[offset] =
-                    String.valueOf(getNodeId(threadBoundTx, rel.getStartNode().getElementId()));
-            row[offset + 1] =
-                    String.valueOf(getNodeId(threadBoundTx, rel.getEndNode().getElementId()));
-            row[offset + 2] = rel.getType().name();
-            collectProps(relPropNames, rel, reporter, row, 3 + offset, keepNull);
-            out.writeNext(row, applyQuotesToAll);
-            rels++;
-            if (batchSize == -1 || rels % batchSize == 0) {
-                reporter.update(0, rels, 0);
-                rels = 0;
+        try (ResourceIterable<Relationship> relIterable = graph.getRelationships()) {
+            for (Relationship rel : relIterable) {
+                row[offset] = String.valueOf(
+                        getNodeId(threadBoundTx, rel.getStartNode().getElementId()));
+                row[offset + 1] =
+                        String.valueOf(getNodeId(threadBoundTx, rel.getEndNode().getElementId()));
+                row[offset + 2] = rel.getType().name();
+                collectProps(relPropNames, rel, reporter, row, 3 + offset, keepNull);
+                out.writeNext(row, applyQuotesToAll);
+                rels++;
+                if (batchSize == -1 || rels % batchSize == 0) {
+                    reporter.update(0, rels, 0);
+                    rels = 0;
+                }
             }
         }
         if (rels > 0) {

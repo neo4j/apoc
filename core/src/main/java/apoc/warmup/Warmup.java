@@ -121,13 +121,14 @@ public class Warmup {
                     long start = System.currentTimeMillis();
                     try {
                         if (pagedFile.fileSize() > 0) {
-                            PageCursor cursor = pagedFile.io(
-                                    0L, PagedFile.PF_READ_AHEAD | PagedFile.PF_SHARED_READ_LOCK, ktx.cursorContext());
-                            while (cursor.next()) {
-                                cursor.getByte();
-                                pages++;
-                                if (pages % 1000 == 0 && Util.transactionIsTerminated(guard)) {
-                                    break;
+                            try (PageCursor cursor = pagedFile.io(
+                                    0L, PagedFile.PF_READ_AHEAD | PagedFile.PF_SHARED_READ_LOCK, ktx.cursorContext())) {
+                                while (cursor.next()) {
+                                    cursor.getByte();
+                                    pages++;
+                                    if (pages % 1000 == 0 && Util.transactionIsTerminated(guard)) {
+                                        break;
+                                    }
                                 }
                             }
                         }

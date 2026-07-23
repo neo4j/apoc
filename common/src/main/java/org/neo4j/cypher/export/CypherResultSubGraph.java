@@ -169,16 +169,18 @@ public class CypherResultSubGraph implements SubGraph {
     private void addRelationshipsBetweenNodes() {
         Set<Node> newNodes = new HashSet<>();
         for (Node node : nodes.values()) {
-            for (Relationship relationship : node.getRelationships()) {
-                if (!relationships.containsKey(relationship.getElementId())) {
-                    continue;
-                }
+            try (ResourceIterable<Relationship> rels = node.getRelationships()) {
+                for (Relationship relationship : rels) {
+                    if (!relationships.containsKey(relationship.getElementId())) {
+                        continue;
+                    }
 
-                final Node other = relationship.getOtherNode(node);
-                if (nodes.containsKey(other.getElementId()) || newNodes.contains(other)) {
-                    continue;
+                    final Node other = relationship.getOtherNode(node);
+                    if (nodes.containsKey(other.getElementId()) || newNodes.contains(other)) {
+                        continue;
+                    }
+                    newNodes.add(other);
                 }
-                newNodes.add(other);
             }
         }
         for (Node node : newNodes) {

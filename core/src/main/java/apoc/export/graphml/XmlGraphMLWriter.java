@@ -33,6 +33,7 @@ import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.ResourceIterable;
 
 /**
  * @author mh
@@ -46,13 +47,17 @@ public class XmlGraphMLWriter {
         writeHeader(xmlWriter);
         writeKey(xmlWriter, graph, config);
         writeGraph(xmlWriter);
-        for (Node node : graph.getNodes()) {
-            int props = writeNode(xmlWriter, node, config);
-            reporter.update(1, 0, props);
+        try (ResourceIterable<Node> nodes = graph.getNodes()) {
+            for (Node node : nodes) {
+                int props = writeNode(xmlWriter, node, config);
+                reporter.update(1, 0, props);
+            }
         }
-        for (Relationship rel : graph.getRelationships()) {
-            int props = writeRelationship(xmlWriter, rel, config);
-            reporter.update(0, 1, props);
+        try (ResourceIterable<Relationship> rels = graph.getRelationships()) {
+            for (Relationship rel : rels) {
+                int props = writeRelationship(xmlWriter, rel, config);
+                reporter.update(0, 1, props);
+            }
         }
         writeFooter(xmlWriter);
         reporter.done();
@@ -60,15 +65,17 @@ public class XmlGraphMLWriter {
 
     private void writeKey(XMLStreamWriter writer, SubGraph ops, ExportConfig config) throws Exception {
         Map<String, Class> keyTypes = new HashMap<>();
-        for (Node node : ops.getNodes()) {
-            if (node.getLabels().iterator().hasNext()) {
-                if (config.getFormat() == ExportFormat.TINKERPOP) {
-                    keyTypes.put("labelV", String.class);
-                } else {
-                    keyTypes.put("labels", String.class);
+        try (ResourceIterable<Node> nodes = ops.getNodes()) {
+            for (Node node : nodes) {
+                if (node.getLabels().iterator().hasNext()) {
+                    if (config.getFormat() == ExportFormat.TINKERPOP) {
+                        keyTypes.put("labelV", String.class);
+                    } else {
+                        keyTypes.put("labels", String.class);
+                    }
                 }
+                updateKeyTypes(keyTypes, node);
             }
-            updateKeyTypes(keyTypes, node);
         }
         boolean useTypes = config.useTypes();
         ExportFormat format = config.getFormat();
@@ -77,13 +84,15 @@ public class XmlGraphMLWriter {
         }
         writeKey(writer, keyTypes, "node", useTypes);
         keyTypes.clear();
-        for (Relationship rel : ops.getRelationships()) {
-            if (config.getFormat() == ExportFormat.TINKERPOP) {
-                keyTypes.put("labelE", String.class);
-            } else {
-                keyTypes.put("label", String.class);
+        try (ResourceIterable<Relationship> rels = ops.getRelationships()) {
+            for (Relationship rel : rels) {
+                if (config.getFormat() == ExportFormat.TINKERPOP) {
+                    keyTypes.put("labelE", String.class);
+                } else {
+                    keyTypes.put("label", String.class);
+                }
+                updateKeyTypes(keyTypes, rel);
             }
-            updateKeyTypes(keyTypes, rel);
         }
         if (format == ExportFormat.GEPHI) {
             keyTypes.put("TYPE", String.class);

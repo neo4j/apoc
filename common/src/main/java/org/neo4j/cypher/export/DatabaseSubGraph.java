@@ -30,6 +30,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ResourceIterable;
+import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -107,18 +108,18 @@ public class DatabaseSubGraph implements SubGraph {
         String startNode = cypherNode(start);
         String endNode = cypherNode(end);
         String relationship = String.format("[r:%s]", quote(type.name()));
-        return transaction
-                .execute(String.format("MATCH %s-%s->%s RETURN count(r) AS count", startNode, relationship, endNode))
-                .<Long>columnAs("count")
-                .next();
+        try (Result result = transaction.execute(
+                String.format("MATCH %s-%s->%s RETURN count(r) AS count", startNode, relationship, endNode))) {
+            return result.<Long>columnAs("count").next();
+        }
     }
 
     @Override
     public long countsForNode(Label label) {
-        return transaction
-                .execute(String.format("MATCH (n:%s) RETURN count(n) AS count", quote(label.name())))
-                .<Long>columnAs("count")
-                .next();
+        try (Result result =
+                transaction.execute(String.format("MATCH (n:%s) RETURN count(n) AS count", quote(label.name())))) {
+            return result.<Long>columnAs("count").next();
+        }
     }
 
     @Override

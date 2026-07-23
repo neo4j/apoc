@@ -938,13 +938,15 @@ public class MetaRestricted {
         relMeta.elementType(Types.of(node).name());
         relMeta.inc().rel(out, in);
         relNodeMeta.inc().rel(out, in);
-        for (Relationship rel : node.getRelationships(Direction.OUTGOING, type)) {
-            Node endNode = rel.getEndNode();
-            List<String> labels = toStrings(endNode.getLabels());
-            relMeta.other(labels);
-            relNodeMeta.other(labels);
-            addProperties(typeMeta, type.name(), relConstraints, indexes, rel, node);
-            relNodeMeta.elementType(Types.RELATIONSHIP.name());
+        try (ResourceIterable<Relationship> rels = node.getRelationships(Direction.OUTGOING, type)) {
+            for (Relationship rel : rels) {
+                Node endNode = rel.getEndNode();
+                List<String> labels = toStrings(endNode.getLabels());
+                relMeta.other(labels);
+                relNodeMeta.other(labels);
+                addProperties(typeMeta, type.name(), relConstraints, indexes, rel, node);
+                relNodeMeta.elementType(Types.RELATIONSHIP.name());
+            }
         }
     }
 

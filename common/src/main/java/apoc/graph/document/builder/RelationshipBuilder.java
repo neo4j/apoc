@@ -28,6 +28,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 
 public class RelationshipBuilder {
 
@@ -53,9 +54,10 @@ public class RelationshipBuilder {
     }
 
     private List<Relationship> getRelationshipsForRealNodes(Node parent, Node child, RelationshipType type) {
-        Iterable<Relationship> relationships = child.getRelationships(Direction.INCOMING, type);
-        return StreamSupport.stream(relationships.spliterator(), false)
-                .filter(rel -> rel.getOtherNode(child).equals(parent))
-                .collect(Collectors.toList());
+        try (ResourceIterable<Relationship> relationships = child.getRelationships(Direction.INCOMING, type)) {
+            return StreamSupport.stream(relationships.spliterator(), false)
+                    .filter(rel -> rel.getOtherNode(child).equals(parent))
+                    .collect(Collectors.toList());
+        }
     }
 }

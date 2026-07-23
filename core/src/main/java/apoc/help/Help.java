@@ -23,6 +23,7 @@ import static apoc.util.Util.map;
 import apoc.util.Util;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.QueryLanguage;
@@ -68,16 +69,20 @@ public class Help {
                 "SHOW FUNCTIONS yield name, description, signature, isDeprecated " + filter
                         + "RETURN 'function' as type, name, description, signature, isDeprecated ");
         Map<String, Object> params = map("name", name, "desc", searchText ? name : null);
-        Stream<Map<String, Object>> proceduresResults = tx.execute(proceduresQuery, params).stream();
-        Stream<Map<String, Object>> functionsResults = tx.execute(functionsQuery, params).stream();
+        // Keep the Result handles so both are closed when the returned stream is closed; otherwise a
+        // downstream LIMIT satisfied from the first stream would leave the second Result's cursor open.
+        Result proceduresResults = tx.execute(proceduresQuery, params);
+        Result functionsResults = tx.execute(functionsQuery, params);
 
-        return Stream.of(proceduresResults, functionsResults)
+        return Stream.of(proceduresResults.stream(), functionsResults.stream())
                 .flatMap(results -> results.map(row -> new HelpResult(
                         row,
                         existsInCore(
                                 (String) row.get("name"),
                                 procedureCallContext.calledwithQueryLanguage().equals(QueryLanguage.CYPHER_5),
-                                row.get("type").equals("function")))));
+                                row.get("type").equals("function")))))
+                .onClose(proceduresResults::close)
+                .onClose(functionsResults::close);
     }
 
     private boolean existsInCore(String name, boolean version5, boolean function) {
