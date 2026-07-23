@@ -61,6 +61,7 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.ResourceIterable;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -1214,11 +1215,13 @@ public class MetaRestricted {
                 Node node = nodes.next();
                 if (count % skipCount == 0) {
                     long maxRels = metaConfig.getMaxRels();
-                    for (Relationship rel : node.getRelationships(direction, relationshipType)) {
-                        Node otherNode = direction == Direction.OUTGOING ? rel.getEndNode() : rel.getStartNode();
-                        // We have found the rel, we are confident the relationship exists.
-                        if (otherNode.hasLabel(labelToLabel)) return true;
-                        if (maxRels != -1 && maxRels-- == 0) break;
+                    try (ResourceIterable<Relationship> rels = node.getRelationships(direction, relationshipType)) {
+                        for (Relationship rel : rels) {
+                            Node otherNode = direction == Direction.OUTGOING ? rel.getEndNode() : rel.getStartNode();
+                            // We have found the rel, we are confident the relationship exists.
+                            if (otherNode.hasLabel(labelToLabel)) return true;
+                            if (maxRels != -1 && maxRels-- == 0) break;
+                        }
                     }
                 }
                 count++;

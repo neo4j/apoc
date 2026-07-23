@@ -927,13 +927,12 @@ public class GraphRefactoringTest {
                     assertEquals("Bob", node.getProperty("name"));
                     assertEquals(1, node.getDegree(Direction.INCOMING));
                     assertEquals(2, node.getDegree(Direction.OUTGOING));
-                    assertEquals(
-                            "Alice",
-                            node.getRelationships(Direction.INCOMING)
-                                    .iterator()
-                                    .next()
-                                    .getStartNode()
-                                    .getProperty("name"));
+                    final String incomingStartName;
+                    try (ResourceIterator<Relationship> it =
+                            node.getRelationships(Direction.INCOMING).iterator()) {
+                        incomingStartName = (String) it.next().getStartNode().getProperty("name");
+                    }
+                    assertEquals("Alice", incomingStartName);
                 });
     }
 
@@ -1710,15 +1709,23 @@ public class GraphRefactoringTest {
                             .map(i -> i.getType().name())
                             .containsExactlyInAnyOrder("ASD", "QWE", "ZXC", "TEST_REL1", "TEST_REL2");
 
-                    final Relationship relTestRel1 = node.getRelationships(RelationshipType.withName("TEST_REL1"))
-                            .iterator()
-                            .next();
-                    final Relationship relTestRel2 = node.getRelationships(RelationshipType.withName("TEST_REL2"))
-                            .iterator()
-                            .next();
-                    final Relationship relQwe = node.getRelationships(RelationshipType.withName("QWE"))
-                            .iterator()
-                            .next();
+                    final Relationship relTestRel1;
+                    try (ResourceIterator<Relationship> it = node.getRelationships(
+                                    RelationshipType.withName("TEST_REL1"))
+                            .iterator()) {
+                        relTestRel1 = it.next();
+                    }
+                    final Relationship relTestRel2;
+                    try (ResourceIterator<Relationship> it = node.getRelationships(
+                                    RelationshipType.withName("TEST_REL2"))
+                            .iterator()) {
+                        relTestRel2 = it.next();
+                    }
+                    final Relationship relQwe;
+                    try (ResourceIterator<Relationship> it = node.getRelationships(RelationshipType.withName("QWE"))
+                            .iterator()) {
+                        relQwe = it.next();
+                    }
                     assertSelfRel(relTestRel1);
                     assertSelfRel(relTestRel2);
                     assertSelfRel(relQwe);

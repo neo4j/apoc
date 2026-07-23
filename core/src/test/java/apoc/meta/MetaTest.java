@@ -33,7 +33,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.configuration.SettingImpl.newBuilder;
 import static org.neo4j.configuration.SettingValueParsers.BOOL;
 import static org.neo4j.driver.Values.isoDuration;
-import static org.neo4j.graphdb.traversal.Evaluators.toDepth;
 
 import apoc.HelperProcedures;
 import apoc.example.Examples;
@@ -287,11 +286,6 @@ class MetaTest {
             Relationship rel = node.createRelationshipTo(node, RelationshipType.withName("FOO"));
             testTypeName(node, "NODE");
             testTypeName(rel, "RELATIONSHIP");
-            Path path = tx.traversalDescription()
-                    .evaluator(toDepth(1))
-                    .traverse(node)
-                    .iterator()
-                    .next();
             // TODO PATH FAILS              testTypeName(path, "PATH");
             tx.rollback();
         }
@@ -327,11 +321,6 @@ class MetaTest {
             Relationship rel = node.createRelationshipTo(node, RelationshipType.withName("FOO"));
             testIsTypeName(node, "NODE");
             testIsTypeName(rel, "RELATIONSHIP");
-            Path path = tx.traversalDescription()
-                    .evaluator(toDepth(1))
-                    .traverse(node)
-                    .iterator()
-                    .next();
             // TODO PATH FAILS            testIsTypeName(path, "PATH");
             tx.rollback();
         }
