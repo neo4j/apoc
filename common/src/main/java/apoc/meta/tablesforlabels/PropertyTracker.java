@@ -94,5 +94,7 @@ public class PropertyTracker {
         typeMappings.put("org.neo4j.values.storable.Int8Vector", "Int8Vector");
         typeMappings.put("org.neo4j.values.storable.Float64Vector", "Float64Vector");
         typeMappings.put("org.neo4j.values.storable.Float32Vector", "Float32Vector");
+        typeMappings.put("org.neo4j.values.storable.UUIDValue", "UUID");
+        typeMappings.put("org.neo4j.values.storable.UUIDValue[]", "UUIDArray");
     }
 }
