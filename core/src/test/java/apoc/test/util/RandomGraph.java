@@ -58,7 +58,9 @@ public class RandomGraph {
                         CHAR,
                         // TODO: remove UUID and UUID_ARRAY here once they are properly supported in Cypher
                         UUID,
-                        UUID_ARRAY -> false;
+                        UUID_ARRAY,
+                        // TODO: remove VECTOR_ARRAY here once it is properly supported in Cypher
+                        VECTOR_ARRAY -> false;
                 default -> true;
             })
             .toList();
