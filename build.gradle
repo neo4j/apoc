@@ -3,7 +3,7 @@ plugins {
   id('com.gradleup.shadow') version '8.3.6'
   id("maven-publish")
   id("com.github.hierynomus.license-report") version "0.16.1"
-  id("com.diffplug.spotless") version "6.22.0"
+  id("com.diffplug.spotless") version "6.24.0"
 }
 
 ext {
@@ -74,7 +74,7 @@ allprojects {
     }
     groovyGradle {
       target '*.gradle'
-      greclipse().configFile(rootProject.file('greclipse.properties'))
+      greclipse('4.29').configFile(rootProject.file('greclipse.properties'))
     }
   }
 }
