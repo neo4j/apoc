@@ -5,7 +5,9 @@ plugins {
   id 'maven-publish'
 }
 
-archivesBaseName = "apoc"
+base {
+  archivesName = "apoc"
+}
 
 configurations {
   apt
