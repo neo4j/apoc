@@ -57,10 +57,10 @@ publishing {
     if (System.getenv("CODEARTIFACT_PUBLISH_URL") ?: "" != "") {
       maven {
         name = 'codeartifact-publish'
-        url System.getenv('CODEARTIFACT_PUBLISH_URL')
+        url = System.getenv('CODEARTIFACT_PUBLISH_URL')
         credentials {
-          username System.getenv('CODEARTIFACT_USERNAME')
-          password System.getenv('CODEARTIFACT_TOKEN')
+          username = System.getenv('CODEARTIFACT_USERNAME')
+          password = System.getenv('CODEARTIFACT_TOKEN')
         }
       }
     }
