@@ -46,6 +46,7 @@ class WarmupTest {
     @Inject
     private GraphDatabaseService db;
 
+    // test
     @ExtensionCallback
     void configure(TestDatabaseManagementServiceBuilder builder) {
         builder.setConfig(GraphDatabaseSettings.default_language, GraphDatabaseSettings.CypherVersion.Cypher5)
