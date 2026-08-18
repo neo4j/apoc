@@ -50,6 +50,7 @@ public class TriggerHandlerNewProcedures {
         }
     }
 
+    // test
     public static TriggerInfo install(
             GraphDatabaseAPI db,
             String databaseName,
