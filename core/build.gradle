@@ -133,7 +133,7 @@ publishing {
   }
   publications {
     shadow(MavenPublication) { publication ->
-      artifactId("apoc-core")
+      artifactId = "apoc-core"
       artifact(mySourcesJar)
       artifact(myJavadocJar)
 

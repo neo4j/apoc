@@ -162,7 +162,7 @@ tasks.check.dependsOn tasks.validateLicenses
 
 tasks.register("generateLicensesFiles") {
   group = 'license'
-  description 'Generates a LICENSES and NOTICE file with 3rd-party dependency license information'
+  description = 'Generates a LICENSES and NOTICE file with 3rd-party dependency license information'
 
   dependsOn tasks.downloadLicenses, tasks.validateLicenses
 
