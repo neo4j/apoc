@@ -133,6 +133,7 @@ import org.neo4j.values.storable.Values;
  */
 public class Util {
 
+    private static final boolean PRINT_CLASS_CHECK_STACK_TRACES = Boolean.getBoolean("printClassCheckStackTracers");
     public static final Label[] NO_LABELS = new Label[0];
     public static final String NODE_COUNT = "MATCH (n) RETURN count(*) as result";
     public static final String REL_COUNT = "MATCH ()-->() RETURN count(*) as result";
@@ -869,7 +870,10 @@ public class Util {
         try {
             Class.forName(className);
             return true;
-        } catch (ClassNotFoundException cnfe) {
+        } catch (Throwable e) {
+            if (PRINT_CLASS_CHECK_STACK_TRACES) {
+                e.printStackTrace();
+            }
             return false;
         }
     }
