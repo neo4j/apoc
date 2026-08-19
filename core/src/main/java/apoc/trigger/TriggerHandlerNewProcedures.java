@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.ConstraintViolationException;
+import org.neo4j.graphdb.MultipleFoundException;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
@@ -144,7 +145,15 @@ public class TriggerHandlerNewProcedures {
     }
 
     public static void setLastUpdate(GraphDatabaseAPI db, String databaseName, Transaction tx, int retryNumber) {
-        Node node = tx.findNode(SystemLabels.ApocTriggerMeta, SystemPropertyKeys.database.name(), databaseName);
+        Node node;
+        try {
+            node = tx.findNode(SystemLabels.ApocTriggerMeta, SystemPropertyKeys.database.name(), databaseName);
+        } catch (MultipleFoundException e) {
+            // This can happen if the triggerConstraint uniqueness constraint wasn't in place yet
+            // (e.g. an older APOC version, or a cluster startup race) and duplicate meta nodes were created.
+            // Clean up the duplicates, keeping a single node, and continue updating that one.
+            node = deleteDuplicateTriggerMetaNodes(databaseName, tx);
+        }
         if (node == null) {
             try {
                 node = tx.createNode(SystemLabels.ApocTriggerMeta);
@@ -164,5 +173,20 @@ public class TriggerHandlerNewProcedures {
         }
         final long value = System.currentTimeMillis();
         node.setProperty(SystemPropertyKeys.lastUpdated.name(), value);
+    }
+
+    private static Node deleteDuplicateTriggerMetaNodes(String databaseName, Transaction tx) {
+        ResourceIterator<Node> nodes =
+                tx.findNodes(SystemLabels.ApocTriggerMeta, SystemPropertyKeys.database.name(), databaseName);
+        Node nodeToKeep = null;
+        while (nodes.hasNext()) {
+            Node node = nodes.next();
+            if (nodeToKeep == null) {
+                nodeToKeep = node;
+            } else {
+                node.delete();
+            }
+        }
+        return nodeToKeep;
     }
 }
