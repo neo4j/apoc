@@ -25,6 +25,7 @@ import apoc.SystemLabels;
 import apoc.SystemPropertyKeys;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -37,6 +38,11 @@ class TriggerHandlerNewProceduresTest {
 
     @Inject
     GraphDatabaseService db;
+
+    @AfterEach
+    void tearDown() {
+        db.executeTransactionally("MATCH (n:" + SystemLabels.ApocTriggerMeta + ") DELETE n");
+    }
 
     @Test
     void setLastUpdateRecoversWhenMultipleMetaNodesExistForSameDatabase() {
