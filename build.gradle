@@ -45,7 +45,13 @@ allprojects {
 
   group = 'org.neo4j.procedure'
   version = System.getenv('APOC_VERSION') ? System.getenv('APOC_VERSION') : apocVersion
-  archivesBaseName = 'apoc'
+  // Guarded so this only runs where the base extension exists. Today that is every
+  // project, since Spotless (applied above) pulls in the base plugin.
+  plugins.withType(BasePlugin) {
+    base {
+      archivesName = 'apoc'
+    }
+  }
   description = """neo4j-apoc-procedures"""
 
   repositories {
