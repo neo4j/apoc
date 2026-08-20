@@ -30,6 +30,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
@@ -62,6 +63,17 @@ class WarmupTest {
     @Test
     void testWarmup() {
         TestUtil.testCall(db, "CALL apoc.warmup.run()", r -> {
+            if (!r.get("nodesTotal").equals(4L)) {
+                try (Transaction tx = db.beginTx()) {
+                    System.out.println("--- GEM TEST ---");
+                    final var result = tx.execute("MATCH (n) RETURN labels(n) AS labels, properties(n) AS properties");
+                    while (result.hasNext()) {
+                        System.out.println(result.next().get("labels"));
+                        System.out.println(result.next().get("properties"));
+                    }
+                    System.out.println("--- GEM TEST ---");
+                }
+            }
             assertEquals(4L, r.get("nodesTotal"));
             assertNotEquals(0L, r.get("nodePages"));
             assertEquals(2L, r.get("relsTotal"));
@@ -146,6 +158,7 @@ class WarmupTest {
     private static void prepareData(GraphDatabaseService database) {
         TestUtil.registerProcedure(database, Warmup.class);
         // Create enough nodes and relationships to span 2 pages
+        database.executeTransactionally("MATCH (n) DETACH DELETE n");
         database.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.foo IS UNIQUE");
         database.executeTransactionally(
                 "UNWIND range(1, 300) AS i CREATE (n:Foo {foo:i})-[:KNOWS {bar:2}]->(m {foobar:3, array:range(1,100)})");

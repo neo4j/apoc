@@ -23,9 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.SystemLabels;
 import apoc.SystemPropertyKeys;
-import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
+import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.util.List;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -33,20 +32,14 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.extension.Inject;
 
-@ImpermanentEnterpriseDbmsExtension
+@EnterpriseDbmsExtension
 class TriggerHandlerNewProceduresTest {
 
     @Inject
     GraphDatabaseService db;
 
-    @AfterEach
-    void tearDown() {
-        db.executeTransactionally("MATCH (n:" + SystemLabels.ApocTriggerMeta + ") DELETE n");
-    }
-
     @Test
     void setLastUpdateRecoversWhenMultipleMetaNodesExistForSameDatabase() {
-        GraphDatabaseAPI dbApi = (GraphDatabaseAPI) db;
         String databaseName = "neo4j";
 
         // simulate the edge case where duplicate ApocTriggerMeta nodes exist for the same database name,
@@ -60,7 +53,7 @@ class TriggerHandlerNewProceduresTest {
         }
 
         try (Transaction tx = db.beginTx()) {
-            TriggerHandlerNewProcedures.setLastUpdate(dbApi, databaseName, tx);
+            TriggerHandlerNewProcedures.setLastUpdate((GraphDatabaseAPI) db, databaseName, tx);
             tx.commit();
         }
 
@@ -73,5 +66,8 @@ class TriggerHandlerNewProceduresTest {
             assertEquals(1, nodes.size());
             assertTrue(nodes.get(0).hasProperty(SystemPropertyKeys.lastUpdated.name()));
         }
+
+        // Cleanup
+        db.executeTransactionally("MATCH (n) DETACH DELETE n");
     }
 }
