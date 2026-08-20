@@ -145,6 +145,7 @@ class WarmupTest {
     private static void prepareData(GraphDatabaseService database) {
         TestUtil.registerProcedure(database, Warmup.class);
         // Create enough nodes and relationships to span 2 pages
+        database.executeTransactionally("MATCH (n) DETACH DELETE n");
         database.executeTransactionally("CREATE CONSTRAINT FOR (f:Foo) REQUIRE f.foo IS UNIQUE");
         database.executeTransactionally(
                 "UNWIND range(1, 300) AS i CREATE (n:Foo {foo:i})-[:KNOWS {bar:2}]->(m {foobar:3, array:range(1,100)})");

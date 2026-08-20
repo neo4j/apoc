@@ -35,7 +35,7 @@ Apache-2.0
   checksums-spi-2.34.0.jar
   commons-cli-1.9.0.jar
   commons-codec-1.19.0.jar
-  commons-codec-1.22.0.jar
+  commons-codec-1.22.1.jar
   commons-collections4-4.4.jar
   commons-compress-1.28.0.jar
   commons-configuration2-2.15.1.jar
@@ -68,10 +68,10 @@ Apache-2.0
   guava-33.5.0-jre.jar
   guice-4.2.3.jar
   guice-servlet-4.2.3.jar
-  hadoop-annotations-3.4.2.jar
-  hadoop-auth-3.4.2.jar
-  hadoop-common-3.4.2-tests.jar
-  hadoop-common-3.4.2.jar
+  hadoop-annotations-3.5.0.jar
+  hadoop-auth-3.5.0.jar
+  hadoop-common-3.5.0-tests.jar
+  hadoop-common-3.5.0.jar
   hadoop-hdfs-3.4.2-tests.jar
   hadoop-hdfs-3.4.2.jar
   hadoop-hdfs-client-3.4.2.jar
@@ -84,8 +84,8 @@ Apache-2.0
   hadoop-mapreduce-client-shuffle-3.4.2.jar
   hadoop-minicluster-3.4.2.jar
   hadoop-registry-3.4.2.jar
-  hadoop-shaded-guava-1.4.0.jar
-  hadoop-shaded-protobuf_3_25-1.4.0.jar
+  hadoop-shaded-guava-1.5.0.jar
+  hadoop-shaded-protobuf_3_25-1.5.0.jar
   hadoop-yarn-api-3.4.2.jar
   hadoop-yarn-client-3.4.2.jar
   hadoop-yarn-common-3.4.2.jar
@@ -124,7 +124,6 @@ Apache-2.0
   javax-websocket-client-impl-9.4.57.v20241219.jar
   javax-websocket-server-impl-9.4.57.v20241219.jar
   javax.inject-1.jar
-  jcip-annotations-1.0-1.jar
   jctools-core-4.0.6.jar
   jettison-1.5.4.jar
   jetty-alpn-java-server-12.1.11.jar
@@ -167,77 +166,77 @@ Apache-2.0
   log4j-core-2.26.1.jar
   log4j-jul-2.26.1.jar
   log4j-layout-template-json-2.26.1.jar
-  lucene-analysis-common-10.5.0.jar
-  lucene-backward-codecs-10.5.0.jar
-  lucene-core-10.5.0.jar
-  lucene-queryparser-10.5.0.jar
+  lucene-analysis-common-10.5.1.jar
+  lucene-backward-codecs-10.5.1.jar
+  lucene-core-10.5.1.jar
+  lucene-queryparser-10.5.1.jar
   magnolia_3-1.3.0.jar
   metrics-core-3.2.4.jar
   metrics-spi-2.34.0.jar
-  netty-all-4.2.14.Final.jar
-  netty-buffer-4.2.16.Final.jar
-  netty-codec-4.2.14.Final.jar
-  netty-codec-base-4.2.16.Final.jar
-  netty-codec-classes-quic-4.2.14.Final.jar
-  netty-codec-compression-4.2.16.Final.jar
-  netty-codec-dns-4.2.14.Final.jar
-  netty-codec-haproxy-4.2.16.Final.jar
-  netty-codec-http-4.2.16.Final.jar
-  netty-codec-http2-4.2.14.Final.jar
-  netty-codec-http3-4.2.14.Final.jar
-  netty-codec-marshalling-4.2.14.Final.jar
-  netty-codec-memcache-4.2.14.Final.jar
-  netty-codec-mqtt-4.2.14.Final.jar
-  netty-codec-native-quic-4.2.14.Final-linux-aarch_64.jar
-  netty-codec-native-quic-4.2.14.Final-linux-x86_64.jar
-  netty-codec-native-quic-4.2.14.Final-osx-aarch_64.jar
-  netty-codec-native-quic-4.2.14.Final-osx-x86_64.jar
-  netty-codec-native-quic-4.2.14.Final-windows-x86_64.jar
-  netty-codec-protobuf-4.2.14.Final.jar
-  netty-codec-redis-4.2.14.Final.jar
-  netty-codec-smtp-4.2.14.Final.jar
-  netty-codec-socks-4.2.14.Final.jar
-  netty-codec-stomp-4.2.14.Final.jar
-  netty-codec-xml-4.2.14.Final.jar
-  netty-common-4.2.16.Final.jar
-  netty-handler-4.2.16.Final.jar
-  netty-handler-proxy-4.2.14.Final.jar
-  netty-handler-ssl-ocsp-4.2.14.Final.jar
+  netty-all-4.2.16.Final.jar
+  netty-buffer-4.2.17.Final.jar
+  netty-codec-4.2.16.Final.jar
+  netty-codec-base-4.2.17.Final.jar
+  netty-codec-classes-quic-4.2.16.Final.jar
+  netty-codec-compression-4.2.17.Final.jar
+  netty-codec-dns-4.2.16.Final.jar
+  netty-codec-haproxy-4.2.17.Final.jar
+  netty-codec-http-4.2.17.Final.jar
+  netty-codec-http2-4.2.16.Final.jar
+  netty-codec-http3-4.2.16.Final.jar
+  netty-codec-marshalling-4.2.16.Final.jar
+  netty-codec-memcache-4.2.16.Final.jar
+  netty-codec-mqtt-4.2.16.Final.jar
+  netty-codec-native-quic-4.2.16.Final-linux-aarch_64.jar
+  netty-codec-native-quic-4.2.16.Final-linux-x86_64.jar
+  netty-codec-native-quic-4.2.16.Final-osx-aarch_64.jar
+  netty-codec-native-quic-4.2.16.Final-osx-x86_64.jar
+  netty-codec-native-quic-4.2.16.Final-windows-x86_64.jar
+  netty-codec-protobuf-4.2.16.Final.jar
+  netty-codec-redis-4.2.16.Final.jar
+  netty-codec-smtp-4.2.16.Final.jar
+  netty-codec-socks-4.2.16.Final.jar
+  netty-codec-stomp-4.2.16.Final.jar
+  netty-codec-xml-4.2.16.Final.jar
+  netty-common-4.2.17.Final.jar
+  netty-handler-4.2.17.Final.jar
+  netty-handler-proxy-4.2.16.Final.jar
+  netty-handler-ssl-ocsp-4.2.16.Final.jar
   netty-nio-client-2.34.0.jar
-  netty-resolver-4.2.16.Final.jar
-  netty-resolver-dns-4.2.14.Final.jar
-  netty-resolver-dns-classes-macos-4.2.14.Final.jar
-  netty-resolver-dns-native-macos-4.2.14.Final-osx-aarch_64.jar
-  netty-resolver-dns-native-macos-4.2.14.Final-osx-x86_64.jar
-  netty-tcnative-classes-2.0.77.Final.jar
-  netty-transport-4.2.16.Final.jar
-  netty-transport-classes-epoll-4.2.16.Final.jar
-  netty-transport-classes-io_uring-4.2.14.Final.jar
-  netty-transport-classes-kqueue-4.2.16.Final.jar
-  netty-transport-native-epoll-4.2.16.Final-linux-aarch_64.jar
-  netty-transport-native-epoll-4.2.16.Final-linux-riscv64.jar
-  netty-transport-native-epoll-4.2.16.Final-linux-x86_64.jar
-  netty-transport-native-epoll-4.2.16.Final.jar
-  netty-transport-native-io_uring-4.2.14.Final-linux-aarch_64.jar
-  netty-transport-native-io_uring-4.2.14.Final-linux-riscv64.jar
-  netty-transport-native-io_uring-4.2.14.Final-linux-x86_64.jar
-  netty-transport-native-kqueue-4.2.16.Final-osx-aarch_64.jar
-  netty-transport-native-kqueue-4.2.16.Final-osx-x86_64.jar
-  netty-transport-native-unix-common-4.2.16.Final.jar
-  netty-transport-rxtx-4.2.14.Final.jar
-  netty-transport-sctp-4.2.14.Final.jar
-  netty-transport-udt-4.2.14.Final.jar
-  nimbus-jose-jwt-9.37.4.jar
+  netty-resolver-4.2.17.Final.jar
+  netty-resolver-dns-4.2.16.Final.jar
+  netty-resolver-dns-classes-macos-4.2.16.Final.jar
+  netty-resolver-dns-native-macos-4.2.16.Final-osx-aarch_64.jar
+  netty-resolver-dns-native-macos-4.2.16.Final-osx-x86_64.jar
+  netty-tcnative-classes-2.0.78.Final.jar
+  netty-transport-4.2.17.Final.jar
+  netty-transport-classes-epoll-4.2.17.Final.jar
+  netty-transport-classes-io_uring-4.2.16.Final.jar
+  netty-transport-classes-kqueue-4.2.17.Final.jar
+  netty-transport-native-epoll-4.2.17.Final-linux-aarch_64.jar
+  netty-transport-native-epoll-4.2.17.Final-linux-riscv64.jar
+  netty-transport-native-epoll-4.2.17.Final-linux-x86_64.jar
+  netty-transport-native-epoll-4.2.17.Final.jar
+  netty-transport-native-io_uring-4.2.16.Final-linux-aarch_64.jar
+  netty-transport-native-io_uring-4.2.16.Final-linux-riscv64.jar
+  netty-transport-native-io_uring-4.2.16.Final-linux-x86_64.jar
+  netty-transport-native-kqueue-4.2.17.Final-osx-aarch_64.jar
+  netty-transport-native-kqueue-4.2.17.Final-osx-x86_64.jar
+  netty-transport-native-unix-common-4.2.17.Final.jar
+  netty-transport-rxtx-4.2.16.Final.jar
+  netty-transport-sctp-4.2.16.Final.jar
+  netty-transport-udt-4.2.16.Final.jar
+  nimbus-jose-jwt-10.4.jar
   objenesis-3.3.jar
   opencsv-5.12.0.jar
   opentest4j-1.3.0.jar
-  parquet-column-1.17.1.jar
-  parquet-common-1.17.1.jar
-  parquet-encoding-1.17.1.jar
+  parquet-column-1.18.0.jar
+  parquet-common-1.18.0.jar
+  parquet-encoding-1.18.0.jar
   parquet-floor-2.1.jar
-  parquet-format-structures-1.17.1.jar
-  parquet-hadoop-1.17.1.jar
-  parquet-jackson-1.17.1.jar
+  parquet-format-structures-1.18.0.jar
+  parquet-hadoop-1.18.0.jar
+  parquet-jackson-1.18.0.jar
   picocli-4.7.7.jar
   profiles-2.34.0.jar
   protocol-core-2.34.0.jar
@@ -260,7 +259,7 @@ Apache-2.0
   shiro-crypto-hash-3.0.0.jar
   shiro-event-3.0.0.jar
   shiro-lang-3.0.0.jar
-  snappy-java-1.1.10.7.jar
+  snappy-java-1.1.10.8.jar
   third-party-jackson-core-2.34.0.jar
   utils-2.34.0.jar
   utils-lite-2.34.0.jar
@@ -481,7 +480,7 @@ BSD-2-Clause
   jline-3.9.0.jar
   jsch-0.1.55.jar
   stax2-api-4.2.1.jar
-  zstd-jni-1.5.7-11.jar
+  zstd-jni-1.5.7-13.jar
 ------------------------------------------------------------------------------
 
 Copyright <year> <copyright holder>
@@ -642,7 +641,6 @@ Common Development and Distribution License Version 1.1
   jersey-json-1.22.0.jar
   jersey-server-1.19.4.jar
   jersey-servlet-1.19.4.jar
-  jsp-api-2.1.jar
   jsr311-api-1.1.1.jar
 ------------------------------------------------------------------------------
 
@@ -1754,16 +1752,21 @@ Eclipse Distribution License - v 1.0
   FastInfoset-1.2.16.jar
   eclipse-collections-11.1.0.jar
   eclipse-collections-api-11.1.0.jar
+  istack-commons-runtime-3.0.12.jar
   istack-commons-runtime-3.0.8.jar
+  jakarta.activation-1.2.2.jar
   jakarta.activation-api-1.2.2.jar
   jakarta.xml.bind-api-2.3.2.jar
+  jakarta.xml.bind-api-2.3.3.jar
   jaxb-runtime-2.3.2.jar
+  jaxb-runtime-2.3.9.jar
   jersey-client-2.46.jar
   jersey-container-servlet-2.46.jar
   jersey-container-servlet-core-2.46.jar
   jersey-hk2-2.46.jar
   stax-ex-1.8.1.jar
   txw2-2.3.2.jar
+  txw2-2.3.9.jar
 ------------------------------------------------------------------------------
 
 Eclipse Distribution License - v 1.0
@@ -2008,11 +2011,13 @@ in any resulting litigation.
 
 ------------------------------------------------------------------------------
 Eclipse Public License - v 2.0
+  aopalliance-repackaged-2.6.1.jar
   hk2-api-2.6.1.jar
   hk2-locator-2.6.1.jar
   hk2-utils-2.6.1.jar
   jakarta.annotation-api-1.3.5.jar
   jakarta.inject-2.6.1.jar
+  jakarta.servlet.jsp-api-2.3.6.jar
   jakarta.ws.rs-api-2.1.6.jar
   jersey-client-2.46.jar
   jersey-common-2.46.jar
@@ -2020,14 +2025,14 @@ Eclipse Public License - v 2.0
   jersey-container-servlet-core-2.46.jar
   jersey-hk2-2.46.jar
   jersey-server-2.46.jar
-  junit-jupiter-6.1.1.jar
-  junit-jupiter-api-6.1.1.jar
-  junit-jupiter-engine-6.1.1.jar
-  junit-jupiter-params-6.1.1.jar
-  junit-platform-commons-6.1.1.jar
-  junit-platform-engine-6.1.1.jar
-  junit-platform-launcher-6.1.1.jar
-  junit-platform-testkit-6.1.1.jar
+  junit-jupiter-6.1.3.jar
+  junit-jupiter-api-6.1.3.jar
+  junit-jupiter-engine-6.1.3.jar
+  junit-jupiter-params-6.1.3.jar
+  junit-platform-commons-6.1.3.jar
+  junit-platform-engine-6.1.3.jar
+  junit-platform-launcher-6.1.3.jar
+  junit-platform-testkit-6.1.3.jar
   osgi-resource-locator-1.0.3.jar
 ------------------------------------------------------------------------------
 
@@ -2707,11 +2712,11 @@ and/or involve the use of third party software.
 
 ------------------------------------------------------------------------------
 MIT
-  bcpkix-jdk18on-1.84.jar
-  bcprov-jdk18on-1.84.jar
-  bcutil-jdk18on-1.84.jar
+  bcpkix-jdk18on-1.85.jar
+  bcprov-jdk18on-1.85.jar
+  bcutil-jdk18on-1.85.jar
   duct-tape-1.0.8.jar
-  java-jwt-4.5.2.jar
+  java-jwt-4.6.0.jar
   jersey-client-2.46.jar
   jersey-container-servlet-2.46.jar
   jersey-container-servlet-core-2.46.jar
