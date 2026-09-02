@@ -127,6 +127,15 @@ downloadLicenses {
   }
 }
 
+// Set the report destinations explicitly. The plugin's defaults derive from
+// ReportingExtension.getBaseDir(), which is deprecated for removal in Gradle 9.0.
+tasks.downloadLicenses.configure {
+  def licenseReportDir = layout.buildDirectory.dir('reports/license').get().asFile
+  jsonDestination = licenseReportDir
+  htmlDestination = licenseReportDir
+  xmlDestination = licenseReportDir
+}
+
 tasks.downloadLicenses.ext.licenseToDependencyJson = {
   ->
   def jsonDir = tasks.downloadLicenses.jsonDestination
