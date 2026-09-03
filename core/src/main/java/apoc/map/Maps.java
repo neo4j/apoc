@@ -39,6 +39,19 @@ public class Maps {
     public Transaction tx;
 
     @UserFunction("apoc.map.groupBy")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates a `MAP` of the `LIST<ANY>` keyed by the given property, with single values.")
+    public Map<String, Object> groupByCypher5(
+            @Name(value = "values", description = "A list of map values to be grouped.") List<Object> values,
+            @Name(value = "key", description = "The key to group the map values by.") String key) {
+        return groupBy(values, key);
+    }
+
+    @UserFunction(
+            name = "apoc.map.groupBy",
+            deprecatedBy = "Cypher's Map Comprehension: RETURN { map IN values | map[key]: map }")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates a `MAP` of the `LIST<ANY>` keyed by the given property, with single values.")
     public Map<String, Object> groupBy(
             @Name(value = "values", description = "A list of map values to be grouped.") List<Object> values,
@@ -81,6 +94,20 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromNodes")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Returns a `MAP` of the given prop to the node of the given label.")
+    public Map<String, Node> fromNodesCypher5(
+            @Name(value = "label", description = "The node labels from which the map will be created.") String label,
+            @Name(value = "prop", description = "The property name to map the returned nodes by.") String property) {
+        return fromNodes(label, property);
+    }
+
+    @UserFunction(
+            name = "apoc.map.fromNodes",
+            deprecatedBy =
+                    "Cypher's Map Comprehension: MATCH (n:Label) RETURN { node IN collect(n) | node[prop]: node }")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a `MAP` of the given prop to the node of the given label.")
     public Map<String, Node> fromNodes(
             @Name(value = "label", description = "The node labels from which the map will be created.") String label,
@@ -99,6 +126,18 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromPairs")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates a `MAP` from the given `LIST<LIST<ANY>>` of key-value pairs.")
+    public Map<String, Object> fromPairsCypher5(
+            @Name(value = "pairs", description = "A list of pairs to create a map from.") List<List<Object>> pairs) {
+        return fromPairs(pairs);
+    }
+
+    @UserFunction(
+            name = "apoc.map.fromPairs",
+            deprecatedBy = "Cypher's Map Comprehension: RETURN { pair IN pairs | pair[0]: pair[1] }")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates a `MAP` from the given `LIST<LIST<ANY>>` of key-value pairs.")
     public Map<String, Object> fromPairs(
             @Name(value = "pairs", description = "A list of pairs to create a map from.") List<List<Object>> pairs) {
@@ -106,6 +145,20 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromLists")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates a `MAP` from the keys and values in the given `LIST<ANY>` values.")
+    public Map<String, Object> fromListsCypher5(
+            @Name(value = "keys", description = "A list of keys to create a map from.") List<String> keys,
+            @Name(value = "values", description = "A list of values associated with the keys to create a map from.")
+                    List<Object> values) {
+        return fromLists(keys, values);
+    }
+
+    @UserFunction(
+            name = "apoc.map.fromLists",
+            deprecatedBy = "Cypher's Map Comprehension: RETURN { i IN range(0, size(keys) - 1) | keys[i]: values[i] }")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates a `MAP` from the keys and values in the given `LIST<ANY>` values.")
     public Map<String, Object> fromLists(
             @Name(value = "keys", description = "A list of keys to create a map from.") List<String> keys,
@@ -134,6 +187,20 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.fromValues")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Creates a `MAP` from the alternating keys and values in the given `LIST<ANY>`.")
+    public Map<String, Object> fromValuesCypher5(
+            @Name(value = "values", description = "A list of keys and values listed pairwise to create a map from.")
+                    List<Object> values) {
+        return fromValues(values);
+    }
+
+    @UserFunction(
+            name = "apoc.map.fromValues",
+            deprecatedBy =
+                    "Cypher's Map Comprehension: RETURN { i IN range(0, size(values) / 2, 2) | values[i]: values[i + 1] }")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Creates a `MAP` from the alternating keys and values in the given `LIST<ANY>`.")
     public Map<String, Object> fromValues(
             @Name(value = "values", description = "A list of keys and values listed pairwise to create a map from.")
@@ -337,6 +404,20 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.clean")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Filters the keys and values contained in the given `LIST<ANY>` values.")
+    public Map<String, Object> cleanCypher5(
+            @Name(value = "map", description = "The map to clean.") Map<String, Object> map,
+            @Name(value = "keys", description = "The list of property keys to be removed.") List<String> keys,
+            @Name(value = "values", description = "The list of values to be removed.") List<Object> values) {
+        return clean(map, keys, values);
+    }
+
+    @UserFunction(
+            name = "apoc.map.clean",
+            deprecatedBy = "Cypher's Map Comprehension: RETURN { k: v IN map WHERE <cleanUpExpression> | k: v }")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Filters the keys and values contained in the given `LIST<ANY>` values.")
     public Map<String, Object> clean(
             @Name(value = "map", description = "The map to clean.") Map<String, Object> map,

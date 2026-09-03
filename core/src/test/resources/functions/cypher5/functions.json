@@ -884,6 +884,150 @@
     ]
   },
   {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.map.clean(map :: MAP, keys :: LIST<STRING>, values :: LIST<ANY>) :: MAP",
+    "name": "apoc.map.clean",
+    "description": "Filters the keys and values contained in the given `LIST<ANY>` values.",
+    "returnDescription": "MAP",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "map",
+        "description": "The map to clean.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "keys",
+        "description": "The list of property keys to be removed.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "values",
+        "description": "The list of values to be removed.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.map.fromLists(keys :: LIST<STRING>, values :: LIST<ANY>) :: MAP",
+    "name": "apoc.map.fromLists",
+    "description": "Creates a `MAP` from the keys and values in the given `LIST<ANY>` values.",
+    "returnDescription": "MAP",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "keys",
+        "description": "A list of keys to create a map from.",
+        "isDeprecated": false,
+        "type": "LIST<STRING>"
+      },
+      {
+        "name": "values",
+        "description": "A list of values associated with the keys to create a map from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.map.fromNodes(label :: STRING, prop :: STRING) :: MAP",
+    "name": "apoc.map.fromNodes",
+    "description": "Returns a `MAP` of the given prop to the node of the given label.",
+    "returnDescription": "MAP",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "label",
+        "description": "The node labels from which the map will be created.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "prop",
+        "description": "The property name to map the returned nodes by.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.map.fromPairs(pairs :: LIST<LIST<ANY>>) :: MAP",
+    "name": "apoc.map.fromPairs",
+    "description": "Creates a `MAP` from the given `LIST<LIST<ANY>>` of key-value pairs.",
+    "returnDescription": "MAP",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "pairs",
+        "description": "A list of pairs to create a map from.",
+        "isDeprecated": false,
+        "type": "LIST<LIST<ANY>>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.map.fromValues(values :: LIST<ANY>) :: MAP",
+    "name": "apoc.map.fromValues",
+    "description": "Creates a `MAP` from the alternating keys and values in the given `LIST<ANY>`.",
+    "returnDescription": "MAP",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "values",
+        "description": "A list of keys and values listed pairwise to create a map from.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.map.groupBy(values :: LIST<ANY>, key :: STRING) :: MAP",
+    "name": "apoc.map.groupBy",
+    "description": "Creates a `MAP` of the `LIST<ANY>` keyed by the given property, with single values.",
+    "returnDescription": "MAP",
+    "deprecatedBy": null,
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "values",
+        "description": "A list of map values to be grouped.",
+        "isDeprecated": false,
+        "type": "LIST<ANY>"
+      },
+      {
+        "name": "key",
+        "description": "The key to group the map values by.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
     "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.map.setEntry(map :: MAP, key :: STRING, value :: ANY) :: MAP",
@@ -1306,37 +1450,6 @@
     ]
   },
   {
-    "isDeprecated": false,
-    "aggregating": false,
-    "signature": "apoc.text.replace(text :: STRING, regex :: STRING, replacement :: STRING) :: STRING",
-    "name": "apoc.text.replace",
-    "description": "Finds and replaces all matches found by the given regular expression with the given replacement.",
-    "returnDescription": "STRING",
-    "deprecatedBy": null,
-    "category": "",
-    "isBuiltIn": false,
-    "argumentDescription": [
-      {
-        "name": "text",
-        "description": "The string to be modified.",
-        "isDeprecated": false,
-        "type": "STRING"
-      },
-      {
-        "name": "regex",
-        "description": "The regular expression pattern to replace in the original string.",
-        "isDeprecated": false,
-        "type": "STRING"
-      },
-      {
-        "name": "replacement",
-        "description": "The value to be inserted in the original string.",
-        "isDeprecated": false,
-        "type": "STRING"
-      }
-    ]
-  },
-  {
     "isDeprecated": true,
     "aggregating": false,
     "signature": "apoc.text.levenshteinDistance(text1 :: STRING, text2 :: STRING) :: INTEGER",
@@ -1369,6 +1482,37 @@
     "description": "Finds and replaces all matches found by the given regular expression with the given replacement.",
     "returnDescription": "STRING",
     "deprecatedBy": "apoc.text.replace",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "text",
+        "description": "The string to be modified.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "regex",
+        "description": "The regular expression pattern to replace in the original string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      },
+      {
+        "name": "replacement",
+        "description": "The value to be inserted in the original string.",
+        "isDeprecated": false,
+        "type": "STRING"
+      }
+    ]
+  },
+  {
+    "isDeprecated": false,
+    "aggregating": false,
+    "signature": "apoc.text.replace(text :: STRING, regex :: STRING, replacement :: STRING) :: STRING",
+    "name": "apoc.text.replace",
+    "description": "Finds and replaces all matches found by the given regular expression with the given replacement.",
+    "returnDescription": "STRING",
+    "deprecatedBy": null,
     "category": "",
     "isBuiltIn": false,
     "argumentDescription": [
