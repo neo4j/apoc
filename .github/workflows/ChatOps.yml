@@ -2,7 +2,9 @@ name: Slash Command Dispatch
 on:
   issue_comment:
     types: [created]
-permissions: write-all
+permissions:
+  issues: write # required by slash-command-dispatch to add a reaction to the triggering comment
+  pull-requests: write
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
