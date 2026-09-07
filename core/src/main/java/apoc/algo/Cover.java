@@ -19,12 +19,12 @@
 package apoc.algo;
 
 import apoc.util.Util;
+import apoc.util.collection.Iterables;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -70,8 +70,7 @@ public class Cover {
     // non-parallelized utility method for use by other procedures
     public static Stream<Relationship> coverNodes(Collection<Node> nodes) {
         Set<Node> nodeSet = new HashSet<>(nodes);
-        return nodes.stream().flatMap(n -> StreamSupport.stream(
-                        n.getRelationships(Direction.OUTGOING).spliterator(), false)
+        return nodes.stream().flatMap(n -> Iterables.stream(n.getRelationships(Direction.OUTGOING))
                 .filter(r -> nodeSet.contains(r.getEndNode())));
     }
 }

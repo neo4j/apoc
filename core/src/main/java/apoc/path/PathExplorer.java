@@ -218,8 +218,13 @@ public class PathExplorer {
             throw new IllegalArgumentException("minLevel can only be 0 or 1 in subgraphAll()");
         }
 
-        List<Node> subgraphNodes =
-                expandConfigPrivate(start, configMap).map(Path::endNode).collect(Collectors.toList());
+        // The traversal stream's onClose (registered in Iterables.stream()) releases the underlying
+        // traversal cursors; collecting it into a list without closing it leaks those cursors, which
+        // newer kernels detect and reject at commit ("Not all allocated cursors were returned").
+        List<Node> subgraphNodes;
+        try (Stream<Path> paths = expandConfigPrivate(start, configMap)) {
+            subgraphNodes = paths.map(Path::endNode).collect(Collectors.toList());
+        }
         List<Relationship> subgraphRels = Cover.coverNodes(subgraphNodes).collect(Collectors.toList());
 
         return Stream.of(new SubgraphGraphResult(subgraphNodes, subgraphRels));

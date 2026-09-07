@@ -380,6 +380,57 @@ class SubgraphTest {
     }
 
     @Test
+    void testSubgraphAllWithRelationshipFilterAndIds() {
+        List<String> ids;
+        try (Transaction tx = db.beginTx()) {
+            Node p1 = tx.createNode(org.neo4j.graphdb.Label.label("Person"));
+            p1.setProperty("id", "person1");
+            Node p2 = tx.createNode(org.neo4j.graphdb.Label.label("Person"));
+            p2.setProperty("id", "person2");
+            Node p3 = tx.createNode(org.neo4j.graphdb.Label.label("Person"));
+            p3.setProperty("id", "person3");
+
+            p1.createRelationshipTo(p2, org.neo4j.graphdb.RelationshipType.withName("HAS"));
+            p2.createRelationshipTo(p3, org.neo4j.graphdb.RelationshipType.withName("FOLLOWS"));
+            p3.createRelationshipTo(p1, org.neo4j.graphdb.RelationshipType.withName("MEMBER_OF"));
+
+            ids = List.of("person1", "person2");
+            tx.commit();
+        }
+
+        String query =
+                """
+                MATCH (n:Person)
+                WHERE n.id IN $ids
+                CALL apoc.path.subgraphAll(n, {maxLevel: 3, limit: 100, relationshipFilter: $relationshipFilter})
+                YIELD nodes, relationships
+                RETURN nodes, relationships
+                """;
+
+        Map<String, Object> params =
+                Map.of("ids", ids, "relationshipFilter", "HAS|USED|HAS_PHONE_NUMBER|HAS_EMAIL|FOLLOW|MEMBER_OF");
+
+        try {
+            TestUtil.testResult(db, query, params, (result) -> {
+                while (result.hasNext()) {
+                    Map<String, Object> row = result.next();
+                    List<Node> nodes = (List<Node>) row.get("nodes");
+                    List<org.neo4j.graphdb.Relationship> relationships =
+                            (List<org.neo4j.graphdb.Relationship>) row.get("relationships");
+                    assertEquals(3, nodes.size());
+                    assertEquals(3, relationships.size());
+                }
+            });
+        } finally {
+            // Cleanup
+            try (Transaction tx = db.beginTx()) {
+                tx.execute("MATCH (n:Person) WHERE n.id IN ['person1', 'person2', 'person3'] DETACH DELETE n");
+                tx.commit();
+            }
+        }
+    }
+
+    @Test
     void testSpanningTreeShouldHaveOnlyOnePathToEachNode() {
         String controlQuery =
                 "MATCH (m:Movie {title: 'The Matrix'})-[*0..4]-(subgraphNode) return collect(distinct subgraphNode) as subgraph";
