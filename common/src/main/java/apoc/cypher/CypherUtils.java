@@ -48,7 +48,12 @@ public class CypherUtils {
         String declaration = " WITH "
                 + join(
                         ", ",
-                        keys.stream().map(s -> format(" $`%s` as `%s` ", s, s)).collect(toList()));
+                        keys.stream()
+                                .map(s -> {
+                                    String quoted = Util.sanitize(s, true);
+                                    return format(" $%s as %s ", quoted, quoted);
+                                })
+                                .collect(toList()));
         return declaration + fragment;
     }
 }
