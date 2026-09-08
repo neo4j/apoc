@@ -166,6 +166,44 @@ class LoadCoreEnterpriseTest {
     }
 
     @Test
+    void testLoadJsonShouldPreventZipEntryCompressionBombAttack() {
+        String zipFileName = "entryBomb.zip";
+        String entryName = "data.json";
+        writeZipEntryFile(zipFileName, entryName, writer -> {
+            writer.write("{\"test\":\"");
+            LongStream.range(0, 99999L)
+                    .forEach(__ -> writer.write("000000000000000000000000000000000000000000000000000000000000"));
+            writer.write("\"}");
+        });
+
+        testMaxSizeExceeded(
+                session,
+                "CALL apoc.load.json($file)",
+                Map.of("file", zipFileName + "!" + entryName),
+                new File(directory, zipFileName).length(),
+                DEFAULT_MAX_DECOMPRESSION_RATIO);
+    }
+
+    private static void writeZipEntryFile(String fileName, String entryName, Consumer<PrintWriter> supplier) {
+        try {
+            File file = new File(directory, fileName);
+            try (FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    java.util.zip.ZipOutputStream zipOutputStream =
+                            new java.util.zip.ZipOutputStream(fileOutputStream)) {
+                zipOutputStream.putNextEntry(new java.util.zip.ZipEntry(entryName));
+                PrintWriter writer = new PrintWriter(zipOutputStream);
+                supplier.accept(writer);
+                writer.flush();
+                zipOutputStream.closeEntry();
+            }
+
+            moveFileToContainer(fileName);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
     void testLoadXmlShouldPreventCompressionBombAttack() {
         loopAllCompressionAlgos(algo -> {
             try {
