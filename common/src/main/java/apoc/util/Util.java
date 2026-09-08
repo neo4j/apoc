@@ -429,8 +429,7 @@ public class Util {
         if (tokens.length == 2) {
             zipFileName = tokens[1];
             sc = getStreamConnection(urlAddress, headers, payload, urlAccessChecker);
-            stream = getFileStreamIntoCompressedFile(sc.getInputStream(), zipFileName, archiveType);
-            stream = toLimitedIStream(stream, sc.getLength());
+            stream = getFileStreamIntoCompressedFile(sc.getInputStream(), zipFileName, archiveType, sc.getLength());
         } else throw new IllegalArgumentException("filename can't be null or empty");
 
         return new CountingInputStream(stream, sc.getLength());
@@ -443,14 +442,17 @@ public class Util {
                 FileUtils.from(urlAddress), urlAddress, headers, payload, urlAccessChecker);
     }
 
-    private static InputStream getFileStreamIntoCompressedFile(InputStream is, String fileName, ArchiveType archiveType)
-            throws IOException {
+    private static InputStream getFileStreamIntoCompressedFile(
+            InputStream is, String fileName, ArchiveType archiveType, long compressedLength) throws IOException {
         try (ArchiveInputStream archive = archiveType.getInputStream(is)) {
             ArchiveEntry archiveEntry;
 
             while ((archiveEntry = archive.getNextEntry()) != null) {
                 if (!archiveEntry.isDirectory() && archiveEntry.getName().equals(fileName)) {
-                    return new ByteArrayInputStream(IOUtils.toByteArray(archive));
+                    // bound the decompressed entry size (apoc.max.decompression.ratio) before it is
+                    // materialized into memory, otherwise a high-ratio entry can exhaust the heap
+                    InputStream limitedEntryStream = toLimitedIStream(archive, compressedLength);
+                    return new ByteArrayInputStream(IOUtils.toByteArray(limitedEntryStream));
                 }
             }
         }
