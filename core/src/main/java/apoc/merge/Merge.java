@@ -148,7 +148,10 @@ public class Merge {
         if (labelNames == null || labelNames.isEmpty()) {
             labels = "";
         } else {
-            labels = ":" + labelNames.stream().map(Util::quote).collect(Collectors.joining(":"));
+            labels = ":"
+                    + labelNames.stream()
+                            .map(label -> Util.sanitize(label, true))
+                            .collect(Collectors.joining(":"));
         }
 
         Map<String, Object> params =
@@ -230,7 +233,8 @@ public class Merge {
                 endNode);
 
         final String cypher = "WITH $startNode as startNode, $endNode as endNode " + "MERGE (startNode)-[r:"
-                + Util.quote(relType) + "{" + identPropsString + "}]->(endNode) " + "ON CREATE SET r+= $onCreateProps "
+                + Util.sanitize(relType, true) + "{" + identPropsString + "}]->(endNode) "
+                + "ON CREATE SET r+= $onCreateProps "
                 + "ON MATCH SET r+= $onMatchProps "
                 + "RETURN r";
         return tx.execute(Util.prefixQuery(procedureCallContext, cypher), params);
@@ -276,7 +280,7 @@ public class Merge {
     private String buildIdentPropsString(Map<String, Object> identProps) {
         if (identProps == null) return "";
         return identProps.keySet().stream()
-                .map(Util::quote)
+                .map(key -> Util.sanitize(key, true))
                 .map(s -> s + ":$identProps." + s)
                 .collect(Collectors.joining(","));
     }
