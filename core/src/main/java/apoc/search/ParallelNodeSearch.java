@@ -35,6 +35,10 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
+import org.neo4j.internal.kernel.api.security.SecurityContext;
+import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.kernel.impl.coreapi.InternalTransaction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -209,6 +213,14 @@ public class ParallelNodeSearch {
                 ? (Map<String, Object>) labelPropertiesInput
                 : Util.readMap(labelPropertiesInput.toString());
 
+        // workers run their own query in their own transaction on separate threads (the caller's
+        // transaction isn't safe to share across threads), so the caller's security context is
+        // captured once here and propagated to each worker instead of letting them fall back to
+        // an unrestricted (AUTH_DISABLED) transaction
+        final SecurityContext securityContext = tx instanceof InternalTransaction internalTx
+                ? internalTx.securityContext()
+                : SecurityContext.AUTH_DISABLED;
+
         return labelProperties.entrySet().parallelStream().flatMap(e -> {
             String label = e.getKey();
             Object properties = e.getValue();
@@ -220,7 +232,8 @@ public class ParallelNodeSearch {
                         operator,
                         value,
                         log,
-                        Util.getCypherVersionString(procedureCallContext)));
+                        Util.getCypherVersionString(procedureCallContext),
+                        securityContext));
             } else if (properties instanceof List) {
                 return ((List<String>) properties)
                         .stream()
@@ -231,7 +244,8 @@ public class ParallelNodeSearch {
                                         operator,
                                         value,
                                         log,
-                                        Util.getCypherVersionString(procedureCallContext)));
+                                        Util.getCypherVersionString(procedureCallContext),
+                                        securityContext));
             }
             throw new RuntimeException("Invalid type for properties " + properties + ": "
                     + (properties == null ? "null" : properties.getClass()));
@@ -244,6 +258,7 @@ public class ParallelNodeSearch {
         Object value;
         private Log log;
         private String cypherVersion;
+        private SecurityContext securityContext;
 
         public QueryWorker(
                 GraphDatabaseService db,
@@ -252,7 +267,8 @@ public class ParallelNodeSearch {
                 String operator,
                 Object value,
                 Log log,
-                String cypherVersion) {
+                String cypherVersion,
+                SecurityContext securityContext) {
             this.db = db;
             this.label = label;
             this.prop = prop;
@@ -260,6 +276,7 @@ public class ParallelNodeSearch {
             this.operator = operator;
             this.log = log;
             this.cypherVersion = cypherVersion;
+            this.securityContext = securityContext;
         }
 
         public Stream<NodeReducedResult> queryForData() {
@@ -268,7 +285,7 @@ public class ParallelNodeSearch {
                     cypherVersion,
                     format(
                             "MATCH (n:`%s`) WHERE n.`%s` %s $value RETURN id(n) AS id,  n.`%s` AS value",
-                            label, prop, operator, prop));
+                            Util.sanitize(label), Util.sanitize(prop), operator, Util.sanitize(prop)));
             return queryForNode(
                     query,
                     (row) -> new NodeReducedResult((long) row.get("id"), labels, singletonMap(prop, row.get("value"))))
@@ -278,13 +295,16 @@ public class ParallelNodeSearch {
         public Stream<Long> queryForNodeId() {
             String query = Util.prefixQuery(
                     cypherVersion,
-                    format("MATCH (n:`%s`) WHERE n.`%s` %s $value RETURN id(n) AS id", label, prop, operator));
+                    format(
+                            "MATCH (n:`%s`) WHERE n.`%s` %s $value RETURN id(n) AS id",
+                            Util.sanitize(label), Util.sanitize(prop), operator));
             return queryForNode(query, (row) -> (long) row.get("id")).stream();
         }
 
         public <T> List<T> queryForNode(String query, Function<Map<String, Object>, T> transformer) {
             long start = currentTimeMillis();
-            try (Transaction tx = db.beginTx()) {
+            try (Transaction tx =
+                    ((GraphDatabaseAPI) db).beginTransaction(KernelTransaction.Type.EXPLICIT, securityContext)) {
                 try (Result nodes = tx.execute(query, singletonMap("value", value))) {
                     return nodes.stream().map(transformer).collect(Collectors.toList());
                 } finally {

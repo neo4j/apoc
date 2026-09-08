@@ -158,6 +158,47 @@ class ParallelNodeSearchTest {
     }
 
     @Test
+    void testSearchDoesntAllowCypherInjectionViaLabel() {
+        long personsBefore = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person) RETURN count(n) AS c");
+
+        // a backtick in a label key, together with an injected clause commented out with `//`,
+        // would break out of the backtick-quoted `MATCH (n:`label`)` if backticks aren't escaped
+        String maliciousLabel =
+                "Person`) WHERE 1=0 WITH 1 AS x MATCH (m) DETACH DELETE m RETURN id(m) AS id, 0 AS value //";
+        Map<String, Object> labelProps = Map.of(maliciousLabel, "name");
+
+        TestUtil.testCall(
+                db,
+                "CALL apoc.search.nodeAllReduced($labelProps, 'exact', 'x') YIELD id RETURN count(id) AS c",
+                Map.of("labelProps", labelProps),
+                row -> assertEquals(0L, row.get("c")));
+
+        // the injected `DETACH DELETE` must not have executed
+        long personsAfter = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person) RETURN count(n) AS c");
+        assertEquals(personsBefore, personsAfter);
+    }
+
+    @Test
+    void testSearchDoesntAllowCypherInjectionViaProperty() {
+        long personsBefore = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person) RETURN count(n) AS c");
+
+        // same injection, but via the property-name position instead of the label position
+        String maliciousProp =
+                "name`) WHERE 1=0 WITH 1 AS x MATCH (m) DETACH DELETE m RETURN id(m) AS id, 0 AS value //";
+        Map<String, Object> labelProps = Map.of("Person", maliciousProp);
+
+        TestUtil.testCall(
+                db,
+                "CALL apoc.search.nodeAllReduced($labelProps, 'exact', 'x') YIELD id RETURN count(id) AS c",
+                Map.of("labelProps", labelProps),
+                row -> assertEquals(0L, row.get("c")));
+
+        // the injected `DETACH DELETE` must not have executed
+        long personsAfter = TestUtil.singleResultFirstColumn(db, "MATCH (n:Person) RETURN count(n) AS c");
+        assertEquals(personsBefore, personsAfter);
+    }
+
+    @Test
     void testNodeReducedMergesMultiplePropertyMatches() {
         db.executeTransactionally("CREATE (:SearchTest {alpha: 'hello world', beta: 'hello there'})");
         try {
