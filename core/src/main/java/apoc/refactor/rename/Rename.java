@@ -197,13 +197,14 @@ public class Rename {
                     Map<String, Object> config) {
         rels = rels.stream().map(r -> Util.rebind(tx, r)).collect(Collectors.toList());
         newType = Util.sanitize(newType);
+        final String rawOldType = oldType;
         oldType = Util.sanitize(oldType);
         String cypherIterate = rels != null && !rels.isEmpty()
-                ? "UNWIND $rels AS oldRel WITH oldRel WHERE type(oldRel)=\"" + oldType
-                        + "\" RETURN oldRel,startNode(oldRel) as a,endNode(oldRel) as b"
+                ? "UNWIND $rels AS oldRel WITH oldRel WHERE type(oldRel)=$oldType "
+                        + "RETURN oldRel,startNode(oldRel) as a,endNode(oldRel) as b"
                 : "MATCH (a)-[oldRel:`" + oldType + "`]->(b) RETURN oldRel,a,b";
         String cypherAction = "CREATE(a)-[newRel:`" + newType + "`]->(b)" + "SET newRel+=oldRel DELETE oldRel";
-        final Map<String, Object> params = MapUtil.map("rels", rels);
+        final Map<String, Object> params = MapUtil.map("rels", rels, "oldType", rawOldType);
         Map<String, Object> parameters = getPeriodicConfig(config, params);
         return getResultOfBatchAndTotalWithInfo(
                 newPeriodic().iterate(cypherIterate, cypherAction, parameters), null, oldType, null);
