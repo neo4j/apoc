@@ -322,7 +322,7 @@ public class JsonImporter implements Closeable {
     }
 
     private String getType(Map<String, Object> param) {
-        return Util.quote((String) param.get("label"));
+        return Util.sanitize((String) param.get("label"), true);
     }
 
     private List<String> getLabels(Map<String, Object> param) {
@@ -332,7 +332,8 @@ public class JsonImporter implements Closeable {
     private String getLabelString(List<String> labels) {
         labels = labels == null ? Collections.emptyList() : labels;
         final String delimiter = ":";
-        final String join = labels.stream().map(Util::quote).collect(Collectors.joining(delimiter));
+        final String join =
+                labels.stream().map(label -> Util.sanitize(label, true)).collect(Collectors.joining(delimiter));
         return join.isBlank() ? join : (delimiter + join);
     }
 
