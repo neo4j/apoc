@@ -19,11 +19,14 @@
 package apoc.export.util;
 
 import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_RATIO;
+import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_SIZE;
 import static apoc.ApocConfig.DEFAULT_MAX_DECOMPRESSION_RATIO;
+import static apoc.ApocConfig.DEFAULT_MAX_DECOMPRESSION_SIZE;
 import static apoc.ApocConfig.apocConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.function.LongSupplier;
 
 public class LimitedSizeInputStream extends InputStream {
     public static final String SIZE_EXCEEDED_ERROR =
@@ -35,13 +38,18 @@ public class LimitedSizeInputStream extends InputStream {
     public static final int SIZE_MULTIPLIER =
             apocConfig().getInt(APOC_MAX_DECOMPRESSION_RATIO, DEFAULT_MAX_DECOMPRESSION_RATIO);
 
+    // Absolute ceiling used whenever the source size cannot be trusted (unknown, or attacker
+    // declared) as the basis for a ratio-based budget.
+    public static final long MAX_ABSOLUTE_SIZE =
+            apocConfig().getLong(APOC_MAX_DECOMPRESSION_SIZE, DEFAULT_MAX_DECOMPRESSION_SIZE);
+
     private final InputStream stream;
-    private final long maxSize;
+    private final LongSupplier maxSizeSupplier;
     private long total;
 
-    public LimitedSizeInputStream(InputStream stream, long maxSize) {
+    private LimitedSizeInputStream(InputStream stream, LongSupplier maxSizeSupplier) {
         this.stream = stream;
-        this.maxSize = maxSize;
+        this.maxSizeSupplier = maxSizeSupplier;
     }
 
     @Override
@@ -65,13 +73,8 @@ public class LimitedSizeInputStream extends InputStream {
     }
 
     private void incrementCounter(int size) throws IOException {
-        // in some test cases, e.g. UtilIT.redirectShouldWorkWhenProtocolNotChangesWithUrlLocation,
-        // the StreamConnection.getLength() returns `-1` because of content length not known,
-        // therefore we skip these cases
-        if (maxSize < 0) {
-            return;
-        }
         total += size;
+        long maxSize = maxSizeSupplier.getAsLong();
         if (total > maxSize) {
             close();
             String msgError = String.format(SIZE_EXCEEDED_ERROR, maxSize, SIZE_MULTIPLIER);
@@ -79,8 +82,48 @@ public class LimitedSizeInputStream extends InputStream {
         }
     }
 
+    /**
+     * A negative ratio is a deliberate, admin-configured opt-out of the decompression-bomb
+     * protection, distinct from a source size that is merely unknown or untrusted.
+     */
+    private static boolean isRatioProtectionDisabled() {
+        return SIZE_MULTIPLIER < 0;
+    }
+
+    private static long ratioBound(long size) {
+        if (isRatioProtectionDisabled()) {
+            return Long.MAX_VALUE;
+        }
+        // size < 0 means the source length is unknown (e.g. chunked transfer encoding) - fall back
+        // to the absolute ceiling instead of disabling enforcement.
+        if (size < 0) {
+            return MAX_ABSOLUTE_SIZE;
+        }
+        if (SIZE_MULTIPLIER != 0 && size > Long.MAX_VALUE / SIZE_MULTIPLIER) {
+            // avoid overflow for pathologically large (e.g. attacker-declared) sizes
+            return MAX_ABSOLUTE_SIZE;
+        }
+        return Math.min(size * SIZE_MULTIPLIER, MAX_ABSOLUTE_SIZE);
+    }
+
+    /**
+     * Bounds a stream using an already-known, trustworthy source size (e.g. a local file's length,
+     * or an in-memory byte array's length). The resulting budget is still capped by the configured
+     * absolute size, so a bogus/huge declared size can't be used to inflate it unboundedly.
+     */
     public static InputStream toLimitedIStream(InputStream stream, long total) {
-        // to prevent potential bomb attack
-        return new LimitedSizeInputStream(stream, total * SIZE_MULTIPLIER);
+        long maxSize = ratioBound(total);
+        return new LimitedSizeInputStream(stream, () -> maxSize);
+    }
+
+    /**
+     * Bounds a stream whose true size cannot be trusted upfront - typically decompressed output read
+     * over HTTP(S)/FTP, where the remote server's declared Content-Length may be absent, chunked, or
+     * simply forged. The budget is (re)computed on every read from the number of bytes actually
+     * consumed so far from the underlying compressed/source stream, so a missing or forged declared
+     * length can no longer be used to disable or inflate the decompression-ratio protection.
+     */
+    public static InputStream toDynamicLimitedIStream(InputStream stream, LongSupplier consumedSourceBytes) {
+        return new LimitedSizeInputStream(stream, () -> ratioBound(consumedSourceBytes.getAsLong()));
     }
 }
