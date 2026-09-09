@@ -322,7 +322,7 @@ public class JsonImporter implements Closeable {
     }
 
     private String getType(Map<String, Object> param) {
-        return Util.quote((String) param.get("label"));
+        return (String) param.get("label");
     }
 
     private List<String> getLabels(Map<String, Object> param) {
@@ -332,7 +332,8 @@ public class JsonImporter implements Closeable {
     private String getLabelString(List<String> labels) {
         labels = labels == null ? Collections.emptyList() : labels;
         final String delimiter = ":";
-        final String join = labels.stream().map(Util::quote).collect(Collectors.joining(delimiter));
+        final String join =
+                labels.stream().map(label -> Util.sanitize(label, true)).collect(Collectors.joining(delimiter));
         return join.isBlank() ? join : (delimiter + join);
     }
 
@@ -348,7 +349,7 @@ public class JsonImporter implements Closeable {
                 query = String.format(CREATE_NODE, getLabelString(lastLabels), importId);
                 break;
             case "relationship":
-                String rel = (String) lastRelTypes.get("label");
+                String rel = Util.sanitize((String) lastRelTypes.get("label"), true);
                 query = String.format(
                         CREATE_RELS,
                         getLabelString((List<String>) lastRelTypes.get("start")),

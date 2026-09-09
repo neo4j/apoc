@@ -502,4 +502,70 @@ class MergeTest {
             assertTrue(e.getMessage().contains("you need to supply at least one identifying property for a merge"));
         }
     }
+
+    @Test
+    void testMergeNodeLabelContainingBacktickShouldNotInjectCypher() {
+        db.executeTransactionally("CREATE (:Canary), (:Canary), (:Canary)");
+
+        String maliciousLabel = "A`) WITH 1 AS x MATCH (m) DETACH DELETE m RETURN m AS n//";
+        Map<String, Object> params = MapUtil.map("label", maliciousLabel);
+
+        testCall(db, "CALL apoc.merge.node([$label], {id: 1}) YIELD node RETURN node", params, (row) -> {
+            Node node = (Node) row.get("node");
+            assertTrue(node.hasLabel(Label.label(maliciousLabel)));
+        });
+
+        // the injected `DETACH DELETE` must not have executed
+        testResult(
+                db,
+                "MATCH (n:Canary) RETURN count(n) AS c",
+                result -> assertEquals(3L, (long) (Iterators.single(result.columnAs("c")))));
+    }
+
+    @Test
+    void testMergeRelationshipTypeContainingBacktickShouldNotInjectCypher() {
+        db.executeTransactionally(
+                "CREATE (:Canary), (:Canary), (:Canary), (:Person{name:'Foo'}), (:Person{name:'Bar'})");
+
+        String maliciousType = "A`]->(x) WITH 1 AS y MATCH (m) DETACH DELETE m RETURN m AS r//";
+
+        Map<String, Object> params = MapUtil.map("relType", maliciousType);
+        testCall(
+                db,
+                "MERGE (s:Person{name:'Foo'}) MERGE (e:Person{name:'Bar'}) WITH s,e "
+                        + "CALL apoc.merge.relationship(s, $relType, {rid: 1}, {}, e) YIELD rel RETURN rel",
+                params,
+                (row) -> {
+                    Relationship rel = (Relationship) row.get("rel");
+                    assertEquals(maliciousType, rel.getType().name());
+                });
+
+        // the injected `DETACH DELETE` must not have executed
+        testResult(
+                db,
+                "MATCH (n:Canary) RETURN count(n) AS c",
+                result -> assertEquals(3L, (long) (Iterators.single(result.columnAs("c")))));
+    }
+
+    @Test
+    void testMergeIdentPropsKeyContainingBacktickShouldNotInjectCypher() {
+        db.executeTransactionally("CREATE (:Canary), (:Canary), (:Canary)");
+
+        String maliciousKey = "a`:1}) WITH n MATCH (m) DETACH DELETE m RETURN n//";
+        Map<String, Object> identProps = MapUtil.map(maliciousKey, "value");
+        Map<String, Object> params = MapUtil.map("identProps", identProps);
+
+        testCall(db, "CALL apoc.merge.node(['Person'], $identProps) YIELD node RETURN node", params, (row) -> {
+            Node node = (Node) row.get("node");
+            assertNotNull(node);
+            assertTrue(node.hasProperty(maliciousKey));
+            assertEquals("value", node.getProperty(maliciousKey));
+        });
+
+        // the injected `DETACH DELETE` must not have executed
+        testResult(
+                db,
+                "MATCH (n:Canary) RETURN count(n) AS c",
+                result -> assertEquals(3L, (long) (Iterators.single(result.columnAs("c")))));
+    }
 }

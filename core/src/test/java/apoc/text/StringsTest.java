@@ -60,7 +60,7 @@ class StringsTest {
 
     @BeforeAll
     void setUp() {
-        TestUtil.registerProcedure(db, Strings.class);
+        TestUtil.registerProcedure(db, Strings.class, apoc.create.Create.class);
     }
 
     @Test
@@ -1247,6 +1247,70 @@ class StringsTest {
                 "RETURN apoc.text.toCypher($v) AS value",
                 map("v", false),
                 (row) -> assertEquals("false", row.get("value")));
+    }
+
+    @Test
+    void testToCypherEscapesQuotesAndBackslashesInStringValues() {
+        db.executeTransactionally("CREATE (:Canary)");
+
+        // a single quote or trailing backslash, if not escaped, would terminate the generated
+        // string literal and let the rest be parsed as Cypher
+        String maliciousValue = "x' }) WITH 1 AS y MATCH (n) DETACH DELETE n //\\";
+        String fragment = TestUtil.singleResultFirstColumn(
+                db, "RETURN apoc.text.toCypher($v) AS value", map("v", maliciousValue));
+
+        // the fragment must round-trip through the Cypher parser as a single string literal
+        // equal to the original value, rather than executing an injected clause
+        String roundTripped = TestUtil.singleResultFirstColumn(db, "RETURN " + fragment + " AS value");
+        assertEquals(maliciousValue, roundTripped);
+
+        long canaries = TestUtil.singleResultFirstColumn(db, "MATCH (n:Canary) RETURN count(n) AS c");
+        assertEquals(1L, canaries);
+    }
+
+    @Test
+    void testToCypherEscapesBacktickInMapKeys() {
+        db.executeTransactionally("CREATE (:Canary)");
+
+        // a backtick in a map key, if not escaped, would terminate the backtick-quoted
+        // identifier and let the rest be parsed as Cypher
+        String maliciousKey = "a` :Admin) WITH 1 AS y MATCH (n) DETACH DELETE n //";
+        Map<String, Object> value = Map.of(maliciousKey, "v");
+        String fragment =
+                TestUtil.singleResultFirstColumn(db, "RETURN apoc.text.toCypher($v) AS value", map("v", value));
+
+        // the fragment must round-trip as a map with the malicious string as a literal key,
+        // rather than executing an injected clause
+        Map<String, Object> roundTripped = TestUtil.singleResultFirstColumn(db, "RETURN " + fragment + " AS value");
+        assertEquals(value, roundTripped);
+
+        long canaries = TestUtil.singleResultFirstColumn(db, "MATCH (n:Canary) RETURN count(n) AS c");
+        assertEquals(1L, canaries);
+    }
+
+    @Test
+    void testToCypherEscapesBacktickInLabels() {
+        db.executeTransactionally("CREATE (:Canary)");
+
+        // a backtick in a node label, if not escaped, would terminate the backtick-quoted
+        // identifier and let the rest be parsed as Cypher
+        String maliciousLabel = "Foo` {}) WITH 1 AS y MATCH (n) DETACH DELETE n //";
+        db.executeTransactionally(
+                "CALL apoc.create.node([$label], {}) YIELD node RETURN node", map("label", maliciousLabel));
+
+        String fragment = TestUtil.singleResultFirstColumn(
+                db,
+                "MATCH (v) WHERE $label IN labels(v) RETURN apoc.text.toCypher(v, {node:'n'}) AS value",
+                map("label", maliciousLabel));
+
+        // toCypher's own documented use case is to embed its output after CREATE; the injected
+        // clause must not execute, and the recreated node must carry the literal malicious label
+        List<String> roundTripped =
+                TestUtil.singleResultFirstColumn(db, "CREATE " + fragment + " RETURN labels(n) AS labels");
+        assertTrue(roundTripped.contains(maliciousLabel));
+
+        long canaries = TestUtil.singleResultFirstColumn(db, "MATCH (n:Canary) RETURN count(n) AS c");
+        assertEquals(1L, canaries);
     }
 
     @Test

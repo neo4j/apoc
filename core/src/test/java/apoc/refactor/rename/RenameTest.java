@@ -249,6 +249,34 @@ class RenameTest {
     }
 
     @Test
+    void testRenameTypeOldTypeWithDoubleQuoteDoesntAllowCypherInjectionForSomeRelationships() {
+        db.executeTransactionally(
+                "UNWIND range(0,3) AS id CREATE (f:Foo {id: id})-[:KNOWS {id: id}]->(l:Fii {id: id})");
+        db.executeTransactionally("CREATE (:Canary {role: 'user'})");
+
+        List<Relationship> rels = TestUtil.firstColumn(db, "MATCH (:Foo)-[r:KNOWS]->(:Fii) RETURN r");
+
+        // a double quote in `oldType`, if spliced unescaped into the `WHERE type(oldRel)="..."`
+        // string literal used when a `rels` list is supplied, would terminate the literal and
+        // let the rest run as Cypher (here: an always-true condition plus a privilege-escalating SET)
+        String maliciousOldType = "x\" OR true WITH oldRel, startNode(oldRel) AS a, endNode(oldRel) AS b "
+                + "MATCH (u:Canary) SET u.role='admin' RETURN oldRel, a, b //";
+
+        testCall(
+                db,
+                "CALL apoc.refactor.rename.type($oldType, 'RENAMED', $rels)",
+                map("oldType", maliciousOldType, "rels", rels),
+                (r) -> assertEquals(0L, r.get("total")));
+
+        // the injected `SET u.role='admin'` must not have executed
+        testCall(db, "MATCH (u:Canary) RETURN u.role AS role", (r) -> assertEquals("user", r.get("role")));
+
+        // none of the relationships should have matched the malicious (literal) type, so none were renamed
+        assertEquals(0L, resultRelationshipsMatches("RENAMED", null));
+        assertEquals(4L, resultRelationshipsMatches("KNOWS", null));
+    }
+
+    @Test
     void testRenameNodesProperty() {
         TestUtil.firstColumn(db, "UNWIND range(0,9) as id CREATE (f:Foo {id: id, name: 'name'+id}) RETURN f");
         testCall(

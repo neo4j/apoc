@@ -451,6 +451,39 @@ class ImportJsonTest {
     }
 
     @Test
+    void shouldNotAllowCypherInjectionViaRelationshipType() {
+        // given a relationship whose file-supplied "label" contains a backtick,
+        // attempting to break out of the quoted identifier and inject arbitrary Cypher
+        String filename = "relationship_type_injection.json";
+        String maliciousType = "X` ]->(e) WITH count(*) AS _ MATCH (n) DETACH DELETE n //";
+
+        // when
+        TestUtil.testCall(db, "CALL apoc.import.json($file)", map("file", filename), (r) -> {
+            assertEquals(2L, r.get("nodes"));
+            assertEquals(1L, r.get("relationships"));
+        });
+
+        // then the injected clause must not have executed, i.e. the nodes must still exist,
+        // and the relationship type must be the literal (sanitized) string, not raw Cypher
+        try (Transaction tx = db.beginTx()) {
+            final long countNodes = tx.execute("MATCH (n) RETURN count(n) AS count")
+                    .<Long>columnAs("count")
+                    .next();
+            assertEquals(2L, countNodes);
+
+            final long countRels = tx.execute("MATCH ()-[r]->() RETURN count(r) AS count")
+                    .<Long>columnAs("count")
+                    .next();
+            assertEquals(1L, countRels);
+
+            final Relationship rel = tx.execute("MATCH ()-[r]->() RETURN r")
+                    .<Relationship>columnAs("r")
+                    .next();
+            assertEquals(maliciousType, rel.getType().name());
+        }
+    }
+
+    @Test
     void shouldTerminateImportJson() {
         createConstraints(List.of("Movie", "Other", "Person"));
         checkTerminationGuard(db, "CALL apoc.import.json('testTerminate.json',{})");

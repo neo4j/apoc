@@ -18,7 +18,6 @@
  */
 package apoc.text;
 
-import static apoc.util.Util.quote;
 import static java.lang.Math.toIntExact;
 import static java.util.Arrays.asList;
 
@@ -46,6 +45,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.lang.model.SourceVersion;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.HammingDistance;
@@ -811,6 +811,25 @@ public class Strings {
         return value == null || value instanceof String || value instanceof Number || value instanceof Boolean;
     }
 
+    /**
+     * Quotes a label, property key, relationship type or variable name for safe inclusion in
+     * generated Cypher: valid identifiers are left as-is (matching {@link Util#quote}), anything
+     * else is backtick-quoted with embedded backticks doubled so they cannot terminate the quoted
+     * identifier and alter the structure of the generated Cypher (unlike {@link Util#quote}, which
+     * does not escape embedded backticks).
+     */
+    private static String quote(String value) {
+        return SourceVersion.isIdentifier(value) && !value.contains("$") ? value : Util.sanitize(value, true);
+    }
+
+    /**
+     * Escapes a string value for safe inclusion inside a single-quoted Cypher string literal,
+     * so that embedded quotes/backslashes cannot terminate the literal and inject Cypher.
+     */
+    private static String quoteStringValue(String value) {
+        return '\'' + value.replace("\\", "\\\\").replace("'", "\\'") + '\'';
+    }
+
     private String cypherName(
             Map<String, Object> config, String key, Supplier<String> s, Function<String, String> quoter) {
         Object name = config.get(key);
@@ -838,7 +857,7 @@ public class Strings {
 
         if (value == null) return "null";
         if (value instanceof Number || value instanceof Boolean) return value.toString();
-        if (value instanceof String) return '\'' + value.toString() + '\'';
+        if (value instanceof String) return quoteStringValue(value.toString());
         if (value instanceof Iterable)
             return '['
                     + StreamSupport.stream(((Iterable<?>) value).spliterator(), false)
@@ -859,7 +878,7 @@ public class Strings {
                     .map(l -> quote(l.name()))
                     .collect(Collectors.joining(":"));
             if (!labels.isEmpty()) labels = ':' + labels;
-            String var = cypherName(config, "node", () -> "", Util::quote);
+            String var = cypherName(config, "node", () -> "", Strings::quote);
             return '(' + var + labels + ' ' + toCypher(node.getAllProperties(), config) + ')';
         }
         if (value instanceof Relationship) {
@@ -867,7 +886,7 @@ public class Strings {
             String type = ':' + quote(rel.getType().name());
             String start = cypherName(
                     config, "start", () -> toCypher(rel.getStartNode(), config), (s) -> '(' + quote(s) + ')');
-            String relationship = cypherName(config, "relationship", () -> "", Util::quote);
+            String relationship = cypherName(config, "relationship", () -> "", Strings::quote);
             String end =
                     cypherName(config, "end", () -> toCypher(rel.getEndNode(), config), (s) -> '(' + quote(s) + ')');
             return start + "-[" + relationship + type + ' ' + toCypher(rel.getAllProperties(), config) + "]->" + end;
