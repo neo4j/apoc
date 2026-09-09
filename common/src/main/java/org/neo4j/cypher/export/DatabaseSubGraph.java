@@ -19,7 +19,7 @@
 package org.neo4j.cypher.export;
 
 import static apoc.export.cypher.formatter.CypherFormatterUtils.cypherNode;
-import static apoc.util.Util.quote;
+import static apoc.util.Util.quoteIdentifierSafely;
 
 import apoc.util.Util;
 import java.util.Comparator;
@@ -107,7 +107,7 @@ public class DatabaseSubGraph implements SubGraph {
     public long countsForRelationship(Label start, RelationshipType type, Label end) {
         String startNode = cypherNode(start);
         String endNode = cypherNode(end);
-        String relationship = String.format("[r:%s]", quote(type.name()));
+        String relationship = String.format("[r:%s]", quoteIdentifierSafely(type.name()));
         try (Result result = transaction.execute(
                 String.format("MATCH %s-%s->%s RETURN count(r) AS count", startNode, relationship, endNode))) {
             return result.<Long>columnAs("count").next();
@@ -116,8 +116,8 @@ public class DatabaseSubGraph implements SubGraph {
 
     @Override
     public long countsForNode(Label label) {
-        try (Result result =
-                transaction.execute(String.format("MATCH (n:%s) RETURN count(n) AS count", quote(label.name())))) {
+        try (Result result = transaction.execute(
+                String.format("MATCH (n:%s) RETURN count(n) AS count", quoteIdentifierSafely(label.name())))) {
             return result.<Long>columnAs("count").next();
         }
     }

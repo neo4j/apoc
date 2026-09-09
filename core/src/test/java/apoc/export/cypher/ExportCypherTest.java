@@ -1096,6 +1096,29 @@ public class ExportCypherTest {
     }
 
     @Test
+    void exportFullTextIndexWithNameAndKeyRequiringEscaping() {
+        // given: an index name and property key crafted to break out of the manual quoting
+        // used by the export (e.g. via a semicolon or an embedded backtick), created the
+        // only way that's possible - via backtick-quoting at index-creation time
+        db.executeTransactionally("CREATE (n:TempNode {`a``b`:'value'})");
+        db.executeTransactionally(
+                "CREATE FULLTEXT INDEX `idx``; DROP USER neo4j; //` FOR (n:TempNode) ON EACH [n.`a``b`]");
+
+        String query = "MATCH (t:TempNode) return t";
+        Map<String, Object> config = map("awaitForIndexes", 3000);
+
+        // when
+        TestUtil.testCall(db, exportQuery, map("query", query, "file", null, "config", config), (r) -> {
+            // then: the whole malicious name/key must round-trip as a single quoted identifier,
+            // never breaking out into extra, attacker-controlled statements
+            String cypherStatements = (String) r.get("cypherStatements");
+            assertTrue(cypherStatements.contains(
+                    "CREATE FULLTEXT INDEX `idx``; DROP USER neo4j; //` FOR (n:TempNode) ON EACH [n.`a``b`];"));
+            assertFalse(cypherStatements.contains("DROP USER neo4j;" + System.lineSeparator()));
+        });
+    }
+
+    @Test
     void shouldExportFulltextIndexForRelationship() {
         // given
         createFullTextRelIndex();

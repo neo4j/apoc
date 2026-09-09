@@ -692,8 +692,17 @@ public class Util {
         }
     }
 
+    // This is in common, so I suspect this is used by extended, leaving as is, please use quoteIdentifierSafely
+    // instead.
     public static String quote(String var) {
         return SourceVersion.isIdentifier(var) && !var.contains("$") ? var : '`' + var + '`';
+    }
+
+    public static String quoteIdentifierSafely(String value) {
+        if (SourceVersion.isIdentifier(value) && !value.contains("$")) {
+            return value;
+        }
+        return sanitize(value, true);
     }
 
     private static final String ESCAPED_UNICODE_BACKTICK = "\\u0060";
@@ -763,7 +772,7 @@ public class Util {
     }
 
     public static String param(String var) {
-        return var.charAt(0) == '$' ? var : '$' + quote(var);
+        return var.charAt(0) == '$' ? var : '$' + quoteIdentifierSafely(var);
     }
 
     public static String withMapping(Stream<String> columns, Function<String, String> withMapping) {

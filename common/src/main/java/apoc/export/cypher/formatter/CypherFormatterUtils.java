@@ -47,9 +47,9 @@ public class CypherFormatterUtils {
     public static final String UNIQUE_ID_NAME = "UNIQUE_IMPORT_NAME";
     public static final String UNIQUE_ID_LABEL = "UNIQUE IMPORT LABEL";
     public static final String UNIQUE_ID_PROP = "UNIQUE IMPORT ID";
-    public static final String Q_UNIQUE_ID_LABEL = Util.quote(UNIQUE_ID_LABEL);
+    public static final String Q_UNIQUE_ID_LABEL = Util.quoteIdentifierSafely(UNIQUE_ID_LABEL);
     public static final String UNIQUE_ID_REL = "UNIQUE IMPORT ID REL";
-    public static final String Q_UNIQUE_ID_REL = Util.quote(UNIQUE_ID_REL);
+    public static final String Q_UNIQUE_ID_REL = Util.quoteIdentifierSafely(UNIQUE_ID_REL);
 
     public static final String FUNCTION_TEMPLATE = "%s('%s')";
 
@@ -67,7 +67,7 @@ public class CypherFormatterUtils {
             StringBuilder props = new StringBuilder(100);
             for (String prop : nodeIdProperties.keySet()) {
                 props.append(", ");
-                props.append(Util.quote(prop));
+                props.append(Util.quoteIdentifierSafely(prop));
                 props.append(":");
                 props.append(CypherFormatterUtils.toString(nodeIdProperties.get(prop)));
             }
@@ -241,7 +241,7 @@ public class CypherFormatterUtils {
 
     public static String formatPropertyName(String id, String prop, Object value, boolean jsonStyle) {
         return (id != null && !"".equals(id) ? id + "." : "")
-                + Util.quote(prop)
+                + Util.quoteIdentifierSafely(prop)
                 + (jsonStyle ? ":" : "=")
                 + toString(value);
     }
@@ -249,7 +249,7 @@ public class CypherFormatterUtils {
     // ---- to string ----
 
     public static String label(String id) {
-        return ":" + Util.quote(id);
+        return ":" + Util.quoteIdentifierSafely(id);
     }
 
     public static String toString(Object value) {
@@ -305,7 +305,7 @@ public class CypherFormatterUtils {
     }
 
     public static String cypherNode(Label label) {
-        return String.format("(%s)", label == null ? "" : ":" + Util.quote(label.name()));
+        return String.format("(%s)", label == null ? "" : ":" + Util.quoteIdentifierSafely(label.name()));
     }
 
     public static String simpleKeyValue(String key, Object value) {

@@ -56,7 +56,8 @@ class UtilQuoteTest {
     @ParameterizedTest(name = "should quote if needed for identifier=''{0}'' (avoidQuote={1})")
     @MethodSource("parameters")
     void shouldQuoteIfNeededForUsageAsParameterName(String identifier, boolean shouldAvoidQuote) {
-        db.executeTransactionally(String.format("CREATE (n:TestNode) SET n.%s = true", Util.quote(identifier)));
+        db.executeTransactionally(
+                String.format("CREATE (n:TestNode) SET n.%s = true", Util.quoteIdentifierSafely(identifier)));
         // If the query did not fail entirely, did it create the expected property?
         TestUtil.testCallCount(db, String.format("MATCH (n:TestNode) WHERE n.`%s` RETURN id(n)", identifier), 1);
     }
@@ -65,6 +66,6 @@ class UtilQuoteTest {
     @MethodSource("parameters")
     void shouldNotQuoteWhenAvoidQuoteIsTrue(String identifier, boolean shouldAvoidQuote) {
         final String expectedIdentifier = shouldAvoidQuote ? identifier : '`' + identifier + '`';
-        assertEquals(expectedIdentifier, Util.quote(identifier));
+        assertEquals(expectedIdentifier, Util.quoteIdentifierSafely(identifier));
     }
 }

@@ -23,6 +23,7 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.Q_UNIQUE_ID_REL;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.isUniqueRelationship;
 import static apoc.export.cypher.formatter.CypherFormatterUtils.simpleKeyValue;
+import static apoc.util.Util.quoteIdentifierSafely;
 
 import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportFormat;
@@ -65,7 +66,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
     public String statementForCleanUpNodes(int batchSize) {
         return "MATCH (n:" + Q_UNIQUE_ID_LABEL + ") " + " WITH n LIMIT "
                 + batchSize + " REMOVE n:"
-                + Q_UNIQUE_ID_LABEL + " REMOVE n." + Util.quote(UNIQUE_ID_PROP) + ";";
+                + Q_UNIQUE_ID_LABEL + " REMOVE n." + quoteIdentifierSafely(UNIQUE_ID_PROP) + ";";
     }
 
     @Override
@@ -80,7 +81,11 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
             String indexType, String label, Iterable<String> keys, boolean ifNotExists, String idxName) {
         return String.format(
                 "CREATE %s INDEX%s%s FOR (n:%s) ON (%s);",
-                indexType, idxName, getIfNotExists(ifNotExists), Util.quote(label), getPropertiesQuoted(keys, "n."));
+                indexType,
+                idxName,
+                getIfNotExists(ifNotExists),
+                quoteIdentifierSafely(label),
+                getPropertiesQuoted(keys, "n."));
     }
 
     @Override
@@ -88,19 +93,23 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
             String indexType, String type, Iterable<String> keys, boolean ifNotExists, String idxName) {
         return String.format(
                 "CREATE %s INDEX%s%s FOR ()-[rel:%s]-() ON (%s);",
-                indexType, idxName, getIfNotExists(ifNotExists), Util.quote(type), getPropertiesQuoted(keys, "rel."));
+                indexType,
+                idxName,
+                getIfNotExists(ifNotExists),
+                quoteIdentifierSafely(type),
+                getPropertiesQuoted(keys, "rel."));
     }
 
     @Override
     public String statementForNodeFullTextIndex(String name, Iterable<Label> labels, Iterable<String> keys) {
         String label = StreamSupport.stream(labels.spliterator(), false)
                 .map(Label::name)
-                .map(Util::quote)
+                .map(Util::quoteIdentifierSafely)
                 .collect(Collectors.joining("|"));
         String key = StreamSupport.stream(keys.spliterator(), false)
-                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "n", s))
+                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "n", s.replace("`", "``")))
                 .collect(Collectors.joining(","));
-        return String.format(STATEMENT_NODE_FULLTEXT_IDX, name, label, key);
+        return String.format(STATEMENT_NODE_FULLTEXT_IDX, quoteIdentifierSafely(name), label, key);
     }
 
     @Override
@@ -108,12 +117,12 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
             String name, Iterable<RelationshipType> types, Iterable<String> keys) {
         String type = StreamSupport.stream(types.spliterator(), false)
                 .map(RelationshipType::name)
-                .map(Util::quote)
+                .map(Util::quoteIdentifierSafely)
                 .collect(Collectors.joining("|"));
         String key = StreamSupport.stream(keys.spliterator(), false)
-                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "rel", s))
+                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "rel", s.replace("`", "``")))
                 .collect(Collectors.joining(","));
-        return String.format(STATEMENT_REL_FULLTEXT_IDX, name, type, key);
+        return String.format(STATEMENT_REL_FULLTEXT_IDX, quoteIdentifierSafely(name), type, key);
     }
 
     @Override
@@ -157,16 +166,16 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
         return String.format(
                 statement,
-                Util.quote(name),
+                quoteIdentifierSafely(name),
                 getIfNotExists(ifNotExists),
-                Util.quote(label),
+                quoteIdentifierSafely(label),
                 getPropertiesQuoted(keys, keysString),
                 typeString);
     }
 
     @Override
     public String statementForDropConstraint(String name) {
-        return String.format(STATEMENT_DROP_CONSTRAINTS, Util.quote(name));
+        return String.format(STATEMENT_DROP_CONSTRAINTS, quoteIdentifierSafely(name));
     }
 
     private String getIfNotExists(boolean ifNotExists) {
@@ -175,7 +184,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
     private String getPropertiesQuoted(Iterable<String> keys, String prefix) {
         String keysString = StreamSupport.stream(keys.spliterator(), false)
-                .map(key -> prefix + Util.quote(key))
+                .map(key -> prefix + quoteIdentifierSafely(key))
                 .collect(Collectors.joining(", "));
         return keysString;
     }
@@ -219,7 +228,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         final boolean withMultiRels =
                 exportConfig.isMultipleRelationshipsWithType() && !isUniqueRelationship(relationship);
         String mergeUniqueKey = withMultiRels ? simpleKeyValue(Q_UNIQUE_ID_REL, relationship.getId()) : "";
-        result.append(" MERGE (n1)-[r:" + Util.quote(type.name()) + mergeUniqueKey + "]->(n2)");
+        result.append(" MERGE (n1)-[r:" + quoteIdentifierSafely(type.name()) + mergeUniqueKey + "]->(n2)");
         if (relationship.getPropertyKeys().iterator().hasNext()) {
             result.append(cypherFormat.equals(CypherFormat.UPDATE_STRUCTURE) ? " ON CREATE SET " : " SET ");
             result.append(CypherFormatterUtils.formatRelationshipProperties("r", relationship, false));
@@ -328,7 +337,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
         String label = getUniqueConstrainedLabel(last, uniqueConstraints);
         out.append("(n:");
-        out.append(Util.quote(label));
+        out.append(quoteIdentifierSafely(label));
         out.append("{");
         writeSetProperties(out, key.getValue());
         out.append("}) ");
@@ -336,7 +345,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         out.append("n += row.properties");
         String addLabels = key.getKey().stream()
                 .filter(l -> !l.equals(label))
-                .map(Util::quote)
+                .map(Util::quoteIdentifierSafely)
                 .collect(Collectors.joining(":"));
         if (!addLabels.isEmpty()) {
             out.append(" SET n:");
@@ -355,7 +364,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         int size = value.size();
         for (String s : value) {
             --size;
-            out.append(Util.quote(s) + ": row." + prefix + formatNodeId(s));
+            out.append(quoteIdentifierSafely(s) + ": row." + prefix + formatNodeId(s));
             if (size > 0) {
                 out.append(", ");
             }
@@ -519,7 +528,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         // create the relationship (depends on the strategy)
         out.append(relationshipClause);
         String mergeUniqueKey = withMultipleRels ? simpleKeyValue(Q_UNIQUE_ID_REL, "row." + ID_REL_KEY) : "";
-        out.append("(start)-[r:" + Util.quote(path.get("type").toString()) + mergeUniqueKey + "]->(end) ");
+        out.append("(start)-[r:" + quoteIdentifierSafely(path.get("type").toString()) + mergeUniqueKey + "]->(end) ");
         out.append(setClause);
         out.append("r += row.properties;");
         out.append(StringUtils.LF);
@@ -541,7 +550,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
             int size = props.size();
             for (Map.Entry<String, Object> es : props.entrySet()) {
                 --size;
-                out.append(Util.quote(es.getKey()));
+                out.append(quoteIdentifierSafely(es.getKey()));
                 out.append(":");
                 out.append(CypherFormatterUtils.toString(es.getValue()));
                 if (size > 0) {
@@ -556,7 +565,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         if (CypherFormatterUtils.UNIQUE_ID_PROP.equals(key)) {
             key = "_id";
         }
-        return Util.quote(key);
+        return quoteIdentifierSafely(key);
     }
 
     private void addCommitToEnd(ExportConfig exportConfig, PrintWriter out, AtomicInteger batchCount) {
@@ -629,7 +638,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
         out.append("(");
         out.append(key);
         out.append(":");
-        out.append(Util.quote(uniqueConstrainedLabel));
+        out.append(quoteIdentifierSafely(uniqueConstrainedLabel));
         out.append("{");
         writeSetProperties(out, uniqueConstrainedProps, key + ".");
         out.append("})");
