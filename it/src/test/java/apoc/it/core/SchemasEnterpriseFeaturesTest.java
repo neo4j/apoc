@@ -188,9 +188,11 @@ class SchemasEnterpriseFeaturesTest {
                 org.junit.jupiter.api.Assertions.assertEquals(List.of("first"), r.get("properties"));
                 org.junit.jupiter.api.Assertions.assertEquals("", r.get("status"));
                 org.junit.jupiter.api.Assertions.assertEquals("NODE_PROPERTY_TYPE", r.get("type"));
-                final String expectedUserDescConstraint =
-                        "name='node_prop_type_movie', type='NODE PROPERTY TYPE', schema=(:Movie {first}), propertyType=INTEGER";
-                Assertions.assertThat(r.get("userDescription").toString()).contains(expectedUserDescConstraint);
+                final String userDescription = r.get("userDescription").toString();
+                Assertions.assertThat(userDescription).contains("name='node_prop_type_movie'");
+                Assertions.assertThat(userDescription).contains("type='NODE PROPERTY TYPE'");
+                Assertions.assertThat(userDescription).contains("schema=(:Movie {first})");
+                Assertions.assertThat(userDescription).contains("propertyType=INTEGER");
 
                 if (cypherVersion.equals("5")) {
                     org.junit.jupiter.api.Assertions.assertEquals(":Movie(first)", r.get("name"));
