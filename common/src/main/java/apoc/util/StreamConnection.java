@@ -18,6 +18,7 @@
  */
 package apoc.util;
 
+import static apoc.export.util.LimitedSizeInputStream.toDynamicLimitedIStream;
 import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 
 import apoc.export.util.CountingInputStream;
@@ -86,12 +87,45 @@ public interface StreamConnection {
 
         @Override
         public long getLength() {
-            return con.getContentLength();
+            // This value is declared by the remote server and must not be trusted on its own.
+            return con.getContentLengthLong();
         }
 
         @Override
         public String getName() {
             return con.getURL().toString();
+        }
+
+        @Override
+        public CountingInputStream toCountingInputStream(String algo) throws IOException {
+            // Bound the decompressed output using the number of compressed bytes actually consumed from
+            // the connection as they are read as the remote servers Content-Length cannot always be trusted
+            long declaredLength = getLength();
+            org.apache.commons.io.input.CountingInputStream sourceCounter =
+                    new org.apache.commons.io.input.CountingInputStream(getInputStream());
+
+            if ("gzip".equals(getEncoding()) || getName().endsWith(".gz")) {
+                InputStream decoded = new GZIPInputStream(sourceCounter);
+                return new CountingInputStream(
+                        toDynamicLimitedIStream(decoded, sourceCounter::getByteCount), declaredLength);
+            }
+            if ("deflate".equals(getName())) {
+                InputStream decoded = new DeflaterInputStream(sourceCounter);
+                return new CountingInputStream(
+                        toDynamicLimitedIStream(decoded, sourceCounter::getByteCount), declaredLength);
+            }
+            try {
+                CompressionAlgo compressionAlgo =
+                        CompressionAlgo.valueOf(algo == null ? CompressionAlgo.NONE.name() : algo);
+                InputStream decoded = compressionAlgo.getInputStream(sourceCounter);
+                // a "NONE" algo has no ratio to bound: decompressed output equals bytes consumed
+                InputStream bounded = compressionAlgo.isNone()
+                        ? decoded
+                        : toDynamicLimitedIStream(decoded, sourceCounter::getByteCount);
+                return new CountingInputStream(bounded, declaredLength);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 

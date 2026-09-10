@@ -83,6 +83,12 @@ public class ApocConfig extends LifecycleAdapter {
             "Import from files not enabled, please set apoc.import.file.enabled=true in your apoc.conf";
     public static final String APOC_MAX_DECOMPRESSION_RATIO = "apoc.max.decompression.ratio";
     public static final Integer DEFAULT_MAX_DECOMPRESSION_RATIO = 200;
+    // Absolute ceiling (in bytes) on decompressed/streamed content, used whenever the source length
+    // cannot be trusted to compute a ratio-based bound (e.g. a remote server's declared Content-Length
+    // is missing, chunked, or attacker-controlled), so that case can no longer disable the anti-bomb
+    // protection entirely.
+    public static final String APOC_MAX_DECOMPRESSION_SIZE = "apoc.max.decompression.size";
+    public static final Long DEFAULT_MAX_DECOMPRESSION_SIZE = 2_000_000_000L;
 
     // These were earlier added via the Neo4j config using the ApocSettings.java class
     private static final Map<String, Object> configDefaultValues = Map.of(
@@ -229,6 +235,15 @@ public class ApocConfig extends LifecycleAdapter {
                         format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO));
             }
 
+            if (!config.containsKey(APOC_MAX_DECOMPRESSION_SIZE)) {
+                config.setProperty(APOC_MAX_DECOMPRESSION_SIZE, DEFAULT_MAX_DECOMPRESSION_SIZE);
+            }
+            if (config.getLong(APOC_MAX_DECOMPRESSION_SIZE) <= 0) {
+                throw new IllegalArgumentException(format(
+                        "value %s is not allowed for the config option %s, it must be a positive number of bytes",
+                        config.getLong(APOC_MAX_DECOMPRESSION_SIZE), APOC_MAX_DECOMPRESSION_SIZE));
+            }
+
             boolean allowFileUrls = neo4jConfig.get(GraphDatabaseSettings.allow_file_urls);
             config.setProperty(APOC_IMPORT_FILE_ALLOW__READ__FROM__FILESYSTEM, allowFileUrls);
 
@@ -364,5 +379,9 @@ public class ApocConfig extends LifecycleAdapter {
                 throw new IllegalArgumentException("don't know how to convert for config option " + key, e);
             }
         }
+    }
+
+    public long getLong(String key, long defaultValue) {
+        return getConfig().getLong(key, defaultValue);
     }
 }
