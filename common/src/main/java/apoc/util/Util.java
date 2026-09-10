@@ -694,6 +694,7 @@ public class Util {
 
     // This is in common, so I suspect this is used by extended, leaving as is, please use quoteIdentifierSafely
     // instead.
+    @Deprecated
     public static String quote(String var) {
         return SourceVersion.isIdentifier(var) && !var.contains("$") ? var : '`' + var + '`';
     }

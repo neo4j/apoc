@@ -107,7 +107,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
                 .map(Util::quoteIdentifierSafely)
                 .collect(Collectors.joining("|"));
         String key = StreamSupport.stream(keys.spliterator(), false)
-                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "n", s.replace("`", "``")))
+                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "n", Util.sanitize(s)))
                 .collect(Collectors.joining(","));
         return String.format(STATEMENT_NODE_FULLTEXT_IDX, quoteIdentifierSafely(name), label, key);
     }
@@ -120,7 +120,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
                 .map(Util::quoteIdentifierSafely)
                 .collect(Collectors.joining("|"));
         String key = StreamSupport.stream(keys.spliterator(), false)
-                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "rel", s.replace("`", "``")))
+                .map(s -> String.format(PROPERTY_QUOTING_FORMAT, "rel", Util.sanitize(s)))
                 .collect(Collectors.joining(","));
         return String.format(STATEMENT_REL_FULLTEXT_IDX, quoteIdentifierSafely(name), type, key);
     }
