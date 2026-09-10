@@ -67,7 +67,8 @@ public class CreateCypherFormatter extends AbstractCypherFormatter implements Cy
         result.append(", ");
         result.append(CypherFormatterUtils.formatNodeLookup(
                 "n2", relationship.getEndNode(), uniqueConstraints, indexedProperties));
-        result.append(" CREATE (n1)-[r:" + Util.quote(relationship.getType().name()));
+        result.append(" CREATE (n1)-[r:"
+                + Util.quoteIdentifierSafely(relationship.getType().name()));
         if (relationship.getPropertyKeys().iterator().hasNext()) {
             result.append(" {");
             result.append(CypherFormatterUtils.formatRelationshipProperties("", relationship, true));

@@ -45,7 +45,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import javax.lang.model.SourceVersion;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.HammingDistance;
@@ -812,17 +811,6 @@ public class Strings {
     }
 
     /**
-     * Quotes a label, property key, relationship type or variable name for safe inclusion in
-     * generated Cypher: valid identifiers are left as-is (matching {@link Util#quote}), anything
-     * else is backtick-quoted with embedded backticks doubled so they cannot terminate the quoted
-     * identifier and alter the structure of the generated Cypher (unlike {@link Util#quote}, which
-     * does not escape embedded backticks).
-     */
-    private static String quote(String value) {
-        return SourceVersion.isIdentifier(value) && !value.contains("$") ? value : Util.sanitize(value, true);
-    }
-
-    /**
      * Escapes a string value for safe inclusion inside a single-quoted Cypher string literal,
      * so that embedded quotes/backslashes cannot terminate the literal and inject Cypher.
      */
@@ -875,20 +863,26 @@ public class Strings {
         if (value instanceof Node) {
             Node node = Util.rebind(tx, (Node) value);
             String labels = StreamSupport.stream(node.getLabels().spliterator(), false)
-                    .map(l -> quote(l.name()))
+                    .map(l -> Util.quoteIdentifierSafely(l.name()))
                     .collect(Collectors.joining(":"));
             if (!labels.isEmpty()) labels = ':' + labels;
-            String var = cypherName(config, "node", () -> "", Strings::quote);
+            String var = cypherName(config, "node", () -> "", Util::quoteIdentifierSafely);
             return '(' + var + labels + ' ' + toCypher(node.getAllProperties(), config) + ')';
         }
         if (value instanceof Relationship) {
             Relationship rel = Util.rebind(tx, (Relationship) value);
-            String type = ':' + quote(rel.getType().name());
+            String type = ':' + Util.quoteIdentifierSafely(rel.getType().name());
             String start = cypherName(
-                    config, "start", () -> toCypher(rel.getStartNode(), config), (s) -> '(' + quote(s) + ')');
-            String relationship = cypherName(config, "relationship", () -> "", Strings::quote);
-            String end =
-                    cypherName(config, "end", () -> toCypher(rel.getEndNode(), config), (s) -> '(' + quote(s) + ')');
+                    config,
+                    "start",
+                    () -> toCypher(rel.getStartNode(), config),
+                    (s) -> '(' + Util.quoteIdentifierSafely(s) + ')');
+            String relationship = cypherName(config, "relationship", () -> "", Util::quoteIdentifierSafely);
+            String end = cypherName(
+                    config,
+                    "end",
+                    () -> toCypher(rel.getEndNode(), config),
+                    (s) -> '(' + Util.quoteIdentifierSafely(s) + ')');
             return start + "-[" + relationship + type + ' ' + toCypher(rel.getAllProperties(), config) + "]->" + end;
         }
         if (value instanceof Map) {
@@ -904,7 +898,7 @@ public class Strings {
                             .map((e) -> Pair.of(e.getKey(), toCypher(e.getValue(), config)))
                             .filter((p) -> p.getRight() != null)
                             .sorted(Comparator.comparing(Pair::getLeft))
-                            .map((p) -> quote(p.getLeft()) + ":" + p.getRight())
+                            .map((p) -> Util.quoteIdentifierSafely(p.getLeft()) + ":" + p.getRight())
                             .collect(Collectors.joining(","))
                     + '}';
         }

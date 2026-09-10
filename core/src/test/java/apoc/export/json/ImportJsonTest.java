@@ -531,8 +531,8 @@ class ImportJsonTest {
     }
 
     private void createConstraints(List<String> labels, String customId) {
-        labels.forEach(label -> db.executeTransactionally(
-                format("CREATE CONSTRAINT FOR (n:%s) REQUIRE n.%s IS UNIQUE;", Util.quote(label), customId)));
+        labels.forEach(label -> db.executeTransactionally(format(
+                "CREATE CONSTRAINT FOR (n:%s) REQUIRE n.%s IS UNIQUE;", Util.quoteIdentifierSafely(label), customId)));
     }
 
     private void createConstraints(List<String> labels) {

@@ -306,7 +306,9 @@ public class MultiStatementCypherSubGraphExporter {
                         }
                     }
                     // "normal" schema index
-                    String idxName = exportConfig.shouldSaveIndexNames() ? " " + name : StringUtils.EMPTY;
+                    String idxName = exportConfig.shouldSaveIndexNames()
+                            ? " " + Util.quoteIdentifierSafely(name)
+                            : StringUtils.EMPTY;
                     String tokenName = tokenNames.get(0);
                     final boolean ifNotExist = exportConfig.ifNotExists();
                     if (isNodeIndex) {

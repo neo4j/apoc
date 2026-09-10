@@ -203,7 +203,7 @@ public class PeriodicUtils {
 
     public static Pair<String, Boolean> prepareInnerStatement(
             String cypherAction, BatchMode batchMode, List<String> columns, String iteratorVariableName) {
-        String names = columns.stream().map(Util::quote).collect(Collectors.joining("|"));
+        String names = columns.stream().map(Util::quoteIdentifierSafely).collect(Collectors.joining("|"));
         boolean withCheck = regNoCaseMultiLine("[{$](" + names + ")\\}?\\s+AS\\s+")
                 .matcher(cypherAction)
                 .find();
@@ -212,7 +212,8 @@ public class PeriodicUtils {
         switch (batchMode) {
             case SINGLE:
                 return Pair.of(
-                        Util.withMapping(columns.stream(), (c) -> Util.param(c) + " AS " + Util.quote(c))
+                        Util.withMapping(
+                                        columns.stream(), (c) -> Util.param(c) + " AS " + Util.quoteIdentifierSafely(c))
                                 + cypherAction,
                         false);
             case BATCH:
@@ -223,10 +224,11 @@ public class PeriodicUtils {
                 }
                 String with = Util.withMapping(
                         columns.stream(),
-                        (c) -> Util.quote(iteratorVariableName) + "." + Util.quote(c) + " AS " + Util.quote(c));
+                        (c) -> Util.quoteIdentifierSafely(iteratorVariableName) + "." + Util.quoteIdentifierSafely(c)
+                                + " AS " + Util.quoteIdentifierSafely(c));
                 return Pair.of(
-                        "UNWIND " + Util.param(iteratorVariableName) + " AS " + Util.quote(iteratorVariableName) + with
-                                + " " + cypherAction,
+                        "UNWIND " + Util.param(iteratorVariableName) + " AS "
+                                + Util.quoteIdentifierSafely(iteratorVariableName) + with + " " + cypherAction,
                         true);
             case BATCH_SINGLE:
                 return Pair.of(cypherAction, true);
