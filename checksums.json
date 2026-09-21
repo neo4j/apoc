@@ -478,5 +478,10 @@
         "sha1": "6c4b855b9cb7d3a9e5e4e4dcbe35fe5ae4333473",
         "sha256": "8607c873df867aa1b3b8c9926d55262d09088d2cccd62b53a35f43cdc22f8433",
         "md5": "cad3054b50f9d03924f7d4ca23e0a71a"
+    },
+    "2026.09.0": {
+        "sha1": "27789603ee3c8a4e0328faed283b4d15a7e86f94",
+        "sha256": "834c4a45142f30ffdb99346fea57a8089a997384010e8e30cdb2dc571cd690db",
+        "md5": "99a344cd9fd2d793b710b6221494de32"
     }
 }
