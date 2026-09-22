@@ -1,8 +1,8 @@
 :readme:
-:branch: 2026.05
+:branch: 2026.09
 :docs: https://neo4j.com/docs/apoc/current
-:apoc-release: 2026.05.0
-:neo4j-version: 2026.05.0
+:apoc-release: 2026.09.0
+:neo4j-version: 2026.09.0
 :img: https://raw.githubusercontent.com/neo4j/apoc/dev/images
 
 https://community.neo4j.com[image:https://img.shields.io/discourse/users?logo=discourse&server=https%3A%2F%2Fcommunity.neo4j.com[Discourse users]]
@@ -283,7 +283,7 @@ docker exec -it neo4j-apoc bin/cypher-shell
 git clone https://github.com/neo4j/apoc
 cd apoc
 ./gradlew shadow
-cp build/extended/libs/apoc-<version>.jar $NEO4J_HOME/plugins/
+cp core/build/libs/apoc-<version>-core.jar $NEO4J_HOME/plugins/
 $NEO4J_HOME/bin/neo4j restart
 ----
 
@@ -291,7 +291,7 @@ $NEO4J_HOME/bin/neo4j restart
 
 A full build including running the tests can be run by `./gradlew build`.
 
-You can either copy the jar (build/libs) into the neo4j target folder (target/neo4j/plugins folder) or launch it in a
+You can either copy the jar (core/build/libs) into the neo4j target folder (target/neo4j/plugins folder) or launch it in a
 dockerized neo4j by mounting the directory containing the apoc-procedures jar as a volume.
 
 // end::build[]
