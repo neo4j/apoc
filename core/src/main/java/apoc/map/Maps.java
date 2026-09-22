@@ -209,6 +209,19 @@ public class Maps {
     }
 
     @UserFunction("apoc.map.merge")
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
+    @Description("Merges the two given `MAP` values into one `MAP`.")
+    public Map<String, Object> mergeCypher5(
+            @Name(value = "map1", description = "The first map to merge with the second map.")
+                    Map<String, Object> first,
+            @Name(value = "map2", description = "The second map to merge with the first map.")
+                    Map<String, Object> second) {
+        return Util.merge(first, second);
+    }
+
+    @UserFunction(name = "apoc.map.merge", deprecatedBy = "Cypher's Map Addition: map1 + map2")
+    @Deprecated
+    @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Merges the two given `MAP` values into one `MAP`.")
     public Map<String, Object> merge(
             @Name(value = "map1", description = "The first map to merge with the second map.")

@@ -1018,6 +1018,31 @@
   {
     "isDeprecated": true,
     "aggregating": false,
+    "signature": "apoc.map.merge(map1 :: MAP, map2 :: MAP) :: MAP",
+    "name": "apoc.map.merge",
+    "description": "Merges the two given `MAP` values into one `MAP`.",
+    "returnDescription": "MAP",
+    "deprecatedBy": "Cypher's Map Addition: map1 + map2",
+    "category": "",
+    "isBuiltIn": false,
+    "argumentDescription": [
+      {
+        "name": "map1",
+        "description": "The first map to merge with the second map.",
+        "isDeprecated": false,
+        "type": "MAP"
+      },
+      {
+        "name": "map2",
+        "description": "The second map to merge with the first map.",
+        "isDeprecated": false,
+        "type": "MAP"
+      }
+    ]
+  },
+  {
+    "isDeprecated": true,
+    "aggregating": false,
     "signature": "apoc.math.cosh(value :: FLOAT) :: FLOAT",
     "name": "apoc.math.cosh",
     "description": "Returns the hyperbolic cosine.",
