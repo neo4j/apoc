@@ -1303,9 +1303,8 @@ public class SchemasTest {
             var preparser = "CYPHER " + cypherVersion + " ";
             testCall(db, preparser + "CALL apoc.schema.nodes", r -> {
                 String actualFailure = (String) r.get("failure");
-                String expectedFailure =
-                        "Property value is too large to index, please see index documentation for limitations.";
-                assertThat(actualFailure).contains(expectedFailure);
+                assertThat(actualFailure).contains("22NBH");
+                assertThat(actualFailure).contains("failedIdx");
                 assertEquals("FAILED", r.get("status"));
                 assertEquals("LabelTest", r.get("label"));
                 assertEquals("RANGE", r.get("type"));
