@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -672,6 +673,68 @@ class StringsTest {
         // throws no exception
         testCall(db, "RETURN apoc.text.regexGroups(null,'<link (\\\\w+)>(\\\\w+)</link>') AS result", row -> {});
         testCall(db, "RETURN apoc.text.regexGroups('abc',null) AS result", row -> {});
+    }
+
+    // The regex functions evaluate the text through a termination-checking CharSequence wrapper. These cases pin the
+    // fact that the engine itself is unchanged, and that the wrapper never leaks into a returned value.
+
+    @Test
+    void testRegexGroupsWithBackreference() {
+        testCall(
+                db,
+                "RETURN apoc.text.regexGroups('xx abab yy', '(ab)\\\\1') AS result",
+                row -> assertEquals(singletonList(asList("abab", "ab")), row.get("result")));
+    }
+
+    @Test
+    void testRegexGroupsWithLookaroundAndUnicodeClasses() {
+        testCall(
+                db,
+                "RETURN apoc.text.regexGroups('foo123bar', '(?<=foo)\\\\d+(?=bar)') AS result",
+                row -> assertEquals(singletonList(singletonList("123")), row.get("result")));
+
+        testCall(
+                db,
+                "RETURN apoc.text.regexGroups('a\u00f1b 12', '\\\\p{L}+') AS result",
+                row -> assertEquals(singletonList(singletonList("a\u00f1b")), row.get("result")));
+    }
+
+    @Test
+    void testRegexGroupsByNameWithBackreference() {
+        testCall(
+                db,
+                "RETURN apoc.text.regexGroupsByName('xx abab yy', '(?<pair>ab)\\\\k<pair>') AS result",
+                row -> assertEquals(
+                        singletonList(Map.of("group", "abab", "matches", Map.of("pair", "ab"))), row.get("result")));
+    }
+
+    @Test
+    void testReplaceWithBackreferenceAndLookahead() {
+        testCall(
+                db,
+                "RETURN apoc.text.replace('a1b2', '([a-z])(?=\\\\d)', '<$1>') AS value",
+                row -> assertEquals("<a>1<b>2", row.get("value")));
+    }
+
+    @Test
+    void testSplitWithOutOfRangeLimit() {
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(db, "RETURN apoc.text.split('a,b,c', ',', 4294967296) AS value", row -> {}));
+        Throwable rootCause = ExceptionUtils.getRootCause(e);
+        assertInstanceOf(ArithmeticException.class, rootCause);
+        assertEquals("integer overflow", rootCause.getMessage());
+    }
+
+    @Test
+    void testRegexResultsArePlainStrings() {
+        Strings strings = new Strings();
+        strings.terminationGuard = () -> {};
+
+        strings.regexGroups("abab", "(ab)(ab)")
+                .forEach(match -> match.forEach(group -> assertSame(String.class, group.getClass())));
+        assertSame(String.class, strings.regreplace("abab", "ab", "c").getClass());
+        strings.split("a,b", ",", 0L).forEach(part -> assertSame(String.class, part.getClass()));
     }
 
     @Test
