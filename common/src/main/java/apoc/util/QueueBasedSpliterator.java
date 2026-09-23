@@ -33,13 +33,29 @@ public class QueueBasedSpliterator<T> implements Spliterator<T> {
     private TerminationGuard terminationGuard;
     private volatile boolean foundTombstone = false;
     private final int timeoutSeconds;
+    private final Runnable onTombstone;
 
     public QueueBasedSpliterator(
             BlockingQueue<T> queue, T tombstone, TerminationGuard terminationGuard, int timeoutSeconds) {
+        this(queue, tombstone, terminationGuard, timeoutSeconds, () -> {});
+    }
+
+    /**
+     * @param onTombstone run once, on the consuming thread, when the tombstone is observed. The producer enqueues the
+     *                    tombstone even when it failed, so this is the hook for reporting that failure to the consumer
+     *                    instead of letting the stream end as if it had completed normally.
+     */
+    public QueueBasedSpliterator(
+            BlockingQueue<T> queue,
+            T tombstone,
+            TerminationGuard terminationGuard,
+            int timeoutSeconds,
+            Runnable onTombstone) {
         this.queue = queue;
         this.tombstone = tombstone;
         this.terminationGuard = terminationGuard;
         this.timeoutSeconds = timeoutSeconds;
+        this.onTombstone = onTombstone;
     }
 
     @Override
@@ -49,6 +65,7 @@ public class QueueBasedSpliterator<T> implements Spliterator<T> {
         T element = QueueUtil.take(queue, timeoutSeconds, () -> terminationGuard.check());
         if (element.equals(tombstone)) {
             foundTombstone = true;
+            onTombstone.run();
             return false;
         } else {
             action.accept(element);
