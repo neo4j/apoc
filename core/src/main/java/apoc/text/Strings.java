@@ -58,6 +58,7 @@ import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
+import org.neo4j.procedure.TerminationGuard;
 import org.neo4j.procedure.UserFunction;
 
 /**
@@ -72,6 +73,9 @@ public class Strings {
 
     @Context
     public Transaction tx;
+
+    @Context
+    public TerminationGuard terminationGuard;
 
     @UserFunction("apoc.text.indexOf")
     @Description("Returns the first occurrence of the lookup `STRING` in the given `STRING`, or -1 if not found.")
@@ -197,7 +201,7 @@ public class Strings {
         if (text == null || regex == null || replacement == null) {
             return null;
         }
-        return text.replaceAll(regex, replacement);
+        return Pattern.compile(regex).matcher(terminationChecking(text)).replaceAll(replacement);
     }
 
     @UserFunction("apoc.text.split")
@@ -214,7 +218,7 @@ public class Strings {
         if (text == null || regex == null || limit == null) {
             return null;
         }
-        String[] resultArray = text.split(regex, limit.intValue());
+        String[] resultArray = Pattern.compile(regex).split(terminationChecking(text), toIntExact(limit));
         return new ArrayList<>(asList(resultArray));
     }
 
@@ -227,7 +231,7 @@ public class Strings {
             return Collections.EMPTY_LIST;
         } else {
             final Pattern pattern = Pattern.compile(regex);
-            final Matcher matcher = pattern.matcher(text);
+            final Matcher matcher = pattern.matcher(terminationChecking(text));
 
             List<List<String>> result = new ArrayList<>();
             while (matcher.find()) {
@@ -253,7 +257,7 @@ public class Strings {
             try {
                 final Pattern pattern = Pattern.compile(regex);
 
-                final Matcher matcher = pattern.matcher(text);
+                final Matcher matcher = pattern.matcher(terminationChecking(text));
                 List<String> namedGroups = getNamedGroups(regex);
                 while (matcher.find()) {
                     Map<String, Object> matchGroupResult = new HashMap<>();
@@ -273,6 +277,14 @@ public class Strings {
             }
             return result;
         }
+    }
+
+    /**
+     * Wraps the input of a user-supplied regular expression so that the match can be terminated; see
+     * {@link TerminationCheckingCharSequence}.
+     */
+    private CharSequence terminationChecking(String text) {
+        return new TerminationCheckingCharSequence(text, terminationGuard);
     }
 
     private List<String> getNamedGroups(String text) {
