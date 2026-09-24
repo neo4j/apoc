@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -1380,5 +1381,91 @@ class StringsTest {
     void testRepeat() {
         testCall(db, "RETURN apoc.text.repeat('a',3) as value", (row) -> assertEquals("aaa", row.get("value")));
         testCall(db, "RETURN apoc.text.repeat('ab',3) as value", (row) -> assertEquals("ababab", row.get("value")));
+        testCall(db, "RETURN apoc.text.repeat('a',0) as value", (row) -> assertEquals("", row.get("value")));
+    }
+
+    @Test
+    @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void testRepeatWithEmptyItemDoesNotSpin() {
+        // (int) count of 4294967296 narrows to 0, so the pre-fix loop allocated nothing and burned a core forever,
+        // uninterruptible by dbms.killQuery or by transaction timeout.
+        testCall(db, "RETURN apoc.text.repeat('', 4294967296) as value", (row) -> assertEquals("", row.get("value")));
+    }
+
+    @Test
+    void testNullArgumentsAreNamed() {
+        // A primitive long parameter made the numeric cases leak `ClassCastException: NoValue cannot be cast to
+        // NumberValue`, naming internal Neo4j value classes; the others surfaced as a bare NullPointerException
+        assertArgumentError("RETURN apoc.text.repeat('a', null) as value", "'count' must not be null");
+        assertArgumentError("RETURN apoc.text.lpad('a', null, '-') as value", "'count' must not be null");
+        assertArgumentError("RETURN apoc.text.rpad('a', null, '-') as value", "'count' must not be null");
+        assertArgumentError("RETURN apoc.text.lpad(null, 5, '-') as value", "'text' must not be null");
+        assertArgumentError("RETURN apoc.text.rpad(null, 5, '-') as value", "'text' must not be null");
+        assertArgumentError("RETURN apoc.text.random(null) as value", "'length' must not be null");
+        assertArgumentError("RETURN apoc.text.random(10, null) as value", "'valid' must not be null");
+        assertArgumentError("RETURN apoc.text.repeat(null, 3) as value", "'item' must not be null");
+
+        // The arguments are checked left to right, so a null item is named before a null count
+        assertArgumentError("RETURN apoc.text.repeat(null, null) as value", "'item' must not be null");
+    }
+
+    @Test
+    void testRepeatWithNegativeCount() {
+        assertArgumentError("RETURN apoc.text.repeat('a', -1) as value", "'count' must not be negative, but was -1");
+    }
+
+    @Test
+    void testLPadWithEmptyDelimiter() {
+        assertArgumentError("RETURN apoc.text.lpad('a', 5, '') as value", "'delimiter' must not be empty");
+    }
+
+    @Test
+    void testRPadWithEmptyDelimiter() {
+        assertArgumentError("RETURN apoc.text.rpad('a', 5, '') as value", "'delimiter' must not be empty");
+    }
+
+    @Test
+    void testRandomWithNegativeLength() {
+        assertArgumentError("RETURN apoc.text.random(-1) as value", "'length' must not be negative, but was -1");
+    }
+
+    @Test
+    void testRandomWithEmptyValidCharacters() {
+        assertArgumentError("RETURN apoc.text.random(10, '') as value", "'valid' must not be empty");
+    }
+
+    @Test
+    void testLengthsAboveTheMaximumStringLengthAreNamed() {
+        // Previously an opaque `ArithmeticException: integer overflow` from the narrowing, or a multi-gigabyte
+        // memory charge, neither of which told the caller which argument was wrong
+        assertArgumentError(
+                "RETURN apoc.text.repeat('a', 2147483648) as value",
+                "'count' must not be greater than 2147483647, but was 2147483648");
+        assertArgumentError(
+                "RETURN apoc.text.lpad('a', 4294967296, '-') as value",
+                "'count' must not be greater than 2147483647, but was 4294967296");
+        assertArgumentError(
+                "RETURN apoc.text.rpad('a', 4294967296, '-') as value",
+                "'count' must not be greater than 2147483647, but was 4294967296");
+        assertArgumentError(
+                "RETURN apoc.text.random(9223372036854775807) as value",
+                "'length' must not be greater than 2147483647, but was 9223372036854775807");
+    }
+
+    @Test
+    void testRepeatResultLongerThanAnyStringIsNamed() {
+        // A count that fits an int can still ask for a result no String can hold. Unchecked, this reached
+        // String.repeat as an OutOfMemoryError, or the memory tracker as a byte count naming no argument.
+        assertArgumentError(
+                "RETURN apoc.text.repeat('ab', 1500000000) as value",
+                "repeating 'item' 1500000000 times would produce 3000000000 characters, "
+                        + "which is more than the maximum of 2147483647");
+    }
+
+    private void assertArgumentError(String query, String expectedMessage) {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (row) -> {}));
+        Throwable rootCause = ExceptionUtils.getRootCause(e);
+        assertInstanceOf(IllegalArgumentException.class, rootCause);
+        assertEquals(expectedMessage, rootCause.getMessage());
     }
 }
