@@ -21,21 +21,17 @@ package apoc.export.cypher;
 import apoc.ApocConfig;
 import apoc.Pools;
 import apoc.export.util.ExportConfig;
+import apoc.export.util.ExportUtils;
 import apoc.export.util.NodesAndRelsSubGraph;
 import apoc.export.util.ProgressReporter;
 import apoc.result.DataProgressInfo;
-import apoc.util.QueueBasedSpliterator;
-import apoc.util.QueueUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 import org.neo4j.cypher.export.CypherResultSubGraph;
 import org.neo4j.cypher.export.DatabaseSubGraph;
 import org.neo4j.cypher.export.SubGraph;
@@ -261,28 +257,17 @@ public class ExportCypher {
         ExportFileManager cypherFileManager = FileManagerFactory.createFileManager(fileName, separatedFiles, c);
 
         if (c.streamStatements()) {
-            long timeout = c.getTimeoutSeconds();
-            final BlockingQueue<DataProgressInfo> queue = new ArrayBlockingQueue<>(1000);
-            ProgressReporter reporterWithConsumer = reporter.withConsumer((pi) -> QueueUtil.put(
-                    queue,
-                    pi == DataProgressInfo.EMPTY
-                            ? DataProgressInfo.EMPTY
-                            : new DataProgressInfo((DataProgressInfo) pi).enrich(cypherFileManager),
-                    timeout));
-            Util.inTxFuture(
-                    null,
-                    pools.getDefaultExecutorService(),
+            return ExportUtils.streamProgressInfo(
                     db,
-                    txInThread -> {
-                        doExport(graph.apply(txInThread), c, onlySchema, reporterWithConsumer, cypherFileManager);
-                        return true;
-                    },
-                    0,
-                    _ignored -> {},
-                    _ignored -> QueueUtil.put(queue, DataProgressInfo.EMPTY, timeout));
-            QueueBasedSpliterator<DataProgressInfo> spliterator =
-                    new QueueBasedSpliterator<>(queue, DataProgressInfo.EMPTY, terminationGuard, Integer.MAX_VALUE);
-            return StreamSupport.stream(spliterator, false);
+                    pools.getDefaultExecutorService(),
+                    terminationGuard,
+                    reporter,
+                    (txInThread, reporterWithConsumer) ->
+                            doExport(graph.apply(txInThread), c, onlySchema, reporterWithConsumer, cypherFileManager),
+                    DataProgressInfo.EMPTY,
+                    pi -> new DataProgressInfo((DataProgressInfo) pi).enrich(cypherFileManager),
+                    c.getTimeoutSeconds(),
+                    Integer.MAX_VALUE);
         } else {
             doExport(graph.apply(tx), c, onlySchema, reporter, cypherFileManager);
             return reporter.stream().map(pi -> (DataProgressInfo) pi).map((dpi) -> dpi.enrich(cypherFileManager));
