@@ -34,6 +34,7 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.graphdb.*;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
+import org.neo4j.memory.HeapEstimator;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -44,6 +45,10 @@ import org.neo4j.procedure.memory.ProcedureMemoryTracker;
 import org.roaringbitmap.longlong.Roaring64NavigableMap;
 
 public class Neighbors {
+    // shallow sizes are fixed per JVM; compute once instead of reflecting on every call
+    private static final long ARRAY_LIST_SHALLOW_SIZE = HeapEstimator.shallowSizeOfInstance(ArrayList.class);
+    private static final long LONG_SHALLOW_SIZE = HeapEstimator.shallowSizeOfInstance(Long.class);
+    private static final long BITMAP_SHALLOW_SIZE = HeapEstimator.shallowSizeOfInstance(Roaring64NavigableMap.class);
 
     @Context
     public Transaction tx;
@@ -189,9 +194,8 @@ public class Neighbors {
             List<Roaring64NavigableMap> seen = hops(node, types, distance, tracker);
             int size = Math.toIntExact(distance);
             final var estimator = procedureMemory.heapEstimator();
-            tracker.allocateHeap(estimator.shallowSizeOfInstance(ArrayList.class)
-                    + estimator.shallowSizeOfObjectArray(size)
-                    + size * estimator.shallowSizeOfInstance(Long.class));
+            tracker.allocateHeap(
+                    ARRAY_LIST_SHALLOW_SIZE + estimator.shallowSizeOfObjectArray(size) + size * LONG_SHALLOW_SIZE);
             List<Object> counts = new ArrayList<>(size);
             for (Roaring64NavigableMap hop : seen) {
                 counts.add(hop.getLongCardinality());
@@ -316,7 +320,7 @@ public class Neighbors {
      */
     private List<Roaring64NavigableMap> hops(Node node, String types, long distance, ProcedureMemoryTracker tracker) {
         final var estimator = procedureMemory.heapEstimator();
-        final long bitmapOverhead = estimator.shallowSizeOfInstance(Roaring64NavigableMap.class);
+        final long bitmapOverhead = BITMAP_SHALLOW_SIZE;
         final long nodeId = getNodeId((InternalTransaction) tx, node.getElementId());
         final List<Pair<RelationshipType, Direction>> typesAndDirections = parse(types);
 
