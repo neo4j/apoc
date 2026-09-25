@@ -56,7 +56,7 @@ public class Exact {
         if (stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
         final BigDecimal a = new BigDecimal(stringA);
         final BigDecimal b = new BigDecimal(stringB);
-        return chargeAndCompute(a, b, () -> a.add(b).toPlainString());
+        return chargeAndCompute(a, b, sumLength(a, b), () -> a.add(b).toPlainString());
     }
 
     @UserFunction("apoc.number.exact.sub")
@@ -75,7 +75,7 @@ public class Exact {
         if (stringA == null || stringA.isEmpty() || stringB == null || stringB.isEmpty()) return null;
         final BigDecimal a = new BigDecimal(stringA);
         final BigDecimal b = new BigDecimal(stringB);
-        return chargeAndCompute(a, b, () -> a.subtract(b).toPlainString());
+        return chargeAndCompute(a, b, sumLength(a, b), () -> a.subtract(b).toPlainString());
     }
 
     @UserFunction("apoc.number.exact.mul")
@@ -100,7 +100,8 @@ public class Exact {
         final BigDecimal a = new BigDecimal(stringA);
         final BigDecimal b = new BigDecimal(stringB);
         final MathContext mathContext = createMathContext(precision, roundingMode);
-        return chargeAndCompute(a, b, () -> a.multiply(b, mathContext).toPlainString());
+        return chargeAndCompute(
+                a, b, sumLength(a, b), () -> a.multiply(b, mathContext).toPlainString());
     }
 
     @UserFunction("apoc.number.exact.div")
@@ -124,7 +125,8 @@ public class Exact {
         final BigDecimal a = new BigDecimal(stringA);
         final BigDecimal b = new BigDecimal(stringB);
         final MathContext mathContext = createMathContext(precision, roundingMode);
-        return chargeAndCompute(a, b, () -> a.divide(b, mathContext).toPlainString());
+        return chargeAndCompute(
+                a, b, quotientLength(a, b), () -> a.divide(b, mathContext).toPlainString());
     }
 
     @UserFunction("apoc.number.exact.toInteger")
@@ -170,18 +172,32 @@ public class Exact {
      * Parsing is cheap even for `1e1000000000` (unscaled value 1, scale -10^9), but `toPlainString()` on it
      * expands the exponent into a two-gigabyte string, so the charge has to precede the computation.
      */
-    private String chargeAndCompute(BigDecimal a, BigDecimal b, Supplier<String> computation) {
+    private String chargeAndCompute(BigDecimal a, BigDecimal b, long lengthResult, Supplier<String> computation) {
         long lengthA = plainStringLength(a);
         long lengthB = plainStringLength(b);
-        // Whichever of add/sub/mul/div is applied, the result's plain form is no longer than both operands'
-        // together, plus room for a sign, a decimal point and a carried digit.
-        long lengthResult = Math.addExact(Math.addExact(lengthA, lengthB), 4L);
         long bytes = Math.addExact(
                 Math.addExact(ProcedureMemoryUtil.sizeOfString(lengthA), ProcedureMemoryUtil.sizeOfString(lengthB)),
                 ProcedureMemoryUtil.sizeOfString(lengthResult));
         try (var tracker = ProcedureMemoryUtil.charge(procedureMemory, bytes)) {
             return computation.get();
         }
+    }
+
+    /**
+     * Upper bound on the plain-string length of a + b, a - b and a * b: no longer than both operands' together,
+     * plus room for a sign, a decimal point and a carried digit.
+     */
+    private static long sumLength(BigDecimal a, BigDecimal b) {
+        return Math.addExact(Math.addExact(plainStringLength(a), plainStringLength(b)), 4L);
+    }
+
+    /**
+     * Upper bound on the plain-string length of a / b. An exact quotient can be longer than both operands together:
+     * 1 / 2^k has k digits while 2^k has only about 0.3 * k, so each divisor digit can contribute up to log2(10),
+     * rounded up to 4, digits to the result.
+     */
+    private static long quotientLength(BigDecimal a, BigDecimal b) {
+        return Math.addExact(Math.addExact(plainStringLength(a), Math.multiplyExact(plainStringLength(b), 4L)), 4L);
     }
 
     /** Upper bound on the length of bd.toPlainString(). */

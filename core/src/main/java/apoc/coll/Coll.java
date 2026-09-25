@@ -58,6 +58,7 @@ import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.util.ValueUtils;
+import org.neo4j.memory.HeapEstimator;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
@@ -68,6 +69,8 @@ import org.neo4j.procedure.memory.ProcedureMemory;
 import org.neo4j.values.AnyValue;
 
 public class Coll {
+    // shallow size is fixed per JVM; compute once instead of reflecting on every call
+    private static final long ARRAY_LIST_SHALLOW_SIZE = HeapEstimator.shallowSizeOfInstance(ArrayList.class);
 
     public static final char ASCENDING_ORDER_CHAR = '^';
 
@@ -1833,7 +1836,7 @@ public class Coll {
     /** Upper bound on the heap occupied by the result of {@code combinations}, saturating at {@link Long#MAX_VALUE}. */
     private long combinationsHeap(int size, int minSelect, int maxSelect) {
         final var estimator = procedureMemory.heapEstimator();
-        final long listOverhead = estimator.shallowSizeOfInstance(ArrayList.class);
+        final long listOverhead = ARRAY_LIST_SHALLOW_SIZE;
 
         long total = 0L;
         long bytes = 0L;

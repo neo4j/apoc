@@ -27,6 +27,7 @@ import static org.neo4j.io.ByteUnit.mebiBytes;
 
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -93,6 +94,21 @@ class ExactMemoryTrackingTest {
 
     @Test
     @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void exactQuotientLongerThanBothOperandsIsCharged() {
+        // 1 / 2^k has k digits, but 2^k has only ~0.3 * k, so a charge of both operands' lengths undercounts it.
+        // With ~420,000 divisor digits that undercount still fits in 4 MiB next to the tracked parameter, while
+        // the quotient's 1,400,000 digits do not.
+        String divisor = BigInteger.ONE.shiftLeft(1_400_000).toString();
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1', $divisor) AS value", Map.of("divisor", divisor));
+
+        testCall(
+                db,
+                "RETURN apoc.number.exact.div('1', '1048576') AS value",
+                row -> assertEquals("0.00000095367431640625", row.get("value")));
+    }
+
+    @Test
+    @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void toIntegerAndToFloatAreNotCharged() {
         // Deliberately left alone: neither materialises a plain string, so neither has anything to charge
         testCall(
@@ -121,8 +137,12 @@ class ExactMemoryTrackingTest {
     }
 
     private void assertMemoryLimitExceeded(String query) {
+        assertMemoryLimitExceeded(query, Map.of());
+    }
+
+    private void assertMemoryLimitExceeded(String query, Map<String, Object> params) {
         QueryExecutionException e =
-                assertThrows(QueryExecutionException.class, () -> testCall(db, query, row -> {}), query);
+                assertThrows(QueryExecutionException.class, () -> testCall(db, query, params, row -> {}), query);
         assertTrue(
                 TestUtil.hasCauses(e, MemoryLimitExceededException.class),
                 query + " should fail with MemoryLimitExceededException, but failed with: " + e.getMessage());
