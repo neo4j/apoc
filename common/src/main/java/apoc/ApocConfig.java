@@ -89,6 +89,10 @@ public class ApocConfig extends LifecycleAdapter {
     // protection entirely.
     public static final String APOC_MAX_DECOMPRESSION_SIZE = "apoc.max.decompression.size";
     public static final Long DEFAULT_MAX_DECOMPRESSION_SIZE = 2_000_000_000L;
+    // Upper bound on the distance accepted by apoc.neighbors.byhop and byhop.count, which emit output proportional
+    // to the distance rather than to the graph. A row count, so the transaction memory limit cannot bound it.
+    public static final String APOC_MAX_HOPS = "apoc.max.hops";
+    public static final Integer DEFAULT_MAX_HOPS = 10_000;
 
     // These were earlier added via the Neo4j config using the ApocSettings.java class
     private static final Map<String, Object> configDefaultValues = Map.of(
@@ -242,6 +246,15 @@ public class ApocConfig extends LifecycleAdapter {
                 throw new IllegalArgumentException(format(
                         "value %s is not allowed for the config option %s, it must be a positive number of bytes",
                         config.getLong(APOC_MAX_DECOMPRESSION_SIZE), APOC_MAX_DECOMPRESSION_SIZE));
+            }
+
+            if (!config.containsKey(APOC_MAX_HOPS)) {
+                config.setProperty(APOC_MAX_HOPS, DEFAULT_MAX_HOPS);
+            }
+            if (config.getInt(APOC_MAX_HOPS) <= 0) {
+                throw new IllegalArgumentException(format(
+                        "value %s is not allowed for the config option %s, it must be a positive number of hops",
+                        config.getInt(APOC_MAX_HOPS), APOC_MAX_HOPS));
             }
 
             boolean allowFileUrls = neo4jConfig.get(GraphDatabaseSettings.allow_file_urls);
