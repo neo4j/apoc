@@ -81,6 +81,18 @@ class ExactMemoryTrackingTest {
     }
 
     @Test
+    @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void extremeScalesAreRejected() {
+        // The reproduction from SURF-1429
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.add('1e2000000000','0') AS value");
+        // Scale Integer.MIN_VALUE, whose int absolute value is still negative
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.add('1e2147483648','0') AS value");
+        // A bounded precision caps the unscaled digits, not the scale, so it must not bypass the charge
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.mul('1e1000000000','1', 10) AS value");
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1e1000000000','1', 10) AS value");
+    }
+
+    @Test
     @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void chargeIsProportionalToTheExponent() {
         assertMemoryLimitExceeded("RETURN apoc.number.exact.add('1e1000000','1') AS value");
