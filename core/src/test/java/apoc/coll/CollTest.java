@@ -27,7 +27,9 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.convert.Json;
@@ -40,10 +42,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension()
@@ -1248,6 +1252,33 @@ class CollTest {
 
             assertEquals(result, row.get("value"));
         });
+    }
+
+    @Test
+    void testCombinationsWithNullSelect() {
+        // Previously `ClassCastException: NoValue cannot be cast to NumberValue`, naming internal value classes
+        assertCombinationsArgumentError(
+                "RETURN apoc.coll.combinations([1,2,3], null) as value", "'minSelect' must not be null");
+        assertCombinationsArgumentError(
+                "RETURN apoc.coll.combinations([1,2,3], 1, null) as value", "'maxSelect' must not be null");
+    }
+
+    @Test
+    void testCombinationsWithOutOfIntRangeSelect() {
+        // 4294967298 used to narrow to 2 and quietly return a result for maxSelect = 2
+        assertCombinationsArgumentError(
+                "RETURN apoc.coll.combinations([1,2,3], 4294967298) as value",
+                "'minSelect' must be between -2147483648 and 2147483647, but was 4294967298");
+        assertCombinationsArgumentError(
+                "RETURN apoc.coll.combinations([1,2,3], 1, 4294967298) as value",
+                "'maxSelect' must be between -2147483648 and 2147483647, but was 4294967298");
+    }
+
+    private void assertCombinationsArgumentError(String query, String expectedMessage) {
+        QueryExecutionException e = assertThrows(QueryExecutionException.class, () -> testCall(db, query, (row) -> {}));
+        Throwable rootCause = ExceptionUtils.getRootCause(e);
+        assertInstanceOf(IllegalArgumentException.class, rootCause);
+        assertEquals(expectedMessage, rootCause.getMessage());
     }
 
     @Test

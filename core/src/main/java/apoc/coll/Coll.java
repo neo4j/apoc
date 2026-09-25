@@ -23,6 +23,7 @@ import static apoc.util.Util.containsValueEquals;
 import static apoc.util.Util.toAnyValues;
 import static java.util.Arrays.asList;
 
+import apoc.util.ProcedureMemoryUtil;
 import apoc.util.Util;
 import java.lang.reflect.Array;
 import java.text.Collator;
@@ -57,15 +58,19 @@ import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.kernel.impl.util.ValueUtils;
+import org.neo4j.memory.HeapEstimator;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.NotThreadSafe;
 import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.UserFunction;
+import org.neo4j.procedure.memory.ProcedureMemory;
 import org.neo4j.values.AnyValue;
 
 public class Coll {
+    // shallow size is fixed per JVM; compute once instead of reflecting on every call
+    private static final long ARRAY_LIST_SHALLOW_SIZE = HeapEstimator.shallowSizeOfInstance(ArrayList.class);
 
     public static final char ASCENDING_ORDER_CHAR = '^';
 
@@ -74,6 +79,9 @@ public class Coll {
 
     @Context
     public ProcedureCallContext procedureCallContext;
+
+    @Context
+    public ProcedureMemory procedureMemory;
 
     @UserFunction("apoc.coll.stdev")
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
@@ -1763,14 +1771,14 @@ public class Coll {
             "Returns a collection of all combinations of `LIST<ANY>` elements between the selection size `minSelect` and `maxSelect` (default: `minSelect`).")
     public List<List<Object>> combinations(
             @Name(value = "coll", description = "The list to return the combinations from.") List<Object> coll,
-            @Name(value = "minSelect", description = "The minimum selection size of the combination.") long minSelectIn,
+            @Name(value = "minSelect", description = "The minimum selection size of the combination.") Long minSelectIn,
             @Name(
                             value = "maxSelect",
                             defaultValue = "-1",
                             description = "The maximum selection size of the combination.")
-                    long maxSelectIn) {
-        int minSelect = (int) minSelectIn;
-        int maxSelect = (int) maxSelectIn;
+                    Long maxSelectIn) {
+        int minSelect = selectionSize("minSelect", minSelectIn);
+        int maxSelect = selectionSize("maxSelect", maxSelectIn);
         maxSelect = maxSelect == -1 ? minSelect : maxSelect;
 
         if (coll == null
@@ -1782,24 +1790,96 @@ public class Coll {
             return Collections.emptyList();
         }
 
-        List<List<Object>> combinations = new ArrayList<>();
+        // C(40, 20) is 137,846,528,820 combinations, more than an ArrayList can hold. Charging the whole result up
+        // front rather than sublist by sublist is what makes such a call fail immediately instead of after seconds
+        // of allocation.
+        try (var tracker =
+                ProcedureMemoryUtil.charge(procedureMemory, combinationsHeap(coll.size(), minSelect, maxSelect))) {
+            List<List<Object>> combinations = new ArrayList<>();
 
-        for (int i = minSelect; i <= maxSelect; i++) {
-            Iterator<int[]> itr = new Combinations(coll.size(), i).iterator();
+            for (int i = minSelect; i <= maxSelect; i++) {
+                Iterator<int[]> itr = new Combinations(coll.size(), i).iterator();
 
-            while (itr.hasNext()) {
-                List<Object> entry = new ArrayList<>(i);
-                int[] indexes = itr.next();
-                if (indexes.length > 0) {
-                    for (int index : indexes) {
-                        entry.add(coll.get(index));
+                while (itr.hasNext()) {
+                    List<Object> entry = new ArrayList<>(i);
+                    int[] indexes = itr.next();
+                    if (indexes.length > 0) {
+                        for (int index : indexes) {
+                            entry.add(coll.get(index));
+                        }
+                        combinations.add(entry);
                     }
-                    combinations.add(entry);
                 }
             }
-        }
 
-        return combinations;
+            return combinations;
+        }
+    }
+
+    /**
+     * A selection size larger than any possible list is rejected by name, rather than being narrowed to an
+     * unrelated value - {@code 4294967298} used to become {@code 2} - or reported as a bare
+     * {@code ArithmeticException: integer overflow}. Values merely outside the list's own size keep their existing
+     * behaviour of returning an empty list.
+     */
+    private static int selectionSize(String argument, Long value) {
+        if (value == null) {
+            throw new IllegalArgumentException("'" + argument + "' must not be null");
+        }
+        if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("'" + argument + "' must be between " + Integer.MIN_VALUE + " and "
+                    + Integer.MAX_VALUE + ", but was " + value);
+        }
+        return value.intValue();
+    }
+
+    /** Upper bound on the heap occupied by the result of {@code combinations}, saturating at {@link Long#MAX_VALUE}. */
+    private long combinationsHeap(int size, int minSelect, int maxSelect) {
+        final var estimator = procedureMemory.heapEstimator();
+        final long listOverhead = ARRAY_LIST_SHALLOW_SIZE;
+
+        long total = 0L;
+        long bytes = 0L;
+        for (int i = minSelect; i <= maxSelect; i++) {
+            long count = binomialSaturating(size, i);
+            long perEntry = listOverhead + estimator.shallowSizeOfObjectArray(i);
+            total = saturatingAdd(total, count);
+            bytes = saturatingAdd(bytes, saturatingMultiply(count, perEntry));
+        }
+        long outerList = listOverhead + estimator.shallowSizeOfObjectArray((int) Math.min(total, Integer.MAX_VALUE));
+        return saturatingAdd(bytes, outerList);
+    }
+
+    /** C(n, k), saturating at {@link Long#MAX_VALUE} rather than overflowing. */
+    private static long binomialSaturating(int n, int k) {
+        if (k < 0 || k > n) return 0L;
+        k = Math.min(k, n - k);
+        long result = 1L;
+        for (int i = 1; i <= k; i++) {
+            try {
+                // The division is exact at every step, so no precision is lost.
+                result = Math.multiplyExact(result, (long) (n - k + i)) / i;
+            } catch (ArithmeticException overflow) {
+                return Long.MAX_VALUE;
+            }
+        }
+        return result;
+    }
+
+    private static long saturatingAdd(long a, long b) {
+        try {
+            return Math.addExact(a, b);
+        } catch (ArithmeticException overflow) {
+            return Long.MAX_VALUE;
+        }
+    }
+
+    private static long saturatingMultiply(long a, long b) {
+        try {
+            return Math.multiplyExact(a, b);
+        } catch (ArithmeticException overflow) {
+            return Long.MAX_VALUE;
+        }
     }
 
     @UserFunction("apoc.coll.different")

@@ -21,11 +21,13 @@ package apoc.number.exact;
 import static apoc.util.TestUtil.testCall;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.test.extension.Inject;
 
@@ -131,5 +133,35 @@ class ExactTest {
                 db,
                 "return apoc.number.exact.add('1E6','1E6') as value",
                 row -> assertEquals("2000000", row.get("value")));
+    }
+
+    @Test
+    void testLegitimateBigNumberArithmeticIsUnaffected() {
+        testCall(db, "return apoc.number.exact.add('1','1') as value", row -> assertEquals("2", row.get("value")));
+        testCall(
+                db,
+                "return apoc.number.exact.add('1e10','1') as value",
+                row -> assertEquals("10000000001", row.get("value")));
+        // 1e1000 + 1 is 1001 digits, comfortably within any sane transaction memory budget
+        testCall(db, "return apoc.number.exact.add('1e1000','1') as value", row -> {
+            String value = (String) row.get("value");
+            assertEquals(1001, value.length());
+            assertTrue(value.startsWith("1000000"));
+            assertTrue(value.endsWith("1"));
+        });
+    }
+
+    @Test
+    @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void testHugeExponentStillAllowedForToIntegerAndToFloat() {
+        // Deliberately left unaccounted: neither materialises a plain string, so there is nothing to charge
+        testCall(
+                db,
+                "return apoc.number.exact.toInteger('1e1000000000') as value",
+                row -> assertEquals(0L, row.get("value")));
+        testCall(
+                db,
+                "return apoc.number.exact.toFloat('1e1000000000') as value",
+                row -> assertEquals(Double.POSITIVE_INFINITY, row.get("value")));
     }
 }
