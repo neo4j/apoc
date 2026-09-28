@@ -120,6 +120,24 @@ class ExactMemoryTrackingTest {
     }
 
     @Test
+    @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void roundedQuotientIsChargedForItsPrecision() {
+        // 1 / 3 never terminates, so the precision alone decides how many digits the result has
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1','3',2000000000) AS value");
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1','3',3000000) AS value");
+
+        setTransactionMemoryLimit(mebiBytes(256));
+        testCall(
+                db,
+                "RETURN apoc.number.exact.div('1','3',1000000) AS value",
+                row -> assertEquals(1000002, ((String) row.get("value")).length()));
+        testCall(
+                db,
+                "RETURN apoc.number.exact.div('1','3',10) AS value",
+                row -> assertEquals("0.3333333333", row.get("value")));
+    }
+
+    @Test
     @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void toIntegerAndToFloatAreNotCharged() {
         // Deliberately left alone: neither materialises a plain string, so neither has anything to charge
