@@ -958,19 +958,29 @@ public class MetaRestricted {
         }
         if (constraints == null) return;
         for (ConstraintDefinition constraint : constraints) {
-            for (String key : constraint.getPropertyKeys()) {
-                if (key.equals(prop)) {
-                    switch (constraint.getConstraintType()) {
-                        case UNIQUENESS -> {
-                            res.unique = true;
-                            node.getLabels().forEach(l -> {
-                                if (res.label != l.name()) res.addLabel(l.name());
-                            });
+            try {
+                for (String key : constraint.getPropertyKeys()) {
+                    if (key.equals(prop)) {
+                        switch (constraint.getConstraintType()) {
+                            case UNIQUENESS, NODE_KEY, RELATIONSHIP_KEY -> {
+                                res.unique = true;
+                                if (constraint.getConstraintType() == ConstraintType.NODE_KEY
+                                        || constraint.getConstraintType() == ConstraintType.RELATIONSHIP_KEY) {
+                                    res.existence = true;
+                                }
+                                node.getLabels().forEach(l -> {
+                                    if (res.label != l.name()) res.addLabel(l.name());
+                                });
+                            }
+                            case RELATIONSHIP_UNIQUENESS -> res.unique = true;
+                            case NODE_PROPERTY_EXISTENCE, RELATIONSHIP_PROPERTY_EXISTENCE -> res.existence = true;
                         }
-                        case RELATIONSHIP_UNIQUENESS -> res.unique = true;
-                        case NODE_PROPERTY_EXISTENCE, RELATIONSHIP_PROPERTY_EXISTENCE -> res.existence = true;
                     }
                 }
+            } catch (Exception ignore) {
+                // GRAPH TYPE constraints may not be associated with properties,
+                // This catches them, and allows for future unknown constraints to be added without
+                // this failing.
             }
         }
     }
