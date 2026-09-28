@@ -21,6 +21,7 @@ package apoc.text;
 import static java.lang.Math.toIntExact;
 import static java.util.Arrays.asList;
 
+import apoc.util.ProcedureMemoryUtil;
 import apoc.util.Util;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -32,6 +33,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -60,6 +62,8 @@ import org.neo4j.procedure.Description;
 import org.neo4j.procedure.Name;
 import org.neo4j.procedure.TerminationGuard;
 import org.neo4j.procedure.UserFunction;
+import org.neo4j.procedure.memory.ProcedureMemory;
+import org.neo4j.procedure.memory.ProcedureMemoryTracker;
 
 /**
  * @author mh
@@ -76,6 +80,9 @@ public class Strings {
 
     @Context
     public TerminationGuard terminationGuard;
+
+    @Context
+    public ProcedureMemory procedureMemory;
 
     @UserFunction("apoc.text.indexOf")
     @Description("Returns the first occurrence of the lookup `STRING` in the given `STRING`, or -1 if not found.")
@@ -519,33 +526,68 @@ public class Strings {
     @Description("Left pads the given `STRING` by the given width.")
     public String lpad(
             @Name(value = "text", description = "The string to be padded.") String text,
-            @Name(value = "count", description = "The number of delimiters to pad the given string with.") long count,
+            @Name(value = "count", description = "The number of delimiters to pad the given string with.") Long count,
             @Name(value = "delimiter", defaultValue = " ", description = "The delimiter to pad the given string with.")
                     String delim) {
+        checkNotNull("text", text);
+        checkNotNull("count", count);
         int len = text.length();
         if (len >= count) return text;
-        StringBuilder sb = new StringBuilder((int) count);
-        char[] chars = new char[(int) count - len];
-        Arrays.fill(chars, delim.charAt(0));
-        sb.append(chars);
-        sb.append(text);
-        return sb.toString();
+        char padChar = padCharacter(delim);
+        checkAtMostMaxStringLength("count", count);
+        try (var tracker = ProcedureMemoryUtil.charge(procedureMemory, ProcedureMemoryUtil.sizeOfString(count))) {
+            int pad = toIntExact(count) - len;
+            return String.valueOf(padChar).repeat(pad) + text;
+        }
     }
 
     @UserFunction("apoc.text.rpad")
     @Description("Right pads the given `STRING` by the given width.")
     public String rpad(
             @Name(value = "text", description = "The string to be padded.") String text,
-            @Name(value = "count", description = "The number of delimiters to pad the given string with.") long count,
+            @Name(value = "count", description = "The number of delimiters to pad the given string with.") Long count,
             @Name(value = "delimiter", defaultValue = " ", description = "The delimiter to pad the given string with.")
                     String delim) {
+        checkNotNull("text", text);
+        checkNotNull("count", count);
         int len = text.length();
         if (len >= count) return text;
-        StringBuilder sb = new StringBuilder(text);
-        char[] chars = new char[(int) count - len];
-        Arrays.fill(chars, delim.charAt(0));
-        sb.append(chars);
-        return sb.toString();
+        char padChar = padCharacter(delim);
+        checkAtMostMaxStringLength("count", count);
+        try (var tracker = ProcedureMemoryUtil.charge(procedureMemory, ProcedureMemoryUtil.sizeOfString(count))) {
+            int pad = toIntExact(count) - len;
+            return text + String.valueOf(padChar).repeat(pad);
+        }
+    }
+
+    private static char padCharacter(String delim) {
+        if (delim == null || delim.isEmpty()) {
+            throw new IllegalArgumentException("'delimiter' must not be empty");
+        }
+        return delim.charAt(0);
+    }
+
+    /**
+     * Rejects a null argument by name. A null reaching one of these functions used to surface as
+     * {@code ClassCastException: NoValue cannot be cast to NumberValue} for the numeric arguments, or as a
+     * {@code NullPointerException} for the others, neither of which tells the caller what was wrong.
+     */
+    private static void checkNotNull(String argument, Object value) {
+        if (value == null) {
+            throw new IllegalArgumentException("'" + argument + "' must not be null");
+        }
+    }
+
+    /**
+     * Rejects a length that no Java String could hold, naming the argument. Without this the caller would get a
+     * bare {@code ArithmeticException: integer overflow} from the narrowing, which names neither the argument nor
+     * the limit.
+     */
+    private static void checkAtMostMaxStringLength(String argument, long value) {
+        if (value > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(
+                    "'" + argument + "' must not be greater than " + Integer.MAX_VALUE + ", but was " + value);
+        }
     }
 
     @UserFunction("apoc.text.format")
@@ -562,7 +604,13 @@ public class Strings {
                     String lang) {
         if (text == null) return null;
         if (params == null) return text;
-        return String.format(new Locale(lang), text, params.toArray());
+        // The output size is driven by the format string, not by any argument: '%2000000000s' pads a one-character
+        // argument out to 2 GB. There is nothing to estimate up front, so charge the output as the buffer grows.
+        try (ProcedureMemoryTracker tracker = procedureMemory.newTracker()) {
+            TrackedAppendable out = new TrackedAppendable(tracker);
+            new Formatter(out, new Locale(lang)).format(text, params.toArray());
+            return out.toString();
+        }
     }
 
     @UserFunction("apoc.text.slug")
@@ -588,23 +636,34 @@ public class Strings {
             "Generates a random `STRING` to the given length using a length parameter and an optional `STRING` of valid characters.\n"
                     + "Unsuitable for cryptographic use-cases.")
     public String random(
-            final @Name(value = "length", description = "The length of the random string.") long length,
+            final @Name(value = "length", description = "The length of the random string.") Long length,
             @Name(
                             value = "valid",
                             defaultValue = "A-Za-z0-9",
                             description = "The valid characters the random string can contain.")
                     String valid) {
+        checkNotNull("length", length);
+        checkNotNull("valid", valid);
+        if (length < 0) {
+            throw new IllegalArgumentException("'length' must not be negative, but was " + length);
+        }
+        checkAtMostMaxStringLength("length", length);
         valid = valid.replaceAll("A-Z", upper).replaceAll("a-z", lower).replaceAll("0-9", numeric);
-
-        StringBuilder output = new StringBuilder(toIntExact(length));
-
-        ThreadLocalRandom rand = ThreadLocalRandom.current();
-
-        while (output.length() < length) {
-            output.append(valid.charAt(rand.nextInt(valid.length())));
+        if (valid.isEmpty()) {
+            throw new IllegalArgumentException("'valid' must not be empty");
         }
 
-        return output.toString();
+        try (var tracker = ProcedureMemoryUtil.charge(procedureMemory, ProcedureMemoryUtil.sizeOfString(length))) {
+            StringBuilder output = new StringBuilder(toIntExact(length));
+
+            ThreadLocalRandom rand = ThreadLocalRandom.current();
+
+            while (output.length() < length) {
+                output.append(valid.charAt(rand.nextInt(valid.length())));
+            }
+
+            return output.toString();
+        }
     }
 
     @UserFunction("apoc.text.capitalize")
@@ -921,11 +980,28 @@ public class Strings {
     @Description("Returns the result of the given item multiplied by the given count.")
     public String repeat(
             @Name(value = "item", description = "The string to be repeated.") String item,
-            @Name(value = "count", description = "The number of times to repeat the given string.") long count) {
-        StringBuilder result = new StringBuilder((int) count * item.length());
-        for (int i = 0; i < count; i++) {
-            result.append(item);
+            @Name(value = "count", description = "The number of times to repeat the given string.") Long count) {
+        checkNotNull("item", item);
+        checkNotNull("count", count);
+        if (count < 0) {
+            throw new IllegalArgumentException("'count' must not be negative, but was " + count);
         }
-        return result.toString();
+        // An empty item repeats to an empty string whatever the count, so answer that before rejecting a count no
+        // String could hold. This is also the case that used to spin forever: a count above 2^31 wrapped the old
+        // int loop counter and never terminated.
+        if (count == 0 || item.isEmpty()) return "";
+        checkAtMostMaxStringLength("count", count);
+
+        // Both factors are at most Integer.MAX_VALUE by now, so the product cannot overflow a long
+        long chars = count * (long) item.length();
+        if (chars > Integer.MAX_VALUE) {
+            // A count that fits an int can still ask for a result no String can hold. Left unchecked, this reaches
+            // String.repeat as an OutOfMemoryError, or the memory tracker as a byte count that names no argument.
+            throw new IllegalArgumentException("repeating 'item' " + count + " times would produce " + chars
+                    + " characters, which is more than the maximum of " + Integer.MAX_VALUE);
+        }
+        try (var tracker = ProcedureMemoryUtil.charge(procedureMemory, ProcedureMemoryUtil.sizeOfString(chars))) {
+            return item.repeat(toIntExact(count));
+        }
     }
 }

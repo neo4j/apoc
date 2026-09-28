@@ -19,6 +19,7 @@
 package apoc;
 
 import static apoc.ApocConfig.APOC_MAX_DECOMPRESSION_RATIO;
+import static apoc.ApocConfig.APOC_MAX_HOPS;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
@@ -47,6 +48,8 @@ import java.util.Set;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.neo4j.configuration.Config;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.dbms.api.DatabaseManagementService;
@@ -174,6 +177,36 @@ class ApocConfigCommandExpansionTest {
                 String.format("value 0 is not allowed for the config option %s", APOC_MAX_DECOMPRESSION_RATIO);
         Assertions.assertThat(e.getMessage()).contains(expectedMessage);
         System.clearProperty(APOC_MAX_DECOMPRESSION_RATIO);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0", "-1"})
+    void testMaxHopsValidation(String value) {
+
+        InternalLogProvider logProvider = new AssertableLogProvider();
+
+        Config neo4jConfig = mock(Config.class);
+        when(neo4jConfig.getDeclaredSettings()).thenReturn(Collections.emptyMap());
+        when(neo4jConfig.get(any())).thenReturn(null);
+        when(neo4jConfig.expandCommands()).thenReturn(false);
+        when(neo4jConfig.get(GraphDatabaseSettings.configuration_directory))
+                .thenReturn(Path.of("C:/neo4j/neo4j-enterprise-5.x.0/conf"));
+
+        GlobalProceduresRegistry registry = mock(GlobalProceduresRegistry.class);
+        DatabaseManagementService databaseManagementService = mock(DatabaseManagementService.class);
+        System.setProperty(APOC_MAX_HOPS, value);
+        try {
+            ApocConfig apocConfig =
+                    new ApocConfig(neo4jConfig, new SimpleLogService(logProvider), registry, databaseManagementService);
+
+            RuntimeException e = assertThrows(RuntimeException.class, apocConfig::init);
+            String expectedMessage = String.format(
+                    "value %s is not allowed for the config option %s, it must be a positive number of hops",
+                    value, APOC_MAX_HOPS);
+            Assertions.assertThat(e.getMessage()).contains(expectedMessage);
+        } finally {
+            System.clearProperty(APOC_MAX_HOPS);
+        }
     }
 
     private void removeLineFromApocConfig(String lineContent) throws IOException {

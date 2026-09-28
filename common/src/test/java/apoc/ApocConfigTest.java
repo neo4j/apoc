@@ -18,6 +18,8 @@
  */
 package apoc;
 
+import static apoc.ApocConfig.APOC_MAX_HOPS;
+import static apoc.ApocConfig.DEFAULT_MAX_HOPS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -71,5 +73,12 @@ class ApocConfigTest {
         apocConfig.init();
 
         assertEquals("bar", apocConfig.getConfig().getString("foo"));
+    }
+
+    @Test
+    void testMaxHopsDefault() {
+        apocConfig.init();
+
+        assertEquals(DEFAULT_MAX_HOPS, apocConfig.getConfig().getInt(APOC_MAX_HOPS));
     }
 }
