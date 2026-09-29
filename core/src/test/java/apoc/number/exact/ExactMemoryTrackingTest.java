@@ -81,6 +81,18 @@ class ExactMemoryTrackingTest {
     }
 
     @Test
+    @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void extremeScalesAreRejected() {
+        // The reproduction from SURF-1429
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.add('1e2000000000','0') AS value");
+        // Scale Integer.MIN_VALUE, whose int absolute value is still negative
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.add('1e2147483648','0') AS value");
+        // A bounded precision caps the unscaled digits, not the scale, so it must not bypass the charge
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.mul('1e1000000000','1', 10) AS value");
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1e1000000000','1', 10) AS value");
+    }
+
+    @Test
     @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
     void chargeIsProportionalToTheExponent() {
         assertMemoryLimitExceeded("RETURN apoc.number.exact.add('1e1000000','1') AS value");
@@ -105,6 +117,24 @@ class ExactMemoryTrackingTest {
                 db,
                 "RETURN apoc.number.exact.div('1', '1048576') AS value",
                 row -> assertEquals("0.00000095367431640625", row.get("value")));
+    }
+
+    @Test
+    @Timeout(value = 60, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+    void roundedQuotientIsChargedForItsPrecision() {
+        // 1 / 3 never terminates, so the precision alone decides how many digits the result has
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1','3',2000000000) AS value");
+        assertMemoryLimitExceeded("RETURN apoc.number.exact.div('1','3',3000000) AS value");
+
+        setTransactionMemoryLimit(mebiBytes(256));
+        testCall(
+                db,
+                "RETURN apoc.number.exact.div('1','3',1000000) AS value",
+                row -> assertEquals(1000002, ((String) row.get("value")).length()));
+        testCall(
+                db,
+                "RETURN apoc.number.exact.div('1','3',10) AS value",
+                row -> assertEquals("0.3333333333", row.get("value")));
     }
 
     @Test

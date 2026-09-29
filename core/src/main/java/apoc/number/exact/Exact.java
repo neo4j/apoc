@@ -125,8 +125,8 @@ public class Exact {
         final BigDecimal a = new BigDecimal(stringA);
         final BigDecimal b = new BigDecimal(stringB);
         final MathContext mathContext = createMathContext(precision, roundingMode);
-        return chargeAndCompute(
-                a, b, quotientLength(a, b), () -> a.divide(b, mathContext).toPlainString());
+        return chargeAndCompute(a, b, quotientLength(a, b, mathContext), () -> a.divide(b, mathContext)
+                .toPlainString());
     }
 
     @UserFunction("apoc.number.exact.toInteger")
@@ -194,10 +194,17 @@ public class Exact {
     /**
      * Upper bound on the plain-string length of a / b. An exact quotient can be longer than both operands together:
      * 1 / 2^k has k digits while 2^k has only about 0.3 * k, so each divisor digit can contribute up to log2(10),
-     * rounded up to 4, digits to the result.
+     * rounded up to 4, digits to the result. A non-zero precision instead rounds the quotient to that many significant
+     * digits whatever the operands are - 1 / 3 to precision 2000000000 is two billion digits - so the bound is the
+     * precision plus room for the leading or trailing zeros that the operands' exponents can add.
      */
-    private static long quotientLength(BigDecimal a, BigDecimal b) {
-        return Math.addExact(Math.addExact(plainStringLength(a), Math.multiplyExact(plainStringLength(b), 4L)), 4L);
+    private static long quotientLength(BigDecimal a, BigDecimal b, MathContext mathContext) {
+        long lengthA = plainStringLength(a);
+        long lengthB = plainStringLength(b);
+        if (mathContext.getPrecision() == 0) {
+            return Math.addExact(Math.addExact(lengthA, Math.multiplyExact(lengthB, 4L)), 4L);
+        }
+        return Math.addExact(Math.addExact(Math.addExact(mathContext.getPrecision(), lengthA), lengthB), 4L);
     }
 
     /** Upper bound on the length of bd.toPlainString(). */
