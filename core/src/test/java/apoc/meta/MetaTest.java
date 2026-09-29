@@ -2386,6 +2386,50 @@ class MetaTest {
         });
     }
 
+    @Test
+    void testMetaSchemaWithGraphTypes() {
+        db.executeTransactionally(
+                "CREATE (:Person {fullName: \"Peter Rabbit\", id: \"13\"})-[:KNOWS {prop1: 1}]->(:Person {fullName: \"Jemima Puddleduck\", id: \"23\"})");
+        db.executeTransactionally(
+                """
+                CYPHER 25
+                ALTER CURRENT GRAPH TYPE SET {
+                  (:`Person` => {`fullName` :: STRING, `id` :: STRING NOT NULL}),
+                  (:`Person` =>)-[:`KNOWS` =>]->(:`Person` =>),
+                  CONSTRAINT `person_id_key` FOR (`n`:`Person` =>) REQUIRE (`n`.`id`) IS KEY
+                }""");
+
+        TestUtil.testCall(db, "CALL apoc.meta.schema()", (row) -> {
+            Map<String, Object> value = (Map<String, Object>) row.get("value");
+            Map<String, Object> personData = (Map<String, Object>) value.get("Person");
+            Map<String, Object> personProperties = (Map<String, Object>) personData.get("properties");
+
+            Map<String, Object> fullNameProp = (Map<String, Object>) personProperties.get("fullName");
+            assertEquals("STRING", fullNameProp.get("type"));
+            assertFalse((boolean) fullNameProp.get("indexed"));
+            assertFalse((boolean) fullNameProp.get("unique"));
+            assertFalse((boolean) fullNameProp.get("existence"));
+
+            Map<String, Object> idProp = (Map<String, Object>) personProperties.get("id");
+            assertEquals("STRING", idProp.get("type"));
+            assertTrue((boolean) idProp.get("indexed"));
+            assertTrue((boolean) idProp.get("unique"));
+            assertTrue((boolean) idProp.get("existence"));
+
+            Map<String, Object> personRels = (Map<String, Object>) personData.get("relationships");
+            Map<String, Object> knowsRel = (Map<String, Object>) personRels.get("KNOWS");
+            Map<String, Object> knowsProperties = (Map<String, Object>) knowsRel.get("properties");
+            assertEquals(1L, knowsRel.get("count"));
+            assertEquals(List.of("Person"), knowsRel.get("labels"));
+
+            Map<String, Object> prop1Prop = (Map<String, Object>) knowsProperties.get("prop1");
+            assertEquals("INTEGER", prop1Prop.get("type"));
+            assertFalse((boolean) prop1Prop.get("indexed"));
+            assertFalse((boolean) prop1Prop.get("array"));
+            assertFalse((boolean) prop1Prop.get("existence"));
+        });
+    }
+
     private void datasetWithNodeRelIdxs() {
         db.executeTransactionally("CREATE INDEX node_index_name FOR (n:Movie) ON (n.b)");
         db.executeTransactionally("CREATE INDEX rel_index_name FOR ()-[r:ACTED_IN]-() ON (r.roles, r.id)");
