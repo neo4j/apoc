@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.assertj.core.api.Assertions;
@@ -1187,6 +1188,20 @@ class ExportGraphMLTest {
                     assertStreamResults(r, "database");
                     assertXMLEquals(getDecompressedData(algo, r.get("data")), EXPECTED_FALSE);
                 });
+    }
+
+    @Test
+    void testExportAllGraphMLStreamUsesThreadBoundTransaction() {
+        db.executeTransactionally("CREATE (:COMMITTED_NODE {p: 'node is committed'})");
+        try (var tx = db.beginTx()) {
+            tx.execute("CREATE (:`UNCOMMITTED_NODE` {p: 'node not committed'})").close();
+            final var exportQuery = "CALL apoc.export.graphml.all(null, {stream: true}) YIELD data";
+            final var data =
+                    tx.execute(exportQuery).<String>columnAs("data").stream().collect(Collectors.joining());
+
+            assertTrue(data.contains("COMMITTED_NODE"));
+            assertFalse(data.contains("UNCOMMITTED_NODE"));
+        }
     }
 
     @Test

@@ -36,6 +36,7 @@ import java.io.PrintWriter;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import org.neo4j.cypher.export.CypherResultSubGraph;
 import org.neo4j.cypher.export.DatabaseSubGraph;
@@ -159,7 +160,7 @@ public class ExportGraphML {
             throws Exception {
 
         String source = String.format("database: nodes(%d), rels(%d)", Util.nodeCount(tx), Util.relCount(tx));
-        return exportGraphML(fileName, source, new DatabaseSubGraph(tx), new ExportConfig(config));
+        return exportGraphML(fileName, source, DatabaseSubGraph::new, new ExportConfig(config));
     }
 
     @Procedure("apoc.export.graphml.data")
@@ -189,7 +190,8 @@ public class ExportGraphML {
             throws Exception {
 
         String source = String.format("data: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportGraphML(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config));
+        final Function<Transaction, SubGraph> graph = threadTx -> new NodesAndRelsSubGraph(threadTx, nodes, rels, true);
+        return exportGraphML(fileName, source, graph, new ExportConfig(config));
     }
 
     @Procedure("apoc.export.graphml.graph")
@@ -220,7 +222,9 @@ public class ExportGraphML {
         Collection<Node> nodes = (Collection<Node>) graph.get("nodes");
         Collection<Relationship> rels = (Collection<Relationship>) graph.get("relationships");
         String source = String.format("graph: nodes(%d), rels(%d)", nodes.size(), rels.size());
-        return exportGraphML(fileName, source, new NodesAndRelsSubGraph(tx, nodes, rels), new ExportConfig(config));
+        final Function<Transaction, SubGraph> subGraph =
+                threadTx -> new NodesAndRelsSubGraph(threadTx, nodes, rels, true);
+        return exportGraphML(fileName, source, subGraph, new ExportConfig(config));
     }
 
     @NotThreadSafe
@@ -252,15 +256,19 @@ public class ExportGraphML {
             throws Exception {
         ExportConfig c = new ExportConfig(config);
         Result result = tx.execute(Util.prefixQueryWithCheck(procedureCallContext, query));
-        SubGraph graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween(), false);
+        CypherResultSubGraph graph = CypherResultSubGraph.from(tx, result, c.getRelsInBetween(), false);
         String source = String.format(
                 "statement: nodes(%d), rels(%d)",
                 Iterables.count(graph.getNodes()), Iterables.count(graph.getRelationships()));
-        return exportGraphML(fileName, source, graph, c);
+        return exportGraphML(fileName, source, graph::rebind, c);
     }
 
     private Stream<ExportProgressInfo> exportGraphML(
-            @Name("file") String fileName, String source, SubGraph graph, ExportConfig exportConfig) throws Exception {
+            @Name("file") String fileName,
+            String source,
+            Function<Transaction, SubGraph> graph,
+            ExportConfig exportConfig)
+            throws Exception {
         apocConfig.checkWriteAllowed(exportConfig, fileName);
         final String format = "graphml";
         ProgressReporter reporter = new ProgressReporter(null, null, new ExportProgressInfo(fileName, source, format));
@@ -278,13 +286,13 @@ public class ExportGraphML {
                     cypherFileManager,
                     (threadBoundTx, reporterWithConsumer) -> {
                         try {
-                            exporter.write(graph, graphMl, reporterWithConsumer, exportConfig);
+                            exporter.write(graph.apply(threadBoundTx), graphMl, reporterWithConsumer, exportConfig);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     });
         } else {
-            exporter.write(graph, graphMl, reporter, exportConfig);
+            exporter.write(graph.apply(tx), graphMl, reporter, exportConfig);
             closeWriter(graphMl);
             return Stream.of((ExportProgressInfo) reporter.getTotal());
         }
