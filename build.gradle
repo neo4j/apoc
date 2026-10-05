@@ -136,6 +136,9 @@ subprojects {
       implementation('org.bouncycastle:bcutil-jdk18on:1.85') {
         because 'CVE-2026-8763, CVE-2026-13506, and to enforce a minimum version across all transitive sources'
       }
+      implementation('org.xerial.snappy:snappy-java:1.1.10.10') {
+        because 'CVE-2026-90559 out-of-bounds write, via org.neo4j:neo4j-import-util -> parquet-hadoop'
+      }
     }
   }
 
