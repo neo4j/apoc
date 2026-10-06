@@ -259,7 +259,7 @@ Apache-2.0
   shiro-crypto-hash-3.0.1.jar
   shiro-event-3.0.1.jar
   shiro-lang-3.0.1.jar
-  snappy-java-1.1.10.10.jar
+  snappy-java-1.1.10.8.jar
   third-party-jackson-core-2.34.0.jar
   utils-2.34.0.jar
   utils-lite-2.34.0.jar
