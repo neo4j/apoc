@@ -115,9 +115,6 @@ subprojects {
       implementation('org.apache.zookeeper:zookeeper:3.8.6') {
         because 'CVE-2026-24308'
       }
-      implementation('com.fasterxml.jackson.core:jackson-core:2.21.1') {
-        because 'GHSA-72hv-8253-57qq'
-      }
       implementation('tools.jackson.core:jackson-core:2.21.1') {
         because 'GHSA-72hv-8253-57qq'
       }
@@ -138,6 +135,9 @@ subprojects {
       }
       implementation('org.xerial.snappy:snappy-java:1.1.10.10') {
         because 'CVE-2026-90559 out-of-bounds write, via org.neo4j:neo4j-import-util -> parquet-hadoop'
+      }
+      implementation('com.fasterxml.jackson:jackson-bom:2.22.3') {
+        because 'CVE-2026-89407, GHSA-p6pp-m3f8-5c89, GHSA-72hv-8253-57qq, and to align jackson-core/databind/annotations'
       }
     }
   }
