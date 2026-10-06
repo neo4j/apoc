@@ -115,8 +115,8 @@ subprojects {
       implementation('org.apache.zookeeper:zookeeper:3.8.6') {
         because 'CVE-2026-24308'
       }
-      implementation('tools.jackson.core:jackson-core:2.21.1') {
-        because 'GHSA-72hv-8253-57qq'
+      implementation('tools.jackson.core:jackson-core:2.22.3') {
+        because 'CVE-2026-89407, CVE-2026-91777, CVE-2026-89425'
       }
       implementation('org.eclipse.jetty:jetty-server:12.0.32') {
         because 'CVE-2026-1605'
@@ -132,9 +132,6 @@ subprojects {
       }
       implementation('org.bouncycastle:bcutil-jdk18on:1.85') {
         because 'CVE-2026-8763, CVE-2026-13506, and to enforce a minimum version across all transitive sources'
-      }
-      implementation('com.fasterxml.jackson:jackson-bom:2.22.3') {
-        because 'CVE-2026-89407, CVE-2026-91777, CVE-2026-89425'
       }
     }
   }
