@@ -203,7 +203,9 @@ public class PeriodicUtils {
 
     public static Pair<String, Boolean> prepareInnerStatement(
             String cypherAction, BatchMode batchMode, List<String> columns, String iteratorVariableName) {
-        String names = columns.stream().map(Util::quoteIdentifierSafely).collect(Collectors.joining("|"));
+        String names = columns.stream()
+                .map(c -> Pattern.quote(Util.quoteIdentifierSafely(c)))
+                .collect(Collectors.joining("|"));
         boolean withCheck = regNoCaseMultiLine("[{$](" + names + ")\\}?\\s+AS\\s+")
                 .matcher(cypherAction)
                 .find();
@@ -217,7 +219,7 @@ public class PeriodicUtils {
                                 + cypherAction,
                         false);
             case BATCH:
-                if (regNoCaseMultiLine("UNWIND\\s+[{$]" + iteratorVariableName + "\\}?\\s+AS\\s+")
+                if (regNoCaseMultiLine("UNWIND\\s+[{$]" + Pattern.quote(iteratorVariableName) + "\\}?\\s+AS\\s+")
                         .matcher(cypherAction)
                         .find()) {
                     return Pair.of(cypherAction, true);

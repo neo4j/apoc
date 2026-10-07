@@ -19,6 +19,7 @@
 package apoc.periodic;
 
 import static apoc.periodic.PeriodicUtils.prepareInnerStatement;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -27,6 +28,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 class PeriodicUtilsTest {
+    @Test
+    void columnNamesAreTreatedAsLiteralsNotRegex() {
+        String evilColumn = "(.*){0,1000}(.*){0,1000}";
+        String action = "RETURN $`" + "a".repeat(40) + "!";
+        Pair<String, Boolean> prepared = assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(5),
+                () -> prepareInnerStatement(action, BatchMode.fromIterateList(false), List.of(evilColumn), "_batch"));
+        assertTrue(prepared.getLeft().contains("`" + evilColumn + "`"));
+    }
+
     @Test
     void iterateListPrefixActionStatementWithUnwind() {
         BatchMode batchMode = BatchMode.fromIterateList(true);
