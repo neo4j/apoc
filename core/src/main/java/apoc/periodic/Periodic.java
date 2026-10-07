@@ -403,8 +403,8 @@ public class Periodic {
         validateQuery(cypherIterate);
 
         long batchSize = Util.toLong(config.getOrDefault("batchSize", 10000));
-        if (batchSize < 1) {
-            throw new IllegalArgumentException("batchSize parameter must be > 0");
+        if (batchSize < 1 || batchSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("batchSize parameter must be between 1 and " + Integer.MAX_VALUE);
         }
         int concurrency = Util.toInteger(
                 config.getOrDefault("concurrency", Runtime.getRuntime().availableProcessors()));
