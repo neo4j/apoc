@@ -19,6 +19,7 @@
 package apoc.util;
 
 import org.neo4j.configuration.Config;
+import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.cypher.internal.PreParser;
 import org.neo4j.cypher.internal.ast.Statement;
@@ -28,6 +29,8 @@ import org.neo4j.cypher.internal.ast.prettifier.ExpressionStringifier$;
 import org.neo4j.cypher.internal.ast.prettifier.Prettifier;
 import org.neo4j.cypher.internal.config.CypherConfiguration;
 import org.neo4j.cypher.internal.parser.AstParserFactory$;
+import org.neo4j.cypher.internal.rewriting.rewriters.IfNoParameter$;
+import org.neo4j.cypher.internal.rewriting.rewriters.literalReplacement;
 import org.neo4j.cypher.internal.rewriting.rewriters.sensitiveLiteralReplacement;
 import org.neo4j.cypher.internal.util.Neo4jCypherExceptionFactory;
 import scala.Option;
@@ -48,6 +51,12 @@ public class LogsUtil {
                     .singleStatement();
             var rewriter = sensitiveLiteralReplacement.apply(statement)._1;
             var res = (Statement) rewriter.apply(statement);
+
+            // honour db.logs.query.obfuscate_literals: replace every literal, not only the sensitive ones
+            if (config.get(GraphDatabaseSettings.log_queries_obfuscate_literals)) {
+                var literalRewriter = literalReplacement.apply(res, IfNoParameter$.MODULE$)._1;
+                res = (Statement) literalRewriter.apply(res);
+            }
 
             return prettifier.asString(res);
         } catch (Exception e) {

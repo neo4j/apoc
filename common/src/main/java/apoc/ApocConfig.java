@@ -197,6 +197,10 @@ public class ApocConfig extends LifecycleAdapter {
         loadConfiguration();
     }
 
+    public Config getNeo4jConfig() {
+        return neo4jConfig;
+    }
+
     protected String determineNeo4jConfFolder() {
         return neo4jConfig.get(configuration_directory).toString();
     }
