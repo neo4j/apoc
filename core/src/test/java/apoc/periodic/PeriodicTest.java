@@ -941,7 +941,20 @@ class PeriodicTest {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
                 () -> testCall(db, query, row -> fail("The test should fail but it didn't")));
-        assertTrue(e.getMessage().contains("batchSize parameter must be > 0"));
+        assertTrue(e.getMessage().contains("batchSize parameter must be between 1 and"));
+    }
+
+    @Test
+    void testIterateQueryFailBatchSizeExceedingIntegerRange() {
+        for (long batchSize : new long[] {4294967296L, Integer.MAX_VALUE + 1L}) {
+            final String query = "CALL apoc.periodic.iterate('UNWIND range(1, 10) AS x RETURN x', 'RETURN $x', "
+                    + "{batchSize:" + batchSize + "})";
+
+            QueryExecutionException e = assertThrows(
+                    QueryExecutionException.class,
+                    () -> testCall(db, query, row -> fail("The test should fail but it didn't")));
+            assertTrue(e.getMessage().contains("batchSize parameter must be between 1 and"));
+        }
     }
 
     @Test

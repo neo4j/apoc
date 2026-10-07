@@ -200,6 +200,9 @@ public class Nodes {
                     Object nodes,
             @Name(value = "batchSize", description = "The number of node values to delete in a single batch.")
                     long batchSize) {
+        if (batchSize < 1 || batchSize > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("batchSize parameter must be between 1 and " + Integer.MAX_VALUE);
+        }
         Iterator<Node> it = Util.nodeStream((InternalTransaction) tx, nodes).iterator();
         long count = 0;
         while (it.hasNext()) {
