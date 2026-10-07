@@ -115,8 +115,8 @@ subprojects {
       implementation('org.apache.zookeeper:zookeeper:3.8.6') {
         because 'CVE-2026-24308'
       }
-      implementation('com.fasterxml.jackson.core:jackson-core:2.21.1') {
-        because 'GHSA-72hv-8253-57qq'
+      implementation('com.fasterxml.jackson.core:jackson-core:2.22.3') {
+        because 'CVE-2026-89407, CVE-2026-91777, CVE-2026-89425'
       }
       implementation('tools.jackson.core:jackson-core:2.21.1') {
         because 'GHSA-72hv-8253-57qq'
