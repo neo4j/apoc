@@ -22,6 +22,8 @@ import static apoc.cypher.Cypher.toMap;
 import static apoc.cypher.CypherUtils.runCypherQuery;
 import static apoc.cypher.CypherUtils.withParamMapping;
 import static apoc.util.MapUtil.map;
+import static apoc.util.MvccUtil.isMvcc;
+import static apoc.util.MvccUtil.mvccNotSupported;
 import static org.neo4j.procedure.Mode.READ;
 import static org.neo4j.procedure.Mode.SCHEMA;
 import static org.neo4j.procedure.Mode.WRITE;
@@ -43,6 +45,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.QueryExecutionType.QueryType;
 import org.neo4j.graphdb.QueryStatistics;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -98,23 +101,35 @@ public class Cypher {
                     Map<String, Object> params,
             @Name(value = "config", defaultValue = "{}", description = "{ statistics = true :: BOOLEAN }")
                     Map<String, Object> config) {
+        return runMany(cypher, params, config, isMvcc(db));
+    }
+
+    private Stream<RowResult> runMany(
+            String cypher, Map<String, Object> params, Map<String, Object> config, boolean rejectWrites) {
         boolean addStatistics = Util.toBoolean(config.getOrDefault("statistics", true));
 
         return Iterators.stream(new Scanner(new StringReader(cypher)).useDelimiter(";\r?\n"))
                 .map(Cypher::removeShellControlCommands)
                 .filter(s -> !s.isBlank())
-                .flatMap(s -> streamInNewTx(s, params, addStatistics));
+                .flatMap(s -> streamInNewTx(s, params, addStatistics, rejectWrites));
     }
 
-    private Stream<Cypher.RowResult> streamInNewTx(String cypher, Map<String, Object> params, boolean stats) {
+    private Stream<Cypher.RowResult> streamInNewTx(
+            String cypher, Map<String, Object> params, boolean stats, boolean rejectWrites) {
         final var innerTx = db.beginTx();
         try {
             // Hello fellow wanderer,
             // At this point you may have questions like;
             // - "Why do we execute this statement in a new transaction?"
             // My guess is as good as yours. This is the way of the apoc. Safe travels.
-            final var results = new RunManyResultSpliterator(
-                    innerTx.execute(Util.prefixQueryWithCheck(procedureCallContext, cypher), params), stats);
+            final var result = innerTx.execute(Util.prefixQueryWithCheck(procedureCallContext, cypher), params);
+            if (rejectWrites && result.getQueryExecutionType().queryType() != QueryType.READ_ONLY) {
+                result.close();
+                throw mvccNotSupported(
+                        "apoc.cypher.runMany with a write query",
+                        "The statements run in separate transactions, whose writes conflict with the calling transaction under MVCC. Use `apoc.cypher.runManyReadOnly` for read queries, or run the write query directly.");
+            }
+            final var results = new RunManyResultSpliterator(result, stats);
             return StreamSupport.stream(results, false).onClose(results::close).onClose(innerTx::commit);
         } catch (AuthorizationViolationException accessModeException) {
             // We meet again, few people make it this far into this world!
@@ -145,7 +160,7 @@ public class Cypher {
                     Map<String, Object> params,
             @Name(value = "config", defaultValue = "{}", description = "{ statistics = true :: BOOLEAN }")
                     Map<String, Object> config) {
-        return runMany(cypher, params, config);
+        return runMany(cypher, params, config, false);
     }
 
     private static final Pattern shellControl =

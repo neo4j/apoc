@@ -18,7 +18,10 @@
  */
 package apoc.lock;
 
+import static apoc.util.MvccUtil.failIfMvcc;
+
 import java.util.List;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
@@ -26,8 +29,14 @@ import org.neo4j.procedure.*;
 
 public class Lock {
 
+    private static final String MVCC_DETAIL =
+            "Entity locks are not taken under MVCC, so the procedure cannot serialise concurrent writers.";
+
     @Context
     public Transaction tx;
+
+    @Context
+    public GraphDatabaseService db;
 
     @NotThreadSafe
     @Procedure(name = "apoc.lock.all", mode = Mode.WRITE)
@@ -36,6 +45,7 @@ public class Lock {
             @Name(value = "nodes", description = "The list of nodes to acquire a write lock on.") List<Node> nodes,
             @Name(value = "rels", description = "The list of relationships to acquire a write lock on.")
                     List<Relationship> rels) {
+        failIfMvcc(db, "apoc.lock.all", MVCC_DETAIL);
         for (Node node : nodes) {
             tx.acquireWriteLock(node);
         }
@@ -49,6 +59,7 @@ public class Lock {
     @Description("Acquires a write lock on the given `NODE` values.")
     public void nodes(
             @Name(value = "nodes", description = "The list of nodes to acquire a write lock on.") List<Node> nodes) {
+        failIfMvcc(db, "apoc.lock.nodes", MVCC_DETAIL);
         for (Node node : nodes) {
             tx.acquireWriteLock(node);
         }
@@ -59,6 +70,7 @@ public class Lock {
     @Description("Acquires a read lock on the given `NODE` values.")
     public void readLockOnNodes(
             @Name(value = "nodes", description = "The list of nodes to acquire a read lock on.") List<Node> nodes) {
+        failIfMvcc(db, "apoc.lock.read.nodes", MVCC_DETAIL);
         for (Node node : nodes) {
             tx.acquireReadLock(node);
         }
@@ -70,6 +82,7 @@ public class Lock {
     public void rels(
             @Name(value = "rels", description = "The list of relationships to acquire a write lock on.")
                     List<Relationship> rels) {
+        failIfMvcc(db, "apoc.lock.rels", MVCC_DETAIL);
         for (Relationship rel : rels) {
             tx.acquireWriteLock(rel);
         }
@@ -81,6 +94,7 @@ public class Lock {
     public void readLocksOnRels(
             @Name(value = "rels", description = "The list of relationships to acquire a read lock on.")
                     List<Relationship> rels) {
+        failIfMvcc(db, "apoc.lock.read.rels", MVCC_DETAIL);
         for (Relationship rel : rels) {
             tx.acquireReadLock(rel);
         }
