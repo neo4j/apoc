@@ -1142,4 +1142,18 @@ class ImportCsvTest {
 
         db.executeTransactionally("MATCH (n:Cat) DETACH DELETE n");
     }
+
+    @Test
+    void importCsvRejectsOversizedHeaderLine() {
+        // 1 MiB + 1 byte
+        byte[] header = new byte[(1 << 20) + 1];
+        java.util.Arrays.fill(header, (byte) 'a');
+
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> db.executeTransactionally(
+                        "CALL apoc.import.csv([{data: $data, labels: ['Big']}], [], {compression: 'NONE'})",
+                        map("data", header)));
+        assertTrue(e.getMessage().contains("CSV header line exceeds the maximum allowed length"), e.getMessage());
+    }
 }

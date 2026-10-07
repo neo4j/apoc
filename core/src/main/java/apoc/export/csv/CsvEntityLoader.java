@@ -47,6 +47,12 @@ public class CsvEntityLoader {
     private final ProgressReporter reporter;
     private final Log log;
     private final URLAccessChecker urlAccessChecker;
+    private static final int MAX_HEADER_LENGTH = 1 << 20;
+    // must be a power of two so the mask check works
+    // This is used to check the state for the supplied number of chars read (8192)
+    // Max checks for 1 MiB is 128, so not too often, but hopefully enough to catch any closed tx
+    private static final int TERMINATION_CHECK_INTERVAL = 8192;
+
     private final TerminationGuard terminationGuard;
 
     /**
@@ -333,14 +339,21 @@ public class CsvEntityLoader {
         }));
     }
 
-    private static String readFirstLine(CountingReader reader) throws IOException {
-        String line = "";
+    private String readFirstLine(CountingReader reader) throws IOException {
+        final StringBuilder line = new StringBuilder();
         int i;
         while ((i = reader.read()) != -1) {
             char c = (char) i;
             if (c == '\n') break;
-            line += c;
+            if (line.length() >= MAX_HEADER_LENGTH) {
+                throw new IOException(
+                        "CSV header line exceeds the maximum allowed length of " + MAX_HEADER_LENGTH + " characters");
+            }
+            line.append(c);
+            if ((line.length() & (TERMINATION_CHECK_INTERVAL - 1)) == 0) {
+                terminationGuard.check();
+            }
         }
-        return line;
+        return line.toString();
     }
 }
