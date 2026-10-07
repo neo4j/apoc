@@ -29,6 +29,7 @@ import static java.util.Collections.singletonMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 import static org.neo4j.graphdb.RelationshipType.withName;
@@ -55,8 +56,10 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
+import org.neo4j.graphdb.Result;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
@@ -386,6 +389,20 @@ class NodesTest {
         db.executeTransactionally("MATCH (n:Foo) WITH collect(n) as nodes CALL apoc.nodes.link(nodes,'BAR') RETURN 1");
         TestUtil.testCall(
                 db, "MATCH (n:Foo)-[r]->() RETURN count(r) as count", row -> assertEquals(2L, row.get("count")));
+    }
+
+    @Test
+    void deleteWithInvalidBatchSize() {
+        db.executeTransactionally("CREATE (:Foo)");
+        for (long batchSize : new long[] {0L, -1L, 4294967296L}) {
+            QueryExecutionException e = assertThrows(
+                    QueryExecutionException.class,
+                    () -> db.executeTransactionally(
+                            "MATCH (n:Foo) WITH collect(n) AS nodes CALL apoc.nodes.delete(nodes, $b) YIELD value RETURN value",
+                            Map.of("b", batchSize),
+                            Result::resultAsString));
+            assertTrue(e.getMessage().contains("batchSize parameter must be between 1 and"));
+        }
     }
 
     @Test
