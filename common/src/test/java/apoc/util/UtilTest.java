@@ -19,6 +19,8 @@
 package apoc.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_KEY;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_LABEL_EXISTENCE;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_PROPERTY_EXISTENCE;
@@ -37,6 +39,9 @@ import static org.neo4j.graphdb.schema.IndexType.RANGE;
 import static org.neo4j.graphdb.schema.IndexType.TEXT;
 import static org.neo4j.graphdb.schema.IndexType.VECTOR;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,6 +50,52 @@ import org.neo4j.graphdb.schema.ConstraintType;
 import org.neo4j.graphdb.schema.IndexType;
 
 class UtilTest {
+
+    @Test
+    void handleRedirectResolvesRelativeLocationAgainstOriginalUrl() throws Exception {
+        HttpURLConnection mockCon = mock(HttpURLConnection.class);
+        when(mockCon.getResponseCode()).thenReturn(302);
+        when(mockCon.getHeaderField("Location")).thenReturn("/relative/path");
+        // con.getURL() reflects the IP-pinned connection URL (see ApocConfig#checkAllowedUrlAndPinToIP /
+        // WebURLAccessRule#substituteHostByIP), which must NOT be used as the base for resolving the
+        // relative Location - otherwise the next hop inherits the pinned IP instead of the original host.
+        when(mockCon.getURL()).thenReturn(new URL("https://93.184.216.34/old/path"));
+
+        String resolved = Util.handleRedirect(mockCon, "https://example.com/old/path");
+
+        assertEquals("https://example.com/relative/path", resolved);
+    }
+
+    @Test
+    void handleRedirectResolvesAbsoluteLocationRegardlessOfBase() throws Exception {
+        HttpURLConnection mockCon = mock(HttpURLConnection.class);
+        when(mockCon.getResponseCode()).thenReturn(302);
+        when(mockCon.getHeaderField("Location")).thenReturn("https://other.example.com/new/path");
+        when(mockCon.getURL()).thenReturn(new URL("https://93.184.216.34/old/path"));
+
+        String resolved = Util.handleRedirect(mockCon, "https://example.com/old/path");
+
+        assertEquals("https://other.example.com/new/path", resolved);
+    }
+
+    @Test
+    void handleRedirectReturnsOriginalUrlWhenNotHttpConnection() throws Exception {
+        URLConnection mockCon = mock(URLConnection.class);
+
+        String resolved = Util.handleRedirect(mockCon, "https://example.com/old/path");
+
+        assertEquals("https://example.com/old/path", resolved);
+    }
+
+    @Test
+    void handleRedirectReturnsOriginalUrlWhenNotRedirect() throws Exception {
+        HttpURLConnection mockCon = mock(HttpURLConnection.class);
+        when(mockCon.getResponseCode()).thenReturn(200);
+
+        String resolved = Util.handleRedirect(mockCon, "https://example.com/old/path");
+
+        assertEquals("https://example.com/old/path", resolved);
+    }
 
     /**
      * If any new constraints or indexes are added, this test will fail.

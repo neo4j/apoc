@@ -385,10 +385,10 @@ public class Util {
         writer.close();
     }
 
-    private static String handleRedirect(URLConnection con, String url) throws IOException {
+    static String handleRedirect(URLConnection con, String url) throws IOException {
         if (!(con instanceof HttpURLConnection)) return url;
         if (!isRedirect(((HttpURLConnection) con))) return url;
-        return new URL(con.getURL(), con.getHeaderField("Location")).toString();
+        return new URL(new URL(url), con.getHeaderField("Location")).toString();
     }
 
     public static CountingInputStream openInputStream(
