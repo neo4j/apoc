@@ -140,10 +140,10 @@ Apache-2.0
   jProcesses-1.6.5.jar
   jackson-annotations-2.22.jar
   jackson-core-2.22.3.jar
-  jackson-core-3.1.0.jar
+  jackson-core-3.2.3.jar
   jackson-databind-2.22.3.jar
-  jackson-databind-3.1.0.jar
-  jackson-dataformat-csv-3.1.0.jar
+  jackson-databind-3.2.3.jar
+  jackson-dataformat-csv-3.2.3.jar
   jackson-datatype-jsr310-2.22.3.jar
   jackson-jaxrs-base-2.22.3.jar
   jackson-jaxrs-json-provider-2.22.3.jar
