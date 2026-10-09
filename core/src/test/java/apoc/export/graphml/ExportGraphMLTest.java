@@ -1190,6 +1190,23 @@ class ExportGraphMLTest {
     }
 
     @Test
+    void testExportAllGraphMLStreamUsesThreadBoundTransaction() {
+        db.executeTransactionally("CREATE (:CommittedNode {name: 'committed'})");
+        try (var tx = db.beginTx()) {
+            tx.execute("CREATE (:UncommittedNode {name: 'uncommitted'})").close();
+            String data = (String)
+                    tx
+                            .execute("CALL apoc.export.graphml.all(null, {stream: true}) YIELD data " + "RETURN data")
+                            .stream()
+                            .map(row -> (String) row.get("data"))
+                            .collect(java.util.stream.Collectors.joining());
+
+            assertTrue(data.contains("CommittedNode"));
+            assertFalse(data.contains("UncommittedNode"));
+        }
+    }
+
+    @Test
     void testExportGraphmlAdminOperationErrorMessage() {
         String filename = "test.xml";
         List<String> invalidQueries =
