@@ -67,12 +67,15 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.logging.AssertableLogProvider;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
 
 @ImpermanentEnterpriseDbmsExtension(configurationCallback = "configure")
 class CypherTest {
+
+    private static final AssertableLogProvider logProvider = new AssertableLogProvider();
 
     @Inject
     GraphDatabaseService db;
@@ -87,13 +90,17 @@ class CypherTest {
                 Timeboxed.class,
                 Strings.class,
                 HelperProcedures.class);
+        // apocConfig() is only available once the dbms has started
+        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
     }
 
     @ExtensionCallback
     void configure(TestDatabaseManagementServiceBuilder builder) {
         final var csvRoot = new File("src/test/resources").toPath().toAbsolutePath();
-        apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
-        builder.setConfig(GraphDatabaseSettings.allow_file_urls, true)
+        builder.setUserLogProvider(logProvider)
+                .setInternalLogProvider(logProvider)
+                .setConfig(GraphDatabaseSettings.log_queries_obfuscate_literals, true)
+                .setConfig(GraphDatabaseSettings.allow_file_urls, true)
                 .setConfig(GraphDatabaseSettings.load_csv_file_url_root, csvRoot);
     }
 
@@ -208,6 +215,22 @@ class CypherTest {
                 "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(10000)', null, $timeout)",
                 singletonMap("timeout", 100),
                 Result::hasNext));
+    }
+
+    @Test
+    void testRunTimeboxedTerminatedQueryIsLoggedWithLiteralsObfuscated() {
+        final String secret = "s3cr3t!";
+        final String innerQuery =
+                "UNWIND range(1, 1000000000) AS x WITH x, '" + secret + "' AS password WHERE x < 0 RETURN password";
+
+        db.executeTransactionally(
+                "CALL apoc.cypher.runTimeboxed($innerQuery, null, 100)",
+                Map.of("innerQuery", innerQuery),
+                Result::resultAsString);
+
+        await().atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> assertThat(logProvider.serialize()).contains("has been terminated"));
+        assertThat(logProvider.serialize()).doesNotContain(secret);
     }
 
     @Test
