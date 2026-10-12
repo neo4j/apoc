@@ -21,8 +21,10 @@ package apoc.cypher;
 import static apoc.util.Util.toBoolean;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import apoc.ApocConfig;
 import apoc.Pools;
 import apoc.result.CypherStatementMapResult;
+import apoc.util.LogsUtil;
 import apoc.util.Util;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -30,6 +32,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.neo4j.configuration.GraphDatabaseSettings;
+import org.neo4j.cypher.internal.CypherVersion;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
@@ -62,12 +66,25 @@ public class Timeboxed {
     public Pools pools;
 
     @Context
+    public ApocConfig apocConfig;
+
+    @Context
     public TerminationGuard terminationGuard;
 
     @Context
     public ProcedureCallContext procedureCallContext;
 
     private static final Map<String, Object> POISON = Collections.singletonMap("__magic", "POISON");
+
+    String sanitizedCypher(String cypher) {
+        final var neo4jConfig = apocConfig.getNeo4jConfig();
+        final var defaultLanguage =
+                switch (neo4jConfig.get(GraphDatabaseSettings.default_language)) {
+                    case Cypher5 -> CypherVersion.Cypher5;
+                    case Cypher25 -> CypherVersion.Cypher25;
+                };
+        return LogsUtil.sanitizeQuery(neo4jConfig, cypher, defaultLanguage);
+    }
 
     @NotThreadSafe
     @Procedure("apoc.cypher.runTimeboxed")
@@ -128,7 +145,7 @@ public class Timeboxed {
                 }
                 innerTx.commit();
             } catch (TransactionTerminatedException e) {
-                log.warn("query " + cypher + " has been terminated");
+                log.warn("query " + sanitizedCypher(cypher) + " has been terminated");
                 if (appendStatusRow || failOnError) {
                     Map<String, Object> map = statusMap(false, true, null);
                     offerToQueue(queue, map, timeout);
