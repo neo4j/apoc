@@ -134,6 +134,8 @@ tasks.downloadLicenses.configure {
   jsonDestination = licenseReportDir
   htmlDestination = licenseReportDir
   xmlDestination = licenseReportDir
+  // The plugin doesn't track resolved dependencies, so a version bump would otherwise reuse a stale report.
+  outputs.upToDateWhen { false }
 }
 
 tasks.downloadLicenses.ext.licenseToDependencyJson = {
@@ -169,79 +171,67 @@ tasks.register("validateLicenses") {
 }
 tasks.check.dependsOn tasks.validateLicenses
 
+// Renders the contents of LICENSES.txt and NOTICE.txt from the downloadLicenses report, keyed by file name.
+def renderLicensesFiles = {
+  ->
+  def licenseGroups = tasks.downloadLicenses.licenseToDependencyJson().licences.sort { it.name }
+
+  def licensesText = new StringBuilder(rootProject.file("$publicDir/licenses/headers/LICENSES-header.txt").text)
+  licenseGroups.findAll { lic ->
+    allowList.any {
+      lic.name == it.name
+    }
+  }.each {
+    licensesText << '\n\n'
+    licensesText << "------------------------------------------------------------------------------\n"
+    licensesText << "$it.name\n"
+    it.dependencies.sort { it }.each { licensesText << "  $it\n" }
+    licensesText << "------------------------------------------------------------------------------\n"
+    licensesText << '\n'
+    licensesText << rootProject.file("$project.rootDir/licenses/text/$it.name").text
+  }
+
+  def noticeText = new StringBuilder(rootProject.file("$publicDir/licenses/headers/NOTICE-header.txt").text)
+  noticeText << '\n\n'
+  noticeText << "Third-party licenses\n"
+  noticeText << "--------------------\n"
+  licenseGroups.each {
+    noticeText << '\n'
+    noticeText << "$it.name\n"
+    it.dependencies.sort { it }.each { noticeText << "  $it\n" }
+  }
+
+  ['LICENSES.txt': licensesText.toString(), 'NOTICE.txt': noticeText.toString()]
+}
+
 tasks.register("generateLicensesFiles") {
   group = 'license'
   description = 'Generates a LICENSES and NOTICE file with 3rd-party dependency license information'
 
   dependsOn tasks.downloadLicenses, tasks.validateLicenses
 
-  def licenseFile = "$tasks.downloadLicenses.jsonDestination/LICENSES.txt"
-  def noticesFile = "$tasks.downloadLicenses.jsonDestination/NOTICE.txt"
-
-  ext.licensesFile = file(licenseFile)
-  ext.noticeFile = file(noticesFile)
-  outputs.file(ext.licensesFile)
-  outputs.file(ext.noticeFile)
   doLast {
-    // LICENSES.txt
-    licensesFile.createNewFile()
-    licensesFile.text = rootProject.file("$publicDir/licenses/headers/LICENSES-header.txt").text
+    renderLicensesFiles().each { name, text -> file("$project.rootDir/$name").text = text }
+  }
+}
 
-    tasks.downloadLicenses.licenseToDependencyJson().licences
-      .findAll { lic -> allowList.any { lic.name == it.name }}
-      .sort { it.name }.each {
-        licensesFile << '\n\n'
-        licensesFile << "------------------------------------------------------------------------------\n"
-        licensesFile << "$it.name\n"
-        it.dependencies.sort { it }.each { licensesFile << "  $it\n" }
-        licensesFile << "------------------------------------------------------------------------------\n"
-        licensesFile << '\n'
-        licensesFile << rootProject.file("$project.rootDir/licenses/text/$it.name").text
-      }
+tasks.register("verifyLicensesFiles") {
+  group = 'license'
+  description = 'Fails if LICENSES.txt or NOTICE.txt are out of date with the 3rd-party dependencies'
 
-    // NOTICE.txt
-    noticeFile.createNewFile()
-    noticeFile.text = rootProject.file("$publicDir/licenses/headers/NOTICE-header.txt").text
-    noticeFile << '\n\n'
-    noticeFile << "Third-party licenses\n"
-    noticeFile << "--------------------\n"
-    tasks.downloadLicenses.licenseToDependencyJson().licences.sort { it.name }.each {
-      noticeFile << '\n'
-      noticeFile << "$it.name\n"
-      it.dependencies.sort { it }.each { noticeFile << "  $it\n" }
-    }
+  dependsOn tasks.downloadLicenses
 
-    // Compare this file to what we have stored already, fail if they differ so that the PR fails and we are forced
-    // to update it instead!
-    File storedLicenseFile = new File("$project.rootDir/LICENSES.txt")
-    boolean throwError = false
+  doLast {
+    def stale = renderLicensesFiles().findAll { name, text ->
+      def stored = file("$project.rootDir/$name")
+      !stored.exists() || stored.readLines() != text.readLines()
+    }.keySet()
 
-    if (licensesFile.readLines().size() != storedLicenseFile.readLines().size()) {
-      throwError = true
-    }
-
-    for (def i = 0; i < licensesFile.readLines().size(); i++) {
-      if (throwError) break
-        if (licensesFile.readLines().get(i) != storedLicenseFile.readLines().get(i)) {
-          throwError = true
-        }
-    }
-
-    // Copy files to root project so they can be tracked
-    copy {
-      from licenseFile
-      into "$project.rootDir"
-    }
-    copy {
-      from noticesFile
-      into "$project.rootDir"
-    }
-
-    // Throw after copy task gets run and the file is updated ready for commit :)
-    // Note: You might need to do a `./gradlew clean` first if your file isn't updating!
-    if (throwError) {
-      throw new GradleException("The LICENSES.txt file has updated depenencies, please update by running `./gradlew generateLicensesFiles` and committing the changes.")
+    if (stale) {
+      throw new GradleException("${stale.join(' and ')} ${stale.size() == 1 ? 'is' : 'are'} out of date with the project's dependencies. " +
+      "Run `./gradlew generateLicensesFiles` and commit the result.")
     }
   }
 }
-tasks.check.dependsOn tasks.generateLicensesFiles
+
+tasks.check.dependsOn tasks.verifyLicensesFiles
