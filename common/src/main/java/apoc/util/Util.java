@@ -366,7 +366,7 @@ public class Util {
         boolean isRedirectCode =
                 responseCode >= 300 && responseCode <= 307 && responseCode != 306 && responseCode != HTTP_NOT_MODIFIED;
         if (isRedirectCode) {
-            URL location = new URL(con.getHeaderField("Location"));
+            URL location = new URL(con.getURL(), con.getHeaderField("Location"));
             String oldProtocol = con.getURL().getProtocol();
             String protocol = location.getProtocol();
             if (!protocol.equals(oldProtocol)
@@ -385,10 +385,10 @@ public class Util {
         writer.close();
     }
 
-    private static String handleRedirect(URLConnection con, String url) throws IOException {
+    static String handleRedirect(URLConnection con, String url) throws IOException {
         if (!(con instanceof HttpURLConnection)) return url;
         if (!isRedirect(((HttpURLConnection) con))) return url;
-        return con.getHeaderField("Location");
+        return new URL(new URL(url), con.getHeaderField("Location")).toString();
     }
 
     public static CountingInputStream openInputStream(

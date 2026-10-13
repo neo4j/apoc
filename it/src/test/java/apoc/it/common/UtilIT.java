@@ -134,6 +134,48 @@ class UtilIT {
     }
 
     @Test
+    void isRedirectResolvesRelativeLocation() throws Exception {
+        HttpURLConnection mockCon = mock(HttpURLConnection.class);
+        when(mockCon.getResponseCode()).thenReturn(302);
+        when(mockCon.getHeaderField("Location")).thenReturn("/relative/path");
+        when(mockCon.getURL()).thenReturn(new URL("https://example.com/old/path"));
+
+        Assertions.assertTrue(Util.isRedirect(mockCon));
+    }
+
+    @Test
+    void isRedirectResolvesProtocolRelativeLocation() throws Exception {
+        HttpURLConnection mockCon = mock(HttpURLConnection.class);
+        when(mockCon.getResponseCode()).thenReturn(302);
+        when(mockCon.getHeaderField("Location")).thenReturn("//other.example.com/path");
+        when(mockCon.getURL()).thenReturn(new URL("https://example.com/old/path"));
+
+        Assertions.assertTrue(Util.isRedirect(mockCon));
+    }
+
+    @Test
+    void redirectWithProtocolRelativeLocationIsResolvedAndFollowed() throws Exception {
+        URLAccessChecker mockChecker = mock(URLAccessChecker.class);
+        GenericContainer targetServer = setUpServer("https://www.google.com");
+        URL targetUrl = getServerUrl(targetServer);
+
+        // protocol-relative Location (no scheme) must resolve against the first hop's scheme, not fail parsing
+        httpServer = setUpServer("//" + targetUrl.getAuthority());
+        URL url = getServerUrl(httpServer);
+        when(mockChecker.checkURL(any()))
+                .thenAnswer((Answer<URL>) invocation -> (URL) invocation.getArguments()[0]);
+
+        try {
+            String page = IOUtils.toString(
+                    Util.openInputStream(url.toString(), null, null, null, mockChecker), StandardCharsets.UTF_8);
+
+            Assertions.assertTrue(page.contains("<title>Google</title>"));
+        } finally {
+            targetServer.stop();
+        }
+    }
+
+    @Test
     void shouldFailForExceedingRedirectLimit() throws Exception {
         URLAccessChecker mockChecker = mock(URLAccessChecker.class);
         httpServer = setUpServer("https://127.0.0.0");
