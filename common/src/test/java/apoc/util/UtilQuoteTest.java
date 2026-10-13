@@ -68,4 +68,16 @@ class UtilQuoteTest {
         final String expectedIdentifier = shouldAvoidQuote ? identifier : '`' + identifier + '`';
         assertEquals(expectedIdentifier, Util.quoteIdentifierSafely(identifier));
     }
+
+    @ParameterizedTest(name = "should double embedded backticks for identifier=''{0}''")
+    @MethodSource("backtickParameters")
+    void shouldEscapeEmbeddedBackticks(String identifier, String expected) {
+        assertEquals(expected, Util.quoteIdentifierSafely(identifier));
+    }
+
+    static Stream<Arguments> backtickParameters() {
+        return Stream.of(
+                Arguments.of("a`b", "`a``b`"),
+                Arguments.of("Normal`; CREATE USER x; //", "`Normal``; CREATE USER x; //`"));
+    }
 }

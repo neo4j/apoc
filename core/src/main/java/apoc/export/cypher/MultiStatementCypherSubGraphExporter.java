@@ -25,6 +25,7 @@ import static apoc.export.cypher.formatter.CypherFormatterUtils.UNIQUE_ID_PROP;
 import apoc.export.cypher.formatter.CypherFormat;
 import apoc.export.cypher.formatter.CypherFormatter;
 import apoc.export.cypher.formatter.CypherFormatterUtils;
+import apoc.export.cypher.formatter.CypherShellGuardWriter;
 import apoc.export.util.ExportConfig;
 import apoc.export.util.ExportFormat;
 import apoc.export.util.ProgressReporter;
@@ -92,10 +93,10 @@ public class MultiStatementCypherSubGraphExporter {
         int batchSize = config.getBatchSize();
         ExportConfig.OptimizationType useOptimizations = config.getOptimizationType();
 
-        PrintWriter schemaWriter = cypherFileManager.getPrintWriter("schema");
-        PrintWriter nodesWriter = cypherFileManager.getPrintWriter("nodes");
-        PrintWriter relationshipsWriter = cypherFileManager.getPrintWriter("relationships");
-        PrintWriter cleanupWriter = cypherFileManager.getPrintWriter("cleanup");
+        PrintWriter schemaWriter = guard(cypherFileManager.getPrintWriter("schema"));
+        PrintWriter nodesWriter = guard(cypherFileManager.getPrintWriter("nodes"));
+        PrintWriter relationshipsWriter = guard(cypherFileManager.getPrintWriter("relationships"));
+        PrintWriter cleanupWriter = guard(cypherFileManager.getPrintWriter("cleanup"));
 
         switch (useOptimizations) {
             case NONE:
@@ -129,7 +130,7 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     public void exportOnlySchema(ExportFileManager cypherFileManager, ProgressReporter reporter, ExportConfig config) {
-        PrintWriter schemaWriter = cypherFileManager.getPrintWriter("schema");
+        PrintWriter schemaWriter = guard(cypherFileManager.getPrintWriter("schema"));
         exportSchema(schemaWriter, config);
         schemaWriter.close();
         reporter.done();
@@ -259,7 +260,7 @@ public class MultiStatementCypherSubGraphExporter {
         }
         commit(out);
         if (graph.getIndexes().iterator().hasNext()) {
-            out.print(this.exportFormat.indexAwait(this.exportConfig.getAwaitForIndexes()));
+            CypherShellGuardWriter.append(out, this.exportFormat.indexAwait(this.exportConfig.getAwaitForIndexes()));
         }
         schemaAwait(out);
         out.flush();
@@ -394,12 +395,16 @@ public class MultiStatementCypherSubGraphExporter {
 
     // ---- Common ----
 
+    private PrintWriter guard(PrintWriter out) {
+        return exportFormat == ExportFormat.CYPHER_SHELL ? new CypherShellGuardWriter(out) : out;
+    }
+
     public void begin(PrintWriter out) {
-        out.print(exportFormat.begin());
+        CypherShellGuardWriter.append(out, exportFormat.begin());
     }
 
     private void schemaAwait(PrintWriter out) {
-        out.print(exportFormat.schemaAwait());
+        CypherShellGuardWriter.append(out, exportFormat.schemaAwait());
     }
 
     private void restart(PrintWriter out) {
@@ -408,7 +413,7 @@ public class MultiStatementCypherSubGraphExporter {
     }
 
     public void commit(PrintWriter out) {
-        out.print(exportFormat.commit());
+        CypherShellGuardWriter.append(out, exportFormat.commit());
     }
 
     private void gatherUniqueConstraints() {

@@ -540,7 +540,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
     private void writeBatchEnd(ExportConfig exportConfig, PrintWriter out, AtomicInteger batchCount) {
         if (isBatchMatch(exportConfig, batchCount)) {
-            out.append(exportConfig.getFormat().commit());
+            CypherShellGuardWriter.append(out, exportConfig.getFormat().commit());
         }
     }
 
@@ -570,13 +570,13 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
 
     private void addCommitToEnd(ExportConfig exportConfig, PrintWriter out, AtomicInteger batchCount) {
         if (batchCount.get() % exportConfig.getBatchSize() != 0) {
-            out.append(exportConfig.getFormat().commit());
+            CypherShellGuardWriter.append(out, exportConfig.getFormat().commit());
         }
     }
 
     private void writeBatchBegin(ExportConfig exportConfig, PrintWriter out, AtomicInteger batchCount) {
         if (isBatchMatch(exportConfig, batchCount)) {
-            out.append(exportConfig.getFormat().begin());
+            CypherShellGuardWriter.append(out, exportConfig.getFormat().begin());
         }
     }
 
@@ -586,7 +586,7 @@ abstract class AbstractCypherFormatter implements CypherFormatter {
                             && exportConfig.getOptimizationType() == ExportConfig.OptimizationType.UNWIND_BATCH_PARAMS)
                     ? ":param rows => ["
                     : "UNWIND [";
-            out.append(start);
+            CypherShellGuardWriter.append(out, start);
         }
     }
 

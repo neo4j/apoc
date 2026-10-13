@@ -1119,6 +1119,53 @@ public class ExportCypherTest {
     }
 
     @Test
+    void exportEscapesBackticksInLabelTypeAndKey() {
+        db.executeTransactionally("CREATE (:`Normal``; MATCH (n) DETACH DELETE n; //`)"
+                + "-[:`KNOWS``; CREATE USER x; //`]->(:Other {`key``; DROP USER y; //`: 'v'})");
+
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map("query", "MATCH (n)-[r]->(m) RETURN n, r, m", "file", null, "config", map()),
+                r -> {
+                    String cypher = (String) r.get("cypherStatements");
+                    assertTrue(cypher.contains("`Normal``; MATCH (n) DETACH DELETE n; //`"));
+                    assertTrue(cypher.contains("`KNOWS``; CREATE USER x; //`"));
+                    assertTrue(cypher.contains("`key``; DROP USER y; //`"));
+                });
+    }
+
+    private static final String NEWLINE_DIRECTIVE_LABEL_QUERY =
+            "CREATE (:`Normal``;\n:commit\nCREATE USER backdoor;\n:begin\n//`)";
+
+    @Test
+    void exportCypherShellRejectsLabelThatWouldInjectDirectives() {
+        db.executeTransactionally(NEWLINE_DIRECTIVE_LABEL_QUERY);
+
+        Exception e = assertThrows(
+                Exception.class,
+                () -> TestUtil.testCall(
+                        db,
+                        exportQuery,
+                        map("query", "MATCH (n) RETURN n", "file", null, "config", map("format", "cypher-shell")),
+                        r -> {}));
+        Throwable root = e;
+        while (root.getCause() != null) root = root.getCause();
+        assertTrue(String.valueOf(root.getMessage()).contains("cypher-shell"), e.getMessage());
+    }
+
+    @Test
+    void exportOtherFormatsAllowLabelWithNewlines() {
+        db.executeTransactionally(NEWLINE_DIRECTIVE_LABEL_QUERY);
+
+        TestUtil.testCall(
+                db,
+                exportQuery,
+                map("query", "MATCH (n) RETURN n", "file", null, "config", map("format", "plain")),
+                r -> assertTrue(((String) r.get("cypherStatements")).contains(":commit")));
+    }
+
+    @Test
     void shouldExportFulltextIndexForRelationship() {
         // given
         createFullTextRelIndex();
