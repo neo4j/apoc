@@ -28,21 +28,24 @@ import static apoc.util.MapUtil.map;
 import static apoc.util.TestUtil.testCall;
 import static apoc.util.TestUtil.testResult;
 import static apoc.util.TransactionTestUtil.checkTerminationGuard;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockserver.integration.ClientAndServer.startClientAndServer;
-import static org.mockserver.matchers.Times.exactly;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 import apoc.util.CompressionAlgo;
 import apoc.util.JsonUtil;
 import apoc.util.TestUtil;
 import apoc.util.Util;
 import apoc.util.collection.Iterators;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
@@ -60,9 +63,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.Header;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.QueryExecutionException;
@@ -74,7 +74,7 @@ import org.neo4j.test.extension.Inject;
 @EnterpriseDbmsExtension(configurationCallback = "configure", createDatabasePerTest = false)
 class LoadJsonTest {
 
-    private static ClientAndServer mockServer;
+    private static WireMockServer mockServer;
     private HttpServer server;
 
     @Inject
@@ -87,7 +87,8 @@ class LoadJsonTest {
 
     @BeforeAll
     void startServer() {
-        mockServer = startClientAndServer(1080);
+        mockServer = new WireMockServer(WireMockConfiguration.options().port(1080));
+        mockServer.start();
     }
 
     @BeforeAll
@@ -102,6 +103,7 @@ class LoadJsonTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        mockServer.resetAll();
         apocConfig().setProperty(APOC_IMPORT_FILE_ENABLED, true);
         apocConfig().setProperty(APOC_IMPORT_FILE_USE_NEO4J_CONFIG, false);
         apocConfig().setProperty("apoc.json.zip.url", "http://localhost:5353/testload.zip?raw=true!person.json");
@@ -412,13 +414,13 @@ class LoadJsonTest {
         String token = Util.encodeUserColonPassToBase64(userPass);
         Map<String, String> responseBody = Map.of("result", "message");
 
-        new MockServerClient("localhost", 1080)
-                .when(request().withPath("/docs/search").withHeader("Authorization", "Basic " + token), exactly(1))
-                .respond(response()
-                        .withStatusCode(200)
-                        .withHeaders(new Header("Cache-Control", "private, max-age=1000"))
+        mockServer.stubFor(get(urlPathEqualTo("/docs/search"))
+                .withHeader("Authorization", equalTo("Basic " + token))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Cache-Control", "private, max-age=1000")
                         .withBody(JsonUtil.OBJECT_MAPPER.writeValueAsString(responseBody))
-                        .withDelay(TimeUnit.SECONDS, 1));
+                        .withFixedDelay((int) TimeUnit.SECONDS.toMillis(1))));
 
         testCall(
                 db,
@@ -433,22 +435,16 @@ class LoadJsonTest {
         String token = Util.encodeUserColonPassToBase64(userPass);
         Map<String, String> responseBody = Map.of("result", "message");
 
-        new MockServerClient("localhost", 1080)
-                .when(
-                        request()
-                                .withMethod("POST")
-                                .withPath("/docs/search")
-                                .withHeader("Authorization", "Basic " + token)
-                                .withHeader("Content-type", "application/json")
-                                .withBody("{\"query\":\"pagecache\",\"version\":\"3.5\"}"),
-                        exactly(1))
-                .respond(response()
-                        .withStatusCode(200)
-                        .withHeaders(
-                                new Header("Content-Type", "application/json"),
-                                new Header("Cache-Control", "public, max-age=86400"))
+        mockServer.stubFor(post(urlPathEqualTo("/docs/search"))
+                .withHeader("Authorization", equalTo("Basic " + token))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .withRequestBody(equalTo("{\"query\":\"pagecache\",\"version\":\"3.5\"}"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withHeader("Cache-Control", "public, max-age=86400")
                         .withBody(JsonUtil.OBJECT_MAPPER.writeValueAsString(responseBody))
-                        .withDelay(TimeUnit.SECONDS, 1));
+                        .withFixedDelay((int) TimeUnit.SECONDS.toMillis(1))));
 
         testCall(
                 db,
@@ -465,20 +461,14 @@ class LoadJsonTest {
 
     @Test
     void testLoadJsonParams() {
-        new MockServerClient("localhost", 1080)
-                .when(
-                        request()
-                                .withMethod("POST")
-                                .withPath("/docs/search")
-                                .withHeader("Content-type", "application/json"),
-                        exactly(1))
-                .respond(response()
-                        .withStatusCode(200)
-                        .withHeaders(
-                                new Header("Content-Type", "application/json"),
-                                new Header("Cache-Control", "public, max-age=86400"))
+        mockServer.stubFor(post(urlPathEqualTo("/docs/search"))
+                .withHeader("Content-Type", equalTo("application/json"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withHeader("Cache-Control", "public, max-age=86400")
                         .withBody("{ result: 'message' }")
-                        .withDelay(TimeUnit.SECONDS, 1));
+                        .withFixedDelay((int) TimeUnit.SECONDS.toMillis(1))));
 
         testCall(
                 db,
