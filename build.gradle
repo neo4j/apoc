@@ -1,6 +1,6 @@
 plugins {
   id("java-library")
-  id('com.gradleup.shadow') version '8.3.6'
+  id('com.gradleup.shadow') version '9.4.3'
   id("maven-publish")
   id("com.github.hierynomus.license-report") version "0.16.1"
   id("com.diffplug.spotless") version "6.24.0"
@@ -9,10 +9,10 @@ plugins {
 ext {
   publicDir = "${project.rootDir}"
   neo4jVersionEffective = project.findProperty("neo4jVersionOverride") ?: project.findProperty("neo4jVersion")
-  testContainersVersion = '2.0.2'
+  testContainersVersion = '2.0.5'
   apacheArrowVersion = '18.3.0'
-  guavaVersion = '33.5.0-jre'
-  awsSdkVersion = '2.34.0'
+  guavaVersion = '33.7.2-jre'
+  awsSdkVersion = '2.55.16'
 }
 
 downloadLicenses {
@@ -94,7 +94,7 @@ subprojects {
   apply plugin: 'java-library'
 
   dependencies {
-    testImplementation(platform("org.junit:junit-bom:6.1.1"))
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation('org.junit.jupiter:junit-jupiter')
 
     // We want the same netty version as other neo4j dependencies, are there better ways than to keep this in sync?
@@ -109,7 +109,7 @@ subprojects {
       implementation('org.apache.avro:avro:1.11.5') {
         because 'CVE-2025-33042'
       }
-      implementation('com.google.guava:guava:33.5.0-jre') {
+      implementation('com.google.guava:guava:33.7.2-jre') {
         because 'CVE-2020-8908, CVE-2023-2976'
       }
       implementation('org.apache.zookeeper:zookeeper:3.8.6') {
@@ -120,9 +120,6 @@ subprojects {
       }
       implementation('tools.jackson.core:jackson-core:3.2.3') {
         because 'GHSA-72hv-8253-57qq'
-      }
-      implementation('org.eclipse.jetty:jetty-server:12.0.32') {
-        because 'CVE-2026-1605'
       }
       implementation('io.opentelemetry:opentelemetry-api:1.62.0') {
         because 'CVE-2026-45292'
