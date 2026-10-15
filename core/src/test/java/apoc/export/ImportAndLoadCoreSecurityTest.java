@@ -288,16 +288,22 @@ class ImportAndLoadCoreSecurityTest {
     }
 
     private void assertIpAddressBlocked(String apocProcedure) {
-        Stream.of("https", "http", "ftp").forEach(protocol -> {
-            String url = String.format("%s://127.168.0.0/test.file", protocol);
-            QueryExecutionException e = assertThrows(
-                    QueryExecutionException.class,
-                    () -> testCall(db, apocProcedure, Map.of("fileName", url), (r) -> {}));
-            assertTrue(
-                    e.getMessage()
-                            .contains(
-                                    "access to /127.168.0.0 is blocked via the configuration property internal.dbms.cypher_ip_blocklist"));
-        });
+        Stream.of(
+                        "https://127.168.0.0/test.file",
+                        "http://127.168.0.0/test.file",
+                        "ftp://127.168.0.0/test.file",
+                        "s3://accessKey:secretKey@127.168.0.0:9000/bucket/test.file",
+                        "s3://accessKey:secretKey@us-east-1.127.168.0.0/bucket/test.file",
+                        "hdfs://127.168.0.0:9000/test.file")
+                .forEach(url -> {
+                    QueryExecutionException e = assertThrows(
+                            QueryExecutionException.class,
+                            () -> testCall(db, apocProcedure, Map.of("fileName", url), (r) -> {}));
+                    assertTrue(
+                            e.getMessage()
+                                    .contains(
+                                            "access to /127.168.0.0 is blocked via the configuration property internal.dbms.cypher_ip_blocklist"));
+                });
     }
 
     private void assertImportDisabled(String apocProcedure, String fileName) {

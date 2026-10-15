@@ -29,6 +29,7 @@ import apoc.export.util.CountingInputStream;
 import apoc.export.util.CountingReader;
 import apoc.export.util.ExportConfig;
 import apoc.util.hdfs.HDFSUtils;
+import apoc.util.s3.S3ParamsExtractor;
 import apoc.util.s3.S3URLConnection;
 import apoc.util.s3.S3UploadUtils;
 import java.io.BufferedOutputStream;
@@ -90,8 +91,10 @@ public class FileUtils {
             throws IOException, URLAccessValidationError, URISyntaxException {
         switch (protocol) {
             case s3:
+                checkRemoteStorageUrl(protocol, urlAddress, urlAccessChecker);
                 return FileUtils.openS3InputStream(urlAddress);
             case hdfs:
+                checkRemoteStorageUrl(protocol, urlAddress, urlAccessChecker);
                 return FileUtils.openHdfsInputStream(urlAddress);
             case ftp:
             case http:
@@ -106,6 +109,29 @@ public class FileUtils {
                     return new StreamConnection.FileStreamConnection(getLoadFileUrl(urlAddress, urlAccessChecker));
                 }
         }
+    }
+
+    /**
+     * Validates, via the {@link URLAccessChecker}, the host that will really be contacted for s3 and hdfs urls.
+     * For s3 this is the endpoint obtained after {@link S3ParamsExtractor} transformations.
+     * Other protocols are a no-op.
+     */
+    public static void checkRemoteStorageUrl(
+            SupportedProtocols protocol, String urlAddress, URLAccessChecker urlAccessChecker)
+            throws URLAccessValidationError, MalformedURLException {
+        URI target;
+        switch (protocol) {
+            case s3 -> target = S3ParamsExtractor.extract(urlAddress).getEndpointUri();
+            case hdfs -> target = URI.create(urlAddress);
+            default -> {
+                return;
+            }
+        }
+        if (target == null || target.getHost() == null) {
+            // no custom endpoint (real AWS), or hdfs default namenode: nothing user-controlled to connect to
+            return;
+        }
+        urlAccessChecker.checkURL(new URL("https", target.getHost(), target.getPort(), "/"));
     }
 
     public static URLStreamHandler createURLStreamHandler(SupportedProtocols protocol) {

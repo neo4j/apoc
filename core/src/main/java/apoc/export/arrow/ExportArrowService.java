@@ -25,10 +25,12 @@ import static apoc.ApocConfig.apocConfig;
 import apoc.Pools;
 import apoc.result.ByteArrayResult;
 import apoc.result.ExportProgressInfo;
+import apoc.util.FileUtils;
 import java.util.stream.Stream;
 import org.neo4j.cypher.export.SubGraph;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Result;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.logging.Log;
 import org.neo4j.procedure.TerminationGuard;
 
@@ -56,12 +58,18 @@ public class ExportArrowService {
         }
     }
 
-    public Stream<ExportProgressInfo> file(String fileName, Object data, ArrowConfig config) {
+    public Stream<ExportProgressInfo> file(
+            String fileName, Object data, ArrowConfig config, URLAccessChecker urlAccessChecker) {
         // we cannot use apocConfig().checkWriteAllowed(..) because the error is confusing
         //  since it says "... use the `{stream:true}` config", but with arrow procedures the streaming mode is
         // implemented via different procedures
         if (!apocConfig().getBoolean(APOC_EXPORT_FILE_ENABLED)) {
             throw new RuntimeException(EXPORT_TO_FILE_ARROW_ERROR);
+        }
+        try {
+            FileUtils.checkRemoteStorageUrl(FileUtils.from(fileName), fileName, urlAccessChecker);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
         }
         if (data instanceof Result) {
             return new ExportResultFileStrategy(fileName, db, pools, terminationGuard, logger)

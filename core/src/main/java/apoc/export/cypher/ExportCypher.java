@@ -40,6 +40,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -53,6 +54,9 @@ import org.neo4j.procedure.TerminationGuard;
  * @since 22.05.16
  */
 public class ExportCypher {
+
+    @Context
+    public URLAccessChecker urlAccessChecker;
 
     @Context
     public GraphDatabaseService db;
@@ -248,7 +252,7 @@ public class ExportCypher {
             Function<Transaction, SubGraph> graph,
             ExportConfig c,
             boolean onlySchema) {
-        apocConfig.checkWriteAllowed(c, fileName);
+        apocConfig.checkWriteAllowed(c, fileName, urlAccessChecker);
 
         DataProgressInfo progressInfo = new DataProgressInfo(fileName, source, "cypher");
         progressInfo.batchSize = c.getBatchSize();

@@ -268,7 +268,7 @@ public class ExportGraphML {
             Function<Transaction, SubGraph> graph,
             ExportConfig exportConfig)
             throws Exception {
-        apocConfig.checkWriteAllowed(exportConfig, fileName);
+        apocConfig.checkWriteAllowed(exportConfig, fileName, urlAccessChecker);
         final String format = "graphml";
         ProgressReporter reporter = new ProgressReporter(null, null, new ExportProgressInfo(fileName, source, format));
         XmlGraphMLWriter exporter = new XmlGraphMLWriter();

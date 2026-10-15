@@ -18,6 +18,8 @@
  */
 package apoc.util.s3;
 
+import java.net.URI;
+
 public class S3Params {
 
     private final String accessKey;
@@ -59,6 +61,38 @@ public class S3Params {
 
     public String getEndpoint() {
         return endpoint;
+    }
+
+    /**
+     * @return the exact URI the AWS SDK will connect to, or null if no custom endpoint is set (i.e. real AWS)
+     */
+    public URI getEndpointUri() {
+        if (endpoint == null) {
+            return null;
+        }
+        if (endpoint.startsWith("http://") || endpoint.startsWith("https://")) {
+            return URI.create(endpoint);
+        }
+        return URI.create(S3URLConnection.getConfiguredProtocol() + "://" + endpoint);
+    }
+
+    /**
+     * @return true if there is no custom endpoint, or the endpoint is an official AWS one
+     */
+    public boolean isAwsEndpoint() {
+        URI uri = getEndpointUri();
+        if (uri == null) {
+            return true;
+        }
+        String host = uri.getHost();
+        if (host == null) {
+            return false;
+        }
+        host = host.toLowerCase();
+        return host.equals("amazonaws.com")
+                || host.endsWith(".amazonaws.com")
+                || host.equals("amazonaws.com.cn")
+                || host.endsWith(".amazonaws.com.cn");
     }
 
     public String getBucket() {
