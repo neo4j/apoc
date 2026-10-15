@@ -25,6 +25,7 @@ import apoc.util.Util;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -109,7 +110,7 @@ public class FileManagerFactory {
          */
         private static String sanitizeSuffix(String suffix) {
             StringBuilder sb = new StringBuilder();
-            for (byte b : suffix.getBytes(java.nio.charset.StandardCharsets.UTF_8)) {
+            for (byte b : suffix.getBytes(StandardCharsets.UTF_8)) {
                 char c = (char) (b & 0xFF);
                 if ((c >= 'a' && c <= 'z')
                         || (c >= 'A' && c <= 'Z')
