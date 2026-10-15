@@ -18,6 +18,7 @@
  */
 package apoc.trigger;
 
+import static apoc.util.MvccUtil.failIfMvcc;
 import static org.neo4j.configuration.GraphDatabaseSettings.SYSTEM_DATABASE_NAME;
 
 import apoc.util.Util;
@@ -46,6 +47,9 @@ public class TriggerNewProcedures {
     public static final String TRIGGER_BAD_TARGET_ERROR = "Triggers can only be installed on user databases.";
     public static final String DB_NOT_FOUND_ERROR = "The user database with name '%s' does not exist";
 
+    private static final String MVCC_DETAIL =
+            "Triggers rely on transaction event handlers, which are invoked per transaction chunk under MVCC.";
+
     @Context
     public GraphDatabaseAPI db;
 
@@ -69,6 +73,10 @@ public class TriggerNewProcedures {
         if (!db.databaseName().equals(SYSTEM_DATABASE_NAME)) {
             throw new RuntimeException(NON_SYS_DB_ERROR);
         }
+    }
+
+    private void checkNotMvcc(String databaseName, String procedureName) {
+        failIfMvcc(db, databaseName, procedureName, MVCC_DETAIL);
     }
 
     private void checkTargetDatabase(String databaseName) {
@@ -103,6 +111,7 @@ public class TriggerNewProcedures {
             @Name(value = "config", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> config) {
         checkInSystemWriter();
+        checkNotMvcc(databaseName, "apoc.trigger.install");
         checkTargetDatabase(databaseName);
         Map<String, Object> params = (Map) config.getOrDefault("params", Collections.emptyMap());
 
@@ -123,6 +132,7 @@ public class TriggerNewProcedures {
                     String databaseName,
             @Name(value = "name", description = "The name of the trigger to drop.") String name) {
         checkInSystemWriter();
+        checkNotMvcc(databaseName, "apoc.trigger.drop");
 
         return withUpdatingTransaction(
                 databaseName, tx -> Stream.ofNullable(TriggerHandlerNewProcedures.drop(db, databaseName, name, tx)));
@@ -137,6 +147,7 @@ public class TriggerNewProcedures {
             @Name(value = "databaseName", description = "The name of the database to drop the triggers from.")
                     String databaseName) {
         checkInSystemWriter();
+        checkNotMvcc(databaseName, "apoc.trigger.dropAll");
 
         return withUpdatingTransaction(
                 databaseName, tx -> TriggerHandlerNewProcedures.dropAll(db, databaseName, tx).stream()
@@ -153,6 +164,7 @@ public class TriggerNewProcedures {
                     String databaseName,
             @Name(value = "name", description = "The name of the trigger to drop.") String name) {
         checkInSystemWriter();
+        checkNotMvcc(databaseName, "apoc.trigger.stop");
 
         return withUpdatingTransaction(databaseName, tx -> {
             final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(db, databaseName, name, true, tx);
@@ -170,6 +182,7 @@ public class TriggerNewProcedures {
                     String databaseName,
             @Name(value = "name", description = "The name of the trigger to resume.") String name) {
         checkInSystemWriter();
+        checkNotMvcc(databaseName, "apoc.trigger.start");
 
         return withUpdatingTransaction(databaseName, tx -> {
             final TriggerInfo triggerInfo = TriggerHandlerNewProcedures.updatePaused(db, databaseName, name, false, tx);
@@ -186,6 +199,7 @@ public class TriggerNewProcedures {
             @Name(value = "databaseName", description = "The name of the database to show triggers on.")
                     String databaseName) {
         checkInSystem();
+        checkNotMvcc(databaseName, "apoc.trigger.show");
 
         return TriggerHandlerNewProcedures.getTriggerNodesList(databaseName, tx);
     }
