@@ -43,22 +43,18 @@ dependencies {
   // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
   // and remove the manual licensing check for it in licenses-3rdparties.gradle
   compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.2', withoutServers
-  compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.62.0'
-  compileOnly group: 'com.github.seancfoley', name: 'ipaddress', version: '5.5.1'
+  compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.75.0'
   compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.20.0'
 
   // These dependencies affect the tests only, they will not be packaged in the resulting .jar
   testImplementation project(':test-utils')
-  testImplementation platform("io.grpc:grpc-bom:1.78.0")
   testImplementation "com.neo4j:enterprise-it-test-support:$neo4jVersionEffective"
-  testImplementation group: 'com.github.stefanbirkner', name: 'system-rules', version: '1.19.0'
   testImplementation group: 'org.hamcrest', name: 'hamcrest', version: '3.0'
   testImplementation group: 'org.neo4j.community', name: 'it-test-support', version: neo4jVersionEffective // , classifier: "tests"
   testImplementation group: 'org.neo4j', name: 'log-test-utils', version: neo4jVersionEffective // , classifier: "tests"
   testImplementation group: 'org.neo4j', name: 'neo4j-kernel', version: neo4jVersionEffective, classifier: "tests"
-  testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.27.6'
-  testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.21.0'
-  testImplementation group: 'pl.pragmatists', name: 'JUnitParams', version: '1.1.1'
+  testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.27.7'
+  testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.24.0'
 
   constraints {
     // Remove when json-path has updated transitive dependency
