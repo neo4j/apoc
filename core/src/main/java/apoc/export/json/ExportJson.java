@@ -40,6 +40,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.procedure.Context;
 import org.neo4j.procedure.Description;
@@ -49,6 +50,9 @@ import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
 public class ExportJson {
+    @Context
+    public URLAccessChecker urlAccessChecker;
+
     @Context
     public Transaction tx;
 
@@ -186,7 +190,7 @@ public class ExportJson {
     private Stream<ExportProgressInfo> exportJson(
             String fileName, String source, Object data, Map<String, Object> config) {
         ExportConfig exportConfig = new ExportConfig(config);
-        apocConfig.checkWriteAllowed(exportConfig, fileName);
+        apocConfig.checkWriteAllowed(exportConfig, fileName, urlAccessChecker);
         final String format = "json";
         ProgressReporter reporter = new ProgressReporter(null, null, new ExportProgressInfo(fileName, source, format));
         JsonFormat exporter = new JsonFormat(db, getJsonFormat(config));

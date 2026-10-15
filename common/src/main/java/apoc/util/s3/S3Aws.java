@@ -22,7 +22,6 @@ import static apoc.export.util.LimitedSizeInputStream.toLimitedIStream;
 
 import apoc.util.StreamConnection;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Objects;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
@@ -44,8 +43,7 @@ public class S3Aws {
 
     public S3Aws(S3Params s3Params, String region) {
 
-        AwsCredentialsProvider credentialsProvider =
-                getCredentialsProvider(s3Params.getAccessKey(), s3Params.getSecretKey(), s3Params.getSessionToken());
+        AwsCredentialsProvider credentialsProvider = getCredentialsProvider(s3Params);
 
         S3ClientBuilder builder = S3Client.builder();
         builder.credentialsProvider(credentialsProvider)
@@ -59,14 +57,7 @@ public class S3Aws {
         region = Objects.nonNull(region) ? region : s3Params.getRegion();
         String endpoint = s3Params.getEndpoint();
         if (Objects.nonNull(endpoint)) {
-            URI endpointUri;
-            if (!endpoint.startsWith("http://") && !endpoint.startsWith("https://")) {
-                String protocol = S3URLConnection.getConfiguredProtocol();
-                endpointUri = URI.create(protocol + "://" + endpoint);
-            } else {
-                endpointUri = URI.create(endpoint);
-            }
-            builder.endpointOverride(endpointUri);
+            builder.endpointOverride(s3Params.getEndpointUri());
             if (region != null) {
                 builder.region(Region.of(region));
             }
@@ -112,8 +103,10 @@ public class S3Aws {
         };
     }
 
-    private static AwsCredentialsProvider getCredentialsProvider(
-            final String accessKey, final String secretKey, final String sessionToken) {
+    private static AwsCredentialsProvider getCredentialsProvider(S3Params s3Params) {
+        final String accessKey = s3Params.getAccessKey();
+        final String secretKey = s3Params.getSecretKey();
+        final String sessionToken = s3Params.getSessionToken();
 
         if (Objects.nonNull(accessKey) && !accessKey.isEmpty() && Objects.nonNull(secretKey) && !secretKey.isEmpty()) {
             final AwsCredentials credentials;
@@ -123,6 +116,11 @@ public class S3Aws {
                 credentials = AwsSessionCredentials.create(accessKey, secretKey, sessionToken);
             }
             return StaticCredentialsProvider.create(credentials);
+        }
+        // The server's ambient AWS credentials must never be sent to a non-AWS, user-supplied endpoint
+        if (!s3Params.isAwsEndpoint()) {
+            throw new IllegalArgumentException(
+                    "Explicit accessKey and secretKey are required when using a custom S3 endpoint");
         }
         return DefaultCredentialsProvider.create();
     }

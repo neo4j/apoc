@@ -39,6 +39,7 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.internal.kernel.api.procs.ProcedureCallContext;
 import org.neo4j.kernel.impl.coreapi.InternalTransaction;
 import org.neo4j.procedure.Context;
@@ -53,6 +54,9 @@ import org.neo4j.procedure.TerminationGuard;
  * @since 22.05.16
  */
 public class ExportCSV {
+    @Context
+    public URLAccessChecker urlAccessChecker;
+
     @Context
     public Transaction tx;
 
@@ -212,7 +216,7 @@ public class ExportCSV {
 
     private Stream<ExportProgressInfo> exportCsv(
             @Name("file") String fileName, String source, ExportData data, ExportConfig exportConfig) {
-        apocConfig.checkWriteAllowed(exportConfig, fileName);
+        apocConfig.checkWriteAllowed(exportConfig, fileName, urlAccessChecker);
         final String format = "csv";
         ExportProgressInfo progressInfo = new ExportProgressInfo(fileName, source, format);
         progressInfo.batchSize = exportConfig.getBatchSize();

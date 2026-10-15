@@ -33,6 +33,7 @@ import static org.neo4j.configuration.GraphDatabaseSettings.transaction_logs_roo
 import static org.neo4j.internal.helpers.ProcessUtils.executeCommandWithOutput;
 
 import apoc.export.util.ExportConfig;
+import apoc.util.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -335,6 +336,17 @@ public class ApocConfig extends LifecycleAdapter {
             isImportFileEnabled();
         } else {
             checkAllowedUrlAndPinToIP(url, urlAccessChecker);
+        }
+    }
+
+    public void checkWriteAllowed(ExportConfig exportConfig, String fileName, URLAccessChecker urlAccessChecker) {
+        checkWriteAllowed(exportConfig, fileName);
+        if (fileName != null && !fileName.isEmpty()) {
+            try {
+                FileUtils.checkRemoteStorageUrl(FileUtils.from(fileName), fileName, urlAccessChecker);
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
         }
     }
 

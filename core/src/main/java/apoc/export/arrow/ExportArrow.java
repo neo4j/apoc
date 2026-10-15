@@ -34,6 +34,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.security.URLAccessChecker;
 import org.neo4j.kernel.api.QueryLanguage;
 import org.neo4j.kernel.api.procedure.QueryLanguageScope;
 import org.neo4j.logging.Log;
@@ -45,6 +46,9 @@ import org.neo4j.procedure.Procedure;
 import org.neo4j.procedure.TerminationGuard;
 
 public class ExportArrow {
+
+    @Context
+    public URLAccessChecker urlAccessChecker;
 
     @Context
     public Transaction tx;
@@ -130,7 +134,7 @@ public class ExportArrow {
             @Name(value = "config", defaultValue = "{}", description = "{ batchSize = 2000 :: INTEGER }")
                     Map<String, Object> config) {
         return new ExportArrowService(db, pools, terminationGuard, logger)
-                .file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config));
+                .file(fileName, new DatabaseSubGraph(tx), new ArrowConfig(config), urlAccessChecker);
     }
 
     @NotThreadSafe
@@ -159,7 +163,7 @@ public class ExportArrow {
             throw new IllegalArgumentException("Supported inputs are VirtualGraph, Map");
         }
         return new ExportArrowService(db, pools, terminationGuard, logger)
-                .file(fileName, subGraph, new ArrowConfig(config));
+                .file(fileName, subGraph, new ArrowConfig(config), urlAccessChecker);
     }
 
     @NotThreadSafe
@@ -178,6 +182,6 @@ public class ExportArrow {
                 : (Map<String, Object>) config.getOrDefault("params", Collections.emptyMap());
         Result result = tx.execute(query, params);
         return new ExportArrowService(db, pools, terminationGuard, logger)
-                .file(fileName, result, new ArrowConfig(config));
+                .file(fileName, result, new ArrowConfig(config), urlAccessChecker);
     }
 }

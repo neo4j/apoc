@@ -122,7 +122,7 @@ public class S3ParamsExtractor {
         }
 
         if (endpoint != null) {
-            endpoint = endpoint.replaceAll(":443", "").replaceAll(":80", "");
+            endpoint = endpoint.replaceAll(":(443|80)$", "");
         }
 
         if (Objects.nonNull(endpoint) && endpoint.isEmpty()) {
