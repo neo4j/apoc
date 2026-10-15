@@ -121,6 +121,21 @@ class S3SsrfProtectionTest {
     }
 
     @Test
+    void hdfsWithoutBlockedHostIsAllowed() throws Exception {
+        URLAccessChecker checker = blocking("10.0.0.5");
+        FileUtils.checkRemoteStorageUrl(SupportedProtocols.hdfs, "hdfs://namenode.example.com:8020/file", checker);
+        verify(checker).checkURL(any(URL.class));
+    }
+
+    @Test
+    void hdfsWithUnparseableHostFailsClosed() {
+        URLAccessChecker checker = mock(URLAccessChecker.class);
+        assertThrows(
+                URLAccessValidationError.class,
+                () -> FileUtils.checkRemoteStorageUrl(SupportedProtocols.hdfs, "hdfs://bad_host:8020/file", checker));
+    }
+
+    @Test
     void realAwsAndOtherProtocolsAreNotChecked() throws Exception {
         URLAccessChecker checker = mock(URLAccessChecker.class);
         FileUtils.checkRemoteStorageUrl(SupportedProtocols.s3, "s3://us-east-1/b/k", checker);

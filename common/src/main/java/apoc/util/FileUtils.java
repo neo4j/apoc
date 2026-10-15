@@ -127,9 +127,13 @@ public class FileUtils {
                 return;
             }
         }
-        if (target == null || target.getHost() == null) {
+        if (target == null || target.getAuthority() == null) {
             // no custom endpoint (real AWS), or hdfs default namenode: nothing user-controlled to connect to
             return;
+        }
+        if (target.getHost() == null) {
+            // fail closed: an authority we cannot parse into a host could not be validated
+            throw new URLAccessValidationError("Cannot determine the host of url: " + urlAddress);
         }
         urlAccessChecker.checkURL(new URL("https", target.getHost(), target.getPort(), "/"));
     }
