@@ -391,6 +391,52 @@ public class Util {
         return new URL(new URL(url), con.getHeaderField("Location")).toString();
     }
 
+    /**
+     * Headers which are safe to forward to a redirect target on a different origin, because they do not
+     * carry any credentials. Everything else (Authorization, Cookie, Proxy-Authorization, custom api key
+     * headers, the "method" pseudo header, ...) is dropped: it was supplied for the original origin only
+     * and the redirect target has not been authenticated in any way.
+     */
+    private static final Set<String> CROSS_ORIGIN_SAFE_HEADERS =
+            Set.of("accept", "accept-encoding", "accept-language", "cache-control", "user-agent");
+
+    /**
+     * Whether a redirect target lives on a different origin than the url the caller supplied credentials for.
+     * A different host is always a different party. The scheme alone is not, so that the http -> https upgrade
+     * allowed by {@link #isRedirect(HttpURLConnection)} keeps its credentials; the standard web ports (80/443)
+     * are therefore treated as equivalent, while any other port change is cross-origin as well.
+     */
+    static boolean isCrossOrigin(URL origin, URL target) {
+        if (origin == null || target == null) return true;
+        String originHost = origin.getHost();
+        String targetHost = target.getHost();
+        if (originHost == null || targetHost == null) return true;
+        if (!originHost.equalsIgnoreCase(targetHost)) return true;
+        int originPort = effectivePort(origin);
+        int targetPort = effectivePort(target);
+        if (originPort == targetPort) return false;
+        return !(isStandardWebPort(originPort) && isStandardWebPort(targetPort));
+    }
+
+    private static int effectivePort(URL url) {
+        return url.getPort() == -1 ? url.getDefaultPort() : url.getPort();
+    }
+
+    private static boolean isStandardWebPort(int port) {
+        return port == 80 || port == 443;
+    }
+
+    static Map<String, Object> filterHeadersForCrossOriginRedirect(Map<String, Object> headers) {
+        if (headers == null) return null;
+        Map<String, Object> filtered = new LinkedHashMap<>();
+        headers.forEach((key, value) -> {
+            if (key != null && CROSS_ORIGIN_SAFE_HEADERS.contains(key.toLowerCase(Locale.ROOT))) {
+                filtered.put(key, value);
+            }
+        });
+        return filtered;
+    }
+
     public static CountingInputStream openInputStream(
             Object input,
             Map<String, Object> headers,
@@ -475,6 +521,13 @@ public class Util {
             con.getInputStream().close();
             if (redirectLimit == 0) {
                 throw new IOException("Redirect limit exceeded");
+            }
+            // The caller supplied the credentials (and any payload) for the original origin only, so they may
+            // not be replayed against a third party the origin redirects to. Compare against the unpinned
+            // urlAddress: con.getURL() is the IP pinned variant and would never match.
+            if (isCrossOrigin(new URL(urlAddress), new URL(newUrl))) {
+                headers = filterHeadersForCrossOriginRedirect(headers);
+                payload = null;
             }
             return readHttpInputStream(newUrl, headers, payload, --redirectLimit, urlAccessChecker);
         }

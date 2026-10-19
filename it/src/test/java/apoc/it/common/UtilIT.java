@@ -25,13 +25,18 @@ import static org.mockito.Mockito.when;
 
 import apoc.ApocConfig;
 import apoc.util.Util;
+import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -198,6 +203,102 @@ class UtilIT {
 
         for (GenericContainer server : servers) {
             server.stop();
+        }
+    }
+
+    @Test
+    void crossOriginRedirectDoesNotForwardCredentialsNorPayload() throws Exception {
+        new ApocConfig(null);
+        URLAccessChecker mockChecker = mock(URLAccessChecker.class);
+        when(mockChecker.checkURL(any(URL.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AtomicReference<String> receivedAuthorization = new AtomicReference<>();
+        AtomicReference<String> receivedCookie = new AtomicReference<>();
+        AtomicReference<String> receivedBody = new AtomicReference<>();
+
+        HttpServer target = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        target.createContext("/collect", exchange -> {
+            receivedAuthorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
+            receivedCookie.set(exchange.getRequestHeaders().getFirst("Cookie"));
+            receivedBody.set(IOUtils.toString(exchange.getRequestBody(), StandardCharsets.UTF_8));
+            byte[] response = "collected".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
+            exchange.close();
+        });
+        target.start();
+
+        HttpServer origin = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        origin.createContext("/report", exchange -> {
+            exchange.getResponseHeaders()
+                    .add("Location", "http://127.0.0.1:" + target.getAddress().getPort() + "/collect");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        origin.start();
+
+        try {
+            URL url = new URL("http://127.0.0.1:" + origin.getAddress().getPort() + "/report");
+            Map<String, Object> headers = new LinkedHashMap<>();
+            headers.put("Authorization", "Basic dXNlcjpzZWNyZXQ=");
+            headers.put("Cookie", "session=abc");
+            headers.put("Accept", "text/plain");
+
+            String page = IOUtils.toString(
+                    Util.openInputStream(url.toString(), headers, "{\"secret\":true}", null, mockChecker),
+                    StandardCharsets.UTF_8);
+
+            Assertions.assertEquals("collected", page);
+            Assertions.assertNull(receivedAuthorization.get(), "Authorization must not be forwarded cross-origin");
+            Assertions.assertNull(receivedCookie.get(), "Cookie must not be forwarded cross-origin");
+            Assertions.assertEquals("", receivedBody.get(), "the payload must not be forwarded cross-origin");
+        } finally {
+            origin.stop(0);
+            target.stop(0);
+        }
+    }
+
+    @Test
+    void sameOriginRedirectKeepsCredentialsAndPayload() throws Exception {
+        new ApocConfig(null);
+        URLAccessChecker mockChecker = mock(URLAccessChecker.class);
+        when(mockChecker.checkURL(any(URL.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        AtomicReference<String> receivedAuthorization = new AtomicReference<>();
+        AtomicReference<String> receivedBody = new AtomicReference<>();
+
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/final", exchange -> {
+            receivedAuthorization.set(exchange.getRequestHeaders().getFirst("Authorization"));
+            receivedBody.set(IOUtils.toString(exchange.getRequestBody(), StandardCharsets.UTF_8));
+            byte[] response = "done".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
+            exchange.close();
+        });
+        server.createContext("/start", exchange -> {
+            exchange.getResponseHeaders()
+                    .add("Location", "http://127.0.0.1:" + server.getAddress().getPort() + "/final");
+            exchange.sendResponseHeaders(302, -1);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            URL url = new URL("http://127.0.0.1:" + server.getAddress().getPort() + "/start");
+            Map<String, Object> headers = new LinkedHashMap<>();
+            headers.put("Authorization", "Basic dXNlcjpzZWNyZXQ=");
+            headers.put("method", "POST");
+
+            String page = IOUtils.toString(
+                    Util.openInputStream(url.toString(), headers, "{\"secret\":true}", null, mockChecker),
+                    StandardCharsets.UTF_8);
+
+            Assertions.assertEquals("done", page);
+            Assertions.assertEquals("Basic dXNlcjpzZWNyZXQ=", receivedAuthorization.get());
+            Assertions.assertEquals("{\"secret\":true}", receivedBody.get());
+        } finally {
+            server.stop(0);
         }
     }
 
