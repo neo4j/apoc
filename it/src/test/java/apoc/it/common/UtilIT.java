@@ -240,7 +240,7 @@ class UtilIT {
         try {
             URL url = new URL("http://127.0.0.1:" + origin.getAddress().getPort() + "/report");
             Map<String, Object> headers = new LinkedHashMap<>();
-            headers.put("Authorization", "Basic dXNlcjpzZWNyZXQ=");
+            headers.put("Authorization", "Basic " + Util.encodeUserColonPassToBase64("user:secret"));
             headers.put("Cookie", "session=abc");
             headers.put("Accept", "text/plain");
 
@@ -286,8 +286,9 @@ class UtilIT {
 
         try {
             URL url = new URL("http://127.0.0.1:" + server.getAddress().getPort() + "/start");
+            String basicAuth = "Basic " + Util.encodeUserColonPassToBase64("user:secret");
             Map<String, Object> headers = new LinkedHashMap<>();
-            headers.put("Authorization", "Basic dXNlcjpzZWNyZXQ=");
+            headers.put("Authorization", basicAuth);
             headers.put("method", "POST");
 
             String page = IOUtils.toString(
@@ -295,7 +296,7 @@ class UtilIT {
                     StandardCharsets.UTF_8);
 
             Assertions.assertEquals("done", page);
-            Assertions.assertEquals("Basic dXNlcjpzZWNyZXQ=", receivedAuthorization.get());
+            Assertions.assertEquals(basicAuth, receivedAuthorization.get());
             Assertions.assertEquals("{\"secret\":true}", receivedBody.get());
         } finally {
             server.stop(0);

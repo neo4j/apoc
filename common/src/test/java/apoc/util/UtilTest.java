@@ -129,7 +129,7 @@ class UtilTest {
     @Test
     void filterHeadersForCrossOriginRedirectDropsCredentials() {
         Map<String, Object> headers = new LinkedHashMap<>();
-        headers.put("Authorization", "Basic dXNlcjpzZWNyZXQ=");
+        headers.put("Authorization", "Basic " + Util.encodeUserColonPassToBase64("user:secret"));
         headers.put("Cookie", "session=abc");
         headers.put("X-Api-Key", "secret");
         headers.put("method", "POST");
