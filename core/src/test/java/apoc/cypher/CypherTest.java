@@ -42,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.HelperProcedures;
+import apoc.Pools;
 import apoc.text.Strings;
 import apoc.util.TestUtil;
 import apoc.util.Util;
@@ -57,6 +58,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -67,6 +70,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.logging.AssertableLogProvider;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
@@ -231,6 +235,42 @@ class CypherTest {
         await().atMost(Duration.ofSeconds(10))
                 .untilAsserted(() -> assertThat(logProvider.serialize()).contains("has been terminated"));
         assertThat(logProvider.serialize()).doesNotContain(secret);
+    }
+
+    @Test
+    void testRunTimeboxedTerminatesQueryWhoseWorkerStartsAfterTheTimeout() {
+        // fill the APOC default executor with blocked tasks, so that the timeboxed worker is queued and only
+        // starts once the timeout has already expired; it must then terminate itself instead of running unbounded
+        Pools pools = ((GraphDatabaseAPI) db).getDependencyResolver().resolveDependency(Pools.class);
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) pools.getDefaultExecutorService();
+        CountDownLatch release = new CountDownLatch(1);
+        for (int i = 0; i < executor.getCorePoolSize(); i++) {
+            executor.submit(() -> {
+                release.await();
+                return null;
+            });
+        }
+        // release the pool well after the timebox has expired, so the worker can only start too late
+        Thread releaser = new Thread(() -> {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            release.countDown();
+        });
+        releaser.setDaemon(true);
+        releaser.start();
+        logProvider.clear();
+
+        db.executeTransactionally(
+                "CALL apoc.cypher.runTimeboxed('UNWIND range(1, 1000000000) AS x WITH x WHERE x < 0 RETURN x AS markerTerminatedByTimebox', null, 50)",
+                emptyMap(),
+                Result::resultAsString);
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(logProvider.serialize())
+                .contains("markerTerminatedByTimebox")
+                .contains("has been terminated"));
     }
 
     @Test
