@@ -19,11 +19,19 @@
 package apoc.log;
 
 import apoc.util.FileUtils;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -80,23 +88,53 @@ public class Neo4jLogStream {
                     + "does not exist or is not readable.  Please ensure this configuration is correct.");
         }
 
-        // Prepend neo4jHome if it's a relative path, and use the user's path otherwise.
-        File f = new File(logDir, logName);
-
+        final Path realLogDir;
+        final Path realFile;
         try {
-            if (!f.getCanonicalFile().toPath().startsWith(logDir.getAbsolutePath())) {
-                throw new RuntimeException("The path you are trying to access has a canonical path outside of the logs "
-                        + "directory, and this procedure is only permitted to access files in the log directory.  This may "
-                        + "occur if the path in question is a symlink or other link.");
-            }
+            // Canonicalize both sides so the comparison happens in the same namespace.
+            realLogDir = logDir.toPath().toRealPath();
+            realFile = realLogDir.resolve(logName).toRealPath();
+        } catch (NoSuchFileException nsf) {
+            throw new RuntimeException("No log file exists by that name");
         } catch (IOException ioe) {
-            throw new RuntimeException("Unable to resolve basic log file canonical path", ioe);
+            throw new RuntimeException("Unable to resolve basic log file canonical path");
+        } catch (InvalidPathException ipe) {
+            throw new RuntimeException("Invalid log file name");
+        }
+
+        if (!realFile.startsWith(realLogDir)) {
+            throw new RuntimeException("The path you are trying to access has a canonical path outside of the logs "
+                    + "directory, and this procedure is only permitted to access files in the log directory.  This may "
+                    + "occur if the path in question is a symlink or other link.");
         }
 
         try {
-            Stream<String> stream = Files.lines(Paths.get(f.toURI()));
+            // Open the already-resolved path without following links, then validate the handle actually read,
+            // so a swap after the check cannot redirect the read.
+            SeekableByteChannel channel =
+                    Files.newByteChannel(realFile, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS);
+            Stream<String> stream;
+            try {
+                if (!(channel instanceof FileChannel)
+                        || !Files.isRegularFile(realFile, LinkOption.NOFOLLOW_LINKS)
+                        || !realFile.equals(realFile.toRealPath())
+                        || hasMultipleHardLinks(realFile)) {
+                    throw new RuntimeException(
+                            "The log file must be a regular, unlinked file inside the logs directory.");
+                }
+                BufferedReader reader = new BufferedReader(Channels.newReader(channel, StandardCharsets.UTF_8));
+                stream = reader.lines().onClose(() -> {
+                    try {
+                        reader.close();
+                    } catch (IOException ignored) {
+                    }
+                });
+            } catch (RuntimeException | IOException e) {
+                channel.close();
+                throw e;
+            }
             final AtomicLong lineNumber = new AtomicLong(0);
-            final String p = f.getCanonicalPath();
+            final String p = realFile.toString();
 
             Stream<FileEntry> entries = stream.map(line -> new FileEntry(lineNumber.getAndIncrement(), line, p));
 
@@ -112,7 +150,16 @@ public class Neo4jLogStream {
             // trace exposes the full path we were checking.
             throw new RuntimeException("No log file exists by that name");
         } catch (IOException exc) {
-            throw new RuntimeException(exc);
+            throw new RuntimeException("Unable to read the log file");
+        }
+    }
+
+    private static boolean hasMultipleHardLinks(Path path) throws IOException {
+        try {
+            Object nlink = Files.getAttribute(path, "unix:nlink", LinkOption.NOFOLLOW_LINKS);
+            return nlink instanceof Number n && n.intValue() > 1;
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
+            return false; // platform doesn't expose link counts
         }
     }
 }
