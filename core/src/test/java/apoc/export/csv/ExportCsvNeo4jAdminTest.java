@@ -23,6 +23,7 @@ import static apoc.ApocConfig.apocConfig;
 import static apoc.util.CompressionAlgo.GZIP;
 import static apoc.util.MapUtil.map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -126,6 +127,26 @@ class ExportCsvNeo4jAdminTest {
                 "CREATE (f:Address1:Address {name:'Andrea', city: 'Milano', street:'Via Garibaldi, 7'})-[:NEXT_DELIVERY]->(a:Address {name: 'Bar Sport'}), (b:Address {street: 'via Benni'})");
         db.executeTransactionally(
                 "CREATE (a:Types {date: date('2018-10-30'), localDateTime: localdatetime('20181030T19:32:24'), dateTime: datetime('2018-10-30T12:50:35.556+0100'), localtime: localtime('12:50:35.556'), duration: duration('P5M1DT12H'), time: time('125035.556+0100'), born_2D: point({ x: 2.3, y: 4.5 }), born_3D:point({ longitude: 56.7, latitude: 12.78, height: 100 })})");
+    }
+
+    @Test
+    void testBulkImportExportSanitizesTokenNamesInFileNames() {
+        db.executeTransactionally("CREATE (:`a/../../b` {p: 1})-[:`r/../../x`]->(:`c\\..\\d`)");
+        for (String fileName : List.of("traversal_export.csv", "traversal_export_noext")) {
+            TestUtil.testCall(db, "CALL apoc.export.csv.all($file,{bulkImport: true})", map("file", fileName), r -> {});
+        }
+
+        File[] created = directory.listFiles((d, n) -> n.startsWith("traversal_export"));
+        List<String> names = java.util.Arrays.stream(created).map(File::getName).toList();
+
+        assertTrue(names.contains("traversal_export.nodes.a%2F.%2E%2F.%2E%2Fb.csv"), names.toString());
+        assertTrue(names.contains("traversal_export.relationships.r%2F.%2E%2F.%2E%2Fx.csv"), names.toString());
+        assertTrue(names.contains("traversal_export_noext.nodes.a%2F.%2E%2F.%2E%2Fb"), names.toString());
+        assertTrue(names.stream().anyMatch(n -> n.startsWith("traversal_export.nodes.c%5C")), names.toString());
+        // nothing escaped the import directory
+        assertTrue(names.stream().noneMatch(n -> n.contains("/") || n.contains("\\")));
+        assertFalse(new File(directory.getParentFile(), "b").exists());
+        assertFalse(new File(directory.getParentFile().getParentFile(), "b.csv").exists());
     }
 
     @Test

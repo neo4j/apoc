@@ -25,6 +25,7 @@ import apoc.util.Util;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -88,12 +89,41 @@ public class FileManagerFactory {
             if (StringUtils.isBlank(suffix)) {
                 return fileName;
             }
+            suffix = sanitizeSuffix(suffix);
             // in case of file without dot extension, we just add the suffix
             if (StringUtils.isEmpty(fileType)) {
                 return fileName + DOT + suffix;
             }
             // TODO check if this should be follow the same rules of FileUtils.readerFor
-            return fileName.replace(fileType, suffix + DOT + fileType);
+            // only the last occurrence is replaced, so that the suffix is never injected elsewhere in the path
+            int idx = fileName.lastIndexOf(fileType);
+            if (idx < 0) {
+                return fileName;
+            }
+            return fileName.substring(0, idx) + suffix + DOT + fileType + fileName.substring(idx + fileType.length());
+        }
+
+        /**
+         * The suffix can derive from graph token names (labels, relationship types), which are arbitrary strings.
+         * Percent-encode everything but [A-Za-z0-9_-] and '.', so it can't contribute path separators or other unsafe
+         * characters; '..' is also neutralised.
+         */
+        private static String sanitizeSuffix(String suffix) {
+            StringBuilder sb = new StringBuilder();
+            for (byte b : suffix.getBytes(StandardCharsets.UTF_8)) {
+                char c = (char) (b & 0xFF);
+                if ((c >= 'a' && c <= 'z')
+                        || (c >= 'A' && c <= 'Z')
+                        || (c >= '0' && c <= '9')
+                        || c == '_'
+                        || c == '-'
+                        || c == '.') {
+                    sb.append(c);
+                } else {
+                    sb.append('%').append(String.format("%02X", b & 0xFF));
+                }
+            }
+            return sb.toString().replace("..", ".%2E");
         }
 
         @Override
