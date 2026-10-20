@@ -29,6 +29,7 @@ import apoc.util.Util;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -117,6 +118,9 @@ public class Timeboxed {
 
         final BlockingQueue<Map<String, Object>> queue = new ArrayBlockingQueue<>(100);
         final AtomicReference<Transaction> txAtomic = new AtomicReference<>();
+        // set by the terminator so that a worker which starts after the timeout terminates itself,
+        // otherwise the termination would be lost and the query would run unbounded.
+        final AtomicBoolean timeboxExpired = new AtomicBoolean(false);
 
         boolean failOnError = toBoolean(config.get("failOnError"));
         boolean appendStatusRow = toBoolean(config.get("appendStatusRow"));
@@ -126,6 +130,10 @@ public class Timeboxed {
         pools.getDefaultExecutorService().submit(() -> {
             try (Transaction innerTx = db.beginTx()) {
                 txAtomic.set(innerTx);
+                if (timeboxExpired.get()) {
+                    // the terminator already fired before this worker started, so terminate right away
+                    innerTx.terminate();
+                }
                 Result result = innerTx.execute(
                         Util.prefixQueryWithCheck(procedureCallContext, cypher),
                         params == null ? Collections.EMPTY_MAP : params);
@@ -165,10 +173,13 @@ public class Timeboxed {
         pools.getScheduledExecutorService()
                 .schedule(
                         () -> {
+                            // set before reading txAtomic: the check-then-act between the two threads must
+                            // never lose the termination, no matter which one runs first.
+                            timeboxExpired.set(true);
                             Transaction tx = txAtomic.get();
                             if (tx == null) {
                                 log.debug(
-                                        "tx is null, either the other transaction finished gracefully or has not yet been start.");
+                                        "tx is null, either the other transaction finished gracefully or has not yet been started; it will terminate itself when it starts.");
                             } else {
                                 if (appendStatusRow || failOnError) {
                                     Map<String, Object> map = statusMap(false, true, null);
@@ -205,6 +216,7 @@ public class Timeboxed {
                                     throw new RuntimeException("The query has been terminated.");
                                 }
                                 hasFinished = true;
+                                return false;
                             }
                         }
 
