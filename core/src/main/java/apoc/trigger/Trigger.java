@@ -20,6 +20,7 @@ package apoc.trigger;
 
 import static apoc.ApocConfig.APOC_TRIGGER_ENABLED;
 import static apoc.ApocConfig.apocConfig;
+import static apoc.util.MvccUtil.failIfMvcc;
 
 import apoc.ApocConfig;
 import apoc.util.Util;
@@ -50,6 +51,9 @@ public class Trigger {
             This instance is not allowed to write to the system database.
             Please open a session against a system database writer when using this procedure.
             """;
+
+    private static final String MVCC_DETAIL =
+            "Triggers rely on transaction event handlers, which are invoked per transaction chunk under MVCC.";
 
     @Context
     public GraphDatabaseAPI db;
@@ -85,6 +89,7 @@ public class Trigger {
                     Map<String, Object> selector,
             @Name(value = "config", defaultValue = "{}", description = "The parameters for the given Cypher statement.")
                     Map<String, Object> config) {
+        failIfMvcc(db, "apoc.trigger.add", MVCC_DETAIL);
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -113,6 +118,7 @@ public class Trigger {
     @Description("Removes the given trigger.")
     public Stream<TriggerInfo> remove(
             @Name(value = "name", description = "The name of the trigger to drop.") String name) {
+        failIfMvcc(db, "apoc.trigger.remove", MVCC_DETAIL);
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -135,6 +141,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.removeAll", mode = Mode.WRITE, deprecatedBy = "apoc.trigger.dropAll")
     @Description("Removes all previously added triggers.")
     public Stream<TriggerInfo> removeAll() {
+        failIfMvcc(db, "apoc.trigger.removeAll", MVCC_DETAIL);
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -149,6 +156,7 @@ public class Trigger {
     @Procedure(name = "apoc.trigger.list", mode = Mode.READ)
     @Description("Lists all currently installed triggers for the session database.")
     public Stream<TriggerInfo> list() {
+        failIfMvcc(db, "apoc.trigger.list", MVCC_DETAIL);
         checkEnabled(apocConfig());
         return triggerHandler.list().entrySet().stream()
                 .map((e) -> new TriggerInfo(
@@ -167,6 +175,7 @@ public class Trigger {
     @Description("Pauses the given trigger.")
     public Stream<TriggerInfo> pause(
             @Name(value = "name", description = "The name of the trigger to pause.") String name) {
+        failIfMvcc(db, "apoc.trigger.pause", MVCC_DETAIL);
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 
@@ -188,6 +197,7 @@ public class Trigger {
     @Description("Resumes the given paused trigger.")
     public Stream<TriggerInfo> resume(
             @Name(value = "name", description = "The name of the trigger to resume.") String name) {
+        failIfMvcc(db, "apoc.trigger.resume", MVCC_DETAIL);
         checkEnabled(apocConfig());
         preprocessDeprecatedProcedures();
 

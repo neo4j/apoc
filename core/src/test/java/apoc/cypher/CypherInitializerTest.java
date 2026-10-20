@@ -32,6 +32,7 @@ import com.neo4j.test.extension.ImpermanentEnterpriseDbmsExtension;
 import java.util.Collections;
 import java.util.Map;
 import java.util.stream.StreamSupport;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -59,12 +60,25 @@ class CypherInitializerTest {
         }
     }
 
-    void configureAll(TestDatabaseManagementServiceBuilder builder) {
-        // Ensure no initializer is configured via system properties
+    private static void clearInitializerProperties() {
         System.clearProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME);
         System.clearProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".0");
         System.clearProperty(APOC_CONFIG_INITIALIZER + "." + DEFAULT_DATABASE_NAME + ".1");
         System.clearProperty(APOC_CONFIG_INITIALIZER + "." + SYSTEM_DATABASE_NAME);
+    }
+
+    /**
+     * The nested tests set initializers as JVM-wide system properties. Clear them once all nested tests are done,
+     * so they don't leak into other test classes running later in the same JVM.
+     */
+    @AfterAll
+    static void clearInitializersAfterAll() {
+        clearInitializerProperties();
+    }
+
+    void configureAll(TestDatabaseManagementServiceBuilder builder) {
+        // Ensure no initializer is configured via system properties
+        clearInitializerProperties();
         builder.setConfigRaw(Map.of("server.config.strict_validation.enabled", "false"));
     }
 

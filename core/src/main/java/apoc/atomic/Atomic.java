@@ -18,6 +18,8 @@
  */
 package apoc.atomic;
 
+import static apoc.util.MvccUtil.failIfMvcc;
+
 import apoc.atomic.util.AtomicUtils;
 import apoc.util.ArrayBackedList;
 import apoc.util.MapUtil;
@@ -32,6 +34,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.neo4j.exceptions.Neo4jException;
 import org.neo4j.graphdb.Entity;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
@@ -44,8 +47,14 @@ import org.neo4j.procedure.*;
  */
 public class Atomic {
 
+    private static final String MVCC_DETAIL =
+            "Entity locks are not taken under MVCC, so concurrent updates fail with transaction conflicts instead of being serialised.";
+
     @Context
     public Transaction tx;
+
+    @Context
+    public GraphDatabaseService db;
 
     @Context
     public ProcedureCallContext procedureCallContext;
@@ -67,6 +76,7 @@ public class Atomic {
             @Name(value = "number", description = "The number to add.") Number number,
             @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
                     Long retryAttempts) {
+        failIfMvcc(db, "apoc.atomic.add", MVCC_DETAIL);
         checkIsEntity(container);
         final Number[] newValue = new Number[1];
         final Number[] oldValue = new Number[1];
@@ -105,6 +115,7 @@ public class Atomic {
             @Name(value = "number", description = "The number to subtract.") Number number,
             @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
                     Long retryAttempts) {
+        failIfMvcc(db, "apoc.atomic.subtract", MVCC_DETAIL);
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Number[] newValue = new Number[1];
@@ -140,6 +151,7 @@ public class Atomic {
             @Name(value = "string", description = "The string value to concatenate with the property.") String string,
             @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
                     Long retryAttempts) {
+        failIfMvcc(db, "apoc.atomic.concat", MVCC_DETAIL);
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final String[] newValue = new String[1];
@@ -177,6 +189,7 @@ public class Atomic {
             @Name(value = "value", description = "The value to insert.") Object value,
             @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
                     Long retryAttempts) {
+        failIfMvcc(db, "apoc.atomic.insert", MVCC_DETAIL);
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
@@ -227,6 +240,7 @@ public class Atomic {
             @Name(value = "position", description = "The position in the list to remove the item from.") Long position,
             @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
                     Long retryAttempts) {
+        failIfMvcc(db, "apoc.atomic.remove", MVCC_DETAIL);
         checkIsEntity(container);
         Entity entity = Util.rebind(tx, (Entity) container);
         final Object[] oldValue = new Object[1];
@@ -277,6 +291,7 @@ public class Atomic {
                     String operation,
             @Name(value = "retryAttempts", defaultValue = "5", description = "The max retry attempts.")
                     Long retryAttempts) {
+        failIfMvcc(db, "apoc.atomic.update", MVCC_DETAIL);
         checkIsEntity(nodeOrRelationship);
         Entity entity = Util.rebind(tx, (Entity) nodeOrRelationship);
         final Object[] oldValue = new Object[1];

@@ -21,6 +21,7 @@ package apoc.refactor;
 import static apoc.refactor.util.PropertiesManager.mergeProperties;
 import static apoc.refactor.util.RefactorConfig.RelationshipSelectionStrategy.MERGE;
 import static apoc.refactor.util.RefactorUtil.*;
+import static apoc.util.MvccUtil.failIfMvcc;
 import static apoc.util.Util.withTransactionAndRebind;
 import static java.util.stream.StreamSupport.stream;
 
@@ -73,6 +74,7 @@ public class GraphRefactoring {
             @Name(value = "labels", description = "The labels to be added to the new nodes.") List<String> labels,
             @Name(value = "outType", description = "The type of the outgoing relationship.") String outType,
             @Name(value = "inType", description = "The type of the ingoing relationship.") String inType) {
+        failIfMvcc(db, "apoc.refactor.extractNode");
         return Util.relsStream((InternalTransaction) tx, rels).map((rel) -> {
             NodeRefactorResult result = new NodeRefactorResult(rel.getId());
             try {
@@ -207,6 +209,7 @@ public class GraphRefactoring {
                     }
                     """)
                     Map<String, Object> config) {
+        failIfMvcc(db, "apoc.refactor.cloneSubgraphFromPaths");
 
         if (paths == null || paths.isEmpty()) return Stream.empty();
 
@@ -264,6 +267,7 @@ public class GraphRefactoring {
                     }
                     """)
                     Map<String, Object> config) {
+        failIfMvcc(db, "apoc.refactor.cloneSubgraph");
 
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
 
@@ -395,6 +399,7 @@ public class GraphRefactoring {
                     }
                     """)
                     Map<String, Object> config) {
+        failIfMvcc(db, "apoc.refactor.mergeNodes");
         if (nodes == null || nodes.isEmpty()) return Stream.empty();
         RefactorConfig conf = new RefactorConfig(config);
         Set<Node> nodesSet = new LinkedHashSet<>(nodes);
@@ -724,6 +729,7 @@ public class GraphRefactoring {
                     List<String> copiedKeys,
             @Name(value = "batchSize", description = "The max size of each batch.") long batchSize)
             throws ExecutionException {
+        failIfMvcc(db, "apoc.refactor.categorize");
         // Verify and adjust arguments
         if (sourceKey == null) throw new IllegalArgumentException("Invalid (null) sourceKey");
 

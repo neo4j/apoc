@@ -22,6 +22,7 @@ import static apoc.periodic.PeriodicUtils.recordError;
 import static apoc.periodic.PeriodicUtils.submitJob;
 import static apoc.periodic.PeriodicUtils.submitProc;
 import static apoc.periodic.PeriodicUtils.wrapTask;
+import static apoc.util.MvccUtil.failIfMvcc;
 import static apoc.util.Util.CONSUME_VOID;
 import static apoc.util.Util.merge;
 import static org.neo4j.graphdb.QueryExecutionType.QueryType;
@@ -412,6 +413,12 @@ public class Periodic {
             throw new IllegalArgumentException("concurrency parameter must be > 0");
         }
         boolean parallel = Util.toBoolean(config.getOrDefault("parallel", false));
+        if (parallel) {
+            failIfMvcc(
+                    db,
+                    "apoc.periodic.iterate with `parallel: true`",
+                    "Parallel batches conflict at commit time under MVCC, even when they touch different data. Use `parallel: false`.");
+        }
         long retries = Util.toLong(config.getOrDefault(
                 "retries", 0)); // todo sleep/delay or push to end of batch to try again or immediate ?
         int failedParams = Util.toInteger(config.getOrDefault("failedParams", -1));
