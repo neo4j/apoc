@@ -486,10 +486,6 @@ public class Util {
                 FileUtils.from(urlAddress), urlAddress, headers, payload, urlAccessChecker);
     }
 
-    // NOTE: unlike a try-with-resources, the archive is intentionally left open on the happy path:
-    // the returned entry stream is read by the caller, and closing it closes the archive and, in
-    // turn, the underlying source stream. The archive is only closed here on failure (no matching
-    // entry, or an exception while scanning entries).
     static InputStream getFileStreamIntoCompressedFile(
             InputStream is, String fileName, ArchiveType archiveType, long compressedLength) throws IOException {
         ArchiveInputStream archive = archiveType.getInputStream(is);
@@ -498,9 +494,6 @@ public class Util {
 
             while ((archiveEntry = archive.getNextEntry()) != null) {
                 if (!archiveEntry.isDirectory() && archiveEntry.getName().equals(fileName)) {
-                    // stream the entry through a size bound (apoc.max.decompression.ratio /
-                    // apoc.max.decompression.size) instead of materializing it into memory,
-                    // otherwise a high-ratio entry can exhaust the heap.
                     return toLimitedIStream(archive, compressedLength);
                 }
             }
@@ -512,12 +505,9 @@ public class Util {
             }
             throw e;
         }
-
         try {
             archive.close();
         } catch (IOException ignored) {
-            // the source stream is closed along with the archive; a close failure here must not
-            // mask the "entry not found" behaviour
         }
         return null;
     }
