@@ -33,7 +33,6 @@ import apoc.result.VirtualNode;
 import apoc.result.VirtualRelationship;
 import apoc.util.collection.Iterators;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -85,7 +84,6 @@ import java.util.stream.StreamSupport;
 import javax.lang.model.SourceVersion;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.neo4j.configuration.Config;
@@ -442,21 +440,29 @@ public class Util {
                 FileUtils.from(urlAddress), urlAddress, headers, payload, urlAccessChecker);
     }
 
-    private static InputStream getFileStreamIntoCompressedFile(
+    static InputStream getFileStreamIntoCompressedFile(
             InputStream is, String fileName, ArchiveType archiveType, long compressedLength) throws IOException {
-        try (ArchiveInputStream archive = archiveType.getInputStream(is)) {
+        ArchiveInputStream archive = archiveType.getInputStream(is);
+        try {
             ArchiveEntry archiveEntry;
 
             while ((archiveEntry = archive.getNextEntry()) != null) {
                 if (!archiveEntry.isDirectory() && archiveEntry.getName().equals(fileName)) {
-                    // bound the decompressed entry size (apoc.max.decompression.ratio) before it is
-                    // materialized into memory, otherwise a high-ratio entry can exhaust the heap
-                    InputStream limitedEntryStream = toLimitedIStream(archive, compressedLength);
-                    return new ByteArrayInputStream(IOUtils.toByteArray(limitedEntryStream));
+                    return toLimitedIStream(archive, compressedLength);
                 }
             }
+        } catch (IOException | RuntimeException e) {
+            try {
+                archive.close();
+            } catch (IOException closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw e;
         }
-
+        try {
+            archive.close();
+        } catch (IOException ignored) {
+        }
         return null;
     }
 
