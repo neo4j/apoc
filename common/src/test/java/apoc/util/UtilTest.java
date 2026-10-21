@@ -113,8 +113,8 @@ class UtilTest {
         byte[] zipBytes = Files.readAllBytes(zip);
         CloseTrackingInputStream source = new CloseTrackingInputStream(new ByteArrayInputStream(zipBytes));
 
-        try (InputStream stream = Util.getFileStreamIntoCompressedFile(
-                source, "data.json", ArchiveType.ZIP, zipBytes.length)) {
+        try (InputStream stream =
+                Util.getFileStreamIntoCompressedFile(source, "data.json", ArchiveType.ZIP, zipBytes.length)) {
             // a ByteArrayInputStream would mean the whole entry was materialized in memory first
             assertFalse(stream instanceof ByteArrayInputStream);
             assertArrayEquals(content, stream.readAllBytes());
@@ -126,7 +126,8 @@ class UtilTest {
 
     @Test
     void missingArchiveEntryClosesArchiveAndSource() throws Exception {
-        Path zip = createZip(tempDir.resolve("entry.zip"), "data.json", "some json payload".getBytes(StandardCharsets.UTF_8));
+        Path zip = createZip(
+                tempDir.resolve("entry.zip"), "data.json", "some json payload".getBytes(StandardCharsets.UTF_8));
         byte[] zipBytes = Files.readAllBytes(zip);
         CloseTrackingInputStream source = new CloseTrackingInputStream(new ByteArrayInputStream(zipBytes));
 
@@ -149,8 +150,8 @@ class UtilTest {
         byte[] tarBytes = Files.readAllBytes(tar);
         CloseTrackingInputStream source = new CloseTrackingInputStream(new ByteArrayInputStream(tarBytes));
 
-        try (InputStream stream = Util.getFileStreamIntoCompressedFile(
-                source, "data.json", ArchiveType.TAR, tarBytes.length)) {
+        try (InputStream stream =
+                Util.getFileStreamIntoCompressedFile(source, "data.json", ArchiveType.TAR, tarBytes.length)) {
             assertFalse(stream instanceof ByteArrayInputStream);
             assertArrayEquals(content, stream.readAllBytes());
         }
