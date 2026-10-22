@@ -160,6 +160,7 @@ public class DegreeDistribution {
                 db,
                 pools.getDefaultExecutorService(),
                 BATCHSIZE,
+                tx.securityContext(),
                 nodeCursor -> stats.forEach((s) -> s.computeDegree(nodeCursor)));
         return stats.stream().map(DegreeStats::done);
     }
