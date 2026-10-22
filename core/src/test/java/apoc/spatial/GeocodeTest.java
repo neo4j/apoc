@@ -77,6 +77,26 @@ class GeocodeTest {
 
     // -- with config map
     @Test
+    void testCallerSuppliedUrlDoesNotLeakApocConfKey() {
+        // the admin's server-configured key must not be substituted into a caller-supplied
+        // url template, otherwise the secret would be delivered to a caller-chosen host
+        final String adminKey = "superSecretAdminKey";
+        apocConfig().setProperty(Geocode.PREFIX + ".opencage.key", adminKey);
+
+        final String url = String.format(URL_FORMAT, "http", BLOCKED_ADDRESS);
+        final String reverseUrl = String.format(REVERSE_URL_FORMAT, "http", BLOCKED_ADDRESS);
+
+        // a caller-supplied template without a caller-supplied key fails,
+        // instead of sending the admin's key to the caller's host
+        assertGeocodeFails(false, "Missing 'key' for geocode provider", map("url", url, "reverseUrl", reverseUrl));
+        assertGeocodeFails(true, "Missing 'key' for geocode provider", map("url", url, "reverseUrl", reverseUrl));
+
+        // with a caller-supplied key the request goes out (and fails on the blocklist)
+        assertGeocodeFails(false, BLOCKED_ERROR, map("key", "myOwnKey", "url", url, "reverseUrl", reverseUrl));
+        assertGeocodeFails(true, BLOCKED_ERROR, map("key", "myOwnKey", "url", url, "reverseUrl", reverseUrl));
+    }
+
+    @Test
     void testWrongUrlButViaOtherProvider() throws Exception {
         // wrong url but doesn't fail because provider is osm, not opencage
         testGeocodeWithThrottling(
