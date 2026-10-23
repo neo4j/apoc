@@ -19,6 +19,9 @@
 package apoc.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.neo4j.graphdb.schema.ConstraintType.NODE_KEY;
@@ -43,6 +46,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
@@ -95,6 +100,51 @@ class UtilTest {
         String resolved = Util.handleRedirect(mockCon, "https://example.com/old/path");
 
         assertEquals("https://example.com/old/path", resolved);
+    }
+
+    @Test
+    void isCrossOriginTreatsDifferentHostsAsCrossOrigin() throws Exception {
+        assertTrue(Util.isCrossOrigin(
+                new URL("https://api.example.com/report"), new URL("https://attacker.example/collect")));
+        assertTrue(Util.isCrossOrigin(
+                new URL("https://api.example.com/report"), new URL("https://evil.api.example.com/collect")));
+        assertFalse(Util.isCrossOrigin(
+                new URL("https://api.example.com/report"), new URL("https://API.example.com/other")));
+    }
+
+    @Test
+    void isCrossOriginKeepsCredentialsOnSameHostRedirects() throws Exception {
+        assertFalse(Util.isCrossOrigin(new URL("https://example.com/a"), new URL("https://example.com/b")));
+        // scheme upgrades are explicitly allowed by isRedirect and must keep their credentials
+        assertFalse(Util.isCrossOrigin(new URL("http://example.com/a"), new URL("https://example.com/b")));
+    }
+
+    @Test
+    void isCrossOriginTreatsDifferentPortsAsCrossOrigin() throws Exception {
+        assertTrue(Util.isCrossOrigin(new URL("https://example.com/a"), new URL("https://example.com:8443/b")));
+        // explicit default port is the same origin
+        assertFalse(Util.isCrossOrigin(new URL("https://example.com/a"), new URL("https://example.com:443/b")));
+    }
+
+    @Test
+    void filterHeadersForCrossOriginRedirectDropsCredentials() {
+        Map<String, Object> headers = new LinkedHashMap<>();
+        headers.put("Authorization", "Basic " + Util.encodeUserColonPassToBase64("user:secret"));
+        headers.put("Cookie", "session=abc");
+        headers.put("X-Api-Key", "secret");
+        headers.put("method", "POST");
+        headers.put("Accept", "application/json");
+        headers.put("accept-encoding", "gzip");
+        headers.put("EmptyHeader", null);
+
+        Map<String, Object> filtered = Util.filterHeadersForCrossOriginRedirect(headers);
+
+        assertEquals(Map.of("Accept", "application/json", "accept-encoding", "gzip"), filtered);
+    }
+
+    @Test
+    void filterHeadersForCrossOriginRedirectHandlesNullHeaders() {
+        assertNull(Util.filterHeadersForCrossOriginRedirect(null));
     }
 
     /**
