@@ -43,15 +43,14 @@ public class MultiThreadedGlobalGraphOperations {
             Consumer<NodeCursor> consumer) {
         BatchJobResult result = new BatchJobResult();
         AtomicInteger processing = new AtomicInteger();
-        try (InternalTransaction tx =
-                db.beginTransaction(KernelTransaction.Type.EXPLICIT, loginContext)) {
+        try (InternalTransaction tx = db.beginTransaction(KernelTransaction.Type.EXPLICIT, loginContext)) {
             KernelTransaction ktx = tx.kernelTransaction();
             Read dataRead = ktx.dataRead();
             PartitionedScan<NodeCursor> scan = dataRead.allNodesScan(1, ktx.cursorContext());
             Function<KernelTransaction, NodeCursor> cursorAllocator =
                     ktx2 -> ktx2.cursors().allocateNodeCursor(ktx2.cursorContext());
-            executorService.submit(
-                    new BatchJob(scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing, loginContext));
+            executorService.submit(new BatchJob(
+                    scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing, loginContext));
         }
 
         try {
@@ -121,8 +120,7 @@ public class MultiThreadedGlobalGraphOperations {
 
         @Override
         public Void call() {
-            try (InternalTransaction tx =
-                    db.beginTransaction(KernelTransaction.Type.EXPLICIT, loginContext)) {
+            try (InternalTransaction tx = db.beginTransaction(KernelTransaction.Type.EXPLICIT, loginContext)) {
                 KernelTransaction ktx = tx.kernelTransaction();
                 try (var statement = ktx.acquireStatement()) {
                     ExecutionContext executionContext = ktx.createExecutionContext();
