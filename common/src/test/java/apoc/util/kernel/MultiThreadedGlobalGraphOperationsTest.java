@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.neo4j.internal.kernel.api.security.LoginContext;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 import org.neo4j.test.extension.Inject;
 
@@ -45,8 +46,12 @@ class MultiThreadedGlobalGraphOperationsTest {
     @Test
     void shouldWorkForAllNodes() {
         AtomicInteger counter = new AtomicInteger();
-        BatchJobResult result =
-                forAllNodes(db, Executors.newFixedThreadPool(4), 10, (nodeCursor) -> counter.incrementAndGet());
+        BatchJobResult result = forAllNodes(
+                db,
+                Executors.newFixedThreadPool(4),
+                10,
+                LoginContext.AUTH_DISABLED,
+                (nodeCursor) -> counter.incrementAndGet());
         assertEquals(1001, counter.get());
         assertEquals(1001, result.getSucceeded());
         assertEquals(0, result.getFailures());
