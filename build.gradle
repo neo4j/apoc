@@ -131,7 +131,10 @@ task checksums <<  {
         def f = new File(fileName)
 
         if (!f.exists()) {
-            new URL(url).withInputStream { i -> f.withOutputStream { it << i }}
+            def connection = new URI(url).toURL().openConnection()
+            connection.setRequestProperty("User-Agent", "apoc-checksums")
+            connection.setRequestProperty("Accept", "*/*")
+            connection.inputStream.withCloseable { i -> f.withOutputStream { it << i } }
         }
 
         println("sha1: " + Checksum.getSha1sum(f))
