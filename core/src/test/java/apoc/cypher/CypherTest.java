@@ -472,16 +472,20 @@ class CypherTest {
     void shouldTimeboxedReturnAllResultsSoFar() {
         db.executeTransactionally(Util.readResourceFile("movies.cypher"));
 
+        long timeout = 3000;
+
         long start = System.currentTimeMillis();
         try (Transaction tx = db.beginTx()) {
             Result result = tx.execute(
-                    "CALL apoc.cypher.runTimeboxed('MATCH (n)-[*]-(m) RETURN elementId(n), elementId(m)', {}, 1000) YIELD value RETURN value");
+                    "CALL apoc.cypher.runTimeboxed('MATCH (n)-[*]-(m) RETURN elementId(n), elementId(m)', {}, $timeout) YIELD value RETURN value",
+                    map("timeout", timeout));
+            assertTrue(result.hasNext());
+            assertNotNull(result.next().get("value"));
             assertTrue(Iterators.count(result) > 0);
             tx.commit();
         }
         long duration = System.currentTimeMillis() - start;
-        // Assert that the test runs in less than 1500 milliseconds
-        assertTrue(duration < 1500L);
+        assertTrue(duration < timeout + 500, "took " + duration + "ms");
     }
 
     @Timeout(9000)
