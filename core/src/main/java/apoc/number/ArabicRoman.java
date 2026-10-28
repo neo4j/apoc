@@ -72,20 +72,53 @@ public class ArabicRoman {
 
         static int toArabic(String number) {
             if (number == null || number.isEmpty()) return 0;
-            if (number.startsWith("M")) return 1000 + toArabic(number.substring(1));
-            if (number.startsWith("CM")) return 900 + toArabic(number.substring(2));
-            if (number.startsWith("D")) return 500 + toArabic(number.substring(1));
-            if (number.startsWith("CD")) return 400 + toArabic(number.substring(2));
-            if (number.startsWith("C")) return 100 + toArabic(number.substring(1));
-            if (number.startsWith("XC")) return 90 + toArabic(number.substring(2));
-            if (number.startsWith("L")) return 50 + toArabic(number.substring(1));
-            if (number.startsWith("XL")) return 40 + toArabic(number.substring(2));
-            if (number.startsWith("X")) return 10 + toArabic(number.substring(1));
-            if (number.startsWith("IX")) return 9 + toArabic(number.substring(2));
-            if (number.startsWith("V")) return 5 + toArabic(number.substring(1));
-            if (number.startsWith("IV")) return 4 + toArabic(number.substring(2));
-            if (number.startsWith("I")) return 1 + toArabic(number.substring(1));
-            return 0;
+            int result = 0;
+            int i = 0;
+            while (i < number.length()) {
+                if (number.startsWith("M", i)) {
+                    result += 1000;
+                    i += 1;
+                } else if (number.startsWith("CM", i)) {
+                    result += 900;
+                    i += 2;
+                } else if (number.startsWith("D", i)) {
+                    result += 500;
+                    i += 1;
+                } else if (number.startsWith("CD", i)) {
+                    result += 400;
+                    i += 2;
+                } else if (number.startsWith("C", i)) {
+                    result += 100;
+                    i += 1;
+                } else if (number.startsWith("XC", i)) {
+                    result += 90;
+                    i += 2;
+                } else if (number.startsWith("L", i)) {
+                    result += 50;
+                    i += 1;
+                } else if (number.startsWith("XL", i)) {
+                    result += 40;
+                    i += 2;
+                } else if (number.startsWith("X", i)) {
+                    result += 10;
+                    i += 1;
+                } else if (number.startsWith("IX", i)) {
+                    result += 9;
+                    i += 2;
+                } else if (number.startsWith("V", i)) {
+                    result += 5;
+                    i += 1;
+                } else if (number.startsWith("IV", i)) {
+                    result += 4;
+                    i += 2;
+                } else if (number.startsWith("I", i)) {
+                    result += 1;
+                    i += 1;
+                } else {
+                    return result;
+                }
+            }
+            return result;
         }
     }
 }

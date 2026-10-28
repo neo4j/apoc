@@ -24,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -52,6 +53,33 @@ class ArabicRomanTest {
         testCall(db, "RETURN apoc.number.romanToArabic('aaa') AS value", row -> assertEquals(0, row.get("value")));
         testCall(db, "RETURN apoc.number.romanToArabic('') AS value", row -> assertEquals(0, row.get("value")));
         testCall(db, "RETURN apoc.number.romanToArabic(null) AS value", row -> assertEquals(0, row.get("value")));
+    }
+
+    @Test
+    void testToArabicLongRepetitionDoesNotOverflow() {
+        testCall(
+                db,
+                "RETURN apoc.number.romanToArabic($s) AS value",
+                Map.of("s", "I".repeat(1_000_000)),
+                row -> assertEquals(1_000_000, row.get("value")));
+    }
+
+    @Test
+    void testToArabicLongMixedInputDoesNotOverflow() {
+        testCall(
+                db,
+                "RETURN apoc.number.romanToArabic($s) AS value",
+                Map.of("s", "MCMXXXII".repeat(1_000)),
+                row -> assertEquals(1_932_000, row.get("value")));
+    }
+
+    @Test
+    void testToArabicStopsAtUnknownCharacter() {
+        testCall(
+                db,
+                "RETURN apoc.number.romanToArabic($s) AS value",
+                Map.of("s", "I".repeat(100_000) + "Z"),
+                row -> assertEquals(100_000, row.get("value")));
     }
 
     @Test
