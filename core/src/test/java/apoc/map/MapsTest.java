@@ -25,15 +25,19 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.test.extension.Inject;
 
 @EnterpriseDbmsExtension(createDatabasePerTest = false)
@@ -419,6 +423,65 @@ class MapsTest {
                         + "RETURN apoc.map.unflatten(flattedMap, $delimiter) AS value",
                 map("expectedMap", expectedMap, "delimiter", delimiter),
                 r -> assertEquals(expectedMap, r.get("value")));
+    }
+
+    @Test
+    void testUnflattenTrailingDelimiterIsPreserved() {
+        TestUtil.testCall(
+                db,
+                "RETURN apoc.map.unflatten($map) AS value",
+                map("map", Map.of("a.", 1L)),
+                r -> assertEquals(map("a", map("", 1L)), r.get("value")));
+    }
+
+    @Test
+    void testUnflattenExcessiveKeyDepthIsRejected() {
+        String key = "a" + ".a".repeat(200_000);
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> TestUtil.testCall(
+                        db,
+                        "RETURN apoc.map.unflatten(apoc.map.setKey({}, $key, 1), '.') AS value",
+                        map("key", key),
+                        (r) -> {}));
+        assertTrue(e.getMessage().contains("maximum nesting depth"), e.getMessage());
+    }
+
+    private static Map<String, Object> deeplyNestedMap(int depth, String linkKey) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("leaf", 1L);
+        for (int i = 0; i < depth; i++) {
+            Map<String, Object> next = new HashMap<>();
+            next.put(linkKey, map);
+            map = next;
+        }
+        return map;
+    }
+
+    // These call Maps directly: passing a map this deep through a Cypher function argument overflows Neo4j's own
+    // recursive ValueMapper before the APOC function is entered, so the guard can only be observed from Java.
+    @Test
+    void testFlattenExcessiveDepthIsRejected() {
+        Map<String, Object> deep = deeplyNestedMap(100_000, "a");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> new Maps().flatten(deep, "."));
+        assertTrue(e.getMessage().contains("maximum nesting depth"), e.getMessage());
+    }
+
+    @Test
+    void testRemoveKeysRecursiveExcessiveDepthIsRejected() {
+        Map<String, Object> deep = deeplyNestedMap(100_000, "x");
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> new Maps()
+                .removeKeys(deep, List.of("a"), Map.<String, Object>of("recursive", true)));
+        assertTrue(e.getMessage().contains("maximum nesting depth"), e.getMessage());
+    }
+
+    @Test
+    void testUpdateTreeExcessiveDepthIsRejected() {
+        Map<String, Object> deep = deeplyNestedMap(100_000, "a");
+        List<List<Object>> data = List.of(asList(1L, Map.of("b", 1L)));
+        IllegalArgumentException e =
+                assertThrows(IllegalArgumentException.class, () -> new Maps().updateTree(deep, "id", data));
+        assertTrue(e.getMessage().contains("maximum nesting depth"), e.getMessage());
     }
 
     @Test

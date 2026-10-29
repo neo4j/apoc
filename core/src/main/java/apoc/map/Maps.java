@@ -35,6 +35,14 @@ import org.neo4j.procedure.UserFunction;
 
 public class Maps {
 
+    private static final int MAX_NESTING_DEPTH = 1_000;
+
+    private static void checkDepth(int depth) {
+        if (depth > MAX_NESTING_DEPTH) {
+            throw new IllegalArgumentException("apoc.map: maximum nesting depth of " + MAX_NESTING_DEPTH + " exceeded");
+        }
+    }
+
     @Context
     public Transaction tx;
 
@@ -382,6 +390,12 @@ public class Maps {
             @Name(value = "keys", description = "The keys to remove from the map.") List<String> keys,
             @Name(value = "config", defaultValue = "{}", description = "{ recursive = false :: BOOLEAN }")
                     Map<String, Object> config) {
+        return removeKeys(map, keys, config, 0);
+    }
+
+    private Map<String, Object> removeKeys(
+            Map<String, Object> map, List<String> keys, Map<String, Object> config, int depth) {
+        checkDepth(depth);
         Map<String, Object> res = new LinkedHashMap<>(map);
         res.keySet().removeAll(keys);
         Map<String, Object> checkedConfig = config == null ? Collections.emptyMap() : config;
@@ -391,7 +405,7 @@ public class Maps {
                 Map.Entry<String, Object> entry = iterator.next();
                 if (entry.getValue() instanceof Map) {
                     Map<String, Object> updatedMap =
-                            removeKeys((Map<String, Object>) entry.getValue(), keys, checkedConfig);
+                            removeKeys((Map<String, Object>) entry.getValue(), keys, checkedConfig, depth + 1);
                     if (updatedMap.isEmpty()) {
                         iterator.remove();
                     } else if (!updatedMap.equals(entry.getValue())) {
@@ -401,7 +415,7 @@ public class Maps {
                     Collection<Object> values = (Collection<Object>) entry.getValue();
                     List<Object> updatedValues = values.stream()
                             .map(value -> value instanceof Map
-                                    ? removeKeys((Map<String, Object>) value, keys, checkedConfig)
+                                    ? removeKeys((Map<String, Object>) value, keys, checkedConfig, depth + 1)
                                     : value)
                             .filter(value -> value instanceof Map ? !((Map<String, Object>) value).isEmpty() : true)
                             .collect(Collectors.toList());
@@ -477,6 +491,12 @@ public class Maps {
     }
 
     Map<String, Object> visit(Map<String, Object> tree, Function<Map<String, Object>, Map<String, Object>> mapper) {
+        return visit(tree, mapper, 0);
+    }
+
+    Map<String, Object> visit(
+            Map<String, Object> tree, Function<Map<String, Object>, Map<String, Object>> mapper, int depth) {
+        checkDepth(depth);
         Map<String, Object> result = mapper.apply(new LinkedHashMap<>(tree));
 
         result.entrySet().forEach(e -> {
@@ -486,7 +506,7 @@ public class Maps {
                         .map(v -> {
                             if (v instanceof Map) {
                                 Map<String, Object> map = (Map<String, Object>) v;
-                                return visit(map, mapper);
+                                return visit(map, mapper, depth + 1);
                             }
                             return v;
                         })
@@ -494,7 +514,7 @@ public class Maps {
                 e.setValue(newList);
             } else if (e.getValue() instanceof Map) {
                 Map<String, Object> map = (Map<String, Object>) e.getValue();
-                e.setValue(visit(map, mapper));
+                e.setValue(visit(map, mapper, depth + 1));
             }
         });
         return result;
@@ -511,20 +531,22 @@ public class Maps {
                             description = "The delimiter used to separate the levels of the flattened map.")
                     String delimiter) {
         Map<String, Object> flattenedMap = new HashMap<>();
-        flattenMapRecursively(flattenedMap, map, "", delimiter == null ? "." : delimiter);
+        flattenMapRecursively(flattenedMap, map, "", delimiter == null ? "." : delimiter, 0);
         return flattenedMap;
     }
 
     @SuppressWarnings("unchecked")
     private void flattenMapRecursively(
-            Map<String, Object> flattenedMap, Map<String, Object> map, String prefix, String delimiter) {
+            Map<String, Object> flattenedMap, Map<String, Object> map, String prefix, String delimiter, int depth) {
+        checkDepth(depth);
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             if (entry.getValue() instanceof Map) {
                 flattenMapRecursively(
                         flattenedMap,
                         (Map<String, Object>) entry.getValue(),
                         prefix + entry.getKey() + delimiter,
-                        delimiter);
+                        delimiter,
+                        depth + 1);
             } else {
                 flattenedMap.put(prefix + entry.getKey(), entry.getValue());
             }
@@ -553,6 +575,11 @@ public class Maps {
     }
 
     public static void unflatEntry(Map<String, Object> map, Object value, String key, String delimiter) {
+        unflatEntry(map, value, key, delimiter, 0);
+    }
+
+    private static void unflatEntry(Map<String, Object> map, Object value, String key, String delimiter, int depth) {
+        checkDepth(depth);
         final String[] keys = key.split(quote(delimiter), 2);
         final String firstPart = keys[0];
 
@@ -561,7 +588,7 @@ public class Maps {
         } else {
             final Map<String, Object> currentMap =
                     (Map<String, Object>) map.computeIfAbsent(firstPart, k -> new HashMap<String, Object>());
-            unflatEntry(currentMap, value, keys[1], delimiter);
+            unflatEntry(currentMap, value, keys[1], delimiter, depth + 1);
         }
     }
 
