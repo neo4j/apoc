@@ -31,7 +31,7 @@ public class ArabicRoman {
     @Description("Converts the given Roman numbers to Arabic numbers.")
     public Number romanToArabic(
             final @Name(value = "romanNumber", description = "A Roman number to be converted.") String number) {
-        if (number == null || number.isEmpty()) return 0;
+        if (number == null || number.isEmpty()) return 0L;
         return toArabic(number.toUpperCase());
     }
 
@@ -70,9 +70,9 @@ public class ArabicRoman {
             return result.toString();
         }
 
-        static int toArabic(String number) {
-            if (number == null || number.isEmpty()) return 0;
-            int result = 0;
+        static long toArabic(String number) {
+            if (number == null || number.isEmpty()) return 0L;
+            long result = 0;
             int i = 0;
             while (i < number.length()) {
                 if (number.startsWith("M", i)) {
