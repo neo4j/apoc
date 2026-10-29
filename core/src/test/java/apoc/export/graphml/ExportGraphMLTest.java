@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 
@@ -48,8 +49,12 @@ import apoc.util.collection.Iterables;
 import com.neo4j.test.extension.EnterpriseDbmsExtension;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +72,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.ResourceIterator;
+import org.neo4j.procedure.TerminationGuard;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
 import org.neo4j.test.extension.Inject;
@@ -303,6 +309,66 @@ class ExportGraphMLTest {
         });
 
         db.executeTransactionally("MATCH (n:Unicode) DETACH DELETE n");
+    }
+
+    @Test
+    void testImportMalformedDataFailsPromptly() throws IOException {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                + "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\">"
+                + "<key id=\"d0\" for=\"node\" attr.name=\"prop\"/>"
+                + "<graph id=\"G\" edgedefault=\"directed\">"
+                + "<node id=\"n0\"><data key=\"d0\">"
+                + "\u0001".repeat(50_000)
+                + "</data></node></graph></graphml>";
+        File file = new File(directory, "malformed-data.graphml");
+        Files.writeString(file.toPath(), xml, StandardCharsets.UTF_8);
+
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db, "CALL apoc.import.graphml($file, {})", map("file", file.getAbsolutePath()), r -> {}));
+        assertTrue(
+                ExceptionUtils.getThrowableList(e).stream()
+                        .anyMatch(t -> t.getMessage() != null && t.getMessage().contains("Failed to read GraphML")),
+                () -> ExceptionUtils.getStackTrace(e));
+    }
+
+    @Test
+    void testPersistentReaderFailureFailsPromptly() {
+        TerminationGuard interruptAwareGuard = () -> {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new RuntimeException("interrupted");
+            }
+        };
+        XmlGraphMLReader graphMLReader = new XmlGraphMLReader(db);
+
+        RuntimeException e = assertTimeoutPreemptively(
+                Duration.ofSeconds(10),
+                () -> assertThrows(
+                        RuntimeException.class,
+                        () -> graphMLReader.parseXML(failingReader("<graphml><graph>"), interruptAwareGuard)));
+
+        assertTrue(e.getMessage().contains("Failed to read GraphML input"), e.getMessage());
+    }
+
+    private static Reader failingReader(String prefix) {
+        return new Reader() {
+            private int position = 0;
+
+            @Override
+            public int read(char[] buffer, int offset, int length) throws IOException {
+                if (position < prefix.length()) {
+                    int count = Math.min(length, prefix.length() - position);
+                    prefix.getChars(position, position + count, buffer, offset);
+                    position += count;
+                    return count;
+                }
+                throw new IOException("simulated stream failure");
+            }
+
+            @Override
+            public void close() {}
+        };
     }
 
     @Test

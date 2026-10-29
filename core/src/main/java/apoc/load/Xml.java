@@ -88,6 +88,8 @@ import org.xml.sax.SAXParseException;
 
 public class Xml {
 
+    private static final int MAX_ELEMENT_DEPTH = 1_000;
+
     private static final XMLInputFactory FACTORY = XMLInputFactory.newFactory();
 
     static {
@@ -250,6 +252,13 @@ public class Xml {
     }
 
     private void handleNode(Deque<Map<String, Object>> stack, Node node, boolean simpleMode) {
+        handleNode(stack, node, simpleMode, 0);
+    }
+
+    private void handleNode(Deque<Map<String, Object>> stack, Node node, boolean simpleMode, int depth) {
+        if (depth > MAX_ELEMENT_DEPTH) {
+            throw new IllegalArgumentException("apoc.xml: maximum element depth of " + MAX_ELEMENT_DEPTH + " exceeded");
+        }
         terminationGuard.check();
 
         // Handle document node
@@ -257,7 +266,7 @@ public class Xml {
             NodeList children = node.getChildNodes();
             for (int i = 0; i < children.getLength(); i++) {
                 if (children.item(i).getLocalName() != null) {
-                    handleNode(stack, children.item(i), simpleMode);
+                    handleNode(stack, children.item(i), simpleMode, depth + 1);
                     return;
                 }
             }
@@ -274,7 +283,7 @@ public class Xml {
 
             // This is to deal with text between xml tags for example new line characters
             if (child.getNodeType() != Node.TEXT_NODE && child.getNodeType() != Node.CDATA_SECTION_NODE) {
-                handleNode(stack, child, simpleMode);
+                handleNode(stack, child, simpleMode, depth + 1);
                 count++;
             } else {
                 // Deal with text nodes

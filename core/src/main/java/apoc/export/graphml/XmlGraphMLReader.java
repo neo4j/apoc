@@ -48,6 +48,8 @@ import org.neo4j.procedure.TerminationGuard;
 public class XmlGraphMLReader {
 
     public static final String LABEL_SPLIT = " *: *";
+
+    private static final int MAX_CONSECUTIVE_READ_FAILURES = 1_000;
     private final GraphDatabaseService db;
     private boolean storeNodeIds;
     private RelationshipType defaultRelType = RelationshipType.withName("UNKNOWN");
@@ -245,20 +247,26 @@ public class XmlGraphMLReader {
         BatchTransaction tx = new BatchTransaction(db, batchSize * 10, reporter);
         try {
 
+            int consecutiveFailures = 0;
             while (reader.hasNext()) {
                 terminationGuard.check();
                 XMLEvent event;
                 try {
                     event = (XMLEvent) reader.next();
+                    consecutiveFailures = 0;
                     if (event.getEventType() == XMLStreamConstants.DTD) {
                         generateXmlDoctypeException();
                     }
                 } catch (Exception e) {
                     // in case of unicode invalid chars we skip the event, or we exit in case of EOF
-                    if (e.getMessage().contains("Unexpected EOF")) {
+                    String message = e.getMessage();
+                    if (message != null && message.contains("Unexpected EOF")) {
                         break;
-                    } else if (e.getMessage().contains("DOCTYPE")) {
+                    } else if (message != null && message.contains("DOCTYPE")) {
                         throw e;
+                    }
+                    if (++consecutiveFailures > MAX_CONSECUTIVE_READ_FAILURES) {
+                        throw new RuntimeException("Failed to read GraphML input: " + message, e);
                     }
                     continue;
                 }
@@ -360,27 +368,43 @@ public class XmlGraphMLReader {
     private Map.Entry<XMLEvent, Object> getDataEventEntry(XMLEventReader reader, Key key) {
         Object value = key.defaultValue;
 
-        final Map.Entry<XMLEvent, String> peekEntry = peekRecursively(reader, null);
+        final Map.Entry<XMLEvent, String> peekEntry = peekRecursively(reader);
         if (peekEntry.getValue() != null) {
             value = key.parseValue(peekEntry.getValue());
         }
         return new AbstractMap.SimpleEntry<>(peekEntry.getKey(), value);
     }
 
-    private Map.Entry<XMLEvent, String> peekRecursively(XMLEventReader reader, String data) {
-        try {
-            final XMLEvent peek = peek(reader);
+    private Map.Entry<XMLEvent, String> peekRecursively(XMLEventReader reader) {
+        StringBuilder data = new StringBuilder();
+        boolean sawCharacters = false;
+        int failures = 0;
+        while (true) {
+            XMLEvent peek;
+            try {
+                peek = peek(reader);
+            } catch (Exception e) {
+                // in case of unicode invalid chars we continue until we get a valid event
+                if (++failures > MAX_CONSECUTIVE_READ_FAILURES) {
+                    throw new RuntimeException("Failed to read GraphML data value: " + e.getMessage(), e);
+                }
+                continue;
+            }
             // in case of char, we concat the result to the current value and redo the peek
             //  in order to obtain e.g. from a string "ab<invalid_char>cd<invalid_char>ef" --> "abcdef"
-            if (peek.isCharacters()) {
-                data = StringUtils.join(data, reader.nextEvent().asCharacters().getData());
-                return peekRecursively(reader, data);
+            if (!peek.isCharacters()) {
+                // in case the event is not a char we continue setting labels/properties
+                return new AbstractMap.SimpleEntry<>(peek, sawCharacters ? data.toString() : null);
             }
-            // in case the event is not a char we continue setting labels/properties
-            return new AbstractMap.SimpleEntry<>(peek, data);
-        } catch (Exception e) {
-            // in case of unicode invalid chars we continue until we get a valid event
-            return peekRecursively(reader, data);
+            try {
+                data.append(reader.nextEvent().asCharacters().getData());
+                sawCharacters = true;
+                failures = 0;
+            } catch (Exception e) {
+                if (++failures > MAX_CONSECUTIVE_READ_FAILURES) {
+                    throw new RuntimeException("Failed to read GraphML data value: " + e.getMessage(), e);
+                }
+            }
         }
     }
 
@@ -452,9 +476,9 @@ public class XmlGraphMLReader {
 
     private XMLEvent peek(XMLEventReader reader) throws XMLStreamException {
         XMLEvent peek = reader.peek();
-        if (peek.isCharacters() && (peek.asCharacters().isWhiteSpace())) {
+        while (peek.isCharacters() && (peek.asCharacters().isWhiteSpace())) {
             reader.nextEvent();
-            return peek(reader);
+            peek = reader.peek();
         }
         return peek;
     }
