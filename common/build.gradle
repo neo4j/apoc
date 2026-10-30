@@ -43,7 +43,10 @@ dependencies {
   // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
   // and remove the manual licensing check for it in licenses-3rdparties.gradle
   compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.2', withoutServers
-  compileOnly group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.75.0'
+  // APOC never uses OTel; GCS 2.75.0 pulls opentelemetry-api 1.62.0 (CVE-2026-118259).
+  compileOnly(group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.75.0') {
+    exclude group: 'io.opentelemetry'
+  }
   compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.20.0'
 
   // These dependencies affect the tests only, they will not be packaged in the resulting .jar
