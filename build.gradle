@@ -121,9 +121,6 @@ subprojects {
       implementation('tools.jackson.core:jackson-core:3.2.3') {
         because 'GHSA-72hv-8253-57qq'
       }
-      implementation('io.opentelemetry:opentelemetry-api:1.62.0') {
-        because 'CVE-2026-45292'
-      }
       implementation('org.bouncycastle:bcprov-jdk18on:1.85') {
         because 'CVE-2026-8763, CVE-2026-13506, and to enforce a minimum version across all transitive sources'
       }
