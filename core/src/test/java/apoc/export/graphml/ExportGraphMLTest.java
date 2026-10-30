@@ -312,25 +312,23 @@ class ExportGraphMLTest {
     }
 
     @Test
-    void testImportMalformedDataFailsPromptly() throws IOException {
+    void testImportLongRunOfInvalidCharactersStillRecovers() throws IOException {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                 + "<graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\">"
                 + "<key id=\"d0\" for=\"node\" attr.name=\"prop\"/>"
                 + "<graph id=\"G\" edgedefault=\"directed\">"
                 + "<node id=\"n0\"><data key=\"d0\">"
                 + "\u0001".repeat(50_000)
-                + "</data></node></graph></graphml>";
-        File file = new File(directory, "malformed-data.graphml");
+                + "kept</data></node></graph></graphml>";
+        File file = new File(directory, "invalid-run.graphml");
         Files.writeString(file.toPath(), xml, StandardCharsets.UTF_8);
 
-        QueryExecutionException e = assertThrows(
-                QueryExecutionException.class,
-                () -> testCall(
-                        db, "CALL apoc.import.graphml($file, {})", map("file", file.getAbsolutePath()), r -> {}));
-        assertTrue(
-                ExceptionUtils.getThrowableList(e).stream()
-                        .anyMatch(t -> t.getMessage() != null && t.getMessage().contains("Failed to read GraphML")),
-                () -> ExceptionUtils.getStackTrace(e));
+        testCall(
+                db,
+                "CALL apoc.import.graphml($file, {})",
+                map("file", file.getAbsolutePath()),
+                r -> assertEquals(1L, r.get("nodes")));
+        testCall(db, "MATCH (n) WHERE n.prop = 'kept' RETURN count(n) AS count", r -> assertEquals(1L, r.get("count")));
     }
 
     @Test

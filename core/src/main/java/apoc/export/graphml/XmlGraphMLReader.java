@@ -265,6 +265,10 @@ public class XmlGraphMLReader {
                     } else if (message != null && message.contains("DOCTYPE")) {
                         throw e;
                     }
+                    if (isRecoverableInvalidCharacter(e)) {
+                        consecutiveFailures = 0;
+                        continue;
+                    }
                     if (++consecutiveFailures > MAX_CONSECUTIVE_READ_FAILURES) {
                         throw new RuntimeException("Failed to read GraphML input: " + message, e);
                     }
@@ -306,7 +310,7 @@ public class XmlGraphMLReader {
                         boolean isNode = last instanceof Node;
                         Key key = isNode ? nodeKeys.get(id) : relKeys.get(id);
                         if (key == null) key = Key.defaultKey(id, isNode);
-                        final Map.Entry<XMLEvent, Object> eventEntry = getDataEventEntry(reader, key);
+                        final Map.Entry<XMLEvent, Object> eventEntry = getDataEventEntry(reader, key, terminationGuard);
                         final XMLEvent next = eventEntry.getKey();
                         final Object value = eventEntry.getValue();
                         if (value != null) {
@@ -365,26 +369,32 @@ public class XmlGraphMLReader {
         return count;
     }
 
-    private Map.Entry<XMLEvent, Object> getDataEventEntry(XMLEventReader reader, Key key) {
+    private Map.Entry<XMLEvent, Object> getDataEventEntry(
+            XMLEventReader reader, Key key, TerminationGuard terminationGuard) {
         Object value = key.defaultValue;
 
-        final Map.Entry<XMLEvent, String> peekEntry = peekRecursively(reader);
+        final Map.Entry<XMLEvent, String> peekEntry = peekRecursively(reader, terminationGuard);
         if (peekEntry.getValue() != null) {
             value = key.parseValue(peekEntry.getValue());
         }
         return new AbstractMap.SimpleEntry<>(peekEntry.getKey(), value);
     }
 
-    private Map.Entry<XMLEvent, String> peekRecursively(XMLEventReader reader) {
+    private Map.Entry<XMLEvent, String> peekRecursively(XMLEventReader reader, TerminationGuard terminationGuard) {
         StringBuilder data = new StringBuilder();
         boolean sawCharacters = false;
         int failures = 0;
         while (true) {
+            terminationGuard.check();
             XMLEvent peek;
             try {
                 peek = peek(reader);
             } catch (Exception e) {
                 // in case of unicode invalid chars we continue until we get a valid event
+                if (isRecoverableInvalidCharacter(e)) {
+                    failures = 0;
+                    continue;
+                }
                 if (++failures > MAX_CONSECUTIVE_READ_FAILURES) {
                     throw new RuntimeException("Failed to read GraphML data value: " + e.getMessage(), e);
                 }
@@ -401,11 +411,20 @@ public class XmlGraphMLReader {
                 sawCharacters = true;
                 failures = 0;
             } catch (Exception e) {
+                if (isRecoverableInvalidCharacter(e)) {
+                    failures = 0;
+                    continue;
+                }
                 if (++failures > MAX_CONSECUTIVE_READ_FAILURES) {
                     throw new RuntimeException("Failed to read GraphML data value: " + e.getMessage(), e);
                 }
             }
         }
+    }
+
+    private static boolean isRecoverableInvalidCharacter(Exception e) {
+        String message = e.getMessage();
+        return message != null && (message.contains("Illegal character") || message.contains("Invalid character"));
     }
 
     private Node getByNodeId(
