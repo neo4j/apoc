@@ -743,6 +743,42 @@ class XmlTest {
     }
 
     @Test
+    void testParseDeeplyNestedXmlIsRejected() {
+        String xml = deeplyNestedXml(50_000);
+
+        QueryExecutionException e = assertThrows(
+                QueryExecutionException.class,
+                () -> testCall(
+                        db,
+                        "RETURN apoc.xml.parse($xml, '/', {failOnError: true}) AS value",
+                        Map.of("xml", xml),
+                        r -> {}));
+
+        Throwable except = ExceptionUtils.getRootCause(e);
+        assertInstanceOf(IllegalArgumentException.class, except);
+        assertEquals("apoc.xml: maximum element depth of 1000 exceeded", except.getMessage());
+    }
+
+    @Test
+    void testParseDeeplyNestedXmlFailOnErrorFalse() {
+        String xml = deeplyNestedXml(50_000);
+
+        testCall(
+                db,
+                "RETURN apoc.xml.parse($xml, '/', {failOnError: false}) AS value",
+                Map.of("xml", xml),
+                r -> assertEquals(Collections.emptyMap(), r.get("value")));
+    }
+
+    private static String deeplyNestedXml(int depth) {
+        StringBuilder xml = new StringBuilder("<root>");
+        for (int i = 0; i < depth; i++) xml.append("<a>");
+        xml.append("x");
+        for (int i = 0; i < depth; i++) xml.append("</a>");
+        return xml.append("</root>").toString();
+    }
+
+    @Test
     void testImportXmlPreventXXEVulnerabilityThrowsQueryExecutionException() {
         QueryExecutionException e = assertThrows(
                 QueryExecutionException.class,
