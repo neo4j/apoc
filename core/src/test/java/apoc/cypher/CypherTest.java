@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,9 @@ import org.neo4j.test.extension.Inject;
 class CypherTest {
 
     private static final AssertableLogProvider logProvider = new AssertableLogProvider();
+
+    // matches the start of a single log message; the message body itself may span several lines
+    private static final Pattern LOG_MESSAGE_START = Pattern.compile("(?m)^(?:TRACE|DEBUG|INFO|WARN|ERROR) @ ");
 
     @Inject
     GraphDatabaseService db;
@@ -224,17 +228,24 @@ class CypherTest {
     @Test
     void testRunTimeboxedTerminatedQueryIsLoggedWithLiteralsObfuscated() {
         final String secret = "s3cr3t!";
+        final String terminatedMarker = "has been terminated";
         final String innerQuery =
                 "UNWIND range(1, 1000000000) AS x WITH x, '" + secret + "' AS password WHERE x < 0 RETURN password";
 
+        logProvider.clear();
         db.executeTransactionally(
                 "CALL apoc.cypher.runTimeboxed($innerQuery, null, 100)",
                 Map.of("innerQuery", innerQuery),
                 Result::resultAsString);
 
         await().atMost(Duration.ofSeconds(10))
-                .untilAsserted(() -> assertThat(logProvider.serialize()).contains("has been terminated"));
-        assertThat(logProvider.serialize()).doesNotContain(secret);
+                .untilAsserted(() -> assertThat(logProvider.serialize()).contains(terminatedMarker));
+
+        final List<String> terminationMessages = Arrays.stream(LOG_MESSAGE_START.split(logProvider.serialize()))
+                .filter(message -> message.contains(terminatedMarker))
+                .toList();
+        assertThat(terminationMessages).isNotEmpty().allSatisfy(message -> assertThat(message)
+                .doesNotContain(secret));
     }
 
     @Test
