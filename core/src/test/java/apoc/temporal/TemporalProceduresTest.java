@@ -20,6 +20,7 @@ package apoc.temporal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import apoc.util.TestUtil;
@@ -201,5 +202,35 @@ class TemporalProceduresTest {
                 () -> TestUtil.singleResultFirstColumn(
                         db,
                         "RETURN apoc.temporal.formatDuration( date( { year: 2018, month: 12, day: 10 } ), 'wrongDuration' ) as output"));
+    }
+
+    @Test
+    void shouldFormatDurationIsoNanosStrippingTrailingZeros() {
+        assertEquals(
+                "01:20:20.48766",
+                TestUtil.singleResultFirstColumn(
+                        db,
+                        "RETURN apoc.temporal.formatDuration(duration('PT1H20M20.48766S'), \"HH:mm:ssIIIIIIIII\") AS output"));
+        assertEquals(
+                "00:00:00",
+                TestUtil.singleResultFirstColumn(
+                        db, "RETURN apoc.temporal.formatDuration(duration('PT0S'), \"HH:mm:ssIIIIIIIII\") AS output"));
+        assertEquals(
+                "00:00:00.000000001",
+                TestUtil.singleResultFirstColumn(
+                        db,
+                        "RETURN apoc.temporal.formatDuration(duration('PT0.000000001S'), \"HH:mm:ssIIIIIIIII\") AS output"));
+    }
+
+    @Test
+    void shouldRejectOverLongDurationPatternRunWithoutHanging() {
+        final String query = "RETURN apoc.temporal.formatDuration(duration('PT0.000000001S'), $format) AS output";
+        final String format = "I".repeat(1_000_000);
+        var e = assertTimeoutPreemptively(
+                java.time.Duration.ofSeconds(10),
+                () -> assertThrows(
+                        RuntimeException.class,
+                        () -> TestUtil.singleResultFirstColumn(db, query, Map.of("format", format))));
+        assertTrue(e.getMessage().contains("Available formats are:"));
     }
 }
