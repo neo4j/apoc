@@ -21,7 +21,6 @@ package apoc.export.arrow;
 import static apoc.export.arrow.ExportArrowStrategy.fromMetaType;
 import static apoc.export.arrow.ExportArrowStrategy.toField;
 
-import apoc.meta.Types;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ public interface ExportResultStrategy {
     default Schema schemaFor(GraphDatabaseService db, List<Map<String, Object>> records) {
         final List<Field> fields = records.stream()
                 .flatMap(m -> m.entrySet().stream())
-                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), fromMetaType(Types.of(e.getValue()))))
+                .map(e -> new AbstractMap.SimpleEntry<>(e.getKey(), fromMetaType(e.getValue())))
                 .collect(Collectors.groupingBy(
                         e -> e.getKey(), Collectors.mapping(e -> e.getValue(), Collectors.toSet())))
                 .entrySet()

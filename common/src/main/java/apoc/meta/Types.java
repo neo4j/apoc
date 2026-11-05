@@ -59,8 +59,6 @@ public enum Types {
     DURATION,
     VECTOR;
 
-    private String typeOfList = "ANY";
-
     private static final Map<Class<?>, Class<?>> primitivesMapping = new HashMap() {
         {
             put(double.class, Double.class);
@@ -72,20 +70,25 @@ public enum Types {
         }
     };
 
-    @Override
-    public String toString() {
-        if (this == Types.LIST) {
-            return "LIST OF " + typeOfList;
-        }
-        return super.toString();
+    public static Types of(Object value) {
+        return of(value == null ? null : value.getClass());
     }
 
-    public static Types of(Object value) {
-        Types type = of(value == null ? null : value.getClass());
-        if (type == Types.LIST && !value.getClass().isArray()) {
-            type.typeOfList = inferType((List<?>) value);
+    /**
+     * Returns the type name of the given value, e.g. "STRING" or "LIST OF STRING".
+     * The element type is computed per call, no state is shared between invocations.
+     */
+    public static String typeName(Object value) {
+        Types type = of(value);
+        return type == LIST ? "LIST OF " + elementTypeName(value) : type.name();
+    }
+
+    /** Returns the (inferred) element type name of a list or array value. */
+    public static String elementTypeName(Object value) {
+        if (value.getClass().isArray()) {
+            return of(value.getClass().getComponentType()).name();
         }
-        return type;
+        return inferType((List<?>) value);
     }
 
     public static Object[] toObjectArray(Object value) {
@@ -122,10 +125,7 @@ public enum Types {
     public static Types of(Class<?> type) {
         if (type == null) return NULL;
         if (type.isArray()) {
-            Types innerType = Types.of(type.getComponentType());
-            Types returnType = LIST;
-            returnType.typeOfList = innerType.toString();
-            return returnType;
+            return LIST;
         }
         if (type.isPrimitive()) {
             type = primitivesMapping.getOrDefault(type, type);
