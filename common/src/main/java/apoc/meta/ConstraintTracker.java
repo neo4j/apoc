@@ -19,12 +19,34 @@
 package apoc.meta;
 
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+/**
+ * Holds the existence-constraint metadata visible to a single procedure invocation.
+ * Instances must never be shared between invocations, transactions or databases.
+ */
 public class ConstraintTracker {
-    // The following maps are (label|rel-type)/constraintdefinition entries
+    // (label|rel-type) -> constrained property keys
+    private final Map<String, Set<String>> nodeConstraints = new HashMap<>();
+    private final Map<String, Set<String>> relConstraints = new HashMap<>();
 
-    public static final Map<String, List<String>> relConstraints = new HashMap<>(20);
-    public static final Map<String, List<String>> nodeConstraints = new HashMap<>(20);
+    public void addNodeConstraint(String label, Iterable<String> propertyKeys) {
+        Set<String> props = nodeConstraints.computeIfAbsent(label, k -> new HashSet<>());
+        propertyKeys.forEach(props::add);
+    }
+
+    public void addRelConstraint(String relType, Iterable<String> propertyKeys) {
+        Set<String> props = relConstraints.computeIfAbsent(relType, k -> new HashSet<>());
+        propertyKeys.forEach(props::add);
+    }
+
+    public Map<String, Set<String>> nodeConstraints() {
+        return nodeConstraints;
+    }
+
+    public Map<String, Set<String>> relConstraints() {
+        return relConstraints;
+    }
 }

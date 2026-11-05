@@ -242,13 +242,13 @@ public class Tables4LabelsProfile {
         }
     }
 
-    public Tables4LabelsProfile finished() {
+    public Tables4LabelsProfile finished(ConstraintTracker constraints) {
         for (PropertyContainerProfile prof : labelMap.values()) {
-            prof.finished();
+            prof.finished(constraints);
         }
 
         for (PropertyContainerProfile prof : relMap.values()) {
-            prof.finished();
+            prof.finished(constraints);
         }
 
         return this;

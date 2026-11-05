@@ -65,7 +65,7 @@ public class PropertyContainerProfile {
         }
     }
 
-    public PropertyContainerProfile finished() {
+    public PropertyContainerProfile finished(ConstraintTracker constraints) {
         PropertyTracker tracker;
 
         for (String propName : this.propertyNames()) {
@@ -73,7 +73,8 @@ public class PropertyContainerProfile {
 
                 // Check for node constraints
 
-                for (Map.Entry<String, List<String>> entry : ConstraintTracker.nodeConstraints.entrySet()) {
+                for (Map.Entry<String, Set<String>> entry :
+                        constraints.nodeConstraints().entrySet()) {
                     for (String pk : entry.getValue()) {
                         if (this.profile.containsKey(pk)) {
                             tracker = this.profile.get(pk);
@@ -85,7 +86,8 @@ public class PropertyContainerProfile {
 
                 // Check for relationship constraints
 
-                for (Map.Entry<String, List<String>> entry : ConstraintTracker.relConstraints.entrySet()) {
+                for (Map.Entry<String, Set<String>> entry :
+                        constraints.relConstraints().entrySet()) {
                     for (String pk : entry.getValue()) {
                         if (this.profile.containsKey(pk)) {
                             tracker = this.profile.get(pk);
