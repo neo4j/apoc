@@ -41,6 +41,9 @@ import org.neo4j.values.storable.DurationFields;
 import org.neo4j.values.storable.DurationValue;
 
 public class DurationFormatUtil {
+    // no duration field can occupy more than a long's 19 digits; this bounds padding width and allocations
+    private static final int MAX_PATTERN_RUN_LENGTH = 64;
+
     public static String getOrCreateDurationPattern(String format) {
         final String formatLower = format.toLowerCase();
         return ISO_DURATION_PATTERNS.getOrDefault(formatLower, ELASTIC_PATTERNS.getOrDefault(formatLower, format));
@@ -104,8 +107,8 @@ public class DurationFormatUtil {
                     // the letter `I` is used to create nanoseconds in iso format, i.e. with trailing zeros. e.g.
                     // '123000' become '123'
                     if (m.group("iso") != null) {
-                        final String isoNanos = getFieldDigit(m, duration, NANOSECONDS_OF_SECOND)
-                                .replaceAll("(?!$)0+$", "");
+                        String isoNanos = getFieldDigit(m, duration, NANOSECONDS_OF_SECOND);
+                        isoNanos = stripTrailingZeros(isoNanos);
                         return isoNanos.isEmpty() ? "" : ("." + isoNanos);
                     }
                     // fallback
@@ -113,11 +116,24 @@ public class DurationFormatUtil {
                 });
     }
 
+    private static String stripTrailingZeros(String s) {
+        int end = s.length();
+        while (end > 0 && s.charAt(end - 1) == '0') {
+            end--;
+        }
+        return s.substring(0, end);
+    }
+
     private static String getFieldDigit(Matcher m, DurationValue duration, DurationFields field) {
         return getFieldDigit(m, duration, field, false);
     }
 
     private static String getFieldDigit(Matcher m, DurationValue duration, DurationFields field, boolean toTruncate) {
+        if (m.group().length() > MAX_PATTERN_RUN_LENGTH) {
+            throw new IllegalArgumentException(
+                    "Duration pattern letter runs cannot be longer than " + MAX_PATTERN_RUN_LENGTH
+                            + " characters, found: " + m.group().length());
+        }
         long replacement = duration.get(field.propertyKey).value();
         // to add padding zeros, e.g. a duration of 15 years with a pattern 'yyyy' will have m.group().length() = 4
         // so the string will be String.format("%04d", years>) --> 0015
