@@ -503,5 +503,15 @@
         "sha1": "7ffdde6b5e20b4f17d5e11fabdef4e0607d2d50e",
         "sha256": "0aee9d3fd12f286f89320f1462b0d929c1b2b3d3b3bd81a0d7277ab44cd25d03",
         "md5": "f7b8fdd69adc8b081fc2dc86b1cb5517"
+    },
+    "5.26.33": {
+        "sha1": "c6ce76434a3ef6e53fabb49f8dd0e0670c491cd7",
+        "sha256": "14223db9bfab8cf6e25f38ab471e6df3cccbd8607afdb06a579aceb1164a283f",
+        "md5": "7659fd7da7e58ceedb2b81c11727c00a"
+    },
+    "2026.10.2": {
+        "sha1": "f6023895496ce74ddd939c484f7f3097c67477b2",
+        "sha256": "b552e93ced9456fcfb9b65e62a0565697e2bb056b01818abdf9be7cffbcefbf0",
+        "md5": "c63d4b4e88c6f2847cfbacd9f704beba"
     }
 }
