@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.neo4j.values.storable.DurationFields;
 import org.neo4j.values.storable.DurationValue;
 
@@ -108,20 +109,12 @@ public class DurationFormatUtil {
                     // '123000' become '123'
                     if (m.group("iso") != null) {
                         String isoNanos = getFieldDigit(m, duration, NANOSECONDS_OF_SECOND);
-                        isoNanos = stripTrailingZeros(isoNanos);
+                        isoNanos = StringUtils.stripEnd(isoNanos, "0");
                         return isoNanos.isEmpty() ? "" : ("." + isoNanos);
                     }
                     // fallback
                     return formatter;
                 });
-    }
-
-    private static String stripTrailingZeros(String s) {
-        int end = s.length();
-        while (end > 0 && s.charAt(end - 1) == '0') {
-            end--;
-        }
-        return s.substring(0, end);
     }
 
     private static String getFieldDigit(Matcher m, DurationValue duration, DurationFields field) {
