@@ -1,6 +1,6 @@
 ---
 name: ticket
-description: Analysis a ticket and proposes a fix.
+description: Analyse a ticket and propose a fix.
 argument-hint: "<linear-issue-id> [ <remarks>]"
 allowed-tools:
   - Bash(gh pr view *)
