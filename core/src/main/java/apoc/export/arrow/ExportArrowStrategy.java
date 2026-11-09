@@ -73,44 +73,35 @@ public interface ExportArrowStrategy<IN, OUT> {
 
     Log getLogger();
 
-    static String fromMetaType(apoc.meta.Types type) {
-        switch (type) {
-            case INTEGER:
-                return "Long";
-            case FLOAT:
-                return "Double";
-            case LIST:
-                String inner = type.toString().substring("LIST OF ".length()).trim();
-                final apoc.meta.Types innerType = apoc.meta.Types.from(inner);
-                if (innerType == apoc.meta.Types.LIST) {
-                    return "AnyArray";
-                }
-                return fromMetaType(innerType) + "Array";
-            case BOOLEAN:
-                return "Boolean";
-            case MAP:
-                return "Map";
-            case RELATIONSHIP:
-                return "Relationship";
-            case NODE:
-                return "Node";
-            case PATH:
-                return "Path";
-            case POINT:
-                return "Point";
-            case DATE:
-                return "Date";
-            case LOCAL_TIME:
-            case DATE_TIME:
-            case LOCAL_DATE_TIME:
-                return "DateTime";
-            case TIME:
-                return "Time";
-            case DURATION:
-                return "Duration";
-            default:
-                return "String";
+    static String fromMetaType(Object value) {
+        final apoc.meta.Types type = apoc.meta.Types.of(value);
+        if (type == apoc.meta.Types.LIST) {
+            final apoc.meta.Types innerType = apoc.meta.Types.from(apoc.meta.Types.elementTypeName(value));
+            if (innerType == apoc.meta.Types.LIST) {
+                return "AnyArray";
+            }
+            return fromMetaType(innerType) + "Array";
         }
+        return fromMetaType(type);
+    }
+
+    static String fromMetaType(apoc.meta.Types type) {
+        return switch (type) {
+            case INTEGER -> "Long";
+            case FLOAT -> "Double";
+            case LIST -> "AnyArray";
+            case BOOLEAN -> "Boolean";
+            case MAP -> "Map";
+            case RELATIONSHIP -> "Relationship";
+            case NODE -> "Node";
+            case PATH -> "Path";
+            case POINT -> "Point";
+            case DATE -> "Date";
+            case LOCAL_TIME, DATE_TIME, LOCAL_DATE_TIME -> "DateTime";
+            case TIME -> "Time";
+            case DURATION -> "Duration";
+            default -> "String";
+        };
     }
 
     static Field toField(String fieldName, Set<String> propertyTypes) {
