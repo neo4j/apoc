@@ -40,11 +40,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.neo4j.configuration.GraphDatabaseSettings;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Result;
 import org.neo4j.test.TestDatabaseManagementServiceBuilder;
 import org.neo4j.test.extension.ExtensionCallback;
@@ -429,5 +431,57 @@ class ArrowTest {
             assertEquals(expected, actual);
             return null;
         });
+    }
+
+    @Test
+    void testFileExportFailureIsPropagated() {
+        // the query fails midway through iteration: the procedure must fail instead of reporting success
+        final var e = Assertions.assertThrows(
+                QueryExecutionException.class,
+                () -> db.executeTransactionally(
+                        "CALL apoc.export.arrow.query('failing.arrow', 'UNWIND range(0, 5) AS i RETURN 1 / (i - 3) AS v') YIELD file RETURN file",
+                        Map.of(),
+                        Result::resultAsString));
+        Assertions.assertTrue(e.getMessage().contains("/ by zero"), e.getMessage());
+    }
+
+    @Test
+    void testStreamExportWithValueNotMatchingSchemaIsWrittenAsNull() {
+        // schema is sampled from the first row (integer), the second value is a string
+        final List<byte[]> list = db.executeTransactionally(
+                "CALL apoc.export.arrow.stream.query($query) YIELD value AS byteArray",
+                Map.of("query", "UNWIND [1, 'two'] AS v RETURN v"),
+                result -> result.<byte[]>columnAs("byteArray").stream().collect(Collectors.toList()));
+
+        db.executeTransactionally(
+                "UNWIND $list AS byteArray CALL apoc.load.arrow.stream(byteArray) YIELD value RETURN value.v AS v",
+                Map.of("list", list),
+                result -> {
+                    final List<Object> actual =
+                            result.<Object>columnAs("v").stream().collect(Collectors.toList());
+                    Assertions.assertEquals(2, actual.size());
+                    Assertions.assertTrue(actual.contains(null) || actual.contains("two"), actual.toString());
+                    return null;
+                });
+    }
+
+    @Test
+    void testFileExportWithSamePropertyDifferentTypesAcrossLabels() {
+        db.executeTransactionally("CREATE (:MixedA {mixedProp: 1}), (:MixedB {mixedProp: 'one'})");
+        try {
+            final String file = db.executeTransactionally(
+                    "CALL apoc.export.arrow.all('mixed_types.arrow') YIELD file", Map.of(), this::extractFileName);
+            final Map<String, Object> values = db.executeTransactionally(
+                    "CALL apoc.load.arrow($file) YIELD value WHERE value.mixedProp IS NOT NULL "
+                            + "RETURN collect(value.mixedProp) AS vals",
+                    Map.of("file", file),
+                    r -> {
+                        final List<Object> vals = (List<Object>) r.next().get("vals");
+                        return Map.of("vals", vals);
+                    });
+            assertEquals(java.util.Set.of("1", "one"), new java.util.HashSet<>((List<Object>) values.get("vals")));
+        } finally {
+            db.executeTransactionally("MATCH (n:MixedA|MixedB) DELETE n");
+        }
     }
 }

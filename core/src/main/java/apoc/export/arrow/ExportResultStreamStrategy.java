@@ -22,6 +22,8 @@ import apoc.Pools;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
@@ -37,6 +39,7 @@ public class ExportResultStreamStrategy implements ExportArrowStreamStrategy<Res
     private final Pools pools;
     private final TerminationGuard terminationGuard;
     private final Log logger;
+    private final Set<String> warnedFields = ConcurrentHashMap.newKeySet();
 
     private final RootAllocator bufferAllocator;
 
@@ -74,6 +77,11 @@ public class ExportResultStreamStrategy implements ExportArrowStreamStrategy<Res
     @Override
     public ExecutorService getExecutorService() {
         return pools.getDefaultExecutorService();
+    }
+
+    @Override
+    public Set<String> getWarnedFields() {
+        return warnedFields;
     }
 
     @Override

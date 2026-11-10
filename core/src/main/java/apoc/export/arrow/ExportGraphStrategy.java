@@ -29,13 +29,12 @@ import apoc.util.Util;
 import apoc.util.collection.Iterables;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.neo4j.cypher.export.SubGraph;
@@ -50,34 +49,43 @@ import org.neo4j.graphdb.ResultTransformer;
 public interface ExportGraphStrategy {
 
     default Schema schemaFor(GraphDatabaseService db, List<Map<String, Object>> records) {
-        final Function<Map<String, Object>, Stream<? extends Field>> flatMapStream = m -> {
-            String propertyName = (String) m.get("propertyName");
-            List<String> propertyTypes = (List<String>) m.get("propertyTypes");
-            return propertyTypes.stream().map(propertyType -> toField(propertyName, new HashSet<>(propertyTypes)));
-        };
-        final Predicate<Map<String, Object>> filterStream = m -> m.get("propertyName") != null;
-        final ResultTransformer<Set<Field>> parsePropertiesResult = result ->
-                result.stream().filter(filterStream).flatMap(flatMapStream).collect(Collectors.toSet());
-
         final Map<String, Object> cfg = records.get(0);
         final Map<String, Object> parameters = Map.of("config", cfg);
-        final Set<Field> allFields = new HashSet<>();
-        Set<Field> nodeFields = db.executeTransactionally(
-                "CALL apoc.meta.nodeTypeProperties($config)", parameters, parsePropertiesResult);
-
+        // Merge property types across all labels/types, so each property name maps to exactly one field.
+        final ResultTransformer<Map<String, Set<String>>> parsePropertiesResult = result -> {
+            final Map<String, Set<String>> types = new TreeMap<>();
+            result.stream().filter(m -> m.get("propertyName") != null).forEach(m -> types.computeIfAbsent(
+                            (String) m.get("propertyName"), k -> new HashSet<>())
+                    .addAll((List<String>) m.get("propertyTypes")));
+            return types;
+        };
+        final Map<String, Set<String>> propertyTypes = new TreeMap<>();
+        final Set<Field> allFields = new LinkedHashSet<>();
         allFields.add(FIELD_ID);
         allFields.add(FIELD_LABELS);
-        allFields.addAll(nodeFields);
+
+        mergeTypes(
+                propertyTypes,
+                db.executeTransactionally(
+                        "CALL apoc.meta.nodeTypeProperties($config)", parameters, parsePropertiesResult));
 
         if (cfg.containsKey("includeRels")) {
-            final Set<Field> relFields = db.executeTransactionally(
-                    "CALL apoc.meta.relTypeProperties($config)", parameters, parsePropertiesResult);
+            mergeTypes(
+                    propertyTypes,
+                    db.executeTransactionally(
+                            "CALL apoc.meta.relTypeProperties($config)", parameters, parsePropertiesResult));
             allFields.add(FIELD_SOURCE_ID);
             allFields.add(FIELD_TARGET_ID);
             allFields.add(FIELD_TYPE);
-            allFields.addAll(relFields);
         }
+        // one field per property name; conflicting types fall back to string (see toField)
+        propertyTypes.forEach((name, types) -> allFields.add(toField(name, types)));
         return new Schema(allFields);
+    }
+
+    private static void mergeTypes(Map<String, Set<String>> target, Map<String, Set<String>> source) {
+        source.forEach((name, types) ->
+                target.computeIfAbsent(name, k -> new HashSet<>()).addAll(types));
     }
 
     default Map<String, Object> entityToMap(Entity entity) {

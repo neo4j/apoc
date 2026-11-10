@@ -25,6 +25,8 @@ import apoc.util.collection.Iterables;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Stream;
 import org.apache.arrow.memory.BufferAllocator;
@@ -44,6 +46,7 @@ public class ExportGraphFileStrategy implements ExportArrowFileStrategy<SubGraph
     private final Pools pools;
     private final TerminationGuard terminationGuard;
     private final Log logger;
+    private final Set<String> warnedFields = ConcurrentHashMap.newKeySet();
 
     private final RootAllocator bufferAllocator;
 
@@ -105,6 +108,11 @@ public class ExportGraphFileStrategy implements ExportArrowFileStrategy<SubGraph
     @Override
     public ExecutorService getExecutorService() {
         return pools.getDefaultExecutorService();
+    }
+
+    @Override
+    public Set<String> getWarnedFields() {
+        return warnedFields;
     }
 
     @Override
