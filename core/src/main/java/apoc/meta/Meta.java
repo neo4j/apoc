@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -228,12 +229,10 @@ public class Meta {
     public String typeCypher(@Name(value = "value", description = "An object to get the type of.") Object value) {
         Types type = Types.of(value);
 
-        switch (type) {
-            case ANY: // TODO Check if it's necessary
-                return value.getClass().getSimpleName();
-            default:
-                return type.toString();
+        if (Objects.requireNonNull(type) == Types.ANY) { // TODO Check if it's necessary
+            return value.getClass().getSimpleName();
         }
+        return Types.typeName(value);
     }
 
     @UserFunction("apoc.meta.cypher.types")

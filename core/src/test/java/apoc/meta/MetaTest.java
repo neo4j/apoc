@@ -47,6 +47,8 @@ import java.io.InputStreamReader;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -358,6 +360,58 @@ class MetaTest {
             Map<String, String> res = (Map) row.get("value");
             res.forEach(Assertions::assertEquals);
         });
+    }
+
+    @Test
+    void testMetaTypesWithMultipleListTypesInOneCall() {
+        Map<String, Object> param = map(
+                "ints", asList(1, 2),
+                "strings", asList("a", "b"),
+                "dates", List.of(LocalDate.of(2018, 1, 1)),
+                "booleans", asList(true, false),
+                "mixed", asList(1, "a"),
+                "empty", Collections.emptyList(),
+                "nested", asList(asList(1, 2), List.of(3)));
+        testCall(db, "RETURN apoc.meta.cypher.types($param) AS value", singletonMap("param", param), row -> {
+            Map<String, String> res = (Map<String, String>) row.get("value");
+            assertEquals("LIST OF INTEGER", res.get("ints"));
+            assertEquals("LIST OF STRING", res.get("strings"));
+            assertEquals("LIST OF DATE", res.get("dates"));
+            assertEquals("LIST OF BOOLEAN", res.get("booleans"));
+            assertEquals("LIST OF ANY", res.get("mixed"));
+            assertEquals("LIST OF ANY", res.get("empty"));
+            assertEquals("LIST OF LIST", res.get("nested"));
+        });
+    }
+
+    @Test
+    void testMetaTypeListIsIsolatedAcrossConcurrentCalls() throws Exception {
+        final Map<String, Object> inputs = map(
+                "LIST OF INTEGER", asList(1, 2),
+                "LIST OF STRING", asList("a", "b"),
+                "LIST OF BOOLEAN", asList(true, false),
+                "LIST OF DATE", List.of(LocalDate.of(2018, 1, 1)),
+                "LIST OF FLOAT", asList(1.5, 2.5));
+        try (var pool = Executors.newFixedThreadPool(inputs.size())) {
+            final List<Future<Boolean>> futures = new ArrayList<>();
+            inputs.forEach((expected, value) -> futures.add(pool.submit(() -> {
+                for (int i = 0; i < 200; i++) {
+                    try (Transaction tx = db.beginTx()) {
+                        Object actual = tx.execute(
+                                        "RETURN apoc.meta.cypher.type($value) AS value", singletonMap("value", value))
+                                .next()
+                                .get("value");
+                        if (!expected.equals(actual)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            })));
+            for (var f : futures) {
+                assertTrue(f.get(2, java.util.concurrent.TimeUnit.MINUTES));
+            }
+        }
     }
 
     private void testTypeName(Object value, String type) {

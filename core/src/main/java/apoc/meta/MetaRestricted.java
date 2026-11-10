@@ -585,24 +585,12 @@ public class MetaRestricted {
         // Collect constraints from the schema
         Schema schema = tx.schema();
 
+        ConstraintTracker constraints = new ConstraintTracker();
         for (ConstraintDefinition cd : schema.getConstraints()) {
             if (cd.isConstraintType(ConstraintType.NODE_PROPERTY_EXISTENCE)) {
-                List<String> props = new ArrayList<>(10);
-                if (ConstraintTracker.nodeConstraints.containsKey(cd.getLabel().name())) {
-                    props = ConstraintTracker.nodeConstraints.get(cd.getLabel().name());
-                }
-                cd.getPropertyKeys().forEach(props::add);
-                ConstraintTracker.nodeConstraints.put(cd.getLabel().name(), props);
-
+                constraints.addNodeConstraint(cd.getLabel().name(), cd.getPropertyKeys());
             } else if (cd.isConstraintType(ConstraintType.RELATIONSHIP_PROPERTY_EXISTENCE)) {
-                List<String> props = new ArrayList<>(10);
-                if (ConstraintTracker.relConstraints.containsKey(
-                        cd.getRelationshipType().name())) {
-                    props = ConstraintTracker.relConstraints.get(
-                            cd.getRelationshipType().name());
-                }
-                cd.getPropertyKeys().forEach(props::add);
-                ConstraintTracker.relConstraints.put(cd.getRelationshipType().name(), props);
+                constraints.addRelConstraint(cd.getRelationshipType().name(), cd.getPropertyKeys());
             }
         }
 
@@ -652,7 +640,7 @@ public class MetaRestricted {
             }
         }
 
-        return profile.finished();
+        return profile.finished(constraints);
     }
 
     // End new code
