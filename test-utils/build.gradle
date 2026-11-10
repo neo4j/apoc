@@ -29,10 +29,10 @@ dependencies {
   api group: 'org.neo4j', name: 'log-test-utils', version: neo4jVersionEffective // , classifier: "tests"
   api group: 'org.neo4j.driver', name: 'neo4j-java-driver', version: '6.3.0'
   // Provides the hdfs:// FileSystem, needed for the hdfs URL stream handler to be registered
-  api group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: '3.4.2', withoutServers.andThen(withoutLoggers)
-  // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
-  // and remove the manual licensing check for it in licenses-3rdparties.gradle
-  api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.2', withoutServers.andThen(withoutLoggers)
+  api group: 'org.apache.hadoop', name: 'hadoop-hdfs-client', version: '3.5.0', withoutServers.andThen(withoutLoggers)
+  // If updated check if the transitive dependency to jakarta.servlet.jsp:jakarta.servlet.jsp-api:2.3.6 has also updated
+  // and update the manual licensing override for it in licenses-3rdparties.gradle
+  api group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.5.0', withoutServers.andThen(withoutLoggers)
   api group: 'org.testcontainers', name: 'testcontainers', version: testContainersVersion
   api group: 'org.testcontainers', name: 'testcontainers-neo4j', version: testContainersVersion
   api group: 'org.testcontainers', name: 'testcontainers-jdbc', version: testContainersVersion // ScriptUtils
