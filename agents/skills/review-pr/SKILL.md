@@ -30,7 +30,6 @@ Read the diff directly rather than checking out the branch — keeps the working
 - **Commit messages** follow Conventional Commits — flag the PR title/commits if they clearly don't (e.g. no `feat:`/`fix:`/`chore:` type prefix).
 - **Labels** — the PR should carry a label for its target branch (`dev`, `5.26`, etc.) and, if it only touches test code, `test-only`. Check `labels` from step 1.
 - **Formatting/license headers** — `spotless:apply` and `license:format` are available as ChatOps commands (`/format`, `/license`) rather than enforced on every push. Don't nitpick formatting or license-header nits; if you spot one, just note that `/format` or `/license` will fix it.
-- **module split** — public/community vs private/enterprise, with `community-it`/`enterprise-it` siblings for integration tests. A production change with no corresponding test in the matching `-it` module (when the change is integration-test-shaped) is worth flagging.
 
 ## 3. Review the diff
 

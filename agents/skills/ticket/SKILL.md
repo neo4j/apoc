@@ -86,9 +86,7 @@ The description of the fix should be sufficiently detailed so that it can be imp
 
 ## 3. Tests
 
-For tests, always consider but not limit yourself to cucumber scenarios under `private/enterprise/cypher/compatibility-spec-suite/src/main/resources/features`.
-
-Consider
+Always add a test.
 
 ## 5. Iterating on an existing report
 

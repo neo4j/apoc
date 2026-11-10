@@ -15,7 +15,7 @@ Use these rather than the underlying Gradle invocations so agents, humans, and C
 
 ## Topology
 
-- `settings.gradle` includes `processor`, `common`, `core`, `test-utils`, `it`. `benchmark` is commented out.
+- `settings.gradle` includes `processor`, `common`, `core`, `test-utils`, `it`.
 - Versions live in `gradle.properties` (`apocVersion`, `neo4jVersion`); `-Pneo4jVersionOverride` overrides the Neo4j version for a build.
 - Shared configuration is in the root `build.gradle`: Java 21, Spotless, dependency constraints (mostly CVE-driven version floors), and the JUnit 5 test setup.
 
@@ -42,6 +42,10 @@ Use these rather than the underlying Gradle invocations so agents, humans, and C
 # format / format check
 ./gradlew spotlessApply
 ./gradlew spotlessCheck
+
+# Verify and generate licenses
+./gradlew generateLicensesFiles
+./gradlew validateLicenses
 ```
 
 ## Capturing output
