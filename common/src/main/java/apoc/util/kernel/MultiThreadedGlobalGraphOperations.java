@@ -36,18 +36,21 @@ import org.neo4j.kernel.internal.GraphDatabaseAPI;
 public class MultiThreadedGlobalGraphOperations {
 
     public static BatchJobResult forAllNodes(
-            GraphDatabaseAPI db, ExecutorService executorService, int batchSize, Consumer<NodeCursor> consumer) {
+            GraphDatabaseAPI db,
+            ExecutorService executorService,
+            int batchSize,
+            LoginContext loginContext,
+            Consumer<NodeCursor> consumer) {
         BatchJobResult result = new BatchJobResult();
         AtomicInteger processing = new AtomicInteger();
-        try (InternalTransaction tx =
-                db.beginTransaction(KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
+        try (InternalTransaction tx = db.beginTransaction(KernelTransaction.Type.EXPLICIT, loginContext)) {
             KernelTransaction ktx = tx.kernelTransaction();
             Read dataRead = ktx.dataRead();
             PartitionedScan<NodeCursor> scan = dataRead.allNodesScan(1, ktx.cursorContext());
             Function<KernelTransaction, NodeCursor> cursorAllocator =
                     ktx2 -> ktx2.cursors().allocateNodeCursor(ktx2.cursorContext());
-            executorService.submit(
-                    new BatchJob(scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing));
+            executorService.submit(new BatchJob(
+                    scan, batchSize, db, consumer, result, cursorAllocator, executorService, processing, loginContext));
         }
 
         try {
@@ -91,6 +94,7 @@ public class MultiThreadedGlobalGraphOperations {
         private final Function<KernelTransaction, NodeCursor> cursorAllocator;
         private final ExecutorService executorService;
         private final AtomicInteger processing;
+        private final LoginContext loginContext;
 
         public BatchJob(
                 PartitionedScan<NodeCursor> scan,
@@ -100,7 +104,8 @@ public class MultiThreadedGlobalGraphOperations {
                 BatchJobResult result,
                 Function<KernelTransaction, NodeCursor> cursorAllocator,
                 ExecutorService executorService,
-                AtomicInteger processing) {
+                AtomicInteger processing,
+                LoginContext loginContext) {
             this.scan = scan;
             this.batchSize = batchSize;
             this.db = db;
@@ -109,13 +114,13 @@ public class MultiThreadedGlobalGraphOperations {
             this.cursorAllocator = cursorAllocator;
             this.executorService = executorService;
             this.processing = processing;
+            this.loginContext = loginContext;
             processing.incrementAndGet();
         }
 
         @Override
         public Void call() {
-            try (InternalTransaction tx =
-                    db.beginTransaction(KernelTransaction.Type.EXPLICIT, LoginContext.AUTH_DISABLED)) {
+            try (InternalTransaction tx = db.beginTransaction(KernelTransaction.Type.EXPLICIT, loginContext)) {
                 KernelTransaction ktx = tx.kernelTransaction();
                 try (var statement = ktx.acquireStatement()) {
                     ExecutionContext executionContext = ktx.createExecutionContext();
@@ -130,7 +135,8 @@ public class MultiThreadedGlobalGraphOperations {
                                     result,
                                     cursorAllocator,
                                     executorService,
-                                    processing));
+                                    processing,
+                                    loginContext));
                             executorService.submit(new BatchJob(
                                     scan,
                                     batchSize,
@@ -139,7 +145,8 @@ public class MultiThreadedGlobalGraphOperations {
                                     result,
                                     cursorAllocator,
                                     executorService,
-                                    processing));
+                                    processing,
+                                    loginContext));
                             while (processAndReport(cursor)) {
                                 // just continue processing...
                             }
