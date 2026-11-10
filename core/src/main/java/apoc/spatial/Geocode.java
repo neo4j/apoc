@@ -370,6 +370,10 @@ public class Geocode {
             activeConfig.setProperty(provider + "." + dotCase, value);
         });
 
+        if ((configMap.containsKey("url") || configMap.containsKey("reverseUrl")) && !configMap.containsKey("key")) {
+            activeConfig.clearProperty(provider + ".key");
+        }
+
         String supplier = provider.toLowerCase();
         final GeocodeSupplier geocodeSupplier = getGeocodeSupplier(terminationGuard, activeConfig, supplier);
         // we return both GeocodeSupplier for real implementations and String supplier for mock tests
