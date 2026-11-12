@@ -78,11 +78,15 @@ public interface ExportArrowFileStrategy<IN> extends ExportArrowStrategy<IN, Str
                 writeBatch(root, writer, rows);
             }
         } catch (Exception e) {
+            // Fail the procedure: a truncated file must never be reported as a successful export
             getLogger().error("Exception while extracting Arrow data:", e);
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
         } finally {
             reporter.done();
             Util.close(root);
             Util.close(writer);
+            // the writer may never have been created (e.g. failure while inferring the schema)
+            Util.close(out);
         }
 
         return Stream.of(progressInfo);
