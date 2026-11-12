@@ -30,9 +30,11 @@ dependencies {
 
   // These will be dependencies packaged with the .jar
   api group: 'com.jayway.jsonpath', name: 'json-path', version: '2.10.0'
+  // Do not update HdrHistogram past 2.1.9; newer versions change how the Percentiles functions behave and break PercentilesTest
+  // If an update is needed, an analysis is needed into if we can change that behaviour
   api group: 'org.hdrhistogram', name: 'HdrHistogram', version: '2.1.9'
   // We need this to avoid seeing SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder" on startup
-  api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.17'
+  api group: 'org.slf4j', name: 'slf4j-api', version: '2.0.20'
 
 
   // These will be dependencies not packaged with the .jar
@@ -40,14 +42,14 @@ dependencies {
   compileOnly group: 'org.neo4j', name: 'neo4j', version: neo4jVersionEffective
   compileOnly group: 'org.neo4j', name: 'neo4j-graph-algo', version: neo4jVersionEffective
   compileOnly group: 'software.amazon.awssdk', name: 's3', version: awsSdkVersion
-  // If updated check if the transitive dependency to javax.servlet.jsp:jsp-api:2.1 has also updated
-  // and remove the manual licensing check for it in licenses-3rdparties.gradle
-  compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.4.2', withoutServers
-  // APOC never uses OTel; GCS 2.75.0 pulls opentelemetry-api 1.62.0 (CVE-2026-118259).
-  compileOnly(group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.75.0') {
+  // If updated check if the transitive dependency to jakarta.servlet.jsp:jakarta.servlet.jsp-api:2.3.6 has also updated
+  // and update the manual licensing override for it in licenses-3rdparties.gradle
+  compileOnly group: 'org.apache.hadoop', name: 'hadoop-common', version: '3.5.0', withoutServers
+  // APOC never uses OTel; GCS 2.76.0 pulls opentelemetry-api 1.62.0 (CVE-2026-118259).
+  compileOnly(group: 'com.google.cloud', name: 'google-cloud-storage', version: '2.76.0') {
     exclude group: 'io.opentelemetry'
   }
-  compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.20.0'
+  compileOnly group: 'org.apache.commons', name: 'commons-lang3', version:  '3.21.0'
 
   // These dependencies affect the tests only, they will not be packaged in the resulting .jar
   testImplementation project(':test-utils')

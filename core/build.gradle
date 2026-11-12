@@ -78,7 +78,7 @@ dependencies {
     exclude group: 'commons-beanutils', module: 'commons-beanutils'
     exclude group: 'org.apache.commons', module: 'commons-collections4'
   }
-  implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '1.6.24'
+  implementation group: 'org.roaringbitmap', name: 'RoaringBitmap', version: '1.6.29'
 
   def arrowExclusions = {
     exclude group: 'com.fasterxml.jackson.core', module: 'jackson-core'
