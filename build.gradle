@@ -109,7 +109,7 @@ subprojects {
       implementation('org.apache.avro:avro:1.11.5') {
         because 'CVE-2025-33042'
       }
-      implementation('com.google.guava:guava:33.7.2-jre') {
+      implementation('com.google.guava:guava:33.8.0-jre') {
         because 'CVE-2020-8908, CVE-2023-2976'
       }
       implementation('org.apache.zookeeper:zookeeper:3.8.6') {
