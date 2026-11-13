@@ -1438,7 +1438,7 @@ public class Coll {
         return list;
     }
 
-    @UserFunction("apoc.coll.shuffle")
+    @UserFunction(value = "apoc.coll.shuffle", deterministic = false)
     @Description("Returns the `LIST<ANY>` shuffled.")
     public List<Object> shuffle(@Name(value = "coll", description = "The list to be shuffled.") List<Object> coll) {
         if (coll == null || coll.isEmpty()) {
@@ -1452,7 +1452,7 @@ public class Coll {
         return shuffledList;
     }
 
-    @UserFunction("apoc.coll.randomItem")
+    @UserFunction(value = "apoc.coll.randomItem", deterministic = false)
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Returns a random item from the `LIST<ANY>`, or null on `LIST<NOTHING>` or `LIST<NULL>`.")
     public Object randomItemCypher5(
@@ -1463,7 +1463,8 @@ public class Coll {
     @Deprecated
     @UserFunction(
             name = "apoc.coll.randomItem",
-            deprecatedBy = "Cypher's `rand()` function: `RETURN list[toInteger(rand() * size(list))]`")
+            deprecatedBy = "Cypher's `rand()` function: `RETURN list[toInteger(rand() * size(list))]`",
+            deterministic = false)
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns a random item from the `LIST<ANY>`, or null on `LIST<NOTHING>` or `LIST<NULL>`.")
     public Object randomItem(
@@ -1477,7 +1478,7 @@ public class Coll {
         return coll.get(ThreadLocalRandom.current().nextInt(coll.size()));
     }
 
-    @UserFunction("apoc.coll.randomItems")
+    @UserFunction(value = "apoc.coll.randomItems", deterministic = false)
     @Description(
             "Returns a `LIST<ANY>` of `itemCount` random items from the original `LIST<ANY>` (optionally allowing elements in the original `LIST<ANY>` to be selected more than once).")
     public List<Object> randomItems(

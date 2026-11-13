@@ -164,7 +164,7 @@ public class Date {
                         .get(chronoField(unit));
     }
 
-    @UserFunction("apoc.date.currentTimestamp")
+    @UserFunction(value = "apoc.date.currentTimestamp", deterministic = false)
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Returns the current Unix epoch timestamp in milliseconds.")
     public long currentTimestampCypher5() {
@@ -172,7 +172,10 @@ public class Date {
     }
 
     @Deprecated
-    @UserFunction(name = "apoc.date.currentTimestamp", deprecatedBy = "Cypher's `datetime.realtime().epochMillis`.")
+    @UserFunction(
+            name = "apoc.date.currentTimestamp",
+            deprecatedBy = "Cypher's `datetime.realtime().epochMillis`.",
+            deterministic = false)
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description("Returns the current Unix epoch timestamp in milliseconds.")
     public long currentTimestamp() {
