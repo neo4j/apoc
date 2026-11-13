@@ -631,7 +631,7 @@ public class Strings {
     private static final String upper = lower.toUpperCase();
     private static final String numeric = "0123456789";
 
-    @UserFunction("apoc.text.random")
+    @UserFunction(value = "apoc.text.random", deterministic = false)
     @Description(
             "Generates a random `STRING` to the given length using a length parameter and an optional `STRING` of valid characters.\n"
                     + "Unsuitable for cryptographic use-cases.")

@@ -397,7 +397,7 @@ public class Create {
         return Stream.of(new CreatedVirtualNodeResult(vNodeFunction(labelNames, props)));
     }
 
-    @UserFunction("apoc.create.vNode")
+    @UserFunction(value = "apoc.create.vNode", deterministic = false)
     @Description("Returns a virtual `NODE`.")
     public Node vNodeFunction(
             @Name(value = "labels", description = "The list of labels to assign to the virtual node.")
@@ -410,7 +410,7 @@ public class Create {
         return new VirtualNode(Util.labels(labelNames), props);
     }
 
-    @UserFunction("apoc.create.virtual.fromNode")
+    @UserFunction(value = "apoc.create.virtual.fromNode", deterministic = false)
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description(
             "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.")
@@ -423,7 +423,7 @@ public class Create {
         return new VirtualNode(node, propertyNames, Util.toBoolean(config.get("wrapNodeIds")));
     }
 
-    @UserFunction("apoc.create.virtual.fromNode")
+    @UserFunction(value = "apoc.create.virtual.fromNode", deterministic = false)
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_25})
     @Description(
             "Returns a virtual `NODE` from the given existing `NODE`. The virtual `NODE` only contains the requested properties.")
@@ -493,7 +493,7 @@ public class Create {
         return Stream.of(new CreatedVirtualRelationshipResult(vRelationshipFunction(from, relType, props, to)));
     }
 
-    @UserFunction("apoc.create.vRelationship")
+    @UserFunction(value = "apoc.create.vRelationship", deterministic = false)
     @Description("Returns a virtual `RELATIONSHIP`.")
     public Relationship vRelationshipFunction(
             @Name(value = "from", description = "The start node to assign to the virtual relationship.") Node from,
@@ -585,7 +585,7 @@ public class Create {
         else pc.setProperty(key, toPropertyValue(value));
     }
 
-    @UserFunction(name = "apoc.create.uuid", deprecatedBy = "Neo4j randomUUID() function")
+    @UserFunction(name = "apoc.create.uuid", deprecatedBy = "Neo4j randomUUID() function", deterministic = false)
     @Deprecated
     @QueryLanguageScope(scope = {QueryLanguage.CYPHER_5})
     @Description("Returns a UUID.")
@@ -593,7 +593,7 @@ public class Create {
         return UUID.randomUUID().toString();
     }
 
-    @UserFunction("apoc.create.uuidBase64")
+    @UserFunction(value = "apoc.create.uuidBase64", deterministic = false)
     @Description("Returns a UUID encoded with base64.")
     public String uuidBase64() {
         return UuidUtil.generateBase64Uuid(UUID.randomUUID());

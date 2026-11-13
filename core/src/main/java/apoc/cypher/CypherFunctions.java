@@ -60,7 +60,7 @@ public class CypherFunctions {
     }
 
     @NotThreadSafe
-    @UserFunction("apoc.cypher.runFirstColumnMany")
+    @UserFunction(value = "apoc.cypher.runFirstColumnMany", deterministic = false)
     @Description(
             "Runs the given statement with the given parameters and returns the first column collected into a `LIST<ANY>`.")
     public List<Object> runFirstColumnMany(
@@ -71,7 +71,7 @@ public class CypherFunctions {
     }
 
     @NotThreadSafe
-    @UserFunction("apoc.cypher.runFirstColumnSingle")
+    @UserFunction(value = "apoc.cypher.runFirstColumnSingle", deterministic = false)
     @Description(
             "Runs the given statement with the given parameters and returns the first element of the first column.")
     public Object runFirstColumnSingle(
