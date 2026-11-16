@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -271,6 +272,80 @@ class CypherTest {
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(logProvider.serialize())
                 .contains("markerTerminatedByTimebox")
                 .contains("has been terminated"));
+    }
+
+    @Test
+    void testRunTimeboxedTerminatesQueryWhoseWorkerIsQueuedByCallerBlocksPolicy() throws Exception {
+        // fill every pool thread and the queue, so that submit falls into CallerBlocksPolicy, which blocks the
+        // calling thread until its task completes; the deadline must still be armed and the worker terminate itself
+        Pools pools = ((GraphDatabaseAPI) db).getDependencyResolver().resolveDependency(Pools.class);
+        ThreadPoolExecutor executor = (ThreadPoolExecutor) pools.getDefaultExecutorService();
+        CountDownLatch release = new CountDownLatch(1);
+        Runnable blocker = () -> {
+            try {
+                release.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        };
+        try {
+            int maxPoolSize = executor.getMaximumPoolSize();
+            executor.prestartAllCoreThreads();
+            // occupy every existing thread first: only then does the queue stop being consumed and can be filled
+            int initialPoolSize = executor.getPoolSize();
+            for (int i = 0; i < initialPoolSize; i++) {
+                executor.submit(blocker);
+            }
+            await().atMost(Duration.ofSeconds(10))
+                    .untilAsserted(() -> assertThat(executor.getActiveCount()).isEqualTo(initialPoolSize));
+
+            // with the queue full, each further submission grows the pool instead of queueing
+            fillQueue(executor, blocker);
+            for (int i = initialPoolSize; i < maxPoolSize; i++) {
+                executor.submit(blocker);
+            }
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+                assertThat(executor.getPoolSize()).isEqualTo(maxPoolSize);
+                assertThat(executor.getActiveCount()).isEqualTo(maxPoolSize);
+            });
+            fillQueue(executor, blocker);
+            assertThat(executor.getQueue().remainingCapacity()).isZero();
+            logProvider.clear();
+
+            AtomicReference<Throwable> callerError = new AtomicReference<>();
+            Thread caller = new Thread(() -> {
+                try {
+                    db.executeTransactionally(
+                            "CALL apoc.cypher.runTimeboxed('CALL apoc.util.sleep(5000) WITH 1 AS x "
+                                    + "RETURN x AS markerQueuedByCallerBlocksPolicy', null, 50)",
+                            emptyMap(),
+                            Result::resultAsString);
+                } catch (Throwable t) {
+                    callerError.set(t);
+                }
+            });
+            caller.setDaemon(true);
+            caller.start();
+
+            // release the pool well after the timebox has expired, so the worker can only start too late
+            Thread.sleep(500);
+            release.countDown();
+
+            caller.join(Duration.ofSeconds(15).toMillis());
+            assertFalse(caller.isAlive());
+            assertThat(callerError.get()).isNull();
+            assertThat(logProvider.serialize())
+                    .contains("markerQueuedByCallerBlocksPolicy")
+                    .contains("has been terminated");
+        } finally {
+            release.countDown();
+        }
+    }
+
+    private static void fillQueue(ThreadPoolExecutor executor, Runnable blocker) {
+        for (int i = executor.getQueue().remainingCapacity(); i > 0; i--) {
+            executor.getQueue().add(blocker);
+        }
     }
 
     @Test
