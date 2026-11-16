@@ -125,6 +125,31 @@ public class Timeboxed {
         boolean failOnError = toBoolean(config.get("failOnError"));
         boolean appendStatusRow = toBoolean(config.get("appendStatusRow"));
 
+        // arm the deadline before submitting: submit may block in CallerBlocksPolicy until the worker
+        // completes, so scheduling afterwards would arm the deadline only after the query already ran
+        pools.getScheduledExecutorService()
+                .schedule(
+                        () -> {
+                            // set before reading txAtomic: the check-then-act between the two threads must
+                            // never lose the termination, no matter which one runs first.
+                            timeboxExpired.set(true);
+                            Transaction tx = txAtomic.get();
+                            if (tx == null) {
+                                log.debug(
+                                        "tx is null, either the other transaction finished gracefully or has not yet been started; it will terminate itself when it starts.");
+                            } else {
+                                if (appendStatusRow || failOnError) {
+                                    Map<String, Object> map = statusMap(false, true, null);
+                                    offerToQueue(queue, map, timeout);
+                                }
+                                tx.terminate();
+                                offerToQueue(queue, POISON, timeout);
+                                log.warn("terminating transaction, putting POISON onto queue");
+                            }
+                        },
+                        timeout,
+                        MILLISECONDS);
+
         // run query to be timeboxed in a separate thread to enable proper tx termination
         // if we'd run this in current thread, a tx.terminate would kill the transaction the procedure call uses itself.
         pools.getDefaultExecutorService().submit(() -> {
@@ -168,30 +193,6 @@ public class Timeboxed {
                 txAtomic.set(null);
             }
         });
-
-        //
-        pools.getScheduledExecutorService()
-                .schedule(
-                        () -> {
-                            // set before reading txAtomic: the check-then-act between the two threads must
-                            // never lose the termination, no matter which one runs first.
-                            timeboxExpired.set(true);
-                            Transaction tx = txAtomic.get();
-                            if (tx == null) {
-                                log.debug(
-                                        "tx is null, either the other transaction finished gracefully or has not yet been started; it will terminate itself when it starts.");
-                            } else {
-                                if (appendStatusRow || failOnError) {
-                                    Map<String, Object> map = statusMap(false, true, null);
-                                    offerToQueue(queue, map, timeout);
-                                }
-                                tx.terminate();
-                                offerToQueue(queue, POISON, timeout);
-                                log.warn("terminating transaction, putting POISON onto queue");
-                            }
-                        },
-                        timeout,
-                        MILLISECONDS);
 
         // consume the blocking queue using a custom iterator finishing upon POISON
         Iterator<Map<String, Object>> queueConsumer = new Iterator<>() {
