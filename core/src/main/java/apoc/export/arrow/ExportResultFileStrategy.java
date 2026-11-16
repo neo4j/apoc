@@ -23,6 +23,8 @@ import apoc.export.util.ProgressReporter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
@@ -41,6 +43,7 @@ public class ExportResultFileStrategy implements ExportArrowFileStrategy<Result>
     private final Pools pools;
     private final TerminationGuard terminationGuard;
     private final Log logger;
+    private final Set<String> warnedFields = ConcurrentHashMap.newKeySet();
 
     private final RootAllocator bufferAllocator;
 
@@ -103,6 +106,11 @@ public class ExportResultFileStrategy implements ExportArrowFileStrategy<Result>
     @Override
     public ExecutorService getExecutorService() {
         return pools.getDefaultExecutorService();
+    }
+
+    @Override
+    public Set<String> getWarnedFields() {
+        return warnedFields;
     }
 
     @Override

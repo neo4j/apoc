@@ -73,6 +73,9 @@ public interface ExportArrowStrategy<IN, OUT> {
 
     Log getLogger();
 
+    /** Fields for which a type mismatch was already logged during this export. */
+    Set<String> getWarnedFields();
+
     static String fromMetaType(Object value) {
         final apoc.meta.Types type = apoc.meta.Types.of(value);
         if (type == apoc.meta.Types.LIST) {
@@ -165,6 +168,24 @@ public interface ExportArrowStrategy<IN, OUT> {
         }
     }
 
+    private static boolean isIntegral(Object value) {
+        return value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte;
+    }
+
+    /**
+     * A value whose type disagrees with the (sampled) schema can't be written to its vector:
+     * write null instead of aborting the export, and leave a trace in the log (the value itself is not logged).
+     * Only the first mismatch per field is logged, to avoid flooding the log on large exports.
+     */
+    private void warnTypeMismatch(String fieldName, Object value) {
+        if (getWarnedFields().add(fieldName)) {
+            getLogger()
+                    .warn(
+                            "Arrow export: value of type %s does not match the schema type of field '%s' and was written as null. Further mismatches for this field are not logged.",
+                            value.getClass().getSimpleName(), fieldName);
+        }
+    }
+
     private void writeListVector(int index, Object value, FieldVector fieldVector) {
         ListVector listVector = (ListVector) fieldVector;
         if (value == null) {
@@ -176,8 +197,12 @@ public interface ExportArrowStrategy<IN, OUT> {
         if (value instanceof Collection) {
             final Collection collection = (Collection) value;
             array = collection.toArray(new Object[collection.size()]);
-        } else {
+        } else if (value instanceof Object[]) {
             array = (Object[]) value;
+        } else {
+            warnTypeMismatch(fieldVector.getName(), value);
+            listVector.setNull(index);
+            return;
         }
         listWriter.setPosition(index);
         listWriter.startList();
@@ -200,14 +225,26 @@ public interface ExportArrowStrategy<IN, OUT> {
                 listWriter.varChar().writeVarChar(0, bytes.length, tempBuf);
                 tempBuf.close();
             } else if (inner instanceof BigIntVector) {
-                long lng = (long) val;
-                listWriter.bigInt().writeBigInt(lng);
+                if (isIntegral(val)) {
+                    listWriter.bigInt().writeBigInt(((Number) val).longValue());
+                } else {
+                    warnTypeMismatch(inner.getName(), val);
+                    listWriter.writeNull();
+                }
             } else if (inner instanceof Float8Vector) {
-                double dbl = (double) val;
-                listWriter.float8().writeFloat8(dbl);
+                if (val instanceof Number) {
+                    listWriter.float8().writeFloat8(((Number) val).doubleValue());
+                } else {
+                    warnTypeMismatch(inner.getName(), val);
+                    listWriter.writeNull();
+                }
             } else if (inner instanceof BitVector) {
-                boolean bool = (boolean) val;
-                listWriter.bit().writeBit(bool ? 1 : 0);
+                if (val instanceof Boolean) {
+                    listWriter.bit().writeBit((Boolean) val ? 1 : 0);
+                } else {
+                    warnTypeMismatch(inner.getName(), val);
+                    listWriter.writeNull();
+                }
             } // TODO datemilli
         }
         listWriter.endList();
@@ -218,7 +255,12 @@ public interface ExportArrowStrategy<IN, OUT> {
         if (value == null) {
             baseVector.setNull(index);
         } else {
-            baseVector.setSafe(index, (boolean) value ? 1 : 0);
+            if (value instanceof Boolean) {
+                baseVector.setSafe(index, (Boolean) value ? 1 : 0);
+            } else {
+                warnTypeMismatch(fieldVector.getName(), value);
+                baseVector.setNull(index);
+            }
         }
     }
 
@@ -227,7 +269,12 @@ public interface ExportArrowStrategy<IN, OUT> {
         if (value == null) {
             baseVector.setNull(index);
         } else {
-            baseVector.setSafe(index, (double) value);
+            if (value instanceof Number) {
+                baseVector.setSafe(index, ((Number) value).doubleValue());
+            } else {
+                warnTypeMismatch(fieldVector.getName(), value);
+                baseVector.setNull(index);
+            }
         }
     }
 
@@ -259,7 +306,12 @@ public interface ExportArrowStrategy<IN, OUT> {
         if (value == null) {
             baseVector.setNull(index);
         } else {
-            baseVector.setSafe(index, (long) value);
+            if (isIntegral(value)) {
+                baseVector.setSafe(index, ((Number) value).longValue());
+            } else {
+                warnTypeMismatch(fieldVector.getName(), value);
+                baseVector.setNull(index);
+            }
         }
     }
 
