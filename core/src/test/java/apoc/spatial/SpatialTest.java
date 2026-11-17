@@ -240,11 +240,12 @@ class SpatialTest {
 
     @Test
     void testSimpleGeocodeOpencageOverwiteApocConfigs() {
-        // the key is defined in apocConfig()
         // the url and provider are in both apocConfig() and config map, but the second ones win
+        // a caller-supplied url is not trusted, so the apocConfig key is not used and the caller supplies its own
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "anotherOne");
         apocConfig().setProperty(Geocode.PREFIX + ".opencage.key", "myOwnMockKey");
-        final Map<String, Object> config = map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL);
+        final Map<String, Object> config =
+                map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL, "key", "myOwnMockKey");
         geocodeOnceCommon(config);
     }
 
@@ -389,11 +390,12 @@ class SpatialTest {
 
     @Test
     void testSimpleReverseGeocodeOpencageOverwiteApocConfigs() {
-        // the key is defined in apocConfig()
         // the url and provider are in both apocConfig() and config map, but the second ones win
+        // a caller-supplied url is not trusted, so the apocConfig key is not used and the caller supplies its own
         apocConfig().setProperty(Geocode.PREFIX + ".provider", "anotherOne");
         apocConfig().setProperty(Geocode.PREFIX + ".opencage.key", "myOwnMockKey");
-        final Map<String, Object> config = map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL);
+        final Map<String, Object> config =
+                map("provider", "opencage", "url", URL, "reverseUrl", REVERSE_URL, "key", "myOwnMockKey");
         reverseGeocodeCommon(config);
     }
 
